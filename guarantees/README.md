@@ -4,7 +4,7 @@ The few behaviours of docket whose silent change would mislead a maintainer or a
 
 ## A layer of its own
 
-The unit tests beside the code pin behaviour from inside. The corpus pins it from outside: it starts docket as its own process and reads only what a user reads. Nothing here imports `src/`, and nothing in `src/` imports this folder. A guarantee is written as one from the start, and a unit test never moves here.
+The unit tests beside the code pin behaviour from inside. The corpus pins it from outside: it starts docket as its own process and reads only what a user reads. Nothing here imports `src/`, and nothing in `src/` imports this folder; `bun run check:structure` refuses both. A guarantee is written as one from the start, and a unit test never moves here.
 
 ## Commands
 

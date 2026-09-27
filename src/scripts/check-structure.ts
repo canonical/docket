@@ -3,7 +3,8 @@
  * Checks the shape of the source tree.
  *
  * `bun src/scripts/check-structure.ts [root]` reads every source file under
- * `root/src` and exits 1 on a finding. `--self-test` builds a scratch tree
+ * `root/src`, and the imports of every file under `root/guarantees`, and
+ * exits 1 on a finding. `--self-test` builds a scratch tree
  * that breaks every rule and exits 0 only when the check rejects each break
  * and accepts each allowance.
  *
@@ -11,6 +12,7 @@
  * passes by having nothing to check.
  */
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -333,7 +335,31 @@ function check(root: string): Finding[] {
       report("tests", `has no ${basename(stem)}.test.ts beside it`);
     }
   }
+  checkCorpus(root, findings);
   return findings;
+}
+
+/**
+ * The guarantees corpus reaches docket only by running it, as a user
+ * does, so a guarantee stays evidence independent of the code it pins:
+ * none of its files imports anything under `src/`.
+ */
+function checkCorpus(root: string, findings: Finding[]): void {
+  if (!existsSync(join(root, "guarantees"))) return;
+  for (const { path, folder } of walk(root, "guarantees")) {
+    if (folder || !isSource(path)) continue;
+    const text = readFileSync(join(root, path), "utf8");
+    const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest);
+    for (const { specifier } of importsOf(source)) {
+      if (join(dirname(path), specifier).startsWith("src/")) {
+        findings.push({
+          file: path,
+          rule: "dependencies",
+          message: `the guarantees corpus imports docket's sources: ${specifier}`,
+        });
+      }
+    }
+  }
 }
 
 function run(root: string): number {
@@ -418,6 +444,10 @@ const breaks: Record<string, [string, string]> = {
     "dependencies",
     'import pins from "../../guarantees/pins.js";\nexport const all = pins;',
   ],
+  "guarantees/pins.ts": [
+    "dependencies",
+    'import { rows } from "../src/lib/owed/index.js";\nexport default rows;',
+  ],
   "src/lib/config/load.ts": [
     "dependencies",
     'import clock from "#clock";\nexport default function load() { return clock; }',
@@ -478,6 +508,8 @@ const allowed: Record<string, string> = {
   ].join("\n"),
   "src/lib/ui/component/ThreadRow/ThreadRow.test.tsx": "",
   "src/testing/alice.ts": 'export const alice = "alice";',
+  "guarantees/entry.test.ts":
+    'import { makeHome } from "./docket.js";\nmakeHome;',
   "src/scripts/check.ts": 'import x from "../lib/owed/index.js";\nx;',
 };
 
