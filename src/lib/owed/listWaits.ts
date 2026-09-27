@@ -1,6 +1,7 @@
 import buildRow from "./buildRow.js";
 import countStates from "./countStates.js";
-import type { OwedAddress, OwedList, RepoWaits, WaitGroup } from "./types.js";
+import groupRows from "./groupRows.js";
+import type { OwedAddress, OwedList, RepoWaits } from "./types.js";
 
 /**
  * Lists every running wait for one address in owed.
@@ -22,7 +23,11 @@ export default function listWaits(
     )
     .sort((a, b) => b.overdue - a.overdue);
   const counts = countStates(rows);
-  const groups: WaitGroup[] = rows.length > 0 ? [{ rows }] : [];
+  const groups = groupRows(
+    rows,
+    address.grouping,
+    repos.map(({ repo }) => repo),
+  );
   const text = `${counts.over} over · ${counts.soon} soon · ${counts.onTrack} on track`;
   return { address, groups, counts, summary: { text, fit: "trimmed" } };
 }

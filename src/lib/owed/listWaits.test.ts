@@ -78,3 +78,22 @@ describe("listWaits", () => {
     expect(list.summary.text).toBe("0 over · 0 soon · 0 on track");
   });
 });
+
+describe("listWaits, grouped", () => {
+  it("splits the sorted rows into the sections of the address's grouping", () => {
+    const later = wait({ owners: ["bob"], due: at("2026-09-24T10:00+02:00") });
+    const sooner = wait({ owners: ["alice"], thread: onDocs });
+    const list = listWaits(
+      [
+        { repo: example, time, waits: [later] },
+        { repo: docs, time, waits: [sooner] },
+      ],
+      { mode: "owed", grouping: "repo" },
+      now,
+    );
+    expect(list.groups.map(({ heading }) => heading?.text)).toEqual([
+      "example",
+      "docs",
+    ]);
+  });
+});

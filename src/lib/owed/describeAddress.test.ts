@@ -7,4 +7,15 @@ describe("describeAddress", () => {
       "owed",
     ]);
   });
+
+  it("names a grouping after its mode", () => {
+    const names = (["owner", "repo", "stack"] as const).map((grouping) =>
+      describeAddress({ mode: "owed", grouping }).join(" · "),
+    );
+    expect(names).toEqual([
+      "owed · by owner",
+      "owed · by repo",
+      "owed · by stack",
+    ]);
+  });
 });

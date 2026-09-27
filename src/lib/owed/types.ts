@@ -29,7 +29,7 @@ export interface FieldList {
 export type WaitState = "over" | "soon" | "onTrack";
 
 /** How owed splits its list into sections. */
-export type OwedGrouping = "none";
+export type OwedGrouping = "none" | "owner" | "repo" | "stack";
 
 /** Where the reader is in owed: the mode and its grouping. */
 export interface OwedAddress {

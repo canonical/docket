@@ -2,7 +2,12 @@ import type { WaitKind } from "../waits/index.js";
 import type { OwedGrouping } from "./types.js";
 
 /** The groupings, in the order the reader steps through them; the first is the default. */
-export const owedGroupings: readonly OwedGrouping[] = ["none"];
+export const owedGroupings: readonly OwedGrouping[] = [
+  "none",
+  "owner",
+  "repo",
+  "stack",
+];
 
 /**
  * A wait is due soon once less than this share of its target is left, so
