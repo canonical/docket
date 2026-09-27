@@ -76,6 +76,7 @@ export type Origin = "built-in" | Place;
  */
 export type ConfigErrorCode =
   | "CONFIG_DUPLICATE_KEY"
+  | "CONFIG_DUPLICATE_WORKDAY"
   | "CONFIG_EMPTY_LIST"
   | "CONFIG_INVALID_DURATION"
   | "CONFIG_INVALID_REPO"

@@ -252,9 +252,21 @@ describe("parseFile", () => {
       refuses("time: { timezone: 2 }\n", "CONFIG_UNKNOWN_TIMEZONE");
     });
 
-    it("refuses a day that is not a day, or is listed twice", () => {
+    it("refuses a day that is not a day", () => {
       refuses("time: { workdays: [mon, funday] }\n", "CONFIG_UNKNOWN_WORKDAY");
-      refuses("time: { workdays: [mon, mon] }\n", "CONFIG_UNKNOWN_WORKDAY");
+    });
+
+    it("refuses a day listed twice, naming the day", () => {
+      expect(personal("time: { workdays: [mon, tue, mon] }\n")).toEqual({
+        ok: false,
+        errors: [
+          {
+            code: "CONFIG_DUPLICATE_WORKDAY",
+            message: "`time.workdays` lists `mon` twice.",
+            recovery: "Keep one `mon` in `time.workdays`.",
+          },
+        ],
+      });
     });
 
     it("refuses workdays that list no day", () => {

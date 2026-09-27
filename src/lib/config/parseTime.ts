@@ -26,11 +26,17 @@ function parseWorkdays(value: unknown): Checked<Weekday[]> {
   // number of workdays.
   const seen = new Set<unknown>();
   for (const day of days.value) {
-    if (!known.includes(day) || seen.has(day)) {
+    if (!known.includes(day)) {
       errors.push({
         code: "CONFIG_UNKNOWN_WORKDAY",
-        message: `\`time.workdays\` lists \`${formatValue(day)}\`, which is not a day or is listed twice.`,
-        recovery: `List each day once, from ${weekdays.map((name) => `\`${name}\``).join(", ")}.`,
+        message: `\`time.workdays\` lists \`${formatValue(day)}\`, which is not a day.`,
+        recovery: `Write days as ${weekdays.map((name) => `\`${name}\``).join(", ")}.`,
+      });
+    } else if (seen.has(day)) {
+      errors.push({
+        code: "CONFIG_DUPLICATE_WORKDAY",
+        message: `\`time.workdays\` lists \`${day}\` twice.`,
+        recovery: `Keep one \`${day}\` in \`time.workdays\`.`,
       });
     }
     seen.add(day);
