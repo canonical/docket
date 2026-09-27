@@ -388,4 +388,31 @@ describe("fetchEvents", () => {
       1, 5, 2,
     ]);
   });
+
+  it("reads a thread met on two pages once, in its latest version", async () => {
+    const comment = item("IssueComment", "2026-09-22T09:00:00Z", {
+      author: user("alice"),
+    });
+    github.graphql(
+      "Events",
+      repository({
+        issues: page([opened({})], "issues-1"),
+        pullRequests: page([]),
+        discussions: page([]),
+      }),
+      repository({
+        issues: page([
+          opened({
+            updatedAt: "2026-09-22T13:00:00Z",
+            timelineItems: { nodes: [comment] },
+          }),
+        ]),
+      }),
+    );
+    github.rest(feed, { body: [] });
+    expect(lines(await events())).toEqual([
+      [1, "opened", "dave", "08:00"],
+      [1, "commented", "alice", "09:00"],
+    ]);
+  });
 });

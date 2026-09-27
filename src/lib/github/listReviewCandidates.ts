@@ -1,6 +1,7 @@
 import type { Account } from "../people/index.js";
 import type { ReviewCandidates, Reviewer } from "../provider/index.js";
 import type { ThreadSummary } from "../waits/index.js";
+import fragments from "./fragments.js";
 import listAssignableUsers from "./listAssignableUsers.js";
 import readAccount from "./readAccount.js";
 import readReviewer from "./readReviewer.js";
@@ -8,13 +9,13 @@ import splitRepo from "./splitRepo.js";
 import type { ActorNode, Client, ReviewerNode } from "./types.js";
 
 const document = `query Candidates($owner: String!, $name: String!, $number: Int!) {
-  rateLimit { limit remaining resetAt }
+  ${fragments.rateLimit}
   repository(owner: $owner, name: $name) {
     pullRequest(number: $number) {
       reviewRequests(first: 100) {
-        nodes { requestedReviewer { __typename ... on User { login } ... on Bot { login } ... on Team { combinedSlug } } }
+        nodes { ${fragments.requestedReviewer} }
       }
-      suggestedReviewers { reviewer { login __typename } }
+      suggestedReviewers { reviewer { ${fragments.account} } }
     }
   }
 }`;

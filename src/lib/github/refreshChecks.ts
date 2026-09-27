@@ -1,5 +1,6 @@
 import type { CheckRefresh } from "../provider/index.js";
 import type { ThreadSummary } from "../waits/index.js";
+import fragments from "./fragments.js";
 import readChecks from "./readChecks.js";
 import splitRepo from "./splitRepo.js";
 import type { Client } from "./types.js";
@@ -45,7 +46,7 @@ export default async function refreshChecks(
     return `r${index}: repository(owner: ${JSON.stringify(owner)}, name: ${JSON.stringify(name)}) { ${pulls.join(" ")} }`;
   });
   const answer = await client.query<Answer>(
-    `query Checks { rateLimit { limit remaining resetAt } ${fields.join(" ")} }`,
+    `query Checks { ${fragments.rateLimit} ${fields.join(" ")} }`,
     {},
     { allowMissing: true },
   );

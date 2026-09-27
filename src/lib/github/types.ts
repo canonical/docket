@@ -137,6 +137,16 @@ export interface RequestNode {
   readonly requestedReviewer: ReviewerNode;
 }
 
+/** Where a pull request sits in its stack; `null` outside one. */
+export type StackEntryNode = {
+  readonly position: number;
+  readonly stack: {
+    readonly number: number;
+    readonly size: number;
+    readonly baseRefName: string;
+  };
+} | null;
+
 /** A pull request's head commit, as GraphQL gives it. */
 export interface HeadCommitNode {
   readonly committedDate: string;
@@ -160,14 +170,7 @@ export interface PullNode extends IssueNode {
   readonly commits: {
     readonly nodes: readonly { readonly commit: HeadCommitNode }[];
   };
-  readonly stackEntry: {
-    readonly position: number;
-    readonly stack: {
-      readonly number: number;
-      readonly size: number;
-      readonly baseRefName: string;
-    };
-  } | null;
+  readonly stackEntry: StackEntryNode;
 }
 
 /** What the snapshot gives about a discussion. */

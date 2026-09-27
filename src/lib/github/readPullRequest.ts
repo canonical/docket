@@ -3,6 +3,7 @@ import readAuthor from "./readAuthor.js";
 import readChecks from "./readChecks.js";
 import readIssue from "./readIssue.js";
 import readReviewRequests from "./readReviewRequests.js";
+import readStackEntry from "./readStackEntry.js";
 import type { PullNode } from "./types.js";
 
 /**
@@ -18,7 +19,7 @@ export default function readPullRequest(
   pushes: readonly Push[],
   members: ReadonlyMap<string, readonly string[]>,
 ): Thread {
-  const entry = node.stackEntry;
+  const stack = readStackEntry(node.stackEntry);
   const checks = readChecks(
     node.commits.nodes.at(-1)?.commit.statusCheckRollup?.state,
   );
@@ -35,15 +36,6 @@ export default function readPullRequest(
     reviewRequests: readReviewRequests(node.timelineItems.nodes, members),
     pushes,
     ...(checks ? { checks } : {}),
-    ...(entry
-      ? {
-          stack: {
-            number: entry.stack.number,
-            position: entry.position,
-            size: entry.stack.size,
-            base: entry.stack.baseRefName,
-          },
-        }
-      : {}),
+    ...(stack ? { stack } : {}),
   };
 }

@@ -1,11 +1,12 @@
+import fragments from "./fragments.js";
 import type { Client, PageNode } from "./types.js";
 
 const document = `query TeamMembers($organisation: String!, $team: String!, $cursor: String) {
-  rateLimit { limit remaining resetAt }
+  ${fragments.rateLimit}
   organization(login: $organisation) {
     team(slug: $team) {
       members(first: 100, after: $cursor) {
-        pageInfo { hasNextPage endCursor }
+        ${fragments.pageInfo}
         nodes { login }
       }
     }

@@ -2,9 +2,12 @@ import type { ThreadEvent } from "../events/index.js";
 import type { Account } from "../people/index.js";
 import type { ThreadKind, ThreadSummary } from "../waits/index.js";
 import countCommits from "./countCommits.js";
+import fetchLists from "./fetchLists.js";
 import fetchPushes from "./fetchPushes.js";
+import fragments from "./fragments.js";
 import readAccount from "./readAccount.js";
 import readCheck from "./readCheck.js";
+import readStackEntry from "./readStackEntry.js";
 import splitRepo from "./splitRepo.js";
 import type {
   ActorNode,
@@ -12,10 +15,10 @@ import type {
   Client,
   FeedPush,
   HeadCommitNode,
-  PageNode,
+  StackEntryNode,
 } from "./types.js";
 
-const account = "login __typename";
+const { account, check, stackEntry, pageInfo, order } = fragments;
 const actor = `actor { ${account} } createdAt`;
 const issueItems = `__typename
   ... on IssueComment { author { ${account} } createdAt }
@@ -29,17 +32,12 @@ const pullItems = `${issueItems}
   ... on MergedEvent { ${actor} }`;
 const issueTypes =
   "ISSUE_COMMENT, CLOSED_EVENT, REOPENED_EVENT, ASSIGNED_EVENT, LABELED_EVENT";
-const order = "orderBy: { field: UPDATED_AT, direction: DESC }";
-const pageInfo = "pageInfo { hasNextPage endCursor }";
 const opened = `number title createdAt updatedAt author { ${account} }`;
-const check = `__typename
-  ... on CheckRun { name status conclusion completedAt checkSuite { app { slug } } }
-  ... on StatusContext { context state createdAt creator { ${account} } }`;
 
 const document = `query Events($owner: String!, $name: String!, $since: DateTime!,
   $issuesAfter: String, $pullsAfter: String, $discussionsAfter: String,
   $withIssues: Boolean!, $withPulls: Boolean!, $withDiscussions: Boolean!) {
-  rateLimit { limit remaining resetAt }
+  ${fragments.rateLimit}
   repository(owner: $owner, name: $name) {
     issues(first: 50, after: $issuesAfter, filterBy: { since: $since }, ${order})
       @include(if: $withIssues) {
@@ -53,7 +51,7 @@ const document = `query Events($owner: String!, $name: String!, $since: DateTime
       ${pageInfo}
       nodes {
         ${opened} headRefName isCrossRepository
-        stackEntry { position stack { number size baseRefName } }
+        ${stackEntry}
         timelineItems(since: $since, first: 100, itemTypes: [${issueTypes},
           PULL_REQUEST_REVIEW, REVIEW_REQUESTED_EVENT, MERGED_EVENT]) { nodes { ${pullItems} } }
         commits(last: 100) { nodes { commit { oid } } }
@@ -100,14 +98,7 @@ interface IssueEventsNode extends OpenedNode {
 interface PullEventsNode extends IssueEventsNode {
   readonly headRefName: string;
   readonly isCrossRepository: boolean;
-  readonly stackEntry: {
-    readonly position: number;
-    readonly stack: {
-      readonly number: number;
-      readonly size: number;
-      readonly baseRefName: string;
-    };
-  } | null;
+  readonly stackEntry: StackEntryNode;
   readonly commits: {
     readonly nodes: readonly { readonly commit: { readonly oid: string } }[];
   };
@@ -132,62 +123,14 @@ interface DiscussionEventsNode extends OpenedNode {
   };
 }
 
-interface Answer {
-  readonly repository: {
-    readonly issues?: PageNode<IssueEventsNode>;
-    readonly pullRequests?: PageNode<PullEventsNode>;
-    readonly discussions?: PageNode<DiscussionEventsNode>;
-  };
-}
-
-type Kind = "issues" | "pullRequests" | "discussions";
-
 /** Reads the three lists of threads updated at or after `since`. */
-async function readThreads(client: Client, repo: string, since: Date) {
-  const { owner, name } = splitRepo(repo);
-  const found = {
-    issues: [] as IssueEventsNode[],
-    pullRequests: [] as PullEventsNode[],
-    discussions: [] as DiscussionEventsNode[],
-  };
-  const after: Record<Kind, string | null> = {
-    issues: null,
-    pullRequests: null,
-    discussions: null,
-  };
-  const done: Record<Kind, boolean> = {
-    issues: false,
-    pullRequests: false,
-    discussions: false,
-  };
-  while (!(done.issues && done.pullRequests && done.discussions)) {
-    const { repository } = await client.query<Answer>(document, {
-      owner,
-      name,
-      since: since.toISOString(),
-      issuesAfter: after.issues,
-      pullsAfter: after.pullRequests,
-      discussionsAfter: after.discussions,
-      withIssues: !done.issues,
-      withPulls: !done.pullRequests,
-      withDiscussions: !done.discussions,
-    });
-    for (const kind of ["issues", "pullRequests", "discussions"] as const) {
-      const list = repository[kind];
-      if (!list) continue;
-      // Issues are filtered by GitHub; the other lists are ordered by
-      // update, so they stop at the first thread updated before `since`.
-      const fresh = list.nodes.filter(
-        ({ updatedAt }) => new Date(updatedAt) >= since,
-      );
-      (found[kind] as OpenedNode[]).push(...fresh);
-      after[kind] = list.pageInfo.endCursor;
-      done[kind] =
-        fresh.length < list.nodes.length || !list.pageInfo.hasNextPage;
-    }
-  }
-  return found;
-}
+const readThreads = (client: Client, repo: string, since: Date) =>
+  fetchLists<IssueEventsNode, PullEventsNode, DiscussionEventsNode>(
+    client,
+    document,
+    { ...splitRepo(repo), since: since.toISOString() },
+    since,
+  );
 
 /** Reads the events one timeline item records. */
 function readItem(
@@ -230,22 +173,13 @@ const summarise = (
   kind: ThreadKind,
   node: OpenedNode | PullEventsNode,
 ): ThreadSummary => {
-  const entry = "stackEntry" in node ? node.stackEntry : null;
+  const stack = readStackEntry("stackEntry" in node ? node.stackEntry : null);
   return {
     repo,
     number: node.number,
     kind,
     title: node.title,
-    ...(entry
-      ? {
-          stack: {
-            number: entry.stack.number,
-            position: entry.position,
-            size: entry.stack.size,
-            base: entry.stack.baseRefName,
-          },
-        }
-      : {}),
+    ...(stack ? { stack } : {}),
   };
 };
 

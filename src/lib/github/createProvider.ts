@@ -4,6 +4,7 @@ import createClient from "./createClient.js";
 import fetchEvents from "./fetchEvents.js";
 import fetchSnapshot from "./fetchSnapshot.js";
 import fetchThreadDetail from "./fetchThreadDetail.js";
+import fragments from "./fragments.js";
 import listAssignableUsers from "./listAssignableUsers.js";
 import listReviewCandidates from "./listReviewCandidates.js";
 import listTeamMembers from "./listTeamMembers.js";
@@ -13,7 +14,7 @@ import refreshChecks from "./refreshChecks.js";
 import setAssignees from "./setAssignees.js";
 import setReviewers from "./setReviewers.js";
 
-const budgetDocument = `query Budget { rateLimit { limit remaining resetAt } }`;
+const budgetDocument = `query Budget { ${fragments.rateLimit} }`;
 
 interface BudgetAnswer {
   readonly rateLimit: {

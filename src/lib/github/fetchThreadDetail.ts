@@ -5,6 +5,7 @@ import type {
   ThreadDetail,
 } from "../provider/index.js";
 import type { ThreadSummary } from "../waits/index.js";
+import fragments from "./fragments.js";
 import GitHubError from "./GitHubError.js";
 import readAccount from "./readAccount.js";
 import readAuthor from "./readAuthor.js";
@@ -19,13 +20,13 @@ import type {
   WrittenNode,
 } from "./types.js";
 
-const account = "login __typename";
-const written = `author { ${account} } authorAssociation body`;
+const { account, check, requestedReviewer } = fragments;
+const written = `${fragments.written} body`;
 const comments = `comments(last: 3) { nodes { ${written} createdAt } }`;
 
 const document = `query Detail($owner: String!, $name: String!, $number: Int!,
   $issue: Boolean!, $pull: Boolean!, $discussion: Boolean!) {
-  rateLimit { limit remaining resetAt }
+  ${fragments.rateLimit}
   repository(owner: $owner, name: $name) {
     issue(number: $number) @include(if: $issue) { updatedAt ${comments} }
     discussion(number: $number) @include(if: $discussion) { updatedAt ${comments} }
@@ -36,7 +37,7 @@ const document = `query Detail($owner: String!, $name: String!, $number: Int!,
         nodes {
           ... on ReviewRequestedEvent {
             createdAt actor { ${account} }
-            requestedReviewer { __typename ... on User { login } ... on Bot { login } ... on Team { combinedSlug } }
+            ${requestedReviewer}
           }
         }
       }
@@ -45,13 +46,7 @@ const document = `query Detail($owner: String!, $name: String!, $number: Int!,
         nodes {
           commit {
             statusCheckRollup {
-              contexts(first: 50) {
-                nodes {
-                  __typename
-                  ... on CheckRun { name status conclusion completedAt checkSuite { app { slug } } }
-                  ... on StatusContext { context state createdAt creator { ${account} } }
-                }
-              }
+              contexts(first: 50) { nodes { ${check} } }
             }
           }
         }

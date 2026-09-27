@@ -5,7 +5,9 @@ import {
   incrementalPageSize,
   watermarkMargin,
 } from "./constants.js";
+import fetchLists from "./fetchLists.js";
 import fetchPushes from "./fetchPushes.js";
+import fragments from "./fragments.js";
 import listTeamMembers from "./listTeamMembers.js";
 import readAccount from "./readAccount.js";
 import readDiscussion from "./readDiscussion.js";
@@ -13,30 +15,21 @@ import readIssue from "./readIssue.js";
 import readPullRequest from "./readPullRequest.js";
 import readReviewer from "./readReviewer.js";
 import splitRepo from "./splitRepo.js";
-import type {
-  Client,
-  DiscussionNode,
-  IssueNode,
-  PageNode,
-  PullNode,
-} from "./types.js";
+import type { Client, DiscussionNode, IssueNode, PullNode } from "./types.js";
 
-const account = "login __typename";
-const written = `author { ${account} } authorAssociation`;
+const { account, written, requestedReviewer, stackEntry, pageInfo, order } =
+  fragments;
 const thread = `number title createdAt updatedAt state ${written}
   assignees(first: 10) { nodes { ${account} } }
   labels(first: 10) { nodes { name } }
   comments(last: 3) { nodes { ${written} createdAt } }`;
-const reviewer = `requestedReviewer { __typename ... on User { login } ... on Bot { login } ... on Team { combinedSlug } }`;
-const order = "orderBy: { field: UPDATED_AT, direction: DESC }";
-const pageInfo = "pageInfo { hasNextPage endCursor }";
 
 const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
   $since: DateTime, $issueStates: [IssueState!], $pullStates: [PullRequestState!],
   $discussionStates: [DiscussionState!], $issuesAfter: String, $pullsAfter: String,
   $discussionsAfter: String, $withIssues: Boolean!, $withPulls: Boolean!,
   $withDiscussions: Boolean!) {
-  rateLimit { limit remaining resetAt }
+  ${fragments.rateLimit}
   repository(owner: $owner, name: $name) {
     issues(first: $size, after: $issuesAfter, states: $issueStates,
       filterBy: { since: $since }, ${order}) @include(if: $withIssues) {
@@ -53,14 +46,14 @@ const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
         timelineItems(last: 20, itemTypes: [REVIEW_REQUESTED_EVENT, REVIEW_REQUEST_REMOVED_EVENT]) {
           nodes {
             __typename
-            ... on ReviewRequestedEvent { createdAt ${reviewer} }
-            ... on ReviewRequestRemovedEvent { createdAt ${reviewer} }
+            ... on ReviewRequestedEvent { createdAt ${requestedReviewer} }
+            ... on ReviewRequestRemovedEvent { createdAt ${requestedReviewer} }
           }
         }
         commits(last: 1) {
           nodes { commit { committedDate author { user { login } } statusCheckRollup { state } } }
         }
-        stackEntry { position stack { number size baseRefName } }
+        ${stackEntry}
       }
     }
     discussions(first: $size, after: $discussionsAfter, states: $discussionStates, ${order})
@@ -77,92 +70,26 @@ const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
   }
 }`;
 
-interface Answer {
-  readonly repository: {
-    readonly issues?: PageNode<IssueNode>;
-    readonly pullRequests?: PageNode<PullNode>;
-    readonly discussions?: PageNode<DiscussionNode>;
-  };
-}
-
-type Kind = "issues" | "pullRequests" | "discussions";
-
-/** A GraphQL list read page by page, and whether it has more to read. */
-interface Reading {
-  after: string | null;
-  done: boolean;
-}
-
-const newest = (a: { updatedAt: string }, b: { updatedAt: string }) =>
-  Date.parse(a.updatedAt) >= Date.parse(b.updatedAt) ? a : b;
-
 /**
- * Reads every page of the three lists, keeping each thread once, in its
- * latest version. A list ordered by update can shift while it is read,
- * so a thread may come twice. With `since`, the pull requests and
- * discussions stop at the first thread updated before it; issues are
- * filtered by GitHub itself.
+ * Reads the three lists: with `since`, every thread updated since it in
+ * any state, so a thread that closed or merged replaces its open copy;
+ * without, only the open threads. Issues are filtered by GitHub itself.
  */
-async function readLists(
-  client: Client,
-  repo: string,
-  since: string | undefined,
-) {
-  const { owner, name } = splitRepo(repo);
-  const found = {
-    issues: new Map<number, IssueNode>(),
-    pullRequests: new Map<number, PullNode>(),
-    discussions: new Map<number, DiscussionNode>(),
-  };
-  const reading: Record<Kind, Reading> = {
-    issues: { after: null, done: false },
-    pullRequests: { after: null, done: false },
-    discussions: { after: null, done: false },
-  };
-  // A full snapshot needs only open threads. An incremental one reads
-  // every state, so a thread that closed or merged replaces its open copy.
+function readLists(client: Client, repo: string, since: string | undefined) {
   const open = since === undefined;
-  while (Object.values(reading).some(({ done }) => !done)) {
-    const { repository } = await client.query<Answer>(document, {
-      owner,
-      name,
+  return fetchLists<IssueNode, PullNode, DiscussionNode>(
+    client,
+    document,
+    {
+      ...splitRepo(repo),
       size: open ? fullPageSize : incrementalPageSize,
       since: since ?? null,
       issueStates: open ? ["OPEN"] : ["OPEN", "CLOSED"],
       pullStates: open ? ["OPEN"] : ["OPEN", "CLOSED", "MERGED"],
       discussionStates: open ? ["OPEN"] : ["OPEN", "CLOSED"],
-      issuesAfter: reading.issues.after,
-      pullsAfter: reading.pullRequests.after,
-      discussionsAfter: reading.discussions.after,
-      withIssues: !reading.issues.done,
-      withPulls: !reading.pullRequests.done,
-      withDiscussions: !reading.discussions.done,
-    });
-    for (const kind of ["issues", "pullRequests", "discussions"] as const) {
-      const list = repository[kind];
-      if (!list) continue;
-      const map = found[kind] as Map<number, { updatedAt: string }>;
-      let stale = false;
-      for (const node of list.nodes) {
-        if (
-          since !== undefined &&
-          Date.parse(node.updatedAt) < Date.parse(since)
-        ) {
-          stale = true;
-          continue;
-        }
-        const seen = map.get(node.number);
-        map.set(node.number, seen ? newest(seen, node) : node);
-      }
-      const { hasNextPage, endCursor } = list.pageInfo;
-      reading[kind] = { after: endCursor, done: stale || !hasNextPage };
-    }
-  }
-  return {
-    issues: [...found.issues.values()],
-    pullRequests: [...found.pullRequests.values()],
-    discussions: [...found.discussions.values()],
-  };
+    },
+    since === undefined ? undefined : new Date(since),
+  );
 }
 
 /**
