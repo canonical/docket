@@ -1,3 +1,10 @@
+/*
+ * What the fetch lock guarantees:
+ * - at most one docket process fetches at a time;
+ * - a lock another process owns is never deleted;
+ * - nothing waits without end: every wait has a bound;
+ * - no lock this process adopted is left behind.
+ */
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { lock } from "proper-lockfile";
@@ -65,21 +72,24 @@ export default async function withFetchLock<T>(
     // process's, and removes it when the process exits: the lock of the
     // process that took it over. A failed task can end the process, so the
     // library is let forget the lock first, which it does within one
-    // `update`, since the lock it touches is gone or another's. The wait
-    // ends after `stale` all the same: when the other process takes the
-    // lock between the library's check of the lock and its touch, the
-    // library touches the other's lock, keeps it as its own and never
-    // forgets it. The task then runs again, or fails, as for a lock the
-    // library did forget.
+    // `update`, since the lock it touches is gone or another's. When the
+    // other process takes the lock between the library's check of the lock
+    // and its touch, the library touches the other's lock and keeps it as
+    // its own for good, keeping it fresh so that no process can take it.
+    // The wait for that ends after `stale`, and the lock is then given up:
+    // by then the other process, at its own touch, found a time it did not
+    // set and dropped its claim, so the lock is this process's alone. The
+    // task then runs again, or fails, as for a lock the library forgot.
     if (lost) {
       let timer: ReturnType<typeof setTimeout> | undefined;
-      await Promise.race([
-        forgotten.promise,
-        new Promise<void>((resolve) => {
-          timer = setTimeout(resolve, lockTiming.stale);
+      const kept = await Promise.race([
+        forgotten.promise.then(() => false),
+        new Promise<boolean>((resolve) => {
+          timer = setTimeout(() => resolve(true), lockTiming.stale);
         }),
       ]);
       clearTimeout(timer);
+      if (kept) await release();
     } else await release();
     if ("error" in outcome) throw outcome.error;
     if (!lost) return outcome.value;

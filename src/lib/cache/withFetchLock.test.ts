@@ -171,50 +171,66 @@ describe("withFetchLock", () => {
     expect(await readdir(directory)).toEqual([]);
   }, 20_000);
 
-  it("ends its wait when the lock library keeps as its own the lock another process took over", async () => {
+  /**
+   * Runs `withFetchLock` with the filesystem the lock library calls
+   * wrapped, to put another process's takeover between the library's check
+   * of the lock and its touch, so the library touches the other's lock and
+   * keeps it as its own. `afterTakeover` then plays the other process.
+   * Resolves to the task's result and the milliseconds from the takeover
+   * to the end.
+   */
+  const adoptTakenLock = async (afterTakeover: () => Promise<void>) => {
     type Call = (path: string, ...rest: unknown[]) => unknown;
-    // The filesystem the lock library calls, wrapped to put another
-    // process's takeover between the library's check of the lock and its
-    // touch, so the library touches the other's lock and keeps it.
-    const shared: { utimes: Call; mkdir: Call } = createRequire(
-      import.meta.url,
-    )("graceful-fs");
-    const { utimes: touch, mkdir: make } = shared;
+    const shared: { utimes: Call } = createRequire(import.meta.url)(
+      "graceful-fs",
+    );
+    const { utimes: touch } = shared;
     const lockfile = join(directory, "fetch.lock");
     let armed = false;
-    let taken = false;
-    let retaking = false;
+    let takenAt = 0;
     shared.utimes = (path, ...rest) => {
       if (armed && path === lockfile) {
         armed = false;
         rmSync(lockfile, { recursive: true });
         mkdirSync(lockfile);
-        taken = true;
+        takenAt = Date.now();
       }
       return touch(path, ...rest);
     };
-    shared.mkdir = (path, ...rest) => {
-      if (taken && path === lockfile) retaking = true;
-      return make(path, ...rest);
-    };
     try {
       let runs = 0;
-      const result = withFetchLock(directory, async () => {
+      const result = await withFetchLock(directory, async () => {
         runs += 1;
         if (runs === 1) {
           armed = true;
-          await vi.waitFor(() => expect(taken).toBe(true), { timeout: 5_000 });
+          await vi.waitFor(() => expect(takenAt).toBeGreaterThan(0), {
+            timeout: 5_000,
+          });
+          await afterTakeover();
         }
         return runs;
       });
-      await vi.waitFor(() => expect(retaking).toBe(true), { timeout: 15_000 });
-      // The other process ends its fetch and gives up its lock.
-      await rm(lockfile, { recursive: true });
-      expect(await result).toBe(2);
-      expect(await readdir(directory)).toEqual([]);
+      return { result, waited: Date.now() - takenAt };
     } finally {
       shared.utimes = touch;
-      shared.mkdir = make;
     }
+  };
+
+  it("runs the task again at once when the process that took the lock over removes it before it hears of the touch", async () => {
+    const { result, waited } = await adoptTakenLock(() =>
+      rm(join(directory, "fetch.lock"), { recursive: true }),
+    );
+    expect(result).toBe(2);
+    expect(waited).toBeLessThan(5_000);
+    expect(await readdir(directory)).toEqual([]);
+  }, 30_000);
+
+  it("gives up after 10 seconds the lock it kept as its own, once the process that took it hears of the touch, and runs the task again", async () => {
+    // The other process finds a time on its lock it did not set, and drops
+    // its claim without removing the lock.
+    const { result, waited } = await adoptTakenLock(async () => undefined);
+    expect(result).toBe(2);
+    expect(waited).toBeGreaterThanOrEqual(10_000);
+    expect(await readdir(directory)).toEqual([]);
   }, 30_000);
 });
