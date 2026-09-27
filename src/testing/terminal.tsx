@@ -50,6 +50,7 @@ const hex = (colour: CapturedSpan["fg"]) =>
 function read(setup: TestRendererSetup): Screen {
   const lines = setup
     .captureCharFrame()
+    .replace(/\n$/, "")
     .split("\n")
     .map((line) => line.trimEnd());
   const spans = setup.captureSpans().lines.flatMap((line) => line.spans);

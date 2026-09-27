@@ -21,6 +21,7 @@ export {
   type UseCommandsResult,
   useCommands,
 } from "./hooks/index.js";
+export { Pane, type PaneProps } from "./layout/index.js";
 export {
   PaneHeader,
   type PaneHeaderProps,
