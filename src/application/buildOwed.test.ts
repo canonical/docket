@@ -22,8 +22,8 @@ describe("buildOwed", () => {
       repos: recordedSettings.repos.slice(1),
     };
     const owed = buildOwed(recordedThreads, watched, "none", recordedNow);
-    expect(owed.groups[0]?.rows.map(({ reference }) => reference.text)).toEqual(
-      ["docs#4"],
-    );
+    expect(
+      owed.groups.at(0)?.rows.map(({ reference }) => reference.text),
+    ).toEqual(["docs#4"]);
   });
 });

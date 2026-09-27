@@ -74,7 +74,7 @@ describe("renderConfig", () => {
       hosts: ["github.com"],
       origins: { repos: "personal", activity: "personal", hosts: "personal" },
     });
-    expect(data.repositories[0]).toMatchObject({
+    expect(data.repositories.at(0)).toMatchObject({
       name: "example",
       repo: "example-org/example-repo",
       time: {
@@ -87,7 +87,7 @@ describe("renderConfig", () => {
       },
       exempt: { close: ["Topic: roadmap", "announcement"] },
     });
-    expect(data.repositories[0].people[0]).toEqual({
+    expect(data.repositories.at(0).people.at(0)).toEqual({
       login: "alice",
       group: "team",
       reason: "listed in the personal file",

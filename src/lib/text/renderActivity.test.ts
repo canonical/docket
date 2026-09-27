@@ -68,7 +68,7 @@ describe("renderActivity", () => {
   });
 
   it("adds each event's absolute time for a person at the detailed level", () => {
-    expect(render("plain", "detailed", "none")[7]).toBe(
+    expect(render("plain", "detailed", "none").at(7)).toBe(
       "  checks failed (lint) (bot) · 25m ago, 2026-09-28 11:35 Europe/Paris",
     );
   });
@@ -90,7 +90,7 @@ describe("renderActivity", () => {
       grouping: "none",
       counts: { threads: 2, events: 4 },
     });
-    expect(answer.groups[0].threads[1]).toEqual({
+    expect(answer.groups.at(0).threads.at(1)).toEqual({
       reference: "docs#4",
       title: "Where do tokens live?",
       kind: "issue",
@@ -117,7 +117,7 @@ describe("renderActivity", () => {
 
   it("names the owners as given: unassigned, one, or none when the thread's facts are missing", () => {
     const list = recordedActivity("none");
-    const [row] = list.groups[0]?.rows ?? [];
+    const [row] = list.groups.at(0)?.rows ?? [];
     if (!row) throw new Error("the recording has events");
     const rows = [
       { ...row, owner: { text: "unassigned", fit: "trimmed" } },
@@ -133,7 +133,9 @@ describe("renderActivity", () => {
       });
     expect(answer("llm")).toContain("pull request · unassigned ·");
     expect(answer("llm")).toContain("pull request · draft ·");
-    const [unassigned, unknown] = JSON.parse(answer("json")).groups[0].threads;
+    const [unassigned, unknown] = JSON.parse(answer("json")).groups.at(
+      0,
+    ).threads;
     expect(unassigned.owners).toEqual([]);
     expect(unknown.owners).toBeNull();
     expect(answer("plain")).toContain(
@@ -143,7 +145,7 @@ describe("renderActivity", () => {
 
   it("strips control sequences from a hostile title and event", () => {
     const list = recordedActivity("none");
-    const [row] = list.groups[0]?.rows ?? [];
+    const [row] = list.groups.at(0)?.rows ?? [];
     if (!row) throw new Error("the recording has events");
     const [line] = row.events;
     if (!line) throw new Error("the row has events");

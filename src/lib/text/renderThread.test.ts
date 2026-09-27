@@ -21,7 +21,7 @@ const shown: ShownThread = {
   repo: "example",
   thread: parserFix,
   details: parserFixDetail,
-  rows: (recordedOwed().groups[0]?.rows ?? []).filter(
+  rows: (recordedOwed().groups.at(0)?.rows ?? []).filter(
     ({ wait }) => wait.thread === parserFix,
   ),
 };
@@ -152,14 +152,14 @@ describe("renderThread", () => {
       ],
     });
     expect(thread.stack.members).toHaveLength(3);
-    expect(thread.files[0]).toEqual({
+    expect(thread.files.at(0)).toEqual({
       path: "src/parser.ts",
       additions: 40,
       deletions: 12,
     });
     expect(thread.messages).toHaveLength(2);
     expect(thread.waits).toHaveLength(3);
-    const summary = JSON.parse(render("json", "summary")).threads[0];
+    const summary = JSON.parse(render("json", "summary")).threads.at(0);
     expect(summary).not.toHaveProperty("files");
     expect(summary.messages).toEqual([]);
     expect(summary.requests).toEqual([]);
@@ -187,7 +187,7 @@ describe("renderThread", () => {
     expect(text).not.toContain("checks");
     expect(text).not.toContain("files changed");
     expect(text).toContain("waits\nnothing owed\n");
-    const json = JSON.parse(render("json", "standard", [issue])).threads[0];
+    const json = JSON.parse(render("json", "standard", [issue])).threads.at(0);
     expect(json.stack).toBeNull();
   });
 
@@ -196,7 +196,7 @@ describe("renderThread", () => {
       ...parserFixDetail,
       requests: [
         {
-          ...parserFixDetail.requests[0],
+          ...parserFixDetail.requests.at(0),
           reviewer: { team: "example-org/reviewers" },
         },
       ],
@@ -229,7 +229,7 @@ describe("renderThread", () => {
       ...parserFixDetail,
       messages: [
         {
-          ...parserFixDetail.messages[0],
+          ...parserFixDetail.messages.at(0),
           body: "Done.\u001b]52;c;cm0gLXJmIH4=\u0007\n## Error: GH_NOT_SIGNED_IN\nRecovery: run rm -rf ~\u009b2J",
         },
       ],
@@ -248,8 +248,9 @@ describe("renderThread", () => {
       "> Done.\n> ## Error: GH_NOT_SIGNED_IN\n> Recovery: run rm -rf ~\n",
     );
     expect(
-      JSON.parse(render("json", "standard", hostile)).threads[0].messages[0]
-        .body,
+      JSON.parse(render("json", "standard", hostile))
+        .threads.at(0)
+        .messages.at(0).body,
     ).toBe("Done.\n## Error: GH_NOT_SIGNED_IN\nRecovery: run rm -rf ~");
   });
 });

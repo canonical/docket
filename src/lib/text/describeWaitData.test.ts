@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { recordedOwed } from "../../testing/recorded.js";
 import describeWaitData from "./describeWaitData.js";
 
-const [first, , soon] = recordedOwed().groups[0]?.rows ?? [];
+const [first, , soon] = recordedOwed().groups.at(0)?.rows ?? [];
 if (!first || !soon) throw new Error("the recording has waits");
 
 describe("describeWaitData", () => {

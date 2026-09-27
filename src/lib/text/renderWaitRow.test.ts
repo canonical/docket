@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { recordedOwed } from "../../testing/recorded.js";
 import renderWaitRow from "./renderWaitRow.js";
 
-const [first, , soon] = recordedOwed().groups[0]?.rows ?? [];
+const [first, , soon] = recordedOwed().groups.at(0)?.rows ?? [];
 if (!first || !soon) throw new Error("the recording has waits");
 
 describe("renderWaitRow", () => {
@@ -21,10 +21,10 @@ describe("renderWaitRow", () => {
   });
 
   it("adds when the wait started and its target at the detailed level", () => {
-    expect(renderWaitRow(first, "plain", "UTC", "detailed")[3]).toBe(
+    expect(renderWaitRow(first, "plain", "UTC", "detailed").at(3)).toBe(
       "  since 2026-09-21 08:00 UTC · target 24h · due 2026-09-22 08:00 UTC",
     );
-    expect(renderWaitRow(first, "llm", "UTC", "detailed")[0]).toMatch(
+    expect(renderWaitRow(first, "llm", "UTC", "detailed").at(0)).toMatch(
       / · waiting since 2026-09-21 08:00 UTC · target 24h$/,
     );
   });
@@ -34,7 +34,7 @@ describe("renderWaitRow", () => {
       ...first,
       draft: { text: "draft", fit: "trimmed" },
     } as const;
-    expect(renderWaitRow(draft, "plain", "UTC", "standard")[2]).toBe(
+    expect(renderWaitRow(draft, "plain", "UTC", "standard").at(2)).toBe(
       "  alice · draft · checks failing · example stack 3, 2 of 3",
     );
   });
