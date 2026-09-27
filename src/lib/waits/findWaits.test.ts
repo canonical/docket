@@ -79,6 +79,13 @@ describe("findWaits", () => {
       expect(closeWaits(botsOnly, settings, now)[0]?.owners).toEqual([]);
     });
 
+    it("runs on a thread a bot opened, which waits for no reply", () => {
+      const botOpened = thread({ kind: "pullRequest", author: exampleSync });
+      expect(
+        findWaits(botOpened, teamSettings, now).map(({ kind }) => kind),
+      ).toEqual(["close"]);
+    });
+
     it("is over target only once the target's working time has passed", () => {
       const settings = {
         ...teamSettings,
