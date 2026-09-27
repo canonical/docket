@@ -10,16 +10,17 @@ describe("describeAddress", () => {
       window: { amount: 1, unit: "w" },
       grouping: "none",
     } as const;
-    expect(describeAddress(address)).toEqual(["activity", "1w"]);
+    expect(describeAddress(address)).toEqual({
+      title: { text: "activity", fit: "trimmed" },
+      address: { text: "1w", fit: "trimmed" },
+    });
   });
 
   it("names a grouping after the window", () => {
-    const names = (["kind", "repo"] as const).map((grouping) =>
-      describeAddress({ mode: "activity", window, grouping }).join(" · "),
+    const addresses = (["kind", "repo"] as const).map(
+      (grouping) =>
+        describeAddress({ mode: "activity", window, grouping }).address?.text,
     );
-    expect(names).toEqual([
-      "activity · 24h · by kind",
-      "activity · 24h · by repo",
-    ]);
+    expect(addresses).toEqual(["24h · by kind", "24h · by repo"]);
   });
 });

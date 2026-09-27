@@ -1,15 +1,19 @@
+import type { Header } from "../owed/index.js";
 import type { ActivityAddress } from "./types.js";
 
 /**
- * Names an address in activity as its parts, such as `activity`, `24h`
- * then `by kind`. The terminal header and text mode join the same parts,
- * so both name a place alike. The ungrouped list adds no part for its
- * grouping.
+ * Names an address in activity as a header: the mode as its title, and
+ * the window then the grouping, such as `24h · by kind`, as its address.
+ * The ungrouped list names its window alone. Text mode joins title and
+ * address with ` · `, so both faces name a place alike.
  */
-export default function describeAddress(address: ActivityAddress): string[] {
+export default function describeAddress(address: ActivityAddress): Header {
   const { amount, unit } = address.window;
-  const parts = [address.mode, `${amount}${unit}`];
-  return address.grouping === "none"
-    ? parts
-    : [...parts, `by ${address.grouping}`];
+  const window = `${amount}${unit}`;
+  const text =
+    address.grouping === "none" ? window : `${window} · by ${address.grouping}`;
+  return {
+    title: { text: address.mode, fit: "trimmed" },
+    address: { text, fit: "trimmed" },
+  };
 }
