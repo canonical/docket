@@ -85,6 +85,7 @@ export type ConfigErrorCode =
   | "CONFIG_TIMEZONE"
   | "CONFIG_TYPE"
   | "CONFIG_UNKNOWN_KEY"
+  | "CONFIG_UNREADABLE"
   | "CONFIG_VERSION"
   | "CONFIG_WORKDAY";
 
