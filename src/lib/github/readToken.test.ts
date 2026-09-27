@@ -33,7 +33,7 @@ afterEach(() => {
 describe("readToken", () => {
   it("gives the token gh prints for github.com, waiting ten seconds at most", async () => {
     const run = answer(null, `${token}\n`);
-    await expect(readToken()).resolves.toBe(token);
+    await expect(readToken("github.com")).resolves.toBe(token);
     expect(run).toHaveBeenCalledWith(
       "gh",
       ["auth", "token", "--hostname", "github.com"],
@@ -44,7 +44,7 @@ describe("readToken", () => {
 
   it("names GH_NOT_INSTALLED when gh cannot be found", async () => {
     answer(Object.assign(new Error("spawn gh ENOENT"), { code: "ENOENT" }), "");
-    await expect(readToken()).rejects.toMatchObject({
+    await expect(readToken("github.com")).rejects.toMatchObject({
       code: "GH_NOT_INSTALLED",
       message: "docket needs the GitHub CLI (gh).",
       recovery:
@@ -54,7 +54,7 @@ describe("readToken", () => {
 
   it("names GH_NOT_SIGNED_IN when gh has no token for the host", async () => {
     answer(Object.assign(new Error("exit 1"), { code: 1 }), "");
-    await expect(readToken()).rejects.toMatchObject({
+    await expect(readToken("github.com")).rejects.toMatchObject({
       code: "GH_NOT_SIGNED_IN",
       message: "gh is not signed in to github.com.",
       recovery: "run gh auth login",
@@ -63,7 +63,7 @@ describe("readToken", () => {
 
   it("names GH_NOT_SIGNED_IN when gh prints nothing", async () => {
     answer(null, "\n");
-    await expect(readToken()).rejects.toMatchObject({
+    await expect(readToken("github.com")).rejects.toMatchObject({
       code: "GH_NOT_SIGNED_IN",
     });
   });
@@ -77,7 +77,7 @@ describe("readToken", () => {
       }),
       "",
     );
-    await expect(readToken()).rejects.toMatchObject({
+    await expect(readToken("github.com")).rejects.toMatchObject({
       code: "GH_NOT_SIGNED_IN",
       message: "gh gave no token for github.com within 10 seconds.",
       recovery: "run gh auth status, and unlock the keyring if it asks",

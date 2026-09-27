@@ -34,7 +34,11 @@ afterEach(() => {
 const repo = "example-org/example-repo";
 const snapshot = (since: string | null = null) =>
   settle(
-    fetchSnapshot(createClient(token, "1.2.3"), repo, since ? { since } : null),
+    fetchSnapshot(
+      createClient(token, "github.com", "1.2.3"),
+      repo,
+      since ? { since } : null,
+    ),
   );
 const lists = (
   issues: unknown[] = [],

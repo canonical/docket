@@ -30,7 +30,7 @@ afterEach(() => {
 });
 
 const events = () =>
-  settle(fetchEvents(createClient(token, "1.2.3"), repo, since));
+  settle(fetchEvents(createClient(token, "github.com", "1.2.3"), repo, since));
 
 /** What an event line reads from an event: its thread, kind and actor. */
 const lines = (found: readonly ThreadEvent[]) =>

@@ -23,7 +23,7 @@ const pull = (state: string | null) => ({
   },
 });
 const refresh = (pulls: Parameters<typeof refreshChecks>[1]) =>
-  settle(refreshChecks(createClient(token, "1.2.3"), pulls));
+  settle(refreshChecks(createClient(token, "github.com", "1.2.3"), pulls));
 
 describe("refreshChecks", () => {
   it("reads the checks of every pull request given in one query, leaving out one GitHub does not find", async () => {

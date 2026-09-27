@@ -1,5 +1,4 @@
 import { execFile } from "node:child_process";
-import { host } from "./constants.js";
 import GitHubError from "./GitHubError.js";
 
 /**
@@ -10,16 +9,16 @@ import GitHubError from "./GitHubError.js";
 const timeout = 10_000;
 
 /**
- * Asks `gh` for its token for github.com. `gh` applies its own order of
+ * Asks `gh` for its token for `host`, such as `github.com`. `gh` applies its own order of
  * `GH_TOKEN`, `GITHUB_TOKEN` and the stored sign-in, and answers without
  * the network, so docket reads neither those variables nor gh's files.
  *
  * @note Impure: runs `gh`.
  * @throws GitHubError `GH_NOT_INSTALLED` when `gh` cannot be run, and
- * `GH_NOT_SIGNED_IN` when it has no token for github.com or gives none
+ * `GH_NOT_SIGNED_IN` when it has no token for `host` or gives none
  * in time.
  */
-export default function readToken(): Promise<string> {
+export default function readToken(host: string): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
       "gh",

@@ -24,7 +24,7 @@ const second =
 const follow = (keepGoing: (items: readonly number[]) => boolean) => {
   const seen: number[][] = [];
   const done = followPages<number>(
-    createClient(token, "1.2.3"),
+    createClient(token, "github.com", "1.2.3"),
     "GET /repos/{owner}/{repo}/activity",
     { owner: "example-org", repo: "example-repo" },
     (items) => {

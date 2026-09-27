@@ -1,4 +1,3 @@
-import { host } from "./constants.js";
 import GitHubError from "./GitHubError.js";
 
 /** The parts of Octokit's errors that are read; none holds the token. */
@@ -24,8 +23,13 @@ const rateLimited = (failure: Failure): boolean =>
  * built from the status, the rate-limit headers and the message GraphQL
  * reports alone, and keeps no link to the original, whose request records
  * the headers sent.
+ *
+ * @param host The host the token was given for, such as `github.com`.
  */
-export default function describeFailure(error: unknown): GitHubError {
+export default function describeFailure(
+  error: unknown,
+  host: string,
+): GitHubError {
   const failure = (error ?? {}) as Failure;
   if (failure.status === 401) {
     return new GitHubError(

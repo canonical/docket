@@ -30,14 +30,17 @@ interface BudgetAnswer {
  *
  * @note Impure: runs `gh`, and every operation reads from or writes to
  * GitHub.
+ * @param host The GitHub host of the watched repositories, as the
+ * configuration's `hosts` names it, such as `github.com`.
  * @param version docket's version, sent in the User-Agent GitHub requires.
  * @throws GitHubError `GH_NOT_INSTALLED` or `GH_NOT_SIGNED_IN` when `gh`
  * gives no token.
  */
 export default async function createProvider(
+  host: string,
   version: string,
 ): Promise<Provider> {
-  const client = createClient(await readToken(), version);
+  const client = createClient(await readToken(host), host, version);
   return {
     snapshot: (repo, cursor) => fetchSnapshot(client, repo, cursor),
     refreshVolatile: (threads) => refreshChecks(client, threads),

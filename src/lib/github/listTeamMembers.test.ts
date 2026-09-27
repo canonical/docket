@@ -21,7 +21,10 @@ const team = (members: unknown) => ({
 });
 const list = () =>
   settle(
-    listTeamMembers(createClient(token, "1.2.3"), "example-org/reviewers"),
+    listTeamMembers(
+      createClient(token, "github.com", "1.2.3"),
+      "example-org/reviewers",
+    ),
   );
 
 describe("listTeamMembers", () => {

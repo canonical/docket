@@ -17,7 +17,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const client = () => createClient(token, "1.2.3");
+const client = () => createClient(token, "github.com", "1.2.3");
 const viewer = "query Viewer { rateLimit { limit remaining resetAt } }";
 const failure = (promise: Promise<unknown>) =>
   settle(promise).then(
@@ -33,6 +33,23 @@ describe("createClient", () => {
     expect(sent?.url.origin).toBe("https://api.github.com");
     expect(sent?.headers.get("authorization")).toBe(`token ${token}`);
     expect(sent?.headers.get("user-agent")).toMatch(/^docket\/1\.2\.3 /);
+  });
+
+  it("calls the API of the host it is given, and names that host when the token is refused", async () => {
+    github.rest("GET /api/v3/rate_limit", { body: {} });
+    github.rest("GET /api/v3/user", {
+      status: 401,
+      body: { message: "Bad credentials" },
+    });
+    const connected = createClient(token, "example.com", "1.2.3");
+    await settle(connected.request("GET /rate_limit"));
+    expect(github.sent.at(0)?.url.href).toBe(
+      "https://example.com/api/v3/rate_limit",
+    );
+    const error = await failure(connected.request("GET /user"));
+    expect(error).toMatchObject({
+      message: "GitHub refused the token gh gave for example.com.",
+    });
   });
 
   it("keeps the budget the latest GraphQL answer reports", async () => {

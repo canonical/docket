@@ -27,7 +27,7 @@ const assignable = (nodes: unknown[], next: string | null = null) =>
 const list = () =>
   settle(
     listAssignableUsers(
-      createClient(token, "1.2.3"),
+      createClient(token, "github.com", "1.2.3"),
       "example-org/example-repo",
     ),
   );

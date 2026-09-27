@@ -12,14 +12,21 @@ import createProvider from "./createProvider.js";
 
 type Callback = (error: unknown, stdout: string, stderr: string) => void;
 
-const gh = vi.hoisted(() => ({ error: null as unknown, stdout: "" }));
+const gh = vi.hoisted(() => ({
+  error: null as unknown,
+  stdout: "",
+  args: [] as string[],
+}));
 vi.mock("node:child_process", () => ({
   execFile: (
     _file: string,
-    _args: string[],
+    args: string[],
     _options: object,
     done: Callback,
-  ) => done(gh.error, gh.stdout, ""),
+  ) => {
+    gh.args = args;
+    done(gh.error, gh.stdout, "");
+  },
 }));
 
 let github: ReturnType<typeof fakeGitHub>;
@@ -48,13 +55,21 @@ const empty = {
 describe("createProvider", () => {
   it("stops with GH_NOT_INSTALLED when gh is missing", async () => {
     gh.error = Object.assign(new Error("spawn gh ENOENT"), { code: "ENOENT" });
-    await expect(createProvider("1.2.3")).rejects.toMatchObject({
+    await expect(createProvider("github.com", "1.2.3")).rejects.toMatchObject({
       code: "GH_NOT_INSTALLED",
     });
   });
 
+  it("reads the token for the host it is given, and calls that host's API", async () => {
+    const provider = await createProvider("example.com", "1.2.3");
+    expect(gh.args).toEqual(["auth", "token", "--hostname", "example.com"]);
+    github.rest(`GET /api/v3/repos/${repo}/issues`, { status: 304 });
+    await settle(provider.probe(repo, 'W/"one"'));
+    expect(github.sent.at(0)?.url.origin).toBe("https://example.com");
+  });
+
   it("declares every optional fact GitHub supplies", async () => {
-    const provider = await createProvider("1.2.3");
+    const provider = await createProvider("github.com", "1.2.3");
     expect([...provider.capabilities()].sort()).toEqual([
       "botAccounts",
       "changeProbe",
@@ -67,7 +82,7 @@ describe("createProvider", () => {
   });
 
   it("asks for the budget once, then reads it from the latest answer", async () => {
-    const provider = await createProvider("1.2.3");
+    const provider = await createProvider("github.com", "1.2.3");
     github.graphql("Budget", { body: { data: { rateLimit } } });
     const expected = {
       limit: 5000,
@@ -82,7 +97,7 @@ describe("createProvider", () => {
   });
 
   it("sends each operation to GitHub with the token gh gave", async () => {
-    const provider = await createProvider("1.2.3");
+    const provider = await createProvider("github.com", "1.2.3");
     const feed = `GET /repos/${repo}/activity`;
     github.graphql("Snapshot", repository(empty));
     github.graphql("Checks", { body: { data: { rateLimit, r0: {} } } });

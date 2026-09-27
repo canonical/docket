@@ -19,7 +19,11 @@ afterEach(() => {
 
 const probe = (tag: string | undefined) =>
   settle(
-    probeChanges(createClient(token, "1.2.3"), "example-org/example-repo", tag),
+    probeChanges(
+      createClient(token, "github.com", "1.2.3"),
+      "example-org/example-repo",
+      tag,
+    ),
   );
 
 describe("probeChanges", () => {

@@ -3,7 +3,7 @@ import describeFailure from "./describeFailure.js";
 import GitHubError from "./GitHubError.js";
 
 const described = (error: unknown) => {
-  const failure = describeFailure(error);
+  const failure = describeFailure(error, "github.com");
   return {
     code: failure.code,
     message: failure.message,
@@ -17,7 +17,7 @@ describe("describeFailure", () => {
       status: 500,
       request: { headers: { authorization: "x" } },
     };
-    const failure = describeFailure(thrown);
+    const failure = describeFailure(thrown, "github.com");
     expect(failure).toBeInstanceOf(GitHubError);
     expect(failure.cause).toBeUndefined();
     expect(JSON.stringify({ ...failure })).not.toContain("authorization");

@@ -21,7 +21,7 @@ afterEach(() => {
 const request = (...reviewers: string[]) =>
   settle(
     setReviewers(
-      createClient(token, "1.2.3"),
+      createClient(token, "github.com", "1.2.3"),
       { ...thread(), number: 2, kind: "pullRequest" },
       reviewers,
     ),

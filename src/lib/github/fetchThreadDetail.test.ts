@@ -27,7 +27,9 @@ afterEach(() => {
 });
 
 const detail = (summary: ThreadSummary) =>
-  settle(fetchThreadDetail(createClient(token, "1.2.3"), summary));
+  settle(
+    fetchThreadDetail(createClient(token, "github.com", "1.2.3"), summary),
+  );
 const message = (login: string, at: string, body: string) => ({
   ...comment(login, at),
   body,

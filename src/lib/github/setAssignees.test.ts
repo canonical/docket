@@ -30,7 +30,7 @@ afterEach(() => {
 const assign = (...logins: string[]) =>
   settle(
     setAssignees(
-      createClient(token, "1.2.3"),
+      createClient(token, "github.com", "1.2.3"),
       { ...thread(), kind: "issue" },
       logins,
     ),

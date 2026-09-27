@@ -29,7 +29,7 @@ afterEach(() => {
 
 const candidates = () =>
   settle(
-    listReviewCandidates(createClient(token, "1.2.3"), {
+    listReviewCandidates(createClient(token, "github.com", "1.2.3"), {
       ...thread(),
       number: 2,
       kind: "pullRequest",

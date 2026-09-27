@@ -1,11 +1,5 @@
 import type { Capability } from "../provider/index.js";
 
-/** The one host docket supports; its token comes from `gh`. */
-export const host = "github.com";
-
-/** The address of GitHub's API for `host`. */
-export const apiUrl = "https://api.github.com";
-
 /**
  * Threads per page of a full snapshot. A hundred per page took 7 of the
  * 10 seconds GitHub allows a query, so fifty leave room.

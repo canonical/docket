@@ -3,7 +3,6 @@ import { retry } from "@octokit/plugin-retry";
 import { throttling } from "@octokit/plugin-throttling";
 import Bottleneck from "bottleneck";
 import type { Budget } from "../provider/index.js";
-import { apiUrl } from "./constants.js";
 import describeFailure from "./describeFailure.js";
 import type { Client, RestResponse } from "./types.js";
 
@@ -71,9 +70,14 @@ const onlyMissing = (error: unknown): error is { readonly data: unknown } => {
  * with its throttling and retry plugins, so docket writes no throttling,
  * back-off or retry of its own.
  *
+ * @param host The GitHub host, such as `github.com`, whose API it calls.
  * @param version docket's version, sent in the User-Agent GitHub requires.
  */
-export default function createClient(token: string, version: string): Client {
+export default function createClient(
+  token: string,
+  host: string,
+  version: string,
+): Client {
   const throttle = {
     // GitHub asks clients to send one request at a time. The plugin
     // already runs GraphQL requests one at a time through its write
@@ -85,7 +89,9 @@ export default function createClient(token: string, version: string): Client {
   };
   const octokit = new GitHub({
     auth: token,
-    baseUrl: apiUrl,
+    // Octokit calls github.com's API unless told otherwise; an Enterprise
+    // host serves its API under /api/v3.
+    ...(host === "github.com" ? {} : { baseUrl: `https://${host}/api/v3` }),
     userAgent: `docket/${version}`,
     throttle,
     // Rate limits, answered 403 or 429, belong to the throttling plugin
@@ -119,7 +125,7 @@ export default function createClient(token: string, version: string): Client {
         if (options.allowMissing && onlyMissing(error)) {
           return record(error.data as T & { rateLimit?: RateLimitNode });
         }
-        throw describeFailure(error);
+        throw describeFailure(error, host);
       }
     },
     async request<T>(route: string, parameters: Record<string, unknown> = {}) {
@@ -137,7 +143,7 @@ export default function createClient(token: string, version: string): Client {
         if (status === 304 && response) {
           return { status, data: response.data, headers: response.headers };
         }
-        throw describeFailure(error);
+        throw describeFailure(error, host);
       }
     },
     lastBudget: () => budget,

@@ -28,7 +28,7 @@ describe("fetchPushes", () => {
     });
     const pushes = await settle(
       fetchPushes(
-        createClient(token, "1.2.3"),
+        createClient(token, "github.com", "1.2.3"),
         "example-org/example-repo",
         new Date("2026-09-22T00:00:00Z"),
       ),
