@@ -28,6 +28,26 @@ const retryOnce = (
 ): boolean => retryCount < 1;
 
 /**
+ * The longest wait, in seconds, for the primary limit to reset before a
+ * request is retried. The primary limit resets on the hour, so a longer
+ * wait would hold the caller for up to an hour; the request fails at
+ * once instead, and its error names when the limit resets.
+ */
+const longestWait = 60;
+
+/**
+ * Retries a request refused for the primary rate limit once, when the
+ * limit resets within `longestWait` seconds.
+ */
+const retrySoon = (
+  after: number,
+  options: unknown,
+  octokit: unknown,
+  retryCount: number,
+): boolean =>
+  after <= longestWait && retryOnce(after, options, octokit, retryCount);
+
+/**
  * Builds the client every operation of the adapter goes through: Octokit
  * with its throttling and retry plugins, so docket writes no throttling,
  * back-off or retry of its own.
@@ -41,7 +61,7 @@ export default function createClient(token: string, version: string): Client {
     // queue, a second apart; this global queue, which every request
     // passes, holds REST reads to one at a time as well.
     global: new Bottleneck.Group({ maxConcurrent: 1 }),
-    onRateLimit: retryOnce,
+    onRateLimit: retrySoon,
     onSecondaryRateLimit: retryOnce,
   };
   const octokit = new GitHub({

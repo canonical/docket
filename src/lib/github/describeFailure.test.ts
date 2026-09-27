@@ -47,7 +47,8 @@ describe("describeFailure", () => {
         code: "GITHUB_RATE_LIMITED",
         message:
           "GitHub is refusing requests from this account until 2026-09-28T11:00:00.000Z, because its rate limit is reached.",
-        recovery: "wait for the limit to reset, then refresh",
+        recovery:
+          "wait for the limit to reset at 2026-09-28T11:00:00.000Z, then refresh",
       });
     });
 

@@ -83,23 +83,44 @@ describe("createClient", () => {
     expect(most).toBe(1);
   });
 
-  it("retries once after a rate limit, then names GITHUB_RATE_LIMITED", async () => {
-    const limited = {
-      status: 403,
-      body: { message: "API rate limit exceeded" },
-      headers: {
-        "x-ratelimit-remaining": "0",
-        "x-ratelimit-reset": String(now.getTime() / 1000 + 60),
-      },
-    };
+  const primary = (status: number, seconds: number) => ({
+    status,
+    body: { message: "API rate limit exceeded" },
+    headers: {
+      "x-ratelimit-remaining": "0",
+      "x-ratelimit-reset": String(now.getTime() / 1000 + seconds),
+    },
+  });
+
+  it.each([403, 429])(
+    "retries once a request refused %i for a limit that resets within a minute, after the reset, then names GITHUB_RATE_LIMITED",
+    async (status) => {
+      const limited = primary(status, 30);
+      github.rest("GET /rate_limit", limited, limited, limited);
+      const error = await failure(client().request("GET /rate_limit"));
+      const times = github.sent.map(({ at }) => at);
+      expect(times).toHaveLength(2);
+      expect(Number(times[1]) - now.getTime()).toBeGreaterThanOrEqual(30_000);
+      expect(error).toMatchObject({
+        code: "GITHUB_RATE_LIMITED",
+        message:
+          "GitHub is refusing requests from this account until 2026-09-28T10:00:30.000Z, because its rate limit is reached.",
+        recovery:
+          "wait for the limit to reset at 2026-09-28T10:00:30.000Z, then refresh",
+      });
+    },
+  );
+
+  it("fails at once with the reset time when the limit resets in more than a minute", async () => {
+    const limited = primary(403, 3600);
     github.rest("GET /rate_limit", limited, limited);
     const error = await failure(client().request("GET /rate_limit"));
-    expect(github.sent).toHaveLength(2);
+    expect(github.sent).toHaveLength(1);
+    expect(Date.now() - now.getTime()).toBeLessThan(60_000);
     expect(error).toMatchObject({
       code: "GITHUB_RATE_LIMITED",
-      message:
-        "GitHub is refusing requests from this account until 2026-09-28T10:01:00.000Z, because its rate limit is reached.",
-      recovery: "wait for the limit to reset, then refresh",
+      recovery:
+        "wait for the limit to reset at 2026-09-28T11:00:00.000Z, then refresh",
     });
   });
 

@@ -36,11 +36,13 @@ export default function describeFailure(error: unknown): GitHubError {
   }
   if (rateLimited(failure)) {
     const reset = Number(failure.response?.headers?.["x-ratelimit-reset"]);
-    const when = reset ? ` until ${new Date(reset * 1000).toISOString()}` : "";
+    const at = reset ? new Date(reset * 1000).toISOString() : undefined;
     return new GitHubError(
       "GITHUB_RATE_LIMITED",
-      `GitHub is refusing requests from this account${when}, because its rate limit is reached.`,
-      "wait for the limit to reset, then refresh",
+      `GitHub is refusing requests from this account${at ? ` until ${at}` : ""}, because its rate limit is reached.`,
+      at
+        ? `wait for the limit to reset at ${at}, then refresh`
+        : "wait for the limit to reset, then refresh",
     );
   }
   const reported = failure.errors?.at(0)?.message;
