@@ -24,14 +24,19 @@ The recordings are written in GitHub's own response shapes, from GitHub's API, w
 | `bun run guarantees` | Runs every entry of the `pr` tier, one at a time. Exit 0 means the tier is green. |
 | `bun guarantees/invoker.ts run <entry>` | Runs one entry. |
 | `bun guarantees/invoker.ts list` | Lists the register. |
+| `bun run guarantees:accept <entry>` | Runs one entry and saves what it prints as its saved outputs under `goldens/`, for review as a diff. |
+| `bun run guarantees:prove` | Breaks the corpus on purpose and requires it to notice. |
 
 ## Why a green tier can be believed
 
 The invoker judges each run by vitest's own report, not by its exit code alone: a run that executed no test fails, whether its selector matched nothing or its file never loaded. Each tier holds one entry built to fail, `selftest/corpus-can-fail`, and the tier is green only when that entry failed as a test and every other entry passed. The register is refused whole when a test file here belongs to no row, because a file no row names never runs.
+
+A saved output that is missing fails its entry; saving one is the explicit act `guarantees:accept`. `bun run guarantees:prove` checks that rule holds: it moves one saved output aside, runs `text-output`, and succeeds only when the entry failed for the missing copy.
 
 ## The entries
 
 | Entry | Kind | What it pins |
 |---|---|---|
 | `working-clock` | determinism | A 24-hour reply target set on Friday at 16:00 falls due on Monday at 16:00, across weekends, time zones and the change to and from daylight saving time; the machine's own time zone changes nothing. |
+| `text-output` | golden | What `owed` and `activity` print in `plain`, `llm` and `json`, from a fixed recording at a fixed instant. |
 | `corpus-can-fail` | conformance | Fails on purpose, so a green tier means something. |

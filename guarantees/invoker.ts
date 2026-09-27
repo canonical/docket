@@ -8,6 +8,7 @@
  *   list          every row
  *   run <id>      one entry
  *   tier <tier>   every entry of a tier; exit 0 means the tier is green
+ *   accept <id>   one entry, saving what it prints as its saved outputs
  *
  * A tier is green only when its entry marked `expect = "fail"` failed as
  * a test, and every other entry passed. The register is refused whole,
@@ -24,7 +25,7 @@ import { join, relative, resolve } from "node:path";
 const corpusRoot = import.meta.dirname;
 const repoRoot = resolve(corpusRoot, "..");
 
-const kinds = ["determinism", "conformance"];
+const kinds = ["determinism", "golden", "conformance"];
 const tiers = ["pr"];
 const expectations = ["pass", "fail"];
 
@@ -92,7 +93,7 @@ interface Verdict {
 }
 
 /** Runs one entry and judges it against its row. */
-const runEntry = async (row: Row): Promise<Verdict> => {
+const runEntry = async (row: Row, accept = false): Promise<Verdict> => {
   const reports = mkdtempSync(join(tmpdir(), "docket-guarantees-"));
   const report = join(reports, "report.json");
   const started = performance.now();
@@ -117,6 +118,7 @@ const runEntry = async (row: Row): Promise<Verdict> => {
         cwd: repoRoot,
         stdout: "inherit",
         stderr: "inherit",
+        env: { ...process.env, GUARANTEES_ACCEPT: accept ? "1" : "0" },
       },
     );
     const code = await child.exited;
@@ -156,8 +158,8 @@ if (command === "list") {
       `${row.tier.padEnd(4)} ${row.kind.padEnd(12)} ${row.expect.padEnd(5)} ${row.id}`,
     );
   }
-} else if (command === "run") {
-  const verdict = await runEntry(findRow(argument));
+} else if (command === "run" || command === "accept") {
+  const verdict = await runEntry(findRow(argument), command === "accept");
   console.error(verdict.line);
   process.exit(verdict.ok ? 0 : 1);
 } else if (command === "tier") {
@@ -177,6 +179,6 @@ if (command === "list") {
   process.exit(green ? 0 : 1);
 } else {
   stop(
-    `usage: bun ${relative(repoRoot, import.meta.filename)} (list | run <id> | tier <tier>)`,
+    `usage: bun ${relative(repoRoot, import.meta.filename)} (list | run <id> | tier <tier> | accept <id>)`,
   );
 }

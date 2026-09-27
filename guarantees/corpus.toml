@@ -2,7 +2,7 @@
 #
 # The row says what the test file cannot say about itself:
 #
-#   kind    determinism | conformance
+#   kind    determinism | golden | conformance
 #           What sort of fact the entry pins.
 #   tier    pr
 #           When it runs: `pr` on every pull request, in `bun run ci`.
@@ -18,6 +18,13 @@ kind   = "determinism"
 tier   = "pr"
 file   = "working-clock.test.ts"
 select = "working-clock"
+expect = "pass"
+
+[text-output]
+kind   = "golden"
+tier   = "pr"
+file   = "text-output.test.ts"
+select = "text-output"
 expect = "pass"
 
 [corpus-can-fail]

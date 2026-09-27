@@ -97,3 +97,4 @@ jobs:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
       - run: bun run guarantees
+      - run: bun run guarantees:prove

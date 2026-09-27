@@ -16,6 +16,8 @@
 - `bun run check:structure`: checks the source tree's shape against the conventions below: exports and file names, barrels, folders, the direction of imports between domains, file length, and that the guarantees corpus imports nothing under `src/`.
 - `bun run self-test`: proves the identity, secret, advisory, licence and structure gates can each fail, by running each against a scratch fixture it must reject.
 - `bun run guarantees`: runs the guarantees corpus's `pr` tier, `guarantees/corpus.toml`'s entries one at a time; `bun guarantees/invoker.ts run <entry>` runs one.
+- `bun run guarantees:accept <entry>`: runs one entry and saves what it prints under `guarantees/goldens/`; the only way a saved output is written.
+- `bun run guarantees:prove`: moves one saved output aside and requires `text-output` to fail for it.
 - `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>`, `assign <reference> <login>…`, `review <reference> <login or org/team>…` and `config`; `--help` after any of them gives its flags, an example and its exit codes. When a terminal gives both the input and the output, `docket` alone opens the terminal interface on owed instead, and `docket activity` without `--format` opens it on activity; piped or captured, every call prints text. `?` lists its keys and `q` quits.
 
 ## Conventions
@@ -52,7 +54,7 @@
 - Tests of the GitHub provider stub `fetch` with `fakeGitHub()` from `src/testing/github.ts`, which answers with responses in the shapes GitHub gives, and run under fake timers, settling each call with `settle()` so the throttling plugin's waits pass at once. No test reaches the network.
 - Tests of the text interface answer from `recordedProvider()` in `src/testing/recorded.ts` at `recordedNow`, and compare whole outputs line by line. `makeHome()` and `openSession()` in `src/testing/docket.ts` run a call, or one command, on a temporary configuration and cache.
 - The guarantees corpus runs docket as its own process, `bun --preload guarantees/standIn.ts src/application/main.ts`, in a temporary home with a stand-in `gh` on `PATH`. The stand-in fixes `new Date()` at the instant a guarantee names and answers `fetch` from a recording under `guarantees/fixtures/`, written in GitHub's response shapes. A guarantee reads only the output, the exit code and the requests sent.
-- A guarantee is a test file and a row in `guarantees/corpus.toml`. The tier's `expect = "fail"` entry must fail for the tier to pass.
+- A guarantee is a test file and a row in `guarantees/corpus.toml`. A missing saved output fails its entry, and the tier's `expect = "fail"` entry must fail for the tier to pass.
 - Fixtures and examples use neutral names only: `alice`, `bob`, `example.com`, `example-org/example-repo`.
 - Commit subjects follow Conventional Commits, with the domain as the scope. Commits are normal commits: no amending and no force-pushing.
 - A pull request fills `.github/PULL_REQUEST_TEMPLATE.md`.
