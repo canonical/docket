@@ -1,6 +1,6 @@
 import type { People } from "../config/index.js";
 import { type Account, classify } from "../people/index.js";
-import type { Thread } from "./types.js";
+import type { ReviewRequest, Thread } from "./types.js";
 
 /** A review wait's reviewer, and when the wait started. */
 export interface ReviewStart {
@@ -16,8 +16,9 @@ const latest = (instants: readonly Date[]): Date | undefined =>
   );
 
 /**
- * Finds a review wait for each review still requested on a pull request.
- * GitHub tracks one request per reviewer, so two reviewers make two waits.
+ * Finds a review wait for each reviewer requested on a pull request. A
+ * reviewer has one wait, however often they were asked, and it follows the
+ * latest request, so two reviewers make two waits.
  *
  * The wait starts at the request. When the reviewer has reviewed since the
  * request, the review stands until the next push: the wait then starts at
@@ -31,8 +32,17 @@ export default function findReviewStarts(
   thread: Thread,
   people: People,
 ): ReviewStart[] {
+  const requests = new Map<string, ReviewRequest>();
+  for (const request of thread.reviewRequests) {
+    const { reviewer } = request;
+    const key = (
+      "team" in reviewer ? reviewer.team : reviewer.login
+    ).toLowerCase();
+    const found = requests.get(key);
+    if (!found || found.at < request.at) requests.set(key, request);
+  }
   const starts: ReviewStart[] = [];
-  for (const { reviewer, at } of thread.reviewRequests) {
+  for (const { reviewer, at } of requests.values()) {
     if (!("team" in reviewer) && classify(reviewer, people) === "bot") {
       continue;
     }

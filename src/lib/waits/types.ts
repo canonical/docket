@@ -30,7 +30,12 @@ export interface Team {
   readonly members: readonly string[];
 }
 
-/** A review requested and not yet withdrawn. */
+/**
+ * The latest request for a reviewer's review that no later withdrawal
+ * cancelled, as the pull request's timeline records it. It stays after the
+ * reviewer reviews: GitHub drops a reviewer from its pending list once they
+ * review, yet a push after that review needs their review once more.
+ */
 export interface ReviewRequest {
   readonly reviewer: Account | Team;
   /** When the review was requested. */
@@ -49,7 +54,7 @@ export interface Thread extends ThreadSummary {
   readonly comments: readonly Message[];
   /** Submitted reviews, on a pull request. */
   readonly reviews: readonly Message[];
-  /** The reviews requested, on a pull request. */
+  /** The reviews requested, on a pull request: one entry per reviewer. */
   readonly reviewRequests: readonly ReviewRequest[];
   /** When commits were pushed, on a pull request. */
   readonly pushes: readonly Date[];

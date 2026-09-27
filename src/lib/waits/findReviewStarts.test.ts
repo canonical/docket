@@ -93,6 +93,35 @@ describe("findReviewStarts", () => {
     ]);
   });
 
+  it("waits again for a reviewer who reviewed, once a push follows the review", () => {
+    const pushedAfterReview = pull({
+      reviewRequests: [request(alice)],
+      reviews: [review(alice, "2026-09-22T12:00+02:00")],
+      pushes: [at("2026-09-22T13:00+02:00")],
+    });
+    expect(findReviewStarts(pushedAfterReview, people)).toEqual([
+      { reviewer: "alice", started: at("2026-09-22T13:00+02:00") },
+    ]);
+  });
+
+  it("makes one wait for a reviewer asked twice, from the latest request", () => {
+    const askedTwice = pull({
+      reviewRequests: [
+        request(alice, "2026-09-22T12:00+02:00"),
+        request({ ...alice, login: "Alice" }),
+        request(reviewers, "2026-09-22T12:00+02:00"),
+        request(reviewers, "2026-09-22T13:00+02:00"),
+      ],
+    });
+    expect(findReviewStarts(askedTwice, people)).toEqual([
+      { reviewer: "alice", started: at("2026-09-22T12:00+02:00") },
+      {
+        reviewer: "example-org/reviewers",
+        started: at("2026-09-22T13:00+02:00"),
+      },
+    ]);
+  });
+
   it("ends only at a review by the requested reviewer", () => {
     const otherReviewer = pull({
       reviewRequests: [request(alice)],
