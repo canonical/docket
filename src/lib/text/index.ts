@@ -9,6 +9,8 @@ export { default as renderConfig } from "./renderConfig.js";
 export { default as renderHelp } from "./renderHelp.js";
 export type { OwedAnswer } from "./renderOwed.js";
 export { default as renderOwed } from "./renderOwed.js";
+export type { WritePlan } from "./renderPlan.js";
+export { default as renderPlan } from "./renderPlan.js";
 export { default as renderProblems } from "./renderProblems.js";
 export type { ShownThread, ThreadAnswer } from "./renderThread.js";
 export { default as renderThread } from "./renderThread.js";
