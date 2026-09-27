@@ -30,10 +30,15 @@ export default async function answerActivity(
       "run docket activity --help",
     );
   }
+  const grouping = activityGroupings.find((entry) => entry === invocation.by);
+  if (!grouping) {
+    fail(
+      "USAGE_INVALID_VALUE",
+      `\`--by\` takes ${activityGroupings.join(", ")}, not \`${invocation.by}\`.`,
+      "run docket activity --help",
+    );
+  }
   const { threads, syncedAt, warnings } = await readThreads(session);
-  // The catalogue lets `--by` take only activity's groupings.
-  const grouping =
-    activityGroupings.find((entry) => entry === invocation.by) ?? "kind";
   const list = await buildActivity(
     provider,
     threads,

@@ -53,7 +53,7 @@ Exit codes:
       const help = renderHelp(name);
       for (const flag of command.flags) {
         expect(help).toContain(`\n  --${flag.name}`);
-        expect(help).toContain(`Default: ${flag.fallback}.`);
+        expect(help).toContain(`Default: ${flag.fallback ?? flag.default}.`);
       }
       expect(help).toContain(`Example:\n  ${command.example}\n`);
       expect(help).toMatch(/Exit codes:\n {2}0 .+\n {2}2 .+\n {2}3 .+\n$/);

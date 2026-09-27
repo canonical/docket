@@ -1,3 +1,5 @@
+import { activityGroupings } from "../activity/index.js";
+import { owedGroupings } from "../owed/index.js";
 import type { Command, Flag } from "./types.js";
 
 const format: Flag = {
@@ -13,7 +15,7 @@ const detail: Flag = {
   name: "detail",
   value: "level",
   choices: ["summary", "standard", "detailed"],
-  fallback: "standard",
+  default: "standard",
   description:
     "How much each item shows: summary gives the counts alone, detailed adds when each wait started, its target, and every message, file and check.",
 };
@@ -21,7 +23,7 @@ const detail: Flag = {
 const maxAge: Flag = {
   name: "max-age",
   value: "seconds",
-  fallback: "300",
+  default: "300",
   description:
     "How old the cached data may be before docket fetches from GitHub; 0 always fetches.",
 };
@@ -33,9 +35,10 @@ const readExits = {
 } as const;
 
 /**
- * Every command docket answers, with the help each gives. `docket --help`
- * and `docket <command> --help` are drawn from this list alone, so the
- * help cannot drift from the commands.
+ * Every command docket answers, with the help each gives. `docket --help`,
+ * `docket <command> --help` and the reading of the arguments (each flag,
+ * its choices and its default) are drawn from this list alone, so neither
+ * the help nor the parser can drift from the commands.
  */
 const catalogue: readonly Command[] = [
   {
@@ -52,8 +55,8 @@ const catalogue: readonly Command[] = [
       {
         name: "by",
         value: "grouping",
-        choices: ["none", "owner", "repo", "stack"],
-        fallback: "none",
+        choices: owedGroupings,
+        default: "none",
         description:
           "Splits the list into sections: by owner, by repo, or by stack; a wait with two owners appears under each.",
       },
@@ -84,8 +87,8 @@ const catalogue: readonly Command[] = [
       {
         name: "by",
         value: "grouping",
-        choices: ["kind", "repo", "none"],
-        fallback: "kind",
+        choices: activityGroupings,
+        default: "kind",
         description:
           "Splits the list into sections: by kind of thread (ISSUES, PULL REQUESTS, DISCUSSIONS), by repo, or none.",
       },

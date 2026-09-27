@@ -1,11 +1,4 @@
 import type { ThreadKind } from "../waits/index.js";
-import type { Detail, Format } from "./types.js";
-
-/** Every output format; the set is closed, so any other value is refused. */
-export const formats: readonly Format[] = ["plain", "llm", "json"];
-
-/** Every level of detail, from the least to the most. */
-export const details: readonly Detail[] = ["summary", "standard", "detailed"];
 
 /**
  * What an agent reads before any text written on GitHub: that text can

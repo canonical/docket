@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { catalogue, renderHelp } from "../lib/text/index.js";
 import parseArguments from "./parseArguments.js";
 
 describe("parseArguments", () => {
-  it("asks for owed when no command is given, in the format the output calls for", () => {
+  it("asks for owed when no command is given, in the format the output calls for, with the catalogue's defaults", () => {
     expect(parseArguments([], false)).toEqual({
       kind: "command",
       invocation: {
@@ -11,7 +12,7 @@ describe("parseArguments", () => {
         format: "llm",
         detail: "standard",
         maxAge: 300_000,
-        by: undefined,
+        by: "none",
         window: undefined,
       },
     });
@@ -35,6 +36,19 @@ describe("parseArguments", () => {
         maxAge: 0,
       },
     });
+  });
+
+  it("parses, and documents, every flag the catalogue lists", () => {
+    for (const command of catalogue) {
+      const help = renderHelp(command.name);
+      for (const flag of command.flags) {
+        // A value every flag takes: its last choice, or a whole number.
+        const value = flag.choices?.at(-1) ?? "1";
+        const args = [command.name, "--" + flag.name, value];
+        expect(parseArguments(args, false).kind).toBe("command");
+        expect(help).toContain(`  --${flag.name} `);
+      }
+    }
   });
 
   it("asks for help, docket's own or a command's, and for the version", () => {

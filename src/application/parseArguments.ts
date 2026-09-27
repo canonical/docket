@@ -1,9 +1,11 @@
-import { parseArgs } from "node:util";
+import { type ParseArgsOptionsConfig, parseArgs } from "node:util";
 import {
   type CommandName,
   catalogue,
-  details,
-  formats,
+  chooseFormat,
+  type Detail,
+  type Flag,
+  type Format,
 } from "../lib/text/index.js";
 import fail from "./fail.js";
 import type { Invocation } from "./types.js";
@@ -14,19 +16,18 @@ export type Request =
   | { readonly kind: "version" }
   | { readonly kind: "command"; readonly invocation: Invocation };
 
-/** The flags any command may take; each command's list narrows them. */
-const options = {
-  by: { type: "string" },
-  window: { type: "string" },
-  format: { type: "string" },
-  detail: { type: "string" },
-  "max-age": { type: "string" },
+/** Every flag the catalogue lists, whichever command takes it. */
+const flags: readonly Flag[] = catalogue.flatMap((command) => command.flags);
+
+/**
+ * The flags any command may take, drawn from the catalogue, each taking a
+ * value, with `--help` and `--version`; each command's list narrows them.
+ */
+const options: ParseArgsOptionsConfig = {
+  ...Object.fromEntries(flags.map(({ name }) => [name, { type: "string" }])),
   help: { type: "boolean" },
   version: { type: "boolean" },
-} as const;
-
-/** The seconds of `--max-age` when none is given. */
-const defaultMaxAge = "300";
+};
 
 /**
  * Splits the arguments into flags and the words around them, refusing a
@@ -62,7 +63,8 @@ function read(args: readonly string[]) {
 /**
  * Reads the arguments against the command catalogue: the command, its
  * arguments and its flags, each flag's value checked against the values
- * the catalogue allows. `docket` alone asks for owed.
+ * the catalogue allows, and each flag left out given the catalogue's
+ * default. `docket` alone asks for owed.
  *
  * @param interactive Whether a terminal shows the output, which decides
  * the format when `--format` is not given.
@@ -107,7 +109,7 @@ export default function parseArguments(
     }
   }
   for (const flag of command.flags) {
-    const value = values[flag.name as keyof typeof values];
+    const value = values[flag.name];
     if (
       typeof value === "string" &&
       flag.choices &&
@@ -120,7 +122,20 @@ export default function parseArguments(
       );
     }
   }
-  const seconds = values["max-age"] ?? defaultMaxAge;
+  /**
+   * The value of the flag `name`: as given, or the catalogue's default. A
+   * command that does not take the flag ignores it, and is given the
+   * default another command's flag of that name has.
+   */
+  const choose = (name: string): string | undefined => {
+    const given = values[name];
+    if (typeof given === "string") return given;
+    const flag =
+      command.flags.find((entry) => entry.name === name) ??
+      flags.find((entry) => entry.name === name);
+    return flag?.default;
+  };
+  const seconds = String(choose("max-age"));
   if (!/^\d+$/.test(seconds)) {
     fail(
       "USAGE_INVALID_VALUE",
@@ -133,14 +148,14 @@ export default function parseArguments(
     invocation: {
       command: command.name,
       positionals: rest,
-      // Each value has been checked against the catalogue's choices.
+      // Each value is one of the catalogue's choices, checked above, or
+      // the catalogue's default, which is one of them.
       format:
-        formats.find((entry) => entry === values.format) ??
-        (interactive ? "plain" : "llm"),
-      detail: details.find((entry) => entry === values.detail) ?? "standard",
+        (choose("format") as Format | undefined) ?? chooseFormat(interactive),
+      detail: choose("detail") as Detail,
       maxAge: Number(seconds) * 1000,
-      by: values.by,
-      window: values.window,
+      by: choose("by"),
+      window: choose("window"),
     },
   };
 }

@@ -48,6 +48,16 @@ describe("answerOwed", () => {
     expect(out()).toContain("\n\ndocs\ndocs#4 · close · 10d left\n");
   });
 
+  it("refuses a grouping owed does not have, before reading any data", async () => {
+    const { session, out } = openSession(home, ["owed"]);
+    const invocation = { ...session.invocation, by: "label" };
+    await expect(answerOwed({ ...session, invocation })).rejects.toMatchObject({
+      code: "USAGE_INVALID_VALUE",
+      message: "`--by` takes none, owner, repo, stack, not `label`.",
+    });
+    expect(out()).toBe("");
+  });
+
   it("answers from cached data during a rate limit, with the warning", async () => {
     await answerOwed(openSession(home, ["owed"]).session);
     const limited = recordedProvider({

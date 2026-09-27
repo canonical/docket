@@ -9,7 +9,7 @@ const formatSignature = ({ name, arguments: parts }: Command) =>
 
 const describeFlag = (flag: Flag) => [
   `  ${formatUsage(flag)}`,
-  `      ${flag.description} Default: ${flag.fallback}.`,
+  `      ${flag.description} Default: ${flag.fallback ?? flag.default}.`,
 ];
 
 const describeExits = (exits: Command["exits"]) =>

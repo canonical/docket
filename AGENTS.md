@@ -35,7 +35,7 @@
 - The cache reaches the data only through the provider interface, never the GitHub adapter. Its tests use `fakeProvider()` from `src/testing/provider.ts`, and prove what happens between processes by starting real ones, such as `src/testing/cacheReader.ts`, on a temporary folder.
 - An error a user can meet carries a named code, one sentence and a recovery step. A code names the problem, as `GH_NOT_SIGNED_IN` and `CONFIG_INVALID_DURATION` do, and a domain lists its codes once, in its `types.ts`. Callers and scripts depend on the codes, so a code is never renamed or reused.
 - The text interface exits 0 when it answered, cached data served during a GitHub or cache failure included, with the failure as a warning; 2 for a `GH_*`, `CONFIG_*` or `USAGE_*` code; and 3 for any other code: no data. `src/lib/text/chooseExitCode.ts` holds the rule.
-- The help is drawn from the command catalogue, `src/lib/text/catalogue.ts`, and nowhere else: a command or flag changes there, with its hand-written help.
+- The help and the reading of the arguments are drawn from the command catalogue, `src/lib/text/catalogue.ts`, and nowhere else: a command, a flag, its choices or its default change there, with the hand-written help.
 - Every string from GitHub or from a repository's file goes through `sanitize` before it is printed, and `llm` output marks it as quoted data: each title, login, label, check name, file path and branch in double quotes, and comments as `>` lines.
 - Text mode reads threads through the cache with `--max-age` (300 seconds by default) and never starts the refresh cycle.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.

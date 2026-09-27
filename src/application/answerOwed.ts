@@ -1,6 +1,7 @@
 import { owedGroupings } from "../lib/owed/index.js";
 import { renderOwed } from "../lib/text/index.js";
 import buildOwed from "./buildOwed.js";
+import fail from "./fail.js";
 import readThreads from "./readThreads.js";
 import type { Session } from "./types.js";
 
@@ -12,10 +13,15 @@ import type { Session } from "./types.js";
  */
 export default async function answerOwed(session: Session): Promise<number> {
   const { context, invocation, resolved } = session;
+  const grouping = owedGroupings.find((entry) => entry === invocation.by);
+  if (!grouping) {
+    fail(
+      "USAGE_INVALID_VALUE",
+      `\`--by\` takes ${owedGroupings.join(", ")}, not \`${invocation.by}\`.`,
+      "run docket owed --help",
+    );
+  }
   const { threads, syncedAt, warnings } = await readThreads(session);
-  // The catalogue lets `--by` take only owed's groupings.
-  const grouping =
-    owedGroupings.find((entry) => entry === invocation.by) ?? "none";
   const list = buildOwed(threads, resolved.settings, grouping, context.now());
   context.write(
     renderOwed({

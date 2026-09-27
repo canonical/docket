@@ -45,4 +45,15 @@ describe("answerActivity", () => {
         "`--window` takes one of the configured windows, 72h, 1w, not `24h`.",
     });
   });
+
+  it("refuses a grouping activity does not have", async () => {
+    const { session } = openSession(home, ["activity"]);
+    const invocation = { ...session.invocation, by: "owner" };
+    await expect(
+      answerActivity({ ...session, invocation }),
+    ).rejects.toMatchObject({
+      code: "USAGE_INVALID_VALUE",
+      message: "`--by` takes kind, repo, none, not `owner`.",
+    });
+  });
 });

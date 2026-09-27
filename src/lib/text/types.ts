@@ -11,19 +11,25 @@ export type Detail = "summary" | "standard" | "detailed";
 /** The commands docket answers. */
 export type CommandName = "owed" | "activity" | "show" | "config";
 
-/** A flag a command takes, as its help describes it. */
-export interface Flag {
+/**
+ * A flag a command takes, as its help describes it. Every flag takes a
+ * value. What applies when it is left out is one value, `default`, or,
+ * when that depends on the call, a sentence, `fallback`: the help prints
+ * whichever the flag has.
+ */
+export type Flag = {
   /** The flag without its dashes, such as `max-age`. */
   readonly name: string;
   /** What the value is, such as `seconds`. */
   readonly value: string;
   /** The only values accepted, when the set is closed. */
   readonly choices?: readonly string[];
-  /** What applies when the flag is left out, as the help writes it. */
-  readonly fallback: string;
   /** One sentence saying what the flag changes. */
   readonly description: string;
-}
+} & (
+  | { readonly default: string; readonly fallback?: undefined }
+  | { readonly fallback: string; readonly default?: undefined }
+);
 
 /** A command, with everything its help says. */
 export interface Command {

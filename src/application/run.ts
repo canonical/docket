@@ -3,6 +3,7 @@ import { readPersonalFile, resolveSettings } from "../lib/config/index.js";
 import type { Provider } from "../lib/provider/index.js";
 import {
   chooseExitCode,
+  chooseFormat,
   type Format,
   type Problem,
   renderHelp,
@@ -36,7 +37,7 @@ const answers = {
  * writes the cache, asks GitHub, and writes the answer.
  */
 export default async function run(context: Context): Promise<number> {
-  let format: Format = context.interactive ? "plain" : "llm";
+  let format: Format = chooseFormat(context.interactive);
   const stop = (problems: readonly Problem[]) => {
     context.writeError(renderProblems(problems, format));
     return chooseExitCode(problems.at(0)?.code ?? "USAGE_INVALID_VALUE");
