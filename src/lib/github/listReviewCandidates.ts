@@ -29,7 +29,7 @@ interface Answer {
       readonly suggestedReviewers: readonly {
         readonly reviewer: NonNullable<ActorNode>;
       }[];
-    } | null;
+    };
   };
 }
 
@@ -46,24 +46,20 @@ export default async function listReviewCandidates(
   pullRequest: ThreadSummary,
 ): Promise<ReviewCandidates> {
   const { owner, name } = splitRepo(pullRequest.repo);
-  const { repository } = await client.query<Answer>(
-    document,
-    {
-      owner,
-      name,
-      number: pullRequest.number,
-    },
-    { allowMissing: true },
-  );
+  const { repository } = await client.query<Answer>(document, {
+    owner,
+    name,
+    number: pullRequest.number,
+  });
   const pull = repository.pullRequest;
-  const requested = (pull?.reviewRequests.nodes ?? []).flatMap(
+  const requested = pull.reviewRequests.nodes.flatMap(
     ({ requestedReviewer }): Reviewer[] => {
       const reviewer = readReviewer(requestedReviewer);
       return reviewer ? [reviewer] : [];
     },
   );
-  const suggested: Account[] = (pull?.suggestedReviewers ?? []).map(
-    ({ reviewer }) => readAccount(reviewer),
+  const suggested: Account[] = pull.suggestedReviewers.map(({ reviewer }) =>
+    readAccount(reviewer),
   );
   const teams: Pick<Team, "team">[] = [];
   for await (const page of client.pages<{ readonly slug: string }>(

@@ -162,7 +162,12 @@ describe("createProvider", () => {
     );
     const assignable = repository({ assignableUsers: page([]) });
     github.graphql("Assignable", assignable, assignable);
-    github.graphql("Candidates", repository({ pullRequest: null }));
+    github.graphql(
+      "Candidates",
+      repository({
+        pullRequest: { reviewRequests: { nodes: [] }, suggestedReviewers: [] },
+      }),
+    );
     github.rest(`GET /repos/${repo}/teams`, { body: [] });
     github.rest(`GET /repos/${repo}/issues/1`, { body: { assignees: [] } });
     github.rest(`GET /repos/${repo}/pulls/2/requested_reviewers`, {

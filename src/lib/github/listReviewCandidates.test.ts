@@ -104,21 +104,26 @@ describe("listReviewCandidates", () => {
     });
   });
 
-  it("lists no request or suggestion for a pull request GitHub does not find", async () => {
-    github.graphql("Candidates", {
-      body: {
-        data: { rateLimit, repository: { pullRequest: null } },
-        errors: [
-          {
-            type: "NOT_FOUND",
-            path: ["repository", "pullRequest"],
-            message: "Could not resolve to a PullRequest with the number of 2.",
-          },
-        ],
-      },
-    });
-    github.rest(`GET ${teams}`, { body: [] });
-    assignable([[], null]);
-    expect(await candidates()).toMatchObject({ requested: [], suggested: [] });
-  });
+  it.each([
+    ["repository", { repository: null }, ["repository"]],
+    [
+      "pull request",
+      { repository: { pullRequest: null } },
+      ["repository", "pullRequest"],
+    ],
+  ])(
+    "names GITHUB_REQUEST_FAILED for a %s GitHub does not find",
+    async (_, data, path) => {
+      github.graphql("Candidates", {
+        body: {
+          data: { rateLimit, ...data },
+          errors: [{ type: "NOT_FOUND", path, message: "Could not resolve." }],
+        },
+      });
+      await expect(candidates()).rejects.toMatchObject({
+        code: "GITHUB_REQUEST_FAILED",
+        message: expect.stringContaining("Could not resolve."),
+      });
+    },
+  );
 });
