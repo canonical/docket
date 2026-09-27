@@ -1,3 +1,7 @@
+import type { CacheErrorCode } from "../cache/index.js";
+import type { ConfigErrorCode } from "../config/index.js";
+import type { ProviderErrorCode } from "../provider/index.js";
+
 /** Where the output goes decides its form: a person, an agent or a program. */
 export type Format = "plain" | "llm" | "json";
 
@@ -35,4 +39,39 @@ export interface Command {
   readonly example: string;
   /** What each exit code means for this command, by code. */
   readonly exits: Readonly<Record<0 | 2 | 3, string>>;
+}
+
+/**
+ * The named codes of the text interface's own errors. This is the one
+ * list of them. Callers and scripts depend on the codes, so a code is
+ * never renamed or reused.
+ */
+export type TextErrorCode =
+  /** The first word is not a command. */
+  | "USAGE_UNKNOWN_COMMAND"
+  /** A flag the command does not take. */
+  | "USAGE_UNKNOWN_FLAG"
+  /** A flag's value, or an argument, outside what it accepts. */
+  | "USAGE_INVALID_VALUE"
+  /** An argument the command needs is missing. */
+  | "USAGE_MISSING_ARGUMENT"
+  /** A reference that names no watched repository, or is badly written. */
+  | "USAGE_INVALID_REFERENCE"
+  /** No open thread answers to the reference. */
+  | "THREAD_NOT_FOUND";
+
+/** Every named code a user can meet, whichever domain names it. */
+export type ErrorCode =
+  | TextErrorCode
+  | ProviderErrorCode
+  | CacheErrorCode
+  | ConfigErrorCode;
+
+/** Something that stopped an answer, or weakens it, and how to fix it. */
+export interface Problem {
+  readonly code: ErrorCode;
+  /** One sentence naming the problem. */
+  readonly message: string;
+  /** What to do so the next call works. */
+  readonly recovery: string;
 }
