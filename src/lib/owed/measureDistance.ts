@@ -25,20 +25,24 @@ export interface Distance {
  * The distance is written in whole days from one working day on, and in
  * whole hours below it, both rounded down: a wait due within the hour
  * reads `0h left`.
+ *
+ * Whether the wait is over follows `now` alone, so waits found at one
+ * instant and listed at a later one read as they stand when listed.
  */
 export default function measureDistance(
   wait: Wait,
   time: WorkingClock,
   now: Date,
 ): Distance {
-  const gap = wait.over
+  const over = now > wait.due;
+  const gap = over
     ? measureWorkingTime(wait.due, now, time)
     : measureWorkingTime(now, wait.due, time);
   const target = measureDuration(wait.target, time);
   const share = gap / target;
   const hours = Math.floor(gap / hourMilliseconds);
   const amount = hours >= 24 ? `${Math.floor(hours / 24)}d` : `${hours}h`;
-  if (wait.over)
+  if (over)
     return { state: "over", overdue: share, text: `${amount} over` };
   return {
     state: share < soonShare ? "soon" : "onTrack",

@@ -6,6 +6,7 @@ import {
   weekdays,
 } from "../clock/index.js";
 import { builtInSettings, type Repo, type Targets } from "../config/index.js";
+import { findWaits } from "../waits/index.js";
 import listWaits from "./listWaits.js";
 
 const now = at("2026-09-23T10:00+02:00");
@@ -100,6 +101,27 @@ describe("listWaits, grouped", () => {
       "example",
       "docs",
     ]);
+  });
+});
+
+describe("listWaits, later than the waits were found", () => {
+  it("measures each wait against the instant it lists them at", () => {
+    const found = findWaits(
+      thread(),
+      teamSettings,
+      at("2026-09-23T09:00+02:00"),
+    );
+    const list = listWaits(
+      [{ repo: example, time, waits: found }],
+      address,
+      at("2026-09-23T15:00+02:00"),
+    );
+    const reply = list.groups[0]?.rows.find((row) => row.kind.text === "reply");
+    expect(reply).toMatchObject({
+      state: "over",
+      distance: { text: "5h over" },
+    });
+    expect(list.counts.over).toBe(1);
   });
 });
 
