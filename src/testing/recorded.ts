@@ -11,6 +11,7 @@ import {
 import type { Repo, Settings } from "../lib/config/index.js";
 import { selectEvents, type ThreadEvent } from "../lib/events/index.js";
 import { groupWaits, listWaits, type OwedGrouping } from "../lib/owed/index.js";
+import type { ThreadDetail } from "../lib/provider/index.js";
 import { findWaits, type Thread } from "../lib/waits/index.js";
 import {
   alice,
@@ -133,6 +134,39 @@ export const recordedEvents: readonly ThreadEvent[] = [
     at: at("2026-09-27T20:00+02:00"),
   },
 ];
+
+/** Everything the details of the pull request show. */
+export const parserFixDetail: ThreadDetail = {
+  updatedAt: at("2026-09-28T11:35+02:00"),
+  messages: [
+    {
+      author: bob,
+      at: at("2026-09-24T15:00+02:00"),
+      body: "Looks close.",
+    },
+    {
+      author: dave,
+      at: at("2026-09-25T09:00+02:00"),
+      body: "Rebased on main.\n\nCould someone look again?",
+    },
+  ],
+  requests: [
+    { reviewer: bob, requester: alice, at: at("2026-09-28T09:00+02:00") },
+  ],
+  files: [
+    { path: "src/parser.ts", additions: 40, deletions: 12 },
+    { path: "src/parser.test.ts", additions: 25, deletions: 0 },
+  ],
+  checks: [
+    { name: "lint", state: "failing" },
+    { name: "test", state: "passing" },
+  ],
+  stack: [
+    { position: 1, number: 11, state: "merged" },
+    { position: 2, number: 12, state: "open" },
+    { position: 3, number: 13, state: "open" },
+  ],
+};
 
 /** owed, as the recording gives it at `recordedNow`. */
 export function recordedOwed(grouping: OwedGrouping = "none") {
