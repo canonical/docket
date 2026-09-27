@@ -1,5 +1,6 @@
 import type { Duration } from "../clock/index.js";
 import type { Origin, Repo, Resolved } from "../config/index.js";
+import quote from "./quote.js";
 import renderJson from "./renderJson.js";
 import renderProblems from "./renderProblems.js";
 import sanitize from "./sanitize.js";
@@ -141,9 +142,12 @@ export default function renderConfig(answer: ConfigAnswer): string {
   }
   const llm = format === "llm";
   const formatItem = (line: string) => (llm ? `- ${line}` : `  ${line}`);
-  const ghLines = problem
-    ? ["", renderProblems([problem], format).trimEnd()]
-    : [`gh: signed in to ${shared.settings.hosts.join(", ")} as ${login}.`];
+  const ghLines =
+    "code" in gh
+      ? ["", renderProblems([gh], format).trimEnd()]
+      : [
+          `gh: signed in to ${shared.settings.hosts.join(", ")} as ${llm ? quote(gh.login) : sanitize(gh.login)}.`,
+        ];
   const sections = [
     [
       llm ? "# config" : "config",

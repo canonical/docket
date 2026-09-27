@@ -38,7 +38,7 @@ export interface ThreadAnswer {
 }
 
 const nameReviewer = (reviewer: Reviewer) =>
-  sanitize("team" in reviewer ? reviewer.team : reviewer.login);
+  "team" in reviewer ? reviewer.team : reviewer.login;
 
 const describeCount = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? "" : "s"}`;
@@ -46,8 +46,14 @@ const describeCount = (count: number, noun: string) =>
 /**
  * The checks on a pull request's head commit: their combined state, then
  * the failing ones by name, or every one at the detailed level.
+ *
+ * @param formatText Writes a check's name, which GitHub gives.
  */
-function describeChecks(details: ThreadDetail, detail: Detail): string {
+function describeChecks(
+  details: ThreadDetail,
+  detail: Detail,
+  formatText: (text: string) => string,
+): string {
   const hasCheck = (state: string) =>
     details.checks.some((check) => check.state === state);
   const state = hasCheck("failing")
@@ -59,7 +65,7 @@ function describeChecks(details: ThreadDetail, detail: Detail): string {
     (check) => detail === "detailed" || check.state === "failing",
   );
   const names = named.map(
-    ({ name, state: each }) => `${sanitize(name)} ${each}`,
+    ({ name, state: each }) => `${formatText(name)} ${each}`,
   );
   return names.length > 0
     ? `checks ${state}: ${names.join(", ")}`
@@ -68,17 +74,19 @@ function describeChecks(details: ThreadDetail, detail: Detail): string {
 
 /**
  * The facts of a thread in words, each on its own line, for both a person
- * and an agent; an agent reads GitHub's text quoted.
+ * and an agent.
+ *
+ * @param formatText Writes a piece of text GitHub gives, quoted as data
+ * for an agent.
  */
 function describeFacts(
   shown: ShownThread,
   formatWhen: (at: Date) => string,
   detail: Detail,
-  llm: boolean,
+  formatText: (text: string) => string,
 ): string[] {
   const { thread, details, repo } = shown;
-  const formatText = (value: string) => (llm ? quote(value) : sanitize(value));
-  const assignees = thread.assignees.map(({ login }) => sanitize(login));
+  const assignees = thread.assignees.map(({ login }) => formatText(login));
   const { stack } = thread;
   const describeNeighbour = (side: string, position: number) => {
     const entry = details.stack?.find((member) => member.position === position);
@@ -95,7 +103,7 @@ function describeFacts(
   const pull = thread.kind === "pullRequest";
   return [
     `title ${formatText(thread.title)}`,
-    `${kindWords[thread.kind]}${thread.draft ? ", draft" : ""}, opened by ${sanitize(thread.author.login)} ${formatWhen(thread.createdAt)}`,
+    `${kindWords[thread.kind]}${thread.draft ? ", draft" : ""}, opened by ${formatText(thread.author.login)} ${formatWhen(thread.createdAt)}`,
     `assignees ${assignees.join(", ") || "none"}`,
     ...(detail === "summary"
       ? []
@@ -103,12 +111,12 @@ function describeFacts(
           `labels ${thread.labels.map(formatText).join(", ") || "none"}`,
           `updated ${formatWhen(details.updatedAt)}`,
           ...(pull && details.checks.length > 0
-            ? [describeChecks(details, detail)]
+            ? [describeChecks(details, detail, formatText)]
             : []),
           ...(stack
             ? [
                 [
-                  `${describeStack(repo, stack)}, onto ${sanitize(stack.base)}`,
+                  `${describeStack(repo, stack)}, onto ${formatText(stack.base)}`,
                   ...neighbours,
                 ].join(", "),
               ]
@@ -146,10 +154,11 @@ function describeTalk(shown: ShownThread, detail: Detail) {
 function renderText(shown: ShownThread, answer: ThreadAnswer): string {
   const { freshness, detail, format } = answer;
   const llm = format === "llm";
+  const formatText = (value: string) => (llm ? quote(value) : sanitize(value));
   const { now, timezone } = freshness;
   const formatWhen = (at: Date) =>
     `${describeTime(at, timezone)}, ${describeAge(at, now)} ago`;
-  const facts = describeFacts(shown, formatWhen, detail, llm);
+  const facts = describeFacts(shown, formatWhen, detail, formatText);
   const { requests, messages } = describeTalk(shown, detail);
   const formatHeading = (text: string) => (llm ? `### ${text}` : text);
   const waits = shown.rows.flatMap((row) =>
@@ -167,14 +176,14 @@ function renderText(shown: ShownThread, answer: ThreadAnswer): string {
             formatHeading("reviews requested"),
             ...requests.map(
               ({ reviewer, requester, at }) =>
-                `${llm ? "- " : "  "}${sanitize(requester.login)} asked ${nameReviewer(reviewer)}, ${formatWhen(at)}`,
+                `${llm ? "- " : "  "}${formatText(requester.login)} asked ${formatText(nameReviewer(reviewer))}, ${formatWhen(at)}`,
             ),
           ],
         ]
       : []),
     ...messages.map(({ author, at, body }) => [
       formatHeading(
-        `message from ${sanitize(author.login)}, ${formatWhen(at)}`,
+        `message from ${formatText(author.login)}, ${formatWhen(at)}`,
       ),
       llm
         ? quoteLines(body)
@@ -218,7 +227,7 @@ function describeThreadData(shown: ShownThread, detail: Detail) {
       : {}),
     waits: shown.rows.map((row) => describeWaitData(row, detail)),
     requests: requests.map(({ reviewer, requester, at }) => ({
-      reviewer: nameReviewer(reviewer),
+      reviewer: sanitize(nameReviewer(reviewer)),
       requester: sanitize(requester.login),
       at: at.toISOString(),
     })),

@@ -42,23 +42,23 @@ describe("renderThread", () => {
       "",
       "## example#12",
       '- title "Fix the parser"',
-      "- pull request, opened by dave 2026-09-21 10:00 Europe/Paris, 7d ago",
-      "- assignees alice",
+      '- pull request, opened by "dave" 2026-09-21 10:00 Europe/Paris, 7d ago',
+      '- assignees "alice"',
       '- labels "kind=bug"',
       "- updated 2026-09-28 11:35 Europe/Paris, 25m ago",
-      "- checks failing: lint failing",
-      "- example stack 3, 2 of 3, onto main, below #11 merged, above #13 open",
+      '- checks failing: "lint" failing',
+      '- example stack 3, 2 of 3, onto "main", below #11 merged, above #13 open',
       "- files changed 2, 65 lines added, 12 lines removed",
       "",
       "### waits",
-      '- example#12 · "Fix the parser" · reply · owner alice · 4d over · due 2026-09-22 10:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
-      '- example#12 · "Fix the parser" · close · owner alice · 2h over · due 2026-09-28 10:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
-      '- example#12 · "Fix the parser" · review · owner bob · 1d left · due 2026-09-30 09:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
+      '- example#12 · "Fix the parser" · reply · owner "alice" · 4d over · due 2026-09-22 10:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
+      '- example#12 · "Fix the parser" · close · owner "alice" · 2h over · due 2026-09-28 10:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
+      '- example#12 · "Fix the parser" · review · owner "bob" · 1d left · due 2026-09-30 09:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
       "",
       "### reviews requested",
-      "- alice asked bob, 2026-09-28 09:00 Europe/Paris, 3h ago",
+      '- "alice" asked "bob", 2026-09-28 09:00 Europe/Paris, 3h ago',
       "",
-      "### message from dave, 2026-09-25 09:00 Europe/Paris, 3d ago",
+      '### message from "dave", 2026-09-25 09:00 Europe/Paris, 3d ago',
       "> Rebased on main.",
       ">",
       "> Could someone look again?",
@@ -119,13 +119,13 @@ describe("renderThread", () => {
       "",
       "## example#12",
       '- title "Fix the parser"',
-      "- pull request, opened by dave 2026-09-21 10:00 Europe/Paris, 7d ago",
-      "- assignees alice",
+      '- pull request, opened by "dave" 2026-09-21 10:00 Europe/Paris, 7d ago',
+      '- assignees "alice"',
       "",
       "### waits",
-      '- example#12 · "Fix the parser" · reply · owner alice · 4d over · due 2026-09-22 10:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
-      '- example#12 · "Fix the parser" · close · owner alice · 2h over · due 2026-09-28 10:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
-      '- example#12 · "Fix the parser" · review · owner bob · 1d left · due 2026-09-30 09:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
+      '- example#12 · "Fix the parser" · reply · owner "alice" · 4d over · due 2026-09-22 10:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
+      '- example#12 · "Fix the parser" · close · owner "alice" · 2h over · due 2026-09-28 10:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
+      '- example#12 · "Fix the parser" · review · owner "bob" · 1d left · due 2026-09-30 09:00 Europe/Paris · checks failing · example stack 3, 2 of 3',
       "",
     ]);
   });
@@ -209,10 +209,10 @@ describe("renderThread", () => {
     } as ShownThread["details"];
     const thread = { ...parserFix, draft: true };
     const text = render("llm", "standard", [{ ...shown, thread, details }]);
-    expect(text).toContain("- alice asked example-org/reviewers,");
+    expect(text).toContain('- "alice" asked "example-org/reviewers",');
     expect(text).toContain("- checks running\n");
-    expect(text).toContain("- pull request, draft, opened by dave");
-    expect(text).toContain("- example stack 3, 2 of 3, onto main\n");
+    expect(text).toContain('- pull request, draft, opened by "dave"');
+    expect(text).toContain('- example stack 3, 2 of 3, onto "main"\n');
     expect(text).toContain("- files changed 1, 1 line added, 1 line removed\n");
     const passing = {
       ...details,

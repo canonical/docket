@@ -43,7 +43,7 @@ function renderLlmRow(row: WaitRow, timezone: string, detail: Detail): string {
     described.reference,
     quote(row.title.text),
     described.kind,
-    describeOwners(described.owners),
+    describeOwners(described.owners.map((login) => quote(login))),
     describeDistance(described),
     `due ${described.due}`,
     ...listMarks(described),

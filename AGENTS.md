@@ -36,7 +36,7 @@
 - An error a user can meet carries a named code, one sentence and a recovery step. A code names the problem, as `GH_NOT_SIGNED_IN` and `CONFIG_INVALID_DURATION` do, and a domain lists its codes once, in its `types.ts`. Callers and scripts depend on the codes, so a code is never renamed or reused.
 - The text interface exits 0 when it answered, cached data served during a GitHub or cache failure included, with the failure as a warning; 2 for a `GH_*`, `CONFIG_*` or `USAGE_*` code; and 3 for any other code: no data. `src/lib/text/chooseExitCode.ts` holds the rule.
 - The help is drawn from the command catalogue, `src/lib/text/catalogue.ts`, and nowhere else: a command or flag changes there, with its hand-written help.
-- Every string from GitHub or from a repository's file goes through `sanitize` before it is printed, and `llm` output marks it as quoted data: titles in double quotes, comments as `>` lines.
+- Every string from GitHub or from a repository's file goes through `sanitize` before it is printed, and `llm` output marks it as quoted data: each title, login, label, check name, file path and branch in double quotes, and comments as `>` lines.
 - Text mode reads threads through the cache with `--max-age` (300 seconds by default) and never starts the refresh cycle.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
 - Every implementation file under `src/lib/` and `src/application/` has its own unit tests beside it, as `<name>.test.ts`, with `describe` blocks named for its export; barrels, `types.ts` and `constants.ts` have none. Each `it()` states an outcome a caller can observe.

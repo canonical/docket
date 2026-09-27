@@ -21,7 +21,7 @@ describe("answerConfig", () => {
     expect(
       await answerConfig(context, invocation, personal, resolved, provider),
     ).toBe(0);
-    expect(out()).toContain("gh: signed in to github.com as alice.");
+    expect(out()).toContain('gh: signed in to github.com as "alice".');
     expect(out()).toContain(
       "## example (example-org/example-repo)\n- people (personal file): alice team, bob team\n",
     );

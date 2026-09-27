@@ -1,7 +1,13 @@
-import { describeAddress, type OwedList } from "../owed/index.js";
+import {
+  describeAddress,
+  type OwedGrouping,
+  type OwedList,
+  type WaitGroup,
+} from "../owed/index.js";
 import { quotedNote } from "./constants.js";
 import describeDataAge from "./describeDataAge.js";
 import describeWaitData from "./describeWaitData.js";
+import quote from "./quote.js";
 import renderFreshness from "./renderFreshness.js";
 import renderJson from "./renderJson.js";
 import renderWaitRow from "./renderWaitRow.js";
@@ -14,6 +20,23 @@ export interface OwedAnswer {
   readonly freshness: Freshness;
   readonly format: Format;
   readonly detail: Detail;
+}
+
+/**
+ * A section's heading for an agent, with what GitHub wrote quoted as
+ * data: the owner's login, or the branch a stack is merged onto, which
+ * ends a stack's heading.
+ */
+function quoteHeading(group: WaitGroup, grouping: OwedGrouping, text: string) {
+  const first = group.rows.at(0);
+  if (grouping === "owner" && first && first.wait.owners.length > 0) {
+    return quote(text);
+  }
+  const base = first?.stacked ? first.wait.thread.stack?.base : undefined;
+  if (grouping === "stack" && base && text.endsWith(base)) {
+    return `${sanitize(text.slice(0, -base.length))}${quote(base)}`;
+  }
+  return sanitize(text);
 }
 
 /**
@@ -58,7 +81,11 @@ export default function renderOwed({
   const empty = detail !== "summary" && groups.length === 0;
   const llm = format === "llm";
   const sections = groups.map((group) => {
-    const heading = group.heading && sanitize(group.heading.text);
+    const heading =
+      group.heading &&
+      (llm
+        ? quoteHeading(group, list.address.grouping, group.heading.text)
+        : sanitize(group.heading.text));
     const rows = group.rows.flatMap((row) =>
       renderWaitRow(row, format, timezone, detail),
     );

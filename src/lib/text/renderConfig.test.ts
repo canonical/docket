@@ -18,7 +18,7 @@ describe("renderConfig", () => {
     expect(renderConfig(answer).split("\n")).toEqual([
       "# config",
       "Personal file: /config/docket/docket.yaml, found.",
-      "gh: signed in to github.com as alice.",
+      'gh: signed in to github.com as "alice".',
       "",
       "## every repository",
       "- repos (personal file): example example-org/example-repo, docs example-org/example-docs",

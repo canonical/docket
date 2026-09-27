@@ -1,6 +1,7 @@
 import {
   type ActivityList,
   describeAddress,
+  describeEvent,
   type EventLine,
   type ThreadRow,
 } from "../activity/index.js";
@@ -45,8 +46,12 @@ function listOwnerNames(row: ThreadRow): string[] | undefined {
   return listOwners(row);
 }
 
-const describeEventLine = ({ event, text }: EventLine) =>
-  `${sanitize(text.text)}${event.bot ? " (bot)" : ""}`;
+/**
+ * One event in words: as the list gives it for a person, and for an agent
+ * with every login, label and check name quoted as data.
+ */
+const describeEventLine = ({ event, text }: EventLine, llm = false) =>
+  `${llm ? describeEvent(event, quote) : sanitize(text.text)}${event.bot ? " (bot)" : ""}`;
 
 function renderLlmRow(row: ThreadRow, timezone: string): string[] {
   const owners = listOwnerNames(row);
@@ -54,14 +59,14 @@ function renderLlmRow(row: ThreadRow, timezone: string): string[] {
     row.reference.text,
     quote(row.title.text),
     kindWords[row.thread.kind],
-    ...(owners ? [describeOwners(owners)] : []),
+    ...(owners ? [describeOwners(owners.map((login) => quote(login)))] : []),
     ...(row.draft ? ["draft"] : []),
     ...(row.thread.stack ? [describeStack(row.repo, row.thread.stack)] : []),
     `newest event ${row.distance.text} ago`,
   ];
   const events = row.events.map(
     (line) =>
-      `  - ${describeEventLine(line)} · ${line.age.text} ago, ${describeTime(line.event.at, timezone)}`,
+      `  - ${describeEventLine(line, true)} · ${line.age.text} ago, ${describeTime(line.event.at, timezone)}`,
   );
   return [`- ${parts.join(" · ")}`, ...events];
 }

@@ -32,14 +32,14 @@ describe("renderActivity", () => {
       "2 threads · 4 events",
       "",
       "## ISSUES",
-      '- docs#4 · "Where do tokens live?" · issue · owners alice, bob · newest event 16h ago',
-      "  - example-sync labelled kind=docs (bot) · 16h ago, 2026-09-27 20:00 Europe/Paris",
+      '- docs#4 · "Where do tokens live?" · issue · owners "alice", "bob" · newest event 16h ago',
+      '  - "example-sync" labelled "kind=docs" (bot) · 16h ago, 2026-09-27 20:00 Europe/Paris',
       "",
       "## PULL REQUESTS",
-      '- example#12 · "Fix the parser" · pull request · owner alice · example stack 3, 2 of 3 · newest event 25m ago',
-      "  - checks failed (lint) (bot) · 25m ago, 2026-09-28 11:35 Europe/Paris",
-      "  - alice requested review · 3h ago, 2026-09-28 09:00 Europe/Paris",
-      "  - dave commented · 3d ago, 2026-09-25 09:00 Europe/Paris",
+      '- example#12 · "Fix the parser" · pull request · owner "alice" · example stack 3, 2 of 3 · newest event 25m ago',
+      '  - checks failed ("lint") (bot) · 25m ago, 2026-09-28 11:35 Europe/Paris',
+      '  - "alice" requested review · 3h ago, 2026-09-28 09:00 Europe/Paris',
+      '  - "dave" commented · 3d ago, 2026-09-25 09:00 Europe/Paris',
       "",
     ]);
   });
@@ -155,6 +155,12 @@ describe("renderActivity", () => {
       events: [
         {
           ...line,
+          event: {
+            ...line.event,
+            kind: "labelled",
+            actor: { ...line.event.actor, login: "alice" },
+            label: "\u001b[31mred",
+          },
           text: { text: "alice labelled \u001b[31mred", fit: "trimmed" },
         },
       ],
@@ -167,7 +173,7 @@ describe("renderActivity", () => {
         detail: "standard",
       });
       expect(text).not.toContain("\u001b");
-      expect(text).toContain("alice labelled red");
+      expect(text).toMatch(/"?alice"? labelled "?red/);
     }
   });
 });
