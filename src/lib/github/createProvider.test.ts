@@ -14,8 +14,12 @@ type Callback = (error: unknown, stdout: string, stderr: string) => void;
 
 const gh = vi.hoisted(() => ({ error: null as unknown, stdout: "" }));
 vi.mock("node:child_process", () => ({
-  execFile: (_file: string, _args: string[], done: Callback) =>
-    done(gh.error, gh.stdout, ""),
+  execFile: (
+    _file: string,
+    _args: string[],
+    _options: object,
+    done: Callback,
+  ) => done(gh.error, gh.stdout, ""),
 }));
 
 let github: ReturnType<typeof fakeGitHub>;

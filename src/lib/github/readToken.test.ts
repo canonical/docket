@@ -5,16 +5,22 @@ import readToken from "./readToken.js";
 type Callback = (error: unknown, stdout: string, stderr: string) => void;
 
 const gh = vi.hoisted(() => ({
-  run: (_file: string, _args: string[], _done: Callback): void => {},
+  run: (
+    _file: string,
+    _args: string[],
+    _options: object,
+    _done: Callback,
+  ) => {},
 }));
 vi.mock("node:child_process", () => ({
-  execFile: (file: string, args: string[], done: Callback) =>
-    gh.run(file, args, done),
+  execFile: (file: string, args: string[], options: object, done: Callback) =>
+    gh.run(file, args, options, done),
 }));
 
 const answer = (error: unknown, stdout: string) => {
-  const run = vi.fn((_file: string, _args: string[], done: Callback) =>
-    done(error, stdout, ""),
+  const run = vi.fn(
+    (_file: string, _args: string[], _options: object, done: Callback) =>
+      done(error, stdout, ""),
   );
   gh.run = run;
   return run;
@@ -25,12 +31,13 @@ afterEach(() => {
 });
 
 describe("readToken", () => {
-  it("gives the token gh prints for github.com", async () => {
+  it("gives the token gh prints for github.com, waiting ten seconds at most", async () => {
     const run = answer(null, `${token}\n`);
     await expect(readToken()).resolves.toBe(token);
     expect(run).toHaveBeenCalledWith(
       "gh",
       ["auth", "token", "--hostname", "github.com"],
+      { timeout: 10_000 },
       expect.any(Function),
     );
   });
@@ -58,6 +65,22 @@ describe("readToken", () => {
     answer(null, "\n");
     await expect(readToken()).rejects.toMatchObject({
       code: "GH_NOT_SIGNED_IN",
+    });
+  });
+
+  it("names GH_NOT_SIGNED_IN, with a way to see why, when gh gives no token in time", async () => {
+    answer(
+      Object.assign(new Error("Command failed"), {
+        killed: true,
+        signal: "SIGTERM",
+        code: null,
+      }),
+      "",
+    );
+    await expect(readToken()).rejects.toMatchObject({
+      code: "GH_NOT_SIGNED_IN",
+      message: "gh gave no token for github.com within 10 seconds.",
+      recovery: "run gh auth status, and unlock the keyring if it asks",
     });
   });
 });
