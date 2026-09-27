@@ -145,6 +145,7 @@ describe("renderOwed", () => {
       draft: false,
       checksFailing: true,
       stack: { number: 3, position: 2, size: 3, base: "main" },
+      invalidRepositoryFile: false,
       started: "2026-09-21T08:00:00.000Z",
       target: "24h",
     });

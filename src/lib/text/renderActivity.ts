@@ -27,7 +27,10 @@ export interface ActivityAnswer {
   readonly detail: Detail;
 }
 
-/** The owners, the draft mark and the stack, where the row has them. */
+/**
+ * The owners, the draft mark, the stack and the invalid-file mark, where
+ * the row has them.
+ */
 function listFacts(row: ThreadRow): string[] {
   const owners = listOwners(row);
   const { stack } = row.thread;
@@ -35,6 +38,7 @@ function listFacts(row: ThreadRow): string[] {
     ...(owners.length > 0 ? [owners.join(", ")] : []),
     ...(row.draft ? ["draft"] : []),
     ...(stack ? [describeStack(row.repo, stack)] : []),
+    ...(row.invalidFile ? [row.invalidFile.text] : []),
   ];
 }
 
@@ -64,6 +68,7 @@ function renderLlmRow(row: ThreadRow, timezone: string): string[] {
     ...(owners ? [describeOwners(owners.map((login) => quote(login)))] : []),
     ...(row.draft ? ["draft"] : []),
     ...(row.thread.stack ? [describeStack(row.repo, row.thread.stack)] : []),
+    ...(row.invalidFile ? [row.invalidFile.text] : []),
     `newest event ${row.distance.text} ago`,
   ];
   const events = row.events.map(
@@ -99,6 +104,7 @@ function describeRowData(row: ThreadRow) {
     owners,
     draft: row.draft !== undefined,
     stack: row.thread.stack ?? null,
+    invalidRepositoryFile: row.invalidFile !== undefined,
     events: row.events.map(({ event }) => {
       // What the event carries beyond its thread, its actor and its time:
       // its kind, whether a bot made it, and its label, assignee, commits
