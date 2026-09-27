@@ -14,6 +14,7 @@ describe("parseArguments", () => {
         maxAge: 300_000,
         by: "none",
         window: undefined,
+        confirm: false,
       },
     });
     const request = parseArguments([], true);
@@ -24,16 +25,26 @@ describe("parseArguments", () => {
 
   it("reads a command's arguments and flags, the maximum age in seconds", () => {
     const request = parseArguments(
-      ["show", "example#12", "--max-age", "0", "--format", "json"],
+      [
+        "assign",
+        "example#12",
+        "alice",
+        "--confirm",
+        "--max-age",
+        "0",
+        "--format",
+        "json",
+      ],
       true,
     );
     expect(request).toMatchObject({
       kind: "command",
       invocation: {
-        command: "show",
-        positionals: ["example#12"],
+        command: "assign",
+        positionals: ["example#12", "alice"],
         format: "json",
         maxAge: 0,
+        confirm: true,
       },
     });
   });
@@ -42,11 +53,13 @@ describe("parseArguments", () => {
     for (const command of catalogue) {
       const help = renderHelp(command.name);
       for (const flag of command.flags) {
-        // A value every flag takes: its last choice, or a whole number.
-        const value = flag.choices?.at(-1) ?? "1";
-        const args = [command.name, "--" + flag.name, value];
+        // A value each flag takes: its last choice, or a whole number; a
+        // switch takes none.
+        const switched = flag.value === undefined;
+        const value = switched ? [] : [flag.choices?.at(-1) ?? "1"];
+        const args = [command.name, `--${flag.name}`, ...value];
         expect(parseArguments(args, false).kind).toBe("command");
-        expect(help).toContain(`  --${flag.name} `);
+        expect(help).toContain(`  --${flag.name}${switched ? "\n" : " "}`);
       }
     }
   });
@@ -56,9 +69,9 @@ describe("parseArguments", () => {
       kind: "help",
       command: undefined,
     });
-    expect(parseArguments(["show", "--help"], false)).toEqual({
+    expect(parseArguments(["review", "--help"], false)).toEqual({
       kind: "help",
-      command: "show",
+      command: "review",
     });
     expect(parseArguments(["--version"], false)).toEqual({ kind: "version" });
   });
@@ -69,6 +82,11 @@ describe("parseArguments", () => {
       ["owed", "--format"],
       "USAGE_INVALID_VALUE",
       "The flag `--format` is given without the value it needs",
+    ],
+    [
+      ["owed", "--confirm=yes"],
+      "USAGE_INVALID_VALUE",
+      "The flag `--confirm` is given",
     ],
     [
       ["config", "--by", "owner"],

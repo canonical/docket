@@ -1,16 +1,19 @@
 import catalogue from "./catalogue.js";
 import type { Command, CommandName, Flag } from "./types.js";
 
-const formatUsage = (flag: Flag) =>
-  `--${flag.name} ${flag.choices?.join("|") ?? `<${flag.value}>`}`;
+const formatUsage = (flag: Flag) => {
+  const value = flag.choices?.join("|") ?? (flag.value && `<${flag.value}>`);
+  return value ? `--${flag.name} ${value}` : `--${flag.name}`;
+};
 
 const formatSignature = ({ name, arguments: parts }: Command) =>
   parts === "" ? `docket ${name}` : `docket ${name} ${parts}`;
 
-const describeFlag = (flag: Flag) => [
-  `  ${formatUsage(flag)}`,
-  `      ${flag.description} Default: ${flag.fallback ?? flag.default}.`,
-];
+const describeFlag = (flag: Flag) => {
+  const said = flag.fallback ?? flag.default;
+  const fallback = said === undefined ? "" : ` Default: ${said}.`;
+  return [`  ${formatUsage(flag)}`, `      ${flag.description}${fallback}`];
+};
 
 const describeExits = (exits: Command["exits"]) =>
   ([0, 2, 3] as const).map((code) => `  ${code}  ${exits[code]}`);
@@ -70,7 +73,7 @@ export default function renderHelp(name?: CommandName): string {
     "Exit codes:",
     "  0  docket answered, even when threads are over target.",
     "  2  A prerequisite is missing, or the call is not valid.",
-    "  3  No data could be obtained.",
+    "  3  No data could be obtained, or GitHub refused a change.",
     "",
     "docket needs the GitHub CLI (gh), signed in with `gh auth login`.",
     "",

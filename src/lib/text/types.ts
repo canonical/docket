@@ -9,26 +9,42 @@ export type Format = "plain" | "llm" | "json";
 export type Detail = "summary" | "standard" | "detailed";
 
 /** The commands docket answers. */
-export type CommandName = "owed" | "activity" | "show" | "config";
+export type CommandName =
+  | "owed"
+  | "activity"
+  | "show"
+  | "assign"
+  | "review"
+  | "config";
 
 /**
- * A flag a command takes, as its help describes it. Every flag takes a
- * value. What applies when it is left out is one value, `default`, or,
- * when that depends on the call, a sentence, `fallback`: the help prints
- * whichever the flag has.
+ * A flag a command takes, as its help describes it. A flag either takes a
+ * value or is a switch, on when given and off when left out, such as
+ * `--confirm`. What applies when a flag with a value is left out is one
+ * value, `default`, or, when that depends on the call, a sentence,
+ * `fallback`: the help prints whichever the flag has.
  */
 export type Flag = {
   /** The flag without its dashes, such as `max-age`. */
   readonly name: string;
-  /** What the value is, such as `seconds`. */
-  readonly value: string;
-  /** The only values accepted, when the set is closed. */
-  readonly choices?: readonly string[];
   /** One sentence saying what the flag changes. */
   readonly description: string;
 } & (
-  | { readonly default: string; readonly fallback?: undefined }
-  | { readonly fallback: string; readonly default?: undefined }
+  | ({
+      /** What the value is, such as `seconds`. */
+      readonly value: string;
+      /** The only values accepted, when the set is closed. */
+      readonly choices?: readonly string[];
+    } & (
+      | { readonly default: string; readonly fallback?: undefined }
+      | { readonly fallback: string; readonly default?: undefined }
+    ))
+  | {
+      readonly value?: undefined;
+      readonly choices?: undefined;
+      readonly default?: undefined;
+      readonly fallback?: undefined;
+    }
 );
 
 /** A command, with everything its help says. */
@@ -71,7 +87,11 @@ export type TextErrorCode =
    * A failure no other code names, such as a defect: the last resort, so
    * that every stop prints a code and a recovery step.
    */
-  | "UNEXPECTED_FAILURE";
+  | "UNEXPECTED_FAILURE"
+  /** The thread cannot take the change, such as reviewers on an issue. */
+  | "THREAD_KIND_UNSUPPORTED"
+  /** GitHub applied only part of a change. */
+  | "WRITE_INCOMPLETE";
 
 /** Every named code a user can meet, whichever domain names it. */
 export type ErrorCode =

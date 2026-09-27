@@ -180,8 +180,9 @@ export const parserFixDetail: ThreadDetail = {
 
 /**
  * A provider answering from the recording: the threads of each
- * repository, their events, the pull request's details, and alice as the
- * account gh is signed in with. `overrides` replaces any operation.
+ * repository, their events, the pull request's details and review
+ * candidates, writes that GitHub records whole, and alice as the account
+ * gh is signed in with. `overrides` replaces any operation.
  */
 export function recordedProvider(overrides: Partial<Provider> = {}): Provider {
   return fakeProvider({
@@ -192,6 +193,15 @@ export function recordedProvider(overrides: Partial<Provider> = {}): Provider {
     events: async (repo) =>
       recordedEvents.filter(({ thread }) => thread.repo === repo),
     threadDetail: async () => parserFixDetail,
+    reviewCandidates: async () => ({
+      requested: [bob],
+      suggested: [carol],
+      people: [alice, bob, carol],
+      teams: [{ team: "example-org/reviewers" }],
+    }),
+    setAssignees: async (_thread, logins) =>
+      logins.map((login) => ({ login, type: "user" as const })),
+    setReviewers: async (_pull, reviewers) => reviewers,
     viewer: async () => "alice",
     ...overrides,
   });

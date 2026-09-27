@@ -13,19 +13,20 @@ import type { Reference } from "./parseReference.js";
 export default function findThreads(
   threads: readonly Thread[],
   reference: Reference,
-): readonly Thread[] {
+): readonly [Thread, ...Thread[]] {
   const { repo, number, stack } = reference;
   const own = threads.filter((thread) => thread.repo === repo.repo);
   const found = stack
     ? (collectStacks(own).find((entry) => entry.number === number)?.members ??
       [])
     : own.filter((thread) => thread.number === number);
-  if (found.length === 0) {
+  const [first, ...rest] = found;
+  if (!first) {
     fail(
       "THREAD_NOT_FOUND",
       `No open thread of ${repo.repo} answers to ${reference.text}.`,
       `check that ${reference.text} is open, then run the command again with --max-age 0 to read the latest data`,
     );
   }
-  return found;
+  return [first, ...rest];
 }

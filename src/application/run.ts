@@ -12,6 +12,7 @@ import answerActivity from "./answerActivity.js";
 import answerConfig from "./answerConfig.js";
 import answerOwed from "./answerOwed.js";
 import answerShow from "./answerShow.js";
+import answerWrite from "./answerWrite.js";
 import describeFailure from "./describeFailure.js";
 import isNamedError from "./isNamedError.js";
 import parseArguments from "./parseArguments.js";
@@ -22,6 +23,8 @@ const answers = {
   owed: answerOwed,
   activity: answerActivity,
   show: answerShow,
+  assign: answerWrite,
+  review: answerWrite,
 } as const;
 
 /**
