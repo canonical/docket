@@ -40,6 +40,7 @@
 - `assign` and `review` print a plan and change nothing unless given `--confirm`, and never send a change that alters nothing.
 - Text mode reads threads, and activity's events, through the cache with `--max-age` (300 seconds by default) and never starts the refresh cycle.
 - Each watched repository's `.github/docket.yaml` is read from its default branch through the cache with `--max-age`, as the threads are. An invalid one gives that repository the built-in defaults for the sections it may declare and marks its rows; one GitHub fails to give leaves the personal file's settings, with a warning.
+- The terminal interface sits in `src/lib/ui/`. It trims or wraps text with `trimText` and `wrapText`, which count display cells with `string-width`, never characters.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
 - Every implementation file under `src/lib/` and `src/application/` has its own unit tests beside it, as `<name>.test.ts`, with `describe` blocks named for its export; barrels, `types.ts` and `constants.ts` have none. Each `it()` states an outcome a caller can observe.
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.
