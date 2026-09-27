@@ -66,6 +66,9 @@ export interface Layer {
 /** Which file a layer comes from. */
 export type Place = "personal" | "repository";
 
+/** Where a section's values come from. */
+export type Origin = "built-in" | Place;
+
 /**
  * The named codes of configuration errors. Callers and scripts depend on
  * them, so a code is never renamed or reused.
