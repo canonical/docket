@@ -57,14 +57,16 @@ export type TextErrorCode =
   | "USAGE_UNKNOWN_COMMAND"
   /** A flag the command does not take. */
   | "USAGE_UNKNOWN_FLAG"
-  /** A flag's value, or an argument, outside what it accepts. */
+  /** A flag's value outside what it accepts. */
   | "USAGE_INVALID_VALUE"
   /** An argument the command needs is missing. */
   | "USAGE_MISSING_ARGUMENT"
   /** A reference that names no watched repository, or is badly written. */
   | "USAGE_INVALID_REFERENCE"
   /** No open thread answers to the reference. */
-  | "THREAD_NOT_FOUND";
+  | "THREAD_NOT_FOUND"
+  /** An argument the command does not take, beyond those it does. */
+  | "USAGE_UNEXPECTED_ARGUMENT";
 
 /** Every named code a user can meet, whichever domain names it. */
 export type ErrorCode =

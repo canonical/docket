@@ -21,7 +21,7 @@ export default async function answerShow(session: Session): Promise<number> {
   const reference = parseReference(positionals, settings.repos, "show");
   if (positionals.length > reference.length) {
     fail(
-      "USAGE_INVALID_VALUE",
+      "USAGE_UNEXPECTED_ARGUMENT",
       `docket show takes one reference, and was given \`${positionals.join(" ")}\`.`,
       "run docket show --help",
     );

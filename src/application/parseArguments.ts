@@ -94,7 +94,7 @@ export default function parseArguments(
   const recovery = `run docket ${command.name} --help`;
   if (command.arguments === "" && rest.length > 0) {
     fail(
-      "USAGE_INVALID_VALUE",
+      "USAGE_UNEXPECTED_ARGUMENT",
       `docket ${command.name} takes no arguments, and was given \`${rest.join(" ")}\`.`,
       recovery,
     );

@@ -187,8 +187,9 @@ describe("run", () => {
     it.each([
       [["show"], "USAGE_MISSING_ARGUMENT"],
       [["show", "nowhere#1"], "USAGE_INVALID_REFERENCE"],
-      [["show", "example#12", "extra"], "USAGE_INVALID_VALUE"],
-      [["owed", "extra"], "USAGE_INVALID_VALUE"],
+      [["show", "example#12", "extra"], "USAGE_UNEXPECTED_ARGUMENT"],
+      [["owed", "extra"], "USAGE_UNEXPECTED_ARGUMENT"],
+      [["owed", "--", "--by"], "USAGE_UNEXPECTED_ARGUMENT"],
       [["later"], "USAGE_UNKNOWN_COMMAND"],
       [["owed", "--confirm"], "USAGE_UNKNOWN_FLAG"],
       [["owed", "--format", "yaml"], "USAGE_INVALID_VALUE"],

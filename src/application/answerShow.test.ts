@@ -53,7 +53,7 @@ describe("answerShow", () => {
   it("refuses more than one reference", async () => {
     const { session } = openSession(home, ["show", "example#12", "docs#4"]);
     await expect(answerShow(session)).rejects.toMatchObject({
-      code: "USAGE_INVALID_VALUE",
+      code: "USAGE_UNEXPECTED_ARGUMENT",
       message:
         "docket show takes one reference, and was given `example#12 docs#4`.",
     });

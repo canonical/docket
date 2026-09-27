@@ -86,6 +86,11 @@ describe("parseArguments", () => {
       "`--max-age` takes a whole number of seconds, not `5m`.",
     ],
     [["docs"], "USAGE_UNKNOWN_COMMAND", "docket has no command `docs`."],
+    [
+      ["config", "--", "--by"],
+      "USAGE_UNEXPECTED_ARGUMENT",
+      "docket config takes no arguments, and was given `--by`.",
+    ],
   ] as const)("refuses %j with %s", (args, code, message) => {
     expect(() => parseArguments(args, false)).toThrow(
       expect.objectContaining({
