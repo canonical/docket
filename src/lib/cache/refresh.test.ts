@@ -151,17 +151,29 @@ describe("the refresh step of createCache", () => {
 
   it("keeps any other failure in the status, with a recovery step, and syncs at the next step", async () => {
     const snapshot = vi.fn(async () => ({ threads: [thread()], cursor: null }));
-    snapshot.mockRejectedValueOnce(new Error("disk full"));
+    snapshot.mockRejectedValueOnce(new Error("The operation timed out."));
     const cache = open(counting({ snapshot }));
     await cache.refresh();
     expect(cache.status().failure).toMatchObject({
       code: "CACHE_REFRESH_FAILED",
-      message: "docket could not refresh its cache (Error: disk full).",
-      recovery: `check that ${directory} has room and that you can write to it, then refresh`,
+      message: "docket could not refresh its cache: The operation timed out.",
+      recovery:
+        "refresh again, and if it keeps failing, run `docket config` to check the settings and gh",
     });
     await cache.refresh();
     expect(cache.threads().threads).toEqual([thread()]);
     expect(cache.status().failure).toBeUndefined();
+  });
+
+  it("names a failure that is not an error by its value", async () => {
+    const snapshot = vi.fn(async () => ({ threads: [thread()], cursor: null }));
+    snapshot.mockRejectedValueOnce("no answer");
+    const cache = open(counting({ snapshot }));
+    await cache.refresh();
+    expect(cache.status().failure).toMatchObject({
+      code: "CACHE_REFRESH_FAILED",
+      message: "docket could not refresh its cache: no answer",
+    });
   });
 });
 
