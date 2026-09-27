@@ -32,25 +32,26 @@ const parsers: {
 
 const personalFile = "the personal file";
 
-function readYaml(text: string): { root: unknown } | { errors: ConfigError[] } {
+function readYaml(
+  text: string,
+): { root: unknown } | { errors: [ConfigError, ...ConfigError[]] } {
   // Maps become Map objects, so no key can reach an object's prototype,
   // and a key given twice is an error rather than a silent overwrite.
   const document = parseDocument(text, { schema: "core", uniqueKeys: true });
-  if (document.errors.length > 0) {
-    return {
-      errors: document.errors.map((error) => ({
-        code:
-          error.code === "DUPLICATE_KEY"
-            ? "CONFIG_DUPLICATE_KEY"
-            : "CONFIG_INVALID_SYNTAX",
-        message: `${error.message.replace(/:?\n[\s\S]*/, "")}.`,
-        recovery:
-          error.code === "DUPLICATE_KEY"
-            ? "Keep one of the two entries for that key."
-            : "Correct the YAML at the line and column the message names.",
-      })),
-    };
-  }
+  const [first, ...rest] = document.errors.map(
+    (error): ConfigError => ({
+      code:
+        error.code === "DUPLICATE_KEY"
+          ? "CONFIG_DUPLICATE_KEY"
+          : "CONFIG_INVALID_SYNTAX",
+      message: `${error.message.replace(/:?\n[\s\S]*/, "")}.`,
+      recovery:
+        error.code === "DUPLICATE_KEY"
+          ? "Keep one of the two entries for that key."
+          : "Correct the YAML at the line and column the message names.",
+    }),
+  );
+  if (first) return { errors: [first, ...rest] };
   try {
     return { root: document.toJS({ mapAsMap: true }) };
   } catch {
@@ -118,7 +119,8 @@ export default function parseFile(text: string, place: Place): FileOutcome {
     errors.push(...parsed.errors);
     layer[section] = parsed.value;
   }
-  return errors.length > 0
-    ? { ok: false, errors }
+  const [first, ...rest] = errors;
+  return first
+    ? { ok: false, errors: [first, ...rest] }
     : { ok: true, layer: layer as Layer };
 }

@@ -38,9 +38,11 @@ const answers = {
  */
 export default async function run(context: Context): Promise<number> {
   let format: Format = chooseFormat(context.interactive);
-  const stop = (problems: readonly Problem[]) => {
+  // The first problem decides the exit code.
+  const stop = (problems: readonly [Problem, ...Problem[]]) => {
     context.writeError(renderProblems(problems, format));
-    return chooseExitCode(problems.at(0)?.code ?? "USAGE_INVALID_VALUE");
+    const [{ code }] = problems;
+    return chooseExitCode(code);
   };
   try {
     const request = parseArguments(context.args, context.interactive);

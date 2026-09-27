@@ -110,7 +110,13 @@ export interface Checked<T> {
   readonly errors: readonly ConfigError[];
 }
 
-/** A file's sections when it is valid, or every error it holds. */
+/**
+ * A file's sections when it is valid, or every error it holds: a file
+ * that is not valid holds at least one.
+ */
 export type FileOutcome =
   | { readonly ok: true; readonly layer: Layer }
-  | { readonly ok: false; readonly errors: readonly ConfigError[] };
+  | {
+      readonly ok: false;
+      readonly errors: readonly [ConfigError, ...ConfigError[]];
+    };
