@@ -41,15 +41,6 @@ export interface FullRefreshProgress extends PageProgress {
   readonly count: number;
 }
 
-/** A full refresh done, or refused during its cooldown. */
-export type FullRefreshAnswer =
-  | { readonly refused: false }
-  | {
-      readonly refused: true;
-      /** The seconds until a full refresh is available. */
-      readonly seconds: number;
-    };
-
 /** What the faces show of the cache's own state, whatever the provider. */
 export interface CacheStatus {
   /** When the data was last synced, as `CachedThreads` gives it. */
@@ -117,12 +108,13 @@ export interface Cache {
   /**
    * Discards the cached data, here and in the file, and fetches every
    * repository whole, reporting its progress in the status. One is
-   * refused within `fullRefreshCooldown` of the last. A provider error is
-   * kept in the status rather than thrown.
+   * refused within `fullRefreshCooldown` of the last, and the status then
+   * says when one is available. A provider error is kept in the status
+   * rather than thrown.
    *
    * @throws Any error that is not the provider's, such as a full disk.
    */
-  fullRefresh(): Promise<FullRefreshAnswer>;
+  fullRefresh(): Promise<void>;
   /**
    * Reloads the cache whenever another process writes it, watching the
    * cache folder: the file itself is replaced on every write.

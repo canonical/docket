@@ -62,7 +62,7 @@ describe("the full refresh of createCache", () => {
     later(10 * second);
     const shown: number[] = [];
     cache.subscribe(() => shown.push(cache.threads().threads.length));
-    expect(await cache.fullRefresh()).toEqual({ refused: false });
+    await cache.fullRefresh();
     expect(shown[0]).toBe(0);
     expect(elsewhere).toEqual([0]);
     expect(cache.threads()).toEqual({
@@ -109,18 +109,18 @@ describe("the full refresh of createCache", () => {
     });
   });
 
-  it("refuses another within 60 seconds, saying how many remain", async () => {
+  it("refuses another within 60 seconds, saying in the status when one is available", async () => {
     const snapshot = paged(1);
     const cache = open(fakeProvider({ snapshot }));
     await cache.fullRefresh();
     later(17_500);
-    expect(await cache.fullRefresh()).toEqual({ refused: true, seconds: 43 });
+    await cache.fullRefresh();
     expect(snapshot).toHaveBeenCalledTimes(1);
     expect(cache.status().fullRefreshAvailableAt).toEqual(
       new Date("2026-09-28T10:01:00Z"),
     );
     later(42_500);
-    expect(await cache.fullRefresh()).toEqual({ refused: false });
+    await cache.fullRefresh();
     expect(snapshot).toHaveBeenCalledTimes(2);
     expect(cache.status().fullRefreshAvailableAt).toBeUndefined();
   });
@@ -134,7 +134,7 @@ describe("the full refresh of createCache", () => {
         },
       }),
     );
-    expect(await cache.fullRefresh()).toEqual({ refused: false });
+    await cache.fullRefresh();
     expect(cache.status()).toMatchObject({
       failure: error,
       refreshing: false,

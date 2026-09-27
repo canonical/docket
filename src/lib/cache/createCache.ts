@@ -16,7 +16,6 @@ import type {
   CachedThreads,
   CacheOptions,
   CacheStatus,
-  FullRefreshAnswer,
   RepoCache,
 } from "./types.js";
 import withFetchLock from "./withFetchLock.js";
@@ -201,13 +200,13 @@ export default function createCache({
       }
       notify();
     },
-    async fullRefresh(): Promise<FullRefreshAnswer> {
+    async fullRefresh() {
       const at = now().getTime();
       const available = lastFullRefresh + fullRefreshCooldown;
       if (at < available) {
         fullRefreshAvailableAt = new Date(available);
         notify();
-        return { refused: true, seconds: Math.ceil((available - at) / 1000) };
+        return;
       }
       lastFullRefresh = at;
       fullRefreshAvailableAt = undefined;
@@ -219,7 +218,6 @@ export default function createCache({
         await record(error);
       }
       notify();
-      return { refused: false };
     },
     watch() {
       mkdirSync(directory, { recursive: true, mode: 0o700 });
