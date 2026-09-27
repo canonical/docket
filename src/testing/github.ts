@@ -15,6 +15,8 @@ export interface Sent {
   readonly headers: Headers;
   /** The JSON body, when there is one. */
   readonly body: Record<string, unknown> | undefined;
+  /** When it was received, in milliseconds on the clock the test runs. */
+  readonly at: number;
 }
 
 /** A recorded answer: a body, or a status with a body and headers. */
@@ -49,6 +51,7 @@ export function fakeGitHub() {
       url,
       headers: new Headers(init.headers),
       body: text ? JSON.parse(text) : undefined,
+      at: Date.now(),
     };
     sent.push(request);
     const operation = /^\s*(?:query|mutation)\s+(\w+)/.exec(

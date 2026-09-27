@@ -103,19 +103,40 @@ describe("createClient", () => {
     });
   });
 
-  it("retries after a secondary rate limit and gives the answer", async () => {
+  it("retries after a secondary rate limit, no sooner than GitHub asks, and gives the answer", async () => {
     github.rest(
       "GET /rate_limit",
       {
         status: 403,
         body: { message: "You have exceeded a secondary rate limit" },
-        headers: { "retry-after": "2" },
+        headers: { "retry-after": "10" },
       },
       { body: { ok: true } },
     );
     const answer = await settle(client().request("GET /rate_limit"));
     expect(answer.data).toEqual({ ok: true });
+    const [first, second] = github.sent.map(({ at }) => at);
+    expect(Number(second) - Number(first)).toBeGreaterThanOrEqual(10_000);
   });
+
+  it.each([403, 429])(
+    "sends a request refused %i for a secondary limit twice at most, the second no sooner than GitHub asks",
+    async (status) => {
+      const limited = {
+        status,
+        body: { message: "You have exceeded a secondary rate limit" },
+        headers: { "retry-after": "10" },
+      };
+      github.rest("GET /rate_limit", limited, limited, limited, limited);
+      const error = await failure(client().request("GET /rate_limit"));
+      expect(error).toMatchObject({ code: "GITHUB_RATE_LIMITED" });
+      const times = github.sent.map(({ at }) => at);
+      expect(times).toHaveLength(2);
+      expect(Number(times[1]) - Number(times[0])).toBeGreaterThanOrEqual(
+        10_000,
+      );
+    },
+  );
 
   it("names GITHUB_RATE_LIMITED when GraphQL reports its limit", async () => {
     const limited = {

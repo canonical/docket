@@ -49,6 +49,11 @@ export default function createClient(token: string, version: string): Client {
     baseUrl: apiUrl,
     userAgent: `docket/${version}`,
     throttle,
+    // Rate limits, answered 403 or 429, belong to the throttling plugin
+    // alone, which waits as long as GitHub asks and retries at most once.
+    // The retry plugin would otherwise send a 429 three more times, a few
+    // seconds apart, whatever wait GitHub named.
+    retry: { doNotRetry: [400, 401, 403, 404, 410, 422, 429, 451] },
   });
   let budget: Budget | undefined;
   return {
