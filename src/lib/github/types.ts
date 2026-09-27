@@ -87,3 +87,76 @@ export interface FeedPush {
   readonly at: Date;
   readonly actor: RestAccount | null;
 }
+
+/** A comment as GraphQL gives it. */
+export interface CommentNode extends WrittenNode {
+  readonly createdAt: string;
+}
+
+/** What the snapshot gives about every issue and pull request. */
+export interface IssueNode extends WrittenNode {
+  readonly number: number;
+  readonly title: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  /** `OPEN`, `CLOSED`, or `MERGED` for a pull request. */
+  readonly state: string;
+  readonly assignees: { readonly nodes: readonly NonNullable<ActorNode>[] };
+  readonly labels: { readonly nodes: readonly { readonly name: string }[] };
+  readonly comments: { readonly nodes: readonly CommentNode[] };
+}
+
+/** A review requested or withdrawn, from a pull request's timeline. */
+export interface RequestNode {
+  readonly __typename: string;
+  readonly createdAt: string;
+  readonly requestedReviewer: ReviewerNode;
+}
+
+/** A pull request's head commit, as GraphQL gives it. */
+export interface HeadCommitNode {
+  readonly committedDate: string;
+  /** The account the commit's author is linked to, if any. */
+  readonly author: { readonly user: { readonly login: string } | null } | null;
+  readonly statusCheckRollup: { readonly state: string } | null;
+}
+
+/** What the snapshot gives about a pull request besides the above. */
+export interface PullNode extends IssueNode {
+  readonly isDraft: boolean;
+  readonly headRefName: string;
+  /** True when the branch lives in a fork. */
+  readonly isCrossRepository: boolean;
+  readonly latestReviews: {
+    readonly nodes: readonly (WrittenNode & {
+      readonly submittedAt: string | null;
+    })[];
+  };
+  readonly timelineItems: { readonly nodes: readonly RequestNode[] };
+  readonly commits: {
+    readonly nodes: readonly { readonly commit: HeadCommitNode }[];
+  };
+  readonly stackEntry: {
+    readonly position: number;
+    readonly stack: {
+      readonly number: number;
+      readonly size: number;
+      readonly baseRefName: string;
+    };
+  } | null;
+}
+
+/** What the snapshot gives about a discussion. */
+export interface DiscussionNode extends WrittenNode {
+  readonly number: number;
+  readonly title: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly closed: boolean;
+  readonly labels: { readonly nodes: readonly { readonly name: string }[] };
+  readonly comments: {
+    readonly nodes: readonly (CommentNode & {
+      readonly replies: { readonly nodes: readonly CommentNode[] };
+    })[];
+  };
+}
