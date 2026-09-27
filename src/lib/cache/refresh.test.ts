@@ -174,6 +174,33 @@ describe("the refresh step of createCache", () => {
       message: "docket could not refresh its cache: no answer.",
     });
   });
+
+  it.each([
+    ["a question mark", "Bad credentials?"],
+    ["an exclamation mark", "Gone!"],
+  ])("adds no full stop to a cause that ends in %s", async (_, cause) => {
+    const snapshot = vi.fn(async () => ({
+      threads: [thread()],
+      cursor: null,
+    }));
+    snapshot.mockRejectedValueOnce(new Error(cause));
+    const cache = open(counting({ snapshot }));
+    await cache.refresh();
+    expect(cache.status().failure).toMatchObject({
+      message: `docket could not refresh its cache: ${cause}`,
+    });
+  });
+
+  it("says only that the refresh failed when the cause has no text", async () => {
+    const snapshot = vi.fn(async () => ({ threads: [thread()], cursor: null }));
+    snapshot.mockRejectedValueOnce(new Error(""));
+    const cache = open(counting({ snapshot }));
+    await cache.refresh();
+    expect(cache.status().failure).toMatchObject({
+      code: "CACHE_REFRESH_FAILED",
+      message: "docket could not refresh its cache.",
+    });
+  });
 });
 
 describe("the watch of createCache", () => {
