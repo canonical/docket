@@ -95,6 +95,15 @@ export interface Counts {
   readonly onTrack: number;
 }
 
+/** Every running wait, measured and sorted for one instant. */
+export interface WaitList {
+  /** The rows, most overdue first. */
+  readonly rows: readonly WaitRow[];
+  readonly counts: Counts;
+  /** `3 over · 2 soon · 6 on track`. */
+  readonly summary: Field;
+}
+
 /** Everything owed shows for one address. */
 export interface OwedList {
   readonly address: OwedAddress;

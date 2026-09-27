@@ -1,10 +1,11 @@
 import buildRow from "./buildRow.js";
 import countStates from "./countStates.js";
-import groupRows from "./groupRows.js";
-import type { OwedAddress, OwedList, RepoWaits } from "./types.js";
+import type { RepoWaits, WaitList } from "./types.js";
 
 /**
- * Lists every running wait for one address in owed.
+ * Measures and sorts every running wait once, for one instant. Grouping
+ * the list, which the reader changes far more often than the data or the
+ * time, works on these rows and measures nothing again.
  *
  * Rows sort most overdue first, as a share of each wait's own target, so
  * a reply 12 hours past a 24-hour target ranks above a close 12 hours
@@ -14,20 +15,14 @@ import type { OwedAddress, OwedList, RepoWaits } from "./types.js";
  */
 export default function listWaits(
   repos: readonly RepoWaits[],
-  address: OwedAddress,
   now: Date,
-): OwedList {
+): WaitList {
   const rows = repos
     .flatMap(({ repo, time, waits }) =>
       waits.map((wait) => buildRow(wait, repo.name, time, now)),
     )
     .sort((a, b) => b.overdue - a.overdue);
   const counts = countStates(rows);
-  const groups = groupRows(
-    rows,
-    address.grouping,
-    repos.map(({ repo }) => repo),
-  );
   const text = `${counts.over} over · ${counts.soon} soon · ${counts.onTrack} on track`;
-  return { address, groups, counts, summary: { text, fit: "trimmed" } };
+  return { rows, counts, summary: { text, fit: "trimmed" } };
 }

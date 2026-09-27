@@ -11,7 +11,6 @@ import listWaits from "./listWaits.js";
 
 const now = at("2026-09-23T10:00+02:00");
 const { time } = teamSettings;
-const address = { mode: "owed", grouping: "none" } as const;
 const example: Repo = {
   name: "example",
   repo: "example-org/example-repo",
@@ -37,13 +36,10 @@ describe("listWaits", () => {
         { repo: example, time, waits: [close, reply] },
         { repo: docs, time, waits: [onTrack] },
       ],
-      address,
       now,
     );
-    expect(list.groups.map(({ rows }) => rows.map((row) => row.wait))).toEqual([
-      [reply, close, onTrack],
-    ]);
-    expect(list.groups[0]?.rows[2]?.reference.text).toBe("docs#7");
+    expect(list.rows.map((row) => row.wait)).toEqual([reply, close, onTrack]);
+    expect(list.rows[2]?.reference.text).toBe("docs#7");
   });
 
   it("keeps waits that stand equal in the order given", () => {
@@ -51,23 +47,15 @@ describe("listWaits", () => {
     const second = wait({ kind: "close" });
     const list = listWaits(
       [{ repo: example, time, waits: [first, second] }],
-      address,
       now,
     );
-    expect(list.groups[0]?.rows.map((row) => row.wait)).toEqual([
-      first,
-      second,
-    ]);
+    expect(list.rows.map((row) => row.wait)).toEqual([first, second]);
   });
 
   it("summarises the list as counts of each state", () => {
     const over = wait({ due: at("2026-09-22T22:00+02:00") });
     const soon = wait({ due: at("2026-09-23T12:00+02:00") });
-    const list = listWaits(
-      [{ repo: example, time, waits: [over, soon] }],
-      address,
-      now,
-    );
+    const list = listWaits([{ repo: example, time, waits: [over, soon] }], now);
     expect(list.counts).toEqual({ over: 1, soon: 1, onTrack: 0 });
     expect(list.summary).toEqual({
       text: "1 over · 1 soon · 0 on track",
@@ -75,30 +63,10 @@ describe("listWaits", () => {
     });
   });
 
-  it("gives no section when nothing is owed, and keeps the address", () => {
-    const list = listWaits([{ repo: example, time, waits: [] }], address, now);
-    expect(list.address).toBe(address);
-    expect(list.groups).toEqual([]);
+  it("gives no row when nothing is owed", () => {
+    const list = listWaits([{ repo: example, time, waits: [] }], now);
+    expect(list.rows).toEqual([]);
     expect(list.summary.text).toBe("0 over · 0 soon · 0 on track");
-  });
-});
-
-describe("listWaits, grouped", () => {
-  it("splits the sorted rows into the sections of the address's grouping", () => {
-    const later = wait({ owners: ["bob"], due: at("2026-09-24T10:00+02:00") });
-    const sooner = wait({ owners: ["alice"], thread: onDocs });
-    const list = listWaits(
-      [
-        { repo: example, time, waits: [later] },
-        { repo: docs, time, waits: [sooner] },
-      ],
-      { mode: "owed", grouping: "repo" },
-      now,
-    );
-    expect(list.groups.map(({ heading }) => heading?.text)).toEqual([
-      "example",
-      "docs",
-    ]);
   });
 });
 
@@ -107,10 +75,9 @@ describe("listWaits, later than the waits were found", () => {
     const found = findWaits(thread(), teamSettings);
     const list = listWaits(
       [{ repo: example, time, waits: found }],
-      address,
       at("2026-09-23T15:00+02:00"),
     );
-    const reply = list.groups[0]?.rows.find((row) => row.kind.text === "reply");
+    const reply = list.rows.find((row) => row.kind.text === "reply");
     expect(reply).toMatchObject({
       state: "over",
       distance: { text: "5h over" },
@@ -157,16 +124,11 @@ describe("listWaits, against targets written in days", () => {
         { repo: example, time: everyDay, waits: waits("example") },
         { repo: docs, time: everyDay, waits: waits("docs") },
       ],
-      address,
       now,
     );
   };
   const states = (owed: ReturnType<typeof listWaits>) =>
-    Object.fromEntries(
-      owed.groups
-        .flatMap(({ rows }) => rows)
-        .map((row) => [row.reference.text, row.state]),
-    );
+    Object.fromEntries(owed.rows.map((row) => [row.reference.text, row.state]));
   const expected = Object.fromEntries(
     shown.map(([reference, , , , state]) => [reference, state]),
   );
