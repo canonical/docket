@@ -24,7 +24,7 @@ describe("buildRow", () => {
       kind: { text: "reply", fit: "trimmed" },
       distance: { text: "14h over", fit: "trimmed" },
       title: { text: "Example title", fit: "trimmed" },
-      owner: { text: "alice", fit: "trimmed", cells: 12 },
+      owner: { text: "alice", fit: "trimmed" },
     });
   });
 

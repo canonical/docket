@@ -9,14 +9,13 @@ import type { Wait } from "../waits/index.js";
 export type Fit = "trimmed" | "wrapped";
 
 /**
- * One piece of text a face draws. The view model never cuts text to a
- * width, because only a face knows its width and measures display cells.
+ * One piece of text a face draws, whole. The view model never cuts text
+ * and caps no field, because only a face knows its width and measures
+ * display cells: a face that trims decides how much room each slot gets.
  */
 export interface Field {
   readonly text: string;
   readonly fit: Fit;
-  /** The most display cells the field takes, whatever the width. */
-  readonly cells?: number;
 }
 
 /** Fields that share a line and wrap between each other. */

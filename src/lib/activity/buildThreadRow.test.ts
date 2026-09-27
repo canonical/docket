@@ -52,7 +52,7 @@ describe("buildThreadRow", () => {
       kind: { text: "PR", fit: "trimmed" },
       age: { text: "25m", fit: "trimmed" },
       title: { text: "Example title", fit: "trimmed" },
-      owner: { text: "alice", fit: "trimmed", cells: 12 },
+      owner: { text: "alice", fit: "trimmed" },
       events: [
         {
           event: pushed,

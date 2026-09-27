@@ -17,9 +17,6 @@ export const owedGroupings: readonly OwedGrouping[] = [
  */
 export const soonShare = 0.2;
 
-/** The most display cells an owner takes on a row, so the title keeps its room. */
-export const ownerCells = 12;
-
 /** The word each kind of wait goes by on screen. */
 export const waitWords: Readonly<Record<WaitKind, string>> = {
   response: "reply",
