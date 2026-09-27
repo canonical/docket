@@ -206,6 +206,25 @@ describe("createClient", () => {
     });
   });
 
+  it("names GITHUB_TIMED_OUT when GitHub gives no answer within 30 seconds", async () => {
+    const sent: number[] = [];
+    vi.stubGlobal(
+      "fetch",
+      (_input: unknown, { signal }: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          sent.push(Date.now());
+          signal?.addEventListener("abort", () => reject(signal.reason));
+        }),
+    );
+    const error = await failure(client().request("GET /rate_limit"));
+    expect(error).toMatchObject({
+      code: "GITHUB_TIMED_OUT",
+      message: "GitHub gave no answer within 30 seconds.",
+    });
+    // The first request is abandoned after 30 seconds, then retried.
+    expect((sent[1] ?? 0) - (sent[0] ?? 0)).toBeGreaterThanOrEqual(30_000);
+  });
+
   it("names GH_NOT_SIGNED_IN when GitHub refuses the token", async () => {
     github.rest("GET /rate_limit", {
       status: 401,

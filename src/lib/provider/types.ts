@@ -172,7 +172,8 @@ export type ProviderErrorCode =
   | "GH_NOT_SIGNED_IN"
   | "GH_TIMED_OUT"
   | "GITHUB_RATE_LIMITED"
-  | "GITHUB_REQUEST_FAILED";
+  | "GITHUB_REQUEST_FAILED"
+  | "GITHUB_TIMED_OUT";
 
 /**
  * An error a provider throws. It never carries the token, a request's
