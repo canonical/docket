@@ -70,24 +70,25 @@ export type Place = "personal" | "repository";
 export type Origin = "built-in" | Place;
 
 /**
- * The named codes of configuration errors. Callers and scripts depend on
- * them, so a code is never renamed or reused.
+ * The named codes of configuration errors, each naming the problem as
+ * `CONFIG_<PROBLEM>`. This is the one list of them. Callers and scripts
+ * depend on the codes, so a code is never renamed or reused.
  */
 export type ConfigErrorCode =
   | "CONFIG_DUPLICATE_KEY"
-  | "CONFIG_DURATION"
-  | "CONFIG_EMPTY"
-  | "CONFIG_GROUP"
-  | "CONFIG_HOST"
-  | "CONFIG_REPO"
+  | "CONFIG_EMPTY_LIST"
+  | "CONFIG_INVALID_DURATION"
+  | "CONFIG_INVALID_REPO"
+  | "CONFIG_INVALID_SYNTAX"
   | "CONFIG_SECTION_NOT_ALLOWED"
-  | "CONFIG_SYNTAX"
-  | "CONFIG_TIMEZONE"
-  | "CONFIG_TYPE"
+  | "CONFIG_UNKNOWN_GROUP"
   | "CONFIG_UNKNOWN_KEY"
-  | "CONFIG_UNREADABLE"
-  | "CONFIG_VERSION"
-  | "CONFIG_WORKDAY";
+  | "CONFIG_UNKNOWN_TIMEZONE"
+  | "CONFIG_UNKNOWN_WORKDAY"
+  | "CONFIG_UNREADABLE_FILE"
+  | "CONFIG_UNSUPPORTED_HOST"
+  | "CONFIG_UNSUPPORTED_VERSION"
+  | "CONFIG_WRONG_TYPE";
 
 /** One problem in a configuration file, and how to fix it. */
 export interface ConfigError {

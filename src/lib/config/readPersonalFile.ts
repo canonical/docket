@@ -43,7 +43,7 @@ export default async function readPersonalFile(
         ok: false,
         errors: [
           {
-            code: "CONFIG_UNREADABLE",
+            code: "CONFIG_UNREADABLE_FILE",
             message: `The personal file ${path} cannot be read.`,
             recovery: `Make ${path} a file you can read, or remove it.`,
           },

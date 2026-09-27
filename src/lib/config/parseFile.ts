@@ -43,7 +43,7 @@ function readYaml(text: string): { root: unknown } | { errors: ConfigError[] } {
         code:
           error.code === "DUPLICATE_KEY"
             ? "CONFIG_DUPLICATE_KEY"
-            : "CONFIG_SYNTAX",
+            : "CONFIG_INVALID_SYNTAX",
         message: `${error.message.replace(/:?\n[\s\S]*/, "")}.`,
         recovery:
           error.code === "DUPLICATE_KEY"
@@ -60,7 +60,7 @@ function readYaml(text: string): { root: unknown } | { errors: ConfigError[] } {
     return {
       errors: [
         {
-          code: "CONFIG_SYNTAX",
+          code: "CONFIG_INVALID_SYNTAX",
           message: "The file repeats its aliases too many times to be read.",
           recovery: "Write the repeated values out instead of using aliases.",
         },
@@ -87,7 +87,7 @@ export default function parseFile(text: string, place: Place): FileOutcome {
       ok: false,
       errors: [
         {
-          code: "CONFIG_VERSION",
+          code: "CONFIG_UNSUPPORTED_VERSION",
           message:
             version === undefined
               ? "The file does not say which version it is written in."

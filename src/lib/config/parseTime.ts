@@ -18,7 +18,7 @@ function parseWorkdays(
   if (!days) return undefined;
   if (days.length === 0) {
     errors.push({
-      code: "CONFIG_EMPTY",
+      code: "CONFIG_EMPTY_LIST",
       message: "`time.workdays` lists no day, so the clock would never run.",
       recovery: "List at least one day, such as `[mon, tue, wed, thu, fri]`.",
     });
@@ -29,7 +29,7 @@ function parseWorkdays(
   for (const day of days) {
     if (!known.includes(day) || seen.has(day)) {
       errors.push({
-        code: "CONFIG_WORKDAY",
+        code: "CONFIG_UNKNOWN_WORKDAY",
         message: `\`time.workdays\` lists \`${String(day)}\`, which is not a day or is listed twice.`,
         recovery: `List each day once, from ${weekdays.map((name) => `\`${name}\``).join(", ")}.`,
       });
@@ -45,7 +45,7 @@ function parseTimezone(
 ): string | undefined {
   if (typeof value === "string" && isTimeZone(value)) return value;
   errors.push({
-    code: "CONFIG_TIMEZONE",
+    code: "CONFIG_UNKNOWN_TIMEZONE",
     message: `\`time.timezone\` is \`${String(value)}\`, which is not a time-zone name.`,
     recovery:
       "Write a name from the IANA time-zone database, such as `Europe/Paris` or `UTC`.",

@@ -94,7 +94,7 @@ describe("parseFile", () => {
         ok: false,
         errors: [
           {
-            code: "CONFIG_VERSION",
+            code: "CONFIG_UNSUPPORTED_VERSION",
             message: "The file does not say which version it is written in.",
             recovery: "Start the file with `version: 1`.",
           },
@@ -103,7 +103,7 @@ describe("parseFile", () => {
     });
 
     it("refuses an empty file", () => {
-      expect(codesOf(parseFile("", "repository"))).toEqual(["CONFIG_VERSION"]);
+      expect(codesOf(parseFile("", "repository"))).toEqual(["CONFIG_UNSUPPORTED_VERSION"]);
     });
 
     it("refuses any other version without reading the rest", () => {
@@ -112,7 +112,7 @@ describe("parseFile", () => {
         ok: false,
         errors: [
           {
-            code: "CONFIG_VERSION",
+            code: "CONFIG_UNSUPPORTED_VERSION",
             message:
               "The file is version `2`, and docket reads only version 1.",
           },
@@ -124,7 +124,7 @@ describe("parseFile", () => {
   describe("YAML", () => {
     it("refuses text that is not YAML, naming the line", () => {
       const outcome = parseFile("version: 1\npeople: [alice\n", "personal");
-      expect(codesOf(outcome)).toContain("CONFIG_SYNTAX");
+      expect(codesOf(outcome)).toContain("CONFIG_INVALID_SYNTAX");
       expect(outcome.ok ? "" : outcome.errors[0]?.message).toMatch(/line \d+/);
     });
 
@@ -151,7 +151,7 @@ describe("parseFile", () => {
         `version: 1\n${levels.join("\n")}\n`,
         "personal",
       );
-      expect(codesOf(outcome)).toEqual(["CONFIG_SYNTAX"]);
+      expect(codesOf(outcome)).toEqual(["CONFIG_INVALID_SYNTAX"]);
     });
   });
 
@@ -171,44 +171,44 @@ describe("parseFile", () => {
     it.each(["repos", "people", "time", "targets", "exempt"])(
       "refuses %s when it is not a map",
       (section) => {
-        refuses(`${section}: [alice]\n`, "CONFIG_TYPE");
+        refuses(`${section}: [alice]\n`, "CONFIG_WRONG_TYPE");
       },
     );
 
     it("refuses a key that is not text", () => {
-      refuses("people: { 1234: team }\n", "CONFIG_TYPE");
+      refuses("people: { 1234: team }\n", "CONFIG_WRONG_TYPE");
     });
   });
 
   describe("repos", () => {
     it("refuses a repository not written as owner/name", () => {
-      refuses("repos: { example: { repo: example-repo } }\n", "CONFIG_REPO");
-      refuses("repos: { example: { tags: [core] } }\n", "CONFIG_REPO");
+      refuses("repos: { example: { repo: example-repo } }\n", "CONFIG_INVALID_REPO");
+      refuses("repos: { example: { tags: [core] } }\n", "CONFIG_INVALID_REPO");
     });
 
     it("refuses a short name a thread reference cannot hold", () => {
       refuses(
         "repos: { 'ex#ample': { repo: example-org/example-repo } }\n",
-        "CONFIG_REPO",
+        "CONFIG_INVALID_REPO",
       );
     });
 
     it("refuses an entry that is not a map, and tags that are not text", () => {
-      refuses("repos: { example: example-org/example-repo }\n", "CONFIG_TYPE");
+      refuses("repos: { example: example-org/example-repo }\n", "CONFIG_WRONG_TYPE");
       refuses(
         "repos: { example: { repo: example-org/example-repo, tags: core } }\n",
-        "CONFIG_TYPE",
+        "CONFIG_WRONG_TYPE",
       );
       refuses(
         "repos: { example: { repo: example-org/example-repo, tags: [[core]] } }\n",
-        "CONFIG_TYPE",
+        "CONFIG_WRONG_TYPE",
       );
     });
   });
 
   describe("people", () => {
     it("refuses a group that is not one of the four", () => {
-      refuses("people: { alice: maintainer }\n", "CONFIG_GROUP");
+      refuses("people: { alice: maintainer }\n", "CONFIG_UNKNOWN_GROUP");
     });
 
     it("refuses one login given two groups under two spellings", () => {
@@ -237,21 +237,21 @@ describe("parseFile", () => {
     });
 
     it("refuses a name that is not a time zone", () => {
-      refuses("time: { timezone: Europe/Nowhere }\n", "CONFIG_TIMEZONE");
-      refuses("time: { timezone: 2 }\n", "CONFIG_TIMEZONE");
+      refuses("time: { timezone: Europe/Nowhere }\n", "CONFIG_UNKNOWN_TIMEZONE");
+      refuses("time: { timezone: 2 }\n", "CONFIG_UNKNOWN_TIMEZONE");
     });
 
     it("refuses a day that is not a day, or is listed twice", () => {
-      refuses("time: { workdays: [mon, funday] }\n", "CONFIG_WORKDAY");
-      refuses("time: { workdays: [mon, mon] }\n", "CONFIG_WORKDAY");
+      refuses("time: { workdays: [mon, funday] }\n", "CONFIG_UNKNOWN_WORKDAY");
+      refuses("time: { workdays: [mon, mon] }\n", "CONFIG_UNKNOWN_WORKDAY");
     });
 
     it("refuses workdays that list no day", () => {
-      refuses("time: { workdays: [] }\n", "CONFIG_EMPTY");
+      refuses("time: { workdays: [] }\n", "CONFIG_EMPTY_LIST");
     });
 
     it("refuses workdays that are not a list", () => {
-      refuses("time: { workdays: mon }\n", "CONFIG_TYPE");
+      refuses("time: { workdays: mon }\n", "CONFIG_WRONG_TYPE");
     });
 
     it("refuses a key the section does not have", () => {
@@ -267,15 +267,15 @@ describe("parseFile", () => {
     });
 
     it("refuses a badly formed duration", () => {
-      refuses("targets: { close: { issue: 30 } }\n", "CONFIG_DURATION");
+      refuses("targets: { close: { issue: 30 } }\n", "CONFIG_INVALID_DURATION");
       refuses(
         "targets: { next-move: { review: 2 days } }\n",
-        "CONFIG_DURATION",
+        "CONFIG_INVALID_DURATION",
       );
     });
 
     it("refuses a metric that is not a map", () => {
-      refuses("targets: { close: 30d }\n", "CONFIG_TYPE");
+      refuses("targets: { close: 30d }\n", "CONFIG_WRONG_TYPE");
     });
   });
 
@@ -292,36 +292,36 @@ describe("parseFile", () => {
     });
 
     it("refuses labels that are not a list of text", () => {
-      refuses("exempt: { close: announcement }\n", "CONFIG_TYPE");
-      refuses("exempt: { close: [[announcement]] }\n", "CONFIG_TYPE");
+      refuses("exempt: { close: announcement }\n", "CONFIG_WRONG_TYPE");
+      refuses("exempt: { close: [[announcement]] }\n", "CONFIG_WRONG_TYPE");
     });
   });
 
   describe("activity", () => {
     it("refuses a window that is not a duration", () => {
-      refuses("activity: [24h, 24]\n", "CONFIG_DURATION");
+      refuses("activity: [24h, 24]\n", "CONFIG_INVALID_DURATION");
     });
 
     it("refuses a list with no window", () => {
-      refuses("activity: []\n", "CONFIG_EMPTY");
+      refuses("activity: []\n", "CONFIG_EMPTY_LIST");
     });
 
     it("refuses windows that are not a list", () => {
-      refuses("activity: 24h\n", "CONFIG_TYPE");
+      refuses("activity: 24h\n", "CONFIG_WRONG_TYPE");
     });
   });
 
   describe("hosts", () => {
     it("refuses any host other than github.com", () => {
-      refuses("hosts: [github.com, github.example.com]\n", "CONFIG_HOST");
+      refuses("hosts: [github.com, github.example.com]\n", "CONFIG_UNSUPPORTED_HOST");
     });
 
     it("refuses a list with no host", () => {
-      refuses("hosts: []\n", "CONFIG_EMPTY");
+      refuses("hosts: []\n", "CONFIG_EMPTY_LIST");
     });
 
     it("refuses hosts that are not a list", () => {
-      refuses("hosts: github.com\n", "CONFIG_TYPE");
+      refuses("hosts: github.com\n", "CONFIG_WRONG_TYPE");
     });
   });
 });

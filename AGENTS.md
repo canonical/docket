@@ -27,7 +27,7 @@
 - No folder is named for a property, such as `utils/`, `helpers/`, `shared/` or `types/`. The exception is `common/` inside a terminal component under `src/lib/ui/`, which holds its subcomponents.
 - Imports between domains point one way, and `src/scripts/check-structure.ts` holds the table: the model domains import only each other; the view models import the model; the port imports the model's types; the adapter and the cache import the port and the model; the text, token and interface domains import the view models, the tokens and the port's types. Only `src/application/` imports everything. Nothing in `src/lib/` imports `src/application/`, `src/testing/` or `src/scripts/`, and nothing in `src/` imports `guarantees/`.
 - Nothing under `src/lib/` reads the system clock. The current time is an argument, so every result is the same under test.
-- An error a user can meet carries a named code, such as `CONFIG_DURATION`, one sentence and a recovery step. Callers and scripts depend on the codes, so a code is never renamed or reused.
+- An error a user can meet carries a named code, one sentence and a recovery step. A code names the problem, as `GH_NOT_SIGNED_IN` and `CONFIG_INVALID_DURATION` do, and a domain lists its codes once, in its `types.ts`. Callers and scripts depend on the codes, so a code is never renamed or reused.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
 - Unit tests sit beside the code they test, as `<name>.test.ts`. Each `it()` states an outcome a caller can observe.
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.

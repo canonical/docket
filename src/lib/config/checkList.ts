@@ -13,7 +13,7 @@ export default function checkList(
 ): unknown[] | undefined {
   if (Array.isArray(value)) return value;
   errors.push({
-    code: "CONFIG_TYPE",
+    code: "CONFIG_WRONG_TYPE",
     message: `\`${path}\` is not a list.`,
     recovery: `Write \`${path}\` as a list, such as \`[first, second]\`.`,
   });

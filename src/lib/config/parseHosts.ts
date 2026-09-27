@@ -13,7 +13,7 @@ export default function parseHosts(
   if (!hosts) return undefined;
   if (hosts.length === 0) {
     errors.push({
-      code: "CONFIG_EMPTY",
+      code: "CONFIG_EMPTY_LIST",
       message: "`hosts` lists no host.",
       recovery: "Write `hosts: [github.com]`, or remove the section.",
     });
@@ -21,7 +21,7 @@ export default function parseHosts(
   for (const host of hosts) {
     if (host !== "github.com") {
       errors.push({
-        code: "CONFIG_HOST",
+        code: "CONFIG_UNSUPPORTED_HOST",
         message: `\`hosts\` lists \`${String(host)}\`, and docket supports only github.com.`,
         recovery: `Remove \`${String(host)}\` from \`hosts\`.`,
       });

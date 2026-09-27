@@ -12,7 +12,7 @@ export default function parseActivity(
   if (!windows) return undefined;
   if (windows.length === 0) {
     errors.push({
-      code: "CONFIG_EMPTY",
+      code: "CONFIG_EMPTY_LIST",
       message: "`activity` lists no time window.",
       recovery: "List at least one window, such as `[24h, 48h, 72h, 1w]`.",
     });

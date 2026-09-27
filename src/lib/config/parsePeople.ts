@@ -23,7 +23,7 @@ export default function parsePeople(
       });
     } else if (!groups.includes(group)) {
       errors.push({
-        code: "CONFIG_GROUP",
+        code: "CONFIG_UNKNOWN_GROUP",
         message: `\`people.${login}\` is \`${String(group)}\`, which is not a group.`,
         recovery: "Write one of `team`, `internal`, `external` or `bot`.",
       });

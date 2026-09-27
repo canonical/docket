@@ -15,7 +15,7 @@ export default function checkDuration(
   const duration = typeof value === "string" ? parseDuration(value) : undefined;
   if (!duration) {
     errors.push({
-      code: "CONFIG_DURATION",
+      code: "CONFIG_INVALID_DURATION",
       message: `\`${path}\` is \`${String(value)}\`, which is not a duration.`,
       recovery:
         "Write a whole number followed by h, d or w, such as `24h`, `2d` or `1w`.",

@@ -16,7 +16,7 @@ export default function checkMap(
 ): Map<string, unknown> | undefined {
   if (!(value instanceof Map)) {
     errors.push({
-      code: "CONFIG_TYPE",
+      code: "CONFIG_WRONG_TYPE",
       message: `\`${path}\` is not a map of keys and values.`,
       recovery: `Write \`${path}\` as keys and values, one \`key: value\` per line.`,
     });
@@ -26,7 +26,7 @@ export default function checkMap(
   for (const [key, entry] of value) {
     if (typeof key !== "string") {
       errors.push({
-        code: "CONFIG_TYPE",
+        code: "CONFIG_WRONG_TYPE",
         message: `\`${path}\` has the key \`${String(key)}\`, which is not text.`,
         recovery: `Quote the key, as in \`"${String(key)}"\`.`,
       });

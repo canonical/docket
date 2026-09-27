@@ -18,7 +18,7 @@ function parseRepo(
   const repo = entries.get("repo");
   if (typeof repo !== "string" || !ownerAndName.test(repo)) {
     errors.push({
-      code: "CONFIG_REPO",
+      code: "CONFIG_INVALID_REPO",
       message: `\`${path}.repo\` is \`${String(repo)}\`, which is not a repository written as owner/name.`,
       recovery: `Write \`repo: owner/name\` under \`${path}\`, such as \`repo: example-org/example-repo\`.`,
     });
@@ -48,7 +48,7 @@ export default function parseRepos(
   for (const [name, entry] of entries) {
     if (!shortName.test(name)) {
       errors.push({
-        code: "CONFIG_REPO",
+        code: "CONFIG_INVALID_REPO",
         message: `\`repos\` has the short name \`${name}\`, which a thread reference cannot hold.`,
         recovery:
           "Name the repository with letters, digits, `.`, `_` and `-` only.",

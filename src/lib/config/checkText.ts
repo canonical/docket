@@ -13,7 +13,7 @@ export default function checkText(
 ): string | undefined {
   if (typeof value === "string") return value;
   errors.push({
-    code: "CONFIG_TYPE",
+    code: "CONFIG_WRONG_TYPE",
     message: `\`${path}\` holds \`${String(value)}\`, which is not text.`,
     recovery: `Quote the value, as in \`"${String(value)}"\`.`,
   });

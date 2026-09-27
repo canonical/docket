@@ -81,7 +81,7 @@ describe("resolveSettings", () => {
       invalidRepository,
     );
     expect(repositoryErrors.map((error) => error.code)).toEqual([
-      "CONFIG_TYPE",
+      "CONFIG_WRONG_TYPE",
     ]);
     expect(settings.people).toEqual(builtInSettings.people);
     expect(settings.time).toEqual(builtInSettings.time);

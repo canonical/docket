@@ -66,7 +66,7 @@ describe("readPersonalFile", () => {
     const read = await readPersonalFile({ XDG_CONFIG_HOME: root });
     expect(read.outcome).toMatchObject({
       ok: false,
-      errors: [{ code: "CONFIG_GROUP" }],
+      errors: [{ code: "CONFIG_UNKNOWN_GROUP" }],
     });
   });
 
@@ -77,7 +77,7 @@ describe("readPersonalFile", () => {
       ok: false,
       errors: [
         {
-          code: "CONFIG_UNREADABLE",
+          code: "CONFIG_UNREADABLE_FILE",
           message: `The personal file ${read.path} cannot be read.`,
           recovery: `Make ${read.path} a file you can read, or remove it.`,
         },
