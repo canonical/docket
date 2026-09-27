@@ -40,11 +40,13 @@ export default async function withFetchLock<T>(
   const lockfilePath = join(directory, lockName);
   for (;;) {
     let lost = false;
+    const forgotten = Promise.withResolvers<void>();
     const release = await lock(directory, {
       ...lockTiming,
       lockfilePath,
       onCompromised: () => {
         lost = true;
+        forgotten.resolve();
       },
     }).catch(describeWait);
     const held = await identifyFile(lockfilePath);
@@ -59,7 +61,13 @@ export default async function withFetchLock<T>(
     // it gives up whatever lock it finds. The lock in the folder says at
     // once whether it is still this one.
     if ((await identifyFile(lockfilePath)) !== held) lost = true;
-    if (!lost) await release();
+    // Until that touch, the library still counts a lost lock as this
+    // process's, and removes it when the process exits: the lock of the
+    // process that took it over. A failed task can end the process, so the
+    // library is let forget the lock first, which it does within one
+    // `update`, since the lock it touches is gone or another's.
+    if (lost) await forgotten.promise;
+    else await release();
     if ("error" in outcome) throw outcome.error;
     if (!lost) return outcome.value;
   }

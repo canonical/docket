@@ -147,4 +147,25 @@ describe("withFetchLock", () => {
     expect(result).toBe(2);
     expect(await readdir(directory)).toEqual([]);
   }, 20_000);
+
+  it("leaves alone, as it exits, the lock another process took over while its failing task stalled", async () => {
+    const start = (script: string) => {
+      const child = spawn(process.execPath, [script, directory]);
+      let said = "";
+      child.stdout.on("data", (chunk: Buffer) => {
+        said += chunk.toString();
+      });
+      return { exited: once(child, "exit"), said: () => said };
+    };
+    const holder = start("src/testing/lockHolder.ts");
+    await vi.waitFor(() => expect(holder.said()).toContain("holding"), {
+      timeout: 5_000,
+    });
+    const taker = start("src/testing/lockTaker.ts");
+    expect(await holder.exited).toEqual([3, null]);
+    await taker.exited;
+    expect(holder.said().trim().split("\n")).toEqual(["holding", "failed"]);
+    expect(taker.said().trim().split("\n")).toEqual(["waiting", "kept"]);
+    expect(await readdir(directory)).toEqual([]);
+  }, 20_000);
 });
