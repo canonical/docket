@@ -83,8 +83,9 @@ export interface Wait {
   readonly owners: readonly string[];
   readonly started: Date;
   readonly target: Duration;
-  /** When the target's working time has passed since `started`. */
+  /**
+   * When the target's working time has passed since `started`. Whether the
+   * wait is over is left to the instant a view reads it at.
+   */
   readonly due: Date;
-  /** Whether the current time is past `due`. */
-  readonly over: boolean;
 }

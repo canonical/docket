@@ -9,7 +9,7 @@ const twoDays = { amount: 2, unit: "d" } as const;
 
 describe("measureDistance", () => {
   it("reads a wait past its due time in hours over, as a share of its target", () => {
-    const over = wait({ due: at("2026-09-22T20:00+02:00"), over: true });
+    const over = wait({ due: at("2026-09-22T20:00+02:00") });
     expect(measureDistance(over, time, now)).toEqual({
       state: "over",
       overdue: 14 / 24,
@@ -18,13 +18,13 @@ describe("measureDistance", () => {
   });
 
   it("reads a whole working day or more in days, rounded down", () => {
-    const over = wait({ due: at("2026-09-21T05:00+02:00"), over: true });
+    const over = wait({ due: at("2026-09-21T05:00+02:00") });
     expect(measureDistance(over, time, now).text).toBe("2d over");
   });
 
   it("leaves the weekend out of the distance past due", () => {
     const monday = at("2026-09-28T10:00+02:00");
-    const over = wait({ due: at("2026-09-25T16:00+02:00"), over: true });
+    const over = wait({ due: at("2026-09-25T16:00+02:00") });
     expect(measureDistance(over, time, monday).text).toBe("18h over");
   });
 
@@ -60,5 +60,12 @@ describe("measureDistance", () => {
   it("reads a wait due within the hour as no whole hour left", () => {
     const close = wait({ target: day, due: at("2026-09-23T10:40+02:00") });
     expect(measureDistance(close, time, now).text).toBe("0h left");
+  });
+
+  it("reads a wait at its due instant as not yet over, and over just after", () => {
+    const due = wait({ due: now });
+    const later = new Date(now.getTime() + 60_000);
+    expect(measureDistance(due, time, now).state).toBe("soon");
+    expect(measureDistance(due, time, later).state).toBe("over");
   });
 });

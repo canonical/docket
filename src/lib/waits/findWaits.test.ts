@@ -10,7 +10,6 @@ import {
 } from "../../testing/facts.js";
 import findWaits from "./findWaits.js";
 
-const now = at("2026-09-23T10:00+02:00");
 const closeWaits = (...args: Parameters<typeof findWaits>) =>
   findWaits(...args).filter(({ kind }) => kind === "close");
 
@@ -18,7 +17,7 @@ describe("findWaits", () => {
   describe("the close clock", () => {
     it("runs on an open thread from its creation, against its kind's target", () => {
       const issue = thread();
-      expect(closeWaits(issue, teamSettings, now)).toEqual([
+      expect(closeWaits(issue, teamSettings)).toEqual([
         {
           thread: issue,
           kind: "close",
@@ -27,14 +26,13 @@ describe("findWaits", () => {
           target: { amount: 30, unit: "d" },
           // Six working weeks later, after the clocks go back in October.
           due: at("2026-11-03T10:00+01:00"),
-          over: false,
         },
       ]);
     });
 
     it("takes the target of each kind of thread", () => {
       const targets = (["issue", "pullRequest", "discussion"] as const).map(
-        (kind) => closeWaits(thread({ kind }), teamSettings, now)[0]?.target,
+        (kind) => closeWaits(thread({ kind }), teamSettings)[0]?.target,
       );
       expect(targets).toEqual([
         { amount: 30, unit: "d" },
@@ -45,7 +43,7 @@ describe("findWaits", () => {
 
     it("runs on a draft pull request too", () => {
       const draft = thread({ kind: "pullRequest", draft: true });
-      expect(closeWaits(draft, teamSettings, now)).toHaveLength(1);
+      expect(closeWaits(draft, teamSettings)).toHaveLength(1);
     });
 
     it("stops on a thread with a label the configuration exempts, whatever its case", () => {
@@ -54,14 +52,14 @@ describe("findWaits", () => {
         exempt: { close: ["Topic: roadmap"] },
       };
       const labelled = thread({ labels: ["bug", "topic: Roadmap"] });
-      expect(closeWaits(labelled, settings, now)).toEqual([]);
+      expect(closeWaits(labelled, settings)).toEqual([]);
       const unlabelled = thread({ labels: ["bug"] });
-      expect(closeWaits(unlabelled, settings, now)).toHaveLength(1);
+      expect(closeWaits(unlabelled, settings)).toHaveLength(1);
     });
 
     it("belongs to every assignee", () => {
       const assigned = thread({ assignees: [alice, carol, bob] });
-      expect(closeWaits(assigned, teamSettings, now)[0]?.owners).toEqual([
+      expect(closeWaits(assigned, teamSettings)[0]?.owners).toEqual([
         "alice",
         "carol",
         "bob",
@@ -74,19 +72,19 @@ describe("findWaits", () => {
         people: new Map([["carol", "bot" as const]]),
       };
       const assigned = thread({ assignees: [exampleSync, carol, alice] });
-      expect(closeWaits(assigned, settings, now)[0]?.owners).toEqual(["alice"]);
+      expect(closeWaits(assigned, settings)[0]?.owners).toEqual(["alice"]);
       const botsOnly = thread({ assignees: [exampleSync] });
-      expect(closeWaits(botsOnly, settings, now)[0]?.owners).toEqual([]);
+      expect(closeWaits(botsOnly, settings)[0]?.owners).toEqual([]);
     });
 
     it("runs on a thread a bot opened, which waits for no reply", () => {
       const botOpened = thread({ kind: "pullRequest", author: exampleSync });
       expect(
-        findWaits(botOpened, teamSettings, now).map(({ kind }) => kind),
+        findWaits(botOpened, teamSettings).map(({ kind }) => kind),
       ).toEqual(["close"]);
     });
 
-    it("is over target only once the target's working time has passed", () => {
+    it("falls due once the target's working time has passed, skipping the weekend", () => {
       const settings = {
         ...teamSettings,
         targets: {
@@ -98,27 +96,21 @@ describe("findWaits", () => {
         },
       } as const;
       const friday = thread({ createdAt: at("2026-09-25T16:00+02:00") });
-      const over = (iso: string) => closeWaits(friday, settings, at(iso))[0];
-      expect(over("2026-09-28T15:59+02:00")).toMatchObject({
-        due: at("2026-09-28T16:00+02:00"),
-        over: false,
-      });
-      expect(over("2026-09-28T16:00+02:00")?.over).toBe(false);
-      expect(over("2026-09-28T16:01+02:00")?.over).toBe(true);
+      const [close] = closeWaits(friday, settings);
+      expect(close?.due).toEqual(at("2026-09-28T16:00+02:00"));
     });
   });
 
   describe("the response wait", () => {
     it("runs from the earliest unanswered message, against the response target", () => {
       const issue = thread({ assignees: [alice, bob] });
-      expect(findWaits(issue, teamSettings, now)[0]).toEqual({
+      expect(findWaits(issue, teamSettings)[0]).toEqual({
         thread: issue,
         kind: "response",
         owners: ["alice", "bob"],
         started: issue.createdAt,
         target: { amount: 24, unit: "h" },
         due: at("2026-09-23T10:00+02:00"),
-        over: false,
       });
     });
 
@@ -126,9 +118,7 @@ describe("findWaits", () => {
       const answered = thread({
         comments: [{ author: bob, at: at("2026-09-22T11:00+02:00") }],
       });
-      const kinds = findWaits(answered, teamSettings, now).map(
-        ({ kind }) => kind,
-      );
+      const kinds = findWaits(answered, teamSettings).map(({ kind }) => kind);
       expect(kinds).toEqual(["close"]);
     });
   });
@@ -143,7 +133,7 @@ describe("findWaits", () => {
         { reviewer: carol, at: at("2026-09-22T11:00+02:00") },
       ],
     });
-    const reviews = findWaits(pull, teamSettings, now).filter(
+    const reviews = findWaits(pull, teamSettings).filter(
       ({ kind }) => kind === "review",
     );
     expect(reviews.map(({ owners }) => owners)).toEqual([["bob"], ["carol"]]);
@@ -151,12 +141,11 @@ describe("findWaits", () => {
       started: at("2026-09-22T11:00+02:00"),
       target: { amount: 2, unit: "d" },
       due: at("2026-09-24T11:00+02:00"),
-      over: false,
     });
   });
 
   it("finds no wait on a closed or merged thread", () => {
     const closed = thread({ open: false, assignees: [alice] });
-    expect(findWaits(closed, teamSettings, now)).toEqual([]);
+    expect(findWaits(closed, teamSettings)).toEqual([]);
   });
 });

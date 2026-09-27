@@ -26,12 +26,10 @@ describe("listWaits", () => {
     const reply = wait({
       kind: "response",
       due: at("2026-09-22T22:00+02:00"),
-      over: true,
     });
     const close = wait({
       target: { amount: 5, unit: "d" },
       due: at("2026-09-22T22:00+02:00"),
-      over: true,
     });
     const onTrack = wait({ thread: onDocs, due: at("2026-09-23T20:00+02:00") });
     const list = listWaits(
@@ -63,7 +61,7 @@ describe("listWaits", () => {
   });
 
   it("summarises the list as counts of each state", () => {
-    const over = wait({ due: at("2026-09-22T22:00+02:00"), over: true });
+    const over = wait({ due: at("2026-09-22T22:00+02:00") });
     const soon = wait({ due: at("2026-09-23T12:00+02:00") });
     const list = listWaits(
       [{ repo: example, time, waits: [over, soon] }],
@@ -105,12 +103,8 @@ describe("listWaits, grouped", () => {
 });
 
 describe("listWaits, later than the waits were found", () => {
-  it("measures each wait against the instant it lists them at", () => {
-    const found = findWaits(
-      thread(),
-      teamSettings,
-      at("2026-09-23T09:00+02:00"),
-    );
+  it("reads a wait found before its due time as over once listed after it", () => {
+    const found = findWaits(thread(), teamSettings);
     const list = listWaits(
       [{ repo: example, time, waits: found }],
       address,
@@ -156,7 +150,6 @@ describe("listWaits, against targets written in days", () => {
                 ? targets.close[kind]
                 : targets.nextMove[waitKind],
             due,
-            over: now > due,
           });
         });
     return listWaits(

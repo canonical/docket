@@ -12,7 +12,6 @@ describe("buildRow", () => {
       kind: "response",
       owners: ["alice"],
       due: at("2026-09-22T20:00+02:00"),
-      over: true,
     });
     const row = buildRow(reply, "example", teamSettings.time, now);
     expect(row).toEqual({

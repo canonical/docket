@@ -67,7 +67,7 @@ export function thread(facts: Partial<Thread> = {}): Thread {
 
 /**
  * A close wait on `thread()`, due on Wednesday 23 September 2026 at 10:00
- * in Paris, a 24-hour target after it started, and not over.
+ * in Paris, a 24-hour target after it started.
  */
 export function wait(facts: Partial<Wait> = {}): Wait {
   return {
@@ -77,7 +77,6 @@ export function wait(facts: Partial<Wait> = {}): Wait {
     started: at("2026-09-22T10:00+02:00"),
     target: { amount: 24, unit: "h" },
     due: at("2026-09-23T10:00+02:00"),
-    over: false,
     ...facts,
   };
 }

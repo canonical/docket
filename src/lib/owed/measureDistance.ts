@@ -42,8 +42,7 @@ export default function measureDistance(
   const share = gap / target;
   const hours = Math.floor(gap / hourMilliseconds);
   const amount = hours >= 24 ? `${Math.floor(hours / 24)}d` : `${hours}h`;
-  if (over)
-    return { state: "over", overdue: share, text: `${amount} over` };
+  if (over) return { state: "over", overdue: share, text: `${amount} over` };
   return {
     state: share < soonShare ? "soon" : "onTrack",
     overdue: -share,
