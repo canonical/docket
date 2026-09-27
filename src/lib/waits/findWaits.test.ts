@@ -126,6 +126,28 @@ describe("findWaits", () => {
     });
   });
 
+  it("gives each requested review its own wait, owned by the reviewer, against the review target", () => {
+    const pull = thread({
+      kind: "pullRequest",
+      author: alice,
+      assignees: [alice],
+      reviewRequests: [
+        { reviewer: bob, at: at("2026-09-22T11:00+02:00") },
+        { reviewer: carol, at: at("2026-09-22T11:00+02:00") },
+      ],
+    });
+    const reviews = findWaits(pull, teamSettings, now).filter(
+      ({ kind }) => kind === "review",
+    );
+    expect(reviews.map(({ owners }) => owners)).toEqual([["bob"], ["carol"]]);
+    expect(reviews[0]).toMatchObject({
+      started: at("2026-09-22T11:00+02:00"),
+      target: { amount: 2, unit: "d" },
+      due: at("2026-09-24T11:00+02:00"),
+      over: false,
+    });
+  });
+
   it("finds no wait on a closed or merged thread", () => {
     const closed = thread({ open: false, assignees: [alice] });
     expect(findWaits(closed, teamSettings, now)).toEqual([]);

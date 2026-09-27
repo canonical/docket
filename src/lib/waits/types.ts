@@ -23,6 +23,20 @@ export interface Message {
   readonly at: Date;
 }
 
+/** A GitHub team, and the logins of its members. */
+export interface Team {
+  /** The team as GitHub names it, such as `example-org/reviewers`. */
+  readonly team: string;
+  readonly members: readonly string[];
+}
+
+/** A review requested and not yet withdrawn. */
+export interface ReviewRequest {
+  readonly reviewer: Account | Team;
+  /** When the review was requested. */
+  readonly at: Date;
+}
+
 /** A thread and the facts recorded on it. */
 export interface Thread extends ThreadSummary {
   readonly author: Account;
@@ -35,6 +49,10 @@ export interface Thread extends ThreadSummary {
   readonly comments: readonly Message[];
   /** Submitted reviews, on a pull request. */
   readonly reviews: readonly Message[];
+  /** The reviews requested, on a pull request. */
+  readonly reviewRequests: readonly ReviewRequest[];
+  /** When commits were pushed, on a pull request. */
+  readonly pushes: readonly Date[];
 }
 
 /**

@@ -6,6 +6,7 @@ import {
 import type { Settings } from "../config/index.js";
 import { classify } from "../people/index.js";
 import findResponseStart from "./findResponseStart.js";
+import findReviewStarts from "./findReviewStarts.js";
 import type { Thread, Wait, WaitKind } from "./types.js";
 
 /**
@@ -14,8 +15,9 @@ import type { Thread, Wait, WaitKind } from "./types.js";
  *
  * A closed or merged thread has none, whatever the reason it closed. An
  * open thread waits for a reply while someone outside the team has the
- * last word, and it always carries the close clock from its creation, drafts
- * included, unless one of its labels is listed in `exempt.close`.
+ * last word, and for each review still requested. It carries the close
+ * clock from its creation, drafts included, unless one of its labels is
+ * listed in `exempt.close`.
  *
  * @param settings The settings in effect for the thread's repository.
  */
@@ -47,6 +49,9 @@ export default function findWaits(
     waits.push(
       measure("response", response, targets.nextMove.response, assignees),
     );
+  }
+  for (const { reviewer, started } of findReviewStarts(thread, people)) {
+    waits.push(measure("review", started, targets.nextMove.review, [reviewer]));
   }
   // GitHub treats label names that differ only in case as the same label.
   const exempted = new Set(exempt.close.map((label) => label.toLowerCase()));
