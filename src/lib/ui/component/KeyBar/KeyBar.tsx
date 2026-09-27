@@ -11,7 +11,7 @@ interface Piece {
 }
 
 /** Cuts the piece that crosses `width` with `…`, dropping the rest. */
-function fit(pieces: readonly Piece[], width: number): Piece[] {
+function fitPieces(pieces: readonly Piece[], width: number): Piece[] {
   const fitted: Piece[] = [];
   let room = width;
   for (const piece of pieces) {
@@ -49,7 +49,7 @@ const KeyBar = ({ commands, width }: KeyBarProps): ReactNode => {
     ]);
   return (
     <text fg={tokens["color.text"]}>
-      {fit(pieces, width).map(({ id, text, look }) => (
+      {fitPieces(pieces, width).map(({ id, text, look }) => (
         <span
           key={id}
           fg={
