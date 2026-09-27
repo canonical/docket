@@ -297,6 +297,29 @@ describe("parseFile", () => {
       );
     });
 
+    it("refuses a duration longer than about five years", () => {
+      expect(personal("targets: { close: { issue: 99999999w } }\n")).toEqual({
+        ok: false,
+        errors: [
+          {
+            code: "CONFIG_INVALID_DURATION",
+            message:
+              '`targets.close.issue` is `"99999999w"`, which is longer than docket accepts.',
+            recovery:
+              "Write a duration no longer than `43800h`, `1825d` or `260w`.",
+          },
+        ],
+      });
+      refuses(`activity: [${"9".repeat(400)}h]\n`, "CONFIG_INVALID_DURATION");
+      refuses("activity: [43801h]\n", "CONFIG_INVALID_DURATION");
+      refuses("activity: [1826d]\n", "CONFIG_INVALID_DURATION");
+      refuses("activity: [261w]\n", "CONFIG_INVALID_DURATION");
+    });
+
+    it("accepts the longest duration in each unit", () => {
+      refuses("activity: [43800h, 1825d, 260w]\n");
+    });
+
     it("refuses a metric that is not a map", () => {
       refuses("targets: { close: 30d }\n", "CONFIG_WRONG_TYPE");
     });

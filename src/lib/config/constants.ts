@@ -1,3 +1,4 @@
+import type { DurationUnit } from "../clock/index.js";
 import type { Place, Section, Settings } from "./types.js";
 
 /** The values docket uses wherever no file declares a section. */
@@ -42,4 +43,15 @@ export const sectionsByPlace: Readonly<Record<Place, readonly Section[]>> = {
     "hosts",
   ],
   repository: ["people", "time", "targets", "exempt"],
+};
+
+/**
+ * The longest duration accepted in each unit, about five years. Nothing
+ * docket measures runs that long, and adding working time to a date takes
+ * longer the longer the duration.
+ */
+export const longestDuration: Readonly<Record<DurationUnit, number>> = {
+  h: 43_800,
+  d: 1_825,
+  w: 260,
 };
