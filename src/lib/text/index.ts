@@ -3,6 +3,8 @@ export { details, formats } from "./constants.js";
 export { default as exitCode } from "./exitCode.js";
 export type { ActivityAnswer } from "./renderActivity.js";
 export { default as renderActivity } from "./renderActivity.js";
+export type { ConfigAnswer } from "./renderConfig.js";
+export { default as renderConfig } from "./renderConfig.js";
 export { default as renderHelp } from "./renderHelp.js";
 export type { OwedAnswer } from "./renderOwed.js";
 export { default as renderOwed } from "./renderOwed.js";

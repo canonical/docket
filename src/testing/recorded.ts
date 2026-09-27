@@ -8,7 +8,13 @@ import {
   groupEvents,
   listEvents,
 } from "../lib/activity/index.js";
-import type { Repo, Settings } from "../lib/config/index.js";
+import {
+  parseFile,
+  type Repo,
+  type Resolved,
+  resolveSettings,
+  type Settings,
+} from "../lib/config/index.js";
 import { selectEvents, type ThreadEvent } from "../lib/events/index.js";
 import { groupWaits, listWaits, type OwedGrouping } from "../lib/owed/index.js";
 import type { ThreadDetail } from "../lib/provider/index.js";
@@ -22,6 +28,7 @@ import {
   exampleSync,
   teamSettings,
 } from "./facts.js";
+import { personalFile } from "./fixtures.js";
 
 /** Monday 28 September 2026, 12:00 in Paris. */
 export const recordedNow = at("2026-09-28T12:00+02:00");
@@ -205,4 +212,15 @@ export function recordedActivity(grouping: ActivityGrouping = "kind") {
     { mode: "activity", window, grouping },
     recordedRepos,
   );
+}
+
+/**
+ * The settings `personalFile` resolves to with no repository file, or,
+ * without it, the built-in defaults.
+ */
+export function resolvedPersonal(withFile = true): Resolved {
+  if (!withFile) return resolveSettings(undefined, undefined);
+  const outcome = parseFile(personalFile, "personal");
+  if (!outcome.ok) throw new Error("the personal file fixture is valid");
+  return resolveSettings(outcome.layer, undefined);
 }
