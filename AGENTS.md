@@ -33,6 +33,7 @@
 - The cache holds GitHub data only, never the token, in `$XDG_CACHE_HOME/docket` (or `~/.cache/docket`): a file readable by its owner alone, written whole as a temporary file renamed over the old one. One docket process fetches at a time, holding the `fetch.lock` there, and a process that takes the lock reads the cache again before it fetches.
 - The cache reaches the data only through the provider interface, never the GitHub adapter. Its tests use `fakeProvider()` from `src/testing/provider.ts`, and prove what happens between processes by starting real ones, such as `src/testing/cacheReader.ts`, on a temporary folder.
 - An error a user can meet carries a named code, one sentence and a recovery step. A code names the problem, as `GH_NOT_SIGNED_IN` and `CONFIG_INVALID_DURATION` do, and a domain lists its codes once, in its `types.ts`. Callers and scripts depend on the codes, so a code is never renamed or reused.
+- Every string from GitHub or from a repository's file goes through `sanitize` before it is printed, and `llm` output marks it as quoted data: titles in double quotes, comments as `>` lines.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
 - Unit tests sit beside the code they test, as `<name>.test.ts`. Each `it()` states an outcome a caller can observe.
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.
