@@ -50,7 +50,7 @@ describe("buildThreadRow", () => {
       stacked: false,
       reference: { text: "example#12", fit: "trimmed" },
       kind: { text: "PR", fit: "trimmed" },
-      age: { text: "25m", fit: "trimmed" },
+      distance: { text: "25m", fit: "trimmed" },
       title: { text: "Example title", fit: "trimmed" },
       owner: { text: "alice", fit: "trimmed" },
       events: [

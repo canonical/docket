@@ -51,8 +51,11 @@ export interface ThreadRow {
   readonly reference: Field;
   /** `issue`, `PR` or `discussion`. */
   readonly kind: Field;
-  /** The age of the newest event. */
-  readonly age: Field;
+  /**
+   * The age of the newest event, such as `25m`. Owed's rows name the same
+   * slot their distance, so one row shape serves both lists.
+   */
+  readonly distance: Field;
   readonly title: Field;
   /**
    * The one owner, or `unassigned`. Absent when the owners take a line of

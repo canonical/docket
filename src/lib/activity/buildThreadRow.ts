@@ -39,7 +39,7 @@ export default function buildThreadRow(
     stacked: thread.stack !== undefined,
     reference: { text: `${repo}#${thread.number}`, fit: "trimmed" },
     kind: { text: threadWords[thread.kind], fit: "trimmed" },
-    age: { text: describeAge(events[0].at, now), fit: "trimmed" },
+    distance: { text: describeAge(events[0].at, now), fit: "trimmed" },
     title: { text: thread.title, fit: "trimmed" },
     ...(facts?.draft ? { draft: { text: "draft", fit: "trimmed" } } : {}),
     ...(owners ? describeOwners(owners) : {}),
