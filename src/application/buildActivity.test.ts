@@ -5,6 +5,7 @@ import {
   recordedProvider,
   recordedSettings,
   recordedThreads,
+  recordedWatched,
 } from "../testing/recorded.js";
 import buildActivity from "./buildActivity.js";
 
@@ -15,7 +16,7 @@ describe("buildActivity", () => {
     const list = await buildActivity(
       recordedProvider().events,
       recordedThreads,
-      recordedSettings,
+      recordedWatched(),
       window,
       "kind",
       recordedNow,
@@ -28,7 +29,7 @@ describe("buildActivity", () => {
     await buildActivity(
       provider.events,
       [],
-      recordedSettings,
+      recordedWatched(),
       window,
       "none",
       recordedNow,
@@ -45,7 +46,7 @@ describe("buildActivity", () => {
     await buildActivity(
       provider.events,
       [],
-      twoDays,
+      recordedWatched(twoDays),
       window,
       "none",
       recordedNow,
@@ -55,5 +56,26 @@ describe("buildActivity", () => {
       "example-org/example-docs",
       new Date("2026-09-13T10:00:00Z"),
     );
+  });
+
+  it("marks the rows of a repository whose own file is invalid", async () => {
+    const invalid = recordedWatched(recordedSettings, [
+      {
+        code: "CONFIG_UNKNOWN_KEY",
+        message: "The file has an unknown key.",
+        recovery: "Remove it.",
+      },
+    ]);
+    const list = await buildActivity(
+      recordedProvider().events,
+      recordedThreads,
+      invalid,
+      window,
+      "none",
+      recordedNow,
+    );
+    expect(
+      list.groups.at(0)?.rows.every(({ invalidFile }) => invalidFile),
+    ).toBe(true);
   });
 });

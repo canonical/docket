@@ -3,6 +3,8 @@
  * at, and the lists built from it, for the text interface's saved
  * outputs. It imports nothing from vitest.
  */
+
+import type { Watched } from "../application/types.js";
 import {
   type ActivityGrouping,
   groupEvents,
@@ -232,6 +234,21 @@ export function recordedActivity(grouping: ActivityGrouping = "kind") {
     { mode: "activity", window, grouping },
     recordedRepos,
   );
+}
+
+/**
+ * The recording's repositories, each with `settings` in effect, and the
+ * errors of its own file: none, unless `repositoryErrors` names some.
+ */
+export function recordedWatched(
+  settings: Settings = recordedSettings,
+  repositoryErrors: Resolved["repositoryErrors"] = [],
+): Watched[] {
+  const origins = resolveSettings(undefined, undefined).origins;
+  return settings.repos.map((repo) => ({
+    ...repo,
+    resolved: { settings, origins, repositoryErrors },
+  }));
 }
 
 /**

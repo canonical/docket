@@ -15,10 +15,10 @@ import type { Session } from "./types.js";
  * and writes the answer.
  */
 export default async function answerShow(session: Session): Promise<number> {
-  const { context, invocation, resolved, provider } = session;
-  const { settings } = resolved;
+  const { context, invocation, watched, provider } = session;
   const { positionals } = invocation;
-  const reference = parseReference(positionals, settings.repos, "show");
+  const reference = parseReference(positionals, watched, "show");
+  const { settings, repositoryErrors } = reference.repo.resolved;
   if (positionals.length > reference.length) {
     fail(
       "USAGE_UNEXPECTED_ARGUMENT",
@@ -36,6 +36,7 @@ export default async function answerShow(session: Session): Promise<number> {
           repo: reference.repo,
           time: settings.time,
           waits: findWaits(thread, settings),
+          invalidFile: repositoryErrors.length > 0,
         },
       ],
       now,

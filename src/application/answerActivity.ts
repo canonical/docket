@@ -17,7 +17,7 @@ import type { Session } from "./types.js";
 export default async function answerActivity(
   session: Session,
 ): Promise<number> {
-  const { context, invocation, resolved } = session;
+  const { context, invocation, resolved, watched } = session;
   const { settings } = resolved;
   const windows = settings.activity.map(
     (window) => [`${window.amount}${window.unit}`, window] as const,
@@ -49,7 +49,7 @@ export default async function answerActivity(
       return events.events;
     },
     read.threads,
-    settings,
+    watched,
     window,
     grouping,
     context.now(),

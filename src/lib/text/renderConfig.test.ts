@@ -10,6 +10,7 @@ const answer: ConfigAnswer = {
   repositories: [{ repo: example, resolved: shared }],
   shared,
   gh: { login: "alice" },
+  warnings: [],
   format: "llm",
 };
 
@@ -46,6 +47,7 @@ describe("renderConfig", () => {
         message: "gh is not signed in to github.com.",
         recovery: "run gh auth login",
       },
+      warnings: [],
       format: "plain",
     });
     expect(text.split("\n")).toEqual([
@@ -136,5 +138,54 @@ describe("renderConfig", () => {
     expect(plain).toContain(
       "\nexample (example-org/example-repo)\n  people (personal file):",
     );
+  });
+});
+
+describe("renderConfig, with repository files", () => {
+  const errors = [
+    {
+      code: "CONFIG_UNKNOWN_KEY",
+      message: "The file has an unknown key `\u001b[2Jtargetz`.",
+      recovery: "Remove it.",
+    },
+  ] as const;
+  const invalid = { ...shared, repositoryErrors: errors };
+  const warning = {
+    code: "GITHUB_TIMED_OUT",
+    message: "GitHub did not answer in time.",
+    recovery: "try again",
+  } as const;
+
+  it("names each error of an invalid repository file, and each file GitHub did not give", () => {
+    const text = renderConfig({
+      ...answer,
+      repositories: [{ repo: example, resolved: invalid }],
+      warnings: [warning],
+    });
+    expect(text).toContain(
+      "- repository file invalid, so built-in defaults apply: CONFIG_UNKNOWN_KEY The file has an unknown key `targetz`. Recovery: Remove it.\n",
+    );
+    expect(text).toContain(
+      'gh: signed in to github.com as "alice".\n\n## Warning: GITHUB_TIMED_OUT\n',
+    );
+  });
+
+  it("gives a program the errors and the warnings as data", () => {
+    const data = JSON.parse(
+      renderConfig({
+        ...answer,
+        repositories: [{ repo: example, resolved: invalid }],
+        warnings: [warning],
+        format: "json",
+      }),
+    );
+    expect(data.warnings).toEqual([warning]);
+    expect(data.repositories.at(0).repositoryFileErrors).toEqual([
+      {
+        code: "CONFIG_UNKNOWN_KEY",
+        message: "The file has an unknown key `targetz`.",
+        recovery: "Remove it.",
+      },
+    ]);
   });
 });

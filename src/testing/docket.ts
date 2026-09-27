@@ -134,6 +134,7 @@ export function openSession(
     invocation: request.invocation,
     personal: { path: join(home.root, "docket.yaml"), outcome },
     resolved,
+    watched: resolved.settings.repos.map((repo) => ({ ...repo, resolved })),
     provider,
     cache: createCache({
       provider,

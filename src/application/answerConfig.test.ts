@@ -60,6 +60,37 @@ describe("answerConfig", () => {
     ).toBe(2);
   });
 
+  it("shows each repository with its own file, and the file's errors when it is invalid", async () => {
+    const { session, out } = openSession(home, ["config"]);
+    const { context, invocation, personal, resolved } = session;
+    const provider = recordedProvider({
+      readFile: async (repo) =>
+        repo === "example-org/example-repo"
+          ? "version: 1\nexempt:\n  close: [wontfix]\n"
+          : "version: 1\ntargetz: {}\n",
+    });
+    expect(
+      await answerConfig(context, invocation, personal, resolved, provider),
+    ).toBe(0);
+    expect(out()).toContain("- exempt (repository file): close wontfix\n");
+    expect(out()).toContain(
+      "- repository file invalid, so built-in defaults apply: CONFIG_UNKNOWN_KEY",
+    );
+  });
+
+  it("shows gh's failure when GitHub refuses the token while reading a repository's file, exiting 2", async () => {
+    const { session, out } = openSession(home, ["config"]);
+    const { context, invocation, personal, resolved } = session;
+    const refused = recordedProvider({
+      readFile: () => Promise.reject(providerError("GH_NOT_SIGNED_IN")),
+    });
+    expect(
+      await answerConfig(context, invocation, personal, resolved, refused),
+    ).toBe(2);
+    expect(out()).toContain("## Error: GH_NOT_SIGNED_IN\n");
+    expect(out()).toContain("- people (personal file): alice team, bob team");
+  });
+
   it("rethrows a failure that has no named code", async () => {
     const { session } = openSession(home, ["config"]);
     const { context, invocation, personal, resolved } = session;

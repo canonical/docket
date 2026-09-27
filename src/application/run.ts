@@ -16,6 +16,7 @@ import answerShow from "./answerShow.js";
 import describeFailure from "./describeFailure.js";
 import isNamedError from "./isNamedError.js";
 import parseArguments from "./parseArguments.js";
+import readRepositoryFiles from "./readRepositoryFiles.js";
 import type { Context, Session } from "./types.js";
 
 const answers = {
@@ -26,7 +27,8 @@ const answers = {
 
 /**
  * Answers one call of docket in text: parses it, reads the personal file,
- * asks gh for a token, and answers the command from the shared cache.
+ * asks gh for a token, reads each watched repository's own file, and
+ * answers the command from the shared cache.
  * Text mode never refreshes in the background: it fetches only when the
  * cached data is older than `--max-age`.
  *
@@ -82,6 +84,11 @@ export default async function run(context: Context): Promise<number> {
     }
     if ("code" in connection) return stop([connection]);
     const provider = connection;
+    const files = await readRepositoryFiles(
+      provider,
+      personal.outcome?.layer,
+      settings.repos,
+    );
     const cache = createCache({
       provider,
       repos: settings.repos.map(({ repo }) => repo),
@@ -93,13 +100,14 @@ export default async function run(context: Context): Promise<number> {
       invocation,
       personal,
       resolved,
+      watched: files.watched,
       provider,
       cache,
       describeFreshness: (syncedAt, warnings = []) => ({
         now: context.now(),
         syncedAt,
         timezone: settings.time.timezone,
-        warnings,
+        warnings: [...files.warnings, ...warnings],
       }),
     };
     return await answers[invocation.command](session);
