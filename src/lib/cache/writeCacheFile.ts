@@ -20,23 +20,25 @@ function tagDates(this: Record<string, unknown>, key: string, value: unknown) {
  * only its owner can enter, because it holds what the owner's account can
  * see on GitHub.
  *
+ * `claim` hears what names the file written, as `identifyFile` names it,
+ * before the file takes its place: a watcher can hear of the change and
+ * identify the file before this function returns, so the writer has to
+ * know the file as its own by then.
+ *
  * @note Impure: writes the filesystem.
- * @returns What names the file written, as `identifyFile` names it.
  */
 export default async function writeCacheFile(
   file: string,
   contents: CacheFile,
-): Promise<string | undefined> {
+  claim: (written: string | undefined) => void,
+): Promise<void> {
   await mkdir(dirname(file), { recursive: true, mode: 0o700 });
   const temporary = `${file}.${randomUUID()}.tmp`;
   const text = JSON.stringify({ format: cacheFormat, ...contents }, tagDates);
   try {
     await writeFile(temporary, text, { mode: 0o600 });
-    // Named before it takes the file's place, so the writer knows it by
-    // the time a watcher hears of the change.
-    const written = await identifyFile(temporary);
+    claim(await identifyFile(temporary));
     await rename(temporary, file);
-    return written;
   } catch (error) {
     await rm(temporary, { force: true });
     throw error;

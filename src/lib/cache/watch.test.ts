@@ -1,3 +1,4 @@
+import * as folders from "node:fs";
 import * as files from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,6 +7,7 @@ import { thread } from "../../testing/facts.js";
 import { fakeProvider, providerError } from "../../testing/provider.js";
 import type { Provider } from "../provider/index.js";
 import createCache from "./createCache.js";
+import identifyFile from "./identifyFile.js";
 
 // The filesystem, counted: every write and read of the cache file.
 vi.mock("node:fs/promises", async (original) => {
@@ -15,6 +17,16 @@ vi.mock("node:fs/promises", async (original) => {
     rename: vi.fn(actual.rename),
     readFile: vi.fn(actual.readFile),
   };
+});
+// The watch, which a test can replace with events it sends itself.
+vi.mock("node:fs", async (original) => {
+  const actual = await original<typeof import("node:fs")>();
+  return { ...actual, watch: vi.fn(actual.watch) };
+});
+// Each identification of a file, so a test can wait for them to finish.
+vi.mock("./identifyFile.js", async (original) => {
+  const actual = await original<typeof import("./identifyFile.js")>();
+  return { default: vi.fn(actual.default) };
 });
 
 const repo = "example-org/example-repo";
@@ -44,6 +56,13 @@ const later = (milliseconds: number) => {
 };
 const pause = (milliseconds: number) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
+/**
+ * Settles once every identification started so far has, and with it each
+ * watch event's choice to load the file or not: the event's handler waits
+ * on the identification before this does.
+ */
+const identified = () =>
+  Promise.all(vi.mocked(identifyFile).mock.results.map(({ value }) => value));
 /** A provider whose snapshots each hold one open thread of the repository. */
 const counting = () =>
   fakeProvider({
@@ -99,15 +118,36 @@ describe("the writes and the watch of createCache", () => {
     stop();
   });
 
-  it("reads back none of its own writes", async () => {
+  it("reads back none of its own writes, however soon it hears of them", async () => {
+    let hear: (event: string, name: string) => void = () => undefined;
+    vi.mocked(folders.watch).mockImplementationOnce(((
+      _folder: string,
+      listener: typeof hear,
+    ) => {
+      hear = listener;
+      return { close: () => undefined };
+    }) as unknown as typeof folders.watch);
+    // Each write is heard, and the file identified, before the writer
+    // takes back control: the soonest the watch can hear of it.
+    const actual = await vi.importActual<typeof files>("node:fs/promises");
+    const replace = async (from: string, to: string) => {
+      await actual.rename(from, to);
+      hear("rename", "snapshots.json");
+      await identified();
+    };
+    vi.mocked(files.rename)
+      .mockImplementationOnce(replace as typeof files.rename)
+      .mockImplementationOnce(replace as typeof files.rename);
     const pane = open(counting());
     const stop = pane.watch();
     await pane.refresh();
     const read = reads();
     later(3 * minute);
     await pane.refresh();
-    expect(reads()).toBe(read + 1);
-    await pause(200);
+    // The first write's event, heard late.
+    hear("rename", "snapshots.json");
+    await identified();
+    expect(writes()).toBe(2);
     expect(reads()).toBe(read + 1);
     stop();
   });

@@ -130,12 +130,10 @@ export default function createCache({
     }
     publish();
   };
-  const save = async () => {
-    written = await writeCacheFile(file, {
-      state: dehydrate(client),
-      fullRefreshAt,
+  const save = () =>
+    writeCacheFile(file, { state: dehydrate(client), fullRefreshAt }, (id) => {
+      written = id;
     });
-  };
 
   /** Reads again the checks still running, on every repository at once. */
   const refreshChecks = async (synced: readonly RepoCache[]) => {
