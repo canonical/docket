@@ -2,6 +2,7 @@ import type { Budget, Provider } from "../provider/index.js";
 import { capabilities } from "./constants.js";
 import createClient from "./createClient.js";
 import fetchEvents from "./fetchEvents.js";
+import fetchFile from "./fetchFile.js";
 import fetchSnapshot from "./fetchSnapshot.js";
 import fetchThreadDetail from "./fetchThreadDetail.js";
 import fetchViewer from "./fetchViewer.js";
@@ -66,6 +67,7 @@ export default async function createProvider(
     setReviewers: (pull, reviewers) => setReviewers(client, pull, reviewers),
     teamMembers: ({ team }) => teamMembers(team),
     probe: (repo, tag) => probeChanges(client, repo, tag),
+    readFile: (repo, path) => fetchFile(client, repo, path),
     async budget(): Promise<Budget> {
       // Asking for the rate figures alone is not charged, so the first
       // call costs nothing; later ones reuse the latest answer's figures.
