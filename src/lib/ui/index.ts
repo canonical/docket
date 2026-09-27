@@ -7,6 +7,8 @@ export {
   type NoticeProps,
   ProgressLine,
   type ProgressLineProps,
+  StatusLine,
+  type StatusLineProps,
 } from "./component/index.js";
 export {
   PaneHeader,
