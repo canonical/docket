@@ -1,3 +1,5 @@
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { mkdir, mkdtemp, readdir, rm, utimes } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -104,4 +106,34 @@ describe("withFetchLock", () => {
     expect(result).toBe(2);
     expect(await readdir(directory)).toEqual([]);
   });
+
+  it("leaves alone the lock another process took over while this one stalled, and runs the task again", async () => {
+    let said = "";
+    let taken: Promise<unknown> = Promise.resolve();
+    let runs = 0;
+    const result = await withFetchLock(directory, async () => {
+      runs += 1;
+      if (runs === 1) {
+        const taker = spawn(process.execPath, [
+          "src/testing/lockTaker.ts",
+          directory,
+        ]);
+        taken = once(taker, "exit");
+        taker.stdout.on("data", (chunk: Buffer) => {
+          said += chunk.toString();
+        });
+        await vi.waitFor(() => expect(said).toContain("waiting"), {
+          timeout: 5_000,
+        });
+        // This process stalls, touching its lock no more, for longer than
+        // the other process lets a lock go untouched before taking it.
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 4_000);
+      }
+      return runs;
+    });
+    await taken;
+    expect(said.trim().split("\n")).toEqual(["waiting", "kept"]);
+    expect(result).toBe(2);
+    expect(await readdir(directory)).toEqual([]);
+  }, 20_000);
 });

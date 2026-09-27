@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { lock } from "proper-lockfile";
 import CacheError from "./CacheError.js";
 import { lockName, lockTiming } from "./constants.js";
+import identifyFile from "./identifyFile.js";
 
 /** Turns a wait for the lock that ran out into a `CacheError`. */
 const describeWait = (error: unknown): never => {
@@ -22,7 +23,8 @@ const describeWait = (error: unknown): never => {
  * When the lock is lost while `task` runs, to a process that judged it
  * abandoned, `task`'s result is dropped and it runs again under the lock
  * taken anew: `task` reads the cache first, so it finds the other
- * process's data and fetches only if that is still needed.
+ * process's data and fetches only if that is still needed. A lost lock is
+ * never given up: it belongs to the process that took it.
  *
  * @note Impure: creates the folder and the lock in the filesystem.
  * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds the
@@ -35,20 +37,30 @@ export default async function withFetchLock<T>(
   // The lock library resolves the real path of what it locks, which
   // therefore exists first.
   await mkdir(directory, { recursive: true, mode: 0o700 });
+  const lockfilePath = join(directory, lockName);
   for (;;) {
     let lost = false;
     const release = await lock(directory, {
       ...lockTiming,
-      lockfilePath: join(directory, lockName),
+      lockfilePath,
       onCompromised: () => {
         lost = true;
       },
     }).catch(describeWait);
+    const held = await identifyFile(lockfilePath);
+    let outcome: { readonly value: T } | { readonly error: unknown };
     try {
-      const result = await task();
-      if (!lost) return result;
-    } finally {
-      if (!lost) await release();
+      outcome = { value: await task() };
+    } catch (error) {
+      outcome = { error };
     }
+    // The library hears that its lock was taken only when its next touch
+    // of the lock comes due, which a process that stalled runs late, and
+    // it gives up whatever lock it finds. The lock in the folder says at
+    // once whether it is still this one.
+    if ((await identifyFile(lockfilePath)) !== held) lost = true;
+    if (!lost) await release();
+    if ("error" in outcome) throw outcome.error;
+    if (!lost) return outcome.value;
   }
 }
