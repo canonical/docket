@@ -1,0 +1,15 @@
+{
+  "name": "docket",
+  "version": "0.0.0",
+  "description": "A terminal tool that shows how long each GitHub issue and pull request has been waiting on its maintainers.",
+  "private": true,
+  "type": "module",
+  "author": "advl",
+  "license": "MIT",
+  "engines": {
+    "bun": ">=1.4.0"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.2"
+  }
+}
