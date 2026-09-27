@@ -58,7 +58,7 @@ function createLocalTimeReader(
 /**
  * Finds the first instant whose local date comes after `today`'s.
  *
- * Local midnight is tried at the offset in force now and at the offset in
+ * Local midnight is tried at the offset in force today and at the offset in
  * force at that first guess. Where a clock change skips midnight, the first
  * guess lands on the change itself; where a change repeats the evening, the
  * second guess lands on the real midnight. The earliest guess that falls on
