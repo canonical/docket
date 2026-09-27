@@ -5,7 +5,7 @@
 - `bun install`: installs the exact toolchain that `bun.lock` records.
 - `bun run ci`: runs every gate below in order, and passes only when all of them pass. A pull request is ready when it passes locally.
 - `bun run build`: type-checks the shipped sources with `tsconfig.build.json`, then compiles `src/application/main.ts` into one Linux x64 executable at `dist/docket`.
-- `bun run check`: runs Biome's formatter and linter over the repository, then type-checks everything under `src/` with `tsconfig.json`.
+- `bun run check`: runs Biome's formatter and linter over the repository, then type-checks everything under `src/` and `guarantees/` with `tsconfig.json`.
 - `bunx biome check --write`: applies Biome's formatting and safe lint fixes.
 - `bun run test`: runs the unit tests with vitest under Bun.
 - `bun run test:coverage`: runs them with v8 coverage, and fails below 100% of the lines, branches, functions and statements in `src/application/` and `src/lib/`.
@@ -15,6 +15,7 @@
 - `bun run check:licences`: refuses any production dependency whose licence is not on the permissive list in `src/scripts/check-licences.ts`.
 - `bun run check:structure`: checks the source tree's shape against the conventions below: exports and file names, barrels, folders, the direction of imports between domains, and file length.
 - `bun run self-test`: proves the identity, secret, advisory, licence and structure gates can each fail, by running each against a scratch fixture it must reject.
+- `bun run guarantees`: runs the guarantees corpus's `pr` tier, `guarantees/corpus.toml`'s entries one at a time; `bun guarantees/invoker.ts run <entry>` runs one.
 - `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>`, `assign <reference> <login>…`, `review <reference> <login or org/team>…` and `config`; `--help` after any of them gives its flags, an example and its exit codes. When a terminal gives both the input and the output, `docket` alone opens the terminal interface on owed instead, and `docket activity` without `--format` opens it on activity; piped or captured, every call prints text. `?` lists its keys and `q` quits.
 
 ## Conventions
@@ -50,6 +51,7 @@
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.
 - Tests of the GitHub provider stub `fetch` with `fakeGitHub()` from `src/testing/github.ts`, which answers with responses in the shapes GitHub gives, and run under fake timers, settling each call with `settle()` so the throttling plugin's waits pass at once. No test reaches the network.
 - Tests of the text interface answer from `recordedProvider()` in `src/testing/recorded.ts` at `recordedNow`, and compare whole outputs line by line. `makeHome()` and `openSession()` in `src/testing/docket.ts` run a call, or one command, on a temporary configuration and cache.
+- A guarantee is a test file and a row in `guarantees/corpus.toml`. The tier's `expect = "fail"` entry must fail for the tier to pass.
 - Fixtures and examples use neutral names only: `alice`, `bob`, `example.com`, `example-org/example-repo`.
 - Commit subjects follow Conventional Commits, with the domain as the scope. Commits are normal commits: no amending and no force-pushing.
 - A pull request fills `.github/PULL_REQUEST_TEMPLATE.md`.

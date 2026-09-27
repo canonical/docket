@@ -20,7 +20,8 @@
     "check:licences": "bun src/scripts/check-licences.ts",
     "check:structure": "bun src/scripts/check-structure.ts",
     "self-test": "bun src/scripts/check-identity.ts --self-test && bun src/scripts/check-secrets.ts --self-test && bun src/scripts/check-audit.ts --self-test && bun src/scripts/check-licences.ts --self-test && bun src/scripts/check-structure.ts --self-test",
-    "ci": "bun run check && bun run build && bun run test:coverage && bun run self-test && bun run check:identity && bun run check:secrets && bun run check:audit && bun run check:licences && bun run check:structure"
+    "guarantees": "bun guarantees/invoker.ts tier pr",
+    "ci": "bun run check && bun run build && bun run test:coverage && bun run self-test && bun run check:identity && bun run check:secrets && bun run check:audit && bun run check:licences && bun run check:structure && bun run guarantees"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",

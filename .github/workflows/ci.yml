@@ -87,3 +87,13 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun src/scripts/check-structure.ts --self-test
       - run: bun run check:structure
+
+  guarantees:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun run guarantees
