@@ -1,3 +1,4 @@
+import type { PageProgress } from "../provider/index.js";
 import type { Client, PageNode } from "./types.js";
 
 /** What every thread in the three lists gives. */
@@ -43,6 +44,9 @@ const newest = <T extends ListNode>(a: T, b: T): T =>
  * included by `$withIssues`, `$withPulls` and `$withDiscussions`.
  * @param since Keeps only the threads updated at or after it, the lists
  * being ordered by update, newest first.
+ * @param onPage Hears of each page read. The total comes from the lists'
+ * `totalCount` on the first page and the page size `$size`; a document
+ * that asks for no count gives the pages read so far.
  */
 export default async function fetchLists<
   I extends ListNode,
@@ -53,6 +57,7 @@ export default async function fetchLists<
   document: string,
   variables: Record<string, unknown>,
   since: Date | undefined,
+  onPage?: (progress: PageProgress) => void,
 ): Promise<Lists<I, P, D>> {
   const found: Record<Kind, Map<number, ListNode>> = {
     issues: new Map(),
@@ -64,6 +69,8 @@ export default async function fetchLists<
     pullRequests: { after: null, done: false },
     discussions: { after: null, done: false },
   };
+  let fetched = 0;
+  let total = 0;
   while (kinds.some((kind) => !reading[kind].done)) {
     const paging = Object.fromEntries(
       kinds.flatMap((kind) => {
@@ -77,6 +84,18 @@ export default async function fetchLists<
     const { repository } = await client.query<{
       readonly repository: Partial<Record<Kind, PageNode<ListNode>>>;
     }>(document, { ...variables, ...paging });
+    fetched += 1;
+    if (fetched === 1) {
+      for (const kind of kinds) {
+        const count = repository[kind]?.totalCount;
+        if (count) {
+          total = Math.max(total, Math.ceil(count / Number(variables.size)));
+        }
+      }
+    }
+    // A list can grow while it is read, so the total never falls behind.
+    total = Math.max(total, fetched);
+    onPage?.({ fetched, total });
     for (const kind of kinds) {
       const list = repository[kind];
       if (!list) continue;

@@ -71,6 +71,8 @@ export interface WrittenNode {
 
 /** A GraphQL list of nodes, with where the next page starts. */
 export interface PageNode<T> {
+  /** How many nodes the whole list holds, when the document asks. */
+  readonly totalCount?: number;
   readonly pageInfo: {
     readonly hasNextPage: boolean;
     readonly endCursor: string | null;
