@@ -160,6 +160,7 @@ export interface Budget {
 export type ProviderErrorCode =
   | "GH_NOT_INSTALLED"
   | "GH_NOT_SIGNED_IN"
+  | "GH_TIMED_OUT"
   | "GITHUB_RATE_LIMITED"
   | "GITHUB_REQUEST_FAILED";
 

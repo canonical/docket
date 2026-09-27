@@ -34,8 +34,8 @@ interface BudgetAnswer {
  * @param host The GitHub host of the watched repositories, as the
  * configuration's `hosts` names it, such as `github.com`.
  * @param version docket's version, sent in the User-Agent GitHub requires.
- * @throws GitHubError `GH_NOT_INSTALLED` or `GH_NOT_SIGNED_IN` when `gh`
- * gives no token.
+ * @throws GitHubError `GH_NOT_INSTALLED`, `GH_NOT_SIGNED_IN` or
+ * `GH_TIMED_OUT` when `gh` gives no token.
  */
 export default async function createProvider(
   host: string,

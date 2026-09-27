@@ -68,7 +68,7 @@ describe("readToken", () => {
     });
   });
 
-  it("names GH_NOT_SIGNED_IN, with a way to see why, when gh gives no token in time", async () => {
+  it("names GH_TIMED_OUT, with a way to see why, when gh gives no token in time", async () => {
     answer(
       Object.assign(new Error("Command failed"), {
         killed: true,
@@ -78,7 +78,7 @@ describe("readToken", () => {
       "",
     );
     await expect(readToken("github.com")).rejects.toMatchObject({
-      code: "GH_NOT_SIGNED_IN",
+      code: "GH_TIMED_OUT",
       message: "gh gave no token for github.com within 10 seconds.",
       recovery: "run gh auth status, and unlock the keyring if it asks",
     });

@@ -14,9 +14,9 @@ const timeout = 10_000;
  * the network, so docket reads neither those variables nor gh's files.
  *
  * @note Impure: runs `gh`.
- * @throws GitHubError `GH_NOT_INSTALLED` when `gh` cannot be run, and
- * `GH_NOT_SIGNED_IN` when it has no token for `host` or gives none
- * in time.
+ * @throws GitHubError `GH_NOT_INSTALLED` when `gh` cannot be run,
+ * `GH_TIMED_OUT` when it gives no token in time, and `GH_NOT_SIGNED_IN`
+ * when it has no token for `host`.
  */
 export default function readToken(host: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -40,7 +40,7 @@ export default function readToken(host: string): Promise<string> {
         } else if (failure?.killed) {
           reject(
             new GitHubError(
-              "GH_NOT_SIGNED_IN",
+              "GH_TIMED_OUT",
               `gh gave no token for ${host} within ${timeout / 1000} seconds.`,
               "run gh auth status, and unlock the keyring if it asks",
             ),
