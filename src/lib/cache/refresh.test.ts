@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, utimes } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -25,6 +25,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.useRealTimers();
   await rm(root, { recursive: true, force: true });
 });
 
@@ -127,6 +128,25 @@ describe("the refresh step of createCache", () => {
     later(2 * minute);
     await cache.refresh();
     expect(cache.status().failure).toBeUndefined();
+  });
+
+  it("keeps a wait for another process's fetch that runs out in the status", async () => {
+    // Another process holds the fetch lock and keeps touching it.
+    const held = join(directory, "fetch.lock");
+    await mkdir(held, { recursive: true });
+    const touched = new Date(Date.now() + 3_600_000);
+    await utimes(held, touched, touched);
+    const provider = counting();
+    const cache = open(provider);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const refreshing = cache.refresh();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    vi.setSystemTime(Date.now() + 120_000);
+    await refreshing;
+    expect(cache.status().failure).toMatchObject({
+      code: "CACHE_LOCK_TIMED_OUT",
+    });
+    expect(provider.snapshot).not.toHaveBeenCalled();
   });
 
   it("throws a failure that is not the provider's", async () => {

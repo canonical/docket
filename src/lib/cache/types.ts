@@ -5,6 +5,14 @@ import type {
   ProviderError,
 } from "../provider/index.js";
 import type { Thread } from "../waits/index.js";
+import type CacheError from "./CacheError.js";
+
+/**
+ * The named codes of the cache's own errors. This is the one list of
+ * them. Callers and scripts depend on the codes, so a code is never
+ * renamed or reused.
+ */
+export type CacheErrorCode = "CACHE_LOCK_TIMED_OUT";
 
 /** What the cache keeps for one repository. */
 export interface RepoCache {
@@ -62,7 +70,7 @@ export interface CacheStatus {
    * What stopped the last refresh, such as no answer from the network. The
    * threads fetched before stay, and `syncedAt` gives their age.
    */
-  readonly failure: ProviderError | undefined;
+  readonly failure: ProviderError | CacheError | undefined;
 }
 
 /** Where the cache keeps its data, and where it fetches it from. */
@@ -95,12 +103,15 @@ export interface Cache {
    * already did.
    *
    * @throws ProviderError when the provider fails.
+   * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
+   * the fetch lock for longer than the wait allows.
    */
   read(maxAge: number): Promise<CachedThreads>;
   /**
    * One step of the refresh cycle: syncs data older than the refresh
    * interval, unless the budget is low or the cycle is paused. A provider
-   * error is kept in the status rather than thrown.
+   * error, or a wait for the fetch lock that runs out, is kept in the
+   * status rather than thrown.
    *
    * @throws Any error that is not the provider's, such as a full disk.
    */
@@ -109,8 +120,8 @@ export interface Cache {
    * Discards the cached data, here and in the file, and fetches every
    * repository whole, reporting its progress in the status. One is
    * refused within `fullRefreshCooldown` of the last, and the status then
-   * says when one is available. A provider error is kept in the status
-   * rather than thrown.
+   * says when one is available. A provider error, or a wait for the fetch
+   * lock that runs out, is kept in the status rather than thrown.
    *
    * @throws Any error that is not the provider's, such as a full disk.
    */

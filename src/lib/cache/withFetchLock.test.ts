@@ -1,7 +1,7 @@
-import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm, utimes } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import withFetchLock from "./withFetchLock.js";
 
 let root: string;
@@ -13,6 +13,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.useRealTimers();
   await rm(root, { recursive: true, force: true });
 });
 
@@ -55,6 +56,38 @@ describe("withFetchLock", () => {
       }),
     ).rejects.toThrow("no answer");
     expect(await withFetchLock(directory, async () => "next")).toBe("next");
+  });
+
+  it("gives up with CACHE_LOCK_TIMED_OUT once another holder keeps the lock for two minutes", async () => {
+    // A holder that keeps touching its lock, so it is never taken over.
+    const held = join(directory, "fetch.lock");
+    await mkdir(held, { recursive: true });
+    const touched = new Date(Date.now() + 3_600_000);
+    await utimes(held, touched, touched);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const waiting = withFetchLock(directory, async () => "ran").catch(
+      (error: unknown) => error,
+    );
+    await pause(300);
+    vi.setSystemTime(Date.now() + 120_000);
+    expect(await waiting).toMatchObject({
+      code: "CACHE_LOCK_TIMED_OUT",
+      message:
+        "Another docket process kept fetching for more than 120 seconds.",
+      recovery:
+        "try again once the other docket process has fetched, or close it",
+    });
+  });
+
+  it("passes on a failure to take the lock that is not another holder's", async () => {
+    await mkdir(directory, { recursive: true, mode: 0o500 });
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const failing = withFetchLock(directory, async () => "ran").catch(
+      (error: unknown) => error,
+    );
+    await pause(300);
+    vi.setSystemTime(Date.now() + 120_000);
+    expect(await failing).toMatchObject({ code: "EACCES" });
   });
 
   it("runs the task again under a new lock when the lock is lost while it runs", async () => {

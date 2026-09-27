@@ -22,14 +22,21 @@ export const lockName = "fetch.lock";
  * touches the lock every `update`, so it hears within a second when
  * another process took the lock from it; a lock untouched for `stale` is
  * left by a process that died, and is taken over. A process waits for the
- * lock for as long as a live holder keeps it, retrying between
- * `minTimeout` and `maxTimeout` apart, because the holder is fetching the
- * data the waiter wants.
+ * lock while a live holder keeps it, because the holder is fetching the
+ * data the waiter wants, retrying between `minTimeout` and `maxTimeout`
+ * apart, and gives up after `maxRetryTime`: longer than a first fetch of
+ * several repositories takes, and short enough that an agent's command
+ * ends.
  */
 export const lockTiming = {
   stale: 10_000,
   update: 1_000,
-  retries: { forever: true, minTimeout: 100, maxTimeout: 1_000 },
+  retries: {
+    forever: true,
+    minTimeout: 100,
+    maxTimeout: 1_000,
+    maxRetryTime: 120_000,
+  },
 } as const;
 
 /**

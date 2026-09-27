@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { PageProgress, ProviderError } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
+import type CacheError from "./CacheError.js";
 import {
   budgetFloor,
   cacheFileName,
@@ -21,8 +22,11 @@ import type {
 import withFetchLock from "./withFetchLock.js";
 import writeCacheFile from "./writeCacheFile.js";
 
-/** Whether a provider threw `error`, with its code and recovery. */
-const isProviderError = (error: unknown): error is ProviderError =>
+/**
+ * Whether `error` is one a user can meet, from the provider or the cache
+ * itself, with its code and recovery.
+ */
+const isNamedError = (error: unknown): error is ProviderError | CacheError =>
   error instanceof Error &&
   typeof (error as Partial<ProviderError>).code === "string" &&
   typeof (error as Partial<ProviderError>).recovery === "string";
@@ -156,12 +160,13 @@ export default function createCache({
     });
 
   /**
-   * Keeps a provider error in the status. A refusal for the rate limit
+   * Keeps a provider error, or the cache's own, in the status. A refusal
+   * for the rate limit
    * pauses the cycle until the budget resets, when the provider can say
    * when that is.
    */
   const record = async (error: unknown) => {
-    if (!isProviderError(error)) throw error;
+    if (!isNamedError(error)) throw error;
     if (error.code === "GITHUB_RATE_LIMITED") {
       const until = await provider.budget().then(
         ({ resetAt }) => resetAt,

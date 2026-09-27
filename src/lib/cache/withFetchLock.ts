@@ -1,7 +1,18 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { lock } from "proper-lockfile";
+import CacheError from "./CacheError.js";
 import { lockName, lockTiming } from "./constants.js";
+
+/** Turns a wait for the lock that ran out into a `CacheError`. */
+const describeWait = (error: unknown): never => {
+  if ((error as { code?: unknown }).code !== "ELOCKED") throw error;
+  throw new CacheError(
+    "CACHE_LOCK_TIMED_OUT",
+    `Another docket process kept fetching for more than ${lockTiming.retries.maxRetryTime / 1000} seconds.`,
+    "try again once the other docket process has fetched, or close it",
+  );
+};
 
 /**
  * Runs `task` while holding the fetch lock of the cache folder, so only
@@ -14,6 +25,8 @@ import { lockName, lockTiming } from "./constants.js";
  * process's data and fetches only if that is still needed.
  *
  * @note Impure: creates the folder and the lock in the filesystem.
+ * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds the
+ * lock for longer than `lockTiming` waits.
  */
 export default async function withFetchLock<T>(
   directory: string,
@@ -30,7 +43,7 @@ export default async function withFetchLock<T>(
       onCompromised: () => {
         lost = true;
       },
-    });
+    }).catch(describeWait);
     try {
       const result = await task();
       if (!lost) return result;
