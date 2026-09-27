@@ -1,4 +1,4 @@
-import type { Cursor, Provider } from "../provider/index.js";
+import type { Cursor, Provider, ProviderError } from "../provider/index.js";
 import type { Thread } from "../waits/index.js";
 
 /** What the cache keeps for one repository. */
@@ -29,6 +29,18 @@ export interface CacheStatus {
   readonly syncedAt: Date | undefined;
   /** True while a refresh fetches. */
   readonly refreshing: boolean;
+  /**
+   * Until when the refresh cycle pauses, and why: the budget ran low, or
+   * the provider refused a request for its rate limit.
+   */
+  readonly paused:
+    | { readonly until: Date; readonly reason: "budget" | "rateLimit" }
+    | undefined;
+  /**
+   * What stopped the last refresh, such as no answer from the network. The
+   * threads fetched before stay, and `syncedAt` gives their age.
+   */
+  readonly failure: ProviderError | undefined;
 }
 
 /** Where the cache keeps its data, and where it fetches it from. */
@@ -63,6 +75,21 @@ export interface Cache {
    * @throws ProviderError when the provider fails.
    */
   read(maxAge: number): Promise<CachedThreads>;
+  /**
+   * One step of the refresh cycle: syncs data older than the refresh
+   * interval, unless the budget is low or the cycle is paused. A provider
+   * error is kept in the status rather than thrown.
+   *
+   * @throws Any error that is not the provider's, such as a full disk.
+   */
+  refresh(): Promise<void>;
+  /**
+   * Reloads the cache whenever another process writes it, watching the
+   * cache folder: the file itself is replaced on every write.
+   *
+   * @returns Stops watching.
+   */
+  watch(): () => void;
   status(): CacheStatus;
   /** Calls `listener` whenever the threads or the status change. */
   subscribe(listener: () => void): () => void;

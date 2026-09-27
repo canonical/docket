@@ -1,7 +1,9 @@
+import { mkdirSync, watch as watchFolder } from "node:fs";
 import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
+import type { ProviderError } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
-import { cacheFileName } from "./constants.js";
+import { budgetFloor, cacheFileName, refreshInterval } from "./constants.js";
 import readCacheFile from "./readCacheFile.js";
 import syncRepo from "./syncRepo.js";
 import type {
@@ -13,6 +15,12 @@ import type {
 } from "./types.js";
 import withFetchLock from "./withFetchLock.js";
 import writeCacheFile from "./writeCacheFile.js";
+
+/** Whether a provider threw `error`, with its code and recovery. */
+const isProviderError = (error: unknown): error is ProviderError =>
+  error instanceof Error &&
+  typeof (error as Partial<ProviderError>).code === "string" &&
+  typeof (error as Partial<ProviderError>).recovery === "string";
 
 /**
  * Opens the cache of the watched repositories' threads, shared through
@@ -38,6 +46,8 @@ export default function createCache({
   const file = join(directory, cacheFileName);
   const listeners = new Set<() => void>();
   let refreshing = false;
+  let paused: CacheStatus["paused"];
+  let failure: CacheStatus["failure"];
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
@@ -115,6 +125,26 @@ export default function createCache({
       }
     });
 
+  /**
+   * Keeps a provider error in the status. A refusal for the rate limit
+   * pauses the cycle until the budget resets, when the provider can say
+   * when that is.
+   */
+  const record = async (error: unknown) => {
+    if (!isProviderError(error)) throw error;
+    if (error.code === "GITHUB_RATE_LIMITED") {
+      const until = await provider.budget().then(
+        ({ resetAt }) => resetAt,
+        () => undefined,
+      );
+      if (until) {
+        paused = { until, reason: "rateLimit" };
+        return;
+      }
+    }
+    failure = error;
+  };
+
   return {
     threads,
     load,
@@ -123,7 +153,36 @@ export default function createCache({
       if (!isFresh(maxAge)) await sync(maxAge);
       return threads();
     },
-    status: (): CacheStatus => ({ syncedAt: syncedAt(), refreshing }),
+    async refresh() {
+      const at = now();
+      if (paused && at < paused.until) return;
+      try {
+        const { limit, remaining, resetAt } = await provider.budget();
+        if (at < resetAt && remaining < limit * budgetFloor) {
+          paused = { until: resetAt, reason: "budget" };
+        } else {
+          await sync(refreshInterval);
+          paused = undefined;
+          failure = undefined;
+        }
+      } catch (error) {
+        await record(error);
+      }
+      notify();
+    },
+    watch() {
+      mkdirSync(directory, { recursive: true, mode: 0o700 });
+      const watcher = watchFolder(directory, (_event, name) => {
+        if (name === cacheFileName) void load();
+      });
+      return () => watcher.close();
+    },
+    status: (): CacheStatus => ({
+      syncedAt: syncedAt(),
+      refreshing,
+      paused,
+      failure,
+    }),
     subscribe(listener) {
       listeners.add(listener);
       return () => {

@@ -45,3 +45,16 @@ export const defaultMaxAge = 300_000;
  * deleted or moved to another repository; fetching everything drops it.
  */
 export const reconcileInterval = 3_600_000;
+
+/**
+ * How long, in milliseconds, an open terminal interface waits after one
+ * refresh ends before the next begins. A cycle costs about 150 points an
+ * hour, 450 at worst: under a tenth of GitHub's hourly 5,000.
+ */
+export const refreshInterval = 120_000;
+
+/**
+ * The share of the hourly budget below which the refresh cycle pauses
+ * until the budget resets, leaving the rest to the user's own requests.
+ */
+export const budgetFloor = 0.2;
