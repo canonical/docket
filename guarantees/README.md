@@ -4,7 +4,18 @@ The few behaviours of docket whose silent change would mislead a maintainer or a
 
 ## A layer of its own
 
-The unit tests beside the code pin behaviour from inside. The corpus pins it from outside: it starts docket as its own process and reads only what a user reads. Nothing here imports `src/`, and nothing in `src/` imports this folder; `bun run check:structure` refuses both. A guarantee is written as one from the start, and a unit test never moves here.
+The unit tests beside the code pin behaviour from inside. The corpus pins it from outside: it starts docket as its own process, `bun src/application/main.ts`, and reads only what a user reads, the output, the exit code and the requests docket sent to GitHub. Nothing here imports `src/`, and nothing in `src/` imports this folder; `bun run check:structure` refuses both. A guarantee is written as one from the start, and a unit test never moves here.
+
+## What a call runs against
+
+`docket.ts` runs each call in a temporary home: a personal file, an empty cache folder, and a `gh` on `PATH` that answers with a token no account holds. Nothing of the machine's own environment reaches docket.
+
+`standIn.ts` is preloaded into that process (`bun --preload`) and stands in for the two things outside docket that a guarantee has to fix, without any change to docket's code:
+
+- the clock: `new Date()` gives the instant the guarantee names;
+- GitHub: `fetch` answers from a recording under `fixtures/`, logs every request, and answers a request that sends back an entity tag with "not modified", as GitHub does.
+
+The recordings are written in GitHub's own response shapes, from GitHub's API, with neutral names only.
 
 ## Commands
 
@@ -22,4 +33,5 @@ The invoker judges each run by vitest's own report, not by its exit code alone: 
 
 | Entry | Kind | What it pins |
 |---|---|---|
+| `working-clock` | determinism | A 24-hour reply target set on Friday at 16:00 falls due on Monday at 16:00, across weekends, time zones and the change to and from daylight saving time; the machine's own time zone changes nothing. |
 | `corpus-can-fail` | conformance | Fails on purpose, so a green tier means something. |

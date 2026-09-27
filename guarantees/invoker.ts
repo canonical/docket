@@ -24,7 +24,7 @@ import { join, relative, resolve } from "node:path";
 const corpusRoot = import.meta.dirname;
 const repoRoot = resolve(corpusRoot, "..");
 
-const kinds = ["conformance"];
+const kinds = ["determinism", "conformance"];
 const tiers = ["pr"];
 const expectations = ["pass", "fail"];
 

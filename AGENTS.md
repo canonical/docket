@@ -51,6 +51,7 @@
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.
 - Tests of the GitHub provider stub `fetch` with `fakeGitHub()` from `src/testing/github.ts`, which answers with responses in the shapes GitHub gives, and run under fake timers, settling each call with `settle()` so the throttling plugin's waits pass at once. No test reaches the network.
 - Tests of the text interface answer from `recordedProvider()` in `src/testing/recorded.ts` at `recordedNow`, and compare whole outputs line by line. `makeHome()` and `openSession()` in `src/testing/docket.ts` run a call, or one command, on a temporary configuration and cache.
+- The guarantees corpus runs docket as its own process, `bun --preload guarantees/standIn.ts src/application/main.ts`, in a temporary home with a stand-in `gh` on `PATH`. The stand-in fixes `new Date()` at the instant a guarantee names and answers `fetch` from a recording under `guarantees/fixtures/`, written in GitHub's response shapes. A guarantee reads only the output, the exit code and the requests sent.
 - A guarantee is a test file and a row in `guarantees/corpus.toml`. The tier's `expect = "fail"` entry must fail for the tier to pass.
 - Fixtures and examples use neutral names only: `alice`, `bob`, `example.com`, `example-org/example-repo`.
 - Commit subjects follow Conventional Commits, with the domain as the scope. Commits are normal commits: no amending and no force-pushing.
