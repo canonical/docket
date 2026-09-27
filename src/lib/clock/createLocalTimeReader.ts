@@ -9,13 +9,17 @@ export interface LocalTime {
   readonly weekday: Weekday;
 }
 
+type Reader = (instant: number) => LocalTime;
+
 /**
- * Prepares a reader of the local time `timezone` shows at an instant,
- * with one formatter for every reading.
+ * The reader of each zone asked for so far. Building a formatter costs
+ * more than a week of readings, and a reader holds nothing but its
+ * formatter, so every caller in a zone shares one.
  */
-export default function createLocalTimeReader(
-  timezone: string,
-): (instant: number) => LocalTime {
+const readers = new Map<string, Reader>();
+
+/** Builds a reader of the local time `timezone` shows at an instant. */
+function buildReader(timezone: string): Reader {
   const format = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     hourCycle: "h23",
@@ -47,4 +51,17 @@ export default function createLocalTimeReader(
       weekday: String(parts.weekday).toLowerCase() as Weekday,
     };
   };
+}
+
+/**
+ * Gives the reader of the local time `timezone` shows at an instant, with
+ * one formatter per zone for every reading.
+ */
+export default function createLocalTimeReader(timezone: string): Reader {
+  let reader = readers.get(timezone);
+  if (!reader) {
+    reader = buildReader(timezone);
+    readers.set(timezone, reader);
+  }
+  return reader;
 }
