@@ -1,6 +1,9 @@
 import createDayReader from "./createDayReader.js";
 import type { WorkingClock } from "./types.js";
 
+const dayMilliseconds = 86_400_000;
+const weekMilliseconds = 7 * dayMilliseconds;
+
 /**
  * Finds the instant at which `milliseconds` of working time have passed
  * since `start`. The clock runs continuously on workdays and stands still
@@ -19,11 +22,22 @@ export default function addWorkingTime(
     throw new RangeError("A working clock needs at least one workday.");
   }
   const readDay = createDayReader(clock);
+  const workingWeek = clock.workdays.length * dayMilliseconds;
   let day = readDay(start.getTime());
   let remaining = milliseconds;
   while (!day.working || remaining > day.end - day.start) {
     if (day.working) remaining -= day.end - day.start;
     day = readDay(day.end);
+    // From a local midnight, seven days on at the same offset is local
+    // midnight again. No zone changes its clock and back within a week, so
+    // the week between holds each workday once at 24 hours, and it is
+    // skipped whole rather than walked day by day.
+    while (remaining > workingWeek) {
+      const later = readDay(day.start + weekMilliseconds);
+      if (later.offset !== day.offset) break;
+      remaining -= workingWeek;
+      day = later;
+    }
   }
   return new Date(day.start + remaining);
 }

@@ -6,6 +6,8 @@ export interface Day {
   readonly start: number;
   /** The first instant of the next day. */
   readonly end: number;
+  /** How far the local wall clock runs ahead of UTC at `start`. */
+  readonly offset: number;
   readonly working: boolean;
 }
 
@@ -109,6 +111,7 @@ export default function createDayReader(
     return {
       start: from,
       end: next.instant,
+      offset: today.offset,
       working: clock.workdays.includes(today.weekday),
     };
   };

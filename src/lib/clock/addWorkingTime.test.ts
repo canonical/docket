@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import addWorkingTime from "./addWorkingTime.js";
 import { hourMilliseconds } from "./constants.js";
 import type { WorkingClock } from "./types.js";
@@ -57,6 +57,33 @@ describe("addWorkingTime", () => {
     expect(addWorkingTime(at("2026-09-25T23:00Z"), hours(1), tokyo)).toEqual(
       at("2026-09-28T01:00+09:00"),
     );
+  });
+
+  it("carries 52 working weeks across two clock changes to the same weekday and hour", () => {
+    expect(
+      addWorkingTime(at("2026-09-25T16:00+02:00"), hours(52 * 120), paris),
+    ).toEqual(at("2027-09-24T16:00+02:00"));
+  });
+
+  it("walks a week in which the clocks change rather than skipping it", () => {
+    // Sunday 29 March 2026 lasts 23 hours in Paris, and is the only workday.
+    const sundays: WorkingClock = { ...paris, workdays: ["sun"] };
+    expect(
+      addWorkingTime(at("2026-03-27T12:00+01:00"), hours(25), sundays),
+    ).toEqual(at("2026-04-05T02:00+02:00"));
+  });
+
+  it("skips whole weeks rather than reading every day of a long duration", () => {
+    const reads = vi.spyOn(Intl.DateTimeFormat.prototype, "formatToParts");
+    const due = addWorkingTime(
+      at("2026-09-25T16:00+02:00"),
+      hours(260 * 120),
+      paris,
+    );
+    expect(due).toEqual(at("2031-09-19T16:00+02:00"));
+    // Fewer readings than the 1,300 workdays the duration spans.
+    expect(reads.mock.calls.length).toBeLessThan(1300);
+    reads.mockRestore();
   });
 
   it("refuses a clock with no workdays", () => {
