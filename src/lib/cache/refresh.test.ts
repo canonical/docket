@@ -157,22 +157,21 @@ describe("the refresh step of createCache", () => {
     expect(cache.status().failure).toMatchObject({
       code: "CACHE_REFRESH_FAILED",
       message: "docket could not refresh its cache: The operation timed out.",
-      recovery:
-        "refresh again, and if it keeps failing, run `docket config` to check the settings and gh",
+      recovery: "refresh again",
     });
     await cache.refresh();
     expect(cache.threads().threads).toEqual([thread()]);
     expect(cache.status().failure).toBeUndefined();
   });
 
-  it("names a failure that is not an error by its value", async () => {
+  it("names a failure that is not an error by its value, ending with a full stop", async () => {
     const snapshot = vi.fn(async () => ({ threads: [thread()], cursor: null }));
     snapshot.mockRejectedValueOnce("no answer");
     const cache = open(counting({ snapshot }));
     await cache.refresh();
     expect(cache.status().failure).toMatchObject({
       code: "CACHE_REFRESH_FAILED",
-      message: "docket could not refresh its cache: no answer",
+      message: "docket could not refresh its cache: no answer.",
     });
   });
 });

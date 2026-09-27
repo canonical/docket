@@ -233,16 +233,19 @@ export default function createCache({
    * cache's own as it is, and any other, such as a full disk or an answer
    * cut short, as `CACHE_REFRESH_FAILED`. That code covers causes that
    * need different steps, so it names the cause and gives a step that
-   * holds for each. A refusal for the rate limit pauses the cycle until
-   * the budget resets, when the provider can say when that is.
+   * holds for each. The message ends with a full stop, as every message
+   * does, whether or not the cause's own text has one. A refusal for the
+   * rate limit pauses the cycle until the budget resets, when the provider
+   * can say when that is.
    */
   const record = async (thrown: unknown): Promise<Partial<CacheStatus>> => {
+    const cause = thrown instanceof Error ? thrown.message : String(thrown);
     const error = isNamedError(thrown)
       ? thrown
       : new CacheError(
           "CACHE_REFRESH_FAILED",
-          `docket could not refresh its cache: ${thrown instanceof Error ? thrown.message : String(thrown)}`,
-          "refresh again, and if it keeps failing, run `docket config` to check the settings and gh",
+          `docket could not refresh its cache: ${cause.endsWith(".") ? cause : `${cause}.`}`,
+          "refresh again",
         );
     if (error.code === "GITHUB_RATE_LIMITED") {
       const until = await provider.budget().then(
