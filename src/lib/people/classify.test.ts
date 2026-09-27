@@ -27,6 +27,10 @@ describe("classify", () => {
     expect(classify(dave, people)).toBe("external");
   });
 
+  it("puts an unlisted person recorded without membership among the external people", () => {
+    expect(classify({ login: "carol", type: "user" }, people)).toBe("external");
+  });
+
   it("lets the configuration correct an account the fallback gets wrong", () => {
     const corrected = new Map<string, Group>([
       ["example-sync", "external"],

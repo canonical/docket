@@ -8,7 +8,7 @@ import {
   teamSettings,
   thread,
 } from "../../testing/facts.js";
-import type { Account } from "../people/index.js";
+import type { Account, Author } from "../people/index.js";
 import findReviewStarts from "./findReviewStarts.js";
 import type { ReviewRequest, Team, Thread } from "./types.js";
 
@@ -18,7 +18,7 @@ const request = (reviewer: Account | Team, iso?: string): ReviewRequest => ({
   reviewer,
   at: iso ? at(iso) : requested,
 });
-const review = (author: Account, iso: string) => ({ author, at: at(iso) });
+const review = (author: Author, iso: string) => ({ author, at: at(iso) });
 const pull = (facts: Partial<Thread>) =>
   thread({ kind: "pullRequest", author: carol, ...facts });
 const reviewers: Team = {

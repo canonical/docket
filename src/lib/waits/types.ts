@@ -1,6 +1,6 @@
 import type { Duration } from "../clock/index.js";
 import type { Targets } from "../config/index.js";
-import type { Account } from "../people/index.js";
+import type { Account, Author } from "../people/index.js";
 import type { StackEntry } from "../stacks/index.js";
 
 /** The kinds of thread, named as the close targets name them. */
@@ -19,7 +19,7 @@ export interface ThreadSummary {
 
 /** A message on a thread: a comment, or a submitted review. */
 export interface Message {
-  readonly author: Account;
+  readonly author: Author;
   readonly at: Date;
 }
 
@@ -44,7 +44,7 @@ export interface ReviewRequest {
 
 /** A thread and the facts recorded on it. */
 export interface Thread extends ThreadSummary {
-  readonly author: Account;
+  readonly author: Author;
   readonly createdAt: Date;
   /** False once the thread is closed or merged, whatever the reason. */
   readonly open: boolean;
