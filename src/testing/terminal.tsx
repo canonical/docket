@@ -6,9 +6,12 @@
 
 import { type CapturedSpan, TextAttributes } from "@opentui/core";
 import type { TestRendererSetup } from "@opentui/core/testing";
+import { KeymapProvider } from "@opentui/keymap/react";
+import { useRenderer } from "@opentui/react";
 import { testRender } from "@opentui/react/test-utils";
-import type { ReactNode } from "react";
+import { act, type ReactNode, useMemo } from "react";
 import { afterEach } from "vitest";
+import createKeymap from "../lib/ui/createKeymap.js";
 
 /** What a drawn screen shows. */
 export interface Screen {
@@ -16,8 +19,11 @@ export interface Screen {
   readonly lines: readonly string[];
   /** How the first run of text containing `text` is drawn. */
   readonly look: (text: string) => Look | undefined;
-  /** Draws the screen again after keys or a resize, and reads it back. */
-  readonly redraw: () => Promise<Screen>;
+  /**
+   * Runs `action`, such as a key press, as React expects under test, lets
+   * every update it causes settle, and reads the screen back.
+   */
+  readonly redraw: (action?: () => void) => Promise<Screen>;
   readonly setup: TestRendererSetup;
 }
 
@@ -59,8 +65,11 @@ function read(setup: TestRendererSetup): Screen {
         }
       );
     },
-    redraw: async () => {
-      await setup.flush();
+    redraw: async (action) => {
+      await act(async () => {
+        action?.();
+        await setup.flush();
+      });
       await setup.renderOnce();
       return read(setup);
     },
@@ -78,4 +87,14 @@ export async function draw(
   drawn.push(setup);
   await setup.renderOnce();
   return read(setup);
+}
+
+/**
+ * Gives `children` the keymap the terminal interface uses, on the
+ * renderer they are drawn with.
+ */
+export function WithKeys({ children }: { children: ReactNode }) {
+  const renderer = useRenderer();
+  const keymap = useMemo(() => createKeymap(renderer), [renderer]);
+  return <KeymapProvider keymap={keymap}>{children}</KeymapProvider>;
 }

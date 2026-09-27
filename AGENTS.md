@@ -43,6 +43,7 @@
 - The terminal interface sits in `src/lib/ui/`, a folder per block under its kind (`subcomponent/`, `component/`): `Name.tsx`, `Name.stories.tsx`, `Name.test.tsx`, `types.ts` and `index.ts`. A block takes its width as a prop and draws within it, trimming or wrapping with `trimText` and `wrapText`, which count display cells with `Bun.stringWidth`, never characters.
 - Stories follow Component Story Format, typed by `src/testing/stories.ts`, and the block's tests draw them through OpenTUI's test renderer with `draw()` from `src/testing/terminal.tsx`, asserting the characters and colours of each line at 40 columns and at one wider width.
 - Every colour comes from `tokens` in `src/lib/tokens/`, which names meanings, never colours, and each colour on screen is paired with a symbol or a word.
+- Keys are bound through OpenTUI's keymap. Each command carries its help label (`desc`), its `group`, an optional key-bar `hint` and `notes`; the help and the key bar read them back with `useCommands`, so a key changes only where it is bound.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
 - Every implementation file under `src/lib/` and `src/application/` has its own unit tests beside it, as `<name>.test.ts` (`.test.tsx` for a file holding JSX), with `describe` blocks named for its export; barrels, `types.ts` and `constants.ts` have none. Each `it()` states an outcome a caller can observe.
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.
@@ -64,6 +65,7 @@
 - `src/application/main.ts` runs when it is imported: it is the program's entry, not a library module.
 - vitest runs under Bun (`bunx --bun vitest`), the runtime the executable is built on, never under Node.
 - vitest compiles JSX with oxc, so JSX options belong under `oxc` in `vitest.config.ts`; it ignores esbuild's.
+- A test of the terminal interface presses keys inside `screen.redraw(() => …)`, which lets React's updates settle before the screen is read back.
 - OpenTUI's own declaration files fail to type-check, so `tsconfig.json` skips declaration files; every source file is still checked.
 - `src/scripts/check-identity.ts` holds the refused words, so it is the one file the identity check skips.
 - The audit and its self-test query the advisory database, and the first gitleaks run through nix downloads it, so `bun run ci` needs the network.
