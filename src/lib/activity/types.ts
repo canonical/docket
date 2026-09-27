@@ -1,30 +1,8 @@
 import type { Duration } from "../clock/index.js";
 import type { People, Repo } from "../config/index.js";
 import type { WindowEvent } from "../events/index.js";
+import type { Field, FieldList } from "../owed/index.js";
 import type { Thread, ThreadSummary } from "../waits/index.js";
-
-/**
- * How a face fits a field to the pane: trimmed text takes one line and is
- * cut with `…`, wrapped text flows over as many lines as it needs.
- */
-export type Fit = "trimmed" | "wrapped";
-
-/**
- * One piece of text a face draws. The view model never cuts text to a
- * width, because only a face knows its width and measures display cells.
- */
-export interface Field {
-  readonly text: string;
-  readonly fit: Fit;
-  /** The most display cells the field takes, whatever the width. */
-  readonly cells?: number;
-}
-
-/** Fields that share a line and wrap between each other. */
-export interface FieldList {
-  readonly fit: "wrapped";
-  readonly fields: readonly Field[];
-}
 
 /** How activity splits its list into sections. */
 export type ActivityGrouping = "kind" | "repo" | "none";

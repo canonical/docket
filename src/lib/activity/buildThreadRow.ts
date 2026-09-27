@@ -1,11 +1,11 @@
 import type { People } from "../config/index.js";
 import type { WindowEvent } from "../events/index.js";
+import { describeOwners } from "../owed/index.js";
 import { classify } from "../people/index.js";
 import type { Thread, ThreadSummary } from "../waits/index.js";
 import { threadWords } from "./constants.js";
 import describeAge from "./describeAge.js";
 import describeEvent from "./describeEvent.js";
-import describeOwners from "./describeOwners.js";
 import type { ThreadRow } from "./types.js";
 
 /**

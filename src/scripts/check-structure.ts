@@ -45,6 +45,9 @@ function grant(from: string[], to: string[], reach: Reach): void {
 }
 grant(model, model, "values");
 grant(viewModels, model, "values");
+// Both lists name their fields and their owners alike, so activity takes
+// owed's field types and owner naming rather than keeping a copy.
+grant(["activity"], ["owed"], "values");
 grant(["provider"], model, "types");
 grant(["github", "cache"], [...model, "provider"], "values");
 grant(surfaces, [...viewModels, "tokens"], "values");
@@ -370,6 +373,10 @@ const breaks: Record<string, [string, string]> = {
   ],
   "src/lib/owed/utils": ["folders", ""],
   "src/lib/activity/common": ["folders", ""],
+  "src/lib/owed/order.ts": [
+    "dependencies",
+    'import rows from "../activity/index.js";\nexport default function order() { return rows; }',
+  ],
   "src/lib/clock/tick.ts": [
     "dependencies",
     'import rows from "../owed/index.js";\nexport default function tick() { return rows; }',
@@ -419,6 +426,10 @@ const allowed: Record<string, string> = {
     'import clock from "../clock/index.js";',
     "export type Row = { at: number };",
     "export default function rows(): Row[] { return [{ at: clock }]; }",
+  ].join("\n"),
+  "src/lib/activity/rows.ts": [
+    'import { describeOwners } from "../owed/index.js";',
+    "export default function rows() { return describeOwners; }",
   ].join("\n"),
   "src/lib/owed/rows.test.ts":
     'import alice from "../../testing/alice.js";\nalice;',

@@ -1,7 +1,7 @@
 import { ownerCells } from "./constants.js";
 import type { Field, FieldList } from "./types.js";
 
-/** How a row names the people a wait belongs to. */
+/** How a row names the people who own its wait or its thread. */
 export interface OwnerFields {
   /** The one owner, or `unassigned`, on the row's second line. */
   readonly owner?: Field;
@@ -10,7 +10,7 @@ export interface OwnerFields {
 }
 
 /**
- * Names a wait's owners. One owner, or none, fits on the second line.
+ * Names a row's owners. One owner, or none, fits on the second line.
  * Two or more take a third line that lists every one of them, so the row's
  * height says how many people own it, where a count such as `+1` would
  * hide who they are. Each owner is capped so a long login leaves the
