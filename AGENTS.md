@@ -13,13 +13,20 @@
 - `bun run check:secrets`: scans every commit and every staged or unstaged change with gitleaks. It uses `gitleaks` from PATH, or runs it through `nix run nixpkgs#gitleaks` when only nix is installed.
 - `bun run check:audit`: refuses any dependency with a published advisory (`bun audit`).
 - `bun run check:licences`: refuses any production dependency whose licence is not on the permissive list in `src/scripts/check-licences.ts`.
-- `bun run self-test`: proves the identity, secret, advisory and licence gates can each fail, by running each against a scratch fixture it must reject.
+- `bun run check:structure`: checks the source tree's shape against the conventions below: exports and file names, barrels, folders, the direction of imports between domains, and file length.
+- `bun run self-test`: proves the identity, secret, advisory, licence and structure gates can each fail, by running each against a scratch fixture it must reject.
 
 ## Conventions
 
 - TypeScript is strict and resolves modules as `NodeNext`, so a relative import names its file with a `.js` extension.
 - `tsconfig.json` extends `@canonical/typescript-config-react` and `biome.json` extends `@canonical/biome-config`. Change a rule locally only with a reason beside it.
 - `src/application/` is the composition root and holds the executable's entry. `src/scripts/` holds the repository's gates, each with a `--self-test` mode.
+- Each domain sits in its own folder under `src/lib/`, and a file is named for its role inside it: `lib/owed/rows.ts`, never `owedRows.ts`.
+- An implementation file under `src/lib/` or `src/application/` exports one value, as its default, and is named after it: `rows.ts` holds `export default function rows`. It may also export the types of its own signature. `types.ts` exports only types and `constants.ts` only named constants.
+- A folder's `index.ts` is a barrel: only named re-exports, such as `export { default as rows } from "./rows.js"`, reaching a file beside it or a child folder's `index.js`. It never uses `export *`, and no import uses a `#` path alias.
+- No folder is named for a property, such as `utils/`, `helpers/`, `shared/` or `types/`. The exception is `common/` inside a terminal component under `src/lib/ui/`, which holds its subcomponents.
+- Imports between domains point one way, and `src/scripts/check-structure.ts` holds the table: the model domains import only each other; the view models import the model; the port imports the model's types; the adapter and the cache import the port and the model; the text, token and interface domains import the view models, the tokens and the port's types. Only `src/application/` imports everything. Nothing in `src/lib/` imports `src/application/`, `src/testing/` or `src/scripts/`, and nothing in `src/` imports `guarantees/`.
+- A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
 - Unit tests sit beside the code they test, as `<name>.test.ts`. Each `it()` states an outcome a caller can observe.
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.
 - Fixtures and examples use neutral names only: `alice`, `bob`, `example.com`, `example-org/example-repo`.
