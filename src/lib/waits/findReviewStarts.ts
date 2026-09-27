@@ -22,8 +22,10 @@ const latest = (instants: readonly Date[]): Date | undefined =>
  *
  * The wait starts at the request. When the reviewer has reviewed since the
  * request, the review stands until the next push: the wait then starts at
- * the latest push after that review, and there is none without such a
- * push. A team's review is given by any of its members.
+ * the latest push by the pull request's author after that review, and
+ * there is none without such a push. A push by anyone else, the reviewer,
+ * a teammate or a bot, changes the code without asking for a review again.
+ * A team's review is given by any of its members.
  *
  * Bots never own a wait and never end one, so a request to a bot makes no
  * wait and a bot's review gives none.
@@ -41,6 +43,7 @@ export default function findReviewStarts(
     const found = requests.get(key);
     if (!found || found.at < request.at) requests.set(key, request);
   }
+  const author = thread.author.login.toLowerCase();
   const starts: ReviewStart[] = [];
   for (const { reviewer, at } of requests.values()) {
     if (!("team" in reviewer) && classify(reviewer, people) === "bot") {
@@ -62,7 +65,14 @@ export default function findReviewStarts(
       starts.push({ reviewer: name, started: at });
       continue;
     }
-    const pushed = latest(thread.pushes.filter((push) => push > reviewed));
+    const pushed = latest(
+      thread.pushes
+        .filter(
+          (push) =>
+            push.author.login.toLowerCase() === author && push.at > reviewed,
+        )
+        .map(({ at }) => at),
+    );
     if (pushed) starts.push({ reviewer: name, started: pushed });
   }
   return starts;

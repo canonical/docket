@@ -10,7 +10,7 @@ import {
 } from "../../testing/facts.js";
 import type { Account, Author } from "../people/index.js";
 import findReviewStarts from "./findReviewStarts.js";
-import type { ReviewRequest, Team, Thread } from "./types.js";
+import type { Push, ReviewRequest, Team, Thread } from "./types.js";
 
 const { people } = teamSettings;
 const requested = at("2026-09-22T11:00+02:00");
@@ -19,6 +19,7 @@ const request = (reviewer: Account | Team, iso?: string): ReviewRequest => ({
   at: iso ? at(iso) : requested,
 });
 const review = (author: Author, iso: string) => ({ author, at: at(iso) });
+const push = (author: Account, iso: string): Push => ({ author, at: at(iso) });
 const pull = (facts: Partial<Thread>) =>
   thread({ kind: "pullRequest", author: carol, ...facts });
 const reviewers: Team = {
@@ -59,7 +60,7 @@ describe("findReviewStarts", () => {
     const reviewed = pull({
       reviewRequests: [request(alice)],
       reviews: [review(alice, "2026-09-22T12:00+02:00")],
-      pushes: [at("2026-09-22T10:30+02:00")],
+      pushes: [push(carol, "2026-09-22T10:30+02:00")],
     });
     expect(findReviewStarts(reviewed, people)).toEqual([]);
   });
@@ -72,9 +73,9 @@ describe("findReviewStarts", () => {
         review(alice, "2026-09-22T12:00+02:00"),
       ],
       pushes: [
-        at("2026-09-22T16:00+02:00"),
-        at("2026-09-22T13:00+02:00"),
-        at("2026-09-22T15:00+02:00"),
+        push(carol, "2026-09-22T16:00+02:00"),
+        push(carol, "2026-09-22T13:00+02:00"),
+        push(carol, "2026-09-22T15:00+02:00"),
       ],
     });
     expect(findReviewStarts(pushedSince, people)).toEqual([
@@ -86,7 +87,7 @@ describe("findReviewStarts", () => {
     const askedAgain = pull({
       reviewRequests: [request(alice, "2026-09-23T09:00+02:00")],
       reviews: [review(alice, "2026-09-22T12:00+02:00")],
-      pushes: [at("2026-09-22T16:00+02:00")],
+      pushes: [push(carol, "2026-09-22T16:00+02:00")],
     });
     expect(findReviewStarts(askedAgain, people)).toEqual([
       { reviewer: "alice", started: at("2026-09-23T09:00+02:00") },
@@ -97,11 +98,40 @@ describe("findReviewStarts", () => {
     const pushedAfterReview = pull({
       reviewRequests: [request(alice)],
       reviews: [review(alice, "2026-09-22T12:00+02:00")],
-      pushes: [at("2026-09-22T13:00+02:00")],
+      pushes: [push(carol, "2026-09-22T13:00+02:00")],
     });
     expect(findReviewStarts(pushedAfterReview, people)).toEqual([
       { reviewer: "alice", started: at("2026-09-22T13:00+02:00") },
     ]);
+  });
+
+  it("waits again once the author pushes after the review, whatever the case of the pusher's login", () => {
+    const authorPushed = pull({
+      reviewRequests: [request(alice)],
+      reviews: [review(alice, "2026-09-22T12:00+02:00")],
+      pushes: [push({ ...carol, login: "Carol" }, "2026-09-22T13:00+02:00")],
+    });
+    expect(findReviewStarts(authorPushed, people)).toEqual([
+      { reviewer: "alice", started: at("2026-09-22T13:00+02:00") },
+    ]);
+  });
+
+  it("starts no wait at the reviewer's own push after their review", () => {
+    const reviewerPushed = pull({
+      reviewRequests: [request(alice)],
+      reviews: [review(alice, "2026-09-22T12:00+02:00")],
+      pushes: [push(alice, "2026-09-22T13:00+02:00")],
+    });
+    expect(findReviewStarts(reviewerPushed, people)).toEqual([]);
+  });
+
+  it("starts no wait at a bot's push after the review", () => {
+    const botPushed = pull({
+      reviewRequests: [request(alice)],
+      reviews: [review(alice, "2026-09-22T12:00+02:00")],
+      pushes: [push(exampleSync, "2026-09-22T13:00+02:00")],
+    });
+    expect(findReviewStarts(botPushed, people)).toEqual([]);
   });
 
   it("makes one wait for a reviewer asked twice, from the latest request", () => {
@@ -134,7 +164,7 @@ describe("findReviewStarts", () => {
     const sameInstant = pull({
       reviewRequests: [request(alice)],
       reviews: [review(alice, "2026-09-22T12:00+02:00")],
-      pushes: [at("2026-09-22T12:00+02:00")],
+      pushes: [push(carol, "2026-09-22T12:00+02:00")],
     });
     expect(findReviewStarts(sameInstant, people)).toEqual([]);
   });

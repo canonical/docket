@@ -42,6 +42,12 @@ export interface ReviewRequest {
   readonly at: Date;
 }
 
+/** A push of commits to a pull request, and the account that made it. */
+export interface Push {
+  readonly author: Account;
+  readonly at: Date;
+}
+
 /** A thread and the facts recorded on it. */
 export interface Thread extends ThreadSummary {
   readonly author: Author;
@@ -56,8 +62,8 @@ export interface Thread extends ThreadSummary {
   readonly reviews: readonly Message[];
   /** The reviews requested, on a pull request: one entry per reviewer. */
   readonly reviewRequests: readonly ReviewRequest[];
-  /** When commits were pushed, on a pull request. */
-  readonly pushes: readonly Date[];
+  /** The pushes of commits, on a pull request. */
+  readonly pushes: readonly Push[];
 }
 
 /**
