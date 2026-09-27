@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -67,6 +67,24 @@ describe("readPersonalFile", () => {
     expect(read.outcome).toMatchObject({
       ok: false,
       errors: [{ code: "CONFIG_UNKNOWN_GROUP" }],
+    });
+  });
+
+  it("gives an error with a recovery line when the file is a link to nothing", async () => {
+    const target = join(root, "dotfiles", "docket.yaml");
+    const path = join(root, "docket", "docket.yaml");
+    await mkdir(join(root, "docket"));
+    await symlink(target, path);
+    const read = await readPersonalFile({ XDG_CONFIG_HOME: root });
+    expect(read.outcome).toEqual({
+      ok: false,
+      errors: [
+        {
+          code: "CONFIG_BROKEN_LINK",
+          message: `The personal file ${path} is a link to ${target}, which does not exist.`,
+          recovery: `Point ${path} at a file that exists, or remove the link.`,
+        },
+      ],
     });
   });
 
