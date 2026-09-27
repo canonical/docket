@@ -39,7 +39,7 @@ export interface ThreadAnswer {
 const nameReviewer = (reviewer: Reviewer) =>
   sanitize("team" in reviewer ? reviewer.team : reviewer.login);
 
-const countOf = (count: number, noun: string) =>
+const describeCount = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? "" : "s"}`;
 
 /**
@@ -114,7 +114,7 @@ function describeFacts(
             : []),
           ...(pull
             ? [
-                `files changed ${details.files.length}, ${countOf(added, "line")} added, ${countOf(removed, "line")} removed`,
+                `files changed ${details.files.length}, ${describeCount(added, "line")} added, ${describeCount(removed, "line")} removed`,
               ]
             : []),
           ...(detail === "detailed"

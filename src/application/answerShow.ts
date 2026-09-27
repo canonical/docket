@@ -49,7 +49,7 @@ export default async function answerShow(session: Session): Promise<number> {
     renderThread({
       reference: reference.text,
       threads: shown,
-      freshness: session.freshness(syncedAt, warnings),
+      freshness: session.describeFreshness(syncedAt, warnings),
       format: invocation.format,
       detail: invocation.detail,
     }),

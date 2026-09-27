@@ -87,7 +87,7 @@ export default async function run(context: Context): Promise<number> {
       resolved,
       provider,
       cache,
-      freshness: (syncedAt, warnings = []) => ({
+      describeFreshness: (syncedAt, warnings = []) => ({
         now: context.now(),
         syncedAt,
         timezone: settings.time.timezone,

@@ -42,7 +42,7 @@ export default async function answerActivity(
   context.write(
     renderActivity({
       list,
-      freshness: session.freshness(syncedAt, warnings),
+      freshness: session.describeFreshness(syncedAt, warnings),
       format: invocation.format,
       detail: invocation.detail,
     }),

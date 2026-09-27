@@ -15,7 +15,7 @@ export default async function answerOwed(session: Session): Promise<number> {
   context.write(
     renderOwed({
       list,
-      freshness: session.freshness(syncedAt, warnings),
+      freshness: session.describeFreshness(syncedAt, warnings),
       format: invocation.format,
       detail: invocation.detail,
     }),

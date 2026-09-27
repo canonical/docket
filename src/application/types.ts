@@ -53,7 +53,7 @@ export interface Session {
   readonly provider: Provider;
   readonly cache: Cache;
   /** How old data synced at `syncedAt` is, with the warnings in force. */
-  readonly freshness: (
+  readonly describeFreshness: (
     syncedAt: Date | undefined,
     warnings?: Freshness["warnings"],
   ) => Freshness;

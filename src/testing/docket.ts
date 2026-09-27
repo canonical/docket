@@ -141,7 +141,7 @@ export function openSession(
       directory: locateCacheDirectory(environment),
       now: () => now,
     }),
-    freshness: (syncedAt, warnings = []) => ({
+    describeFreshness: (syncedAt, warnings = []) => ({
       now,
       syncedAt,
       timezone: resolved.settings.time.timezone,
