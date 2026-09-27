@@ -60,6 +60,17 @@ describe("withFetchLock", () => {
     expect(await withFetchLock(directory, async () => "next")).toBe("next");
   });
 
+  it("takes over at once a lock left untouched for 10 seconds, as by a process that died", async () => {
+    const left = join(directory, "fetch.lock");
+    await mkdir(left, { recursive: true });
+    const untouched = new Date(Date.now() - 11_000);
+    await utimes(left, untouched, untouched);
+    const started = Date.now();
+    expect(await withFetchLock(directory, async () => "ran")).toBe("ran");
+    expect(Date.now() - started).toBeLessThan(1_000);
+    expect(await readdir(directory)).toEqual([]);
+  });
+
   it("gives up with CACHE_LOCK_TIMED_OUT once another holder keeps the lock for two minutes", async () => {
     // A holder that keeps touching its lock, so it is never taken over.
     const held = join(directory, "fetch.lock");
