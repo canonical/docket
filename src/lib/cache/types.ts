@@ -1,3 +1,4 @@
+import type { DehydratedState } from "@tanstack/query-core";
 import type {
   Cursor,
   PageProgress,
@@ -24,6 +25,17 @@ export interface RepoCache {
   readonly tag: string | undefined;
   /** When every thread was last fetched, rather than those since a cursor. */
   readonly reconciledAt: Date;
+}
+
+/** What the cache file holds, for every docket process. */
+export interface CacheFile {
+  /** TanStack Query's dehydrated cache: one query per repository. */
+  readonly state: DehydratedState;
+  /**
+   * When the last full refresh started, in whichever process, so its
+   * cooldown holds across processes. Absent before the first.
+   */
+  readonly fullRefreshAt: Date | undefined;
 }
 
 /** The threads of every watched repository, and how old they are. */
@@ -118,7 +130,9 @@ export interface Cache {
   /**
    * Discards the cached data, here and in the file, and fetches every
    * repository whole, reporting its progress in the status. One is
-   * refused within `fullRefreshCooldown` of the last, and the status then
+   * refused within `fullRefreshCooldown` of the last, in any process,
+   * checked under the fetch lock so two asked together fetch once, and
+   * the status then
    * says when one is available. It never throws: whatever stops it is
    * kept in the status, as `refresh` keeps it.
    */

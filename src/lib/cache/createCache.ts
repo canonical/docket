@@ -59,7 +59,7 @@ export default function createCache({
   let failure: CacheStatus["failure"];
   let fullRefresh: CacheStatus["fullRefresh"];
   let fullRefreshAvailableAt: Date | undefined;
-  let lastFullRefresh = Number.NEGATIVE_INFINITY;
+  let fullRefreshAt: Date | undefined;
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
@@ -86,11 +86,17 @@ export default function createCache({
   });
 
   const load = async () => {
-    const state = await readCacheFile(file);
-    if (state) hydrate(client, state);
+    const contents = await readCacheFile(file);
+    if (contents) {
+      hydrate(client, contents.state);
+      // Every write happens under the lock after a load, and carries the
+      // start it loaded forward, so the file's is always the latest.
+      fullRefreshAt = contents.fullRefreshAt ?? fullRefreshAt;
+    }
     notify();
   };
-  const save = () => writeCacheFile(file, dehydrate(client));
+  const save = () =>
+    writeCacheFile(file, { state: dehydrate(client), fullRefreshAt });
 
   /** Reads again the checks still running, on every repository at once. */
   const refreshChecks = async (synced: readonly RepoCache[]) => {
@@ -103,60 +109,85 @@ export default function createCache({
     return running.length === 0 ? [] : provider.refreshVolatile(running);
   };
 
+  /** Fetches every repository, the lock held. */
+  const fetchAll = async () => {
+    refreshing = true;
+    notify();
+    try {
+      // Every repository is dated from before its fetch, so the data is
+      // never taken as newer than it is.
+      const at = now();
+      const synced = new Map<string, RepoCache>();
+      for (const [index, repo] of repos.entries()) {
+        const previous = entry(repo);
+        // A repository with nothing to show is fetched whole while the
+        // list waits for it, so its progress is reported.
+        const onPage = previous
+          ? undefined
+          : (pages: PageProgress) => {
+              fullRefresh = {
+                repo,
+                position: index + 1,
+                count: repos.length,
+                ...pages,
+              };
+              notify();
+            };
+        onPage?.({ fetched: 0, total: 0 });
+        const value = await syncRepo(provider, repo, previous, at, onPage);
+        synced.set(repo, value);
+        store(repo, value, at);
+        await save();
+      }
+      const refreshed = await refreshChecks([...synced.values()]);
+      for (const [repo, value] of synced) {
+        const threads = applyChecks(value.threads, refreshed);
+        store(repo, { ...value, threads }, at);
+      }
+      await save();
+    } finally {
+      refreshing = false;
+      fullRefresh = undefined;
+      notify();
+    }
+  };
+
   /**
    * Syncs every repository under the fetch lock, unless the data is
    * younger than `maxAge` once the lock is held: the process that held it
-   * before may have fetched it. With `discard`, the cached data is
-   * thrown away first, here and in the file, and everything is fetched.
+   * before may have fetched it.
    */
-  const sync = (maxAge: number, discard = false) =>
+  const sync = (maxAge: number) =>
     withFetchLock(directory, async () => {
-      if (discard) {
-        client.clear();
-        await save();
-      } else {
-        await load();
-        if (isFresh(maxAge)) return;
+      await load();
+      if (!isFresh(maxAge)) await fetchAll();
+    });
+
+  /**
+   * Throws the cached data away, here and in the file, and fetches
+   * everything, under the fetch lock, unless a full refresh started within
+   * `fullRefreshCooldown` in any process: the file says when the last
+   * one started, and it is read once the lock is held.
+   *
+   * @returns Whether it fetched rather than being refused.
+   */
+  const discardAndFetch = () =>
+    withFetchLock(directory, async () => {
+      await load();
+      const at = now();
+      const available =
+        (fullRefreshAt?.getTime() ?? Number.NEGATIVE_INFINITY) +
+        fullRefreshCooldown;
+      if (at.getTime() < available) {
+        fullRefreshAvailableAt = new Date(available);
+        return false;
       }
-      refreshing = true;
-      notify();
-      try {
-        // Every repository is dated from before its fetch, so the data is
-        // never taken as newer than it is.
-        const at = now();
-        const synced = new Map<string, RepoCache>();
-        for (const [index, repo] of repos.entries()) {
-          const previous = entry(repo);
-          // A repository with nothing to show is fetched whole while the
-          // list waits for it, so its progress is reported.
-          const onPage = previous
-            ? undefined
-            : (pages: PageProgress) => {
-                fullRefresh = {
-                  repo,
-                  position: index + 1,
-                  count: repos.length,
-                  ...pages,
-                };
-                notify();
-              };
-          onPage?.({ fetched: 0, total: 0 });
-          const value = await syncRepo(provider, repo, previous, at, onPage);
-          synced.set(repo, value);
-          store(repo, value, at);
-          await save();
-        }
-        const refreshed = await refreshChecks([...synced.values()]);
-        for (const [repo, value] of synced) {
-          const threads = applyChecks(value.threads, refreshed);
-          store(repo, { ...value, threads }, at);
-        }
-        await save();
-      } finally {
-        refreshing = false;
-        fullRefresh = undefined;
-        notify();
-      }
+      fullRefreshAvailableAt = undefined;
+      fullRefreshAt = at;
+      client.clear();
+      await save();
+      await fetchAll();
+      return true;
     });
 
   /**
@@ -212,19 +243,11 @@ export default function createCache({
       notify();
     },
     async fullRefresh() {
-      const at = now().getTime();
-      const available = lastFullRefresh + fullRefreshCooldown;
-      if (at < available) {
-        fullRefreshAvailableAt = new Date(available);
-        notify();
-        return;
-      }
-      lastFullRefresh = at;
-      fullRefreshAvailableAt = undefined;
       try {
-        await sync(0, true);
-        paused = undefined;
-        failure = undefined;
+        if (await discardAndFetch()) {
+          paused = undefined;
+          failure = undefined;
+        }
       } catch (error) {
         await record(error);
       }

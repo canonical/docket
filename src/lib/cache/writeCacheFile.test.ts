@@ -19,13 +19,13 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-/** A dehydrated cache holding one repository's threads. */
-function stateOf(threads: unknown) {
+/** A cache file holding one repository's threads. */
+function stateOf(threads: unknown, fullRefreshAt?: Date) {
   const client = new QueryClient();
   client.setQueryData(["snapshot", "example-org/example-repo"], threads, {
     updatedAt: Date.parse("2026-09-28T10:00:00Z"),
   });
-  return dehydrate(client);
+  return { state: dehydrate(client), fullRefreshAt };
 }
 
 describe("writeCacheFile", () => {
@@ -33,17 +33,24 @@ describe("writeCacheFile", () => {
     const state = stateOf([thread()]);
     await writeCacheFile(file, state);
     const read = await readCacheFile(file);
-    expect(read?.queries[0]?.state.data).toEqual([thread()]);
-    expect(read?.queries[0]?.state.dataUpdatedAt).toBe(
+    expect(read?.state.queries[0]?.state.data).toEqual([thread()]);
+    expect(read?.state.queries[0]?.state.dataUpdatedAt).toBe(
       Date.parse("2026-09-28T10:00:00Z"),
     );
+    expect(read?.fullRefreshAt).toBeUndefined();
+  });
+
+  it("writes when the last full refresh started, which readCacheFile reads back", async () => {
+    const started = new Date("2026-09-28T09:59:00Z");
+    await writeCacheFile(file, stateOf([], started));
+    expect((await readCacheFile(file))?.fullRefreshAt).toEqual(started);
   });
 
   it("writes a title written like a date as text", async () => {
     const title = "2026-09-28T10:00:00.000Z";
     await writeCacheFile(file, stateOf([thread({ title })]));
     const read = await readCacheFile(file);
-    expect(read?.queries[0]?.state.data).toEqual([thread({ title })]);
+    expect(read?.state.queries[0]?.state.data).toEqual([thread({ title })]);
   });
 
   it("leaves a file only its owner can read, in a folder only its owner can enter", async () => {
@@ -57,7 +64,7 @@ describe("writeCacheFile", () => {
     await writeCacheFile(file, stateOf([thread({ number: 2 })]));
     expect(await readdir(join(root, "docket"))).toEqual(["snapshots.json"]);
     const read = await readCacheFile(file);
-    expect(read?.queries[0]?.state.data).toEqual([thread({ number: 2 })]);
+    expect(read?.state.queries[0]?.state.data).toEqual([thread({ number: 2 })]);
   });
 
   it("leaves no temporary file behind when the file cannot be replaced", async () => {

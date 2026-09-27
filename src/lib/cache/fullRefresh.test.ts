@@ -61,7 +61,9 @@ describe("the full refresh of createCache", () => {
     });
     later(10 * second);
     const shown: number[] = [];
-    cache.subscribe(() => shown.push(cache.threads().threads.length));
+    cache.subscribe(() => {
+      if (cache.status().refreshing) shown.push(cache.threads().threads.length);
+    });
     await cache.fullRefresh();
     expect(shown[0]).toBe(0);
     expect(elsewhere).toEqual([0]);
@@ -123,6 +125,35 @@ describe("the full refresh of createCache", () => {
     await cache.fullRefresh();
     expect(snapshot).toHaveBeenCalledTimes(2);
     expect(cache.status().fullRefreshAvailableAt).toBeUndefined();
+  });
+
+  it("refuses one within 60 seconds of another process's, saying in the status when one is available", async () => {
+    const first = paged(1);
+    await open(fakeProvider({ snapshot: first })).fullRefresh();
+    later(second);
+    const snapshot = paged(1);
+    const cache = open(fakeProvider({ snapshot }));
+    await cache.fullRefresh();
+    expect(snapshot).not.toHaveBeenCalled();
+    expect(cache.status().fullRefreshAvailableAt).toEqual(
+      new Date("2026-09-28T10:01:00Z"),
+    );
+    later(59 * second);
+    await cache.fullRefresh();
+    expect(snapshot).toHaveBeenCalledTimes(1);
+  });
+
+  it("fetches once when two processes ask for one together", async () => {
+    const one = paged(1);
+    const two = paged(1);
+    const first = open(fakeProvider({ snapshot: one }));
+    const other = open(fakeProvider({ snapshot: two }));
+    await Promise.all([first.fullRefresh(), other.fullRefresh()]);
+    expect(one.mock.calls.length + two.mock.calls.length).toBe(1);
+    const refused = [first, other].map(
+      (cache) => cache.status().fullRefreshAvailableAt,
+    );
+    expect(refused).toContainEqual(new Date("2026-09-28T10:01:00Z"));
   });
 
   it("keeps the provider's error in the status rather than throwing it", async () => {

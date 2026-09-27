@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import type { DehydratedState } from "@tanstack/query-core";
 import { cacheFormat, dateTag } from "./constants.js";
+import type { CacheFile } from "./types.js";
 
 /** Reads `{ "$date": "<ISO 8601>" }` back as a date. */
 function readDates(_key: string, value: unknown): unknown {
@@ -20,13 +20,17 @@ function readDates(_key: string, value: unknown): unknown {
  */
 export default async function readCacheFile(
   file: string,
-): Promise<DehydratedState | undefined> {
+): Promise<CacheFile | undefined> {
   try {
-    const { format, state } = JSON.parse(
+    const { format, state, fullRefreshAt } = JSON.parse(
       await readFile(file, "utf8"),
       readDates,
     );
-    return format === cacheFormat ? state : undefined;
+    if (format !== cacheFormat) return undefined;
+    return {
+      state,
+      fullRefreshAt: fullRefreshAt instanceof Date ? fullRefreshAt : undefined,
+    };
   } catch {
     return undefined;
   }

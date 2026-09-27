@@ -24,4 +24,15 @@ describe("readCacheFile", () => {
     await writeFile(file, JSON.stringify({ format: 0, state: {} }));
     expect(await readCacheFile(file)).toBeUndefined();
   });
+
+  it("reads no start of a full refresh that is not a date", async () => {
+    await writeFile(
+      file,
+      JSON.stringify({ format: 1, state: {}, fullRefreshAt: "soon" }),
+    );
+    expect(await readCacheFile(file)).toEqual({
+      state: {},
+      fullRefreshAt: undefined,
+    });
+  });
 });
