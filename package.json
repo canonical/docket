@@ -27,6 +27,7 @@
     "@canonical/biome-config": "0.40.0",
     "@canonical/typescript-config-react": "0.40.0",
     "@types/bun": "1.4.2",
+    "@types/proper-lockfile": "4.1.4",
     "@vitest/coverage-v8": "5.0.2",
     "license-checker-rseidelsohn": "5.0.1",
     "typescript": "5.9.3",
@@ -38,7 +39,9 @@
     "@octokit/plugin-paginate-rest": "15.0.0",
     "@octokit/plugin-retry": "8.1.1",
     "@octokit/plugin-throttling": "11.0.5",
+    "@tanstack/query-core": "5.104.0",
     "bottleneck": "2.19.5",
+    "proper-lockfile": "4.1.2",
     "yaml": "2.9.1"
   }
 }
