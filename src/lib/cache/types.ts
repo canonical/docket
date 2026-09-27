@@ -12,7 +12,7 @@ import type CacheError from "./CacheError.js";
  * them. Callers and scripts depend on the codes, so a code is never
  * renamed or reused.
  */
-export type CacheErrorCode = "CACHE_LOCK_TIMED_OUT";
+export type CacheErrorCode = "CACHE_LOCK_TIMED_OUT" | "CACHE_REFRESH_FAILED";
 
 /** What the cache keeps for one repository. */
 export interface RepoCache {
@@ -109,21 +109,18 @@ export interface Cache {
   read(maxAge: number): Promise<CachedThreads>;
   /**
    * One step of the refresh cycle: syncs data older than the refresh
-   * interval, unless the budget is low or the cycle is paused. A provider
-   * error, or a wait for the fetch lock that runs out, is kept in the
-   * status rather than thrown.
-   *
-   * @throws Any error that is not the provider's, such as a full disk.
+   * interval, unless the budget is low or the cycle is paused. It never
+   * throws: whatever stops it is kept in the status, a provider error or
+   * a wait for the fetch lock that runs out with its own code, and any
+   * other, such as a full disk, as `CACHE_REFRESH_FAILED`.
    */
   refresh(): Promise<void>;
   /**
    * Discards the cached data, here and in the file, and fetches every
    * repository whole, reporting its progress in the status. One is
    * refused within `fullRefreshCooldown` of the last, and the status then
-   * says when one is available. A provider error, or a wait for the fetch
-   * lock that runs out, is kept in the status rather than thrown.
-   *
-   * @throws Any error that is not the provider's, such as a full disk.
+   * says when one is available. It never throws: whatever stops it is
+   * kept in the status, as `refresh` keeps it.
    */
   fullRefresh(): Promise<void>;
   /**

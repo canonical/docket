@@ -1,4 +1,9 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fakeProvider } from "../../testing/provider.js";
+import createCache from "./createCache.js";
 import startRefreshCycle from "./startRefreshCycle.js";
 
 beforeEach(() => {
@@ -62,5 +67,31 @@ describe("startRefreshCycle", () => {
     stop();
     await vi.advanceTimersByTimeAsync(600 * second);
     expect(cache.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a refresh that fails in the status, and refreshes again 120 seconds later", async () => {
+    const root = await mkdtemp(join(tmpdir(), "docket-cycle-"));
+    const snapshot = vi.fn(async () => {
+      throw new Error("disk full");
+    });
+    const cache = createCache({
+      provider: fakeProvider({ snapshot }),
+      repos: ["example-org/example-repo"],
+      directory: join(root, "docket"),
+      now: () => new Date("2026-09-28T10:00:00Z"),
+    });
+    const stop = startRefreshCycle(cache);
+    await vi.waitFor(() => {
+      expect(cache.status().failure).toMatchObject({
+        code: "CACHE_REFRESH_FAILED",
+      });
+    });
+    expect(snapshot).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(120 * second);
+    await vi.waitFor(() => {
+      expect(snapshot).toHaveBeenCalledTimes(2);
+    });
+    stop();
+    await rm(root, { recursive: true, force: true });
   });
 });

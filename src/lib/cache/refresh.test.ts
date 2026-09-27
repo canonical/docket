@@ -149,9 +149,19 @@ describe("the refresh step of createCache", () => {
     expect(provider.snapshot).not.toHaveBeenCalled();
   });
 
-  it("throws a failure that is not the provider's", async () => {
-    const cache = open(counting({ snapshot: failing(new Error("disk full")) }));
-    await expect(cache.refresh()).rejects.toThrow("disk full");
+  it("keeps any other failure in the status, with a recovery step, and syncs at the next step", async () => {
+    const snapshot = vi.fn(async () => ({ threads: [thread()], cursor: null }));
+    snapshot.mockRejectedValueOnce(new Error("disk full"));
+    const cache = open(counting({ snapshot }));
+    await cache.refresh();
+    expect(cache.status().failure).toMatchObject({
+      code: "CACHE_REFRESH_FAILED",
+      message: "docket could not refresh its cache (Error: disk full).",
+      recovery: `check that ${directory} has room and that you can write to it, then refresh`,
+    });
+    await cache.refresh();
+    expect(cache.threads().threads).toEqual([thread()]);
+    expect(cache.status().failure).toBeUndefined();
   });
 });
 

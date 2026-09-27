@@ -4,8 +4,9 @@ import type { Cache } from "./types.js";
 /**
  * Starts the refresh cycle of an open terminal interface: a refresh at
  * once, then another `refreshInterval` after each one ends, and a reload
- * whenever another process writes the cache. Text mode never starts it:
- * it reads once, with a maximum age.
+ * whenever another process writes the cache. A refresh keeps whatever
+ * stops it in the cache's status, so the next one still comes. Text mode
+ * never starts it: it reads once, with a maximum age.
  *
  * @note Impure: sets timers and watches the cache folder.
  * @returns Stops the cycle.

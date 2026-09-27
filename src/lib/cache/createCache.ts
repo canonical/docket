@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { PageProgress, ProviderError } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
-import type CacheError from "./CacheError.js";
+import CacheError from "./CacheError.js";
 import {
   budgetFloor,
   cacheFileName,
@@ -160,13 +160,19 @@ export default function createCache({
     });
 
   /**
-   * Keeps a provider error, or the cache's own, in the status. A refusal
-   * for the rate limit
-   * pauses the cycle until the budget resets, when the provider can say
-   * when that is.
+   * Keeps what stopped a refresh in the status: a provider error or the
+   * cache's own as it is, and any other, such as a full disk, as
+   * `CACHE_REFRESH_FAILED`. A refusal for the rate limit pauses the cycle
+   * until the budget resets, when the provider can say when that is.
    */
-  const record = async (error: unknown) => {
-    if (!isNamedError(error)) throw error;
+  const record = async (thrown: unknown) => {
+    const error = isNamedError(thrown)
+      ? thrown
+      : new CacheError(
+          "CACHE_REFRESH_FAILED",
+          `docket could not refresh its cache (${String(thrown)}).`,
+          `check that ${directory} has room and that you can write to it, then refresh`,
+        );
     if (error.code === "GITHUB_RATE_LIMITED") {
       const until = await provider.budget().then(
         ({ resetAt }) => resetAt,
