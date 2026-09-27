@@ -1,8 +1,10 @@
 import {
+  type ActivityGrouping,
   type ActivityList,
   describeAddress,
   describeEvent,
   type EventLine,
+  type ThreadGroup,
   type ThreadRow,
 } from "../activity/index.js";
 import { kindWords, quotedNote } from "./constants.js";
@@ -97,14 +99,25 @@ function describeRowData(row: ThreadRow) {
     owners,
     draft: row.draft !== undefined,
     stack: row.thread.stack ?? null,
-    events: row.events.map(({ event, text }) => ({
-      kind: event.kind,
-      actor: sanitize(event.actor.login),
-      bot: event.bot,
-      text: sanitize(text.text),
-      at: event.at.toISOString(),
-    })),
+    events: row.events.map(({ event }) => {
+      // What the event carries beyond its thread, its actor and its time:
+      // its kind, whether a bot made it, and its label, assignee, commits
+      // or checks.
+      const { thread: _thread, actor, at, ...facts } = event;
+      return { ...facts, actor: actor.login, at: at.toISOString() };
+    }),
   };
+}
+
+/**
+ * What a section holds, as data: the kind of its threads, or their
+ * repository. A section always holds a row.
+ */
+function describeGroupData(group: ThreadGroup, grouping: ActivityGrouping) {
+  const [first] = group.rows;
+  if (grouping === "kind") return { kind: first?.thread.kind };
+  if (grouping === "repo") return { repo: first?.repo };
+  return {};
 }
 
 /**
@@ -135,7 +148,7 @@ export default function renderActivity({
         ? {}
         : {
             groups: groups.map((group) => ({
-              heading: group.heading?.text ?? null,
+              ...describeGroupData(group, list.address.grouping),
               threads: group.rows.map(describeRowData),
             })),
           }),

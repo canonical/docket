@@ -133,13 +133,13 @@ describe("renderOwed", () => {
       },
       counts: { over: 2, soon: 1, onTrack: 3 },
     });
-    expect(answer.groups.at(0).heading).toBeNull();
+    expect(answer.groups.at(0)).not.toHaveProperty("heading");
     expect(answer.groups.at(0).waits.at(0)).toEqual({
       reference: "example#12",
       title: "Fix the parser",
-      kind: "reply",
+      kind: "response",
       state: "over",
-      distance: "4d over",
+      overdue: expect.any(Number),
       owners: ["alice"],
       due: "2026-09-22T08:00:00.000Z",
       draft: false,
@@ -156,6 +156,23 @@ describe("renderOwed", () => {
     });
     const standard = JSON.parse(render("json").join("\n"));
     expect(standard.groups.at(0).waits.at(2)).not.toHaveProperty("started");
+  });
+
+  it("names each section of a program's data by its identifier, never its heading", () => {
+    const data = (grouping: OwedGrouping) =>
+      JSON.parse(render("json", "standard", grouping).join("\n")).groups.map(
+        ({ waits: _waits, ...key }: Record<string, unknown>) => key,
+      );
+    expect(data("owner")).toEqual([
+      { owner: "alice" },
+      { owner: "bob" },
+      { owner: null },
+    ]);
+    expect(data("repo")).toEqual([{ repo: "example" }, { repo: "docs" }]);
+    expect(data("stack")).toEqual([
+      { stack: { repo: "example", number: 3, size: 3, base: "main" } },
+      { stack: null },
+    ]);
   });
 
   it("gives a program the counts alone at the summary level", () => {

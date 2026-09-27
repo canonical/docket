@@ -90,8 +90,8 @@ describe("renderConfig", () => {
     expect(data.repositories.at(0).people.at(0)).toEqual({
       login: "alice",
       group: "team",
-      reason: "listed in the personal file",
     });
+    expect(data.repositories.at(0).origins.people).toBe("personal");
     const signedOut = JSON.parse(
       renderConfig({
         ...answer,

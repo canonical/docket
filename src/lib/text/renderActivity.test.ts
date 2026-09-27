@@ -100,17 +100,24 @@ describe("renderActivity", () => {
       events: [
         {
           kind: "labelled",
+          label: "kind=docs",
           actor: "example-sync",
           bot: true,
-          text: "example-sync labelled kind=docs",
           at: "2026-09-27T18:00:00.000Z",
         },
       ],
     });
     const byKind = JSON.parse(render("json").join("\n"));
-    expect(
-      byKind.groups.map(({ heading }: { heading: string }) => heading),
-    ).toEqual(["ISSUES", "PULL REQUESTS"]);
+    expect(byKind.groups.map(({ kind }: { kind: string }) => kind)).toEqual([
+      "issue",
+      "pullRequest",
+    ]);
+    const byRepo = JSON.parse(render("json", "standard", "repo").join("\n"));
+    expect(byRepo.groups.map(({ repo }: { repo: string }) => repo)).toEqual([
+      "example",
+      "docs",
+    ]);
+    expect(answer.groups.at(0)).not.toHaveProperty("heading");
     const summary = JSON.parse(render("json", "summary").join("\n"));
     expect(summary).not.toHaveProperty("groups");
   });
@@ -173,7 +180,9 @@ describe("renderActivity", () => {
         detail: "standard",
       });
       expect(text).not.toContain("\u001b");
-      expect(text).toMatch(/"?alice"? labelled "?red/);
+      expect(text).toMatch(
+        format === "json" ? /"label": "red"/ : /"?alice"? labelled "?red/,
+      );
     }
   });
 });

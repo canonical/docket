@@ -6,13 +6,13 @@ const [first, , soon] = recordedOwed().groups.at(0)?.rows ?? [];
 if (!first || !soon) throw new Error("the recording has waits");
 
 describe("describeWaitData", () => {
-  it("gives a wait as data, its due time in ISO 8601", () => {
+  it("gives a wait as data, its kind as an identifier and its due time in ISO 8601", () => {
     expect(describeWaitData(soon, "standard")).toEqual({
       reference: "example#15",
       title: "Crash on start",
-      kind: "reply",
+      kind: "response",
       state: "soon",
-      distance: "4h left",
+      overdue: -1 / 6,
       owners: [],
       due: "2026-09-28T14:00:00.000Z",
       draft: false,

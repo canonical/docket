@@ -40,19 +40,18 @@ const formatList = (values: readonly string[]) =>
     ? values.map((value) => sanitize(value)).join(", ")
     : "none";
 
-/** Each person listed in `people`, with the group and the file that says so. */
-const listPeople = ({ settings, origins }: Sections) =>
+/** Each person listed in `people`, with the group the file gives. */
+const listPeople = ({ settings }: Pick<Resolved, "settings">) =>
   [...settings.people].map(([login, group]) => ({
     login: sanitize(login),
     group,
-    reason: `listed in the ${originWords[origins.people]}`,
   }));
 
 /** The sections a repository's own file may declare, as lines of text. */
 function writeRepositoryLines({ settings, origins }: Sections): string[] {
   const { time, targets, exempt } = settings;
   const { nextMove, close } = targets;
-  const listed = listPeople({ settings, origins }).map(
+  const listed = listPeople({ settings }).map(
     ({ login, group }) => `${login} ${group}`,
   );
   return [
@@ -78,7 +77,7 @@ const fallback =
 function describeSettings({ settings, origins }: Sections) {
   const { time, targets, exempt } = settings;
   return {
-    people: listPeople({ settings, origins }),
+    people: listPeople({ settings }),
     time: { ...time, timezone: sanitize(time.timezone) },
     targets: {
       nextMove: {

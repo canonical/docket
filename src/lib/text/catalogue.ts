@@ -6,7 +6,7 @@ const format: Flag = {
   choices: ["plain", "llm", "json"],
   fallback: "plain in a terminal, llm when the output is piped or captured",
   description:
-    "How the answer is written: plain text for a person, condensed Markdown for an agent (llm), or JSON for a program.",
+    "How the answer is written: plain text for a person, condensed Markdown for an agent (llm), or JSON for a program. In JSON, every key, and every value docket names, such as a kind or a state, is a fixed camelCase identifier rather than an on-screen word: the configuration's `next-move` is `nextMove`.",
 };
 
 const detail: Flag = {

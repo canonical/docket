@@ -40,6 +40,34 @@ function quoteHeading(group: WaitGroup, grouping: OwedGrouping, text: string) {
 }
 
 /**
+ * What a section holds, as data: the owner, `null` over the waits no one
+ * owns; the repository; or the stack, `null` over the pull requests in
+ * none. A section always holds a row.
+ */
+function describeGroupData(group: WaitGroup, grouping: OwedGrouping) {
+  const [first] = group.rows;
+  if (grouping === "owner") {
+    // The heading of an owner's section is the owner's login.
+    return { owner: first?.wait.owners.length ? group.heading?.text : null };
+  }
+  if (grouping === "repo") return { repo: first?.repo };
+  if (grouping === "stack") {
+    const stack = first?.stacked ? first.wait.thread.stack : undefined;
+    return {
+      stack: stack
+        ? {
+            repo: first?.repo,
+            number: stack.number,
+            size: stack.size,
+            base: stack.base,
+          }
+        : null,
+    };
+  }
+  return {};
+}
+
+/**
  * Writes owed: every running wait, most overdue first, in the sections of
  * its grouping. `summary` gives the counts alone.
  *
@@ -71,7 +99,7 @@ export default function renderOwed({
         ? {}
         : {
             groups: groups.map((group) => ({
-              heading: group.heading?.text ?? null,
+              ...describeGroupData(group, list.address.grouping),
               waits: group.rows.map((row) => describeWaitData(row, detail)),
             })),
           }),
