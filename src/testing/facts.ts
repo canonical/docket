@@ -57,6 +57,8 @@ export function thread(facts: Partial<Thread> = {}): Thread {
     draft: false,
     labels: [],
     assignees: [],
+    comments: [],
+    reviews: [],
     ...facts,
   };
 }

@@ -5,6 +5,7 @@ import {
 } from "../clock/index.js";
 import type { Settings } from "../config/index.js";
 import { classify } from "../people/index.js";
+import findResponseStart from "./findResponseStart.js";
 import type { Thread, Wait, WaitKind } from "./types.js";
 
 /**
@@ -12,7 +13,8 @@ import type { Thread, Wait, WaitKind } from "./types.js";
  * clock of the thread's repository.
  *
  * A closed or merged thread has none, whatever the reason it closed. An
- * open thread always carries the close clock from its creation, drafts
+ * open thread waits for a reply while someone outside the team has the
+ * last word, and it always carries the close clock from its creation, drafts
  * included, unless one of its labels is listed in `exempt.close`.
  *
  * @param settings The settings in effect for the thread's repository.
@@ -40,6 +42,12 @@ export default function findWaits(
     return { thread, kind, owners, started, target, due, over: now > due };
   };
   const waits: Wait[] = [];
+  const response = findResponseStart(thread, people);
+  if (response) {
+    waits.push(
+      measure("response", response, targets.nextMove.response, assignees),
+    );
+  }
   // GitHub treats label names that differ only in case as the same label.
   const exempted = new Set(exempt.close.map((label) => label.toLowerCase()));
   if (!thread.labels.some((label) => exempted.has(label.toLowerCase()))) {

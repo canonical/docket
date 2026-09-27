@@ -17,6 +17,12 @@ export interface ThreadSummary {
   readonly stack?: StackEntry;
 }
 
+/** A message on a thread: a comment, or a submitted review. */
+export interface Message {
+  readonly author: Account;
+  readonly at: Date;
+}
+
 /** A thread and the facts recorded on it. */
 export interface Thread extends ThreadSummary {
   readonly author: Account;
@@ -26,6 +32,9 @@ export interface Thread extends ThreadSummary {
   readonly draft: boolean;
   readonly labels: readonly string[];
   readonly assignees: readonly Account[];
+  readonly comments: readonly Message[];
+  /** Submitted reviews, on a pull request. */
+  readonly reviews: readonly Message[];
 }
 
 /**

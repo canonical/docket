@@ -101,6 +101,31 @@ describe("findWaits", () => {
     });
   });
 
+  describe("the response wait", () => {
+    it("runs from the earliest unanswered message, against the response target", () => {
+      const issue = thread({ assignees: [alice, bob] });
+      expect(findWaits(issue, teamSettings, now)[0]).toEqual({
+        thread: issue,
+        kind: "response",
+        owners: ["alice", "bob"],
+        started: issue.createdAt,
+        target: { amount: 24, unit: "h" },
+        due: at("2026-09-23T10:00+02:00"),
+        over: false,
+      });
+    });
+
+    it("does not run once the team has the last word", () => {
+      const answered = thread({
+        comments: [{ author: bob, at: at("2026-09-22T11:00+02:00") }],
+      });
+      const kinds = findWaits(answered, teamSettings, now).map(
+        ({ kind }) => kind,
+      );
+      expect(kinds).toEqual(["close"]);
+    });
+  });
+
   it("finds no wait on a closed or merged thread", () => {
     const closed = thread({ open: false, assignees: [alice] });
     expect(findWaits(closed, teamSettings, now)).toEqual([]);
