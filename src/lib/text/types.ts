@@ -75,3 +75,18 @@ export interface Problem {
   /** What to do so the next call works. */
   readonly recovery: string;
 }
+
+/** How old the data behind an answer is, and what weakens it. */
+export interface Freshness {
+  /** The instant the answer is given at. */
+  readonly now: Date;
+  /** When the data was last synced; absent when no repository is watched. */
+  readonly syncedAt: Date | undefined;
+  /** The time zone absolute times are written in. */
+  readonly timezone: string;
+  /**
+   * What stopped a fetch while cached data could still answer, such as a
+   * rate limit.
+   */
+  readonly warnings: readonly Problem[];
+}
