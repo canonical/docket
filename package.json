@@ -9,7 +9,15 @@
   "engines": {
     "bun": ">=1.4.0"
   },
+  "scripts": {
+    "build": "tsc --noEmit -p tsconfig.build.json && bun build --compile --target=bun-linux-x64 --outfile dist/docket src/application/main.ts",
+    "check": "biome check && tsc --noEmit"
+  },
   "devDependencies": {
-    "@types/bun": "1.4.2"
+    "@biomejs/biome": "2.5.13",
+    "@canonical/biome-config": "0.40.0",
+    "@canonical/typescript-config-react": "0.40.0",
+    "@types/bun": "1.4.2",
+    "typescript": "5.9.3"
   }
 }
