@@ -1,4 +1,5 @@
 import checkMap from "./checkMap.js";
+import formatValue from "./formatValue.js";
 import type { Checked, ConfigError, Group, People } from "./types.js";
 
 const groups: readonly unknown[] = ["team", "internal", "external", "bot"];
@@ -22,7 +23,7 @@ export default function parsePeople(value: unknown): Checked<People> {
     } else if (!groups.includes(group)) {
       errors.push({
         code: "CONFIG_UNKNOWN_GROUP",
-        message: `\`people.${login}\` is \`${String(group)}\`, which is not a group.`,
+        message: `\`people.${login}\` is \`${formatValue(group)}\`, which is not a group.`,
         recovery: "Write one of `team`, `internal`, `external` or `bot`.",
       });
     } else {

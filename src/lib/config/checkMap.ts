@@ -1,3 +1,4 @@
+import formatValue from "./formatValue.js";
 import type { Checked, ConfigError } from "./types.js";
 
 /**
@@ -31,8 +32,11 @@ export default function checkMap(
     if (typeof key !== "string") {
       errors.push({
         code: "CONFIG_WRONG_TYPE",
-        message: `\`${path}\` has the key \`${String(key)}\`, which is not text.`,
-        recovery: `Quote the key, as in \`"${String(key)}"\`.`,
+        message: `\`${path}\` has the key \`${formatValue(key)}\`, which is not text.`,
+        recovery:
+          Array.isArray(key) || key instanceof Map
+            ? "Write the key as text, not as a list or a map."
+            : `Quote the key, as in \`${JSON.stringify(`${key}`)}\`.`,
       });
     } else if (keys && !keys.includes(key)) {
       errors.push({

@@ -1,4 +1,5 @@
 import checkList from "./checkList.js";
+import formatValue from "./formatValue.js";
 import type { Checked, ConfigError } from "./types.js";
 
 /**
@@ -20,8 +21,8 @@ export default function parseHosts(value: unknown): Checked<string[]> {
     if (host !== "github.com") {
       errors.push({
         code: "CONFIG_UNSUPPORTED_HOST",
-        message: `\`hosts\` lists \`${String(host)}\`, and docket supports only github.com.`,
-        recovery: `Remove \`${String(host)}\` from \`hosts\`.`,
+        message: `\`hosts\` lists \`${formatValue(host)}\`, and docket supports only github.com.`,
+        recovery: `Remove \`${formatValue(host)}\` from \`hosts\`.`,
       });
     }
   }

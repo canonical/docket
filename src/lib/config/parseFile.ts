@@ -1,6 +1,7 @@
 import { parseDocument } from "yaml";
 import checkMap from "./checkMap.js";
 import { sectionsByPlace } from "./constants.js";
+import formatValue from "./formatValue.js";
 import parseActivity from "./parseActivity.js";
 import parseExempt from "./parseExempt.js";
 import parseHosts from "./parseHosts.js";
@@ -89,7 +90,7 @@ export default function parseFile(text: string, place: Place): FileOutcome {
           message:
             version === undefined
               ? "The file does not say which version it is written in."
-              : `The file is version \`${String(version)}\`, and docket reads only version 1.`,
+              : `The file is version \`${formatValue(version)}\`, and docket reads only version 1.`,
           recovery: "Start the file with `version: 1`.",
         },
       ],

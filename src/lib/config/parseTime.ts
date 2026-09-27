@@ -6,6 +6,7 @@ import {
 } from "../clock/index.js";
 import checkList from "./checkList.js";
 import checkMap from "./checkMap.js";
+import formatValue from "./formatValue.js";
 import type { Checked, ConfigError } from "./types.js";
 
 const known: readonly unknown[] = weekdays;
@@ -28,7 +29,7 @@ function parseWorkdays(value: unknown): Checked<Weekday[]> {
     if (!known.includes(day) || seen.has(day)) {
       errors.push({
         code: "CONFIG_UNKNOWN_WORKDAY",
-        message: `\`time.workdays\` lists \`${String(day)}\`, which is not a day or is listed twice.`,
+        message: `\`time.workdays\` lists \`${formatValue(day)}\`, which is not a day or is listed twice.`,
         recovery: `List each day once, from ${weekdays.map((name) => `\`${name}\``).join(", ")}.`,
       });
     }
@@ -46,7 +47,7 @@ function parseTimezone(value: unknown): Checked<string> {
     errors: [
       {
         code: "CONFIG_UNKNOWN_TIMEZONE",
-        message: `\`time.timezone\` is \`${String(value)}\`, which is not a time-zone name.`,
+        message: `\`time.timezone\` is \`${formatValue(value)}\`, which is not a time-zone name.`,
         recovery:
           "Write a name from the IANA time-zone database, such as `Europe/Paris` or `UTC`.",
       },

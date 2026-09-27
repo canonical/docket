@@ -1,6 +1,7 @@
 import checkList from "./checkList.js";
 import checkMap from "./checkMap.js";
 import checkText from "./checkText.js";
+import formatValue from "./formatValue.js";
 import type { Checked, ConfigError, Repo } from "./types.js";
 
 // A short name is written before `#` in a thread reference, as in `ds#88`.
@@ -16,7 +17,10 @@ function parseRepo(name: string, value: unknown): Checked<Repo> {
   if (typeof repo !== "string" || !ownerAndName.test(repo)) {
     errors.push({
       code: "CONFIG_INVALID_REPO",
-      message: `\`${path}.repo\` is \`${String(repo)}\`, which is not a repository written as owner/name.`,
+      message:
+        repo === undefined
+          ? `\`${path}\` does not say which repository it is.`
+          : `\`${path}.repo\` is \`${formatValue(repo)}\`, which is not a repository written as owner/name.`,
       recovery: `Write \`repo: owner/name\` under \`${path}\`, such as \`repo: example-org/example-repo\`.`,
     });
     return { value: undefined, errors };

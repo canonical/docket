@@ -1,4 +1,5 @@
 import { type Duration, parseDuration } from "../clock/index.js";
+import formatValue from "./formatValue.js";
 import type { Checked } from "./types.js";
 
 /**
@@ -17,7 +18,7 @@ export default function checkDuration(
     errors: [
       {
         code: "CONFIG_INVALID_DURATION",
-        message: `\`${path}\` is \`${String(value)}\`, which is not a duration.`,
+        message: `\`${path}\` is \`${formatValue(value)}\`, which is not a duration.`,
         recovery:
           "Write a whole number followed by h, d or w, such as `24h`, `2d` or `1w`.",
       },

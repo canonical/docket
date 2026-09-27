@@ -1,3 +1,4 @@
+import formatValue from "./formatValue.js";
 import type { Checked } from "./types.js";
 
 /**
@@ -15,8 +16,11 @@ export default function checkText(
     errors: [
       {
         code: "CONFIG_WRONG_TYPE",
-        message: `\`${path}\` holds \`${String(value)}\`, which is not text.`,
-        recovery: `Quote the value, as in \`"${String(value)}"\`.`,
+        message: `\`${path}\` holds \`${formatValue(value)}\`, which is not text.`,
+        recovery:
+          Array.isArray(value) || value instanceof Map
+            ? "Write the value as text, not as a list or a map."
+            : `Quote the value, as in \`${JSON.stringify(`${value}`)}\`.`,
       },
     ],
   };

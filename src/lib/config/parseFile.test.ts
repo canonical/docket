@@ -339,3 +339,72 @@ describe("parseFile", () => {
     });
   });
 });
+
+describe("parseFile's messages", () => {
+  const firstError = (body: string) => {
+    const outcome = personal(body);
+    return outcome.ok ? undefined : outcome.errors[0];
+  };
+
+  it("shows a map as keys and values, and asks for text", () => {
+    expect(firstError("exempt: { close: [ { a: 1 } ] }\n")).toEqual({
+      code: "CONFIG_WRONG_TYPE",
+      message: '`exempt.close` holds `{ "a": 1 }`, which is not text.',
+      recovery: "Write the value as text, not as a list or a map.",
+    });
+  });
+
+  it("shows a list with its items quoted", () => {
+    expect(
+      firstError("repos: { example: { repo: [example-org, example-repo] } }\n")
+        ?.message,
+    ).toBe(
+      '`repos.example.repo` is `["example-org", "example-repo"]`, which is not a repository written as owner/name.',
+    );
+  });
+
+  it("shows a long list by its first entries, and a list inside it by its brackets", () => {
+    expect(
+      firstError("exempt: { close: [[1, 2, 3, 4, 5, 6, { a: 1 }]] }\n")
+        ?.message,
+    ).toBe("`exempt.close` holds `[1, 2, 3, 4, 5, …]`, which is not text.");
+    expect(
+      firstError("exempt: { close: [{ a: [1], b: {}, c: { d: 1 } }] }\n")
+        ?.message,
+    ).toBe(
+      '`exempt.close` holds `{ "a": […], "b": {…}, "c": {…} }`, which is not text.',
+    );
+    expect(firstError("exempt: { close: [{}] }\n")?.message).toBe(
+      "`exempt.close` holds `{}`, which is not text.",
+    );
+  });
+
+  it("quotes text", () => {
+    expect(firstError("time: { timezone: Europe/Nowhere }\n")?.message).toBe(
+      '`time.timezone` is `"Europe/Nowhere"`, which is not a time-zone name.',
+    );
+  });
+
+  it("suggests quoting a value or key written as a number", () => {
+    expect(firstError("exempt: { close: [12] }\n")?.recovery).toBe(
+      'Quote the value, as in `"12"`.',
+    );
+    expect(firstError("people: { 1234: team }\n")).toEqual({
+      code: "CONFIG_WRONG_TYPE",
+      message: "`people` has the key `1234`, which is not text.",
+      recovery: 'Quote the key, as in `"1234"`.',
+    });
+  });
+
+  it("asks for a key written as text when a key is a list", () => {
+    expect(firstError("people: { [a, b]: team }\n")?.recovery).toBe(
+      "Write the key as text, not as a list or a map.",
+    );
+  });
+
+  it("says when a repository entry does not name its repository", () => {
+    expect(firstError("repos: { example: { tags: [core] } }\n")?.message).toBe(
+      "`repos.example` does not say which repository it is.",
+    );
+  });
+});
