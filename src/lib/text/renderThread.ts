@@ -2,7 +2,7 @@ import { describeAge } from "../activity/index.js";
 import type { WaitRow } from "../owed/index.js";
 import type { Reviewer, ThreadDetail } from "../provider/index.js";
 import type { Thread } from "../waits/index.js";
-import { quotedNote } from "./constants.js";
+import { kindWords, quotedNote } from "./constants.js";
 import describeDataAge from "./describeDataAge.js";
 import describeStack from "./describeStack.js";
 import describeTime from "./describeTime.js";
@@ -35,12 +35,6 @@ export interface ThreadAnswer {
   readonly format: Format;
   readonly detail: Detail;
 }
-
-const kindWords = {
-  issue: "issue",
-  pullRequest: "pull request",
-  discussion: "discussion",
-} as const;
 
 const nameReviewer = (reviewer: Reviewer) =>
   sanitize("team" in reviewer ? reviewer.team : reviewer.login);

@@ -4,7 +4,7 @@ import {
   type EventLine,
   type ThreadRow,
 } from "../activity/index.js";
-import { quotedNote } from "./constants.js";
+import { kindWords, quotedNote } from "./constants.js";
 import describeDataAge from "./describeDataAge.js";
 import describeOwners from "./describeOwners.js";
 import describeStack from "./describeStack.js";
@@ -22,13 +22,6 @@ export interface ActivityAnswer {
   readonly format: Format;
   readonly detail: Detail;
 }
-
-/** Each kind of thread in words, for an agent. */
-const kindWords = {
-  issue: "issue",
-  pullRequest: "pull request",
-  discussion: "discussion",
-} as const;
 
 /** The owners, the draft mark and the stack, where the row has them. */
 function listFacts(row: ThreadRow): string[] {
