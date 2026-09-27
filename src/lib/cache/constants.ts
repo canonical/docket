@@ -58,3 +58,10 @@ export const refreshInterval = 120_000;
  * until the budget resets, leaving the rest to the user's own requests.
  */
 export const budgetFloor = 0.2;
+
+/**
+ * How long, in milliseconds, after a full refresh starts another is
+ * refused: each one fetches every repository whole, which costs points
+ * and time.
+ */
+export const fullRefreshCooldown = 60_000;

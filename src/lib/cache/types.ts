@@ -1,4 +1,9 @@
-import type { Cursor, Provider, ProviderError } from "../provider/index.js";
+import type {
+  Cursor,
+  PageProgress,
+  Provider,
+  ProviderError,
+} from "../provider/index.js";
 import type { Thread } from "../waits/index.js";
 
 /** What the cache keeps for one repository. */
@@ -23,12 +28,38 @@ export interface CachedThreads {
   readonly syncedAt: Date | undefined;
 }
 
+/**
+ * How far fetching every repository whole has come, while nothing is
+ * shown for it: on the first run, or after a full refresh. The pages are
+ * those of the repository being fetched, 0 of 0 until its first page.
+ */
+export interface FullRefreshProgress extends PageProgress {
+  readonly repo: string;
+  /** Its place in the list of repositories, from 1. */
+  readonly position: number;
+  /** How many repositories the list holds. */
+  readonly count: number;
+}
+
+/** A full refresh done, or refused during its cooldown. */
+export type FullRefreshAnswer =
+  | { readonly refused: false }
+  | {
+      readonly refused: true;
+      /** The seconds until a full refresh is available. */
+      readonly seconds: number;
+    };
+
 /** What the faces show of the cache's own state, whatever the provider. */
 export interface CacheStatus {
   /** When the data was last synced, as `CachedThreads` gives it. */
   readonly syncedAt: Date | undefined;
   /** True while a refresh fetches. */
   readonly refreshing: boolean;
+  /** The progress of fetching everything, while nothing is shown. */
+  readonly fullRefresh: FullRefreshProgress | undefined;
+  /** When a full refresh is available again, after one was refused. */
+  readonly fullRefreshAvailableAt: Date | undefined;
   /**
    * Until when the refresh cycle pauses, and why: the budget ran low, or
    * the provider refused a request for its rate limit.
@@ -83,6 +114,15 @@ export interface Cache {
    * @throws Any error that is not the provider's, such as a full disk.
    */
   refresh(): Promise<void>;
+  /**
+   * Discards the cached data, here and in the file, and fetches every
+   * repository whole, reporting its progress in the status. One is
+   * refused within `fullRefreshCooldown` of the last. A provider error is
+   * kept in the status rather than thrown.
+   *
+   * @throws Any error that is not the provider's, such as a full disk.
+   */
+  fullRefresh(): Promise<FullRefreshAnswer>;
   /**
    * Reloads the cache whenever another process writes it, watching the
    * cache folder: the file itself is replaced on every write.

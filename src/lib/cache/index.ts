@@ -7,4 +7,6 @@ export type {
   CachedThreads,
   CacheOptions,
   CacheStatus,
+  FullRefreshAnswer,
+  FullRefreshProgress,
 } from "./types.js";

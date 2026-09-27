@@ -1,9 +1,14 @@
 import { mkdirSync, watch as watchFolder } from "node:fs";
 import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
-import type { ProviderError } from "../provider/index.js";
+import type { PageProgress, ProviderError } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
-import { budgetFloor, cacheFileName, refreshInterval } from "./constants.js";
+import {
+  budgetFloor,
+  cacheFileName,
+  fullRefreshCooldown,
+  refreshInterval,
+} from "./constants.js";
 import readCacheFile from "./readCacheFile.js";
 import syncRepo from "./syncRepo.js";
 import type {
@@ -11,6 +16,7 @@ import type {
   CachedThreads,
   CacheOptions,
   CacheStatus,
+  FullRefreshAnswer,
   RepoCache,
 } from "./types.js";
 import withFetchLock from "./withFetchLock.js";
@@ -48,6 +54,9 @@ export default function createCache({
   let refreshing = false;
   let paused: CacheStatus["paused"];
   let failure: CacheStatus["failure"];
+  let fullRefresh: CacheStatus["fullRefresh"];
+  let fullRefreshAvailableAt: Date | undefined;
+  let lastFullRefresh = Number.NEGATIVE_INFINITY;
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
@@ -94,12 +103,18 @@ export default function createCache({
   /**
    * Syncs every repository under the fetch lock, unless the data is
    * younger than `maxAge` once the lock is held: the process that held it
-   * before may have fetched it.
+   * before may have fetched it. With `discard`, the cached data is
+   * thrown away first, here and in the file, and everything is fetched.
    */
-  const sync = (maxAge: number) =>
+  const sync = (maxAge: number, discard = false) =>
     withFetchLock(directory, async () => {
-      await load();
-      if (isFresh(maxAge)) return;
+      if (discard) {
+        client.clear();
+        await save();
+      } else {
+        await load();
+        if (isFresh(maxAge)) return;
+      }
       refreshing = true;
       notify();
       try {
@@ -107,8 +122,23 @@ export default function createCache({
         // never taken as newer than it is.
         const at = now();
         const synced = new Map<string, RepoCache>();
-        for (const repo of repos) {
-          const value = await syncRepo(provider, repo, entry(repo), at);
+        for (const [index, repo] of repos.entries()) {
+          const previous = entry(repo);
+          // A repository with nothing to show is fetched whole while the
+          // list waits for it, so its progress is reported.
+          const onPage = previous
+            ? undefined
+            : (pages: PageProgress) => {
+                fullRefresh = {
+                  repo,
+                  position: index + 1,
+                  count: repos.length,
+                  ...pages,
+                };
+                notify();
+              };
+          onPage?.({ fetched: 0, total: 0 });
+          const value = await syncRepo(provider, repo, previous, at, onPage);
           synced.set(repo, value);
           store(repo, value, at);
           await save();
@@ -121,6 +151,7 @@ export default function createCache({
         await save();
       } finally {
         refreshing = false;
+        fullRefresh = undefined;
         notify();
       }
     });
@@ -170,6 +201,26 @@ export default function createCache({
       }
       notify();
     },
+    async fullRefresh(): Promise<FullRefreshAnswer> {
+      const at = now().getTime();
+      const available = lastFullRefresh + fullRefreshCooldown;
+      if (at < available) {
+        fullRefreshAvailableAt = new Date(available);
+        notify();
+        return { refused: true, seconds: Math.ceil((available - at) / 1000) };
+      }
+      lastFullRefresh = at;
+      fullRefreshAvailableAt = undefined;
+      try {
+        await sync(0, true);
+        paused = undefined;
+        failure = undefined;
+      } catch (error) {
+        await record(error);
+      }
+      notify();
+      return { refused: false };
+    },
     watch() {
       mkdirSync(directory, { recursive: true, mode: 0o700 });
       const watcher = watchFolder(directory, (_event, name) => {
@@ -180,6 +231,8 @@ export default function createCache({
     status: (): CacheStatus => ({
       syncedAt: syncedAt(),
       refreshing,
+      fullRefresh,
+      fullRefreshAvailableAt,
       paused,
       failure,
     }),
