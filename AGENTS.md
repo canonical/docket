@@ -29,10 +29,12 @@
 - Nothing under `src/lib/` reads the system clock. The current time is an argument, so every result is the same under test.
 - The model domains derive everything from facts a provider records, such as who wrote a comment and when, and infer none. A rule GitHub does not apply, such as "the author is the assignee", is never applied here.
 - The view models (`owed`, `activity`) give each piece of text as a field marked trimmed or wrapped, and never cut it to a width: only a face knows its width, and it measures display cells. They cap no field either: how much room a slot gets, such as the owner on a terminal row, belongs to the face that trims it, and a face that never trims shows every field whole.
+- The GitHub provider takes its token only from `gh auth token`, and keeps it inside the provider: it reads no token variable and no file of gh's, and no result or error carries the token. Every request goes through Octokit's throttling and retry plugins, one at a time.
 - An error a user can meet carries a named code, one sentence and a recovery step. A code names the problem, as `GH_NOT_SIGNED_IN` and `CONFIG_INVALID_DURATION` do, and a domain lists its codes once, in its `types.ts`. Callers and scripts depend on the codes, so a code is never renamed or reused.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
 - Unit tests sit beside the code they test, as `<name>.test.ts`. Each `it()` states an outcome a caller can observe.
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.
+- Tests of the GitHub provider stub `fetch` with `fakeGitHub()` from `src/testing/github.ts`, which answers with responses in the shapes GitHub gives, and run under fake timers, settling each call with `settle()` so the throttling plugin's waits pass at once. No test reaches the network.
 - Fixtures and examples use neutral names only: `alice`, `bob`, `example.com`, `example-org/example-repo`.
 - Commit subjects follow Conventional Commits, with the domain as the scope. Commits are normal commits: no amending and no force-pushing.
 - A pull request fills `.github/PULL_REQUEST_TEMPLATE.md`.
