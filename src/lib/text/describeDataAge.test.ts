@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
-import dataAge from "./dataAge.js";
+import describeDataAge from "./describeDataAge.js";
 
 const now = new Date("2026-09-28T10:00:00Z");
 
 it("gives when the data was synced, its age in whole seconds, and the warnings made safe", () => {
-  const age = dataAge({
+  const age = describeDataAge({
     now,
     syncedAt: new Date("2026-09-28T09:58:59.500Z"),
     timezone: "UTC",
@@ -31,10 +31,16 @@ it("gives when the data was synced, its age in whole seconds, and the warnings m
 
 it("gives no time and no age when no repository is watched, and never a negative age", () => {
   expect(
-    dataAge({ now, syncedAt: undefined, timezone: "UTC", warnings: [] }),
+    describeDataAge({
+      now,
+      syncedAt: undefined,
+      timezone: "UTC",
+      warnings: [],
+    }),
   ).toEqual({ syncedAt: null, ageSeconds: null, warnings: [] });
   const ahead = new Date("2026-09-28T10:00:05Z");
   expect(
-    dataAge({ now, syncedAt: ahead, timezone: "UTC", warnings: [] }).ageSeconds,
+    describeDataAge({ now, syncedAt: ahead, timezone: "UTC", warnings: [] })
+      .ageSeconds,
   ).toBe(0);
 });

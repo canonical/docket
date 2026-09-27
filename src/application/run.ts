@@ -2,7 +2,7 @@ import { createCache, locateCacheDirectory } from "../lib/cache/index.js";
 import { readPersonalFile, resolveSettings } from "../lib/config/index.js";
 import type { Provider } from "../lib/provider/index.js";
 import {
-  exitCode,
+  chooseExitCode,
   type Format,
   type Problem,
   renderHelp,
@@ -36,7 +36,7 @@ export default async function run(context: Context): Promise<number> {
   let format: Format = context.interactive ? "plain" : "llm";
   const stop = (problems: readonly Problem[]) => {
     context.writeError(renderProblems(problems, format));
-    return exitCode(problems[0]?.code ?? "USAGE_INVALID_VALUE");
+    return chooseExitCode(problems[0]?.code ?? "USAGE_INVALID_VALUE");
   };
   try {
     const request = parseArguments(context.args, context.interactive);

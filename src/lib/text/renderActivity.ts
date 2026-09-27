@@ -5,7 +5,7 @@ import {
   type ThreadRow,
 } from "../activity/index.js";
 import { quotedNote } from "./constants.js";
-import dataAge from "./dataAge.js";
+import describeDataAge from "./describeDataAge.js";
 import describeOwners from "./describeOwners.js";
 import describeStack from "./describeStack.js";
 import describeTime from "./describeTime.js";
@@ -31,7 +31,7 @@ const kindWords = {
 } as const;
 
 /** The owners, the draft mark and the stack, where the row has them. */
-function facts(row: ThreadRow): string[] {
+function listFacts(row: ThreadRow): string[] {
   const owners = listOwners(row);
   const { stack } = row.thread;
   return [
@@ -45,17 +45,17 @@ function facts(row: ThreadRow): string[] {
  * The logins that own the thread, none when it is unassigned, or
  * `undefined` when the thread's facts were not given.
  */
-function ownerList(row: ThreadRow): string[] | undefined {
+function listOwnerNames(row: ThreadRow): string[] | undefined {
   if (!row.owner && !row.owners) return undefined;
   if (row.owner?.text === "unassigned") return [];
   return listOwners(row);
 }
 
-const eventText = ({ event, text }: EventLine) =>
+const describeEventLine = ({ event, text }: EventLine) =>
   `${sanitize(text.text)}${event.bot ? " (bot)" : ""}`;
 
-function llmRow(row: ThreadRow, timezone: string): string[] {
-  const owners = ownerList(row);
+function renderLlmRow(row: ThreadRow, timezone: string): string[] {
+  const owners = listOwnerNames(row);
   const parts = [
     row.reference.text,
     quote(row.title.text),
@@ -67,20 +67,20 @@ function llmRow(row: ThreadRow, timezone: string): string[] {
   ];
   const events = row.events.map(
     (line) =>
-      `  - ${eventText(line)} · ${line.age.text} ago, ${describeTime(line.event.at, timezone)}`,
+      `  - ${describeEventLine(line)} · ${line.age.text} ago, ${describeTime(line.event.at, timezone)}`,
   );
   return [`- ${parts.join(" · ")}`, ...events];
 }
 
-function plainRow(row: ThreadRow, timezone: string, detail: Detail) {
+function renderPlainRow(row: ThreadRow, timezone: string, detail: Detail) {
   const events = row.events.map((line) => {
     const when =
       detail === "detailed"
         ? `${line.age.text} ago, ${describeTime(line.event.at, timezone)}`
         : `${line.age.text} ago`;
-    return `  ${eventText(line)} · ${when}`;
+    return `  ${describeEventLine(line)} · ${when}`;
   });
-  const extra = facts(row);
+  const extra = listFacts(row);
   return [
     `${row.reference.text} · ${row.kind.text} · ${row.distance.text}`,
     `  ${sanitize(row.title.text)}`,
@@ -89,8 +89,8 @@ function plainRow(row: ThreadRow, timezone: string, detail: Detail) {
   ];
 }
 
-function jsonRow(row: ThreadRow) {
-  const owners = ownerList(row) ?? null;
+function describeRowData(row: ThreadRow) {
+  const owners = listOwnerNames(row) ?? null;
   return {
     reference: row.reference.text,
     title: sanitize(row.title.text),
@@ -130,14 +130,14 @@ export default function renderActivity({
       mode: list.address.mode,
       window: `${amount}${unit}`,
       grouping: list.address.grouping,
-      data: dataAge(freshness),
+      data: describeDataAge(freshness),
       counts: list.counts,
       ...(detail === "summary"
         ? {}
         : {
             groups: groups.map((group) => ({
               heading: group.heading?.text ?? null,
-              threads: group.rows.map(jsonRow),
+              threads: group.rows.map(describeRowData),
             })),
           }),
     };
@@ -147,7 +147,7 @@ export default function renderActivity({
   const sections = groups.map((group) => {
     const heading = group.heading && sanitize(group.heading.text);
     const rows = group.rows.flatMap((row) =>
-      llm ? llmRow(row, timezone) : plainRow(row, timezone, detail),
+      llm ? renderLlmRow(row, timezone) : renderPlainRow(row, timezone, detail),
     );
     const head = heading ? [llm ? `## ${heading}` : heading] : [];
     return [...head, ...rows].join("\n");

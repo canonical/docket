@@ -1,11 +1,11 @@
 import { describeAddress, type OwedList } from "../owed/index.js";
 import { quotedNote } from "./constants.js";
-import dataAge from "./dataAge.js";
+import describeDataAge from "./describeDataAge.js";
+import describeWaitData from "./describeWaitData.js";
 import renderFreshness from "./renderFreshness.js";
 import renderWaitRow from "./renderWaitRow.js";
 import sanitize from "./sanitize.js";
 import type { Detail, Format, Freshness } from "./types.js";
-import waitData from "./waitData.js";
 
 /** What owed prints: the list, how old its data is, and how to write it. */
 export interface OwedAnswer {
@@ -41,14 +41,14 @@ export default function renderOwed({
     const answer = {
       mode: list.address.mode,
       grouping: list.address.grouping,
-      data: dataAge(freshness),
+      data: describeDataAge(freshness),
       counts: list.counts,
       ...(detail === "summary"
         ? {}
         : {
             groups: groups.map((group) => ({
               heading: group.heading?.text ?? null,
-              waits: group.rows.map((row) => waitData(row, detail)),
+              waits: group.rows.map((row) => describeWaitData(row, detail)),
             })),
           }),
     };

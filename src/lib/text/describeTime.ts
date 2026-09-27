@@ -13,7 +13,7 @@ export default function describeTime(at: Date, timezone: string): string {
     minute: "2-digit",
     hourCycle: "h23",
   }).formatToParts(at);
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
+  const readPart = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((entry) => entry.type === type)?.value;
-  return `${part("year")}-${part("month")}-${part("day")} ${part("hour")}:${part("minute")} ${timezone}`;
+  return `${readPart("year")}-${readPart("month")}-${readPart("day")} ${readPart("hour")}:${readPart("minute")} ${timezone}`;
 }

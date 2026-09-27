@@ -2,7 +2,7 @@ import type { PersonalFile, Resolved } from "../lib/config/index.js";
 import type { Provider } from "../lib/provider/index.js";
 import {
   type ConfigAnswer,
-  exitCode,
+  chooseExitCode,
   type Problem,
   renderConfig,
 } from "../lib/text/index.js";
@@ -50,5 +50,5 @@ export default async function answerConfig(
       format: invocation.format,
     }),
   );
-  return "code" in gh ? exitCode(gh.code) : 0;
+  return "code" in gh ? chooseExitCode(gh.code) : 0;
 }

@@ -3,7 +3,7 @@ import sanitize from "./sanitize.js";
 import type { Detail } from "./types.js";
 
 /** One row as data, for a program: times in ISO 8601. */
-export default function waitData(row: WaitRow, detail: Detail) {
+export default function describeWaitData(row: WaitRow, detail: Detail) {
   const { thread, owners, due, started, target } = row.wait;
   return {
     reference: row.reference.text,

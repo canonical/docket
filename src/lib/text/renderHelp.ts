@@ -1,14 +1,14 @@
 import catalogue from "./catalogue.js";
 import type { Command, CommandName, Flag } from "./types.js";
 
-const usage = (flag: Flag) =>
+const formatUsage = (flag: Flag) =>
   `--${flag.name} ${flag.choices?.join("|") ?? `<${flag.value}>`}`;
 
-const signature = ({ name, arguments: parts }: Command) =>
+const formatSignature = ({ name, arguments: parts }: Command) =>
   parts === "" ? `docket ${name}` : `docket ${name} ${parts}`;
 
 const describeFlag = (flag: Flag) => [
-  `  ${usage(flag)}`,
+  `  ${formatUsage(flag)}`,
   `      ${flag.description} Default: ${flag.fallback}.`,
 ];
 
@@ -23,9 +23,11 @@ const describeExits = (exits: Command["exits"]) =>
 export default function renderHelp(name?: CommandName): string {
   const command = catalogue.find((entry) => entry.name === name);
   if (command) {
-    const flags = command.flags.map((flag) => `[${usage(flag)}]`).join(" ");
+    const flags = command.flags
+      .map((flag) => `[${formatUsage(flag)}]`)
+      .join(" ");
     return [
-      `Usage: ${signature(command)} ${flags}`,
+      `Usage: ${formatSignature(command)} ${flags}`,
       "",
       command.answers,
       "",

@@ -3,16 +3,16 @@ import type { WaitRow } from "../owed/index.js";
 import type { Reviewer, ThreadDetail } from "../provider/index.js";
 import type { Thread } from "../waits/index.js";
 import { quotedNote } from "./constants.js";
-import dataAge from "./dataAge.js";
+import describeDataAge from "./describeDataAge.js";
 import describeStack from "./describeStack.js";
 import describeTime from "./describeTime.js";
+import describeWaitData from "./describeWaitData.js";
 import quote from "./quote.js";
 import quoteLines from "./quoteLines.js";
 import renderFreshness from "./renderFreshness.js";
 import renderWaitRow from "./renderWaitRow.js";
 import sanitize from "./sanitize.js";
 import type { Detail, Format, Freshness } from "./types.js";
-import waitData from "./waitData.js";
 
 /** One thread as `show` prints it: its facts, its details and its waits. */
 export interface ShownThread {
@@ -42,10 +42,10 @@ const kindWords = {
   discussion: "discussion",
 } as const;
 
-const reviewerName = (reviewer: Reviewer) =>
+const nameReviewer = (reviewer: Reviewer) =>
   sanitize("team" in reviewer ? reviewer.team : reviewer.login);
 
-const lines = (count: number, noun: string) =>
+const countOf = (count: number, noun: string) =>
   `${count} ${noun}${count === 1 ? "" : "s"}`;
 
 /**
@@ -53,11 +53,11 @@ const lines = (count: number, noun: string) =>
  * the failing ones by name, or every one at the detailed level.
  */
 function describeChecks(details: ThreadDetail, detail: Detail): string {
-  const has = (state: string) =>
+  const hasCheck = (state: string) =>
     details.checks.some((check) => check.state === state);
-  const state = has("failing")
+  const state = hasCheck("failing")
     ? "failing"
-    : has("running")
+    : hasCheck("running")
       ? "running"
       : "passing";
   const named = details.checks.filter(
@@ -77,36 +77,36 @@ function describeChecks(details: ThreadDetail, detail: Detail): string {
  */
 function describeFacts(
   shown: ShownThread,
-  when: (at: Date) => string,
+  formatWhen: (at: Date) => string,
   detail: Detail,
   llm: boolean,
 ): string[] {
   const { thread, details, repo } = shown;
-  const text = (value: string) => (llm ? quote(value) : sanitize(value));
+  const formatText = (value: string) => (llm ? quote(value) : sanitize(value));
   const assignees = thread.assignees.map(({ login }) => sanitize(login));
   const { stack } = thread;
-  const neighbour = (side: string, position: number) => {
+  const describeNeighbour = (side: string, position: number) => {
     const entry = details.stack?.find((member) => member.position === position);
     return entry ? [`${side} #${entry.number} ${entry.state}`] : [];
   };
   const neighbours = stack
     ? [
-        ...neighbour("below", stack.position - 1),
-        ...neighbour("above", stack.position + 1),
+        ...describeNeighbour("below", stack.position - 1),
+        ...describeNeighbour("above", stack.position + 1),
       ]
     : [];
   const added = details.files.reduce((sum, file) => sum + file.additions, 0);
   const removed = details.files.reduce((sum, file) => sum + file.deletions, 0);
   const pull = thread.kind === "pullRequest";
   return [
-    `title ${text(thread.title)}`,
-    `${kindWords[thread.kind]}${thread.draft ? ", draft" : ""}, opened by ${sanitize(thread.author.login)} ${when(thread.createdAt)}`,
+    `title ${formatText(thread.title)}`,
+    `${kindWords[thread.kind]}${thread.draft ? ", draft" : ""}, opened by ${sanitize(thread.author.login)} ${formatWhen(thread.createdAt)}`,
     `assignees ${assignees.join(", ") || "none"}`,
     ...(detail === "summary"
       ? []
       : [
-          `labels ${thread.labels.map(text).join(", ") || "none"}`,
-          `updated ${when(details.updatedAt)}`,
+          `labels ${thread.labels.map(formatText).join(", ") || "none"}`,
+          `updated ${formatWhen(details.updatedAt)}`,
           ...(pull && details.checks.length > 0
             ? [describeChecks(details, detail)]
             : []),
@@ -120,13 +120,13 @@ function describeFacts(
             : []),
           ...(pull
             ? [
-                `files changed ${details.files.length}, ${lines(added, "line")} added, ${lines(removed, "line")} removed`,
+                `files changed ${details.files.length}, ${countOf(added, "line")} added, ${countOf(removed, "line")} removed`,
               ]
             : []),
           ...(detail === "detailed"
             ? details.files.map(
                 ({ path, additions, deletions }) =>
-                  `file ${text(path)}, ${additions} added, ${deletions} removed`,
+                  `file ${formatText(path)}, ${additions} added, ${deletions} removed`,
               )
             : []),
         ]),
@@ -152,11 +152,11 @@ function renderText(shown: ShownThread, answer: ThreadAnswer): string {
   const { freshness, detail, format } = answer;
   const llm = format === "llm";
   const { now, timezone } = freshness;
-  const when = (at: Date) =>
+  const formatWhen = (at: Date) =>
     `${describeTime(at, timezone)}, ${describeAge(at, now)} ago`;
-  const facts = describeFacts(shown, when, detail, llm);
+  const facts = describeFacts(shown, formatWhen, detail, llm);
   const { requests, messages } = describeTalk(shown, detail);
-  const heading = (text: string) => (llm ? `### ${text}` : text);
+  const formatHeading = (text: string) => (llm ? `### ${text}` : text);
   const waits = shown.rows.flatMap((row) =>
     renderWaitRow(row, llm ? "llm" : "plain", timezone, detail),
   );
@@ -165,20 +165,22 @@ function renderText(shown: ShownThread, answer: ThreadAnswer): string {
       llm ? `## ${shown.reference}` : shown.reference,
       ...facts.map((fact) => (llm ? `- ${fact}` : `  ${fact}`)),
     ],
-    [heading("waits"), ...(waits.length > 0 ? waits : ["nothing owed"])],
+    [formatHeading("waits"), ...(waits.length > 0 ? waits : ["nothing owed"])],
     ...(requests.length > 0
       ? [
           [
-            heading("reviews requested"),
+            formatHeading("reviews requested"),
             ...requests.map(
               ({ reviewer, requester, at }) =>
-                `${llm ? "- " : "  "}${sanitize(requester.login)} asked ${reviewerName(reviewer)}, ${when(at)}`,
+                `${llm ? "- " : "  "}${sanitize(requester.login)} asked ${nameReviewer(reviewer)}, ${formatWhen(at)}`,
             ),
           ],
         ]
       : []),
     ...messages.map(({ author, at, body }) => [
-      heading(`message from ${sanitize(author.login)}, ${when(at)}`),
+      formatHeading(
+        `message from ${sanitize(author.login)}, ${formatWhen(at)}`,
+      ),
       llm
         ? quoteLines(body)
         : sanitize(body, true)
@@ -190,7 +192,7 @@ function renderText(shown: ShownThread, answer: ThreadAnswer): string {
   return sections.map((section) => section.join("\n")).join("\n\n");
 }
 
-function threadData(shown: ShownThread, detail: Detail) {
+function describeThreadData(shown: ShownThread, detail: Detail) {
   const { thread, details } = shown;
   const { requests, messages } = describeTalk(shown, detail);
   const full = detail !== "summary";
@@ -219,9 +221,9 @@ function threadData(shown: ShownThread, detail: Detail) {
           })),
         }
       : {}),
-    waits: shown.rows.map((row) => waitData(row, detail)),
+    waits: shown.rows.map((row) => describeWaitData(row, detail)),
     requests: requests.map(({ reviewer, requester, at }) => ({
-      reviewer: reviewerName(reviewer),
+      reviewer: nameReviewer(reviewer),
       requester: sanitize(requester.login),
       at: at.toISOString(),
     })),
@@ -245,8 +247,8 @@ export default function renderThread(answer: ThreadAnswer): string {
   if (format === "json") {
     const data = {
       reference,
-      data: dataAge(freshness),
-      threads: threads.map((shown) => threadData(shown, detail)),
+      data: describeDataAge(freshness),
+      threads: threads.map((shown) => describeThreadData(shown, detail)),
     };
     return `${JSON.stringify(data, null, 2)}\n`;
   }

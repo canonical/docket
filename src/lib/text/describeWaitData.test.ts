@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { recordedOwed } from "../../testing/recorded.js";
-import waitData from "./waitData.js";
+import describeWaitData from "./describeWaitData.js";
 
 const [first, , soon] = recordedOwed().groups[0]?.rows ?? [];
 if (!first || !soon) throw new Error("the recording has waits");
 
-describe("waitData", () => {
+describe("describeWaitData", () => {
   it("gives a wait as data, its due time in ISO 8601", () => {
-    expect(waitData(soon, "standard")).toEqual({
+    expect(describeWaitData(soon, "standard")).toEqual({
       reference: "example#15",
       title: "Crash on start",
       kind: "reply",
@@ -22,7 +22,7 @@ describe("waitData", () => {
   });
 
   it("adds when the wait started and its target at the detailed level", () => {
-    expect(waitData(first, "detailed")).toMatchObject({
+    expect(describeWaitData(first, "detailed")).toMatchObject({
       started: "2026-09-21T08:00:00.000Z",
       target: "24h",
       stack: { number: 3, position: 2, size: 3, base: "main" },

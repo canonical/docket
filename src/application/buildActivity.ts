@@ -17,7 +17,7 @@ const day = 86_400_000;
  * time is missed. Every seven days hold each workday once, so `n` weeks
  * hold `n` working weeks; a day more covers a clock change.
  */
-function reach(window: Duration, settings: Settings, now: Date): Date {
+function findEarliest(window: Duration, settings: Settings, now: Date): Date {
   const workingWeek = settings.time.workdays.length * day;
   const weeks = Math.ceil(measureDuration(window, settings.time) / workingWeek);
   return new Date(now.getTime() - weeks * 7 * day - day);
@@ -37,7 +37,7 @@ export default async function buildActivity(
   grouping: ActivityGrouping,
   now: Date,
 ): Promise<ActivityList> {
-  const since = reach(window, settings, now);
+  const since = findEarliest(window, settings, now);
   const repos = [];
   for (const repo of settings.repos) {
     const events = await provider.events(repo.repo, since);
