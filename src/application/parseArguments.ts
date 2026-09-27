@@ -2,8 +2,8 @@ import { parseArgs } from "node:util";
 import {
   type CommandName,
   catalogue,
-  type Detail,
-  type Format,
+  details,
+  formats,
 } from "../lib/text/index.js";
 import fail from "./fail.js";
 import type { Invocation } from "./types.js";
@@ -133,10 +133,11 @@ export default function parseArguments(
     invocation: {
       command: command.name,
       positionals: rest,
+      // Each value has been checked against the catalogue's choices.
       format:
-        (values.format as Format | undefined) ??
+        formats.find((entry) => entry === values.format) ??
         (interactive ? "plain" : "llm"),
-      detail: (values.detail as Detail | undefined) ?? "standard",
+      detail: details.find((entry) => entry === values.detail) ?? "standard",
       maxAge: Number(seconds) * 1000,
       by: values.by,
       window: values.window,

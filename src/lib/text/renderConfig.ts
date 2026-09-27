@@ -121,7 +121,7 @@ export default function renderConfig(answer: ConfigAnswer): string {
               recovery: sanitize(problem.recovery),
             },
           }
-        : { signedIn: true, host: settings.hosts[0], login },
+        : { signedIn: true, host: settings.hosts.at(0), login },
       repos: settings.repos,
       activity: settings.activity.map(formatDuration),
       hosts: settings.hosts,

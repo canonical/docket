@@ -36,7 +36,7 @@ export default async function run(context: Context): Promise<number> {
   let format: Format = context.interactive ? "plain" : "llm";
   const stop = (problems: readonly Problem[]) => {
     context.writeError(renderProblems(problems, format));
-    return chooseExitCode(problems[0]?.code ?? "USAGE_INVALID_VALUE");
+    return chooseExitCode(problems.at(0)?.code ?? "USAGE_INVALID_VALUE");
   };
   try {
     const request = parseArguments(context.args, context.interactive);
@@ -54,20 +54,16 @@ export default async function run(context: Context): Promise<number> {
     if (personal.outcome?.ok === false) return stop(personal.outcome.errors);
     const resolved = resolveSettings(personal.outcome?.layer, undefined);
     const { settings } = resolved;
-    let provider: Provider | undefined;
-    let gh: Problem | undefined;
+    // The provider gh's token opens, or why gh gave no token.
+    let connection: Provider | Problem;
     try {
-      provider = await context.connect(settings.hosts[0] ?? "github.com");
+      connection = await context.connect(settings.hosts.at(0) ?? "github.com");
     } catch (error) {
       if (!isNamedError(error)) throw error;
-      gh = {
-        code: error.code,
-        message: error.message,
-        recovery: error.recovery,
-      };
+      const { code, message, recovery } = error;
+      connection = { code, message, recovery };
     }
     if (invocation.command === "config") {
-      const connection = provider ?? (gh as Problem);
       return await answerConfig(
         context,
         invocation,
@@ -76,7 +72,8 @@ export default async function run(context: Context): Promise<number> {
         connection,
       );
     }
-    if (!provider) return stop([gh as Problem]);
+    if ("code" in connection) return stop([connection]);
+    const provider = connection;
     const cache = createCache({
       provider,
       repos: settings.repos.map(({ repo }) => repo),

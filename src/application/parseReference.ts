@@ -37,17 +37,17 @@ export default function parseReference(
   }
   const thread = /^([^#\s]+)#(\d+)$/.exec(first);
   const stack =
-    words[1] === "stack" && /^\d+$/.test(words[2] ?? "")
-      ? [first, words[2]]
+    words.at(1) === "stack" && /^\d+$/.test(words.at(2) ?? "")
+      ? [first, words.at(2)]
       : undefined;
-  const [name, number] = thread ? [thread[1], thread[2]] : (stack ?? []);
+  const [name, number] = thread ? [thread.at(1), thread.at(2)] : (stack ?? []);
   const repo = repos.find((entry) => entry.name === name);
   if (!repo || number === undefined) {
     const known = repos.map((entry) => entry.name).join(", ") || "none";
     fail(
       "USAGE_INVALID_REFERENCE",
       `\`${words.slice(0, 3).join(" ")}\` names no thread of a watched repository; the short names are: ${known}.`,
-      `write the reference as <repo>#<number>, such as ${repos[0]?.name ?? "example"}#12`,
+      `write the reference as <repo>#<number>, such as ${repos.at(0)?.name ?? "example"}#12`,
     );
   }
   return {

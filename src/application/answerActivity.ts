@@ -1,4 +1,4 @@
-import type { ActivityGrouping } from "../lib/activity/index.js";
+import { activityGroupings } from "../lib/activity/index.js";
 import { renderActivity } from "../lib/text/index.js";
 import buildActivity from "./buildActivity.js";
 import fail from "./fail.js";
@@ -28,7 +28,9 @@ export default async function answerActivity(
     );
   }
   const { threads, syncedAt, warnings } = await readThreads(session);
-  const grouping = (invocation.by ?? "kind") as ActivityGrouping;
+  // The catalogue lets `--by` take only activity's groupings.
+  const grouping =
+    activityGroupings.find((entry) => entry === invocation.by) ?? "kind";
   const list = await buildActivity(
     provider,
     threads,
