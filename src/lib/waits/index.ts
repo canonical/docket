@@ -1,5 +1,6 @@
 export { default as findWaits } from "./findWaits.js";
 export type {
+  Checks,
   Message,
   Push,
   ReviewRequest,
