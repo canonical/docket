@@ -103,7 +103,9 @@ describe("parseFile", () => {
     });
 
     it("refuses an empty file", () => {
-      expect(codesOf(parseFile("", "repository"))).toEqual(["CONFIG_UNSUPPORTED_VERSION"]);
+      expect(codesOf(parseFile("", "repository"))).toEqual([
+        "CONFIG_UNSUPPORTED_VERSION",
+      ]);
     });
 
     it("refuses any other version without reading the rest", () => {
@@ -182,7 +184,10 @@ describe("parseFile", () => {
 
   describe("repos", () => {
     it("refuses a repository not written as owner/name", () => {
-      refuses("repos: { example: { repo: example-repo } }\n", "CONFIG_INVALID_REPO");
+      refuses(
+        "repos: { example: { repo: example-repo } }\n",
+        "CONFIG_INVALID_REPO",
+      );
       refuses("repos: { example: { tags: [core] } }\n", "CONFIG_INVALID_REPO");
     });
 
@@ -194,7 +199,10 @@ describe("parseFile", () => {
     });
 
     it("refuses an entry that is not a map, and tags that are not text", () => {
-      refuses("repos: { example: example-org/example-repo }\n", "CONFIG_WRONG_TYPE");
+      refuses(
+        "repos: { example: example-org/example-repo }\n",
+        "CONFIG_WRONG_TYPE",
+      );
       refuses(
         "repos: { example: { repo: example-org/example-repo, tags: core } }\n",
         "CONFIG_WRONG_TYPE",
@@ -237,7 +245,10 @@ describe("parseFile", () => {
     });
 
     it("refuses a name that is not a time zone", () => {
-      refuses("time: { timezone: Europe/Nowhere }\n", "CONFIG_UNKNOWN_TIMEZONE");
+      refuses(
+        "time: { timezone: Europe/Nowhere }\n",
+        "CONFIG_UNKNOWN_TIMEZONE",
+      );
       refuses("time: { timezone: 2 }\n", "CONFIG_UNKNOWN_TIMEZONE");
     });
 
@@ -313,7 +324,10 @@ describe("parseFile", () => {
 
   describe("hosts", () => {
     it("refuses any host other than github.com", () => {
-      refuses("hosts: [github.com, github.example.com]\n", "CONFIG_UNSUPPORTED_HOST");
+      refuses(
+        "hosts: [github.com, github.example.com]\n",
+        "CONFIG_UNSUPPORTED_HOST",
+      );
     });
 
     it("refuses a list with no host", () => {
