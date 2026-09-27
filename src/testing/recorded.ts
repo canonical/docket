@@ -17,7 +17,7 @@ import {
 } from "../lib/config/index.js";
 import { selectEvents, type ThreadEvent } from "../lib/events/index.js";
 import { groupWaits, listWaits, type OwedGrouping } from "../lib/owed/index.js";
-import type { ThreadDetail } from "../lib/provider/index.js";
+import type { Provider, ThreadDetail } from "../lib/provider/index.js";
 import { findWaits, type Thread } from "../lib/waits/index.js";
 import {
   alice,
@@ -29,6 +29,7 @@ import {
   teamSettings,
 } from "./facts.js";
 import { personalFile } from "./fixtures.js";
+import { fakeProvider } from "./provider.js";
 
 /** Monday 28 September 2026, 12:00 in Paris. */
 export const recordedNow = at("2026-09-28T12:00+02:00");
@@ -174,6 +175,24 @@ export const parserFixDetail: ThreadDetail = {
     { position: 3, number: 13, state: "open" },
   ],
 };
+
+/**
+ * A provider answering from the recording: the threads of each
+ * repository, their events and the pull request's details. `overrides`
+ * replaces any operation.
+ */
+export function recordedProvider(overrides: Partial<Provider> = {}): Provider {
+  return fakeProvider({
+    snapshot: async (repo) => ({
+      threads: recordedThreads.filter((thread) => thread.repo === repo),
+      cursor: { since: "2026-09-28T09:59:00Z" },
+    }),
+    events: async (repo) =>
+      recordedEvents.filter(({ thread }) => thread.repo === repo),
+    threadDetail: async () => parserFixDetail,
+    ...overrides,
+  });
+}
 
 /** owed, as the recording gives it at `recordedNow`. */
 export function recordedOwed(grouping: OwedGrouping = "none") {

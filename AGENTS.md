@@ -15,6 +15,7 @@
 - `bun run check:licences`: refuses any production dependency whose licence is not on the permissive list in `src/scripts/check-licences.ts`.
 - `bun run check:structure`: checks the source tree's shape against the conventions below: exports and file names, barrels, folders, the direction of imports between domains, and file length.
 - `bun run self-test`: proves the identity, secret, advisory, licence and structure gates can each fail, by running each against a scratch fixture it must reject.
+- `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>` and `config`; `--help` after any of them gives its flags, an example and its exit codes.
 
 ## Conventions
 
@@ -33,13 +34,15 @@
 - The cache holds GitHub data only, never the token, in `$XDG_CACHE_HOME/docket` (or `~/.cache/docket`): a file readable by its owner alone, written whole as a temporary file renamed over the old one. One docket process fetches at a time, holding the `fetch.lock` there, and a process that takes the lock reads the cache again before it fetches.
 - The cache reaches the data only through the provider interface, never the GitHub adapter. Its tests use `fakeProvider()` from `src/testing/provider.ts`, and prove what happens between processes by starting real ones, such as `src/testing/cacheReader.ts`, on a temporary folder.
 - An error a user can meet carries a named code, one sentence and a recovery step. A code names the problem, as `GH_NOT_SIGNED_IN` and `CONFIG_INVALID_DURATION` do, and a domain lists its codes once, in its `types.ts`. Callers and scripts depend on the codes, so a code is never renamed or reused.
+- The text interface exits 0 when it answered, cached data served during a GitHub or cache failure included, with the failure as a warning; 2 for a `GH_*`, `CONFIG_*` or `USAGE_*` code; and 3 for any other code: no data. `src/lib/text/exitCode.ts` holds the rule.
 - The help is drawn from the command catalogue, `src/lib/text/catalogue.ts`, and nowhere else: a command or flag changes there, with its hand-written help.
 - Every string from GitHub or from a repository's file goes through `sanitize` before it is printed, and `llm` output marks it as quoted data: titles in double quotes, comments as `>` lines.
-- The text interface exits 0 when it answered, cached data served during a GitHub or cache failure included, with the failure as a warning; 2 for a `GH_*`, `CONFIG_*` or `USAGE_*` code; and 3 for any other code: no data. `src/lib/text/exitCode.ts` holds the rule.
+- Text mode reads threads through the cache with `--max-age` (300 seconds by default) and never starts the refresh cycle.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
-- Unit tests sit beside the code they test, as `<name>.test.ts`. Each `it()` states an outcome a caller can observe.
+- Every implementation file under `src/lib/` and `src/application/` has its own unit tests beside it, as `<name>.test.ts`, with `describe` blocks named for its export; barrels, `types.ts` and `constants.ts` have none. Each `it()` states an outcome a caller can observe.
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.
 - Tests of the GitHub provider stub `fetch` with `fakeGitHub()` from `src/testing/github.ts`, which answers with responses in the shapes GitHub gives, and run under fake timers, settling each call with `settle()` so the throttling plugin's waits pass at once. No test reaches the network.
+- Tests of the text interface answer from `recordedProvider()` in `src/testing/recorded.ts` at `recordedNow`, and compare whole outputs line by line. `makeHome()` and `openSession()` in `src/testing/docket.ts` run a call, or one command, on a temporary configuration and cache.
 - Fixtures and examples use neutral names only: `alice`, `bob`, `example.com`, `example-org/example-repo`.
 - Commit subjects follow Conventional Commits, with the domain as the scope. Commits are normal commits: no amending and no force-pushing.
 - A pull request fills `.github/PULL_REQUEST_TEMPLATE.md`.
