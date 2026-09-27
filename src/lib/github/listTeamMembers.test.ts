@@ -36,8 +36,8 @@ describe("listTeamMembers", () => {
     );
     expect(await list()).toEqual(["alice", "bob"]);
     expect(github.sent.map(({ body }) => body?.variables)).toEqual([
-      { organisation: "example-org", team: "reviewers", after: null },
-      { organisation: "example-org", team: "reviewers", after: "m1" },
+      { organisation: "example-org", team: "reviewers" },
+      { organisation: "example-org", team: "reviewers", cursor: "m1" },
     ]);
   });
 

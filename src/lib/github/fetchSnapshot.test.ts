@@ -269,7 +269,6 @@ describe("fetchSnapshot", () => {
     expect(variables(github.sent.at(1) as Sent)).toEqual({
       organisation: "example-org",
       team: "reviewers",
-      after: null,
     });
   });
 

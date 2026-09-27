@@ -1,7 +1,6 @@
 import type { Account } from "../people/index.js";
 import type { ReviewCandidates, Reviewer } from "../provider/index.js";
 import type { ThreadSummary } from "../waits/index.js";
-import followPages from "./followPages.js";
 import listAssignableUsers from "./listAssignableUsers.js";
 import readAccount from "./readAccount.js";
 import readReviewer from "./readReviewer.js";
@@ -66,15 +65,12 @@ export default async function listReviewCandidates(
     ({ reviewer }) => readAccount(reviewer),
   );
   const teams: string[] = [];
-  await followPages<{ readonly slug: string }>(
-    client,
+  for await (const page of client.pages<{ readonly slug: string }>(
     "GET /repos/{owner}/{repo}/teams",
     { owner, repo: name, per_page: 100 },
-    (page) => {
-      teams.push(...page.map(({ slug }) => `${owner}/${slug}`));
-      return true;
-    },
-  );
+  )) {
+    teams.push(...page.map(({ slug }) => `${owner}/${slug}`));
+  }
   const people = await listAssignableUsers(client, pullRequest.repo);
   return { requested, suggested, people, teams };
 }

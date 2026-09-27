@@ -270,6 +270,23 @@ describe("createClient", () => {
     expect(error).toMatchObject({ code: "GITHUB_REQUEST_FAILED" });
   });
 
+  it("names GITHUB_REQUEST_FAILED when a page of a list is refused", async () => {
+    const connected = client();
+    const read = async () => {
+      for await (const _ of connected.pages("GET /repos/o/r/teams")) {
+        // Every page is read.
+      }
+    };
+    const errors = [
+      await failure(read()),
+      await failure(connected.paginate(viewer, {})),
+    ];
+    expect(errors).toMatchObject([
+      { code: "GITHUB_REQUEST_FAILED" },
+      { code: "GITHUB_REQUEST_FAILED" },
+    ]);
+  });
+
   it("names GITHUB_REQUEST_FAILED with the status GitHub refused with", async () => {
     const error = await failure(client().request("GET /repos/o/r"));
     expect(error).toMatchObject({

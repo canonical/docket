@@ -1,4 +1,6 @@
 import { Octokit } from "@octokit/core";
+import { paginateGraphQL } from "@octokit/plugin-paginate-graphql";
+import { paginateRest } from "@octokit/plugin-paginate-rest";
 import { retry } from "@octokit/plugin-retry";
 import { throttling } from "@octokit/plugin-throttling";
 import Bottleneck from "bottleneck";
@@ -6,7 +8,7 @@ import type { Budget } from "../provider/index.js";
 import describeFailure from "./describeFailure.js";
 import type { Client, RestResponse } from "./types.js";
 
-const GitHub = Octokit.plugin(throttling, retry);
+const GitHub = Octokit.plugin(throttling, retry, paginateRest, paginateGraphQL);
 
 /** The rate figures every GraphQL document of the adapter asks for. */
 interface RateLimitNode {
@@ -101,13 +103,16 @@ export default function createClient(
     retry: { doNotRetry: [400, 401, 403, 404, 410, 422, 429, 451] },
   });
   let budget: Budget | undefined;
-  const record = <T>(data: T & { rateLimit?: RateLimitNode }): T => {
-    if (data.rateLimit) {
-      const { limit, remaining, resetAt } = data.rateLimit;
+  // Every GraphQL answer carries the rate figures its document asks for,
+  // pages of a list and answers with an error among them, so the budget
+  // is read from each answer as it arrives.
+  octokit.hook.after("request", ({ data }) => {
+    const rate: RateLimitNode | undefined = data?.data?.rateLimit;
+    if (rate) {
+      const { limit, remaining, resetAt } = rate;
       budget = { limit, remaining, resetAt: new Date(resetAt) };
     }
-    return data;
-  };
+  });
   return {
     async query<T>(
       document: string,
@@ -115,15 +120,10 @@ export default function createClient(
       options: { readonly allowMissing?: boolean } = {},
     ) {
       try {
-        return record(
-          await octokit.graphql<T & { rateLimit?: RateLimitNode }>(
-            document,
-            variables,
-          ),
-        );
+        return await octokit.graphql<T>(document, variables);
       } catch (error) {
         if (options.allowMissing && onlyMissing(error)) {
-          return record(error.data as T & { rateLimit?: RateLimitNode });
+          return error.data as T;
         }
         throw describeFailure(error, host);
       }
@@ -143,6 +143,29 @@ export default function createClient(
         if (status === 304 && response) {
           return { status, data: response.data, headers: response.headers };
         }
+        throw describeFailure(error, host);
+      }
+    },
+    async paginate<T>(document: string, variables: Record<string, unknown>) {
+      try {
+        return await octokit.graphql.paginate<T & object>(document, variables);
+      } catch (error) {
+        // A list whose owner is `null` has no `pageInfo` to follow, which
+        // the plugin reports as an error that holds the answer.
+        const { name, response } = error as { name?: string; response?: T };
+        if (name === "MissingPageInfo") return response as T;
+        throw describeFailure(error, host);
+      }
+    },
+    async *pages<T>(route: string, parameters: Record<string, unknown> = {}) {
+      try {
+        for await (const { data } of octokit.paginate.iterator(
+          route,
+          parameters,
+        )) {
+          yield data as readonly T[];
+        }
+      } catch (error) {
         throw describeFailure(error, host);
       }
     },

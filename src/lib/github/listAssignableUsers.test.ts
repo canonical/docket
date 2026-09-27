@@ -44,8 +44,8 @@ describe("listAssignableUsers", () => {
       { login: "bob", type: "user" },
     ]);
     expect(github.sent.map(({ body }) => body?.variables)).toEqual([
-      { owner: "example-org", name: "example-repo", after: null },
-      { owner: "example-org", name: "example-repo", after: "a1" },
+      { owner: "example-org", name: "example-repo" },
+      { owner: "example-org", name: "example-repo", cursor: "a1" },
     ]);
   });
 

@@ -1,11 +1,10 @@
-import collectPages from "./collectPages.js";
 import type { Client, PageNode } from "./types.js";
 
-const document = `query TeamMembers($organisation: String!, $team: String!, $after: String) {
+const document = `query TeamMembers($organisation: String!, $team: String!, $cursor: String) {
   rateLimit { limit remaining resetAt }
   organization(login: $organisation) {
     team(slug: $team) {
-      members(first: 100, after: $after) {
+      members(first: 100, after: $cursor) {
         pageInfo { hasNextPage endCursor }
         nodes { login }
       }
@@ -30,13 +29,11 @@ export default async function listTeamMembers(
   team: string,
 ): Promise<string[]> {
   const [organisation, slug] = team.split("/");
-  const members = await collectPages(async (after) => {
-    const answer = await client.query<Answer>(document, {
-      organisation,
-      team: slug,
-      after,
-    });
-    return answer.organization?.team?.members;
+  const answer = await client.paginate<Answer>(document, {
+    organisation,
+    team: slug,
   });
-  return members.map(({ login }) => login);
+  return (answer.organization?.team?.members.nodes ?? []).map(
+    ({ login }) => login,
+  );
 }

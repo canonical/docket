@@ -1,4 +1,3 @@
-import followPages from "./followPages.js";
 import splitRepo from "./splitRepo.js";
 import type { Client, FeedPush, RestAccount } from "./types.js";
 
@@ -31,20 +30,20 @@ export default async function fetchPushes(
 ): Promise<FeedPush[]> {
   const { owner, name } = splitRepo(repo);
   const pushes: FeedPush[] = [];
-  await followPages<FeedEntry>(
-    client,
-    "GET /repos/{owner}/{repo}/activity",
-    { owner, repo: name, per_page: 100, ...(ref ? { ref } : {}) },
-    (entries) => {
-      for (const entry of entries) {
-        const at = new Date(entry.timestamp);
-        if (at < since) return false;
-        if (!pushTypes.has(entry.activity_type)) continue;
-        const { ref, before, after, actor } = entry;
-        pushes.push({ ref, before, after, at, actor });
-      }
-      return true;
-    },
-  );
+  const feed = client.pages<FeedEntry>("GET /repos/{owner}/{repo}/activity", {
+    owner,
+    repo: name,
+    per_page: 100,
+    ...(ref ? { ref } : {}),
+  });
+  for await (const entries of feed) {
+    for (const entry of entries) {
+      const at = new Date(entry.timestamp);
+      if (at < since) return pushes;
+      if (!pushTypes.has(entry.activity_type)) continue;
+      const { ref, before, after, actor } = entry;
+      pushes.push({ ref, before, after, at, actor });
+    }
+  }
   return pushes;
 }

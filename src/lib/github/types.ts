@@ -32,6 +32,21 @@ export interface Client {
     route: string,
     parameters?: Record<string, unknown>,
   ): Promise<RestResponse<T>>;
+  /**
+   * Runs a GraphQL document over every page of the one list it reads,
+   * which starts each page at `$cursor`, and gives its data with every
+   * node of that list. A list whose owner GitHub gives as `null`, such as
+   * a team hidden from the reader, stays `null`.
+   */
+  paginate<T>(document: string, variables: Record<string, unknown>): Promise<T>;
+  /**
+   * Reads a REST list page by page, following the link GitHub gives to
+   * the next page; leaving the loop early reads no further page.
+   */
+  pages<T>(
+    route: string,
+    parameters?: Record<string, unknown>,
+  ): AsyncIterable<readonly T[]>;
   /** The rate budget the latest GraphQL answer reported, if any has. */
   lastBudget(): Budget | undefined;
 }
