@@ -10,6 +10,7 @@ import {
   fullRefreshCooldown,
   refreshInterval,
 } from "./constants.js";
+import isSame from "./isSame.js";
 import readCacheFile from "./readCacheFile.js";
 import syncRepo from "./syncRepo.js";
 import type {
@@ -54,20 +55,12 @@ export default function createCache({
   });
   const file = join(directory, cacheFileName);
   const listeners = new Set<() => void>();
-  let refreshing = false;
-  let paused: CacheStatus["paused"];
-  let failure: CacheStatus["failure"];
-  let fullRefresh: CacheStatus["fullRefresh"];
-  let fullRefreshAvailableAt: Date | undefined;
   let fullRefreshAt: Date | undefined;
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
   const store = (repo: string, value: RepoCache, at: Date) =>
     client.setQueryData(key(repo), value, { updatedAt: at.getTime() });
-  const notify = () => {
-    for (const listener of listeners) listener();
-  };
 
   const syncedAt = (): Date | undefined => {
     const times = repos.map(
@@ -80,10 +73,49 @@ export default function createCache({
     const at = syncedAt();
     return at !== undefined && now().getTime() - at.getTime() < maxAge;
   };
-  const threads = (): CachedThreads => ({
-    threads: repos.flatMap((repo) => entry(repo)?.threads ?? []),
-    syncedAt: syncedAt(),
-  });
+
+  // The threads and the status given out. Each is replaced only when
+  // something in it changes, because a face reads them through React's
+  // useSyncExternalStore, which needs the same value back until then.
+  let shown: CachedThreads = { threads: [], syncedAt: undefined };
+  let shownData = repos.map(() => ({ data: undefined as unknown, at: 0 }));
+  let status: CacheStatus = {
+    syncedAt: undefined,
+    refreshing: false,
+    fullRefresh: undefined,
+    fullRefreshAvailableAt: undefined,
+    paused: undefined,
+    failure: undefined,
+  };
+
+  /**
+   * Brings the threads and the status given out up to date with the
+   * queries and with `change`, and tells the listeners when either
+   * changed.
+   */
+  const publish = (change: Partial<CacheStatus> = {}) => {
+    const data = repos.map((repo) => {
+      const state = client.getQueryState(key(repo));
+      return { data: state?.data, at: state?.dataUpdatedAt ?? 0 };
+    });
+    const threadsChanged = data.some(
+      (now, index) =>
+        now.data !== shownData[index]?.data || now.at !== shownData[index]?.at,
+    );
+    if (threadsChanged) {
+      shownData = data;
+      shown = {
+        threads: repos.flatMap((repo) => entry(repo)?.threads ?? []),
+        syncedAt: syncedAt(),
+      };
+    }
+    const next = { ...status, ...change, syncedAt: shown.syncedAt };
+    const statusChanged = !isSame(next, status);
+    if (statusChanged) status = next;
+    if (threadsChanged || statusChanged) {
+      for (const listener of listeners) listener();
+    }
+  };
 
   const load = async () => {
     const contents = await readCacheFile(file);
@@ -93,7 +125,7 @@ export default function createCache({
       // start it loaded forward, so the file's is always the latest.
       fullRefreshAt = contents.fullRefreshAt ?? fullRefreshAt;
     }
-    notify();
+    publish();
   };
   const save = () =>
     writeCacheFile(file, { state: dehydrate(client), fullRefreshAt });
@@ -111,8 +143,7 @@ export default function createCache({
 
   /** Fetches every repository, the lock held. */
   const fetchAll = async () => {
-    refreshing = true;
-    notify();
+    publish({ refreshing: true });
     try {
       // Every repository is dated from before its fetch, so the data is
       // never taken as newer than it is.
@@ -124,15 +155,15 @@ export default function createCache({
         // list waits for it, so its progress is reported.
         const onPage = previous
           ? undefined
-          : (pages: PageProgress) => {
-              fullRefresh = {
-                repo,
-                position: index + 1,
-                count: repos.length,
-                ...pages,
-              };
-              notify();
-            };
+          : (pages: PageProgress) =>
+              publish({
+                fullRefresh: {
+                  repo,
+                  position: index + 1,
+                  count: repos.length,
+                  ...pages,
+                },
+              });
         onPage?.({ fetched: 0, total: 0 });
         const value = await syncRepo(provider, repo, previous, at, onPage);
         synced.set(repo, value);
@@ -146,9 +177,7 @@ export default function createCache({
       }
       await save();
     } finally {
-      refreshing = false;
-      fullRefresh = undefined;
-      notify();
+      publish({ refreshing: false, fullRefresh: undefined });
     }
   };
 
@@ -179,10 +208,10 @@ export default function createCache({
         (fullRefreshAt?.getTime() ?? Number.NEGATIVE_INFINITY) +
         fullRefreshCooldown;
       if (at.getTime() < available) {
-        fullRefreshAvailableAt = new Date(available);
+        publish({ fullRefreshAvailableAt: new Date(available) });
         return false;
       }
-      fullRefreshAvailableAt = undefined;
+      publish({ fullRefreshAvailableAt: undefined });
       fullRefreshAt = at;
       client.clear();
       await save();
@@ -196,7 +225,7 @@ export default function createCache({
    * `CACHE_REFRESH_FAILED`. A refusal for the rate limit pauses the cycle
    * until the budget resets, when the provider can say when that is.
    */
-  const record = async (thrown: unknown) => {
+  const record = async (thrown: unknown): Promise<Partial<CacheStatus>> => {
     const error = isNamedError(thrown)
       ? thrown
       : new CacheError(
@@ -209,49 +238,42 @@ export default function createCache({
         ({ resetAt }) => resetAt,
         () => undefined,
       );
-      if (until) {
-        paused = { until, reason: "rateLimit" };
-        return;
-      }
+      if (until) return { paused: { until, reason: "rateLimit" } } as const;
     }
-    failure = error;
+    return { failure: error };
   };
 
   return {
-    threads,
+    threads: () => shown,
     load,
     async read(maxAge) {
       await load();
       if (!isFresh(maxAge)) await sync(maxAge);
-      return threads();
+      return shown;
     },
     async refresh() {
       const at = now();
-      if (paused && at < paused.until) return;
+      if (status.paused && at < status.paused.until) return;
       try {
         const { limit, remaining, resetAt } = await provider.budget();
         if (at < resetAt && remaining < limit * budgetFloor) {
-          paused = { until: resetAt, reason: "budget" };
+          publish({ paused: { until: resetAt, reason: "budget" } });
         } else {
           await sync(refreshInterval);
-          paused = undefined;
-          failure = undefined;
+          publish({ paused: undefined, failure: undefined });
         }
       } catch (error) {
-        await record(error);
+        publish(await record(error));
       }
-      notify();
     },
     async fullRefresh() {
       try {
         if (await discardAndFetch()) {
-          paused = undefined;
-          failure = undefined;
+          publish({ paused: undefined, failure: undefined });
         }
       } catch (error) {
-        await record(error);
+        publish(await record(error));
       }
-      notify();
     },
     watch() {
       mkdirSync(directory, { recursive: true, mode: 0o700 });
@@ -260,14 +282,7 @@ export default function createCache({
       });
       return () => watcher.close();
     },
-    status: (): CacheStatus => ({
-      syncedAt: syncedAt(),
-      refreshing,
-      fullRefresh,
-      fullRefreshAvailableAt,
-      paused,
-      failure,
-    }),
+    status: () => status,
     subscribe(listener) {
       listeners.add(listener);
       return () => {

@@ -102,7 +102,10 @@ export interface CacheOptions {
  * query per repository, kept on disk for every docket process.
  */
 export interface Cache {
-  /** The threads held in memory, as last loaded or fetched. */
+  /**
+   * The threads held in memory, as last loaded or fetched: the same value
+   * on every call until they change.
+   */
   threads(): CachedThreads;
   /**
    * Loads what other processes wrote to the cache file, keeping only data
@@ -144,6 +147,7 @@ export interface Cache {
    * @returns Stops watching.
    */
   watch(): () => void;
+  /** The cache's state: the same value on every call until it changes. */
   status(): CacheStatus;
   /** Calls `listener` whenever the threads or the status change. */
   subscribe(listener: () => void): () => void;

@@ -203,6 +203,23 @@ describe("createCache", () => {
     expect(seen).toHaveLength(count);
   });
 
+  it("gives the same threads and status on every call until they change", async () => {
+    const cache = open(counting());
+    const threads = cache.threads();
+    const status = cache.status();
+    expect(cache.threads()).toBe(threads);
+    expect(cache.status()).toBe(status);
+    await cache.read(5 * minute);
+    const read = cache.threads();
+    const synced = cache.status();
+    expect(read).not.toBe(threads);
+    expect(synced).not.toBe(status);
+    await cache.load();
+    await cache.read(5 * minute);
+    expect(cache.threads()).toBe(read);
+    expect(cache.status()).toBe(synced);
+  });
+
   it("holds nothing, and fetches nothing, with no repository to watch", async () => {
     const provider = counting();
     const read = await open(provider, []).read(5 * minute);
