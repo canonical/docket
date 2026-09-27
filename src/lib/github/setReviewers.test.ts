@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { thread } from "../../testing/facts.js";
 import { fakeGitHub, restUser, settle, token } from "../../testing/github.js";
+import type { Reviewer } from "../provider/index.js";
 import createClient from "./createClient.js";
 import setReviewers from "./setReviewers.js";
 
@@ -18,7 +19,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const request = (...reviewers: string[]) =>
+const person = (login: string) => ({ login, type: "user" as const });
+const team = (name: string) => ({ team: name });
+const request = (...reviewers: Reviewer[]) =>
   settle(
     setReviewers(
       createClient(token, "github.com", "1.2.3"),
@@ -48,7 +51,13 @@ describe("setReviewers", () => {
     github.rest(`GET ${route}`, standing(["bob", "carol"], ["design"]));
     github.rest(`DELETE ${route}`, pull(["bob"], []));
     github.rest(`POST ${route}`, pull(["bob", "dave"], ["reviewers"]));
-    expect(await request("BOB", "dave", "example-org/reviewers")).toEqual([
+    expect(
+      await request(
+        person("BOB"),
+        person("dave"),
+        team("example-org/reviewers"),
+      ),
+    ).toEqual([
       { login: "bob", type: "user" },
       { login: "dave", type: "user" },
       { team: "example-org/reviewers" },
@@ -62,7 +71,7 @@ describe("setReviewers", () => {
   it("only withdraws when nothing is missing", async () => {
     github.rest(`GET ${route}`, standing(["bob"], ["design"]));
     github.rest(`DELETE ${route}`, pull([], ["design"]));
-    expect(await request("example-org/design")).toEqual([
+    expect(await request(team("example-org/design"))).toEqual([
       { team: "example-org/design" },
     ]);
     expect(writes()).toEqual([["DELETE", ["bob"], []]]);
@@ -77,7 +86,9 @@ describe("setReviewers", () => {
 
   it("writes nothing when the requests are already the ones asked for", async () => {
     github.rest(`GET ${route}`, standing(["bob"], []));
-    expect(await request("bob")).toEqual([{ login: "bob", type: "user" }]);
+    expect(await request(person("bob"))).toEqual([
+      { login: "bob", type: "user" },
+    ]);
     expect(writes()).toEqual([]);
   });
 });

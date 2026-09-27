@@ -22,8 +22,8 @@ const missing = (from: readonly string[], among: readonly string[]) => {
 };
 
 /**
- * Makes `reviewers` the whole set of reviews requested on a pull request:
- * logins, and teams written `organisation/team`. GitHub's own calls only
+ * Makes `reviewers` the whole set of reviews requested on a pull request,
+ * people and teams. GitHub's own calls only
  * add or only remove, so this reads the requests standing and sends the
  * difference, removals first. Names match whatever their case.
  *
@@ -34,7 +34,7 @@ const missing = (from: readonly string[], among: readonly string[]) => {
 export default async function setReviewers(
   client: Client,
   pullRequest: ThreadSummary,
-  reviewers: readonly string[],
+  reviewers: readonly Reviewer[],
 ): Promise<Reviewer[]> {
   const { owner, name } = splitRepo(pullRequest.repo);
   const route = "/repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers";
@@ -42,11 +42,14 @@ export default async function setReviewers(
   const read = await client.request<Requested>(`GET ${route}`, target);
   let users = read.data.users;
   let teams = read.data.teams;
-  // Teams are named by their slug alone within the repository's owner.
-  const wantedUsers = reviewers.filter((entry) => !entry.includes("/"));
-  const wantedTeams = reviewers
-    .filter((entry) => entry.includes("/"))
-    .map((entry) => entry.slice(entry.indexOf("/") + 1));
+  const wantedUsers = reviewers.flatMap((entry) =>
+    "login" in entry ? [entry.login] : [],
+  );
+  // GitHub names a team `organisation/slug`, and the calls take the slug
+  // alone, within the repository's owner.
+  const wantedTeams = reviewers.flatMap((entry) =>
+    "team" in entry ? [entry.team.slice(entry.team.indexOf("/") + 1)] : [],
+  );
   const currentUsers = users.map(({ login }) => login);
   const currentTeams = teams.map(({ slug }) => slug);
   const changes = [

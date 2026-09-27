@@ -97,7 +97,10 @@ describe("listReviewCandidates", () => {
         { login: "alice", type: "user" },
         { login: "bob", type: "user" },
       ],
-      teams: ["example-org/reviewers", "example-org/design"],
+      teams: [
+        { team: "example-org/reviewers" },
+        { team: "example-org/design" },
+      ],
     });
   });
 

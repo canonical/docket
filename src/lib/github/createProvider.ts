@@ -51,7 +51,7 @@ export default async function createProvider(
     reviewCandidates: (pull) => listReviewCandidates(client, pull),
     setAssignees: (thread, logins) => setAssignees(client, thread, logins),
     setReviewers: (pull, reviewers) => setReviewers(client, pull, reviewers),
-    teamMembers: (team) => listTeamMembers(client, team),
+    teamMembers: ({ team }) => listTeamMembers(client, team),
     probe: (repo, tag) => probeChanges(client, repo, tag),
     async budget(): Promise<Budget> {
       // Asking for the rate figures alone is not charged, so the first

@@ -131,7 +131,7 @@ describe("createProvider", () => {
         provider.reviewCandidates(pull),
         provider.setAssignees({ ...thread(), kind: "issue" }, []),
         provider.setReviewers(pull, []),
-        provider.teamMembers("example-org/reviewers"),
+        provider.teamMembers({ team: "example-org/reviewers" }),
         provider.probe(repo, 'W/"one"'),
       ]),
     );

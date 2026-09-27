@@ -1,6 +1,12 @@
 import type { ThreadEvent } from "../events/index.js";
 import type { Account, Author } from "../people/index.js";
-import type { Checks, Message, Thread, ThreadSummary } from "../waits/index.js";
+import type {
+  Checks,
+  Message,
+  Team,
+  Thread,
+  ThreadSummary,
+} from "../waits/index.js";
 
 /**
  * The facts a provider may or may not supply. A view leaves out whatever
@@ -74,8 +80,7 @@ export interface DetailMessage extends Message {
 
 /** Who asked a reviewer for a review, and when. */
 export interface RequestDetail {
-  /** The requested person's login, or the requested team's name. */
-  readonly reviewer: string;
+  readonly reviewer: Reviewer;
   readonly requester: Account;
   readonly at: Date;
 }
@@ -116,8 +121,11 @@ export interface ThreadDetail {
   readonly stack?: readonly StackMember[];
 }
 
-/** A person or a team that can be asked for a review. */
-export type Reviewer = Account | { readonly team: string };
+/**
+ * A person or a team that can be asked for a review. A team is named as
+ * the model names it, without its members.
+ */
+export type Reviewer = Account | Pick<Team, "team">;
 
 /** Whom the review editor offers, in the order it lists them. */
 export interface ReviewCandidates {
@@ -128,7 +136,7 @@ export interface ReviewCandidates {
   /** Everyone who can be requested. */
   readonly people: readonly Account[];
   /** The teams of the organisation that owns the repository. */
-  readonly teams: readonly string[];
+  readonly teams: readonly Pick<Team, "team">[];
 }
 
 /** A thread that can have assignees: discussions have none. */
@@ -199,14 +207,13 @@ export interface Provider {
   /**
    * Makes `reviewers` the whole set of reviews requested on the pull
    * request, removing any other request, and gives the set that results.
-   * A team is written `organisation/team`.
    */
   setReviewers(
     pullRequest: ThreadSummary,
-    reviewers: readonly string[],
+    reviewers: readonly Reviewer[],
   ): Promise<readonly Reviewer[]>;
-  /** The logins of a team, written `organisation/team`. */
-  teamMembers(team: string): Promise<readonly string[]>;
+  /** The logins of a team's members. */
+  teamMembers(team: Pick<Team, "team">): Promise<readonly string[]>;
   /** Whether anything changed in `repo` since the check that gave `tag`. */
   probe(repo: string, tag: string | undefined): Promise<ChangeProbe>;
   /** The rate budget left. */

@@ -165,7 +165,7 @@ export default async function fetchThreadDetail(
       if (!reviewer) return [];
       return [
         {
-          reviewer: "team" in reviewer ? reviewer.team : reviewer.login,
+          reviewer,
           requester: readAccount(event.actor),
           at: new Date(event.createdAt),
         },

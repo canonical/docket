@@ -154,12 +154,12 @@ describe("fetchThreadDetail", () => {
     ]);
     expect(found.requests).toEqual([
       {
-        reviewer: "example-org/reviewers",
+        reviewer: { team: "example-org/reviewers" },
         requester: { login: "alice", type: "user" },
         at: new Date("2026-09-22T09:00:00Z"),
       },
       {
-        reviewer: "bob",
+        reviewer: { login: "bob", type: "user" },
         requester: { login: "example-sync", type: "bot" },
         at: new Date("2026-09-22T09:01:00Z"),
       },
