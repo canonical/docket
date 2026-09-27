@@ -53,6 +53,9 @@ grant(["provider"], model, "types");
 grant(["github", "cache"], [...model, "provider"], "values");
 grant(surfaces, [...viewModels, "tokens"], "values");
 grant(surfaces, ["provider"], "types");
+// A face shows the cache's status, so it names the status's types; it
+// reaches the cache itself only through what the composition root passes.
+grant(["text", "ui"], ["cache"], "types");
 
 const propertyFolders = new Set([
   "common",
@@ -384,6 +387,10 @@ const breaks: Record<string, [string, string]> = {
     "dependencies",
     'import fetch from "../github/index.js";\nexport default function render() { return fetch; }',
   ],
+  "src/lib/text/status.ts": [
+    "dependencies",
+    'import { createCache } from "../cache/index.js";\nexport default function status() { return createCache; }',
+  ],
   "src/lib/tokens/palette.ts": [
     "dependencies",
     'import { port } from "../provider/index.js";\nexport default function palette() { return port; }',
@@ -416,8 +423,9 @@ const allowed: Record<string, string> = {
     "export default function Margin() { return null; }",
   "src/lib/ui/component/ThreadRow/ThreadRow.tsx": [
     'import type { Port } from "../../../provider/index.js";',
+    'import type { CacheStatus } from "../../../cache/index.js";',
     'import rows from "../../../owed/index.js";',
-    "export default function ThreadRow(port: Port) { return [port, rows]; }",
+    "export default function ThreadRow(port: Port, status: CacheStatus) { return [port, status, rows]; }",
   ].join("\n"),
   "src/lib/ui/component/ThreadRow/index.ts":
     'export { default as ThreadRow } from "./ThreadRow.js";',
