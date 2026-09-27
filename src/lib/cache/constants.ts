@@ -31,3 +31,17 @@ export const lockTiming = {
   update: 1_000,
   retries: { forever: true, minTimeout: 100, maxTimeout: 1_000 },
 } as const;
+
+/**
+ * How long, in milliseconds, cached data serves a reader that names no
+ * maximum age, so an agent asking in a loop causes at most one refresh
+ * every five minutes.
+ */
+export const defaultMaxAge = 300_000;
+
+/**
+ * How often, in milliseconds, a repository is fetched whole rather than
+ * since its cursor. No snapshot since a cursor reports a thread that was
+ * deleted or moved to another repository; fetching everything drops it.
+ */
+export const reconcileInterval = 3_600_000;
