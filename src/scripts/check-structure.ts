@@ -66,6 +66,14 @@ const lengthHeader = /^\/\/ Longer than 500 lines because \S/;
 const isTest = (file: string) => /\.(test|stories)\.tsx?$/.test(file);
 const isSource = (file: string) => /\.tsx?$/.test(file);
 
+/**
+ * Barrels, types and constants hold no behaviour of their own, so they need
+ * no test beside them. Every other file under `src/lib` or `src/application`
+ * does.
+ */
+const needsTest = (file: string) =>
+  !isTest(file) && !/^(index|types|constants)\.tsx?$/.test(basename(file));
+
 /** Where a repository path sits: a domain, or one of the other areas. */
 function area(path: string): string {
   const domain = /^src\/lib\/([^/]+)\//.exec(path);
@@ -266,6 +274,7 @@ type Report = (rule: string, message: string) => void;
 function check(root: string): Finding[] {
   const findings: Finding[] = [];
   const entries = walk(root, "src");
+  const paths = new Set(entries.map((entry) => entry.path));
   for (const { path, folder } of entries) {
     const report: Report = (rule, message) =>
       findings.push({ file: path, rule, message });
@@ -307,6 +316,14 @@ function check(root: string): Finding[] {
     if (basename(path) === "index.ts") checkBarrel(source, report);
     else if (!isTest(path)) checkExports(path, source, report);
     checkImports(path, source, report);
+    const stem = path.replace(/\.tsx?$/, "");
+    if (
+      needsTest(path) &&
+      !paths.has(`${stem}.test.ts`) &&
+      !paths.has(`${stem}.test.tsx`)
+    ) {
+      report("tests", `has no ${basename(stem)}.test.ts beside it`);
+    }
   }
   return findings;
 }
@@ -384,6 +401,7 @@ const breaks: Record<string, [string, string]> = {
   "src/lib/billing": ["dependencies", ""],
   "src/lib/config/schema.ts": ["length", `${long}\nexport default 1;`],
   "src/lib/config/types.ts": ["exports", "export const x = 1;"],
+  "src/lib/waits/owner.ts": ["tests", "export default function owner() {}"],
 };
 
 /** Each file must be accepted: the allowances and the rules' scopes. */
@@ -424,6 +442,12 @@ const allowed: Record<string, string> = {
     'import snapshot from "../lib/github/index.js";',
     "export default function main() { return [manifest, snapshot]; }",
   ].join("\n"),
+  // A test beside each file above that needs one, as .test.ts or .test.tsx.
+  "src/lib/ui/component/ThreadRow/common/Margin/Margin.test.tsx": "",
+  "src/lib/ui/component/ThreadRow/ThreadRow.test.tsx": "",
+  "src/lib/github/snapshot.test.ts": "",
+  "src/lib/config/long.test.ts": "",
+  "src/application/main.test.ts": "",
   "src/testing/alice.ts": 'export const alice = "alice";',
   "src/scripts/check.ts": 'import x from "../lib/owed/index.js";\nx;',
 };
