@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { hourMilliseconds } from "./constants.js";
 import measureWorkingTime from "./measureWorkingTime.js";
 import type { WorkingClock } from "./types.js";
@@ -77,6 +77,17 @@ describe("measureWorkingTime", () => {
     expect(
       between("2026-04-04T00:00-03:00", "2026-04-06T00:00-04:00", saturdays),
     ).toBe(hours(25));
+  });
+
+  it("reads the zone's calendar about once per day of the span", () => {
+    const reads = vi.spyOn(Intl.DateTimeFormat.prototype, "formatToParts");
+    expect(
+      between("2026-09-01T12:00+02:00", "2026-10-01T12:00+02:00", paris),
+    ).toBe(hours(22 * 24));
+    // The span touches 31 days: one reading for each, and one more for the
+    // instant it starts at, mid-day.
+    expect(reads).toHaveBeenCalledTimes(32);
+    reads.mockRestore();
   });
 
   it("counts no time for a date the zone skipped", () => {

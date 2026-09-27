@@ -55,25 +55,38 @@ function createLocalTimeReader(
   };
 }
 
+/** An instant, and the local time the clock's zone shows at it. */
+interface Reading {
+  readonly instant: number;
+  readonly local: LocalTime;
+}
+
 /**
  * Finds the first instant whose local date comes after `today`'s.
  *
- * Local midnight is tried at the offset in force today and at the offset in
- * force at that first guess. Where a clock change skips midnight, the first
- * guess lands on the change itself; where a change repeats the evening, the
- * second guess lands on the real midnight. The earliest guess that falls on
- * a later date is the boundary.
+ * Local midnight is tried first at the offset in force today. When the
+ * offset there is the same, that guess is local midnight. Otherwise the
+ * clock changes before it, and midnight is tried again at the offset in
+ * force at the first guess. When the clocks go forward, that second guess
+ * is the real midnight, or falls on today where the change skips midnight,
+ * and then the first guess lands on the change itself. When the clocks go
+ * back, the first guess falls on today, and the second is the real
+ * midnight.
  */
 function findNextDayStart(
   today: LocalTime,
   read: (instant: number) => LocalTime,
-): number {
+): Reading {
   const midnight = today.date + dayMilliseconds;
   const first = midnight - today.offset;
-  const second = midnight - read(first).offset;
-  return Math.min(
-    ...[first, second].filter((guess) => read(guess).date > today.date),
-  );
+  const atFirst = read(first);
+  if (atFirst.offset === today.offset)
+    return { instant: first, local: atFirst };
+  const second = midnight - atFirst.offset;
+  const atSecond = read(second);
+  return atSecond.date > today.date
+    ? { instant: second, local: atSecond }
+    : { instant: first, local: atFirst };
 }
 
 /**
@@ -81,16 +94,21 @@ function findNextDayStart(
  * gives the span from that instant to the start of the next local day, and
  * says whether the clock runs on that day. A day on which the zone changes
  * its clock lasts its real length, 23 or 25 hours.
+ *
+ * Reading day after day, each day's start is the previous day's end, so the
+ * reader keeps the local time it found there rather than reading it again.
  */
 export default function createDayReader(
   clock: WorkingClock,
 ): (from: number) => Day {
   const read = createLocalTimeReader(clock.timezone);
+  let next: Reading | undefined;
   return (from) => {
-    const today = read(from);
+    const today = next?.instant === from ? next.local : read(from);
+    next = findNextDayStart(today, read);
     return {
       start: from,
-      end: findNextDayStart(today, read),
+      end: next.instant,
       working: clock.workdays.includes(today.weekday),
     };
   };
