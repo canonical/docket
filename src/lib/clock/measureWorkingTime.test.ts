@@ -93,13 +93,28 @@ describe("measureWorkingTime", () => {
     ).toBe(hours(25));
   });
 
+  it("counts a week in which the zone changes its clock and back at its real length", () => {
+    // Recife kept summer time only from 8 to 15 October 2000: a Sunday of
+    // 23 hours and a Saturday of 25, less than seven days apart.
+    const start = new Date("2000-10-08T02:30:00Z");
+    const end = new Date("2000-10-18T02:30:00Z");
+    const sundays = { workdays: ["sun"], timezone: "America/Recife" } as const;
+    const saturdays = { ...sundays, workdays: ["sat"] } as const;
+    expect(measureWorkingTime(start, end, sundays)).toBe(
+      walkDayByDay(start, end, sundays),
+    );
+    expect(measureWorkingTime(start, end, sundays)).toBe(hours(47));
+    expect(measureWorkingTime(start, end, saturdays)).toBe(hours(25.5));
+  });
+
   it("reads the zone's calendar a few times a week rather than once a day", () => {
     const reads = vi.spyOn(Intl.DateTimeFormat.prototype, "formatToParts");
     expect(
       between("2024-09-02T12:00+02:00", "2026-08-31T12:00+02:00", paris),
     ).toBe(hours(520 * 24));
-    // Under a quarter as many readings as the 729 days the span touches.
-    expect(reads.mock.calls.length).toBeLessThan(729 / 4);
+    // Under half as many readings as the 729 days the span touches: two
+    // a week, at its end and midweek.
+    expect(reads.mock.calls.length).toBeLessThan(729 / 2);
     reads.mockRestore();
   });
 
