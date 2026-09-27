@@ -1,4 +1,5 @@
 import type { WindowEvent } from "../events/index.js";
+import { invalidFileMark } from "../owed/index.js";
 import buildThreadRow from "./buildThreadRow.js";
 import type { EventList, RepoEvents } from "./types.js";
 
@@ -13,7 +14,8 @@ const count = (amount: number, noun: string) =>
  * the order given, and so do threads.
  *
  * @param repos The watched repositories, in the configuration's order,
- * each with the events already cut to the window.
+ * each with the events already cut to the window. A repository whose own
+ * file is invalid has each of its rows marked.
  */
 export default function listEvents(
   repos: readonly RepoEvents[],
@@ -22,7 +24,7 @@ export default function listEvents(
   const newestFirst = (a: WindowEvent, b: WindowEvent) =>
     b.at.getTime() - a.at.getTime();
   const rows = repos
-    .flatMap(({ repo, people, threads, events }) => {
+    .flatMap(({ repo, people, threads, events, invalidFile }) => {
       const byNumber = new Map<number, [WindowEvent, ...WindowEvent[]]>();
       for (const event of [...events].sort(newestFirst)) {
         const gathered = byNumber.get(event.thread.number);
@@ -40,7 +42,15 @@ export default function listEvents(
           gathered,
           now,
         );
-        return { newest: gathered[0], row };
+        return {
+          newest: gathered[0],
+          row: invalidFile
+            ? {
+                ...row,
+                invalidFile: { text: invalidFileMark, fit: "trimmed" as const },
+              }
+            : row,
+        };
       });
     })
     .sort((a, b) => newestFirst(a.newest, b.newest))

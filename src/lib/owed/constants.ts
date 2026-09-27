@@ -17,6 +17,12 @@ export const owedGroupings: readonly OwedGrouping[] = [
  */
 export const soonShare = 0.2;
 
+/**
+ * The mark on every row of a repository whose own file is invalid: the
+ * repository then has the built-in settings, whatever its file says.
+ */
+export const invalidFileMark = "invalid repository file";
+
 /** The word each kind of wait goes by on screen. */
 export const waitWords: Readonly<Record<WaitKind, string>> = {
   response: "reply",

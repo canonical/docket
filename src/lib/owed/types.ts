@@ -52,6 +52,11 @@ export interface RepoWaits {
   /** The working clock of the repository's settings. */
   readonly time: WorkingClock;
   readonly waits: readonly Wait[];
+  /**
+   * Whether the repository's own file is invalid, so its settings are the
+   * built-in defaults.
+   */
+  readonly invalidFile?: boolean;
 }
 
 /** One running wait, as the list shows it. */
@@ -86,6 +91,8 @@ export interface WaitRow {
   readonly draft?: Field;
   /** Every owner, on a third line, when there are two or more. */
   readonly owners?: FieldList;
+  /** `invalid repository file`, when the repository's own file is invalid. */
+  readonly invalidFile?: Field;
 }
 
 /** A section of the list; without a heading when the list is not grouped. */
