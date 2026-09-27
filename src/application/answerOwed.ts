@@ -4,7 +4,12 @@ import buildOwed from "./buildOwed.js";
 import readThreads from "./readThreads.js";
 import type { Session } from "./types.js";
 
-/** Answers `docket owed`, and `docket` alone, from the cached threads. */
+/**
+ * Answers `docket owed`, and `docket` alone, from the cached threads.
+ *
+ * @note Impure: reads the cache, which asks GitHub when its data is
+ * too old, and writes the answer.
+ */
 export default async function answerOwed(session: Session): Promise<number> {
   const { context, invocation, resolved } = session;
   const { threads, syncedAt, warnings } = await readThreads(session);

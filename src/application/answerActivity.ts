@@ -8,6 +8,9 @@ import type { Session } from "./types.js";
 /**
  * Answers `docket activity`: the events inside one of the configured
  * windows, the first when `--window` is not given.
+ *
+ * @note Impure: reads the cache, asks GitHub for the events, and
+ * writes the answer.
  */
 export default async function answerActivity(
   session: Session,

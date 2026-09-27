@@ -28,6 +28,8 @@ function findEarliest(window: Duration, settings: Settings, now: Date): Date {
  * within the window of working time before `now`, under their threads.
  * Events are not cached, so each call asks GitHub for them; the cached
  * threads give each row its owners.
+ *
+ * @note Impure: asks GitHub for the events of each watched repository.
  */
 export default async function buildActivity(
   provider: Provider,

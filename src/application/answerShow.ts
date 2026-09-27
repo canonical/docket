@@ -10,6 +10,9 @@ import type { Session } from "./types.js";
 /**
  * Answers `docket show`: the thread, or each pull request of the stack,
  * with its details, which GitHub gives on each call, and its waits.
+ *
+ * @note Impure: reads the cache, asks GitHub for the thread's details,
+ * and writes the answer.
  */
 export default async function answerShow(session: Session): Promise<number> {
   const { context, invocation, resolved, provider } = session;

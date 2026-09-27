@@ -31,6 +31,9 @@ const answers = {
  * @returns The exit code: 0 when docket answered, 2 when a prerequisite
  * is missing or the call is not valid, 3 when no data could be obtained
  * or a change was refused.
+ *
+ * @note Impure: reads the personal file, asks gh for a token, reads and
+ * writes the cache, asks GitHub, and writes the answer.
  */
 export default async function run(context: Context): Promise<number> {
   let format: Format = context.interactive ? "plain" : "llm";

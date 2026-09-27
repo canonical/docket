@@ -16,6 +16,9 @@ import type { Context, Invocation } from "./types.js";
  * why and exits with that problem's code: 2 for gh, 3 for GitHub.
  *
  * @param connection The provider gh's token opened, or why gh gave none.
+ *
+ * @note Impure: asks GitHub which account gh is signed in with, and
+ * writes the answer.
  */
 export default async function answerConfig(
   context: Context,

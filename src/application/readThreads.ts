@@ -16,6 +16,9 @@ export interface ReadThreads extends CachedThreads {
  *
  * @throws Error the failure, when some repository has no data at all, or
  * when gh itself is not ready, which no cached data fixes.
+ *
+ * @note Impure: reads the cache, which asks GitHub when its data is
+ * too old.
  */
 export default async function readThreads({
   cache,

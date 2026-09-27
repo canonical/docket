@@ -5,6 +5,9 @@ import run from "./run.js";
 /**
  * Runs docket with the process's arguments, environment and output, and
  * leaves the exit code the answer gives.
+ *
+ * @note Impure: reads the process's arguments and environment, writes
+ * to its output, and sets its exit code.
  */
 export default async function main(): Promise<void> {
   process.exitCode = await run({
