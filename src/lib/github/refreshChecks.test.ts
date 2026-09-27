@@ -26,7 +26,7 @@ const refresh = (pulls: Parameters<typeof refreshChecks>[1]) =>
   settle(refreshChecks(createClient(token, "1.2.3"), pulls));
 
 describe("refreshChecks", () => {
-  it("reads the checks of every pull request given in one query", async () => {
+  it("reads the checks of every pull request given in one query, leaving out one GitHub does not find", async () => {
     github.graphql("Checks", {
       body: {
         data: {
@@ -34,6 +34,13 @@ describe("refreshChecks", () => {
           r0: { p2: pull("SUCCESS"), p3: pull("PENDING"), p4: null },
           r1: { p2: pull(null) },
         },
+        errors: [
+          {
+            type: "NOT_FOUND",
+            path: ["r0", "p4"],
+            message: "Could not resolve to a PullRequest with the number of 4.",
+          },
+        ],
       },
     });
     const docs = { ...thread(), repo: "example-org/example-docs" };

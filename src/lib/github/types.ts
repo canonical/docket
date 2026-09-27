@@ -12,8 +12,17 @@ export interface RestResponse<T> {
  * requests in GitHub's limits, and throws only a `GitHubError`.
  */
 export interface Client {
-  /** Runs a GraphQL document and gives its data. */
-  query<T>(document: string, variables: Record<string, unknown>): Promise<T>;
+  /**
+   * Runs a GraphQL document and gives its data. GitHub answers a node it
+   * does not find, such as a pull request by a number that was deleted,
+   * with `null` there and a `NOT_FOUND` error; with `allowMissing`, such
+   * an answer gives its data, the node `null`, rather than an error.
+   */
+  query<T>(
+    document: string,
+    variables: Record<string, unknown>,
+    options?: { readonly allowMissing?: boolean },
+  ): Promise<T>;
   /**
    * Sends a REST request, such as `GET /repos/{owner}/{repo}/activity`. A
    * "not modified" answer (304) comes back with its status rather than as

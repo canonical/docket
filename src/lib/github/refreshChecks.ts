@@ -47,6 +47,7 @@ export default async function refreshChecks(
   const answer = await client.query<Answer>(
     `query Checks { rateLimit { limit remaining resetAt } ${fields.join(" ")} }`,
     {},
+    { allowMissing: true },
   );
   return pullRequests.flatMap(({ repo, number }) => {
     const pull = answer[`r${repos.indexOf(repo)}`]?.[`p${number}`];

@@ -4,6 +4,7 @@ import {
   bot,
   fakeGitHub,
   page,
+  rateLimit,
   repository,
   settle,
   token,
@@ -101,7 +102,18 @@ describe("listReviewCandidates", () => {
   });
 
   it("lists no request or suggestion for a pull request GitHub does not find", async () => {
-    github.graphql("Candidates", repository({ pullRequest: null }));
+    github.graphql("Candidates", {
+      body: {
+        data: { rateLimit, repository: { pullRequest: null } },
+        errors: [
+          {
+            type: "NOT_FOUND",
+            path: ["repository", "pullRequest"],
+            message: "Could not resolve to a PullRequest with the number of 2.",
+          },
+        ],
+      },
+    });
     github.rest(`GET ${teams}`, { body: [] });
     assignable([[], null]);
     expect(await candidates()).toMatchObject({ requested: [], suggested: [] });

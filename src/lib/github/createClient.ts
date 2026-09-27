@@ -48,6 +48,25 @@ const retrySoon = (
   after <= longestWait && retryOnce(after, options, octokit, retryCount);
 
 /**
+ * Whether a GraphQL answer gave its data, and every error it carries only
+ * names a node GitHub did not find there.
+ */
+const onlyMissing = (error: unknown): error is { readonly data: unknown } => {
+  const { data, errors } = (error ?? {}) as {
+    readonly data?: unknown;
+    readonly errors?: unknown;
+  };
+  return (
+    data != null &&
+    Array.isArray(errors) &&
+    errors.every(
+      ({ type, path }: { type?: string; path?: unknown }) =>
+        type === "NOT_FOUND" && Array.isArray(path),
+    )
+  );
+};
+
+/**
  * Builds the client every operation of the adapter goes through: Octokit
  * with its throttling and retry plugins, so docket writes no throttling,
  * back-off or retry of its own.
@@ -76,19 +95,30 @@ export default function createClient(token: string, version: string): Client {
     retry: { doNotRetry: [400, 401, 403, 404, 410, 422, 429, 451] },
   });
   let budget: Budget | undefined;
+  const record = <T>(data: T & { rateLimit?: RateLimitNode }): T => {
+    if (data.rateLimit) {
+      const { limit, remaining, resetAt } = data.rateLimit;
+      budget = { limit, remaining, resetAt: new Date(resetAt) };
+    }
+    return data;
+  };
   return {
-    async query<T>(document: string, variables: Record<string, unknown>) {
+    async query<T>(
+      document: string,
+      variables: Record<string, unknown>,
+      options: { readonly allowMissing?: boolean } = {},
+    ) {
       try {
-        const data = await octokit.graphql<T & { rateLimit?: RateLimitNode }>(
-          document,
-          variables,
+        return record(
+          await octokit.graphql<T & { rateLimit?: RateLimitNode }>(
+            document,
+            variables,
+          ),
         );
-        if (data.rateLimit) {
-          const { limit, remaining, resetAt } = data.rateLimit;
-          budget = { limit, remaining, resetAt: new Date(resetAt) };
-        }
-        return data;
       } catch (error) {
+        if (options.allowMissing && onlyMissing(error)) {
+          return record(error.data as T & { rateLimit?: RateLimitNode });
+        }
         throw describeFailure(error);
       }
     },

@@ -46,11 +46,15 @@ export default async function listReviewCandidates(
   pullRequest: ThreadSummary,
 ): Promise<ReviewCandidates> {
   const { owner, name } = splitRepo(pullRequest.repo);
-  const { repository } = await client.query<Answer>(document, {
-    owner,
-    name,
-    number: pullRequest.number,
-  });
+  const { repository } = await client.query<Answer>(
+    document,
+    {
+      owner,
+      name,
+      number: pullRequest.number,
+    },
+    { allowMissing: true },
+  );
   const pull = repository.pullRequest;
   const requested = (pull?.reviewRequests.nodes ?? []).flatMap(
     ({ requestedReviewer }): Reviewer[] => {

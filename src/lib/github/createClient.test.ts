@@ -202,6 +202,57 @@ describe("createClient", () => {
     });
   });
 
+  const missing = {
+    type: "NOT_FOUND",
+    path: ["repository", "pullRequest"],
+    message: "Could not resolve to a PullRequest with the number of 2.",
+  };
+  const partial = (...errors: unknown[]) => ({
+    body: { data: { rateLimit, repository: { pullRequest: null } }, errors },
+  });
+
+  it("gives the data, the node null, when allowed and GitHub only did not find a node", async () => {
+    github.graphql("Viewer", partial(missing));
+    const connected = client();
+    const data = await settle(
+      connected.query(viewer, {}, { allowMissing: true }),
+    );
+    expect(data).toEqual({ rateLimit, repository: { pullRequest: null } });
+    expect(connected.lastBudget()?.remaining).toBe(4990);
+  });
+
+  it("names GITHUB_REQUEST_FAILED for a node GitHub did not find, unless allowed", async () => {
+    github.graphql("Viewer", partial(missing));
+    const error = await failure(client().query(viewer, {}));
+    expect(error).toMatchObject({ code: "GITHUB_REQUEST_FAILED" });
+  });
+
+  it("names GITHUB_REQUEST_FAILED, even when allowed, for any other error or no data", async () => {
+    github.graphql(
+      "Viewer",
+      partial(missing, { type: "FORBIDDEN", path: ["x"], message: "No." }),
+      partial({ ...missing, path: undefined }),
+      { body: { data: null, errors: [missing] } },
+    );
+    const connected = client();
+    for (let n = 0; n < 3; n += 1) {
+      const error = await failure(
+        connected.query(viewer, {}, { allowMissing: true }),
+      );
+      expect(error).toMatchObject({ code: "GITHUB_REQUEST_FAILED" });
+    }
+  });
+
+  it("names GITHUB_REQUEST_FAILED, even when allowed, when GitHub cannot be reached", async () => {
+    vi.stubGlobal("fetch", async () => {
+      throw new TypeError("fetch failed");
+    });
+    const error = await failure(
+      client().query(viewer, {}, { allowMissing: true }),
+    );
+    expect(error).toMatchObject({ code: "GITHUB_REQUEST_FAILED" });
+  });
+
   it("names GITHUB_REQUEST_FAILED with the status GitHub refused with", async () => {
     const error = await failure(client().request("GET /repos/o/r"));
     expect(error).toMatchObject({
