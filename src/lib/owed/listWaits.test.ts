@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { at, teamSettings, thread, wait } from "../../testing/facts.js";
-import type { Repo } from "../config/index.js";
+import {
+  hourMilliseconds,
+  type WorkingClock,
+  weekdays,
+} from "../clock/index.js";
+import { builtInSettings, type Repo, type Targets } from "../config/index.js";
 import listWaits from "./listWaits.js";
 
 const now = at("2026-09-23T10:00+02:00");
@@ -95,5 +100,81 @@ describe("listWaits, grouped", () => {
       "example",
       "docs",
     ]);
+  });
+});
+
+describe("listWaits, against targets written in days", () => {
+  // The rows of the approved owed screen, as distances from `now` in
+  // hours: positive past due, negative while time is left.
+  const shown = [
+    ["example#1201", "pullRequest", "review", 48, "over"],
+    ["example#1240", "issue", "response", 14, "over"],
+    ["example#1202", "pullRequest", "review", 24, "over"],
+    ["docs#91", "issue", "close", -11, "soon"],
+    ["docs#88", "pullRequest", "review", -9, "soon"],
+    ["docs#95", "discussion", "close", -144, "onTrack"],
+    ["example#1258", "pullRequest", "review", -24, "onTrack"],
+    ["docs#99", "issue", "close", -288, "onTrack"],
+    ["example#1233", "issue", "response", -12, "onTrack"],
+    ["example#1204", "pullRequest", "close", -192, "onTrack"],
+    ["example#1250", "pullRequest", "review", -48, "onTrack"],
+  ] as const;
+  const everyDay: WorkingClock = { workdays: weekdays, timezone: "UTC" };
+  const list = (targets: Targets) => {
+    const waits = (name: string) =>
+      shown
+        .filter(([reference]) => reference.startsWith(`${name}#`))
+        .map(([reference, kind, waitKind, hours]) => {
+          const due = new Date(now.getTime() - hours * hourMilliseconds);
+          return wait({
+            thread: thread({ kind, number: Number(reference.split("#")[1]) }),
+            kind: waitKind,
+            target:
+              waitKind === "close"
+                ? targets.close[kind]
+                : targets.nextMove[waitKind],
+            due,
+            over: now > due,
+          });
+        });
+    return listWaits(
+      [
+        { repo: example, time: everyDay, waits: waits("example") },
+        { repo: docs, time: everyDay, waits: waits("docs") },
+      ],
+      address,
+      now,
+    );
+  };
+  const states = (owed: ReturnType<typeof listWaits>) =>
+    Object.fromEntries(
+      owed.groups
+        .flatMap(({ rows }) => rows)
+        .map((row) => [row.reference.text, row.state]),
+    );
+  const expected = Object.fromEntries(
+    shown.map(([reference, , , , state]) => [reference, state]),
+  );
+
+  it("reproduces the screen's states under the targets the screen was drawn with", () => {
+    const owed = list({
+      nextMove: {
+        response: { amount: 24, unit: "h" },
+        review: { amount: 3, unit: "d" },
+      },
+      close: {
+        issue: { amount: 30, unit: "d" },
+        pullRequest: { amount: 14, unit: "d" },
+        discussion: { amount: 30, unit: "d" },
+      },
+    });
+    expect(states(owed)).toEqual(expected);
+    expect(owed.summary.text).toBe("3 over · 2 soon · 6 on track");
+  });
+
+  it("reproduces the screen's states under the built-in targets", () => {
+    const owed = list(builtInSettings.targets);
+    expect(states(owed)).toEqual(expected);
+    expect(owed.summary.text).toBe("3 over · 2 soon · 6 on track");
   });
 });

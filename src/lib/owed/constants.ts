@@ -10,10 +10,12 @@ export const owedGroupings: readonly OwedGrouping[] = [
 ];
 
 /**
- * A wait is due soon once less than this share of its target is left, so
- * a short target and a long one warn at the same point in their life.
+ * A wait is due soon once less than a fifth of its target is left, so a
+ * short target and a long one warn at the same point in their life. A
+ * fifth keeps a 30-day close with 6 days left on track, while a 2-day
+ * review with 9 hours left is due soon.
  */
-export const soonShare = 0.25;
+export const soonShare = 0.2;
 
 /** The most display cells an owner takes on a row, so the title keeps its room. */
 export const ownerCells = 12;

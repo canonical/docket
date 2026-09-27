@@ -28,7 +28,7 @@ describe("measureDistance", () => {
     expect(measureDistance(over, time, monday).text).toBe("18h over");
   });
 
-  it("marks a wait due soon once less than a quarter of its target is left", () => {
+  it("marks a wait due soon once less than a fifth of its target is left", () => {
     const soon = wait({ target: twoDays, due: at("2026-09-23T19:00+02:00") });
     expect(measureDistance(soon, time, now)).toEqual({
       state: "soon",
@@ -37,12 +37,15 @@ describe("measureDistance", () => {
     });
   });
 
-  it("keeps a wait with exactly a quarter of its target left on track", () => {
-    const quarter = wait({
-      target: twoDays,
-      due: at("2026-09-23T22:00+02:00"),
+  it("keeps a wait with exactly a fifth of its target left on track", () => {
+    const fifth = wait({
+      target: { amount: 5, unit: "d" },
+      due: at("2026-09-24T10:00+02:00"),
     });
-    expect(measureDistance(quarter, time, now).state).toBe("onTrack");
+    expect(measureDistance(fifth, time, now)).toMatchObject({
+      state: "onTrack",
+      text: "1d left",
+    });
   });
 
   it("reads time left on track in days once a working day or more is left", () => {
