@@ -78,15 +78,16 @@ describe("selectEvents", () => {
     expect(marked?.bot).toBe(true);
   });
 
-  it("keeps an event dated at the current time and leaves out one dated after it", () => {
+  it("keeps an event dated at the current time and one dated after it", () => {
     const now = at("2026-09-22T12:00+02:00");
+    const later = at("2026-09-22T12:01+02:00");
     const events = [
       event("2026-09-22T12:00+02:00"),
       event("2026-09-22T12:01+02:00"),
     ];
     expect(
       selectEvents(events, day, now, teamSettings).map(({ at }) => at),
-    ).toEqual([now]);
+    ).toEqual([now, later]);
   });
 
   it("keeps every kind of event, with the detail its activity line names", () => {

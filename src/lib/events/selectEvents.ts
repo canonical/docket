@@ -64,9 +64,9 @@ export type WindowEvent = ThreadEvent & { readonly bot: boolean };
  * Monday-to-Friday clock, a 24-hour window on Monday morning reaches back
  * to Friday morning, weekend included.
  *
- * The window ends at `now`, so an event dated after it is left out: such a
- * date comes from a clock that runs ahead of the reader's, and the event
- * enters the window once `now` reaches it.
+ * An event dated after `now` is kept. Its date comes from GitHub's clock,
+ * which decides what is fresh, never the reader's: a reader whose clock
+ * runs behind GitHub's still sees the latest events, their own included.
  *
  * @param settings The settings in effect for the events' repository.
  */
@@ -79,10 +79,7 @@ export default function selectEvents(
   const { time, people } = settings;
   const length = measureDuration(window, time);
   return events
-    .filter(
-      (event) =>
-        event.at <= now && addWorkingTime(event.at, length, time) >= now,
-    )
+    .filter((event) => addWorkingTime(event.at, length, time) >= now)
     .map((event) => ({
       ...event,
       bot: classify(event.actor, people) === "bot",
