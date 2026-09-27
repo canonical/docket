@@ -1,3 +1,4 @@
+import renderJson from "./renderJson.js";
 import sanitize from "./sanitize.js";
 import type { Format, Problem } from "./types.js";
 
@@ -19,7 +20,7 @@ export default function renderProblems(
   }));
   if (format === "json") {
     const key = label === "Error" ? "errors" : "warnings";
-    return `${JSON.stringify({ [key]: safe }, null, 2)}\n`;
+    return renderJson({ [key]: safe });
   }
   const heading = format === "llm" ? `## ${label}: ` : `${label} `;
   const blocks = safe.map(

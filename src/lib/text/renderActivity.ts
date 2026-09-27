@@ -12,6 +12,7 @@ import describeTime from "./describeTime.js";
 import listOwners from "./listOwners.js";
 import quote from "./quote.js";
 import renderFreshness from "./renderFreshness.js";
+import renderJson from "./renderJson.js";
 import sanitize from "./sanitize.js";
 import type { Detail, Format, Freshness } from "./types.js";
 
@@ -134,7 +135,7 @@ export default function renderActivity({
             })),
           }),
     };
-    return `${JSON.stringify(answer, null, 2)}\n`;
+    return renderJson(answer);
   }
   const llm = format === "llm";
   const sections = groups.map((group) => {

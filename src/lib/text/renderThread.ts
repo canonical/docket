@@ -10,6 +10,7 @@ import describeWaitData from "./describeWaitData.js";
 import quote from "./quote.js";
 import quoteLines from "./quoteLines.js";
 import renderFreshness from "./renderFreshness.js";
+import renderJson from "./renderJson.js";
 import renderWaitRow from "./renderWaitRow.js";
 import sanitize from "./sanitize.js";
 import type { Detail, Format, Freshness } from "./types.js";
@@ -244,7 +245,7 @@ export default function renderThread(answer: ThreadAnswer): string {
       data: describeDataAge(freshness),
       threads: threads.map((shown) => describeThreadData(shown, detail)),
     };
-    return `${JSON.stringify(data, null, 2)}\n`;
+    return renderJson(data);
   }
   const llm = format === "llm";
   const head = [

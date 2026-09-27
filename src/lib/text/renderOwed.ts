@@ -3,6 +3,7 @@ import { quotedNote } from "./constants.js";
 import describeDataAge from "./describeDataAge.js";
 import describeWaitData from "./describeWaitData.js";
 import renderFreshness from "./renderFreshness.js";
+import renderJson from "./renderJson.js";
 import renderWaitRow from "./renderWaitRow.js";
 import sanitize from "./sanitize.js";
 import type { Detail, Format, Freshness } from "./types.js";
@@ -52,7 +53,7 @@ export default function renderOwed({
             })),
           }),
     };
-    return `${JSON.stringify(answer, null, 2)}\n`;
+    return renderJson(answer);
   }
   const empty = detail !== "summary" && groups.length === 0;
   const llm = format === "llm";

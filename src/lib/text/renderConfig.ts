@@ -1,5 +1,6 @@
 import type { Duration } from "../clock/index.js";
 import type { Origin, Repo, Resolved } from "../config/index.js";
+import renderJson from "./renderJson.js";
 import renderProblems from "./renderProblems.js";
 import sanitize from "./sanitize.js";
 import type { Format, Problem } from "./types.js";
@@ -136,7 +137,7 @@ export default function renderConfig(answer: ConfigAnswer): string {
         ...describeSettings(resolved),
       })),
     };
-    return `${JSON.stringify(data, null, 2)}\n`;
+    return renderJson(data);
   }
   const llm = format === "llm";
   const formatItem = (line: string) => (llm ? `- ${line}` : `  ${line}`);
