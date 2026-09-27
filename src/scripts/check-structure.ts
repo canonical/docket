@@ -457,6 +457,7 @@ const allowed: Record<string, string> = {
   "src/lib/ui/component/ThreadRow/common/Margin/Margin.test.tsx": "",
   "src/lib/ui/component/ThreadRow/ThreadRow.test.tsx": "",
   "src/lib/github/snapshot.test.ts": "",
+  "src/lib/activity/rows.test.ts": "",
   "src/lib/config/long.test.ts": "",
   "src/application/main.test.ts": "",
   "src/testing/alice.ts": 'export const alice = "alice";',
