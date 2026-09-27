@@ -24,6 +24,15 @@ export interface FieldList {
   readonly fields: readonly Field[];
 }
 
+/**
+ * A pane's header: the mode as its title, and where the reader is inside
+ * it as its address, absent when there is nothing to add to the mode.
+ */
+export interface Header {
+  readonly title: Field;
+  readonly address?: Field;
+}
+
 /** Where a wait stands against its target. */
 export type WaitState = "over" | "soon" | "onTrack";
 

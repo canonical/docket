@@ -8,6 +8,7 @@ export type {
   Field,
   FieldList,
   Fit,
+  Header,
   OwedAddress,
   OwedGrouping,
   OwedList,
