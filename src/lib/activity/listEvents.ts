@@ -1,11 +1,7 @@
 import type { WindowEvent } from "../events/index.js";
 import buildThreadRow from "./buildThreadRow.js";
-import type {
-  ActivityAddress,
-  ActivityList,
-  RepoEvents,
-  ThreadGroup,
-} from "./types.js";
+import groupThreads from "./groupThreads.js";
+import type { ActivityAddress, ActivityList, RepoEvents } from "./types.js";
 
 const count = (amount: number, noun: string) =>
   `${amount} ${noun}${amount === 1 ? "" : "s"}`;
@@ -51,7 +47,11 @@ export default function listEvents(
     .sort((a, b) => newestFirst(a.newest, b.newest))
     .map(({ row }) => row);
   const events = rows.reduce((total, row) => total + row.events.length, 0);
-  const groups: ThreadGroup[] = rows.length > 0 ? [{ rows }] : [];
+  const groups = groupThreads(
+    rows,
+    address.grouping,
+    repos.map(({ repo }) => repo),
+  );
   const text = `${count(rows.length, "thread")} · ${count(events, "event")}`;
   return {
     address,

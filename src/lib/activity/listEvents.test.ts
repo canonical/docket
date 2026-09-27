@@ -121,3 +121,22 @@ describe("listEvents", () => {
     expect(list.summary.text).toBe("0 threads · 0 events");
   });
 });
+
+describe("listEvents, grouped", () => {
+  it("splits the sorted rows into the sections of the address's grouping", () => {
+    const issue = comment(one, "2026-09-28T06:00+02:00");
+    const pull = comment(
+      thread({ number: 3, kind: "pullRequest" }),
+      "2026-09-28T09:00+02:00",
+    );
+    const list = listEvents(
+      [{ repo: example, people, threads: [], events: [pull, issue] }],
+      { ...address, grouping: "kind" },
+      now,
+    );
+    expect(list.groups.map(({ heading }) => heading?.text)).toEqual([
+      "ISSUES",
+      "PULL REQUESTS",
+    ]);
+  });
+});

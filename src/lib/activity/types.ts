@@ -27,7 +27,7 @@ export interface FieldList {
 }
 
 /** How activity splits its list into sections. */
-export type ActivityGrouping = "none";
+export type ActivityGrouping = "kind" | "repo" | "none";
 
 /** Where the reader is in activity: the mode, its window and its grouping. */
 export interface ActivityAddress {
