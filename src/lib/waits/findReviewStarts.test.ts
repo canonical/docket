@@ -122,6 +122,31 @@ describe("findReviewStarts", () => {
     ]);
   });
 
+  it("counts a review given at the instant of the request", () => {
+    const sameInstant = pull({
+      reviewRequests: [request(alice)],
+      reviews: [review(alice, "2026-09-22T11:00+02:00")],
+    });
+    expect(findReviewStarts(sameInstant, people)).toEqual([]);
+  });
+
+  it("starts no wait at a push made at the instant of the review", () => {
+    const sameInstant = pull({
+      reviewRequests: [request(alice)],
+      reviews: [review(alice, "2026-09-22T12:00+02:00")],
+      pushes: [at("2026-09-22T12:00+02:00")],
+    });
+    expect(findReviewStarts(sameInstant, people)).toEqual([]);
+  });
+
+  it("ends a person's wait at their review, whatever the case of the review author's login", () => {
+    const reviewedAsAlice = pull({
+      reviewRequests: [request(alice)],
+      reviews: [review({ ...alice, login: "Alice" }, "2026-09-22T12:00+02:00")],
+    });
+    expect(findReviewStarts(reviewedAsAlice, people)).toEqual([]);
+  });
+
   it("ends only at a review by the requested reviewer", () => {
     const otherReviewer = pull({
       reviewRequests: [request(alice)],
