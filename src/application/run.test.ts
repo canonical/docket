@@ -198,7 +198,7 @@ describe("docket config", () => {
   it("shows the settings and that gh is signed in, exiting 0", async () => {
     const { code, out } = await home.call(["config"]);
     expect(code).toBe(0);
-    expect(out).toContain("gh: signed in to github.com.");
+    expect(out).toContain("gh: signed in to github.com as alice.");
     expect(out).toContain("## example (example-org/example-repo)");
   });
 

@@ -67,7 +67,14 @@ export default async function run(context: Context): Promise<number> {
       };
     }
     if (invocation.command === "config") {
-      return answerConfig(context, invocation, personal, resolved, gh);
+      const connection = provider ?? (gh as Problem);
+      return await answerConfig(
+        context,
+        invocation,
+        personal,
+        resolved,
+        connection,
+      );
     }
     if (!provider) return stop([gh as Problem]);
     const cache = createCache({

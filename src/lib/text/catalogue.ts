@@ -113,7 +113,7 @@ const catalogue: readonly Command[] = [
     name: "config",
     arguments: "",
     answers:
-      "Which settings are in effect for each watched repository, which file set each one, how each listed person is classified, and whether gh is installed and signed in.",
+      "Which settings are in effect for each watched repository, which file set each one, how each listed person is classified, and which account gh is signed in with.",
     notes: [
       "The personal file is `docket/docket.yaml` in `$XDG_CONFIG_HOME`, or `~/.config` when it is unset.",
     ],
@@ -122,7 +122,7 @@ const catalogue: readonly Command[] = [
     exits: {
       0: "The settings are valid and gh is signed in.",
       2: "gh is not installed or not signed in, or the personal configuration is invalid; the output says which.",
-      3: "Never.",
+      3: "GitHub could not be reached to say which account gh is signed in with; the output says why.",
     },
   },
 ];

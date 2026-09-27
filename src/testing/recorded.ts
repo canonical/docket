@@ -178,8 +178,8 @@ export const parserFixDetail: ThreadDetail = {
 
 /**
  * A provider answering from the recording: the threads of each
- * repository, their events and the pull request's details. `overrides`
- * replaces any operation.
+ * repository, their events, the pull request's details, and alice as the
+ * account gh is signed in with. `overrides` replaces any operation.
  */
 export function recordedProvider(overrides: Partial<Provider> = {}): Provider {
   return fakeProvider({
@@ -190,6 +190,7 @@ export function recordedProvider(overrides: Partial<Provider> = {}): Provider {
     events: async (repo) =>
       recordedEvents.filter(({ thread }) => thread.repo === repo),
     threadDetail: async () => parserFixDetail,
+    viewer: async () => "alice",
     ...overrides,
   });
 }

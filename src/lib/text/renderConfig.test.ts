@@ -9,7 +9,7 @@ const answer: ConfigAnswer = {
   personal: { path: "/config/docket/docket.yaml", found: true },
   repositories: [{ repo: example, resolved: shared }],
   shared,
-  gh: undefined,
+  gh: { login: "alice" },
   format: "llm",
 };
 
@@ -18,7 +18,7 @@ describe("renderConfig", () => {
     expect(renderConfig(answer).split("\n")).toEqual([
       "# config",
       "Personal file: /config/docket/docket.yaml, found.",
-      "gh: signed in to github.com.",
+      "gh: signed in to github.com as alice.",
       "",
       "## every repository",
       "- repos (personal file): example example-org/example-repo, docs example-org/example-docs",
@@ -69,7 +69,7 @@ describe("renderConfig", () => {
     const data = JSON.parse(renderConfig({ ...answer, format: "json" }));
     expect(data).toMatchObject({
       personalFile: { path: "/config/docket/docket.yaml", found: true },
-      gh: { signedIn: true, host: "github.com" },
+      gh: { signedIn: true, host: "github.com", login: "alice" },
       activity: ["24h", "1w"],
       hosts: ["github.com"],
       origins: { repos: "personal", activity: "personal", hosts: "personal" },
