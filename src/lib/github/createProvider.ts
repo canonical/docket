@@ -4,6 +4,7 @@ import createClient from "./createClient.js";
 import fetchEvents from "./fetchEvents.js";
 import fetchSnapshot from "./fetchSnapshot.js";
 import fetchThreadDetail from "./fetchThreadDetail.js";
+import fetchViewer from "./fetchViewer.js";
 import fragments from "./fragments.js";
 import listAssignableUsers from "./listAssignableUsers.js";
 import listReviewCandidates from "./listReviewCandidates.js";
@@ -77,6 +78,7 @@ export default async function createProvider(
       const { limit, remaining, resetAt } = rateLimit;
       return { limit, remaining, resetAt: new Date(resetAt) };
     },
+    viewer: () => fetchViewer(client),
     capabilities: () => capabilities,
   };
 }
