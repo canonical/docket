@@ -61,6 +61,7 @@
 - `src/application/main.ts` runs when it is imported: it is the program's entry, not a library module.
 - vitest runs under Bun (`bunx --bun vitest`), the runtime the executable is built on, never under Node.
 - vitest compiles JSX with oxc, so JSX options belong under `oxc` in `vitest.config.ts`; it ignores esbuild's.
+- OpenTUI's own declaration files fail to type-check, so `tsconfig.json` skips declaration files; every source file is still checked.
 - `src/scripts/check-identity.ts` holds the refused words, so it is the one file the identity check skips.
 - The audit and its self-test query the advisory database, and the first gitleaks run through nix downloads it, so `bun run ci` needs the network.
 - GitHub Actions does not run for this repository, so the local `bun run ci` is the gate: paste its output into the pull request's QA section.
