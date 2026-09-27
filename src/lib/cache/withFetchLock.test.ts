@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import { once } from "node:events";
+import { mkdirSync, rmSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, rm, utimes } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -168,4 +170,51 @@ describe("withFetchLock", () => {
     expect(taker.said().trim().split("\n")).toEqual(["waiting", "kept"]);
     expect(await readdir(directory)).toEqual([]);
   }, 20_000);
+
+  it("ends its wait when the lock library keeps as its own the lock another process took over", async () => {
+    type Call = (path: string, ...rest: unknown[]) => unknown;
+    // The filesystem the lock library calls, wrapped to put another
+    // process's takeover between the library's check of the lock and its
+    // touch, so the library touches the other's lock and keeps it.
+    const shared: { utimes: Call; mkdir: Call } = createRequire(
+      import.meta.url,
+    )("graceful-fs");
+    const { utimes: touch, mkdir: make } = shared;
+    const lockfile = join(directory, "fetch.lock");
+    let armed = false;
+    let taken = false;
+    let retaking = false;
+    shared.utimes = (path, ...rest) => {
+      if (armed && path === lockfile) {
+        armed = false;
+        rmSync(lockfile, { recursive: true });
+        mkdirSync(lockfile);
+        taken = true;
+      }
+      return touch(path, ...rest);
+    };
+    shared.mkdir = (path, ...rest) => {
+      if (taken && path === lockfile) retaking = true;
+      return make(path, ...rest);
+    };
+    try {
+      let runs = 0;
+      const result = withFetchLock(directory, async () => {
+        runs += 1;
+        if (runs === 1) {
+          armed = true;
+          await vi.waitFor(() => expect(taken).toBe(true), { timeout: 5_000 });
+        }
+        return runs;
+      });
+      await vi.waitFor(() => expect(retaking).toBe(true), { timeout: 15_000 });
+      // The other process ends its fetch and gives up its lock.
+      await rm(lockfile, { recursive: true });
+      expect(await result).toBe(2);
+      expect(await readdir(directory)).toEqual([]);
+    } finally {
+      shared.utimes = touch;
+      shared.mkdir = make;
+    }
+  }, 30_000);
 });

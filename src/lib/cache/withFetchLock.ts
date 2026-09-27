@@ -65,9 +65,22 @@ export default async function withFetchLock<T>(
     // process's, and removes it when the process exits: the lock of the
     // process that took it over. A failed task can end the process, so the
     // library is let forget the lock first, which it does within one
-    // `update`, since the lock it touches is gone or another's.
-    if (lost) await forgotten.promise;
-    else await release();
+    // `update`, since the lock it touches is gone or another's. The wait
+    // ends after `stale` all the same: when the other process takes the
+    // lock between the library's check of the lock and its touch, the
+    // library touches the other's lock, keeps it as its own and never
+    // forgets it. The task then runs again, or fails, as for a lock the
+    // library did forget.
+    if (lost) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      await Promise.race([
+        forgotten.promise,
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, lockTiming.stale);
+        }),
+      ]);
+      clearTimeout(timer);
+    } else await release();
     if ("error" in outcome) throw outcome.error;
     if (!lost) return outcome.value;
   }
