@@ -3,6 +3,7 @@ import { thread } from "../../testing/facts.js";
 import {
   fakeGitHub,
   page,
+  pullNode,
   rateLimit,
   repository,
   settle,
@@ -79,6 +80,56 @@ describe("createProvider", () => {
       "stacks",
       "teamReviews",
     ]);
+  });
+
+  it("reads a team's members once while it lives, however many snapshots request it", async () => {
+    const provider = await createProvider("github.com", "1.2.3");
+    const requested = pullNode({
+      timelineItems: {
+        nodes: [
+          {
+            __typename: "ReviewRequestedEvent",
+            createdAt: "2026-09-22T09:00:00Z",
+            requestedReviewer: {
+              __typename: "Team",
+              combinedSlug: "example-org/reviewers",
+            },
+          },
+        ],
+      },
+    });
+    const changed = repository({ ...empty, pullRequests: page([requested]) });
+    github.graphql("Snapshot", changed, changed);
+    github.graphql("TeamMembers", {
+      body: {
+        data: {
+          rateLimit,
+          organization: { team: { members: page([{ login: "erin" }]) } },
+        },
+      },
+    });
+    const since = { since: "2026-09-22T00:00:00Z" };
+    const snapshots = [
+      await settle(provider.snapshot(repo, since)),
+      await settle(provider.snapshot(repo, since)),
+    ];
+    const members = await settle(
+      provider.teamMembers({ team: "example-org/reviewers" }),
+    );
+    for (const { threads } of snapshots) {
+      expect(threads.at(0)).toMatchObject({
+        reviewRequests: [
+          { reviewer: { team: "example-org/reviewers", members: ["erin"] } },
+        ],
+      });
+    }
+    expect(members).toEqual(["erin"]);
+    const operations = github.sent.map(({ body }) =>
+      String(body?.query)
+        .match(/query (\w+)/)
+        ?.at(1),
+    );
+    expect(operations).toEqual(["Snapshot", "TeamMembers", "Snapshot"]);
   });
 
   it("asks for the budget once, then reads it from the latest answer", async () => {

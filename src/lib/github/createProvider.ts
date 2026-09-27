@@ -42,8 +42,20 @@ export default async function createProvider(
   version: string,
 ): Promise<Provider> {
   const client = createClient(await readToken(host), host, version);
+  // Every incremental snapshot sees the newest thread again, so a team
+  // requested on it would be read every cycle. Teams change rarely, so
+  // each team's members are read once and kept while the provider lives.
+  const teams = new Map<string, readonly string[]>();
+  const teamMembers = async (team: string) => {
+    const known = teams.get(team);
+    if (known) return known;
+    const members = await listTeamMembers(client, team);
+    teams.set(team, members);
+    return members;
+  };
   return {
-    snapshot: (repo, cursor) => fetchSnapshot(client, repo, cursor),
+    snapshot: (repo, cursor) =>
+      fetchSnapshot(client, repo, cursor, teamMembers),
     refreshVolatile: (threads) => refreshChecks(client, threads),
     events: (repo, since) => fetchEvents(client, repo, since),
     threadDetail: (thread) => fetchThreadDetail(client, thread),
@@ -51,7 +63,7 @@ export default async function createProvider(
     reviewCandidates: (pull) => listReviewCandidates(client, pull),
     setAssignees: (thread, logins) => setAssignees(client, thread, logins),
     setReviewers: (pull, reviewers) => setReviewers(client, pull, reviewers),
-    teamMembers: ({ team }) => listTeamMembers(client, team),
+    teamMembers: ({ team }) => teamMembers(team),
     probe: (repo, tag) => probeChanges(client, repo, tag),
     async budget(): Promise<Budget> {
       // Asking for the rate figures alone is not charged, so the first

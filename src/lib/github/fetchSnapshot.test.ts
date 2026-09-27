@@ -17,6 +17,7 @@ import {
 } from "../../testing/github.js";
 import createClient from "./createClient.js";
 import fetchSnapshot from "./fetchSnapshot.js";
+import listTeamMembers from "./listTeamMembers.js";
 
 let github: ReturnType<typeof fakeGitHub>;
 
@@ -34,11 +35,12 @@ afterEach(() => {
 const repo = "example-org/example-repo";
 const snapshot = (since: string | null = null) =>
   settle(
-    fetchSnapshot(
-      createClient(token, "github.com", "1.2.3"),
-      repo,
-      since ? { since } : null,
-    ),
+    (() => {
+      const client = createClient(token, "github.com", "1.2.3");
+      return fetchSnapshot(client, repo, since ? { since } : null, (team) =>
+        listTeamMembers(client, team),
+      );
+    })(),
   );
 const lists = (
   issues: unknown[] = [],

@@ -8,7 +8,6 @@ import {
 import fetchLists from "./fetchLists.js";
 import fetchPushes from "./fetchPushes.js";
 import fragments from "./fragments.js";
-import listTeamMembers from "./listTeamMembers.js";
 import readAccount from "./readAccount.js";
 import readDiscussion from "./readDiscussion.js";
 import readIssue from "./readIssue.js";
@@ -139,11 +138,13 @@ async function findPushes(
  * keeps the cursor it was given.
  *
  * @note Impure: reads from GitHub.
+ * @param teamMembers Gives the logins of a team named `organisation/team`.
  */
 export default async function fetchSnapshot(
   client: Client,
   repo: string,
   cursor: Cursor | null,
+  teamMembers: (team: string) => Promise<readonly string[]>,
 ): Promise<Snapshot> {
   const lists = await readLists(client, repo, cursor?.since);
   const open = lists.pullRequests.filter(({ state }) => state === "OPEN");
@@ -157,7 +158,7 @@ export default async function fetchSnapshot(
   );
   const members = new Map<string, readonly string[]>();
   for (const team of teams) {
-    members.set(team, await listTeamMembers(client, team));
+    members.set(team, await teamMembers(team));
   }
   const pulls: Thread[] = [];
   for (const node of lists.pullRequests) {
