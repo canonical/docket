@@ -14,6 +14,10 @@ describe("trimText", () => {
     expect(trimText("ab😀cd", 4)).toBe("ab…");
   });
 
+  it("counts an arrow as the one cell a terminal draws it in", () => {
+    expect(trimText("owed ↔ activity", 15)).toBe("owed ↔ activity");
+  });
+
   it("gives nothing when no cell is left", () => {
     expect(trimText("owed", 0)).toBe("");
   });

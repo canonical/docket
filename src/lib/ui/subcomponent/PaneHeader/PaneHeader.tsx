@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import stringWidth from "string-width";
 import { tokens } from "../../../tokens/index.js";
 import trimText from "../../trimText.js";
 import type { PaneHeaderProps } from "./types.js";
@@ -19,8 +18,11 @@ const PaneHeader = ({
   width,
 }: PaneHeaderProps): ReactNode => {
   const left = trimText(title, width);
-  const right = trimText(address, width - stringWidth(left) - 1);
-  const gap = Math.max(0, width - stringWidth(left) - stringWidth(right));
+  const right = trimText(address, width - Bun.stringWidth(left) - 1);
+  const gap = Math.max(
+    0,
+    width - Bun.stringWidth(left) - Bun.stringWidth(right),
+  );
   return (
     <text fg={tokens["color.text"]}>
       <span attributes={tokens["typography.weight.bold"]}>{left}</span>

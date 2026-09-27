@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import stringWidth from "string-width";
 import { tokens } from "../../../tokens/index.js";
 import type { ProgressLineProps } from "./types.js";
 
@@ -22,7 +21,7 @@ const ProgressLine = ({
   const fraction = `${fetched}/${total}`;
   const cells = Math.max(
     0,
-    Math.min(barCells, width - stringWidth(fraction) - 1),
+    Math.min(barCells, width - Bun.stringWidth(fraction) - 1),
   );
   const filled =
     total > 0 ? Math.min(cells, Math.floor((cells * fetched) / total)) : 0;
