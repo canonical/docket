@@ -1,3 +1,4 @@
+// Longer than 500 lines because each rule and the self-test cases that break it read best in one file.
 /**
  * Checks the shape of the source tree.
  *
@@ -45,6 +46,9 @@ function grant(from: string[], to: string[], reach: Reach): void {
 }
 grant(model, model, "values");
 grant(viewModels, model, "values");
+// Both lists name their fields and their owners alike, so activity takes
+// owed's field types and owner naming rather than keeping a copy.
+grant(["activity"], ["owed"], "values");
 grant(["provider"], model, "types");
 grant(["github", "cache"], [...model, "provider"], "values");
 grant(surfaces, [...viewModels, "tokens"], "values");
@@ -66,13 +70,11 @@ const lengthHeader = /^\/\/ Longer than 500 lines because \S/;
 const isTest = (file: string) => /\.(test|stories)\.tsx?$/.test(file);
 const isSource = (file: string) => /\.tsx?$/.test(file);
 
-/**
- * Barrels, types and constants hold no behaviour of their own, so they need
- * no test beside them. Every other file under `src/lib` or `src/application`
- * does.
- */
+/** Barrels, types and constants hold no behaviour, so they need no test. */
 const needsTest = (file: string) =>
-  !isTest(file) && !/^(index|types|constants)\.tsx?$/.test(basename(file));
+  /^src\/(lib|application)\//.test(file) &&
+  !isTest(file) &&
+  !/^(index|types|constants)\.tsx?$/.test(basename(file));
 
 /** Where a repository path sits: a domain, or one of the other areas. */
 function area(path: string): string {
@@ -370,6 +372,10 @@ const breaks: Record<string, [string, string]> = {
   ],
   "src/lib/owed/utils": ["folders", ""],
   "src/lib/activity/common": ["folders", ""],
+  "src/lib/owed/order.ts": [
+    "dependencies",
+    'import rows from "../activity/index.js";\nexport default function order() { return rows; }',
+  ],
   "src/lib/clock/tick.ts": [
     "dependencies",
     'import rows from "../owed/index.js";\nexport default function tick() { return rows; }',
@@ -420,6 +426,10 @@ const allowed: Record<string, string> = {
     "export type Row = { at: number };",
     "export default function rows(): Row[] { return [{ at: clock }]; }",
   ].join("\n"),
+  "src/lib/activity/rows.ts": [
+    'import { describeOwners } from "../owed/index.js";',
+    "export default function rows() { return describeOwners; }",
+  ].join("\n"),
   "src/lib/owed/rows.test.ts":
     'import alice from "../../testing/alice.js";\nalice;',
   "src/lib/owed/types.ts":
@@ -442,12 +452,7 @@ const allowed: Record<string, string> = {
     'import snapshot from "../lib/github/index.js";',
     "export default function main() { return [manifest, snapshot]; }",
   ].join("\n"),
-  // A test beside each file above that needs one, as .test.ts or .test.tsx.
-  "src/lib/ui/component/ThreadRow/common/Margin/Margin.test.tsx": "",
   "src/lib/ui/component/ThreadRow/ThreadRow.test.tsx": "",
-  "src/lib/github/snapshot.test.ts": "",
-  "src/lib/config/long.test.ts": "",
-  "src/application/main.test.ts": "",
   "src/testing/alice.ts": 'export const alice = "alice";',
   "src/scripts/check.ts": 'import x from "../lib/owed/index.js";\nx;',
 };
@@ -456,6 +461,13 @@ function selfTest(): number {
   const root = mkdtempSync(join(tmpdir(), "structure-fixture-"));
   try {
     const files = { ...allowed };
+    // Every other allowed file gets the test beside it that the rule asks for.
+    for (const path of Object.keys(allowed)) {
+      const stem = path.replace(/\.tsx?$/, "");
+      if (needsTest(path) && !(`${stem}.test.tsx` in allowed)) {
+        files[`${stem}.test.ts`] ??= "";
+      }
+    }
     for (const [path, [, text]] of Object.entries(breaks)) files[path] = text;
     for (const [path, text] of Object.entries(files)) {
       if (isSource(path)) {

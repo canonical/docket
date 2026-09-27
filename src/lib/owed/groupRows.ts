@@ -1,0 +1,82 @@
+import type { Repo } from "../config/index.js";
+import { collectStacks } from "../stacks/index.js";
+import type { OwedGrouping, WaitGroup, WaitRow } from "./types.js";
+
+type Section = readonly [heading: string, rows: readonly WaitRow[]];
+
+/**
+ * Owners alphabetically, then `unassigned`. A wait with two owners is owed
+ * by each, so its row sits under both. GitHub logins ignore case, so one
+ * owner written two ways is one section, headed as first written.
+ */
+function sectionOwners(rows: readonly WaitRow[]): Section[] {
+  const owners = new Map<string, string>();
+  for (const owner of rows.flatMap((row) => row.wait.owners)) {
+    const key = owner.toLowerCase();
+    if (!owners.has(key)) owners.set(key, owner);
+  }
+  const sections = [...owners]
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([key, owner]): Section => {
+      const owns = (row: WaitRow) =>
+        row.wait.owners.some((login) => login.toLowerCase() === key);
+      return [owner, rows.filter(owns)];
+    });
+  const unassigned = rows.filter((row) => row.wait.owners.length === 0);
+  return [...sections, ["unassigned", unassigned]];
+}
+
+/**
+ * Stacks by repository, then stack number, each headed with its full size
+ * even when some of its pull requests have no running wait. Inside a
+ * stack, rows go by position, bottom first. Rows in no stack come last.
+ */
+function sectionStacks(rows: readonly WaitRow[], order: string[]): Section[] {
+  const placed = rows.map((row) => ({
+    row,
+    repo: row.repo,
+    stack: row.wait.thread.stack,
+  }));
+  const stacks = collectStacks(placed).sort(
+    (a, b) =>
+      order.indexOf(a.repo) - order.indexOf(b.repo) || a.number - b.number,
+  );
+  const sections = stacks.map(({ repo, number, size, base, members }) => {
+    const prs = size === 1 ? "1 PR" : `${size} PRs`;
+    const heading = `${repo} stack ${number} · ${prs} → ${base}`;
+    return [heading, members.map(({ row }) => row)] as const;
+  });
+  return [...sections, ["NOT IN A STACK", rows.filter((row) => !row.stacked)]];
+}
+
+/**
+ * Splits sorted rows into the sections of a grouping. The order of the
+ * sections is a fixed rule of each grouping and never follows the sort.
+ * Rows keep the sort inside a section, except inside a stack, and a
+ * section with no rows is left out.
+ *
+ * @param repos The watched repositories, in the configuration's order,
+ * which is the order of the `repo` sections.
+ */
+export default function groupRows(
+  rows: readonly WaitRow[],
+  grouping: OwedGrouping,
+  repos: readonly Repo[],
+): WaitGroup[] {
+  if (grouping === "none") return rows.length > 0 ? [{ rows }] : [];
+  const order = repos.map(({ name }) => name);
+  const sections =
+    grouping === "owner"
+      ? sectionOwners(rows)
+      : grouping === "repo"
+        ? order.map(
+            (name): Section => [name, rows.filter((row) => row.repo === name)],
+          )
+        : sectionStacks(rows, order);
+  return sections
+    .filter(([, members]) => members.length > 0)
+    .map(([text, members]) => ({
+      heading: { text, fit: "trimmed" },
+      rows: members,
+    }));
+}

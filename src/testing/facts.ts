@@ -4,7 +4,7 @@ import {
   type Settings,
 } from "../lib/config/index.js";
 import type { Author } from "../lib/people/index.js";
-import type { Thread } from "../lib/waits/index.js";
+import type { Thread, Wait } from "../lib/waits/index.js";
 
 /** A member of the organisation, listed as team in `people`. */
 export const alice: Author = { login: "alice", type: "user", member: true };
@@ -61,6 +61,22 @@ export function thread(facts: Partial<Thread> = {}): Thread {
     reviews: [],
     reviewRequests: [],
     pushes: [],
+    ...facts,
+  };
+}
+
+/**
+ * A close wait on `thread()`, due on Wednesday 23 September 2026 at 10:00
+ * in Paris, a 24-hour target after it started.
+ */
+export function wait(facts: Partial<Wait> = {}): Wait {
+  return {
+    thread: thread(),
+    kind: "close",
+    owners: [],
+    started: at("2026-09-22T10:00+02:00"),
+    target: { amount: 24, unit: "h" },
+    due: at("2026-09-23T10:00+02:00"),
     ...facts,
   };
 }
