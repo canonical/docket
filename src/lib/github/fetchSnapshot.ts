@@ -23,6 +23,16 @@ const thread = `number title createdAt updatedAt state ${written}
   labels(first: 10) { nodes { name } }
   comments(last: 3) { nodes { ${written} createdAt } }`;
 
+// The latest requests and the latest withdrawals, twenty of each, read as
+// two lists: read as one, a run of withdrawals would push a request that
+// still stands out of the twenty.
+const requests = `requested: timelineItems(last: 20, itemTypes: [REVIEW_REQUESTED_EVENT]) {
+    nodes { __typename ... on ReviewRequestedEvent { createdAt ${requestedReviewer} } }
+  }
+  withdrawn: timelineItems(last: 20, itemTypes: [REVIEW_REQUEST_REMOVED_EVENT]) {
+    nodes { __typename ... on ReviewRequestRemovedEvent { createdAt ${requestedReviewer} } }
+  }`;
+
 const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
   $since: DateTime, $issueStates: [IssueState!], $pullStates: [PullRequestState!],
   $discussionStates: [DiscussionState!], $issuesAfter: String, $pullsAfter: String,
@@ -42,13 +52,7 @@ const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
         ${thread}
         isDraft headRefName isCrossRepository
         latestReviews(first: 10) { nodes { ${written} submittedAt } }
-        timelineItems(last: 20, itemTypes: [REVIEW_REQUESTED_EVENT, REVIEW_REQUEST_REMOVED_EVENT]) {
-          nodes {
-            __typename
-            ... on ReviewRequestedEvent { createdAt ${requestedReviewer} }
-            ... on ReviewRequestRemovedEvent { createdAt ${requestedReviewer} }
-          }
-        }
+        ${requests}
         commits(last: 1) {
           nodes { commit { committedDate author { user { login } } statusCheckRollup { state } } }
         }
@@ -149,8 +153,8 @@ export default async function fetchSnapshot(
   const lists = await readLists(client, repo, cursor?.since);
   const open = lists.pullRequests.filter(({ state }) => state === "OPEN");
   const teams = new Set(
-    open.flatMap(({ timelineItems }) =>
-      timelineItems.nodes.flatMap(({ requestedReviewer }) => {
+    open.flatMap(({ requested }) =>
+      requested.nodes.flatMap(({ requestedReviewer }) => {
         const found = readReviewer(requestedReviewer);
         return found && "team" in found ? [found.team] : [];
       }),

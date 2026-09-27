@@ -215,14 +215,16 @@ describe("fetchSnapshot", () => {
     expect(await snapshot()).toEqual({ threads: [], cursor: null });
   });
 
-  it("reads the review requests the timeline leaves standing", async () => {
-    const request = (at: string, reviewer: unknown, removed = false) => ({
-      __typename: removed
-        ? "ReviewRequestRemovedEvent"
-        : "ReviewRequestedEvent",
-      createdAt: at,
-      requestedReviewer: reviewer,
-    });
+  const request = (at: string, reviewer: unknown, removed = false) => ({
+    __typename: removed ? "ReviewRequestRemovedEvent" : "ReviewRequestedEvent",
+    createdAt: at,
+    requestedReviewer: reviewer,
+  });
+
+  it("reads the review requests the timeline leaves standing, however many withdrawals follow", async () => {
+    const withdrawals = Array.from({ length: 20 }, (_, n) =>
+      request(`2026-09-22T10:${10 + n}:00Z`, user("dave"), true),
+    );
     const team = { __typename: "Team", combinedSlug: "example-org/reviewers" };
     github.graphql(
       "Snapshot",
@@ -230,14 +232,19 @@ describe("fetchSnapshot", () => {
         [],
         [
           pullNode({
-            timelineItems: {
+            requested: {
               nodes: [
+                request("2026-09-22T09:40:00Z", { ...user("carol") }),
                 request("2026-09-22T09:00:00Z", { ...user("bob") }),
                 request("2026-09-22T09:05:00Z", { ...bot("example-review") }),
                 request("2026-09-22T09:10:00Z", team),
                 request("2026-09-22T09:15:00Z", null),
+              ],
+            },
+            withdrawn: {
+              nodes: [
                 request("2026-09-22T09:30:00Z", { ...user("bob") }, true),
-                request("2026-09-22T09:40:00Z", { ...user("carol") }),
+                ...withdrawals,
               ],
             },
           }),
@@ -268,6 +275,15 @@ describe("fetchSnapshot", () => {
         at: new Date("2026-09-22T09:40:00Z"),
       },
     ]);
+    const query = String(github.sent.at(0)?.body?.query);
+    for (const [alias, kind] of [
+      ["requested", "REVIEW_REQUESTED_EVENT"],
+      ["withdrawn", "REVIEW_REQUEST_REMOVED_EVENT"],
+    ]) {
+      expect(query).toContain(
+        `${alias}: timelineItems(last: 20, itemTypes: [${kind}])`,
+      );
+    }
     expect(variables(github.sent.at(1) as Sent)).toEqual({
       organisation: "example-org",
       team: "reviewers",

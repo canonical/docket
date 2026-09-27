@@ -85,7 +85,7 @@ describe("createProvider", () => {
   it("reads a team's members once while it lives, however many snapshots request it", async () => {
     const provider = await createProvider("github.com", "1.2.3");
     const requested = pullNode({
-      timelineItems: {
+      requested: {
         nodes: [
           {
             __typename: "ReviewRequestedEvent",

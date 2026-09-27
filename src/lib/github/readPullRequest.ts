@@ -33,7 +33,10 @@ export default function readPullRequest(
         ? [{ author: readAuthor(review), at: new Date(review.submittedAt) }]
         : [],
     ),
-    reviewRequests: readReviewRequests(node.timelineItems.nodes, members),
+    reviewRequests: readReviewRequests(
+      [...node.requested.nodes, ...node.withdrawn.nodes],
+      members,
+    ),
     pushes,
     ...(checks ? { checks } : {}),
     ...(stack ? { stack } : {}),

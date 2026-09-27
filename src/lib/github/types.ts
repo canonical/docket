@@ -166,7 +166,10 @@ export interface PullNode extends IssueNode {
       readonly submittedAt: string | null;
     })[];
   };
-  readonly timelineItems: { readonly nodes: readonly RequestNode[] };
+  /** The latest reviews requested. */
+  readonly requested: { readonly nodes: readonly RequestNode[] };
+  /** The latest requests withdrawn. */
+  readonly withdrawn: { readonly nodes: readonly RequestNode[] };
   readonly commits: {
     readonly nodes: readonly { readonly commit: HeadCommitNode }[];
   };

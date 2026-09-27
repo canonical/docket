@@ -92,7 +92,7 @@ describe("readPullRequest", () => {
     const team = { __typename: "Team", combinedSlug: "example-org/reviewers" };
     const pull = read(
       {
-        timelineItems: {
+        requested: {
           nodes: [
             {
               __typename: "ReviewRequestedEvent",
@@ -104,6 +104,10 @@ describe("readPullRequest", () => {
               createdAt: "2026-09-22T09:00:00Z",
               requestedReviewer: team,
             },
+          ],
+        },
+        withdrawn: {
+          nodes: [
             {
               __typename: "ReviewRequestRemovedEvent",
               createdAt: "2026-09-22T10:00:00Z",

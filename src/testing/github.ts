@@ -179,7 +179,8 @@ export const pullNode = (fields: Record<string, unknown> = {}) => ({
   headRefName: "feat/example",
   isCrossRepository: false,
   latestReviews: { nodes: [] },
-  timelineItems: { nodes: [] },
+  requested: { nodes: [] },
+  withdrawn: { nodes: [] },
   commits: {
     nodes: [
       {
