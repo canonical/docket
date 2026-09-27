@@ -76,11 +76,20 @@ export interface ThreadGroup {
   readonly rows: readonly ThreadRow[];
 }
 
+/** Every thread with events inside the window, gathered for one instant. */
+export interface EventList {
+  /** The rows, by their newest event, newest first. */
+  readonly rows: readonly ThreadRow[];
+  readonly counts: { readonly threads: number; readonly events: number };
+  /** `7 threads · 10 events`. */
+  readonly summary: Field;
+}
+
 /** Everything activity shows for one address. */
 export interface ActivityList {
   readonly address: ActivityAddress;
   readonly groups: readonly ThreadGroup[];
-  readonly counts: { readonly threads: number; readonly events: number };
+  readonly counts: EventList["counts"];
   /** `7 threads · 10 events`. */
   readonly summary: Field;
 }

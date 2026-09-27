@@ -1,25 +1,24 @@
 import type { WindowEvent } from "../events/index.js";
 import buildThreadRow from "./buildThreadRow.js";
-import groupThreads from "./groupThreads.js";
-import type { ActivityAddress, ActivityList, RepoEvents } from "./types.js";
+import type { EventList, RepoEvents } from "./types.js";
 
 const count = (amount: number, noun: string) =>
   `${amount} ${noun}${amount === 1 ? "" : "s"}`;
 
 /**
- * Lists the events inside the window for one address in activity. Events
- * stay nested under their thread, newest first, and threads come by their
- * newest event, newest first. Events at the same instant keep the order
- * given, and so do threads.
+ * Gathers the events inside the window into rows, once for one instant.
+ * Grouping the list works on these rows and builds none of them again.
+ * Events stay nested under their thread, newest first, and threads come
+ * by their newest event, newest first. Events at the same instant keep
+ * the order given, and so do threads.
  *
  * @param repos The watched repositories, in the configuration's order,
  * each with the events already cut to the window.
  */
 export default function listEvents(
   repos: readonly RepoEvents[],
-  address: ActivityAddress,
   now: Date,
-): ActivityList {
+): EventList {
   const newestFirst = (a: WindowEvent, b: WindowEvent) =>
     b.at.getTime() - a.at.getTime();
   const rows = repos
@@ -47,15 +46,9 @@ export default function listEvents(
     .sort((a, b) => newestFirst(a.newest, b.newest))
     .map(({ row }) => row);
   const events = rows.reduce((total, row) => total + row.events.length, 0);
-  const groups = groupThreads(
-    rows,
-    address.grouping,
-    repos.map(({ repo }) => repo),
-  );
   const text = `${count(rows.length, "thread")} · ${count(events, "event")}`;
   return {
-    address,
-    groups,
+    rows,
     counts: { threads: rows.length, events },
     summary: { text, fit: "trimmed" },
   };

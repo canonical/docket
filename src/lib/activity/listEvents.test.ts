@@ -7,11 +7,6 @@ import listEvents from "./listEvents.js";
 
 const now = at("2026-09-28T10:00+02:00");
 const { people } = teamSettings;
-const address = {
-  mode: "activity",
-  window: { amount: 24, unit: "h" },
-  grouping: "none",
-} as const;
 const example: Repo = {
   name: "example",
   repo: "example-org/example-repo",
@@ -42,10 +37,9 @@ describe("listEvents", () => {
         { repo: example, people, threads: [], events },
         { repo: docs, people, threads: [], events: [docsEvent] },
       ],
-      address,
       now,
     );
-    const rows = list.groups.flatMap(({ rows }) => rows);
+    const { rows } = list;
     expect(rows.map(({ reference }) => reference.text)).toEqual([
       "example#1",
       "example#2",
@@ -65,10 +59,9 @@ describe("listEvents", () => {
     ];
     const list = listEvents(
       [{ repo: example, people, threads: [], events }],
-      address,
       now,
     );
-    expect(list.groups[0]?.rows[0]?.title.text).toBe("Renamed");
+    expect(list.rows[0]?.title.text).toBe("Renamed");
   });
 
   it("gives a row its owners from the thread's facts", () => {
@@ -76,10 +69,9 @@ describe("listEvents", () => {
     const events = [comment(one, "2026-09-28T06:00+02:00")];
     const list = listEvents(
       [{ repo: example, people, threads: [two, facts], events }],
-      address,
       now,
     );
-    expect(list.groups[0]?.rows[0]?.owner?.text).toBe("alice");
+    expect(list.rows[0]?.owner?.text).toBe("alice");
   });
 
   it("counts the threads and events in the window", () => {
@@ -90,7 +82,6 @@ describe("listEvents", () => {
     ];
     const list = listEvents(
       [{ repo: example, people, threads: [], events }],
-      address,
       now,
     );
     expect(list.counts).toEqual({ threads: 2, events: 3 });
@@ -104,39 +95,17 @@ describe("listEvents", () => {
     const events = [comment(one, "2026-09-28T06:00+02:00")];
     const list = listEvents(
       [{ repo: example, people, threads: [], events }],
-      address,
       now,
     );
     expect(list.summary.text).toBe("1 thread · 1 event");
   });
 
-  it("gives no section when nothing happened, and keeps the address", () => {
+  it("gives no row when nothing happened", () => {
     const list = listEvents(
       [{ repo: example, people, threads: [], events: [] }],
-      address,
       now,
     );
-    expect(list.address).toBe(address);
-    expect(list.groups).toEqual([]);
+    expect(list.rows).toEqual([]);
     expect(list.summary.text).toBe("0 threads · 0 events");
-  });
-});
-
-describe("listEvents, grouped", () => {
-  it("splits the sorted rows into the sections of the address's grouping", () => {
-    const issue = comment(one, "2026-09-28T06:00+02:00");
-    const pull = comment(
-      thread({ number: 3, kind: "pullRequest" }),
-      "2026-09-28T09:00+02:00",
-    );
-    const list = listEvents(
-      [{ repo: example, people, threads: [], events: [pull, issue] }],
-      { ...address, grouping: "kind" },
-      now,
-    );
-    expect(list.groups.map(({ heading }) => heading?.text)).toEqual([
-      "ISSUES",
-      "PULL REQUESTS",
-    ]);
   });
 });
