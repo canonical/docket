@@ -9,6 +9,7 @@ import parseRepos from "./parseRepos.js";
 import parseTargets from "./parseTargets.js";
 import parseTime from "./parseTime.js";
 import type {
+  Checked,
   ConfigError,
   FileOutcome,
   Layer,
@@ -17,10 +18,7 @@ import type {
 } from "./types.js";
 
 const parsers: {
-  readonly [S in Section]: (
-    value: unknown,
-    errors: ConfigError[],
-  ) => Layer[S] | undefined;
+  readonly [S in Section]: (value: unknown) => Checked<Layer[S]>;
 } = {
   repos: parseRepos,
   people: parsePeople,
@@ -97,14 +95,14 @@ export default function parseFile(text: string, place: Place): FileOutcome {
       ],
     };
   }
-  const errors: ConfigError[] = [];
-  // The root is a map, so the check returns one.
-  const sections = checkMap(root, "the file", errors, [
+  const sections = checkMap(root, "the file", [
     "version",
     ...sectionsByPlace.personal,
-  ]) as Map<string, unknown>;
+  ]);
+  const errors: ConfigError[] = [...sections.errors];
   const layer: Record<string, unknown> = {};
-  for (const [key, value] of sections) {
+  // The root is a map, so the check returns one.
+  for (const [key, value] of sections.value as Map<string, unknown>) {
     if (key === "version") continue;
     const section = key as Section;
     if (!sectionsByPlace[place].includes(section)) {
@@ -115,7 +113,9 @@ export default function parseFile(text: string, place: Place): FileOutcome {
       });
       continue;
     }
-    layer[section] = parsers[section](value, errors);
+    const parsed = parsers[section](value);
+    errors.push(...parsed.errors);
+    layer[section] = parsed.value;
   }
   return errors.length > 0
     ? { ok: false, errors }

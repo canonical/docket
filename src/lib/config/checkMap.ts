@@ -1,28 +1,32 @@
-import type { ConfigError } from "./types.js";
+import type { Checked, ConfigError } from "./types.js";
 
 /**
  * Checks that `value` is a map whose keys are text and, when `keys` is
  * given, are all among them.
  *
  * @param path Where the value sits, such as `targets.close`.
- * @returns The map, without its unknown keys, or `undefined` when `value`
- * is not a map.
+ * @returns The map, without its unknown keys, or no value when `value` is
+ * not a map.
  */
 export default function checkMap(
   value: unknown,
   path: string,
-  errors: ConfigError[],
   keys?: readonly string[],
-): Map<string, unknown> | undefined {
+): Checked<Map<string, unknown>> {
   if (!(value instanceof Map)) {
-    errors.push({
-      code: "CONFIG_WRONG_TYPE",
-      message: `\`${path}\` is not a map of keys and values.`,
-      recovery: `Write \`${path}\` as keys and values, one \`key: value\` per line.`,
-    });
-    return undefined;
+    return {
+      value: undefined,
+      errors: [
+        {
+          code: "CONFIG_WRONG_TYPE",
+          message: `\`${path}\` is not a map of keys and values.`,
+          recovery: `Write \`${path}\` as keys and values, one \`key: value\` per line.`,
+        },
+      ],
+    };
   }
   const known = new Map<string, unknown>();
+  const errors: ConfigError[] = [];
   for (const [key, entry] of value) {
     if (typeof key !== "string") {
       errors.push({
@@ -40,5 +44,5 @@ export default function checkMap(
       known.set(key, entry);
     }
   }
-  return known;
+  return { value: known, errors };
 }

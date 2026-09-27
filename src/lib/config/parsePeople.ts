@@ -1,18 +1,16 @@
 import checkMap from "./checkMap.js";
-import type { ConfigError, Group, People } from "./types.js";
+import type { Checked, ConfigError, Group, People } from "./types.js";
 
 const groups: readonly unknown[] = ["team", "internal", "external", "bot"];
 
 /** Reads the `people` section: each login and the one group it is in. */
-export default function parsePeople(
-  value: unknown,
-  errors: ConfigError[],
-): People | undefined {
-  const entries = checkMap(value, "people", errors);
-  if (!entries) return undefined;
+export default function parsePeople(value: unknown): Checked<People> {
+  const entries = checkMap(value, "people");
+  if (!entries.value) return { value: undefined, errors: entries.errors };
+  const errors: ConfigError[] = [...entries.errors];
   const people = new Map<string, Group>();
   const written = new Map<string, string>();
-  for (const [login, group] of entries) {
+  for (const [login, group] of entries.value) {
     const key = login.toLowerCase();
     const earlier = written.get(key);
     if (earlier !== undefined) {
@@ -32,5 +30,5 @@ export default function parsePeople(
     }
     written.set(key, login);
   }
-  return people;
+  return { value: people, errors };
 }

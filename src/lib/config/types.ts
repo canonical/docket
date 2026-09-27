@@ -99,6 +99,15 @@ export interface ConfigError {
   readonly recovery: string;
 }
 
+/**
+ * What reading one value gave: the value, which is `undefined` when it
+ * cannot be read at all, and every error found in it.
+ */
+export interface Checked<T> {
+  readonly value: T | undefined;
+  readonly errors: readonly ConfigError[];
+}
+
 /** A file's sections when it is valid, or every error it holds. */
 export type FileOutcome =
   | { readonly ok: true; readonly layer: Layer }

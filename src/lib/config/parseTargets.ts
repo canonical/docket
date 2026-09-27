@@ -1,23 +1,24 @@
 import type { Duration } from "../clock/index.js";
 import checkDuration from "./checkDuration.js";
 import checkMap from "./checkMap.js";
-import type { ConfigError, Layer } from "./types.js";
+import type { Checked, ConfigError, Layer } from "./types.js";
 
 /** Reads a map of durations, renaming each key as `fields` says. */
 function parseDurations<Field extends string>(
   value: unknown,
   path: string,
   fields: Readonly<Record<string, Field>>,
-  errors: ConfigError[],
-): Partial<Record<Field, Duration>> | undefined {
-  const entries = checkMap(value, path, errors, Object.keys(fields));
-  if (!entries) return undefined;
+): Checked<Partial<Record<Field, Duration>>> {
+  const entries = checkMap(value, path, Object.keys(fields));
+  if (!entries.value) return { value: undefined, errors: entries.errors };
+  const errors: ConfigError[] = [...entries.errors];
   const durations: Partial<Record<Field, Duration>> = {};
-  for (const [key, entry] of entries) {
-    const duration = checkDuration(entry, `${path}.${key}`, errors);
-    if (duration) durations[fields[key] as Field] = duration;
+  for (const [key, entry] of entries.value) {
+    const duration = checkDuration(entry, `${path}.${key}`);
+    errors.push(...duration.errors);
+    if (duration.value) durations[fields[key] as Field] = duration.value;
   }
-  return durations;
+  return { value: durations, errors };
 }
 
 /**
@@ -26,29 +27,31 @@ function parseDurations<Field extends string>(
  */
 export default function parseTargets(
   value: unknown,
-  errors: ConfigError[],
-): Layer["targets"] {
-  const entries = checkMap(value, "targets", errors, ["next-move", "close"]);
-  if (!entries) return undefined;
-  const nextMove = entries.has("next-move")
-    ? parseDurations(
-        entries.get("next-move"),
-        "targets.next-move",
-        { response: "response", review: "review" },
-        errors,
-      )
+): Checked<NonNullable<Layer["targets"]>> {
+  const entries = checkMap(value, "targets", ["next-move", "close"]);
+  if (!entries.value) return { value: undefined, errors: entries.errors };
+  const nextMove = entries.value.has("next-move")
+    ? parseDurations(entries.value.get("next-move"), "targets.next-move", {
+        response: "response",
+        review: "review",
+      })
     : undefined;
-  const close = entries.has("close")
-    ? parseDurations(
-        entries.get("close"),
-        "targets.close",
-        {
-          issue: "issue",
-          "pull-request": "pullRequest",
-          discussion: "discussion",
-        },
-        errors,
-      )
+  const close = entries.value.has("close")
+    ? parseDurations(entries.value.get("close"), "targets.close", {
+        issue: "issue",
+        "pull-request": "pullRequest",
+        discussion: "discussion",
+      })
     : undefined;
-  return { ...(nextMove && { nextMove }), ...(close && { close }) };
+  return {
+    value: {
+      ...(nextMove?.value && { nextMove: nextMove.value }),
+      ...(close?.value && { close: close.value }),
+    },
+    errors: [
+      ...entries.errors,
+      ...(nextMove?.errors ?? []),
+      ...(close?.errors ?? []),
+    ],
+  };
 }
