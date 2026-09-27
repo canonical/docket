@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { dehydrate, QueryClient } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { thread } from "../../testing/facts.js";
+import identifyFile from "./identifyFile.js";
 import readCacheFile from "./readCacheFile.js";
 import writeCacheFile from "./writeCacheFile.js";
 
@@ -38,6 +39,12 @@ describe("writeCacheFile", () => {
       Date.parse("2026-09-28T10:00:00Z"),
     );
     expect(read?.fullRefreshAt).toBeUndefined();
+  });
+
+  it("names the file it wrote, as identifyFile names it", async () => {
+    const written = await writeCacheFile(file, stateOf([]));
+    expect(written).toBeDefined();
+    expect(written).toBe(await identifyFile(file));
   });
 
   it("writes when the last full refresh started, which readCacheFile reads back", async () => {

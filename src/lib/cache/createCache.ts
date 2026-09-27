@@ -10,6 +10,7 @@ import {
   fullRefreshCooldown,
   refreshInterval,
 } from "./constants.js";
+import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import readCacheFile from "./readCacheFile.js";
 import syncRepo from "./syncRepo.js";
@@ -56,6 +57,8 @@ export default function createCache({
   const file = join(directory, cacheFileName);
   const listeners = new Set<() => void>();
   let fullRefreshAt: Date | undefined;
+  // The file this process wrote last, as identifyFile names it.
+  let written: string | undefined;
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
@@ -127,8 +130,12 @@ export default function createCache({
     }
     publish();
   };
-  const save = () =>
-    writeCacheFile(file, { state: dehydrate(client), fullRefreshAt });
+  const save = async () => {
+    written = await writeCacheFile(file, {
+      state: dehydrate(client),
+      fullRefreshAt,
+    });
+  };
 
   /** Reads again the checks still running, on every repository at once. */
   const refreshChecks = async (synced: readonly RepoCache[]) => {
@@ -168,15 +175,17 @@ export default function createCache({
         const value = await syncRepo(provider, repo, previous, at, onPage);
         synced.set(repo, value);
         store(repo, value, at);
-        await save();
       }
       const refreshed = await refreshChecks([...synced.values()]);
       for (const [repo, value] of synced) {
         const threads = applyChecks(value.threads, refreshed);
         store(repo, { ...value, threads }, at);
       }
-      await save();
     } finally {
+      // Every other process reloads the file on each write, so a sync
+      // writes it once, even when a repository fails, which keeps those
+      // synced before it.
+      await save();
       publish({ refreshing: false, fullRefresh: undefined });
     }
   };
@@ -278,7 +287,11 @@ export default function createCache({
     watch() {
       mkdirSync(directory, { recursive: true, mode: 0o700 });
       const watcher = watchFolder(directory, (_event, name) => {
-        if (name === cacheFileName) void load();
+        if (name !== cacheFileName) return;
+        // The file this process wrote holds nothing it lacks.
+        void identifyFile(file).then((found) =>
+          found === written ? undefined : load(),
+        );
       });
       return () => watcher.close();
     },
