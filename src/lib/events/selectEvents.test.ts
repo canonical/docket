@@ -8,7 +8,10 @@ import {
   thread,
 } from "../../testing/facts.js";
 import type { Account } from "../people/index.js";
-import selectEvents, { type Event, type EventKind } from "./selectEvents.js";
+import selectEvents, {
+  type EventKind,
+  type ThreadEvent,
+} from "./selectEvents.js";
 
 const { repo, number, kind, title } = thread();
 const summary = { repo, number, kind, title };
@@ -16,7 +19,7 @@ const event = (
   iso: string,
   actor: Account = dave,
   eventKind: EventKind = "commented",
-): Event => ({ thread: summary, kind: eventKind, actor, at: at(iso) });
+): ThreadEvent => ({ thread: summary, kind: eventKind, actor, at: at(iso) });
 const day = { amount: 24, unit: "h" } as const;
 
 describe("selectEvents", () => {

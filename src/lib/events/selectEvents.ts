@@ -21,7 +21,7 @@ export type EventKind =
   | "reopened";
 
 /** Something that happened on a thread, as the provider records it. */
-export interface Event {
+export interface ThreadEvent {
   readonly thread: ThreadSummary;
   readonly kind: EventKind;
   readonly actor: Account;
@@ -29,7 +29,7 @@ export interface Event {
 }
 
 /** An event inside the window, marked when a bot made it. */
-export interface WindowEvent extends Event {
+export interface WindowEvent extends ThreadEvent {
   readonly bot: boolean;
 }
 
@@ -51,7 +51,7 @@ export interface WindowEvent extends Event {
  * @param settings The settings in effect for the events' repository.
  */
 export default function selectEvents(
-  events: readonly Event[],
+  events: readonly ThreadEvent[],
   window: Duration,
   now: Date,
   settings: Settings,
