@@ -12,19 +12,23 @@
   "scripts": {
     "build": "tsc --noEmit -p tsconfig.build.json && bun build --compile --target=bun-linux-x64 --outfile dist/docket src/application/main.ts",
     "check": "biome check && tsc --noEmit",
+    "test": "bunx --bun vitest run",
+    "test:coverage": "bunx --bun vitest run --coverage",
     "check:identity": "bun src/scripts/check-identity.ts",
     "check:secrets": "bun src/scripts/check-secrets.ts",
     "check:audit": "bun src/scripts/check-audit.ts",
     "check:licences": "bun src/scripts/check-licences.ts",
     "self-test": "bun src/scripts/check-identity.ts --self-test && bun src/scripts/check-secrets.ts --self-test && bun src/scripts/check-audit.ts --self-test && bun src/scripts/check-licences.ts --self-test",
-    "ci": "bun run check && bun run build && bun run self-test && bun run check:identity && bun run check:secrets && bun run check:audit && bun run check:licences"
+    "ci": "bun run check && bun run build && bun run test:coverage && bun run self-test && bun run check:identity && bun run check:secrets && bun run check:audit && bun run check:licences"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",
     "@canonical/biome-config": "0.40.0",
     "@canonical/typescript-config-react": "0.40.0",
     "@types/bun": "1.4.2",
+    "@vitest/coverage-v8": "5.0.2",
     "license-checker-rseidelsohn": "5.0.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "5.0.2"
   }
 }
