@@ -36,6 +36,8 @@ describe("describeEvent", () => {
       { ...facts, kind: "reviewRequested" },
       { ...facts, kind: "pushed", commits: 2 },
       { ...facts, kind: "pushed", commits: 1 },
+      { ...facts, kind: "pushed" },
+      { ...facts, kind: "checksFailed", checks: ["lint", "test"] },
     ];
     expect(events.map(describeEvent)).toEqual([
       "alice assigned bob",
@@ -43,6 +45,8 @@ describe("describeEvent", () => {
       "alice requested review",
       "alice pushed 2 commits",
       "alice pushed 1 commit",
+      "alice pushed",
+      "checks failed (lint, test)",
     ]);
   });
 });
