@@ -8,18 +8,16 @@ import {
   thread,
 } from "../../testing/facts.js";
 import type { Account } from "../people/index.js";
-import selectEvents, {
-  type EventKind,
-  type ThreadEvent,
-} from "./selectEvents.js";
+import selectEvents, { type ThreadEvent } from "./selectEvents.js";
 
 const { repo, number, kind, title } = thread();
 const summary = { repo, number, kind, title };
-const event = (
-  iso: string,
-  actor: Account = dave,
-  eventKind: EventKind = "commented",
-): ThreadEvent => ({ thread: summary, kind: eventKind, actor, at: at(iso) });
+const event = (iso: string, actor: Account = dave): ThreadEvent => ({
+  thread: summary,
+  kind: "commented",
+  actor,
+  at: at(iso),
+});
 const day = { amount: 24, unit: "h" } as const;
 
 describe("selectEvents", () => {
@@ -91,25 +89,23 @@ describe("selectEvents", () => {
     ).toEqual([now]);
   });
 
-  it("keeps every kind of event", () => {
+  it("keeps every kind of event, with the detail its activity line names", () => {
     const now = at("2026-09-22T12:00+02:00");
-    const kinds: EventKind[] = [
-      "opened",
-      "commented",
-      "reviewed",
-      "reviewRequested",
-      "pushed",
-      "assigned",
-      "labelled",
-      "closed",
-      "merged",
-      "reopened",
+    const commented = event("2026-09-22T10:00+02:00");
+    const events: ThreadEvent[] = [
+      { ...commented, kind: "opened" },
+      commented,
+      { ...commented, kind: "reviewed" },
+      { ...commented, kind: "reviewRequested" },
+      { ...commented, kind: "pushed", commits: 2 },
+      { ...commented, kind: "assigned", assignee: "bob" },
+      { ...commented, kind: "labelled", label: "kind=bug" },
+      { ...commented, kind: "closed" },
+      { ...commented, kind: "merged" },
+      { ...commented, kind: "reopened" },
     ];
-    const events = kinds.map((eventKind) =>
-      event("2026-09-22T10:00+02:00", dave, eventKind),
+    expect(selectEvents(events, day, now, teamSettings)).toEqual(
+      events.map((kept) => ({ ...kept, bot: false })),
     );
-    expect(
-      selectEvents(events, day, now, teamSettings).map(({ kind }) => kind),
-    ).toEqual(kinds);
   });
 });

@@ -7,31 +7,51 @@ import type { Settings } from "../config/index.js";
 import { type Account, classify } from "../people/index.js";
 import type { ThreadSummary } from "../waits/index.js";
 
-/** The kinds of event a provider records on a thread. */
-export type EventKind =
-  | "opened"
-  | "commented"
-  | "reviewed"
-  | "reviewRequested"
-  | "pushed"
-  | "assigned"
-  | "labelled"
-  | "closed"
-  | "merged"
-  | "reopened";
-
-/** Something that happened on a thread, as the provider records it. */
-export interface ThreadEvent {
+/** What every event records: where it happened, who made it, and when. */
+interface EventFacts {
   readonly thread: ThreadSummary;
-  readonly kind: EventKind;
   readonly actor: Account;
   readonly at: Date;
 }
 
+/**
+ * Something that happened on a thread, as the provider records it. A kind
+ * whose activity line names more than its actor carries that detail.
+ */
+export type ThreadEvent = EventFacts &
+  (
+    | {
+        readonly kind:
+          | "opened"
+          | "commented"
+          | "reviewed"
+          | "reviewRequested"
+          | "closed"
+          | "merged"
+          | "reopened";
+      }
+    | {
+        readonly kind: "assigned";
+        /** The login of the account assigned. */
+        readonly assignee: string;
+      }
+    | {
+        readonly kind: "labelled";
+        /** The label's name, such as `kind=bug`. */
+        readonly label: string;
+      }
+    | {
+        readonly kind: "pushed";
+        /** How many commits the push carried. */
+        readonly commits: number;
+      }
+  );
+
+/** The kinds of event a provider records on a thread. */
+export type EventKind = ThreadEvent["kind"];
+
 /** An event inside the window, marked when a bot made it. */
-export interface WindowEvent extends ThreadEvent {
-  readonly bot: boolean;
-}
+export type WindowEvent = ThreadEvent & { readonly bot: boolean };
 
 /**
  * Keeps the events that happened within `window` of working time before
