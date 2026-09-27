@@ -7,7 +7,7 @@
   "author": "advl",
   "license": "MIT",
   "engines": {
-    "bun": ">=1.4.0"
+    "bun": ">=1.4.2"
   },
   "scripts": {
     "build": "tsc --noEmit -p tsconfig.build.json && bun build --compile --target=bun-linux-x64 --outfile dist/docket src/application/main.ts",
