@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 import type {
   ThreadRow as ActivityThread,
   ActivityList as List,
@@ -10,9 +10,9 @@ import {
   countRowLines,
   EventLine,
   GroupHeading,
-  keepInView,
   ThreadAccordion,
   ThreadRow,
+  useListScroll,
 } from "../lib/ui/index.js";
 import findThreadState from "./findThreadState.js";
 import listWaiting from "./listWaiting.js";
@@ -72,7 +72,6 @@ export default function ActivityList({
   width,
   height,
 }: ActivityListProps): ReactNode {
-  const [first, setFirst] = useState(0);
   const blocks: Block[] = [];
   let place = 0;
   let from = 0;
@@ -123,23 +122,7 @@ export default function ActivityList({
       place += 1;
     }
   }
-  const top = keepInView(
-    blocks.map(({ lines }) => lines),
-    from,
-    to,
-    height,
-    first,
-  );
-  // The first block shown is remembered from the frame before, so the list
-  // only scrolls when the selection would leave it.
-  if (top !== first) setFirst(top);
-  // Whole blocks only, as many as fit: a thread is never drawn without its
-  // second line. The first is drawn whatever its height, cut by the region.
-  let used = 0;
-  const shown = blocks.slice(top).filter(({ lines }, index) => {
-    used += lines;
-    return index === 0 || used <= height;
-  });
+  const shown = useListScroll({ blocks, from, to, room: height });
   return (
     <box flexDirection="column" height={height} overflow="hidden">
       {shown.map(({ key, node }) => (

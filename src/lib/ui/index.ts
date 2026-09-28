@@ -32,9 +32,11 @@ export {
   type KeyCommand,
   type UseCommandsProps,
   type UseCommandsResult,
+  type UseListScrollProps,
+  type UseListScrollResult,
   useCommands,
+  useListScroll,
 } from "./hooks/index.js";
-export { default as keepInView } from "./keepInView.js";
 export { Pane, type PaneProps } from "./layout/index.js";
 export {
   PaneHeader,

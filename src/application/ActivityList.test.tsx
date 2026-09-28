@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { tokens } from "../lib/tokens/index.js";
 import {
@@ -179,6 +180,30 @@ describe("ActivityList", () => {
       "PULL REQUESTS",
       " ┃example#12 PR                      25m",
       " ┃Fix the parser · alice",
+    ]);
+  });
+
+  it("scrolls back up to the threads above once the region grows tall enough", async () => {
+    let grow = () => {};
+    const Growing = () => {
+      const [height, setHeight] = useState(12);
+      grow = () => setHeight(20);
+      return (
+        <ActivityList
+          {...reading}
+          list={recordedActivity("kind")}
+          selected={1}
+          width={40}
+          height={height}
+        />
+      );
+    };
+    const screen = await draw(<Growing />, 40, 20);
+    expect(screen.lines.at(0)).toBe("PULL REQUESTS");
+    const tall = await screen.redraw(() => grow());
+    expect(tall.lines.slice(0, 2)).toEqual([
+      "ISSUES",
+      "  docs#4 issue                       16h",
     ]);
   });
 });
