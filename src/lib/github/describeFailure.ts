@@ -59,6 +59,15 @@ export default function describeFailure(
       "check the network connection and https://www.githubstatus.com, then refresh",
     );
   }
+  if (failure.cause?.name === "TypeError") {
+    // `fetch` throws a TypeError when the request gets no answer at all:
+    // the name does not resolve, or the connection is refused.
+    return new GitHubError(
+      "GITHUB_UNREACHABLE",
+      `docket could not reach ${host}: the request got no answer.`,
+      "check the network connection and https://www.githubstatus.com, then refresh",
+    );
+  }
   const reported = failure.errors?.at(0)?.message;
   if (reported !== undefined) {
     // GraphQL answers an error in the body, such as a repository it
