@@ -25,8 +25,9 @@ export interface UseEditorProps {
   /** Shows the result of applying, or of a refused key, on the status line. */
   readonly onResult: (result: ActionResult) => void;
   /**
-   * True while the help covers the editor, which turns its keys off, so
-   * none acts on what is out of sight.
+   * True while the help covers the editor, or the pane is too narrow to
+   * draw it, which turns its keys off, so none acts on what is out of
+   * sight.
    */
   readonly covered: boolean;
 }

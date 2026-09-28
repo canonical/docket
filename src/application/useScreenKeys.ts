@@ -49,6 +49,11 @@ export interface UseScreenKeysProps {
   readonly help: boolean;
   /** Whether an editor is open, which turns every key but the help's off. */
   readonly editorOpen: boolean;
+  /**
+   * Whether the pane is too narrow to draw the screen, which turns every
+   * key but `q` off.
+   */
+  readonly narrow: boolean;
   /** What each key does, as the frame on show gives it. */
   readonly actions: ScreenActions;
 }
@@ -73,6 +78,7 @@ export default function useScreenKeys({
   mode,
   help,
   editorOpen,
+  narrow,
   actions,
 }: UseScreenKeysProps): UseScreenKeysResult {
   // The keys run closures made when their layer was bound, so they read
@@ -204,14 +210,15 @@ export default function useScreenKeys({
           run: () => latest.current.quit(),
         },
       ].map((command) => {
-        // An open editor takes the typing, so no key but the help's runs;
-        // and no key acts on what the help hides, so while it shows only
-        // its own keys and quitting run.
-        const runs = command.name.startsWith("help.")
-          ? true
-          : editorOpen
-            ? false
-            : !help || command.name === "app.quit";
+        // No key acts on what the screen does not show: below the narrowest
+        // pane only quitting runs, and while the help shows only its own
+        // keys and quitting. An open editor takes the typing, so no key but
+        // the help's runs.
+        const quits = command.name === "app.quit";
+        const runs = narrow
+          ? quits
+          : command.name.startsWith("help.") ||
+            (!editorOpen && (!help || quits));
         return runs ? command : { ...command, enabled: false };
       }),
       bindings: [
@@ -238,7 +245,7 @@ export default function useScreenKeys({
         { key: "q", cmd: "app.quit" },
       ],
     }),
-    [mode, help, editorOpen],
+    [mode, help, editorOpen, narrow],
   );
   const active = useCommands({ visibility: "active" });
   const bound = useCommands({ visibility: "registered" }).toSorted(

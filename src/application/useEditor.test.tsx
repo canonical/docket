@@ -579,6 +579,19 @@ describe("useEditor", () => {
       expect(applied.lines.at(-2)).toBe("✓ assigned alice, bob");
     });
 
+    it("ticks, applies and cancels nothing at 32 columns, keeping the editor as it was", async () => {
+      const { provider, setAssignees } = recordAssignees();
+      const opened = await settle(
+        await press(await showRecorded(provider), "a"),
+      );
+      const before = opened.lines;
+      opened.setup.resize(32, 16);
+      await press(await opened.redraw(), "down", "space", "return", "escape");
+      opened.setup.resize(40, 16);
+      expect((await opened.redraw()).lines).toEqual(before);
+      expect(setAssignees).not.toHaveBeenCalled();
+    });
+
     it("drops whom GitHub offers once its editor has closed", async () => {
       const { promise, resolve } = Promise.withResolvers<void>();
       const provider = recordedProvider({

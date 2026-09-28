@@ -1250,5 +1250,50 @@ describe("Screen", () => {
       expect(wide.lines.at(0)).toBe("owed");
       expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
     });
+
+    it("acts on no key but q at 32 columns, and on every key again once widened, the selection where it was", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const opened: string[] = [];
+      const onQuit = vi.fn();
+      const view = viewOf(
+        cache,
+        everyCapability,
+        readRecorded,
+        readRecordedDetail,
+        async (url) => {
+          opened.push(url);
+        },
+      );
+      const screen = await show(view, 40, onQuit);
+      await press(await screen.redraw(), "j", "j");
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines).not.toContain("  loading…"),
+      );
+      const before = (await screen.redraw()).lines;
+      for (const key of [
+        ...["left", "h", "right", "l", "up", "k", "down", "j"],
+        ...["pageup", "pagedown", "home", "end", "return", "a", "r", "g", "t"],
+        ...["R", "?", "escape"],
+      ]) {
+        screen.setup.resize(32, 12);
+        const narrow = await press(await screen.redraw(), key);
+        expect(narrow.lines.filter(Boolean)).toEqual([
+          "docket needs 40 columns",
+        ]);
+        screen.setup.resize(40, 12);
+        expect((await screen.redraw()).lines).toEqual(before);
+      }
+      expect(opened).toEqual([]);
+      expect(onQuit).not.toHaveBeenCalled();
+      screen.setup.resize(32, 12);
+      await press(await screen.redraw(), "q");
+      expect(onQuit).toHaveBeenCalledOnce();
+      screen.setup.resize(40, 12);
+      await press(await screen.redraw(), "return");
+      expect(opened).toEqual([
+        "https://github.com/example-org/example-repo/issues/15",
+      ]);
+    });
   });
 });

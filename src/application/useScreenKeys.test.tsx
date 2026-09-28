@@ -44,6 +44,7 @@ function probe(start: Partial<State> = {}) {
       mode: "owed",
       help: false,
       editorOpen: false,
+      narrow: false,
       actions: noting(ran),
       ...start,
     });
@@ -200,6 +201,36 @@ describe("useScreenKeys", () => {
     expect(ran).toEqual(["toggleHelp", "closeHelp"]);
     expect(drawn.lines.at(0)).toBe("? esc");
   });
+
+  it.each([
+    { shown: "nothing open", help: false, editorOpen: false },
+    { shown: "the help open", help: true, editorOpen: false },
+    { shown: "an editor open", help: false, editorOpen: true },
+    { shown: "the help open over an editor", help: true, editorOpen: true },
+  ])(
+    "runs only q while the pane is too narrow, and every key again once it widens, with $shown",
+    async ({ help, editorOpen }) => {
+      const { ran, change, screen } = await bind({
+        mode: "activity",
+        narrow: true,
+        help,
+        editorOpen,
+      });
+      const drawn = await press(
+        screen,
+        ...["left", "h", "right", "l", "up", "k", "down", "j"],
+        ...["pageup", "pagedown", "home", "end", "return", "a", "r", "g", "t"],
+        ...["R", "?", "escape", "q"],
+      );
+      expect(ran).toEqual(["quit"]);
+      expect(drawn.lines.at(0)).toBe("q");
+      await screen.redraw(() =>
+        change({ narrow: false, help: false, editorOpen: false }),
+      );
+      await press(screen, "j", "t");
+      expect(ran.slice(1)).toEqual(["moveSelection 1", "nextWindow"]);
+    },
+  );
 
   it("lists the groups in the help's order, from the mode down to the app", async () => {
     const { screen } = await bind();
