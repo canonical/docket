@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import fixture from "./fixture.js";
+import findFixture from "./findFixture.js";
 import type { Home, SentRequest } from "./types.js";
 
 const corpusRoot = import.meta.dirname;
@@ -58,7 +58,7 @@ export default function makeHome(personalFile: string): Home {
             TZ: machineZone,
             LANG: "C.UTF-8",
             GUARANTEES_NOW: now,
-            GUARANTEES_RECORDING: fixture(`${recording}.ts`),
+            GUARANTEES_RECORDING: findFixture(`${recording}.ts`),
             GUARANTEES_REQUESTS: log,
           },
         },

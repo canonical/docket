@@ -6,28 +6,33 @@
 import type { RecordedAnswer } from "../types.js";
 
 /** A person's account as GraphQL gives it. */
-export const user = (login: string) => ({ login, __typename: "User" });
+export const buildUser = (login: string) => ({ login, __typename: "User" });
 
 /** A bot's account as GraphQL gives it; its login carries no suffix. */
-export const bot = (login: string) => ({ login, __typename: "Bot" });
+export const buildBot = (login: string) => ({ login, __typename: "Bot" });
 
 /** One page of a GraphQL list, the last one. */
-export const page = (nodes: readonly unknown[]) => ({
+export const buildPage = (nodes: readonly unknown[]) => ({
   pageInfo: { hasNextPage: false, endCursor: null },
   totalCount: nodes.length,
   nodes,
 });
 
 /** A comment, or a review, by `login` with its tie to the repository. */
-export const comment = (
+export const buildComment = (
   login: string,
   createdAt: string,
   association = "MEMBER",
   body = "",
-) => ({ author: user(login), authorAssociation: association, createdAt, body });
+) => ({
+  author: buildUser(login),
+  authorAssociation: association,
+  createdAt,
+  body,
+});
 
 /** An open issue, as the snapshot query gives it. */
-export const issueNode = (fields: {
+export const buildIssueNode = (fields: {
   readonly number: number;
   readonly title: string;
   readonly createdAt: string;
@@ -43,21 +48,25 @@ export const issueNode = (fields: {
   createdAt: fields.createdAt,
   updatedAt: fields.updatedAt ?? fields.createdAt,
   state: "OPEN",
-  author: user(fields.author),
+  author: buildUser(fields.author),
   authorAssociation: fields.association ?? "NONE",
-  assignees: { nodes: (fields.assignees ?? []).map(user) },
+  assignees: { nodes: (fields.assignees ?? []).map(buildUser) },
   labels: { nodes: (fields.labels ?? []).map((name) => ({ name })) },
   comments: { nodes: fields.comments ?? [] },
 });
 
 /** Where a pull request sits in its stack. */
-export const stackEntry = (position: number, size: number, base: string) => ({
+export const buildStackEntry = (
+  position: number,
+  size: number,
+  base: string,
+) => ({
   position,
   stack: { number: 3, size, baseRefName: base },
 });
 
 /** A check run a GitHub App ran, finished with `conclusion`. */
-export const checkRun = (
+export const buildCheckRun = (
   name: string,
   conclusion: string,
   completedAt: string,
@@ -74,21 +83,21 @@ export const checkRun = (
  * The answer to the free check for changes: a list of one issue, tagged
  * `tag`. A request sending the tag back is answered "not modified".
  */
-export const probe = (tag: string): RecordedAnswer => ({
+export const buildProbe = (tag: string): RecordedAnswer => ({
   headers: { etag: `"${tag}"` },
   body: [{ number: 1 }],
 });
 
 /** A snapshot answer: the three lists of a repository's open threads. */
-export const snapshot = (
+export const buildSnapshot = (
   issues: readonly unknown[],
   pullRequests: readonly unknown[] = [],
 ): RecordedAnswer => ({
   data: {
     repository: {
-      issues: page(issues),
-      pullRequests: page(pullRequests),
-      discussions: page([]),
+      issues: buildPage(issues),
+      pullRequests: buildPage(pullRequests),
+      discussions: buildPage([]),
     },
   },
 });

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterAll, describe, expect, it } from "vitest";
-import fixture from "./fixture.js";
+import findFixture from "./findFixture.js";
 import makeHome from "./makeHome.js";
 import type { SentRequest } from "./types.js";
 
@@ -112,7 +112,7 @@ const measure = (requests: readonly SentRequest[]) => {
   };
 };
 
-const home = makeHome(readFileSync(fixture("team.yaml"), "utf8"));
+const home = makeHome(readFileSync(findFixture("team.yaml"), "utf8"));
 afterAll(() => home.remove());
 
 // A refresh every 120 seconds: each call is two minutes after the last,

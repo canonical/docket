@@ -1,11 +1,16 @@
 import { noFile } from "./constants.js";
-import { issueNode, probe, snapshot } from "./shapes.js";
+import { buildIssueNode, buildProbe, buildSnapshot } from "./shapes.js";
 
 const repo = "example-org/example-repo";
 
 /** An issue bob opened at `createdAt`, waiting for a reply. */
-const opened = (number: number, createdAt: string) =>
-  issueNode({ number, title: `Opened ${createdAt}`, createdAt, author: "bob" });
+const buildOpened = (number: number, createdAt: string) =>
+  buildIssueNode({
+    number,
+    title: `Opened ${createdAt}`,
+    createdAt,
+    author: "bob",
+  });
 
 /**
  * Issues opened at instants chosen around weekends and clock changes:
@@ -15,11 +20,11 @@ const opened = (number: number, createdAt: string) =>
  */
 export default {
   [`File ${repo}`]: noFile,
-  [`GET /repos/${repo}/issues`]: probe("clock"),
-  [`Snapshot ${repo}`]: snapshot([
-    opened(1, "2026-09-25T14:00:00Z"),
-    opened(2, "2026-10-23T14:00:00Z"),
-    opened(3, "2027-03-12T21:00:00Z"),
-    opened(4, "2026-09-26T02:00:00Z"),
+  [`GET /repos/${repo}/issues`]: buildProbe("clock"),
+  [`Snapshot ${repo}`]: buildSnapshot([
+    buildOpened(1, "2026-09-25T14:00:00Z"),
+    buildOpened(2, "2026-10-23T14:00:00Z"),
+    buildOpened(3, "2027-03-12T21:00:00Z"),
+    buildOpened(4, "2026-09-26T02:00:00Z"),
   ]),
 };

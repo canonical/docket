@@ -8,7 +8,7 @@ import makeHome from "./makeHome.js";
  * changes nothing. Read from outside, through when `owed` says each
  * 24-hour reply falls due.
  */
-const personalFile = (timezone: string) => `version: 1
+const buildPersonalFile = (timezone: string) => `version: 1
 repos:
   example: { repo: example-org/example-repo }
 time:
@@ -20,8 +20,8 @@ targets:
 
 const now = "2027-03-15T12:00:00Z";
 const homes = {
-  paris: makeHome(personalFile("Europe/Paris")),
-  newYork: makeHome(personalFile("America/New_York")),
+  paris: makeHome(buildPersonalFile("Europe/Paris")),
+  newYork: makeHome(buildPersonalFile("America/New_York")),
 };
 afterAll(() => {
   for (const home of Object.values(homes)) home.remove();

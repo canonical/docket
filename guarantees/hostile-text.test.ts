@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterAll, describe, expect, it } from "vitest";
-import fixture from "./fixture.js";
+import findFixture from "./findFixture.js";
 import hostileWords from "./fixtures/hostileWords.js";
 import makeHome from "./makeHome.js";
 
@@ -12,7 +12,7 @@ import makeHome from "./makeHome.js";
  * which an agent reads, titles appear in double quotes and comments as
  * `>` lines, so a comment addressed to the agent stays data.
  */
-const home = makeHome(readFileSync(fixture("example.yaml"), "utf8"));
+const home = makeHome(readFileSync(findFixture("example.yaml"), "utf8"));
 afterAll(() => home.remove());
 
 const commands = [["owed"], ["activity"], ["show", "example#12"]];

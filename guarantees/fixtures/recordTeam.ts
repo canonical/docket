@@ -1,15 +1,15 @@
 import type { Recording, Words } from "../types.js";
 import { noFile, noPushes } from "./constants.js";
 import {
-  bot,
-  checkRun,
-  comment,
-  issueNode,
-  page,
-  probe,
-  snapshot,
-  stackEntry,
-  user,
+  buildBot,
+  buildCheckRun,
+  buildComment,
+  buildIssueNode,
+  buildPage,
+  buildProbe,
+  buildSnapshot,
+  buildStackEntry,
+  buildUser,
 } from "./shapes.js";
 
 const repo = "example-org/example-repo";
@@ -25,7 +25,7 @@ const docs = "example-org/example-docs";
  */
 export default function recordTeam(words: Words, tag = "first"): Recording {
   const parserFix = {
-    ...issueNode({
+    ...buildIssueNode({
       number: 12,
       title: words.title,
       createdAt: "2026-09-21T08:00:00Z",
@@ -33,7 +33,7 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
       author: "dave",
       assignees: ["alice"],
       labels: [words.label],
-      comments: [comment("dave", "2026-09-25T07:00:00Z", "NONE")],
+      comments: [buildComment("dave", "2026-09-25T07:00:00Z", "NONE")],
     }),
     isDraft: false,
     headRefName: words.branch,
@@ -60,15 +60,15 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
         },
       ],
     },
-    stackEntry: stackEntry(2, 3, words.branch),
+    stackEntry: buildStackEntry(2, 3, words.branch),
   };
-  const crash = issueNode({
+  const crash = buildIssueNode({
     number: 15,
     title: "Crash on start",
     createdAt: "2026-09-25T14:00:00Z",
     author: "carol",
   });
-  const tokens = issueNode({
+  const tokens = buildIssueNode({
     number: 4,
     title: "Where do tokens live?",
     createdAt: "2026-09-01T08:00:00Z",
@@ -77,8 +77,11 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
     association: "MEMBER",
     assignees: ["alice", "bob"],
   });
-  const failed = checkRun(words.check, "FAILURE", "2026-09-28T09:35:00Z");
-  const opened = (node: { number: number; title: string }, at: string) => ({
+  const failed = buildCheckRun(words.check, "FAILURE", "2026-09-28T09:35:00Z");
+  const buildOpened = (
+    node: { number: number; title: string },
+    at: string,
+  ) => ({
     number: node.number,
     title: node.title,
     createdAt: at,
@@ -86,28 +89,28 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
   return {
     [`File ${repo}`]: noFile,
     [`File ${docs}`]: noFile,
-    [`GET /repos/${repo}/issues`]: probe(`${tag}-example`),
-    [`GET /repos/${docs}/issues`]: probe(`${tag}-docs`),
+    [`GET /repos/${repo}/issues`]: buildProbe(`${tag}-example`),
+    [`GET /repos/${docs}/issues`]: buildProbe(`${tag}-docs`),
     [`GET /repos/${repo}/activity`]: noPushes,
     [`GET /repos/${docs}/activity`]: noPushes,
-    [`Snapshot ${repo}`]: snapshot([crash], [parserFix]),
-    [`Snapshot ${docs}`]: snapshot([tokens]),
+    [`Snapshot ${repo}`]: buildSnapshot([crash], [parserFix]),
+    [`Snapshot ${docs}`]: buildSnapshot([tokens]),
     [`Events ${repo}`]: {
       data: {
         repository: {
-          issues: page([
+          issues: buildPage([
             {
-              ...opened(crash, crash.createdAt),
+              ...buildOpened(crash, crash.createdAt),
               updatedAt: crash.updatedAt,
-              author: user("carol"),
+              author: buildUser("carol"),
               timelineItems: { nodes: [] },
             },
           ]),
-          pullRequests: page([
+          pullRequests: buildPage([
             {
-              ...opened(parserFix, parserFix.createdAt),
+              ...buildOpened(parserFix, parserFix.createdAt),
               updatedAt: parserFix.updatedAt,
-              author: user("dave"),
+              author: buildUser("dave"),
               headRefName: words.branch,
               isCrossRepository: true,
               stackEntry: parserFix.stackEntry,
@@ -115,12 +118,12 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
                 nodes: [
                   {
                     __typename: "IssueComment",
-                    author: user("dave"),
+                    author: buildUser("dave"),
                     createdAt: "2026-09-25T07:00:00Z",
                   },
                   {
                     __typename: "ReviewRequestedEvent",
-                    actor: user("alice"),
+                    actor: buildUser("alice"),
                     createdAt: "2026-09-28T07:00:00Z",
                   },
                 ],
@@ -142,23 +145,23 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
               },
             },
           ]),
-          discussions: page([]),
+          discussions: buildPage([]),
         },
       },
     },
     [`Events ${docs}`]: {
       data: {
         repository: {
-          issues: page([
+          issues: buildPage([
             {
-              ...opened(tokens, tokens.createdAt),
+              ...buildOpened(tokens, tokens.createdAt),
               updatedAt: tokens.updatedAt,
-              author: user("alice"),
+              author: buildUser("alice"),
               timelineItems: {
                 nodes: [
                   {
                     __typename: "LabeledEvent",
-                    actor: bot("example-sync"),
+                    actor: buildBot("example-sync"),
                     createdAt: "2026-09-27T18:00:00Z",
                     label: { name: "kind=docs" },
                   },
@@ -166,8 +169,8 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
               },
             },
           ]),
-          pullRequests: page([]),
-          discussions: page([]),
+          pullRequests: buildPage([]),
+          discussions: buildPage([]),
         },
       },
     },
@@ -178,13 +181,18 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
             updatedAt: parserFix.updatedAt,
             comments: {
               nodes: [
-                comment("dave", "2026-09-25T07:00:00Z", "NONE", words.comment),
+                buildComment(
+                  "dave",
+                  "2026-09-25T07:00:00Z",
+                  "NONE",
+                  words.comment,
+                ),
               ],
             },
             reviews: {
               nodes: [
                 {
-                  ...comment(
+                  ...buildComment(
                     "bob",
                     "2026-09-24T13:00:00Z",
                     "MEMBER",
@@ -198,7 +206,7 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
               nodes: [
                 {
                   createdAt: "2026-09-28T07:00:00Z",
-                  actor: user("alice"),
+                  actor: buildUser("alice"),
                   requestedReviewer: { __typename: "User", login: "bob" },
                 },
               ],

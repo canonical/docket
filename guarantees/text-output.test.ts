@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { afterAll, describe, it } from "vitest";
 import expectGolden from "./expectGolden.js";
-import fixture from "./fixture.js";
+import findFixture from "./findFixture.js";
 import makeHome from "./makeHome.js";
 
 /**
@@ -11,7 +11,7 @@ import makeHome from "./makeHome.js";
  * change to any of them is a change a reader meets, and it shows here as
  * a diff to accept or refuse.
  */
-const home = makeHome(readFileSync(fixture("team.yaml"), "utf8"));
+const home = makeHome(readFileSync(findFixture("team.yaml"), "utf8"));
 afterAll(() => home.remove());
 
 const call = async (args: readonly string[]) => {
