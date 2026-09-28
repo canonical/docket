@@ -425,6 +425,28 @@ describe("createCache, after a write", () => {
     expect(other.snapshot).not.toHaveBeenCalled();
   });
 
+  it("shows the checks still running on a changed pull request as they finished", async () => {
+    const provider = counting();
+    const cache = open(provider);
+    await cache.read(5 * minute);
+    const running = thread({
+      number: 1,
+      kind: "pullRequest",
+      checks: "running",
+    });
+    vi.mocked(provider.snapshot).mockResolvedValueOnce({
+      threads: [running],
+      cursor: { since: "2026-09-28T10:00:00Z" },
+    });
+    vi.spyOn(provider, "refreshVolatile").mockResolvedValueOnce([
+      { repo, number: 1, checks: "passing" },
+    ]);
+    await cache.refreshRepo(repo);
+    expect(cache.threads().threads).toEqual([
+      { ...running, checks: "passing" },
+    ]);
+  });
+
   it("leaves a repository it holds nothing of for the next read to fetch whole", async () => {
     const provider = counting();
     await open(provider).refreshRepo(repo);
