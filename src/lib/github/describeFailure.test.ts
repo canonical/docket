@@ -90,6 +90,45 @@ describe("describeFailure", () => {
     });
   });
 
+  describe("a change GitHub will not make", () => {
+    it("gives GitHub's reason, with each detail its answer lists", () => {
+      expect(
+        described({
+          status: 422,
+          response: {
+            data: {
+              message: "Validation Failed",
+              errors: [
+                { resource: "PullRequest", code: "custom" },
+                { message: "dave is not a collaborator" },
+              ],
+            },
+          },
+        }),
+      ).toEqual({
+        code: "GITHUB_REQUEST_FAILED",
+        message:
+          "GitHub refused the request: Validation Failed: dave is not a collaborator.",
+        recovery: "change what GitHub's reason names, then refresh",
+      });
+    });
+
+    it("keeps the full stop GitHub's reason ends with", () => {
+      expect(
+        described({
+          status: 422,
+          response: { data: { message: "dave is not a collaborator." } },
+        }).message,
+      ).toBe("GitHub refused the request: dave is not a collaborator.");
+    });
+
+    it("names the status when GitHub words no reason", () => {
+      expect(
+        described({ status: 422, response: { data: { message: "" } } }).message,
+      ).toBe("GitHub refused a request with status 422.");
+    });
+  });
+
   it("names the status of any other refusal", () => {
     expect(described({ status: 404 })).toEqual({
       code: "GITHUB_REQUEST_FAILED",

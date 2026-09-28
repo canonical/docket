@@ -9,6 +9,11 @@ interface Failure {
   readonly cause?: { readonly name?: string };
   readonly response?: {
     readonly headers?: Readonly<Record<string, string | number | undefined>>;
+    /** The body of a REST answer, which names why GitHub refused. */
+    readonly data?: {
+      readonly message?: unknown;
+      readonly errors?: readonly { readonly message?: unknown }[];
+    };
   };
   readonly errors?: readonly {
     readonly type?: string;
@@ -22,9 +27,24 @@ const rateLimited = (failure: Failure): boolean =>
   (failure.errors ?? []).some(({ type }) => type === "RATE_LIMITED");
 
 /**
+ * Why GitHub refused, as its REST answer words it: the message, then each
+ * detail the answer lists, or nothing when it words none.
+ */
+const readRefusal = (failure: Failure): string | undefined => {
+  const data = failure.response?.data;
+  const words = [
+    data?.message,
+    ...(data?.errors ?? []).map((error) => error.message),
+  ].filter((part): part is string => typeof part === "string" && part !== "");
+  const [message, ...details] = words;
+  if (message === undefined) return undefined;
+  return details.length > 0 ? `${message}: ${details.join("; ")}` : message;
+};
+
+/**
  * Turns whatever a request threw into a `GitHubError`. The new error is
- * built from the status, the rate-limit headers and the message GraphQL
- * reports alone, and keeps no link to the original, whose request records
+ * built from the status, the rate-limit headers and the message GitHub
+ * answers alone, and keeps no link to the original, whose request records
  * the headers sent.
  *
  * @param host The host the token was given for, such as `github.com`.
@@ -76,6 +96,17 @@ export default function describeFailure(
       "GITHUB_REQUEST_FAILED",
       `GitHub answered with an error: ${reported}`,
       "check that your gh account can read the repository, then refresh",
+    );
+  }
+  const refusal = failure.status === 422 && readRefusal(failure);
+  if (refusal) {
+    // GitHub answers 422 when it will not make the change asked for, such
+    // as reviews requested from someone who is not a collaborator, and its
+    // answer names why.
+    return new GitHubError(
+      "GITHUB_REQUEST_FAILED",
+      `GitHub refused the request: ${/[.?!]$/.test(refusal) ? refusal : `${refusal}.`}`,
+      "change what GitHub's reason names, then refresh",
     );
   }
   if (failure.status !== undefined && failure.status < 500) {
