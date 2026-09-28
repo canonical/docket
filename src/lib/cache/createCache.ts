@@ -333,60 +333,64 @@ export default function createCache({
     return { failure: error };
   };
 
+  /**
+   * What `find` gives from the data held, loaded from the file first.
+   * Otherwise `fetch` fetches it under the fetch lock, unless the process
+   * that held the lock before already did, keeps it in the queries, and
+   * the file then gives it to every process.
+   */
+  const readThrough = async <Held>(
+    find: () => Held | undefined,
+    fetch: (at: Date) => Promise<Held>,
+  ): Promise<Held> => {
+    try {
+      await load();
+      const cached = find();
+      if (cached) return cached;
+      return await withFetchLock(directory, async () => {
+        // The process that held the lock before may have fetched it.
+        await load();
+        const fetched = find();
+        if (fetched) return fetched;
+        // Dated from before the fetch, so it is never taken as newer than
+        // it is.
+        const held = await fetch(now());
+        await save();
+        return held;
+      });
+    } catch (error) {
+      throw classifyFolderFailure(error, directory);
+    }
+  };
+
   return {
     threads: () => shown,
     load,
     findEvents,
-    async readEvents(repo, since, maxAge) {
-      try {
-        await load();
-        const cached = findFreshEvents(repo, since, maxAge);
-        if (cached) return cached;
-        return await withFetchLock(directory, async () => {
-          // The process that held the lock before may have fetched them.
-          await load();
-          const fetched = findFreshEvents(repo, since, maxAge);
-          if (fetched) return fetched;
-          // Dated from before the fetch, so they are never taken as newer
-          // than they are.
-          const at = now();
+    readEvents: (repo, since, maxAge) =>
+      readThrough(
+        () => findFreshEvents(repo, since, maxAge),
+        async (at) => {
           const events = await provider.events(repo, since);
           const value: EventsCache = { since, events };
           client.setQueryData(eventsKey(repo), value, {
             updatedAt: at.getTime(),
           });
-          await save();
           return { events, syncedAt: at };
-        });
-      } catch (error) {
-        throw classifyFolderFailure(error, directory);
-      }
-    },
-    async readFile(repo, path, maxAge) {
-      try {
-        await load();
-        const cached = findFreshFile(repo, path, maxAge);
-        if (cached) return cached;
-        return await withFetchLock(directory, async () => {
-          // The process that held the lock before may have fetched it.
-          await load();
-          const fetched = findFreshFile(repo, path, maxAge);
-          if (fetched) return fetched;
-          // Dated from before the fetch, so it is never taken as newer
-          // than it is.
-          const at = now();
+        },
+      ),
+    readFile: (repo, path, maxAge) =>
+      readThrough(
+        () => findFreshFile(repo, path, maxAge),
+        async (at) => {
           const text = await provider.readFile(repo, path);
           const value: FileCache = { text: text ?? null };
           client.setQueryData(fileKey(repo, path), value, {
             updatedAt: at.getTime(),
           });
-          await save();
           return { text, syncedAt: at };
-        });
-      } catch (error) {
-        throw classifyFolderFailure(error, directory);
-      }
-    },
+        },
+      ),
     async refreshRepo(repo) {
       try {
         await withFetchLock(directory, async () => {
