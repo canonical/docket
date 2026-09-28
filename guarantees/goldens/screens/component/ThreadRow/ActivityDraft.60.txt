@@ -1,0 +1,8 @@
+60 columns
+|  example#14 PR                                           3h
+|  Update dependency example-lib to 2.0 · unassigned draft
+
+runs
+1:3 "example#14 PR                                           3h" fg #c6c8d1ff bg #00000000
+2:3 "Update dependency example-lib to 2.0 · unassigned" fg #c6c8d1ff bg #00000000
+2:52 " draft" fg #6b7089ff bg #00000000

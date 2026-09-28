@@ -1,0 +1,49 @@
+60 columns
+|owed
+|
+|  nothing owed
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|synced 2m ago
+|←→ mode ↑↓ sel g grp ?
+
+runs
+1:1 "owed" fg #c6c8d1ff bg #161821ff bold
+3:1 "  nothing owed" fg #c6c8d1ff bg #161821ff
+35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
+36:1 "←→" fg #c6c8d1ff bg #161821ff bold
+36:3 " mode" fg #6b7089ff bg #161821ff
+36:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
+36:11 " sel" fg #6b7089ff bg #161821ff
+36:16 "g" fg #c6c8d1ff bg #161821ff bold
+36:17 " grp" fg #6b7089ff bg #161821ff
+36:22 "?" fg #c6c8d1ff bg #161821ff bold

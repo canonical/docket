@@ -15,7 +15,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/application/**", "src/lib/**"],
-      exclude: ["**/*.test.{ts,tsx}"],
+      // The application's frame stories are exercised by the screens guarantee, not by the unit suite.
+      exclude: ["**/*.test.{ts,tsx}", "src/application/**/*.stories.tsx"],
       thresholds: { 100: true },
     },
   },

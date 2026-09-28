@@ -1,0 +1,55 @@
+40 columns
+|owed
+|
+|  ✗ docket needs the GitHub CLI (gh)
+|  Recovery: install it from
+|  https://cli.github.com, then run
+|  gh auth login
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|←→ mode ↑↓ sel ⏎ open g grp a r ?
+
+runs
+1:1 "owed" fg #c6c8d1ff bg #161821ff bold
+3:3 "✗ docket needs the GitHub CLI (gh)" fg #e27878ff bg #161821ff
+4:3 "Recovery: install it from" fg #c6c8d1ff bg #161821ff
+5:3 "https://cli.github.com, then run" fg #c6c8d1ff bg #161821ff
+6:3 "gh auth login" fg #c6c8d1ff bg #161821ff
+36:1 "←→" fg #c6c8d1ff bg #161821ff bold
+36:3 " mode" fg #6b7089ff bg #161821ff
+36:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
+36:11 " sel" fg #6b7089ff bg #161821ff
+36:16 "⏎" fg #c6c8d1ff bg #161821ff bold
+36:17 " open" fg #6b7089ff bg #161821ff
+36:23 "g" fg #c6c8d1ff bg #161821ff bold
+36:24 " grp" fg #6b7089ff bg #161821ff
+36:29 "a" fg #c6c8d1ff bg #161821ff bold
+36:31 "r" fg #c6c8d1ff bg #161821ff bold
+36:33 "?" fg #c6c8d1ff bg #161821ff bold

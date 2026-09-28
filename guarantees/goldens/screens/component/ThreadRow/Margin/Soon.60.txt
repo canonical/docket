@@ -1,0 +1,5 @@
+60 columns
+|▌
+
+runs
+1:1 "▌" fg #e2a478ff bg #00000000

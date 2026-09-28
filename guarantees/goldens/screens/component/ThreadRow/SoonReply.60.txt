@@ -1,0 +1,9 @@
+60 columns
+|▌ example#15 reply                                   3h left
+|  Crash on start · unassigned
+
+runs
+1:1 "▌" fg #e2a478ff bg #00000000
+1:3 "example#15 reply                                   " fg #c6c8d1ff bg #00000000
+1:54 "3h left" fg #e2a478ff bg #00000000
+2:3 "Crash on start · unassigned" fg #c6c8d1ff bg #00000000

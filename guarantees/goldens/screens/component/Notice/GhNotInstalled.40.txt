@@ -1,0 +1,11 @@
+40 columns
+|  ✗ docket needs the GitHub CLI (gh)
+|  Recovery: install it from
+|  https://cli.github.com, then run
+|  gh auth login
+
+runs
+1:3 "✗ docket needs the GitHub CLI (gh)" fg #e27878ff bg #00000000
+2:3 "Recovery: install it from" fg #c6c8d1ff bg #00000000
+3:3 "https://cli.github.com, then run" fg #c6c8d1ff bg #00000000
+4:3 "gh auth login" fg #c6c8d1ff bg #00000000

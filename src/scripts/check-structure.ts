@@ -151,6 +151,22 @@ function importsOf(source: ts.SourceFile): Import[] {
   return found;
 }
 
+/** Whether the file calls `import()` with anything but a written path. */
+function hasUnreadImport(source: ts.SourceFile): boolean {
+  const visit = (node: ts.Node): boolean =>
+    (ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      !(node.arguments[0] && ts.isStringLiteral(node.arguments[0]))) ||
+    (ts.forEachChild(node, visit) ?? false);
+  return visit(source);
+}
+
+/** A stories file anywhere under `src/`, as an import names it. */
+const isStory = (path: string) => /^src\/.+\.stories\.(js|tsx)$/.test(path);
+
+/** The one corpus file that loads the stories by a path it finds. */
+const storyLoader = "guarantees/screens.test.tsx";
+
 const hasModifier = (node: ts.Node, kind: ts.SyntaxKind) =>
   ts.canHaveModifiers(node) &&
   (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === kind);
@@ -343,9 +359,18 @@ function check(root: string): Finding[] {
 }
 
 /**
- * The guarantees corpus reaches docket only by running it, as a user
- * does, so a guarantee stays evidence independent of the code it pins:
- * none of its files imports anything under `src/`.
+ * The guarantees corpus reaches docket by running it, as a user does, so
+ * a guarantee stays evidence independent of the code it pins. The one
+ * exception is the stories files under `src/`, which the `screens` entry
+ * draws: a story names a state worth pinning, and only drawing it shows it.
+ *
+ * In each `.ts` and `.tsx` file under `guarantees/`, the check refuses an
+ * `import`, an `export … from` or an `import()` of a written relative path
+ * that reaches under `src/` to anything but a `*.stories` file, and an
+ * `import()` of a path it cannot read anywhere but in the file that loads
+ * the stories. It reads nothing else: `require()`, `import … = require()`,
+ * an absolute path, a `file://` URL and a file with another extension go
+ * unseen.
  */
 function checkCorpus(root: string, findings: Finding[]): void {
   if (!existsSync(join(root, "guarantees"))) return;
@@ -354,13 +379,21 @@ function checkCorpus(root: string, findings: Finding[]): void {
     const text = readFileSync(join(root, path), "utf8");
     const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest);
     for (const { specifier } of importsOf(source)) {
-      if (join(dirname(path), specifier).startsWith("src/")) {
+      const target = join(dirname(path), specifier);
+      if (target.startsWith("src/") && !isStory(target)) {
         findings.push({
           file: path,
           rule: "dependencies",
           message: `the guarantees corpus imports docket's sources: ${specifier}`,
         });
       }
+    }
+    if (path !== storyLoader && hasUnreadImport(source)) {
+      findings.push({
+        file: path,
+        rule: "dependencies",
+        message: `imports a path the check cannot read; only ${storyLoader} may, to load the stories`,
+      });
     }
   }
 }
@@ -451,6 +484,22 @@ const breaks: Record<string, [string, string]> = {
     "dependencies",
     'import { rows } from "../src/lib/owed/index.js";\nexport default rows;',
   ],
+  "guarantees/row.ts": [
+    "dependencies",
+    'import ThreadRow from "../src/lib/ui/component/ThreadRow/ThreadRow.js";\nexport default ThreadRow;',
+  ],
+  "guarantees/frame.ts": [
+    "dependencies",
+    'import Screen from "../src/application/Screen.js";\nexport default Screen;',
+  ],
+  "guarantees/fixture.ts": [
+    "dependencies",
+    'import { recordedNow } from "../src/testing/recorded.js";\nexport default recordedNow;',
+  ],
+  "guarantees/load.ts": [
+    "dependencies",
+    "const path = process.argv[2];\nexport default await import(path);",
+  ],
   "src/lib/config/load.ts": [
     "dependencies",
     'import clock from "#clock";\nexport default function load() { return clock; }',
@@ -513,6 +562,12 @@ const allowed: Record<string, string> = {
   "src/testing/alice.ts": 'export const alice = "alice";',
   "guarantees/entry.test.ts":
     'import makeHome from "./makeHome.js";\nmakeHome;',
+  "guarantees/screen.test.ts":
+    'import * as stories from "../src/lib/ui/component/ThreadRow/ThreadRow.stories.js";\nstories;',
+  "guarantees/frames.test.ts":
+    'import * as stories from "../src/application/Screen.stories.js";\nstories;',
+  "guarantees/screens.test.tsx":
+    "const path = process.argv[2];\nexport default await import(path);",
   "src/scripts/check.ts": 'import x from "../lib/owed/index.js";\nx;',
 };
 

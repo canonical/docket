@@ -45,7 +45,7 @@ const stop = (message: string): never => {
 
 /** Every test file under the corpus, relative to it. */
 const findTestFiles = (): string[] =>
-  [...new Bun.Glob("**/*.test.ts").scanSync({ cwd: corpusRoot })]
+  [...new Bun.Glob("**/*.test.{ts,tsx}").scanSync({ cwd: corpusRoot })]
     .filter((file) => !file.startsWith("fixtures/"))
     .sort();
 

@@ -1,0 +1,5 @@
+60 columns
+|    example-sync opened                                   3h
+
+runs
+1:1 "    example-sync opened                                   3h" fg #6b7089ff bg #00000000

@@ -8,7 +8,6 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import findFixture from "./findFixture.js";
 import type { Home, SentRequest } from "./types.js";
 
 const corpusRoot = import.meta.dirname;
@@ -58,7 +57,7 @@ export default function makeHome(personalFile: string): Home {
             TZ: machineZone,
             LANG: "C.UTF-8",
             GUARANTEES_NOW: now,
-            GUARANTEES_RECORDING: findFixture(`${recording}.ts`),
+            GUARANTEES_RECORDING: recording,
             GUARANTEES_REQUESTS: log,
             // Set by `guarantees:prove` alone, to break the stand-in.
             ...(process.env.GUARANTEES_BREAK

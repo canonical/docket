@@ -1,0 +1,8 @@
+40 columns
+|  example#14 PR                       3h
+|  Update dependency … · unassigned draft
+
+runs
+1:3 "example#14 PR                       3h" fg #c6c8d1ff bg #00000000
+2:3 "Update dependency … · unassigned" fg #c6c8d1ff bg #00000000
+2:35 " draft" fg #6b7089ff bg #00000000
