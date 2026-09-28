@@ -333,10 +333,7 @@ export default function Screen({
   // The list region: rows once the data is in, or what stands in for them.
   // owed opens with a notice while a watched repository lists no team.
   const teamless = describeNoTeam(
-    watched.map(({ name, resolved }) => ({
-      name,
-      people: resolved.settings.people,
-    })),
+    watched.map(({ resolved }) => resolved.settings.people),
   );
   let region: ReactNode = null;
   if (problem) {

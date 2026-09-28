@@ -528,15 +528,16 @@ describe("Screen", () => {
       const screen = await show(view, 40, () => {}, 17);
       const owed = await vi.waitFor(async () => {
         const drawn = await screen.redraw();
-        expect(drawn.lines.at(6)).toMatch(/^▌ docs#4 reply/);
+        expect(drawn.lines.at(7)).toMatch(/^▌ docs#4 reply/);
         return drawn;
       });
-      expect(owed.lines.slice(1, 6)).toEqual([
+      expect(owed.lines.slice(1, 7)).toEqual([
         "  ✗ no team in docket.yaml, so every",
         "  comment starts a reply wait",
         "  Recovery: list the team under people:",
-        "  in the personal file or in the",
-        "  repository's .github/docket.yaml",
+        "  in the personal file or the",
+        "  repository's .github/docket.yaml, then",
+        "  run docket config",
       ]);
       await press(screen, "right");
       expect((await screen.redraw()).lines.join("\n")).not.toContain("no team");
@@ -550,11 +551,18 @@ describe("Screen", () => {
           "  Where do tokens live?",
           "  alice, bob",
           "  dave · 3d ago",
+          "  Rebased on main. Could someone look",
+          "  again?",
         ],
       ],
       [
         14,
-        ["▌ docs#4 reply                  18d over", "  Where do tokens live?"],
+        [
+          "▌ docs#4 reply                  18d over",
+          "  Where do tokens live?",
+          "  alice, bob",
+          "  dave · 3d ago",
+        ],
       ],
     ])(
       "keeps the notice whole above the selected row, cut below it, at 40 by %i",
@@ -572,15 +580,16 @@ describe("Screen", () => {
         const screen = await show(view, 40, () => {}, height);
         const owed = await vi.waitFor(async () => {
           const drawn = await screen.redraw();
-          expect(drawn.lines.at(6)).toMatch(/^▌ docs#4 reply/);
+          expect(drawn.lines.at(7)).toMatch(/^▌ docs#4 reply/);
           return drawn;
         });
-        expect(owed.lines.slice(1, 6 + rows.length)).toEqual([
+        expect(owed.lines.slice(1, height - 3)).toEqual([
           "  ✗ no team in docket.yaml, so every",
           "  comment starts a reply wait",
           "  Recovery: list the team under people:",
-          "  in the personal file or in the",
-          "  repository's .github/docket.yaml",
+          "  in the personal file or the",
+          "  repository's .github/docket.yaml, then",
+          "  run docket config",
           ...rows,
         ]);
         expect(owed.lines.at(height - 3)).toMatch(/^\d+ over/);
@@ -599,11 +608,12 @@ describe("Screen", () => {
         watched: recordedWatched(teamless),
       };
       const screen = await (await show(view, 60)).redraw();
-      expect(screen.lines.slice(2, 7)).toEqual([
+      expect(screen.lines.slice(2, 8)).toEqual([
         "  ✗ no team in docket.yaml, so every comment starts a reply",
         "  wait",
         "  Recovery: list the team under people: in the personal file",
-        "  or in the repository's .github/docket.yaml",
+        "  or the repository's .github/docket.yaml, then run",
+        "  docket config",
         "  nothing owed",
       ]);
     });
@@ -624,7 +634,7 @@ describe("Screen", () => {
       });
     });
 
-    it("names a repository whose own file lists no team while the personal file lists one", async () => {
+    it("shows the notice while a repository's own file lists no team, though the personal file lists one", async () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const people = new Map([["carol", "internal" as const]]);
@@ -646,8 +656,8 @@ describe("Screen", () => {
         return drawn;
       });
       expect(owed.lines.slice(1, 3)).toEqual([
-        "  ✗ no team in docket.yaml for docs, so every comment starts",
-        "  a reply wait",
+        "  ✗ no team in docket.yaml, so every comment starts a reply",
+        "  wait",
       ]);
       expect(owed.lines.join("\n")).toMatch(/docs#4 reply/);
     });

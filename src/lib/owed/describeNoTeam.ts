@@ -9,26 +9,21 @@ import type { People } from "../config/index.js";
  * Without a team every login counts as outside it, so every comment
  * starts a reply wait, the maintainers' own included: the list is wrong
  * rather than full, and nothing on a row says so. The close and review
- * waits stay right, so the rows still show. The notice names the
- * repositories without a team unless it is every one of them.
+ * waits stay right, so the rows still show. The notice names no
+ * repository, and sends the reader to `docket config`, which names each
+ * one that lists no team.
  *
- * @param repos The watched repositories by their short names, each with
- * the people in effect for it.
+ * @param people The people in effect for each watched repository.
  */
 export default function describeNoTeam(
-  repos: readonly { readonly name: string; readonly people: People }[],
+  people: readonly People[],
 ): { readonly reason: string; readonly recovery: string } | undefined {
-  const names = repos
-    .filter(({ people }) => ![...people.values()].includes("team"))
-    .map(({ name }) => name);
-  const last = names.at(-1);
-  if (last === undefined) return undefined;
-  const listed =
-    names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${last}` : last;
-  const which = names.length < repos.length ? ` for ${listed}` : "";
+  if (people.every((listed) => [...listed.values()].includes("team"))) {
+    return undefined;
+  }
   return {
-    reason: `no team in docket.yaml${which}, so every comment starts a reply wait`,
+    reason: "no team in docket.yaml, so every comment starts a reply wait",
     recovery:
-      "list the team under people: in the personal file or in the repository's .github/docket.yaml",
+      "list the team under people: in the personal file or the repository's .github/docket.yaml, then run docket config",
   };
 }

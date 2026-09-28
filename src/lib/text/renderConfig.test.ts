@@ -116,7 +116,7 @@ describe("renderConfig", () => {
     });
   });
 
-  it("says a repository lists no team from its own people, in words, with the symbol, and as data", () => {
+  it("says a repository lists no team from its own people, in words, with the symbol, and as data, naming it", () => {
     const [, docs] = shared.settings.repos;
     if (!docs) throw new Error("the fixture watches two repositories");
     const people = new Map([["carol", "internal" as const]]);
@@ -130,15 +130,24 @@ describe("renderConfig", () => {
       { repo: docs, resolved: declared },
     ];
     const reason =
-      "no team in docket.yaml for docs, so every comment starts a reply wait";
+      "no team in docket.yaml, so every comment starts a reply wait";
     const recovery =
-      "Recovery: list the team under people: in the personal file or in the repository's .github/docket.yaml";
-    expect(renderConfig({ ...answer, repositories })).toContain(
+      "Recovery: list the team under people: in the personal file or the repository's .github/docket.yaml, then run docket config";
+    const llm = renderConfig({ ...answer, repositories });
+    expect(llm).toContain(
       `\n\nWarning: ${reason}\n${recovery}\n\n## every repository`,
     );
-    expect(
-      renderConfig({ ...answer, repositories, format: "plain" }),
-    ).toContain(`\n\n✗ ${reason}\n${recovery}\n\nevery repository`);
+    expect(llm).toContain(
+      `\n## docs (example-org/example-docs)\n- Warning: ${reason}\n- people`,
+    );
+    expect(llm).not.toContain(
+      `\n## example (example-org/example-repo)\n- Warning`,
+    );
+    const plain = renderConfig({ ...answer, repositories, format: "plain" });
+    expect(plain).toContain(`\n\n✗ ${reason}\n${recovery}\n\nevery repository`);
+    expect(plain).toContain(
+      `\ndocs (example-org/example-docs)\n  ✗ ${reason}\n  people`,
+    );
     const data = JSON.parse(
       renderConfig({ ...answer, repositories, format: "json" }),
     );
