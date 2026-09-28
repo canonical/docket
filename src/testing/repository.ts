@@ -1,7 +1,7 @@
 /**
- * A throwaway git repository with one commit, which the gates' tests point
- * git at through its environment variables, to prove a self-test leaves it
- * alone.
+ * A throwaway git repository with one commit and a linked worktree, which
+ * the gates' tests point git at through its environment variables, to prove
+ * a self-test leaves it alone.
  */
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -11,6 +11,8 @@ import { join } from "node:path";
 export interface Repository {
   root: string;
   gitDirectory: string;
+  /** The git directory of its linked worktree, `.git/worktrees/side`. */
+  linkedGitDirectory: string;
   /** Its HEAD, refs, index and config, as one comparable text. */
   readState: () => string;
   /** Deletes it. */
@@ -18,15 +20,19 @@ export interface Repository {
 }
 
 /**
- * The ways a caller points git at a repository: `GIT_DIR` alone, as a hook
- * or `git rebase --exec` exports it, and with `GIT_WORK_TREE` and
- * `GIT_INDEX_FILE` beside it.
+ * The ways a caller points git at a repository: `GIT_DIR` naming a linked
+ * worktree's git directory, as `git rebase --exec` and hooks export it when
+ * run in a linked worktree, and `GIT_DIR` with `GIT_WORK_TREE` and
+ * `GIT_INDEX_FILE` beside it. In a plain checkout, rebase exports no
+ * `GIT_DIR`.
  */
 export const pointings: Record<
   string,
   (repository: Repository) => Record<string, string>
 > = {
-  "GIT_DIR alone": ({ gitDirectory }) => ({ GIT_DIR: gitDirectory }),
+  "a linked worktree's GIT_DIR": ({ linkedGitDirectory }) => ({
+    GIT_DIR: linkedGitDirectory,
+  }),
   "GIT_DIR, GIT_WORK_TREE and GIT_INDEX_FILE": ({ root, gitDirectory }) => ({
     GIT_DIR: gitDirectory,
     GIT_WORK_TREE: root,
@@ -48,7 +54,10 @@ export function readEnvironmentWithoutGit(): Record<string, string> {
   );
 }
 
-/** Creates a repository in a temporary folder, with one commit by alice. */
+/**
+ * Creates a repository in a temporary folder, with one commit by alice and a
+ * linked worktree on a branch named side.
+ */
 export function makeRepository(): Repository {
   const root = mkdtempSync(join(tmpdir(), "throwaway-repository-"));
   const gitDirectory = join(root, ".git");
@@ -76,9 +85,11 @@ export function makeRepository(): Repository {
   writeFileSync(join(root, "notes.md"), "notes\n");
   git("add", "notes.md");
   git("commit", "-q", "-m", "notes");
+  git("worktree", "add", "-q", "-b", "side", join(root, "side"));
   return {
     root,
     gitDirectory,
+    linkedGitDirectory: join(gitDirectory, "worktrees", "side"),
     readState: () =>
       [
         git("rev-parse", "HEAD"),
