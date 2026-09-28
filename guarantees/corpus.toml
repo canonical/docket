@@ -27,6 +27,13 @@ file   = "text-output.test.ts"
 select = "text-output"
 expect = "pass"
 
+[hostile-text]
+kind   = "conformance"
+tier   = "pr"
+file   = "hostile-text.test.ts"
+select = "hostile-text"
+expect = "pass"
+
 [corpus-can-fail]
 kind   = "conformance"
 tier   = "pr"

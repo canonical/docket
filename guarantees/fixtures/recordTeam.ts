@@ -180,5 +180,62 @@ export default function recordTeam(words: Words): Recording {
         },
       },
     },
+    [`Detail ${repo}#12`]: {
+      data: {
+        repository: {
+          pullRequest: {
+            updatedAt: parserFix.updatedAt,
+            comments: {
+              nodes: [
+                comment("dave", "2026-09-25T07:00:00Z", "NONE", words.comment),
+              ],
+            },
+            reviews: {
+              nodes: [
+                {
+                  ...comment(
+                    "bob",
+                    "2026-09-24T13:00:00Z",
+                    "MEMBER",
+                    "Looks close.",
+                  ),
+                  submittedAt: "2026-09-24T13:00:00Z",
+                },
+              ],
+            },
+            timelineItems: {
+              nodes: [
+                {
+                  createdAt: "2026-09-28T07:00:00Z",
+                  actor: user("alice"),
+                  requestedReviewer: { __typename: "User", login: "bob" },
+                },
+              ],
+            },
+            files: {
+              nodes: [{ path: "src/parser.ts", additions: 40, deletions: 12 }],
+            },
+            commits: {
+              nodes: [
+                {
+                  commit: {
+                    statusCheckRollup: { contexts: { nodes: [failed] } },
+                  },
+                },
+              ],
+            },
+            stack: {
+              entries: {
+                nodes: [
+                  { position: 1, pullRequest: { number: 11, state: "MERGED" } },
+                  { position: 2, pullRequest: { number: 12, state: "OPEN" } },
+                  { position: 3, pullRequest: { number: 13, state: "OPEN" } },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
   };
 }

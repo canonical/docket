@@ -1,0 +1,9 @@
+version: 1
+repos:
+  example: { repo: example-org/example-repo }
+people:
+  alice: team
+  bob: team
+time:
+  timezone: Europe/Paris
+activity: [72h, 1w]

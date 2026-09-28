@@ -39,4 +39,5 @@ A saved output that is missing fails its entry; saving one is the explicit act `
 |---|---|---|
 | `working-clock` | determinism | A 24-hour reply target set on Friday at 16:00 falls due on Monday at 16:00, across weekends, time zones and the change to and from daylight saving time; the machine's own time zone changes nothing. |
 | `text-output` | golden | What `owed` and `activity` print in `plain`, `llm` and `json`, from a fixed recording at a fixed instant. |
+| `hostile-text` | conformance | Control sequences in a title, a comment, a label, a check name and a branch name are never printed; in `llm` output titles are in double quotes and comments are `>` lines. |
 | `corpus-can-fail` | conformance | Fails on purpose, so a green tier means something. |
