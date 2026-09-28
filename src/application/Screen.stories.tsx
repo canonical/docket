@@ -55,12 +55,15 @@ export default meta;
 
 const settled = settleStatus(recordedNow);
 
-/** Every thread's details, with the thread's own age, labels and assignees. */
+/**
+ * Every thread's details, with the thread's own age, labels and assignees.
+ * The held cache gives only recorded threads, so any other is a mistake.
+ */
 const readDetail = async (thread: ThreadSummary): Promise<ThreadDetail> => {
   const facts = recordedThreads.find(
     ({ repo, number }) => repo === thread.repo && number === thread.number,
   );
-  if (!facts) return parserFixDetail;
+  if (!facts) throw new Error(`#${thread.number} is not recorded`);
   const { createdAt, labels, assignees } = facts;
   return { ...parserFixDetail, createdAt, labels, assignees };
 };
