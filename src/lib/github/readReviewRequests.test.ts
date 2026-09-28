@@ -34,6 +34,21 @@ describe("readReviewRequests", () => {
     ]);
   });
 
+  it("names who asked for each request, and a deleted account as GitHub shows it", () => {
+    const [byBob, byNobody] = readReviewRequests(
+      [
+        {
+          ...requested("2026-09-22T09:00:00Z", alice),
+          actor: { __typename: "User", login: "bob" },
+        },
+        { ...requested("2026-09-22T09:00:00Z", reviewers), actor: null },
+      ],
+      none,
+    );
+    expect(byBob?.requester).toEqual({ login: "bob", type: "user" });
+    expect(byNobody?.requester).toEqual({ login: "ghost", type: "user" });
+  });
+
   it("keeps the latest request to the same reviewer, whatever the order given", () => {
     const requests = readReviewRequests(
       [

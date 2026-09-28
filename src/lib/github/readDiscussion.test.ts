@@ -41,14 +41,16 @@ describe("readDiscussion", () => {
     expect(discussion.labels).toEqual(["announcement"]);
   });
 
-  it("reads each reply as a message, right after the comment it answers", () => {
+  it("reads each reply as a message with its text, right after the comment it answers", () => {
     const discussion = read({
       comments: {
         nodes: [
           {
             ...comment("alice", "2026-09-22T09:00:00Z"),
             replies: {
-              nodes: [comment("dave", "2026-09-22T10:00:00Z", "NONE")],
+              nodes: [
+                comment("dave", "2026-09-22T10:00:00Z", "NONE", "Any news?"),
+              ],
             },
           },
           {
@@ -59,9 +61,17 @@ describe("readDiscussion", () => {
       },
     });
     expect(discussion.comments).toEqual([
-      { author: alice, at: new Date("2026-09-22T09:00:00Z") },
-      { author: dave, at: new Date("2026-09-22T10:00:00Z") },
-      { author: bob, at: new Date("2026-09-22T11:00:00Z") },
+      {
+        author: alice,
+        at: new Date("2026-09-22T09:00:00Z"),
+        text: "Example comment",
+      },
+      { author: dave, at: new Date("2026-09-22T10:00:00Z"), text: "Any news?" },
+      {
+        author: bob,
+        at: new Date("2026-09-22T11:00:00Z"),
+        text: "Example comment",
+      },
     ]);
   });
 });

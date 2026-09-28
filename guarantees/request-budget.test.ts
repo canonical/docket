@@ -14,7 +14,12 @@ import type { SentRequest } from "./types.js";
  * changed about 2, and the check for changes, answered "not modified",
  * nothing. A whole fetch at 100 threads a page costs twice as much and
  * took 7.2 of the 10 seconds GitHub allows a query, so a return to it
- * fails here. A refresh sends the check and one query a page of threads;
+ * fails here. Each message's text and each review request's requester are
+ * fields, which GitHub does not charge, so a whole fetch costs exactly 8
+ * points; a list of their own, such as a separate list of each thread's
+ * latest comment, costs 50 requests for each of the issues and the pull
+ * requests and would take a page to 9, which fails here too. A refresh
+ * sends the check and one query a page of threads;
  * the recording's lists fit one page. The reading of each repository's
  * own file belongs to the call, not to the refresh, so it is left out of
  * the count.
@@ -146,13 +151,11 @@ describe("request-budget", () => {
     expect(countPoints({ query })).toBe(51);
   });
 
-  it("fetches every repository whole within the budget", async () => {
+  it("fetches every repository whole for exactly the budget's points", async () => {
     const [whole] = await cycles;
     expect(whole?.code).toBe(0);
     const spent = measure(whole?.requests ?? []);
-    expect(spent.points).toBeLessThanOrEqual(
-      budget.whole.points * repositories,
-    );
+    expect(spent.points).toBe(budget.whole.points * repositories);
     expect(spent.requests).toBeLessThanOrEqual(
       budget.whole.requests * repositories,
     );

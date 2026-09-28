@@ -33,11 +33,13 @@ describe("readIssue", () => {
     expect(read({ state: "CLOSED" }).open).toBe(false);
   });
 
-  it("reads the labels, the assignees and each comment with its writer", () => {
+  it("reads the labels, the assignees and each comment with its writer and text", () => {
     const issue = read({
       labels: { nodes: [{ name: "bug" }, { name: "Topic: roadmap" }] },
       assignees: { nodes: [user("alice"), bot("example-sync")] },
-      comments: { nodes: [comment("alice", "2026-09-22T09:00:00Z")] },
+      comments: {
+        nodes: [comment("alice", "2026-09-22T09:00:00Z", "MEMBER", "On it.")],
+      },
     });
     expect(issue.labels).toEqual(["bug", "Topic: roadmap"]);
     expect(issue.assignees).toEqual([
@@ -45,7 +47,7 @@ describe("readIssue", () => {
       { login: "example-sync", type: "bot" },
     ]);
     expect(issue.comments).toEqual([
-      { author: alice, at: new Date("2026-09-22T09:00:00Z") },
+      { author: alice, at: new Date("2026-09-22T09:00:00Z"), text: "On it." },
     ]);
   });
 });

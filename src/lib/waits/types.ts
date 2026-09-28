@@ -23,6 +23,11 @@ export interface ThreadSummary {
 export interface Message {
   readonly author: Author;
   readonly at: Date;
+  /**
+   * What it says, as plain text, as the snapshot gives it. A thread's
+   * details give the Markdown body instead, so theirs carry none.
+   */
+  readonly text?: string;
 }
 
 /** A GitHub team, and the logins of its members. */
@@ -42,6 +47,8 @@ export interface ReviewRequest {
   readonly reviewer: Account | Team;
   /** When the review was requested. */
   readonly at: Date;
+  /** Who asked for it, absent when the provider does not record it. */
+  readonly requester?: Account;
 }
 
 /** A push of commits to a pull request, and the account that made it. */

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { bob } from "../../testing/facts.js";
 import {
   bot,
   comment,
@@ -66,7 +67,9 @@ describe("fetchSnapshot", () => {
           issueNode({
             assignees: { nodes: [user("alice"), bot("example-sync")] },
             labels: { nodes: [{ name: "kind=bug" }] },
-            comments: { nodes: [comment("bob", "2026-09-22T09:00:00Z")] },
+            comments: {
+              nodes: [comment("bob", "2026-09-22T09:00:00Z", "MEMBER", "Hi")],
+            },
           }),
         ],
         [],
@@ -103,10 +106,7 @@ describe("fetchSnapshot", () => {
           { login: "example-sync", type: "bot" },
         ],
         comments: [
-          {
-            author: { login: "bob", type: "user", member: true },
-            at: new Date("2026-09-22T09:00:00Z"),
-          },
+          { author: bob, at: new Date("2026-09-22T09:00:00Z"), text: "Hi" },
         ],
         reviews: [],
         reviewRequests: [],

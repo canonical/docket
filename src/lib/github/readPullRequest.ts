@@ -30,7 +30,13 @@ export default function readPullRequest(
     // A review GitHub has not submitted yet is a draft only its writer sees.
     reviews: node.latestReviews.nodes.flatMap((review) =>
       review.submittedAt
-        ? [{ author: readAuthor(review), at: new Date(review.submittedAt) }]
+        ? [
+            {
+              author: readAuthor(review),
+              at: new Date(review.submittedAt),
+              text: review.bodyText,
+            },
+          ]
         : [],
     ),
     reviewRequests: readReviewRequests(

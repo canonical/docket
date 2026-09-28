@@ -34,7 +34,9 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
       author: "dave",
       assignees: ["alice"],
       labels: [words.label],
-      comments: [buildComment("dave", "2026-09-25T07:00:00Z", "NONE")],
+      comments: [
+        buildComment("dave", "2026-09-25T07:00:00Z", "NONE", words.comment),
+      ],
     }),
     isDraft: false,
     headRefName: words.branch,
@@ -45,6 +47,7 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
         {
           __typename: "ReviewRequestedEvent",
           createdAt: "2026-09-28T07:00:00Z",
+          actor: buildUser("alice"),
           requestedReviewer: { __typename: "User", login: "bob" },
         },
       ],

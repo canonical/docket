@@ -114,9 +114,11 @@ export interface FeedPush {
   readonly actor: RestAccount | null;
 }
 
-/** A comment as GraphQL gives it. */
+/** A comment as the snapshot gives it, with its text. */
 export interface CommentNode extends WrittenNode {
   readonly createdAt: string;
+  /** What it says, as plain text. */
+  readonly bodyText: string;
 }
 
 /** What the snapshot gives about every issue and pull request. */
@@ -138,6 +140,8 @@ export interface RequestNode {
   readonly __typename: string;
   readonly createdAt: string;
   readonly requestedReviewer: ReviewerNode;
+  /** Who asked for the review, on a request; absent on a withdrawal. */
+  readonly actor?: ActorNode;
 }
 
 /** Where a pull request sits in its stack; `null` outside one. */
@@ -167,6 +171,7 @@ export interface PullNode extends IssueNode {
   readonly latestReviews: {
     readonly nodes: readonly (WrittenNode & {
       readonly submittedAt: string | null;
+      readonly bodyText: string;
     })[];
   };
   /** The latest reviews requested. */

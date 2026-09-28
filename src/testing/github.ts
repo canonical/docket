@@ -139,12 +139,21 @@ export const bot = (login: string) => ({ login, __typename: "Bot" });
 /** An account as REST gives it. */
 export const restUser = (login: string, type = "User") => ({ login, type });
 
-/** A comment by `login`, a member of the organisation, as GraphQL gives it. */
+/**
+ * A comment by `login`, a member of the organisation, as the snapshot
+ * gives it, saying `text`.
+ */
 export const comment = (
   login: string,
   createdAt: string,
   association = "MEMBER",
-) => ({ author: user(login), authorAssociation: association, createdAt });
+  text = "Example comment",
+) => ({
+  author: user(login),
+  authorAssociation: association,
+  createdAt,
+  bodyText: text,
+});
 
 /**
  * An open issue in example-org/example-repo, as the snapshot query gives

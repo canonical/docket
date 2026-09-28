@@ -5,6 +5,7 @@ import type { CommentNode, DiscussionNode } from "./types.js";
 const readMessage = (comment: CommentNode) => ({
   author: readAuthor(comment),
   at: new Date(comment.createdAt),
+  text: comment.bodyText,
 });
 
 /**
