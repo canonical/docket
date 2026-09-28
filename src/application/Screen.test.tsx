@@ -1551,6 +1551,67 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(attention.press).toHaveBeenCalledTimes(2);
     });
 
+    it("checks the selected thread's repository every minute while the pane is active, and reads its details again when it changed", async () => {
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+      try {
+        let changed = false;
+        // Once something changed, the fetch brings each title edited, and
+        // GitHub records the change on each thread.
+        const recorded = recordedProvider();
+        const provider = recordedProvider({
+          probe: async () => ({ changed, tag: '"tag"' }),
+          snapshot: async (repo, cursor) => {
+            const snapshot = await recorded.snapshot(repo, cursor);
+            if (!changed) return snapshot;
+            const threads = snapshot.threads.map((each) => ({
+              ...each,
+              title: `${each.title}, edited`,
+              updatedAt: new Date(each.updatedAt.getTime() + 60_000),
+            }));
+            return { ...snapshot, threads };
+          },
+        });
+        const cache = await openCache(provider);
+        await cache.refresh();
+        const refreshIfChanged = vi.spyOn(cache, "refreshIfChanged");
+        const readDetail = vi.fn(readRecordedDetail);
+        const attention = {
+          press: () => {},
+          state: () => "active" as const,
+          subscribe: () => () => {},
+        };
+        const screen = await drawSuspending(
+          <WithKeys>
+            <Screen
+              {...viewOf(cache, everyCapability, readRecorded, readDetail)}
+              attention={attention}
+              onQuit={() => {}}
+            />
+          </WithKeys>,
+          40,
+        );
+        const reads = readDetail.mock.calls.length;
+        // Each check runs under the fetch lock, on the real filesystem, so
+        // the minute passing only starts it: its answer is awaited.
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(refreshIfChanged).toHaveBeenCalledWith(
+          "example-org/example-repo",
+        );
+        expect(await refreshIfChanged.mock.results.at(0)?.value).toBe(false);
+        await screen.redraw();
+        expect(readDetail).toHaveBeenCalledTimes(reads);
+        changed = true;
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(await refreshIfChanged.mock.results.at(1)?.value).toBe(true);
+        await vi.waitFor(async () => {
+          await screen.redraw();
+          expect(readDetail).toHaveBeenCalledTimes(reads + 1);
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it("says details are paused once reading them spent the hour's budget", async () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();

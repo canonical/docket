@@ -51,6 +51,7 @@ import useAttention, { type UseAttentionProps } from "./useAttention.js";
 import useEditor from "./useEditor.js";
 import useHeldDetails from "./useHeldDetails.js";
 import useScreenKeys from "./useScreenKeys.js";
+import useSelectedWatch from "./useSelectedWatch.js";
 import useViewer from "./useViewer.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
@@ -290,10 +291,18 @@ export default function Screen({
     (owed ?? listed)?.groups.flatMap(
       (group): readonly (WaitRow | ActivityThread)[] => group.rows,
     ) ?? [];
+  const selectedRow = rows.at(placeSelection(rows, selections[mode]));
   useEffect(() => {
     drawnRows.current = rows;
-    drawnSelection.current = rows.at(placeSelection(rows, selections[mode]));
-    editor.follow(drawnSelection.current?.reference.text);
+    drawnSelection.current = selectedRow;
+    editor.follow(selectedRow?.reference.text);
+  });
+  useSelectedWatch({
+    cache,
+    selected:
+      selectedRow &&
+      ("wait" in selectedRow ? selectedRow.wait.thread : selectedRow.thread),
+    attention: attentionState,
   });
   // A thread's details are read once for each change GitHub records on it,
   // and once for each change the list's roll-up of its checks shows, since

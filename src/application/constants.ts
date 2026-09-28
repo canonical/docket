@@ -12,3 +12,11 @@ export const detailWindow = 14;
  * are read until the hour is over, and the status line says so.
  */
 export const detailBudgetPerHour = 300;
+
+/**
+ * How often, in milliseconds, the selected thread's repository is checked
+ * for changes while the pane is active: every 60 seconds, by the free
+ * check, so the thread watched stays current and costs points only when
+ * something changed. An idle pane stops it, which bounds it by attention.
+ */
+export const selectedThreadInterval = 60_000;
