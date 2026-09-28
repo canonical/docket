@@ -33,8 +33,13 @@ const storyFiles = /^src\/.+\.stories\.tsx$/;
 const widths = [40, 60];
 /** Room enough for the tallest story; blank lines below the last are left out. */
 const height = 24;
-/** The screen drawn too narrow, and how narrow. */
-const narrow = { title: "layout/Pane", story: "NothingOwed", width: 32 };
+/** How narrow the screens drawn too narrow are. */
+const narrowWidth = 32;
+/** The screens drawn too narrow: the pane alone, and the composed screen. */
+const narrow = [
+  { title: "layout/Pane", story: "NothingOwed" },
+  { title: "application/Screen", story: "Owed" },
+];
 
 interface Story {
   readonly args: Readonly<Record<string, unknown>>;
@@ -216,21 +221,20 @@ describe("screens", () => {
     });
   }
 
-  it(`says only that the pane needs 40 columns when drawn at ${narrow.width}`, async () => {
-    const file = files.find(({ default: meta }) => meta.title === narrow.title);
-    const story = storiesOf(file ?? ({} as StoryFile)).find(
-      ([name]) => name === narrow.story,
-    );
-    if (!file || !story) {
-      throw new Error(`no story ${narrow.story} in ${narrow.title}`);
-    }
-    const screen = await drawStory(file, story[1], narrow.width);
-    expect(screen.split("\n").filter((line) => line.startsWith("|"))).toEqual([
-      "|docket needs 40 columns",
-    ]);
-    expectGolden(
-      `screens/${narrow.title}/${narrow.story}.${narrow.width}.txt`,
-      screen,
-    );
-  });
+  for (const { title, story: named } of narrow) {
+    it(`says only that ${title}'s ${named} needs 40 columns when drawn at ${narrowWidth}`, async () => {
+      const file = files.find(({ default: meta }) => meta.title === title);
+      const story = storiesOf(file ?? ({} as StoryFile)).find(
+        ([name]) => name === named,
+      );
+      if (!file || !story) {
+        throw new Error(`no story ${named} in ${title}`);
+      }
+      const screen = await drawStory(file, story[1], narrowWidth);
+      expect(screen.split("\n").filter((line) => line.startsWith("|"))).toEqual(
+        ["|docket needs 40 columns"],
+      );
+      expectGolden(`screens/${title}/${named}.${narrowWidth}.txt`, screen);
+    });
+  }
 });

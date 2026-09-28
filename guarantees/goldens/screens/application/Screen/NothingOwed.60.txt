@@ -1,0 +1,42 @@
+60 columns
+|owed
+|
+|  nothing owed
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|0 over · 0 soon · 0 on track
+|synced 2m ago
+|←→ mode ↑↓ sel ⏎ open g grp a r ?
+
+runs
+1:1 "owed" fg #c6c8d1ff bg #161821ff bold
+3:1 "  nothing owed" fg #c6c8d1ff bg #161821ff
+22:1 "0 over · 0 soon · 0 on track" fg #c6c8d1ff bg #161821ff
+23:1 "synced 2m ago" fg #6b7089ff bg #161821ff
+24:1 "←→" fg #c6c8d1ff bg #161821ff bold
+24:3 " mode" fg #6b7089ff bg #161821ff
+24:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
+24:11 " sel" fg #6b7089ff bg #161821ff
+24:16 "⏎" fg #c6c8d1ff bg #161821ff bold
+24:17 " open" fg #6b7089ff bg #161821ff
+24:23 "g" fg #c6c8d1ff bg #161821ff bold
+24:24 " grp" fg #6b7089ff bg #161821ff
+24:29 "a" fg #c6c8d1ff bg #161821ff bold
+24:31 "r" fg #c6c8d1ff bg #161821ff bold
+24:33 "?" fg #c6c8d1ff bg #161821ff bold

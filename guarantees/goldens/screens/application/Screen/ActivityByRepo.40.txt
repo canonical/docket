@@ -1,0 +1,65 @@
+40 columns
+|activity                   72h · by repo
+|example
+| ┃example#12 PR                      25m
+| ┃Fix the parser · alice
+|  dave · 3d ago
+|  Rebased on main. Could someone look
+|  again?
+|  example stack 3 · 2 of 3 · → main
+|  below #11 merged, above #13 open
+|    ✗ checks failed (lint)           25m
+|    alice requested review            3h
+|    dave commented                    3d
+|docs
+|  docs#4 issue                       16h
+|  Where do tokens live?
+|  alice, bob
+|    example-sync labelled kind=docs  16h
+|
+|
+|
+|
+|2 threads · 4 events
+|synced 2m ago
+|←→ mode ↑↓ sel ⏎ open g grp t time a r ?
+
+runs
+1:1 "activity" fg #c6c8d1ff bg #161821ff bold
+1:9 "                   72h · by repo" fg #c6c8d1ff bg #161821ff
+2:1 "example" fg #c6c8d1ff bg #161821ff bold
+3:1 " " fg #ffffffff bg #2e3244ff
+3:2 "┃" fg #6b7089ff bg #2e3244ff
+3:3 "example#12 PR                      25m" fg #c6c8d1ff bg #2e3244ff
+4:1 " " fg #ffffffff bg #2e3244ff
+4:2 "┃" fg #6b7089ff bg #2e3244ff
+4:3 "Fix the parser · alice" fg #c6c8d1ff bg #2e3244ff
+4:25 "                " fg #ffffffff bg #2e3244ff
+5:1 "  dave · 3d ago" fg #c6c8d1ff bg #161821ff
+6:1 "  Rebased on main. Could someone look" fg #c6c8d1ff bg #161821ff
+7:1 "  again?" fg #c6c8d1ff bg #161821ff
+8:1 "  example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #161821ff
+9:1 "  below #11 merged, above #13 open" fg #6b7089ff bg #161821ff
+10:1 "    ✗ checks failed (lint)           25m" fg #e27878ff bg #161821ff
+11:1 "    alice requested review            3h" fg #c6c8d1ff bg #161821ff
+12:1 "    dave commented                    3d" fg #c6c8d1ff bg #161821ff
+13:1 "docs" fg #c6c8d1ff bg #161821ff bold
+14:3 "docs#4 issue                       16h" fg #c6c8d1ff bg #161821ff
+15:3 "Where do tokens live?" fg #c6c8d1ff bg #161821ff
+16:3 "alice, bob" fg #c6c8d1ff bg #161821ff
+17:1 "    example-sync labelled kind=docs  16h" fg #6b7089ff bg #161821ff
+22:1 "2 threads · 4 events" fg #c6c8d1ff bg #161821ff
+23:1 "synced 2m ago" fg #6b7089ff bg #161821ff
+24:1 "←→" fg #c6c8d1ff bg #161821ff bold
+24:3 " mode" fg #6b7089ff bg #161821ff
+24:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
+24:11 " sel" fg #6b7089ff bg #161821ff
+24:16 "⏎" fg #c6c8d1ff bg #161821ff bold
+24:17 " open" fg #6b7089ff bg #161821ff
+24:23 "g" fg #c6c8d1ff bg #161821ff bold
+24:24 " grp" fg #6b7089ff bg #161821ff
+24:29 "t" fg #c6c8d1ff bg #161821ff bold
+24:30 " time" fg #6b7089ff bg #161821ff
+24:36 "a" fg #c6c8d1ff bg #161821ff bold
+24:38 "r" fg #c6c8d1ff bg #161821ff bold
+24:40 "?" fg #c6c8d1ff bg #161821ff bold

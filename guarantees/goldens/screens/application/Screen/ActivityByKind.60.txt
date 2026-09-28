@@ -1,0 +1,67 @@
+60 columns
+|activity                                       24h · by kind
+|ISSUES
+|  docs#4 issue                                           16h
+|  Where do tokens live?
+|  alice, bob
+|  age 27d · owner alice, bob
+|  last activity 25m ago · dave
+|  labels none
+|
+|
+|    example-sync labelled kind=docs                      16h
+|PULL REQUESTS
+| ┃example#12 PR                                          25m
+| ┃Fix the parser · alice
+|    ✗ checks failed (lint)                               25m
+|    alice requested review                                3h
+|
+|
+|
+|
+|
+|2 threads · 3 events
+|synced 2m ago
+|←→ mode ↑↓ sel ⏎ open g grp t time a r ?
+
+runs
+1:1 "activity" fg #c6c8d1ff bg #161821ff bold
+1:9 "                                       24h · by kind" fg #c6c8d1ff bg #161821ff
+2:1 "ISSUES" fg #c6c8d1ff bg #161821ff bold
+3:1 " " fg #ffffffff bg #2e3244ff
+3:2 " " fg #6b7089ff bg #2e3244ff
+3:3 "docs#4 issue                                           16h" fg #c6c8d1ff bg #2e3244ff
+4:1 " " fg #ffffffff bg #2e3244ff
+4:2 " " fg #6b7089ff bg #2e3244ff
+4:3 "Where do tokens live?" fg #c6c8d1ff bg #2e3244ff
+4:24 "                                     " fg #ffffffff bg #2e3244ff
+5:1 " " fg #ffffffff bg #2e3244ff
+5:2 " " fg #6b7089ff bg #2e3244ff
+5:3 "alice, bob" fg #c6c8d1ff bg #2e3244ff
+5:13 "                                                " fg #ffffffff bg #2e3244ff
+6:1 "  age 27d · owner alice, bob" fg #c6c8d1ff bg #161821ff
+7:1 "  last activity 25m ago · dave" fg #c6c8d1ff bg #161821ff
+8:1 "  labels none" fg #c6c8d1ff bg #161821ff
+11:1 "    example-sync labelled kind=docs                      16h" fg #6b7089ff bg #161821ff
+12:1 "PULL REQUESTS" fg #c6c8d1ff bg #161821ff bold
+13:2 "┃" fg #6b7089ff bg #161821ff
+13:3 "example#12 PR                                          25m" fg #c6c8d1ff bg #161821ff
+14:2 "┃" fg #6b7089ff bg #161821ff
+14:3 "Fix the parser · alice" fg #c6c8d1ff bg #161821ff
+15:1 "    ✗ checks failed (lint)                               25m" fg #e27878ff bg #161821ff
+16:1 "    alice requested review                                3h" fg #c6c8d1ff bg #161821ff
+22:1 "2 threads · 3 events" fg #c6c8d1ff bg #161821ff
+23:1 "synced 2m ago" fg #6b7089ff bg #161821ff
+24:1 "←→" fg #c6c8d1ff bg #161821ff bold
+24:3 " mode" fg #6b7089ff bg #161821ff
+24:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
+24:11 " sel" fg #6b7089ff bg #161821ff
+24:16 "⏎" fg #c6c8d1ff bg #161821ff bold
+24:17 " open" fg #6b7089ff bg #161821ff
+24:23 "g" fg #c6c8d1ff bg #161821ff bold
+24:24 " grp" fg #6b7089ff bg #161821ff
+24:29 "t" fg #c6c8d1ff bg #161821ff bold
+24:30 " time" fg #6b7089ff bg #161821ff
+24:36 "a" fg #c6c8d1ff bg #161821ff bold
+24:38 "r" fg #c6c8d1ff bg #161821ff bold
+24:40 "?" fg #c6c8d1ff bg #161821ff bold

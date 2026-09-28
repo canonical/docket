@@ -1,0 +1,58 @@
+40 columns
+|help
+|
+|Mode
+|  ← →  h l switch mode (owed ↔ activity)
+|           docket opens owed
+|  g        next grouping
+|  t        next time window (activity)
+|           owed: most overdue first
+|           activity: newest first
+|
+|List
+|  ↑ ↓  k j move the selection
+|           (opens the accordion)
+|
+|Thread
+|  ⏎        open in the browser
+|  a        assign
+|  r        request review
+|
+|Editor
+|  type     filter
+|  ↑ ↓      move
+|  ␣        toggle
+|  ⏎        apply
+
+runs
+1:1 "help" fg #c6c8d1ff bg #161821ff bold
+3:1 "Mode" fg #c6c8d1ff bg #161821ff bold
+4:3 "← →  h l" fg #c6c8d1ff bg #161821ff bold
+4:11 " switch mode (owed ↔ activity)" fg #c6c8d1ff bg #161821ff
+5:1 "           docket opens owed" fg #c6c8d1ff bg #161821ff
+6:3 "g" fg #c6c8d1ff bg #161821ff bold
+6:4 "        next grouping" fg #c6c8d1ff bg #161821ff
+7:3 "t" fg #c6c8d1ff bg #161821ff bold
+7:4 "        next time window (activity)" fg #c6c8d1ff bg #161821ff
+8:1 "           owed: most overdue first" fg #c6c8d1ff bg #161821ff
+9:1 "           activity: newest first" fg #c6c8d1ff bg #161821ff
+11:1 "List" fg #c6c8d1ff bg #161821ff bold
+12:3 "↑ ↓  k j" fg #c6c8d1ff bg #161821ff bold
+12:11 " move the selection" fg #c6c8d1ff bg #161821ff
+13:1 "           (opens the accordion)" fg #c6c8d1ff bg #161821ff
+15:1 "Thread" fg #c6c8d1ff bg #161821ff bold
+16:3 "⏎" fg #c6c8d1ff bg #161821ff bold
+16:4 "        open in the browser" fg #c6c8d1ff bg #161821ff
+17:3 "a" fg #c6c8d1ff bg #161821ff bold
+17:4 "        assign" fg #c6c8d1ff bg #161821ff
+18:3 "r" fg #c6c8d1ff bg #161821ff bold
+18:4 "        request review" fg #c6c8d1ff bg #161821ff
+20:1 "Editor" fg #c6c8d1ff bg #161821ff bold
+21:3 "type" fg #c6c8d1ff bg #161821ff bold
+21:7 "     filter" fg #c6c8d1ff bg #161821ff
+22:3 "↑ ↓" fg #c6c8d1ff bg #161821ff bold
+22:6 "      move" fg #c6c8d1ff bg #161821ff
+23:3 "␣" fg #c6c8d1ff bg #161821ff bold
+23:4 "        toggle" fg #c6c8d1ff bg #161821ff
+24:3 "⏎" fg #c6c8d1ff bg #161821ff bold
+24:4 "        apply" fg #c6c8d1ff bg #161821ff

@@ -44,5 +44,5 @@ A detector in the corpus can go blind without anything in docket changing, and a
 | `text-output` | golden | What `owed` and `activity` print in `plain`, `llm` and `json`, from a fixed recording at a fixed instant. |
 | `hostile-text` | conformance | Control sequences in a title, a comment, a label, a check name and a branch name are never printed, and no string a program reads back from `json` output holds one, a pull request's base branch included; in `llm` output titles, labels, check names and branches are in double quotes and comments are `>` lines. |
 | `request-budget` | budget | A refresh every 120 seconds stays within the points and requests proposed for GitHub's limits, and docket never has two requests open at once. |
-| `screens` | golden | Every story under `src/`, drawn as a person sees it at 40 and 60 columns: the characters of each line, and the colours and attributes of each run of text. Below 40 columns the pane says only `docket needs 40 columns`. |
+| `screens` | golden | Every story under `src/`, the blocks' and the composed screen's, drawn as a person sees it at 40 and 60 columns: the characters of each line, and the colours and attributes of each run of text. Below 40 columns the pane says only `docket needs 40 columns`. |
 | `corpus-can-fail` | conformance | Fails on purpose, so a green tier means something. |
