@@ -5,6 +5,8 @@ export {
   countRowLines,
   EmptyState,
   type EmptyStateProps,
+  EventLine,
+  type EventLineProps,
   GroupHeading,
   type GroupHeadingProps,
   HelpOverlay,
