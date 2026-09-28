@@ -157,7 +157,7 @@ export default function Screen({
   const [help, setHelp] = useState(false);
   const [selection, setSelection] = useState<Selection>({ place: 0, wait: "" });
   // The keys read the rows drawn last, so a binding never holds a list
-  // that the clock or a refresh has since measured again.
+  // older than the one on screen.
   const drawnRows = useRef<readonly WaitRow[]>([]);
   const moveSelection = (step: number) =>
     setSelection((current) => {
@@ -278,8 +278,8 @@ export default function Screen({
     drawnRows.current = rows;
   });
   // A thread's details are read once for each copy of the data: moving the
-  // selection back to a thread shows what was read, and a refresh reads
-  // them again.
+  // selection back to a thread shows what was read, and each refresh
+  // brings a copy that reads its own.
   const details = useMemo(
     () => ({ of: cached, read: new Map<string, Promise<ThreadDetail>>() }),
     [cached],

@@ -12,7 +12,7 @@ describe("identifyRow", () => {
     expect(identifyRow(other)).not.toBe(identifyRow(overReview));
   });
 
-  it("names a wait again the same once it is measured at another instant", () => {
+  it("names a wait the same when it is measured at another instant", () => {
     const later = measureRow({ ...overReview.wait });
     expect(identifyRow(later)).toBe(identifyRow(overReview));
   });
