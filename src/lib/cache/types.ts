@@ -174,9 +174,10 @@ export interface Cache {
   /**
    * The events held for `repo` at or after `since`, however old, as last
    * loaded or fetched; nothing when those held do not reach back to
-   * `since`.
+   * `since`. Without `since`, every event held, however far back they
+   * reach; nothing when none are held.
    */
-  findEvents(repo: string, since: Date): CachedEvents | undefined;
+  findEvents(repo: string, since?: Date): CachedEvents | undefined;
   /**
    * The events on `repo`'s threads at or after `since`, no older than
    * `maxAge` milliseconds. Otherwise they are fetched under the fetch

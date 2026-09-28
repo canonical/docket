@@ -37,3 +37,27 @@ export interface UseCommandsProps {
 
 /** The commands, in the order they were bound. */
 export type UseCommandsResult = readonly KeyCommand[];
+
+/** Props for the useListScroll hook. */
+export interface UseListScrollProps<Block extends { readonly lines: number }> {
+  /**
+   * The list's blocks, in order: a heading, or a row with what opens under
+   * it. Each gives the lines it takes.
+   */
+  readonly blocks: readonly Block[];
+  /**
+   * The first block that must be whole in view: the selected row, or the
+   * heading above it when the row is the first of its group.
+   */
+  readonly from: number;
+  /** The last block that must be whole in view: the selected row. */
+  readonly to: number;
+  /** The lines the list region has. */
+  readonly room: number;
+}
+
+/**
+ * The blocks to draw, in order: whole blocks only, as many as fit the
+ * room, and always the first, whatever its height.
+ */
+export type UseListScrollResult<Block> = readonly Block[];

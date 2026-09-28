@@ -74,13 +74,18 @@ export default function createCache({
 
   const eventsKey = (repo: string) => ["events", repo];
 
-  /** The events held for `repo` from `since` on, when they reach back to it. */
-  const findEvents = (repo: string, since: Date): CachedEvents | undefined => {
+  /**
+   * The events held for `repo` from `since` on, when they reach back to it;
+   * without `since`, every event held.
+   */
+  const findEvents = (repo: string, since?: Date): CachedEvents | undefined => {
     const state = client.getQueryState<EventsCache>(eventsKey(repo));
     const held = state?.data;
-    if (!state || !held || held.since > since) return undefined;
+    if (!state || !held) return undefined;
+    const from = since ?? held.since;
+    if (held.since > from) return undefined;
     return {
-      events: held.events.filter(({ at }) => at >= since),
+      events: held.events.filter(({ at }) => at >= from),
       syncedAt: new Date(state.dataUpdatedAt),
     };
   };

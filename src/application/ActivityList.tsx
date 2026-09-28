@@ -1,0 +1,135 @@
+import type { ReactNode } from "react";
+import type {
+  ThreadRow as ActivityThread,
+  ActivityList as List,
+} from "../lib/activity/index.js";
+import type { WaitRow } from "../lib/owed/index.js";
+import type { ThreadDetail } from "../lib/provider/index.js";
+import {
+  accordionHeight,
+  countRowLines,
+  EventLine,
+  GroupHeading,
+  ThreadAccordion,
+  ThreadRow,
+  useListScroll,
+} from "../lib/ui/index.js";
+import findThreadState from "./findThreadState.js";
+import listWaiting from "./listWaiting.js";
+
+/** Props for the ActivityList component. */
+export interface ActivityListProps {
+  /** activity's groups, as the view model gives them for one address. */
+  readonly list: List;
+  /** The place of the selected thread among the threads, in the order drawn. */
+  readonly selected: number;
+  /** Reads the details of the selected thread for its accordion. */
+  readonly readDetail: (row: ActivityThread) => Promise<ThreadDetail>;
+  /**
+   * Measures owed's rows of a thread and the other pull requests of its
+   * stack, most pressing first, whose waits tell the selected thread's
+   * accordion its current state and the kinds its stack lines name. Only
+   * the selected thread is measured.
+   */
+  readonly measureWaits: (row: ActivityThread) => readonly WaitRow[];
+  /** The instant ages are measured at. */
+  readonly now: Date;
+  /** The time zone a time of day is written in. */
+  readonly timezone: string;
+  /** The width of the pane, in display cells. */
+  readonly width: number;
+  /** The lines the list region has. */
+  readonly height: number;
+}
+
+/**
+ * One heading, or one thread with its events, and the accordion when it
+ * is selected.
+ */
+interface Block {
+  readonly key: string;
+  readonly lines: number;
+  readonly node: ReactNode;
+}
+
+/**
+ * activity's list region: each group's heading, when the list is grouped,
+ * then each thread with its events nested under it, newest first. A
+ * thread's events never leave it, whatever the grouping. The accordion
+ * opens under the selected thread, above its events, with the thread's
+ * current state. Only the threads move the selection, so a heading is
+ * never selected. The list scrolls as little as it must to keep the
+ * selected thread whole in view, with its group's heading when it is the
+ * group's first thread.
+ */
+export default function ActivityList({
+  list,
+  selected,
+  readDetail,
+  measureWaits,
+  now,
+  timezone,
+  width,
+  height,
+}: ActivityListProps): ReactNode {
+  const blocks: Block[] = [];
+  let place = 0;
+  let from = 0;
+  let to = 0;
+  for (const { heading, rows } of list.groups) {
+    if (heading) {
+      const node = <GroupHeading text={heading.text} width={width} />;
+      blocks.push({ key: heading.text, lines: 1, node });
+    }
+    for (const row of rows) {
+      const chosen = place === selected;
+      const waits = chosen ? measureWaits(row) : [];
+      if (chosen) {
+        to = blocks.length;
+        from = heading && row === rows.at(0) ? to - 1 : to;
+      }
+      blocks.push({
+        key: row.reference.text,
+        lines:
+          countRowLines(row, width) +
+          (chosen ? accordionHeight : 0) +
+          row.events.length,
+        node: (
+          <>
+            <ThreadRow row={row} selected={chosen} width={width} />
+            {chosen && (
+              <ThreadAccordion
+                row={findThreadState(row, waits)}
+                detail={readDetail(row)}
+                waiting={listWaiting(waits)}
+                now={now}
+                timezone={timezone}
+                width={width}
+              />
+            )}
+            {row.events.map((line, index) => (
+              <EventLine
+                // An event line holds no state, so its place is its key.
+                // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+                key={index}
+                line={line}
+                width={width}
+              />
+            ))}
+          </>
+        ),
+      });
+      place += 1;
+    }
+  }
+  const shown = useListScroll({ blocks, from, to, room: height });
+  return (
+    <box flexDirection="column" height={height} overflow="hidden">
+      {shown.map(({ key, node }) => (
+        <box key={key} flexDirection="column" flexShrink={0}>
+          {node}
+        </box>
+      ))}
+    </box>
+  );
+}

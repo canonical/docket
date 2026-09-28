@@ -4,7 +4,13 @@ import {
   sharedCloseDetail,
   soonReplyDetail,
 } from "../../../../testing/details.js";
-import { at, carol, thread } from "../../../../testing/facts.js";
+import {
+  alice,
+  at,
+  carol,
+  exampleSync,
+  thread,
+} from "../../../../testing/facts.js";
 import { recordedNow } from "../../../../testing/recorded.js";
 import {
   draftClose,
@@ -156,13 +162,49 @@ describe("describeDetail", () => {
       const row = measureRow({});
       const { body } = describeDetail(
         row,
-        { ...sharedCloseDetail, messages: [] },
+        { ...sharedCloseDetail, messages: [], labels: [] },
         reading,
       );
       expect(texts(body)).toEqual([
         "age 6d · owner unassigned",
         "last activity 3h ago",
         "labels none",
+      ]);
+    });
+  });
+
+  describe("a thread no wait runs on", () => {
+    it("gives the close body from its details, with the owners its row names", () => {
+      const resting = {
+        repo: "example",
+        thread: sharedClose.wait.thread,
+        owners: "alice, bob",
+      };
+      const { body } = describeDetail(resting, sharedCloseDetail, reading);
+      expect(texts(body)).toEqual([
+        "age 6d · owner alice, bob",
+        "last activity 3h ago · bob",
+        "labels priority=high · kind=bug · area/icons",
+      ]);
+    });
+
+    it("gives a closed thread its age, its assignees that are not bots as owners, and its labels, then its stack lines", () => {
+      const resting = { repo: "example", thread: overReview.wait.thread };
+      const closed = { ...sharedCloseDetail, assignees: [alice, exampleSync] };
+      expect(texts(describeDetail(resting, closed, reading).body)).toEqual([
+        "age 6d · owner alice",
+        "last activity 3h ago · bob",
+        "labels priority=high · kind=bug · area/icons",
+      ]);
+      const unassigned = { ...sharedCloseDetail, assignees: [exampleSync] };
+      expect(
+        describeDetail(resting, unassigned, reading).body.at(0)?.text,
+      ).toBe("age 6d · owner unassigned");
+      expect(
+        texts(describeDetail(resting, overReviewDetail, reading).stack),
+      ).toEqual([
+        "example stack 3 · 2 of 3 · → main",
+        "below #11 merged, above #13 close",
       ]);
     });
   });

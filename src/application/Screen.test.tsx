@@ -10,7 +10,7 @@ import type {
   ThreadDetail,
 } from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
-import type { ThreadSummary } from "../lib/waits/index.js";
+import { findWaits, type ThreadSummary } from "../lib/waits/index.js";
 import {
   everyCapability,
   fakeProvider,
@@ -23,15 +23,24 @@ import {
   recordedProvider,
   recordedRepos,
   recordedSettings,
+  recordedThreads,
   recordedWatched,
 } from "../testing/recorded.js";
 import {
   type Screen as Drawn,
+  draw,
   drawSuspending,
   WithKeys,
 } from "../testing/terminal.js";
 import Screen from "./Screen.js";
 import type { TerminalView, WatchedFiles } from "./types.js";
+
+// The measuring of waits is watched, not replaced, to see which threads a
+// redraw measures.
+vi.mock("../lib/waits/index.js", async (importOriginal) => {
+  const waits = await importOriginal<typeof import("../lib/waits/index.js")>();
+  return { ...waits, findWaits: vi.fn(waits.findWaits) };
+});
 
 const folders: string[] = [];
 afterEach(async () => {
@@ -57,8 +66,20 @@ const readRecorded = async (): Promise<WatchedFiles> => ({
   watched: recordedWatched(),
 });
 
-/** Reads every thread's details as the recording's pull request's. */
-const readRecordedDetail = async () => parserFixDetail;
+/**
+ * Reads every thread's details as the recording's pull request's, with the
+ * thread's own age, labels and assignees when the recording holds it.
+ */
+const readRecordedDetail = async (
+  thread: ThreadSummary,
+): Promise<ThreadDetail> => {
+  const facts = recordedThreads.find(
+    ({ repo, number }) => repo === thread.repo && number === thread.number,
+  );
+  if (!facts) return parserFixDetail;
+  const { createdAt, labels, assignees } = facts;
+  return { ...parserFixDetail, createdAt, labels, assignees };
+};
 
 /** Opens nothing, and says it opened. */
 const openNothing = async (_url: string) => {};
@@ -79,7 +100,13 @@ function viewOf(
     openInBrowser,
     settings: recordedSettings,
     watched: recordedWatched(),
-    source: { cache, capabilities, readWatched, readDetail },
+    source: {
+      cache,
+      capabilities,
+      readWatched,
+      readDetail,
+      readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
+    },
   };
 }
 
@@ -451,16 +478,20 @@ describe("Screen", () => {
       );
     });
 
-    it("keeps owed's selection while activity is shown, where the keys move nothing", async () => {
+    it("keeps a selection for each mode, so switching back finds it where it was", async () => {
       const screen = await showRecorded();
-      const activity = await press(screen, "l", "j");
-      expect(activity.lines.slice(1, 9).every((line) => line === "")).toBe(
-        true,
+      await press(screen, "j", "l");
+      const activity = await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(1)).toContain("docs#4");
+        return drawn;
+      });
+      expect(activity.look("docs#4")?.bg).toBe(
+        tokens["color.background.selected"],
       );
-      expect(activity.lines.at(11)).toBe("←→ mode g grp t time ?");
       const owed = await press(screen, "h");
       expect(owed.lines.at(1)).toBe(
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
       );
     });
 
@@ -517,13 +548,6 @@ describe("Screen", () => {
       expect(failed.look("✗ could")?.fg).toBe(tokens["color.text.error"]);
     });
 
-    it("opens nothing in activity, where nothing is selected", async () => {
-      const open = vi.fn(openNothing);
-      const screen = await showRecorded(readRecordedDetail, open);
-      await press(screen, "l", "return");
-      expect(open).not.toHaveBeenCalled();
-    });
-
     it("opens nothing when nothing is owed", async () => {
       const open = vi.fn(openNothing);
       const cache = await openCache(fakeProvider());
@@ -534,7 +558,230 @@ describe("Screen", () => {
     });
   });
 
+  describe("activity", () => {
+    /** Opens the recording's activity on a pane 16 lines tall. */
+    async function showActivity(
+      width: number,
+      cache?: Cache,
+      openInBrowser = openNothing,
+    ) {
+      const opened = cache ?? (await openCache(recordedProvider()));
+      await opened.refresh();
+      const view = {
+        ...viewOf(opened),
+        mode: "activity",
+        openInBrowser,
+      } as const;
+      const screen = await draw(
+        <WithKeys>
+          <Screen {...view} onQuit={() => {}} />
+        </WithKeys>,
+        width,
+        16,
+      );
+      await vi.waitFor(async () => {
+        const { lines } = await screen.redraw();
+        expect(lines.slice(1, 3).join("")).not.toBe("");
+        expect(lines).not.toContain("  refresh in progress…");
+        expect(lines).not.toContain("  loading…");
+      });
+      return screen.redraw();
+    }
+
+    it("says refresh in progress while the events are read, on opening and after t", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      let gate = Promise.withResolvers<void>();
+      const view = viewOf(cache);
+      const source = {
+        ...view.source,
+        readEvents: async (repo: string, since: Date) => {
+          await gate.promise;
+          return cache.readEvents(repo, since, 300_000);
+        },
+      };
+      const screen = await show({ ...view, mode: "activity", source });
+      expect((await screen.redraw()).lines.slice(1, 3)).toEqual([
+        "",
+        "  refresh in progress…",
+      ]);
+      gate.resolve();
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.at(9)).toBe(
+          "2 threads · 3 events",
+        ),
+      );
+      gate = Promise.withResolvers<void>();
+      const wider = await press(screen, "t");
+      expect(wider.lines.slice(0, 3)).toEqual([
+        `activity${" ".repeat(19)}48h · by kind`,
+        "",
+        "  refresh in progress…",
+      ]);
+      expect(wider.lines.at(9)).toBe("");
+      gate.resolve();
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.at(9)).toBe(
+          "2 threads · 4 events",
+        ),
+      );
+    });
+
+    it("lists each thread with its events under it, by kind, and counts them at 40 columns", async () => {
+      const screen = await showActivity(40);
+      expect(screen.lines).toEqual([
+        `activity${" ".repeat(19)}24h · by kind`,
+        "ISSUES",
+        "  docs#4 issue                       16h",
+        "  Where do tokens live?",
+        "  alice, bob",
+        "  age 27d · owner alice, bob",
+        "  last activity 25m ago · dave",
+        "  labels none",
+        "",
+        "",
+        "    example-sync labelled kind=docs  16h",
+        "PULL REQUESTS",
+        "",
+        "2 threads · 3 events",
+        "synced 0m ago",
+        "←→ mode ↑↓ sel ⏎ open g grp t time ?",
+      ]);
+    });
+
+    it("moves the selection over the threads with j and k, never onto a heading", async () => {
+      const screen = await showActivity(40);
+      const selected = tokens["color.background.selected"];
+      expect(screen.look("docs#4")?.bg).toBe(selected);
+      const down = await press(screen, "j");
+      expect(down.look("Fix the parser")?.bg).toBe(selected);
+      expect(down.look("docs#4")?.bg).not.toBe(selected);
+      expect(down.look("PULL REQUESTS")?.bg).not.toBe(selected);
+      expect((await press(screen, "down")).look("Fix the parser")?.bg).toBe(
+        selected,
+      );
+      const up = await press(screen, "k", "up");
+      expect(up.look("docs#4")?.bg).toBe(selected);
+      expect(up.look("ISSUES")?.bg).not.toBe(selected);
+    });
+
+    it("opens the accordion under the selected thread, above its events", async () => {
+      const screen = await showActivity(60);
+      await press(screen, "j");
+      const drawn = await vi.waitFor(async () => {
+        const lines = (await screen.redraw()).lines;
+        expect(lines).not.toContain("  loading…");
+        return lines;
+      });
+      const row = drawn.indexOf(" ┃Fix the parser · alice");
+      expect(drawn.slice(row + 1, row + 7)).toEqual([
+        "  dave · 3d ago",
+        "  Rebased on main. Could someone look again?",
+        "  waiting since Mon 10:00 · target 24h",
+        "  example stack 3 · 2 of 3 · → main",
+        "  below #11 merged, above #13 open",
+        `    ✗ checks failed (lint)${" ".repeat(31)}25m`,
+      ]);
+    });
+
+    it("measures only the selected thread and its stack as the screen redraws", async () => {
+      const screen = await showActivity(40);
+      vi.mocked(findWaits).mockClear();
+      await press(screen, "j");
+      await screen.redraw();
+      const measured = vi
+        .mocked(findWaits)
+        .mock.calls.map(([thread]) => `${thread.repo}#${thread.number}`);
+      expect(measured.length).toBeGreaterThan(0);
+      expect(new Set(measured)).toEqual(
+        new Set(["example-org/example-repo#12"]),
+      );
+    });
+
+    it("opens the selected thread's page, as GitHub gives it, with ⏎, and never a heading", async () => {
+      const opened: string[] = [];
+      const screen = await showActivity(40, undefined, async (url) => {
+        opened.push(url);
+      });
+      await press(screen, "return", "j", "return", "k", "k", "return");
+      expect(opened).toEqual([
+        "https://github.com/example-org/example-docs/issues/4",
+        "https://github.com/example-org/example-repo/pull/12",
+        "https://github.com/example-org/example-docs/issues/4",
+      ]);
+    });
+
+    it("regroups with g and reaches further back with t, at 60 columns", async () => {
+      const screen = await showActivity(60);
+      const byRepo = await press(screen, "g");
+      expect(byRepo.lines.slice(0, 2)).toEqual([
+        `activity${" ".repeat(39)}24h · by repo`,
+        "example",
+      ]);
+      const wider = await press(screen, "g", "t");
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.at(13)).toBe(
+          "2 threads · 4 events",
+        ),
+      );
+      expect(wider.lines.at(0)).toBe(`activity${" ".repeat(49)}48h`);
+      expect((await screen.redraw()).lines).toContain(
+        `    dave commented${" ".repeat(40)}3d`,
+      );
+    });
+
+    it("stands the failure in for the list when no events are held for the window", async () => {
+      const cache = await openCache(
+        recordedProvider({
+          events: () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
+        }),
+      );
+      const screen = await showActivity(40, cache);
+      expect(screen.lines.slice(1, 3)).toEqual([
+        "",
+        "  ✗ The provider failed with",
+      ]);
+      expect(screen.lines.at(13)).toBe("");
+    });
+
+    it("lists the repositories that read beside one that fails, the status naming the failure", async () => {
+      const cache = await openCache(
+        recordedProvider({
+          events: async (repo) => {
+            if (repo === "example-org/example-docs") {
+              throw providerError("GITHUB_TIMED_OUT");
+            }
+            return recordedProvider().events(repo, recordedNow);
+          },
+        }),
+      );
+      const screen = await showActivity(40, cache);
+      expect(screen.lines.slice(1, 3)).toEqual([
+        "PULL REQUESTS",
+        " ┃example#12 PR                      25m",
+      ]);
+      expect(screen.lines.slice(13, 15)).toEqual([
+        "1 thread · 2 events",
+        "✗ offline · data from 12:00",
+      ]);
+    });
+  });
+
   describe("keys", () => {
+    it("opens activity at the window and grouping the call names, and t steps on from there", async () => {
+      const [, , threeDays] = recordedSettings.activity;
+      const view = {
+        ...viewOf(await openCache(fakeProvider())),
+        mode: "activity",
+        activity: { window: threeDays, grouping: "repo" },
+      } as const;
+      const screen = await (await show(view)).redraw();
+      expect(screen.lines.at(0)).toBe(`activity${" ".repeat(19)}72h · by repo`);
+      expect((await press(screen, "t")).lines.at(0)).toBe(
+        `activity${" ".repeat(20)}1w · by repo`,
+      );
+    });
+
     it("opens on activity when the call asks for it, and switches back to owed", async () => {
       const view = {
         ...viewOf(await openCache(fakeProvider())),
@@ -619,7 +866,9 @@ describe("Screen", () => {
       expect(owed.lines.at(0)).toBe("owed");
       expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
       const activity = await press(screen, "right");
-      expect(activity.lines.at(11)).toBe("←→ mode g grp t time ?");
+      expect(activity.lines.at(11)).toBe(
+        "←→ mode ↑↓ sel ⏎ open g grp t time ?",
+      );
       expect(activity.look("t")?.bold).toBe(true);
     });
 

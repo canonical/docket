@@ -182,7 +182,10 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
       data: {
         repository: {
           pullRequest: {
+            createdAt: parserFix.createdAt,
             updatedAt: parserFix.updatedAt,
+            labels: parserFix.labels,
+            assignees: parserFix.assignees,
             comments: {
               nodes: [
                 buildComment(

@@ -1,15 +1,16 @@
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 import type { OwedList as List, WaitRow } from "../lib/owed/index.js";
 import type { ThreadDetail } from "../lib/provider/index.js";
 import {
   accordionHeight,
   countRowLines,
   GroupHeading,
-  keepInView,
   ThreadAccordion,
   ThreadRow,
+  useListScroll,
 } from "../lib/ui/index.js";
 import identifyRow from "./identifyRow.js";
+import listWaiting from "./listWaiting.js";
 
 /** What the list draws, and where. */
 export interface OwedListProps {
@@ -36,18 +37,6 @@ interface Block {
 }
 
 /**
- * The kind of each thread's most pressing wait, by reference, which the
- * accordion names beside a stacked pull request's open neighbours.
- */
-function listWaiting(list: List): Record<string, string> {
-  const waiting: Record<string, string> = {};
-  for (const row of list.groups.flatMap((group) => group.rows)) {
-    waiting[row.reference.text] ??= row.kind.text;
-  }
-  return waiting;
-}
-
-/**
  * owed's list: each group's heading, then its rows, with the accordion
  * open under the selected row. Only the rows move the selection, so a
  * heading is never selected. The list scrolls as little as it must to
@@ -63,8 +52,7 @@ export default function OwedList({
   width,
   height,
 }: OwedListProps): ReactNode {
-  const [first, setFirst] = useState(0);
-  const waiting = listWaiting(list);
+  const waiting = listWaiting(list.groups.flatMap((group) => group.rows));
   const blocks: Block[] = [];
   let place = 0;
   let from = 0;
@@ -102,23 +90,7 @@ export default function OwedList({
       place += 1;
     }
   }
-  const top = keepInView(
-    blocks.map(({ lines }) => lines),
-    from,
-    to,
-    height,
-    first,
-  );
-  // The first block shown is remembered from the frame before, so the list
-  // only scrolls when the selection would leave it.
-  if (top !== first) setFirst(top);
-  // Whole blocks only, as many as fit: a row is never drawn without its
-  // second line. The first is drawn whatever its height, cut by the region.
-  let used = 0;
-  const shown = blocks.slice(top).filter(({ lines }, index) => {
-    used += lines;
-    return index === 0 || used <= height;
-  });
+  const shown = useListScroll({ blocks, from, to, room: height });
   return (
     <box flexDirection="column" height={height} overflow="hidden">
       {shown.map(({ key, node }) => (

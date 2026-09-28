@@ -17,7 +17,7 @@ import {
   resolveSettings,
   type Settings,
 } from "../lib/config/index.js";
-import { selectEvents, type ThreadEvent } from "../lib/events/index.js";
+import { type ThreadEvent, timeEvents } from "../lib/events/index.js";
 import { groupWaits, listWaits, type OwedGrouping } from "../lib/owed/index.js";
 import type { Provider, ThreadDetail } from "../lib/provider/index.js";
 import { findWaits, type Thread } from "../lib/waits/index.js";
@@ -150,7 +150,10 @@ export const recordedEvents: readonly ThreadEvent[] = [
 
 /** Everything the details of the pull request show. */
 export const parserFixDetail: ThreadDetail = {
+  createdAt: at("2026-09-21T10:00+02:00"),
   updatedAt: at("2026-09-28T11:35+02:00"),
+  labels: ["kind=bug"],
+  assignees: [alice],
   messages: [
     {
       author: bob,
@@ -237,12 +240,13 @@ export function recordedActivity(grouping: ActivityGrouping = "kind") {
       repo,
       people: recordedSettings.people,
       threads: recordedThreads.filter((thread) => thread.repo === repo.repo),
-      events: selectEvents(
+      events: timeEvents(
         recordedEvents.filter(({ thread }) => thread.repo === repo.repo),
         window,
-        recordedNow,
         recordedSettings,
-      ),
+      )
+        .filter(({ until }) => until >= recordedNow)
+        .map(({ event }) => event),
     })),
     recordedNow,
   );

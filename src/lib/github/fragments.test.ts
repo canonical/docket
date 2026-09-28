@@ -52,6 +52,18 @@ describe("fragments", () => {
     expect(select(fragments.account)).toEqual(account);
   });
 
+  it("selects a thread's assignees as accounts", () => {
+    expect(select(fragments.assignees)).toEqual({
+      assignees: { nodes: account },
+    });
+  });
+
+  it("selects a thread's labels by name", () => {
+    expect(select(fragments.labels)).toEqual({
+      labels: { nodes: { name: true } },
+    });
+  });
+
   it("selects the author of something written and their tie to the repository", () => {
     expect(select(fragments.written)).toEqual({
       author: account,

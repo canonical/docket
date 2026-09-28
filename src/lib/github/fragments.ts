@@ -10,6 +10,10 @@ const fragments = {
   rateLimit,
   /** An account: its login, and its type, which tells a bot apart. */
   account,
+  /** A thread's first ten assignees, each an account. */
+  assignees: `assignees(first: 10) { nodes { ${account} } }`,
+  /** A thread's first ten labels, by name. */
+  labels: "labels(first: 10) { nodes { name } }",
   /** Something written: its author, and the author's tie to the repository. */
   written: `author { ${account} } authorAssociation`,
   /** A requested reviewer: a person, a bot, or a team by its full name. */

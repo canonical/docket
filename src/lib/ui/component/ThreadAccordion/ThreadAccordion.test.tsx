@@ -5,7 +5,7 @@ import {
   overReviewDetail,
   soonReplyDetail,
 } from "../../../../testing/details.js";
-import { measureRow } from "../../../../testing/rows.js";
+import { measureRow, overReview } from "../../../../testing/rows.js";
 import { drawSuspending } from "../../../../testing/terminal.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import { tokens } from "../../../tokens/index.js";
@@ -45,7 +45,7 @@ describe("ThreadAccordion", () => {
 
     it("names an owner the row cuts whole, first, before the review's body and the stack lines", async () => {
       const row = measureRow({
-        ...Review.args.row.wait,
+        ...overReview.wait,
         owners: ["carol-at-example-org"],
       });
       const screen = await open({ ...Review.args, row });
@@ -61,7 +61,7 @@ describe("ThreadAccordion", () => {
 
     it("keeps a stacked review's checks in its five lines when the row cuts only a team", async () => {
       const row = measureRow({
-        ...Review.args.row.wait,
+        ...overReview.wait,
         owners: ["example-org/reviewers"],
       });
       const screen = await open({ ...Review.args, row });

@@ -315,6 +315,15 @@ describe("createCache, for events", () => {
     ).toBeUndefined();
   });
 
+  it("gives every event held without a time to reach back to, and none it never fetched", async () => {
+    const provider = withEvents();
+    const cache = open(provider);
+    expect(cache.findEvents(repo)).toBeUndefined();
+    await cache.readEvents(repo, since, 5 * minute);
+    expect(cache.findEvents(repo)).toEqual(cache.findEvents(repo, since));
+    expect(cache.findEvents(repo)?.events).toHaveLength(1);
+  });
+
   it("throws the provider's error, and CACHE_UNUSABLE for a folder it cannot make", async () => {
     const limited = withEvents({
       events: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),

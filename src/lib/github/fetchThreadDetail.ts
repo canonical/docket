@@ -20,18 +20,24 @@ import type {
   WrittenNode,
 } from "./types.js";
 
-const { account, check, requestedReviewer } = fragments;
+const { account, assignees, check, labels, requestedReviewer } = fragments;
 const written = `${fragments.written} body`;
 const comments = `comments(last: 3) { nodes { ${written} createdAt } }`;
+// The facts every kind of thread has; a discussion has no assignees.
+const facts = `createdAt updatedAt ${labels}`;
 
 const document = `query Detail($owner: String!, $name: String!, $number: Int!,
   $issue: Boolean!, $pull: Boolean!, $discussion: Boolean!) {
   ${fragments.rateLimit}
   repository(owner: $owner, name: $name) {
-    issue(number: $number) @include(if: $issue) { updatedAt ${comments} }
-    discussion(number: $number) @include(if: $discussion) { updatedAt ${comments} }
+    issue(number: $number) @include(if: $issue) {
+      ${facts} ${assignees} ${comments}
+    }
+    discussion(number: $number) @include(if: $discussion) {
+      ${facts} ${comments}
+    }
     pullRequest(number: $number) @include(if: $pull) {
-      updatedAt ${comments}
+      ${facts} ${assignees} ${comments}
       reviews(last: 3) { nodes { ${written} submittedAt } }
       timelineItems(last: 30, itemTypes: [REVIEW_REQUESTED_EVENT]) {
         nodes {
@@ -59,7 +65,10 @@ const document = `query Detail($owner: String!, $name: String!, $number: Int!,
 type MessageNode = WrittenNode & { readonly body: string };
 
 interface DetailNode {
+  readonly createdAt: string;
   readonly updatedAt: string;
+  readonly labels: { readonly nodes: readonly { readonly name: string }[] };
+  readonly assignees?: { readonly nodes: readonly NonNullable<ActorNode>[] };
   readonly comments: {
     readonly nodes: readonly (MessageNode & { readonly createdAt: string })[];
   };
@@ -119,9 +128,10 @@ const readMessage = (node: MessageNode, at: string): DetailMessage => ({
 });
 
 /**
- * Fetches what a thread's details show beyond the snapshot: the latest
- * comments and reviews with their text and, on a pull request, who asked
- * for each review, the files changed, each check, and its stack.
+ * Fetches what a thread's details show: its age, labels and assignees,
+ * which the snapshot holds of an open thread only; the latest comments
+ * and reviews with their text; and, on a pull request, who asked for each
+ * review, the files changed, each check, and its stack.
  *
  * @note Impure: reads from GitHub.
  * @throws GitHubError `GITHUB_REQUEST_FAILED` when GitHub has no such
@@ -182,7 +192,10 @@ export default async function fetchThreadDetail(
     }),
   );
   return {
+    createdAt: new Date(node.createdAt),
     updatedAt: new Date(node.updatedAt),
+    labels: node.labels.nodes.map(({ name }) => name),
+    assignees: (node.assignees?.nodes ?? []).map(readAccount),
     messages,
     requests,
     files: node.files?.nodes ?? [],

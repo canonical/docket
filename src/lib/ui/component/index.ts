@@ -1,5 +1,6 @@
 export { CountsLine, type CountsLineProps } from "./CountsLine/index.js";
 export { EmptyState, type EmptyStateProps } from "./EmptyState/index.js";
+export { EventLine, type EventLineProps } from "./EventLine/index.js";
 export {
   GroupHeading,
   type GroupHeadingProps,
@@ -14,6 +15,7 @@ export {
   type StatusLineProps,
 } from "./StatusLine/index.js";
 export {
+  type RestingThread,
   ThreadAccordion,
   type ThreadAccordionProps,
 } from "./ThreadAccordion/index.js";

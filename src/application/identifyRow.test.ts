@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { findActivityRow } from "../testing/activity.js";
 import { measureRow, overReview } from "../testing/rows.js";
 import identifyRow from "./identifyRow.js";
 
@@ -15,5 +16,9 @@ describe("identifyRow", () => {
   it("names a wait the same when it is measured at another instant", () => {
     const later = measureRow({ ...overReview.wait });
     expect(identifyRow(later)).toBe(identifyRow(overReview));
+  });
+
+  it("names activity's thread by its reference", () => {
+    expect(identifyRow(findActivityRow(12))).toBe("example#12");
   });
 });

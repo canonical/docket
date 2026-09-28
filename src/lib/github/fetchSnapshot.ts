@@ -16,11 +16,18 @@ import readReviewer from "./readReviewer.js";
 import splitRepo from "./splitRepo.js";
 import type { Client, DiscussionNode, IssueNode, PullNode } from "./types.js";
 
-const { account, written, requestedReviewer, stackEntry, pageInfo, order } =
-  fragments;
+const {
+  assignees,
+  labels,
+  written,
+  requestedReviewer,
+  stackEntry,
+  pageInfo,
+  order,
+} = fragments;
 const thread = `number url title createdAt updatedAt state ${written}
-  assignees(first: 10) { nodes { ${account} } }
-  labels(first: 10) { nodes { name } }
+  ${assignees}
+  ${labels}
   comments(last: 3) { nodes { ${written} createdAt } }`;
 
 // The latest requests and the latest withdrawals, twenty of each, read as
@@ -64,7 +71,7 @@ const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
       ${pageInfo} totalCount
       nodes {
         number url title createdAt updatedAt closed ${written}
-        labels(first: 10) { nodes { name } }
+        ${labels}
         comments(last: 3) {
           nodes { ${written} createdAt replies(last: 1) { nodes { ${written} createdAt } } }
         }

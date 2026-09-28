@@ -69,6 +69,7 @@ describe("openTerminal", () => {
         capabilities: everyCapability,
         readWatched: async () => ({ watched: recordedWatched() }),
         readDetail: async () => parserFixDetail,
+        readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
       },
     });
     await vi.waitFor(() => expect(snapshot).toHaveBeenCalledTimes(2));
@@ -98,6 +99,7 @@ describe("openTerminal", () => {
         capabilities: everyCapability,
         readWatched: () => new Promise(() => {}),
         readDetail: async () => parserFixDetail,
+        readEvents: () => new Promise(() => {}),
       },
     });
     await vi.waitFor(() => expect(snapshot).toHaveBeenCalled());

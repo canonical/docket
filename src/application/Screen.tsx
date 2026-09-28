@@ -9,6 +9,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
+  type ThreadRow as ActivityThread,
   activityGroupings,
   describeAddress as describeActivityAddress,
 } from "../lib/activity/index.js";
@@ -34,11 +35,15 @@ import {
   StatusLine,
   useCommands,
 } from "../lib/ui/index.js";
+import type { ThreadSummary } from "../lib/waits/index.js";
+import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
+import buildThreadWaits from "./buildThreadWaits.js";
 import identifyRow from "./identifyRow.js";
 import OwedList from "./OwedList.js";
 import placeSelection, { type Selection } from "./placeSelection.js";
 import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
+import useActivity from "./useActivity.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
@@ -92,6 +97,9 @@ function describeHold(
 const ignoreChanges = () => () => {};
 const readNothing = () => undefined;
 
+/** Where a selection starts: on the first row. */
+const unselected: Selection = { place: 0, row: "" };
+
 /**
  * The terminal interface's one screen: owed or activity, with the header
  * naming the mode and its address, the list region, the counts, the
@@ -102,6 +110,7 @@ const readNothing = () => undefined;
 export default function Screen({
   mode: openingMode,
   owedGrouping: openingGrouping,
+  activity: openingActivity,
   now,
   openInBrowser,
   settings,
@@ -154,21 +163,28 @@ export default function Screen({
   const [owedGrouping, setOwedGrouping] = useState(
     owedChoices.includes(openingGrouping) ? openingGrouping : firstOwed,
   );
-  const [activityGrouping, setActivityGrouping] = useState(firstActivity);
-  const [window, setWindow] = useState(firstWindow);
+  const [activityGrouping, setActivityGrouping] = useState(
+    openingActivity?.grouping ?? firstActivity,
+  );
+  const [window, setWindow] = useState(openingActivity?.window ?? firstWindow);
   const [help, setHelp] = useState(false);
-  const [selection, setSelection] = useState<Selection>({ place: 0, wait: "" });
+  // Each mode keeps its own selection, so switching back finds it where it
+  // was left.
+  const [selections, setSelections] = useState<
+    Readonly<Record<TerminalMode, Selection>>
+  >({ owed: unselected, activity: unselected });
   const [action, setAction] = useState<ActionResult>();
   // The keys read the rows drawn last, and the row selected among them,
   // so a binding never holds a list older than the one on screen.
-  const drawnRows = useRef<readonly WaitRow[]>([]);
-  const drawnSelection = useRef<WaitRow>(undefined);
+  const drawnRows = useRef<readonly (WaitRow | ActivityThread)[]>([]);
+  const drawnSelection = useRef<WaitRow | ActivityThread>(undefined);
   const moveSelection = (step: number) =>
-    setSelection((current) => {
+    setSelections((current) => {
       const rows = drawnRows.current;
-      const place = placeSelection(rows, current) + step;
+      const place = placeSelection(rows, current[mode]) + step;
       const row = rows.at(place);
-      return row && place >= 0 ? { place, wait: identifyRow(row) } : current;
+      if (!row || place < 0) return current;
+      return { ...current, [mode]: { place, row: identifyRow(row) } };
     });
 
   useBindings(
@@ -194,7 +210,6 @@ export default function Screen({
           desc: "move the selection",
           group: "List",
           hint: "sel",
-          enabled: mode === "owed",
           run: () => moveSelection(-1),
         },
         {
@@ -203,7 +218,6 @@ export default function Screen({
           group: "List",
           hint: "sel",
           notes: ["(opens the accordion)"],
-          enabled: mode === "owed",
           run: () => moveSelection(1),
         },
         {
@@ -211,12 +225,13 @@ export default function Screen({
           desc: "open in the browser",
           group: "Thread",
           hint: "open",
-          enabled: mode === "owed",
-          // Only a row is ever selected, so a heading never opens.
+          // Only a row is ever selected, in either mode, so a heading or a
+          // stack never opens.
           run: () => {
             const row = drawnSelection.current;
             if (!row) return;
-            openInBrowser(row.wait.thread.url).catch(() =>
+            const { url } = "wait" in row ? row.wait.thread : row.thread;
+            openInBrowser(url).catch(() =>
               setAction({
                 failed: true,
                 text: "could not open the browser",
@@ -296,11 +311,30 @@ export default function Screen({
     threads && mode === "owed"
       ? buildOwed(threads, watched, owedGrouping, at)
       : undefined;
+  const activity = useActivity({
+    source,
+    threads,
+    syncedAt: status?.syncedAt,
+    shown: mode === "activity",
+    watched,
+    window,
+    grouping: activityGrouping,
+    now,
+    at,
+  });
   const room = width - indent;
-  const rows = owed ? owed.groups.flatMap((group) => group.rows) : [];
+  const listed = activity && "list" in activity ? activity.list : undefined;
+  // A failure reading activity's events leaves the rows held, and the
+  // status line names it as it names a failed refresh.
+  const failure = activity && "list" in activity ? activity.failure : undefined;
+  const shownStatus = status && failure ? { ...status, failure } : status;
+  const rows: readonly (WaitRow | ActivityThread)[] =
+    (owed ?? listed)?.groups.flatMap(
+      (group): readonly (WaitRow | ActivityThread)[] => group.rows,
+    ) ?? [];
   useEffect(() => {
     drawnRows.current = rows;
-    drawnSelection.current = rows.at(placeSelection(rows, selection));
+    drawnSelection.current = rows.at(placeSelection(rows, selections[mode]));
   });
   // A thread's details are read once for each copy of the data: moving the
   // selection back to a thread shows what was read, and each refresh
@@ -315,6 +349,21 @@ export default function Screen({
     }),
     [cached],
   );
+  const readOnce = (
+    read: (thread: ThreadSummary) => Promise<ThreadDetail>,
+    reference: string,
+    thread: ThreadSummary,
+  ) => {
+    const { readings, failed } = details;
+    const arrived = drawnSelection.current?.reference.text !== reference;
+    if (arrived && failed.delete(reference)) readings.delete(reference);
+    const known = readings.get(reference);
+    if (known) return known;
+    const reading = read(thread);
+    reading.catch(() => failed.add(reference));
+    readings.set(reference, reading);
+    return reading;
+  };
 
   // The list region: rows once the data is in, or what stands in for them.
   let region: ReactNode = null;
@@ -344,23 +393,47 @@ export default function Screen({
   } else if (owed?.groups.length === 0) {
     region = <EmptyState message="nothing owed" width={width} />;
   } else if (owed && readThreadDetail) {
-    const readDetail = (row: WaitRow) => {
-      const key = row.reference.text;
-      const { readings, failed } = details;
-      const arrived = drawnSelection.current?.reference.text !== key;
-      if (arrived && failed.delete(key)) readings.delete(key);
-      const known = readings.get(key);
-      if (known) return known;
-      const reading = readThreadDetail(row.wait.thread);
-      reading.catch(() => failed.add(key));
-      readings.set(key, reading);
-      return reading;
-    };
     region = (
       <OwedList
         list={owed}
-        selected={placeSelection(rows, selection)}
-        readDetail={readDetail}
+        selected={placeSelection(rows, selections.owed)}
+        readDetail={(row) =>
+          readOnce(readThreadDetail, row.reference.text, row.wait.thread)
+        }
+        now={at}
+        timezone={settings.time.timezone}
+        width={width}
+        height={height - 4}
+      />
+    );
+  } else if (activity && "problem" in activity) {
+    const { message, recovery } = activity.problem;
+    region = (
+      <Notice
+        reason={dropFullStop(message)}
+        recovery={recovery}
+        width={width}
+      />
+    );
+  } else if (mode === "activity" && !activity) {
+    // No list is held for the window yet: on opening, and after t.
+    region = (
+      <box paddingLeft={indent}>
+        <text fg={tokens["color.text"]}>refresh in progress…</text>
+      </box>
+    );
+  }
+  if (listed && threads && readThreadDetail) {
+    region = (
+      <ActivityList
+        list={listed}
+        selected={placeSelection(rows, selections.activity)}
+        readDetail={(row) =>
+          readOnce(readThreadDetail, row.reference.text, row.thread)
+        }
+        measureWaits={(row) =>
+          buildThreadWaits(row.thread, threads, watched, at)
+        }
         now={at}
         timezone={settings.time.timezone}
         width={width}
@@ -368,6 +441,7 @@ export default function Screen({
       />
     );
   }
+  const summary = (owed ?? listed)?.summary.text;
 
   return (
     <Pane
@@ -383,10 +457,14 @@ export default function Screen({
           />
         )
       }
-      counts={owed && <CountsLine summary={owed.summary.text} width={width} />}
+      counts={
+        summary === undefined ? undefined : (
+          <CountsLine summary={summary} width={width} />
+        )
+      }
       status={
         <StatusLine
-          status={problem ? undefined : status}
+          status={problem ? undefined : shownStatus}
           action={action}
           now={at}
           timezone={settings.time.timezone}
@@ -407,7 +485,7 @@ export default function Screen({
         ) : undefined
       }
     >
-      {owed && owed.groups.length > 0 ? (
+      {listed || (owed && owed.groups.length > 0) ? (
         region
       ) : (
         <box paddingTop={1}>{region}</box>

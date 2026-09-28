@@ -1,4 +1,5 @@
-import type { Cache } from "../lib/cache/index.js";
+import type { ActivityAddress } from "../lib/activity/index.js";
+import type { Cache, CachedEvents } from "../lib/cache/index.js";
 import type {
   PersonalFile,
   Repo,
@@ -120,6 +121,13 @@ export interface TerminalView {
    * header and the call name one address.
    */
   readonly owedGrouping: OwedGrouping;
+  /**
+   * The window and grouping activity opens on: those `--window` and
+   * `--by` name when `docket activity` opens the interface, and the first
+   * of each when absent. The window is one of `settings.activity`, the
+   * list `t` steps through.
+   */
+  readonly activity?: Pick<ActivityAddress, "window" | "grouping">;
   /** The current time, read whenever an age is measured. */
   readonly now: () => Date;
   /** Opens a thread's page in the browser, and rejects when it cannot. */
@@ -155,6 +163,14 @@ export interface TerminalView {
          * as the problem the interface shows in place of the list.
          */
         readonly readWatched: () => Promise<WatchedFiles>;
+        /**
+         * Reads the events of a repository at or after `since` through
+         * the cache, no older than the call's maximum age.
+         */
+        readonly readEvents: (
+          repo: string,
+          since: Date,
+        ) => Promise<CachedEvents>;
       }
     | { readonly problem: Problem };
 }

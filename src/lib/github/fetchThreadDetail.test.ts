@@ -36,12 +36,15 @@ const message = (login: string, at: string, body: string) => ({
 });
 
 describe("fetchThreadDetail", () => {
-  it("gives an issue's latest comments with their text", async () => {
+  it("gives an issue's age, labels, assignees and latest comments with their text", async () => {
     github.graphql(
       "Detail",
       repository({
         issue: {
+          createdAt: "2026-09-21T08:00:00Z",
           updatedAt: "2026-09-22T12:00:00Z",
+          labels: { nodes: [{ name: "kind: bug" }, { name: "area/icons" }] },
+          assignees: { nodes: [user("alice"), bot("example-sync")] },
           comments: {
             nodes: [message("dave", "2026-09-22T09:00:00Z", "Any news?")],
           },
@@ -49,7 +52,13 @@ describe("fetchThreadDetail", () => {
       }),
     );
     expect(await detail(thread())).toEqual({
+      createdAt: new Date("2026-09-21T08:00:00Z"),
       updatedAt: new Date("2026-09-22T12:00:00Z"),
+      labels: ["kind: bug", "area/icons"],
+      assignees: [
+        { login: "alice", type: "user" },
+        { login: "example-sync", type: "bot" },
+      ],
       messages: [
         {
           author: { login: "dave", type: "user", member: true },
@@ -76,7 +85,10 @@ describe("fetchThreadDetail", () => {
       "Detail",
       repository({
         pullRequest: {
+          createdAt: "2026-09-21T08:00:00Z",
           updatedAt: "2026-09-22T12:00:00Z",
+          labels: { nodes: [] },
+          assignees: { nodes: [] },
           comments: {
             nodes: [message("bob", "2026-09-22T11:00:00Z", "Rebased.")],
           },
@@ -179,7 +191,10 @@ describe("fetchThreadDetail", () => {
       "Detail",
       repository({
         pullRequest: {
+          createdAt: "2026-09-21T08:00:00Z",
           updatedAt: "2026-09-22T12:00:00Z",
+          labels: { nodes: [] },
+          assignees: { nodes: [] },
           comments: { nodes: [] },
           reviews: { nodes: [] },
           timelineItems: { nodes: [] },
@@ -194,17 +209,23 @@ describe("fetchThreadDetail", () => {
     expect(found).not.toHaveProperty("stack");
   });
 
-  it("asks for a discussion by its kind", async () => {
+  it("asks for a discussion by its kind, which has labels and no assignees", async () => {
     github.graphql(
       "Detail",
       repository({
         discussion: {
+          createdAt: "2026-09-21T08:00:00Z",
           updatedAt: "2026-09-22T12:00:00Z",
+          labels: { nodes: [{ name: "question" }] },
           comments: { nodes: [] },
         },
       }),
     );
-    await detail({ ...thread(), kind: "discussion" });
+    expect(await detail({ ...thread(), kind: "discussion" })).toMatchObject({
+      createdAt: new Date("2026-09-21T08:00:00Z"),
+      labels: ["question"],
+      assignees: [],
+    });
     expect(github.sent.at(0)?.body?.variables).toMatchObject({
       discussion: true,
       issue: false,

@@ -7,8 +7,10 @@ import {
   teamSettings,
   thread,
 } from "../../testing/facts.js";
+import type { Duration } from "../clock/index.js";
+import type { Settings } from "../config/index.js";
 import type { Account } from "../people/index.js";
-import selectEvents, { type ThreadEvent } from "./selectEvents.js";
+import timeEvents, { type ThreadEvent } from "./timeEvents.js";
 
 const { repo, number, url, kind, title } = thread();
 const summary = { repo, number, url, kind, title };
@@ -20,7 +22,25 @@ const event = (iso: string, actor: Account = dave): ThreadEvent => ({
 });
 const day = { amount: 24, unit: "h" } as const;
 
-describe("selectEvents", () => {
+/** The events inside `window` at `now`, as their times say. */
+const listInside = (
+  events: readonly ThreadEvent[],
+  window: Duration,
+  now: Date,
+  settings: Settings,
+) =>
+  timeEvents(events, window, settings)
+    .filter(({ until }) => until >= now)
+    .map(({ event }) => event);
+
+describe("timeEvents", () => {
+  it("gives each event the instant it leaves the window, adding the window in working time", () => {
+    const friday = event("2026-09-25T10:00+02:00");
+    expect(timeEvents([friday], day, teamSettings)).toEqual([
+      { event: { ...friday, bot: false }, until: at("2026-09-28T10:00+02:00") },
+    ]);
+  });
+
   it("counts the window in working time, so the weekend stays inside it", () => {
     const monday = at("2026-09-28T10:00+02:00");
     const events = [
@@ -29,7 +49,7 @@ describe("selectEvents", () => {
       event("2026-09-26T12:00+02:00"),
       event("2026-09-28T09:00+02:00"),
     ];
-    expect(selectEvents(events, day, monday, teamSettings)).toEqual(
+    expect(listInside(events, day, monday, teamSettings)).toEqual(
       events.slice(1).map((kept) => ({ ...kept, bot: false })),
     );
   });
@@ -42,7 +62,7 @@ describe("selectEvents", () => {
     ];
     const week = { amount: 1, unit: "w" } as const;
     expect(
-      selectEvents(events, week, friday, teamSettings).map(({ at }) => at),
+      listInside(events, week, friday, teamSettings).map(({ at }) => at),
     ).toEqual([at("2026-09-25T11:00+02:00")]);
   });
 
@@ -53,7 +73,7 @@ describe("selectEvents", () => {
       event("2026-09-22T10:01+02:00", exampleSync),
     ];
     expect(
-      selectEvents(events, day, now, teamSettings).map(({ actor, bot }) => [
+      listInside(events, day, now, teamSettings).map(({ actor, bot }) => [
         actor.login,
         bot,
       ]),
@@ -69,7 +89,7 @@ describe("selectEvents", () => {
       ...teamSettings,
       people: new Map([["dave", "bot" as const]]),
     };
-    const [marked] = selectEvents(
+    const [marked] = listInside(
       [event("2026-09-22T10:00+02:00")],
       day,
       now,
@@ -86,7 +106,7 @@ describe("selectEvents", () => {
       event("2026-09-22T12:01+02:00"),
     ];
     expect(
-      selectEvents(events, day, now, teamSettings).map(({ at }) => at),
+      listInside(events, day, now, teamSettings).map(({ at }) => at),
     ).toEqual([now, later]);
   });
 
@@ -105,7 +125,7 @@ describe("selectEvents", () => {
       { ...commented, kind: "merged" },
       { ...commented, kind: "reopened" },
     ];
-    expect(selectEvents(events, day, now, teamSettings)).toEqual(
+    expect(listInside(events, day, now, teamSettings)).toEqual(
       events.map((kept) => ({ ...kept, bot: false })),
     );
   });
