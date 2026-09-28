@@ -117,6 +117,19 @@ export const OwedSecondSelected: Story<ScreenFrameProps> = {
   args: { ...recording, run: ["selection.next"] },
 };
 
+/** A review row selected, its review accordion open under it. */
+export const OwedReviewSelected: Story<ScreenFrameProps> = {
+  args: {
+    ...recording,
+    run: [
+      "selection.next",
+      "selection.next",
+      "selection.next",
+      "selection.next",
+    ],
+  },
+};
+
 /** owed by owner: owners alphabetically, unassigned last. */
 export const OwedByOwner: Story<ScreenFrameProps> = {
   args: { ...recording, owedGrouping: "owner" },
