@@ -203,6 +203,22 @@ export interface Cache {
    */
   refreshRepo(repo: string): Promise<void>;
   /**
+   * Runs the free check for changes on `repo`, and only when it sees a
+   * change, fetches the threads changed since the last sync, under the
+   * fetch lock, for every docket process: the selected thread's
+   * repository, checked often and at no cost while nothing changes. It
+   * spends nothing while the budget is low, and asks nothing while the
+   * provider refuses requests for its rate limit, has no free check, or
+   * while the repository holds nothing yet.
+   *
+   * @returns Whether it fetched a change.
+   * @throws ProviderError when the provider fails.
+   * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
+   * the fetch lock for longer than the wait allows, and `CACHE_UNUSABLE`
+   * when the cache folder cannot be made, read or written.
+   */
+  refreshIfChanged(repo: string): Promise<boolean>;
+  /**
    * The events held for `repo` at or after `since`, however old, as last
    * loaded or fetched; nothing when those held do not reach back to
    * `since`. Without `since`, every event held, however far back they

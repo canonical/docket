@@ -329,6 +329,33 @@ export default function createCache({
           return { login, syncedAt: at };
         },
       ),
+    async refreshIfChanged(repo) {
+      const at = now();
+      const { paused } = status;
+      if (paused?.reason === "rateLimit" && at < paused.until) return false;
+      if (!provider.capabilities().has("changeProbe")) return false;
+      try {
+        return await withFetchLock(directory, async () => {
+          await load();
+          const previous = entry(repo);
+          if (!previous) return false;
+          const floor = await findBudgetFloor(provider, at);
+          const value = await syncRepo(provider, repo, previous, at, {
+            spend: !floor,
+            reconcile: false,
+          });
+          // Unchanged, the repository keeps its data, and its tag, which
+          // GitHub still answers "not modified".
+          if (!value || value.threads === previous.threads) return false;
+          store(repo, value, at);
+          await save();
+          publish();
+          return true;
+        });
+      } catch (error) {
+        throw classifyFolderFailure(error, directory);
+      }
+    },
     async refreshRepo(repo) {
       try {
         await withFetchLock(directory, async () => {

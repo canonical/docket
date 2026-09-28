@@ -83,6 +83,7 @@ export function holdCache(
     readFile: async () => ({ text: undefined, syncedAt }),
     readViewer: async () => ({ login: "alice", syncedAt }),
     refresh: async () => {},
+    refreshIfChanged: async () => false,
     fullRefresh: async () => {},
     watch: () => () => {},
     patchAssignees: ({ repo, number }, assignees) => {
