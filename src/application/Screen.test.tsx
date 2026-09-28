@@ -143,6 +143,17 @@ function show(view: TerminalView, width = 40, onQuit = () => {}, height = 12) {
   );
 }
 
+/**
+ * What the terminal sends for a key the mock input names no helper for:
+ * the page keys as their escape sequences, home and end by their names.
+ */
+const sequences: Readonly<Record<string, string>> = {
+  pageup: "\u001B[5~",
+  pagedown: "\u001B[6~",
+  home: "HOME",
+  end: "END",
+};
+
 /** Presses `keys` one after another and reads the screen back. */
 async function press(screen: Drawn, ...keys: string[]) {
   let drawn = screen;
@@ -155,7 +166,7 @@ async function press(screen: Drawn, ...keys: string[]) {
       } else if (key === "escape") {
         screen.setup.mockInput.pressEscape();
       } else {
-        screen.setup.mockInput.pressKey(key);
+        screen.setup.mockInput.pressKey(sequences[key] ?? key);
       }
     });
     // The input reads a lone escape only once no sequence follows it.
@@ -508,6 +519,70 @@ describe("Screen", () => {
       );
     });
 
+    it("moves a page at a time, as many rows as the list shows, never past either end", async () => {
+      const short = await showRecorded();
+      expect((await press(short, "pagedown")).lines.at(1)).toBe(
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
+      );
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const tall = await (await show(viewOf(cache), 40, () => {}, 20)).redraw();
+      const screen = await press(tall, "g");
+      expect(screen.lines.slice(1, 3)).toEqual([
+        "alice",
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      ]);
+      // alice's three rows fill the screen, bob's heading below them.
+      const page = await press(screen, "pagedown");
+      expect(page.lines.slice(8, 10)).toEqual([
+        "bob",
+        `▌ docs#4 close${" ".repeat(18)}10d left`,
+      ]);
+      expect(page.look("bob")?.bg).not.toBe(
+        tokens["color.background.selected"],
+      );
+      const last = await press(screen, "pagedown", "pagedown");
+      expect(last.lines.slice(10, 12)).toEqual([
+        `▌ example#15 close${" ".repeat(14)}29d left`,
+        "  Crash on start · unassigned",
+      ]);
+      expect(last.lines.at(12)).toBe("  age 2d · owner unassigned");
+      const first = await press(screen, "pageup", "pageup", "pageup");
+      expect(first.lines.slice(1, 5)).toEqual([
+        "alice",
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        " ┃Fix the parser · alice ✗ checks",
+        "  dave · 3d ago",
+      ]);
+    });
+
+    it("moves to the last thread with end and the first with home", async () => {
+      const screen = await showRecorded();
+      const last = await press(screen, "end");
+      expect(last.lines.slice(1, 3)).toEqual([
+        `▌ example#15 close${" ".repeat(14)}29d left`,
+        "  Crash on start · unassigned",
+      ]);
+      expect((await press(screen, "end")).lines.at(1)).toBe(last.lines.at(1));
+      const first = await press(screen, "home");
+      expect(first.lines.at(1)).toBe(
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      );
+      expect((await press(screen, "home")).lines.at(1)).toBe(first.lines.at(1));
+    });
+
+    it("leaves the selection where it is when a page or end key is pressed under the help or in an editor", async () => {
+      const screen = await showRecorded();
+      await press(screen, "?", "pagedown", "end", "?");
+      const assigning = await press(screen, "a");
+      expect(assigning.lines.at(0)).toBe("assigning example#12");
+      await press(screen, "pagedown", "end");
+      const closed = await press(screen, "escape");
+      expect(closed.lines.at(1)).toBe(
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      );
+    });
+
     it("keeps a selection for each mode, so switching back finds it where it was", async () => {
       const screen = await showRecorded();
       await press(screen, "j", "l");
@@ -523,6 +598,14 @@ describe("Screen", () => {
       expect(owed.lines.at(1)).toBe(
         `▌┃example#12 close${" ".repeat(15)}2h over`,
       );
+    });
+
+    it("stays on nothing owed whichever key moves the selection", async () => {
+      const cache = await openCache(fakeProvider());
+      await cache.refresh();
+      const screen = await (await show(viewOf(cache))).redraw();
+      const moved = await press(screen, "j", "k", "pagedown", "end", "home");
+      expect(moved.lines.at(2)).toBe("  nothing owed");
     });
 
     it("reads a thread's details once, however often the selection returns to it", async () => {
@@ -693,6 +776,25 @@ describe("Screen", () => {
       const up = await press(screen, "k", "up");
       expect(up.look("docs#4")?.bg).toBe(selected);
       expect(up.look("ISSUES")?.bg).not.toBe(selected);
+    });
+
+    it("moves a page of the threads shown, past a heading, never beyond either end, and to either end with home and end", async () => {
+      const screen = await showActivity(40);
+      const selected = tokens["color.background.selected"];
+      // The screen shows docs#4 alone, so a page is one thread.
+      expect(screen.lines).not.toContain(" ┃Fix the parser · alice");
+      const page = await press(screen, "pagedown");
+      expect(page.look("Fix the parser")?.bg).toBe(selected);
+      expect(page.look("PULL REQUESTS")?.bg).not.toBe(selected);
+      expect((await press(screen, "pagedown")).look("Fix the parser")?.bg).toBe(
+        selected,
+      );
+      const back = await press(screen, "pageup", "pageup");
+      expect(back.look("docs#4")?.bg).toBe(selected);
+      expect((await press(screen, "end")).look("Fix the parser")?.bg).toBe(
+        selected,
+      );
+      expect((await press(screen, "home")).look("docs#4")?.bg).toBe(selected);
     });
 
     it("opens the accordion under the selected thread, above its events", async () => {
@@ -1013,7 +1115,7 @@ describe("Screen", () => {
 
     it("shows every key with ?, grouped, and hides it again", async () => {
       const view = viewOf(await openCache(fakeProvider()));
-      const screen = await show(view, 40, () => {}, 34);
+      const screen = await show(view, 40, () => {}, 36);
       const help = await press(screen, "?");
       expect(help.lines).toEqual([
         "help",
@@ -1029,6 +1131,8 @@ describe("Screen", () => {
         "List",
         "  ↑ ↓  k j move the selection",
         "           (opens the accordion)",
+        "  ⇞ ⇟      a page up or down",
+        "  home end the first or last thread",
         "",
         "Thread",
         "  ⏎        open in the browser",

@@ -17,6 +17,7 @@ function drawList(
   width: number,
   height: number,
   editor?: { readonly node: ReactNode; readonly lines: number },
+  onShownRows: (rows: number) => void = () => {},
 ) {
   return drawSuspending(
     <OwedList
@@ -27,6 +28,7 @@ function drawList(
       timezone="Europe/Paris"
       width={width}
       height={height}
+      onShownRows={onShownRows}
       {...(editor && { editor })}
     />,
     width,
@@ -62,6 +64,12 @@ describe("OwedList", () => {
     expect(screen.look("example#12 close")?.bg).not.toBe(
       tokens["color.background.selected"],
     );
+  });
+
+  it("tells how many rows it shows, headings not counted", async () => {
+    const shown: number[] = [];
+    await drawList("owner", 0, 40, 16, undefined, (rows) => shown.push(rows));
+    expect(shown.at(-1)).toBe(3);
   });
 
   it("heads each stack with its full size, its rows bottom first, at 60 columns", async () => {

@@ -12,6 +12,8 @@
 |List
 |  ↑ ↓  k j move the selection
 |           (opens the accordion)
+|  ⇞ ⇟      a page up or down
+|  home end the first or last thread
 |
 |Thread
 |  ⏎        open in the browser
@@ -49,31 +51,35 @@ runs
 12:3 "↑ ↓  k j" fg #c6c8d1ff bg #161821ff bold
 12:11 " move the selection" fg #c6c8d1ff bg #161821ff
 13:1 "           (opens the accordion)" fg #c6c8d1ff bg #161821ff
-15:1 "Thread" fg #c6c8d1ff bg #161821ff bold
-16:3 "⏎" fg #c6c8d1ff bg #161821ff bold
-16:4 "        open in the browser" fg #c6c8d1ff bg #161821ff
-17:3 "a" fg #c6c8d1ff bg #161821ff bold
-17:4 "        assign" fg #c6c8d1ff bg #161821ff
-18:3 "r" fg #c6c8d1ff bg #161821ff bold
-18:4 "        request review" fg #c6c8d1ff bg #161821ff
-20:1 "Editor" fg #c6c8d1ff bg #161821ff bold
-21:3 "type" fg #c6c8d1ff bg #161821ff bold
-21:7 "     filter" fg #c6c8d1ff bg #161821ff
-22:3 "↑ ↓" fg #c6c8d1ff bg #161821ff bold
-22:6 "      move" fg #c6c8d1ff bg #161821ff
-23:3 "␣" fg #c6c8d1ff bg #161821ff bold
-23:4 "        toggle" fg #c6c8d1ff bg #161821ff
-24:3 "⏎" fg #c6c8d1ff bg #161821ff bold
-24:4 "        apply" fg #c6c8d1ff bg #161821ff
-25:3 "esc" fg #c6c8d1ff bg #161821ff bold
-25:6 "      cancel" fg #c6c8d1ff bg #161821ff
-27:1 "App" fg #c6c8d1ff bg #161821ff bold
-28:3 "?" fg #c6c8d1ff bg #161821ff bold
-28:4 "        show or hide help" fg #c6c8d1ff bg #161821ff
-29:3 "esc" fg #c6c8d1ff bg #161821ff bold
-29:6 "      close help" fg #c6c8d1ff bg #161821ff
-30:3 "R" fg #c6c8d1ff bg #161821ff bold
-30:4 "        full refresh" fg #c6c8d1ff bg #161821ff
-31:3 "q" fg #c6c8d1ff bg #161821ff bold
-31:4 "        quit" fg #c6c8d1ff bg #161821ff
-33:1 "  windows are counted in working time" fg #c6c8d1ff bg #161821ff
+14:3 "⇞ ⇟" fg #c6c8d1ff bg #161821ff bold
+14:6 "      a page up or down" fg #c6c8d1ff bg #161821ff
+15:3 "home end" fg #c6c8d1ff bg #161821ff bold
+15:11 " the first or last thread" fg #c6c8d1ff bg #161821ff
+17:1 "Thread" fg #c6c8d1ff bg #161821ff bold
+18:3 "⏎" fg #c6c8d1ff bg #161821ff bold
+18:4 "        open in the browser" fg #c6c8d1ff bg #161821ff
+19:3 "a" fg #c6c8d1ff bg #161821ff bold
+19:4 "        assign" fg #c6c8d1ff bg #161821ff
+20:3 "r" fg #c6c8d1ff bg #161821ff bold
+20:4 "        request review" fg #c6c8d1ff bg #161821ff
+22:1 "Editor" fg #c6c8d1ff bg #161821ff bold
+23:3 "type" fg #c6c8d1ff bg #161821ff bold
+23:7 "     filter" fg #c6c8d1ff bg #161821ff
+24:3 "↑ ↓" fg #c6c8d1ff bg #161821ff bold
+24:6 "      move" fg #c6c8d1ff bg #161821ff
+25:3 "␣" fg #c6c8d1ff bg #161821ff bold
+25:4 "        toggle" fg #c6c8d1ff bg #161821ff
+26:3 "⏎" fg #c6c8d1ff bg #161821ff bold
+26:4 "        apply" fg #c6c8d1ff bg #161821ff
+27:3 "esc" fg #c6c8d1ff bg #161821ff bold
+27:6 "      cancel" fg #c6c8d1ff bg #161821ff
+29:1 "App" fg #c6c8d1ff bg #161821ff bold
+30:3 "?" fg #c6c8d1ff bg #161821ff bold
+30:4 "        show or hide help" fg #c6c8d1ff bg #161821ff
+31:3 "esc" fg #c6c8d1ff bg #161821ff bold
+31:6 "      close help" fg #c6c8d1ff bg #161821ff
+32:3 "R" fg #c6c8d1ff bg #161821ff bold
+32:4 "        full refresh" fg #c6c8d1ff bg #161821ff
+33:3 "q" fg #c6c8d1ff bg #161821ff bold
+33:4 "        quit" fg #c6c8d1ff bg #161821ff
+35:1 "  windows are counted in working time" fg #c6c8d1ff bg #161821ff
