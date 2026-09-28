@@ -15,8 +15,10 @@ import type { Connection, Context, Invocation, Watched } from "./types.js";
  * default maximum age, as the other commands read it, where each came from,
  * and the account gh is signed in with. When gh gives no token, or GitHub
  * does not answer, it says why and exits with that problem's code: 2 for
- * gh, 3 for GitHub; each repository then shows the settings the personal
- * file and the built-in defaults give.
+ * gh, 3 for GitHub. The repositories' files are read before the account,
+ * so a repository shows its own file's settings even when GitHub then
+ * fails to give the account; it shows the settings the personal file and
+ * the built-in defaults give only when its file could not be read.
  *
  * @param connection The provider gh's token opened, with the cache on
  * it, or why gh gave no token.
