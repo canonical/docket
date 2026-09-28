@@ -14,7 +14,10 @@ The unit tests beside the code pin behaviour from inside. The corpus pins it fro
 
 - the clock: `new Date()` gives the instant the guarantee names;
 - GitHub: `fetch` answers from a recording under `fixtures/`, logs every request, and answers a request that sends back an entity tag with "not modified", as GitHub does;
-- the machine: the time zone its process runs in is written first in the request log, so an entry can check that the zone it asked for reached docket.
+- the machine: the time zone its process runs in is written first in the request log, so an entry can check that the zone it asked for reached docket;
+- a day: with `GUARANTEES_UNTIL`, each of docket's waits of a minute or more passes as soon as docket is quiet, the clock moving on to its end, so a day of an open pane runs in about a minute, and the process ends once the clock would reach that instant. Each logged request carries the clock's time.
+
+`makeHome.ts` also opens the terminal interface in a pseudo-terminal (`open`), as a person does with `docket` alone, and can press keys once it has drawn a given text.
 
 The recordings are written in GitHub's own response shapes, from GitHub's API, with neutral names only.
 
@@ -43,6 +46,6 @@ A detector in the corpus can go blind without anything in docket changing, and a
 | `working-clock` | determinism | A 24-hour reply target set on Friday at 16:00 falls due on Monday at 16:00, across weekends, time zones and the change to and from daylight saving time. What is left before a reply is due, or how far past it is, counts working time only, in the configured time zone: on a weekend, across midnight there while UTC is still on the day before, and after the clocks go back. The machine's own time zone changes none of it. |
 | `text-output` | golden | What `owed` and `activity` print in `plain`, `llm` and `json`, from a fixed recording at a fixed instant. |
 | `hostile-text` | conformance | Control sequences in a title, a comment, a label, a check name and a branch name are never printed, and no string a program reads back from `json` output holds one, a pull request's base branch included; in `llm` output titles, labels, check names and branches are in double quotes and comments are `>` lines. |
-| `request-budget` | budget | A refresh every 120 seconds stays within the points and requests proposed for GitHub's limits, and docket never has two requests open at once. |
+| `request-budget` | budget | A refresh every 120 seconds stays within the points and requests proposed for GitHub's limits, and docket never has two requests open at once. A pane left idle for a day checks each repository at most every 30 minutes once 20 minutes have passed and spends no points on the list while nothing changes; a pane scrolled through reads details at most a point a request, within 300 points an hour. |
 | `screens` | golden | Every story under `src/`, the blocks' and the composed screen's, drawn as a person sees it at 40 and 60 columns: the characters of each line, and the colours and attributes of each run of text. Below 40 columns the pane says only `docket needs 40 columns`. |
 | `corpus-can-fail` | conformance | Fails on purpose, so a green tier means something. |

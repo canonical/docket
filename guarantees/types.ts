@@ -16,7 +16,8 @@ export interface RecordedAnswer {
  * The answers GitHub gives, keyed by request: `GET /repos/org/repo/issues`
  * for REST, and for GraphQL the operation and repository, such as
  * `Snapshot org/repo`, followed by `#12` when the request names a thread,
- * or the operation alone, such as `Viewer`, when it names no repository.
+ * or the operation alone, such as `Viewer` or `Budget`, when it names no
+ * repository.
  */
 export type Recording = Readonly<Record<string, RecordedAnswer>>;
 
@@ -29,6 +30,8 @@ export interface SentRequest {
   readonly inFlight: number;
   /** The entity tag it sent back, if any. */
   readonly tag: string | undefined;
+  /** When it was sent, on the stand-in's clock. */
+  readonly at: string;
 }
 
 /** What one call of docket printed, how it exited, what it asked GitHub, and the time zone it ran in. */
@@ -54,9 +57,31 @@ export interface Call {
   readonly machineZone?: string;
 }
 
+/** How the terminal interface is opened, and what a person does in it. */
+export interface Opening extends Call {
+  /**
+   * The instant the stand-in's clock runs to, a day passing in seconds,
+   * when docket's process ends.
+   */
+  readonly until: string;
+  /**
+   * The keys pressed once the interface has drawn `ready`, one at a time,
+   * each `pause` milliseconds of real time after the last.
+   */
+  readonly keys?: readonly string[];
+  readonly ready?: string;
+  readonly pause?: number;
+}
+
 /** A temporary home, and docket run in it. */
 export interface Home {
   call(args: readonly string[], call: Call): Promise<Outcome>;
+  /**
+   * Opens the terminal interface in a pseudo-terminal, as a person does
+   * with `docket` alone, until the stand-in's clock reaches `until`.
+   * `out` is everything the interface drew.
+   */
+  open(opening: Opening): Promise<Outcome>;
   remove(): void;
 }
 

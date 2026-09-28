@@ -95,6 +95,8 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
   });
   return {
     Viewer: viewer,
+    // The rate figures alone, which every answer carries.
+    Budget: { data: {} },
     [`File ${repo}`]: noFile,
     [`File ${docs}`]: noFile,
     [`GET /repos/${repo}/issues`]: buildProbe(`${tag}-example`),

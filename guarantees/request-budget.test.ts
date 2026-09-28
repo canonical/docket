@@ -7,7 +7,12 @@ import type { SentRequest } from "./types.js";
 /**
  * One refresh of the watched repositories stays within the budget
  * proposed for GitHub's limits, and docket never has two requests open
- * at once, as GitHub asks of its clients.
+ * at once, as GitHub asks of its clients. An open terminal pane stays
+ * within it over a day: left without a key, it checks each repository at
+ * most every 30 minutes once 20 minutes have passed, spends no points on
+ * the list while nothing changes, and reads the selected thread's details
+ * at most once a check; scrolled through, it reads details at most a
+ * point a request, within 300 points an hour.
  *
  * The budget, per repository, is what docket's page sizes cost: a whole
  * fetch asks for 50 threads a page and costs 8 points, a fetch of what
@@ -104,8 +109,25 @@ function countPoints({ query, variables }: Record<string, unknown>): number {
   return Math.max(1, Math.round(readSelection(1) / 100));
 }
 
-const isCallRead = ({ body }: SentRequest) =>
-  /^\s*query\s+(File|Viewer)\b/.test(String(body.query ?? ""));
+/** The name of a GraphQL request's operation, such as `Snapshot`. */
+const nameOperation = ({ body }: SentRequest) =>
+  /^\s*query\s+(\w+)/.exec(String(body.query ?? ""))?.[1];
+
+/** Whether a request reads a file or the viewer, for the call, not the refresh. */
+const isCallRead = (request: SentRequest) =>
+  ["File", "Viewer"].includes(nameOperation(request) ?? "");
+
+/** Whether a request reads a thread's details, one or several at once. */
+const isDetailRead = (request: SentRequest) =>
+  ["Detail", "Details"].includes(nameOperation(request) ?? "");
+
+/** A pane left without a key for 20 minutes is idle. */
+const idleAfter = 20 * 60_000;
+/** An idle pane checks each repository at most every 30 minutes. */
+const idleInterval = 30 * 60_000;
+/** Details may spend 300 points an hour. */
+const detailBudgetPerHour = 300;
+const day = 24 * 3_600_000;
 
 /** The points and requests one refresh spent. */
 const measure = (requests: readonly SentRequest[]) => {
@@ -118,7 +140,13 @@ const measure = (requests: readonly SentRequest[]) => {
 };
 
 const home = makeHome(readFileSync(findFixture("team.yaml"), "utf8"));
-afterAll(() => home.remove());
+// Each open pane has a home of its own, so it shares no cache with the
+// calls above or with the other pane.
+const idleHome = makeHome(readFileSync(findFixture("team.yaml"), "utf8"));
+const scrollHome = makeHome(readFileSync(findFixture("team.yaml"), "utf8"));
+afterAll(() => {
+  for (const each of [home, idleHome, scrollHome]) each.remove();
+});
 
 // A refresh every 120 seconds: each call is two minutes after the last,
 // and asks for data no older than that.
@@ -182,6 +210,63 @@ describe("request-budget", () => {
       budget.changed.requests * repositories,
     );
   });
+
+  const idleDay = idleHome.open({
+    now: "2026-09-29T10:00:00Z",
+    until: "2026-09-30T10:00:00Z",
+    recording: "team",
+  });
+  /** The requests an idle day sent once the pane was idle. */
+  const sentIdle = async () => {
+    const { requests } = await idleDay;
+    const idleFrom = Date.parse("2026-09-29T10:00:00Z") + idleAfter;
+    return requests.filter(({ at }) => Date.parse(at) >= idleFrom);
+  };
+
+  it("checks each repository at most every 30 minutes once a pane is left idle for a day", async () => {
+    const { code } = await idleDay;
+    expect(code).toBe(0);
+    const checks = (await sentIdle()).filter(
+      ({ method, url }) =>
+        method === "GET" && new URL(url).pathname.endsWith("/issues"),
+    );
+    expect(checks.length).toBeGreaterThan(0);
+    for (const repo of [
+      "example-org/example-repo",
+      "example-org/example-docs",
+    ]) {
+      const count = checks.filter(({ url }) => url.includes(repo)).length;
+      expect(count).toBeLessThanOrEqual((day - idleAfter) / idleInterval);
+    }
+  }, 180_000);
+
+  it("spends no points on the list while an idle pane sees nothing change, and reads details at most once a check", async () => {
+    const sent = await sentIdle();
+    expect(sent.length).toBeGreaterThan(0);
+    const graphql = sent.filter(({ url }) => url.endsWith("/graphql"));
+    expect(graphql.filter((request) => !isDetailRead(request))).toEqual([]);
+    const cycles = (day - idleAfter) / idleInterval;
+    expect(graphql.length).toBeLessThanOrEqual(cycles);
+    expect(sent.length).toBeLessThanOrEqual(cycles * (repositories + 1));
+  }, 180_000);
+
+  it("reads details at most a point a request, within 300 points an hour, while a pane is scrolled", async () => {
+    const minutes = 10;
+    const { code, requests } = await scrollHome.open({
+      now: "2026-09-30T12:00:00Z",
+      until: `2026-09-30T12:${minutes}:00Z`,
+      recording: "team",
+      ready: "Fix the parser",
+      keys: [..."jjjkkkjjjkkkjjjkkk"],
+    });
+    expect(code).toBe(0);
+    const reads = requests.filter(isDetailRead);
+    expect(reads.length).toBeGreaterThan(0);
+    for (const { body } of reads) expect(countPoints(body)).toBe(1);
+    expect(reads.length).toBeLessThanOrEqual(
+      (detailBudgetPerHour * minutes) / 60,
+    );
+  }, 180_000);
 
   it("never has two requests open at once", async () => {
     const sent = (await cycles).flatMap(({ requests }) => requests);

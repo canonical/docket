@@ -16,6 +16,11 @@
  * - The machine: the first line of that file is the time zone this
  *   process runs in, as the process itself reads it, so a caller can see
  *   that the machine's time zone it asked for reached docket.
+ * - A day: with `GUARANTEES_UNTIL`, each of docket's waits of a minute or
+ *   more passes at once, as soon as docket is quiet, the clock moving on
+ *   to its end (`fastForward.ts`), until the clock would reach that
+ *   instant, when the process ends. Each logged request carries the
+ *   clock's time.
  *
  * A request the recording holds no answer for gets a 404 naming it, which
  * docket reports as a failure, so a recording that falls behind docket
@@ -39,13 +44,15 @@
  * `unquoted`, and appends to a file.
  */
 import { appendFileSync } from "node:fs";
-import type { Recording, SentRequest } from "./types.js";
+import fastForward from "./fastForward.js";
+import type { RecordedAnswer, Recording, SentRequest } from "./types.js";
 
 const {
   GUARANTEES_NOW,
   GUARANTEES_RECORDING,
   GUARANTEES_REQUESTS,
   GUARANTEES_BREAK,
+  GUARANTEES_UNTIL,
 } = process.env;
 if (!GUARANTEES_NOW || !GUARANTEES_RECORDING || !GUARANTEES_REQUESTS) {
   throw new Error(
@@ -113,11 +120,13 @@ appendFileSync(
   `${JSON.stringify({ machineZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}\n`,
 );
 
+// How far a day passing has moved the clock on, in milliseconds.
+let moved = 0;
 const RealDate = Date;
 class FixedDate extends RealDate {
   // biome-ignore lint/suspicious/noExplicitAny: Date's constructor takes several shapes, passed on whole.
   constructor(...args: any[]) {
-    if (args.length === 0) super(fixed);
+    if (args.length === 0) super(fixed + moved);
     else super(...(args as [string]));
   }
 }
@@ -131,6 +140,16 @@ const recordedRateLimit = {
 
 let inFlight = 0;
 const answerDelay = 5;
+const touch = GUARANTEES_UNTIL
+  ? fastForward({
+      span: new RealDate(GUARANTEES_UNTIL).getTime() - fixed,
+      isQuiet: () => inFlight === 0,
+      moveClock: (by) => {
+        moved = by;
+      },
+      onEnd: () => process.exit(0),
+    })
+  : () => {};
 
 /**
  * Holds one request open for as long as an answer takes, counted in
@@ -142,6 +161,7 @@ const holdOpen = async (onOpen: (open: number) => void) => {
   onOpen(inFlight);
   await new Promise((resolve) => setTimeout(resolve, answerDelay));
   inFlight -= 1;
+  touch();
 };
 
 /** `text` with every instant in it an hour later. */
@@ -164,6 +184,30 @@ const findKey = (method: string, url: URL, body: Record<string, unknown>) => {
   return `${operation} ${variables.owner}/${variables.name}${number}`;
 };
 
+/**
+ * The answer to a query reading several threads' details at once, one
+ * alias per thread such as
+ * `t0: repository(owner: "o", name: "r") { issue(number: 4) { … } }`,
+ * built from the answer the recording holds for each thread alone
+ * (`Detail o/r#4`); a thread it holds none for is `null`, as GitHub
+ * answers a thread it does not find.
+ */
+const composeDetails = (query: string): RecordedAnswer => {
+  const aliases = query.matchAll(
+    /(t\d+): repository\(owner: "([^"]+)", name: "([^"]+)"\) \{ (\w+)\(number: (\d+)\)/g,
+  );
+  const data = Object.fromEntries(
+    [...aliases].map(([, alias, owner, name, kind, number]) => {
+      const alone = recording[`Detail ${owner}/${name}#${number}`]?.data as
+        | { readonly repository?: Record<string, unknown> }
+        | undefined;
+      const found = alone?.repository?.[kind ?? ""];
+      return [alias, found ? { [kind ?? ""]: found } : null];
+    }),
+  );
+  return { data };
+};
+
 globalThis.fetch = (async (
   input: string | URL | Request,
   init: RequestInit = {},
@@ -178,11 +222,18 @@ globalThis.fetch = (async (
   // only the count of open requests shows it.
   if (GUARANTEES_BREAK === "overlap") void holdOpen(() => {});
   await holdOpen((open) => {
-    const sent: SentRequest = { ...request, inFlight: open };
+    const sent: SentRequest = {
+      ...request,
+      inFlight: open,
+      at: new FixedDate().toISOString(),
+    };
     appendFileSync(log, `${JSON.stringify(sent)}\n`);
   });
   const key = findKey(request.method, new URL(request.url), request.body);
-  const answer = recording[key];
+  const answer =
+    key === "Details"
+      ? composeDetails(String(request.body.query))
+      : recording[key];
   if (!answer) {
     return Response.json(
       { message: `the recording has no answer for ${key}` },
