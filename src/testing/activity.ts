@@ -32,6 +32,14 @@ const bump = thread({
   draft: true,
 });
 
+/** A documentation issue in a repository whose own file is invalid. */
+const tokensGuide = thread({
+  repo: "example-org/example-docs",
+  number: 4,
+  title: "Where do tokens live?",
+  assignees: [bob],
+});
+
 /** An issue alice and bob both own. */
 const crash = thread({
   number: 15,
@@ -72,7 +80,10 @@ const events: WindowEvent[] = [
   },
 ];
 
-/** The rows, newest first: the pull request, the draft, then the issue. */
+/**
+ * The rows, newest first: the pull request, the draft, the issue, then
+ * the documentation issue.
+ */
 export const activityRows: readonly ThreadRow[] = listEvents(
   [
     {
@@ -80,6 +91,21 @@ export const activityRows: readonly ThreadRow[] = listEvents(
       people: teamSettings.people,
       threads: [parserFix, bump, crash],
       events,
+    },
+    {
+      repo: { name: "docs", repo: "example-org/example-docs", tags: [] },
+      people: teamSettings.people,
+      threads: [tokensGuide],
+      events: [
+        {
+          thread: tokensGuide,
+          kind: "commented",
+          actor: alice,
+          at: at("2026-09-26T09:00+02:00"),
+          bot: false,
+        },
+      ],
+      invalidFile: true,
     },
   ],
   activityNow,

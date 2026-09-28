@@ -1,3 +1,4 @@
+export { ActivityRow, type ActivityRowProps } from "./ActivityRow/index.js";
 export { CountsLine, type CountsLineProps } from "./CountsLine/index.js";
 export { EmptyState, type EmptyStateProps } from "./EmptyState/index.js";
 export { EventLine, type EventLineProps } from "./EventLine/index.js";
