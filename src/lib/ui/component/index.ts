@@ -15,6 +15,7 @@ export {
   type StatusLineProps,
 } from "./StatusLine/index.js";
 export {
+  type RestingThread,
   ThreadAccordion,
   type ThreadAccordionProps,
 } from "./ThreadAccordion/index.js";

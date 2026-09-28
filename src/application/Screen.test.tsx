@@ -463,7 +463,7 @@ describe("Screen", () => {
       await press(screen, "j", "l");
       const activity = await vi.waitFor(async () => {
         const drawn = await screen.redraw();
-        expect(drawn.lines.at(1)).toBe("ISSUES");
+        expect(drawn.lines.at(1)).toContain("docs#4");
         return drawn;
       });
       expect(activity.look("docs#4")?.bg).toBe(
@@ -561,6 +561,9 @@ describe("Screen", () => {
       await vi.waitFor(async () =>
         expect((await screen.redraw()).lines.slice(1, 3).join("")).not.toBe(""),
       );
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines).not.toContain("  loading…"),
+      );
       return screen.redraw();
     }
 
@@ -572,13 +575,13 @@ describe("Screen", () => {
         "  docs#4 issue                       16h",
         "  Where do tokens live?",
         "  alice, bob",
+        "  age 27d · owner alice, bob",
+        "  last activity 25m ago · dave",
+        "  labels none",
+        "",
+        "",
         "    example-sync labelled kind=docs  16h",
         "PULL REQUESTS",
-        " ┃example#12 PR                      25m",
-        " ┃Fix the parser · alice",
-        "    ✗ checks failed (lint)           25m",
-        "    alice requested review            3h",
-        "",
         "",
         "2 threads · 3 events",
         "synced 0m ago",
@@ -602,6 +605,25 @@ describe("Screen", () => {
       expect(up.look("ISSUES")?.bg).not.toBe(selected);
     });
 
+    it("opens the accordion under the selected thread, above its events", async () => {
+      const screen = await showActivity(60);
+      await press(screen, "j");
+      const drawn = await vi.waitFor(async () => {
+        const lines = (await screen.redraw()).lines;
+        expect(lines).not.toContain("  loading…");
+        return lines;
+      });
+      const row = drawn.indexOf(" ┃Fix the parser · alice");
+      expect(drawn.slice(row + 1, row + 7)).toEqual([
+        "  dave · 3d ago",
+        "  Rebased on main. Could someone look again?",
+        "  waiting since Mon 10:00 · target 24h",
+        "  example stack 3 · 2 of 3 · → main",
+        "  below #11 merged, above #13 open",
+        `    ✗ checks failed (lint)${" ".repeat(31)}25m`,
+      ]);
+    });
+
     it("regroups with g and reaches further back with t, at 60 columns", async () => {
       const screen = await showActivity(60);
       const byRepo = await press(screen, "g");
@@ -616,7 +638,7 @@ describe("Screen", () => {
         ),
       );
       expect(wider.lines.at(0)).toBe(`activity${" ".repeat(49)}48h`);
-      expect((await screen.redraw()).lines.at(5)).toBe(
+      expect((await screen.redraw()).lines).toContain(
         `    dave commented${" ".repeat(40)}3d`,
       );
     });

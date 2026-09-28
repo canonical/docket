@@ -35,6 +35,7 @@ import {
   StatusLine,
   useCommands,
 } from "../lib/ui/index.js";
+import type { ThreadSummary } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import identifyRow from "./identifyRow.js";
@@ -342,6 +343,21 @@ export default function Screen({
     }),
     [cached],
   );
+  const readOnce = (
+    read: (thread: ThreadSummary) => Promise<ThreadDetail>,
+    reference: string,
+    thread: ThreadSummary,
+  ) => {
+    const { readings, failed } = details;
+    const arrived = drawnSelection.current?.reference.text !== reference;
+    if (arrived && failed.delete(reference)) readings.delete(reference);
+    const known = readings.get(reference);
+    if (known) return known;
+    const reading = read(thread);
+    reading.catch(() => failed.add(reference));
+    readings.set(reference, reading);
+    return reading;
+  };
 
   // The list region: rows once the data is in, or what stands in for them.
   let region: ReactNode = null;
@@ -371,23 +387,13 @@ export default function Screen({
   } else if (owed?.groups.length === 0) {
     region = <EmptyState message="nothing owed" width={width} />;
   } else if (owed && readThreadDetail) {
-    const readDetail = (row: WaitRow) => {
-      const key = row.reference.text;
-      const { readings, failed } = details;
-      const arrived = drawnSelection.current?.reference.text !== key;
-      if (arrived && failed.delete(key)) readings.delete(key);
-      const known = readings.get(key);
-      if (known) return known;
-      const reading = readThreadDetail(row.wait.thread);
-      reading.catch(() => failed.add(key));
-      readings.set(key, reading);
-      return reading;
-    };
     region = (
       <OwedList
         list={owed}
         selected={placeSelection(rows, selections.owed)}
-        readDetail={readDetail}
+        readDetail={(row) =>
+          readOnce(readThreadDetail, row.reference.text, row.wait.thread)
+        }
         now={at}
         timezone={settings.time.timezone}
         width={width}
@@ -404,11 +410,20 @@ export default function Screen({
       />
     );
   }
-  if (listed) {
+  if (listed && threads && readThreadDetail) {
     region = (
       <ActivityList
         list={listed}
         selected={placeSelection(rows, selections.activity)}
+        readDetail={(row) =>
+          readOnce(readThreadDetail, row.reference.text, row.thread)
+        }
+        waits={buildOwed(threads, watched, "none", at).groups.flatMap(
+          (group) => group.rows,
+        )}
+        threads={threads}
+        now={at}
+        timezone={settings.time.timezone}
         width={width}
         height={height - 4}
       />

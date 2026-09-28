@@ -10,6 +10,7 @@ import {
   ThreadRow,
 } from "../lib/ui/index.js";
 import identifyRow from "./identifyRow.js";
+import listWaiting from "./listWaiting.js";
 
 /** What the list draws, and where. */
 export interface OwedListProps {
@@ -36,18 +37,6 @@ interface Block {
 }
 
 /**
- * The kind of each thread's most pressing wait, by reference, which the
- * accordion names beside a stacked pull request's open neighbours.
- */
-function listWaiting(list: List): Record<string, string> {
-  const waiting: Record<string, string> = {};
-  for (const row of list.groups.flatMap((group) => group.rows)) {
-    waiting[row.reference.text] ??= row.kind.text;
-  }
-  return waiting;
-}
-
-/**
  * owed's list: each group's heading, then its rows, with the accordion
  * open under the selected row. Only the rows move the selection, so a
  * heading is never selected. The list scrolls as little as it must to
@@ -64,7 +53,7 @@ export default function OwedList({
   height,
 }: OwedListProps): ReactNode {
   const [first, setFirst] = useState(0);
-  const waiting = listWaiting(list);
+  const waiting = listWaiting(list.groups.flatMap((group) => group.rows));
   const blocks: Block[] = [];
   let place = 0;
   let from = 0;

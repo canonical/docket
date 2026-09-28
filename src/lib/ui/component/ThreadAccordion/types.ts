@@ -1,5 +1,6 @@
 import type { WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
+import type { Thread, ThreadSummary } from "../../../waits/index.js";
 
 /**
  * One piece of the accordion's text, wrapped to the pane, and the
@@ -21,13 +22,30 @@ export interface DetailText {
   readonly stack: readonly DetailLine[];
 }
 
+/**
+ * A thread no wait runs on, such as a closed one in activity, which the
+ * accordion shows with the close body.
+ */
+export interface RestingThread {
+  /** The short name of its repository, which the stack lines name. */
+  readonly repo: string;
+  /**
+   * The thread, with its recorded facts when they are held: they give its
+   * age and labels. A closed thread's facts are not held.
+   */
+  readonly thread: Thread | ThreadSummary;
+  /** Its owners as its row names them, such as `alice, bob` or `unassigned`. */
+  readonly owners?: string;
+}
+
 /** Props for the ThreadAccordion component. */
 export interface ThreadAccordionProps {
   /**
-   * The selected row, whose kind of wait decides the body.
+   * The selected row's running wait, whose kind decides the body, or the
+   * thread at rest, which takes the close body.
    * Maps to DSL role: reply body, review body, close body (cardinality: 1)
    */
-  row: WaitRow;
+  row: WaitRow | RestingThread;
   /**
    * The thread's details as the provider reads them: the accordion shows
    * `loading…` until they arrive, and the reason if they fail.

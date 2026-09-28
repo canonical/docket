@@ -167,6 +167,44 @@ describe("describeDetail", () => {
     });
   });
 
+  describe("a thread no wait runs on", () => {
+    it("gives the close body from its facts, with the owners its row names", () => {
+      const resting = {
+        repo: "example",
+        thread: sharedClose.wait.thread,
+        owners: "alice, bob",
+      };
+      const { body } = describeDetail(resting, sharedCloseDetail, reading);
+      expect(texts(body)).toEqual([
+        "age 6d · owner alice, bob",
+        "last activity 3h ago · bob",
+        "labels priority=high · kind=bug · area/icons",
+      ]);
+    });
+
+    it("gives its last activity alone when its facts are not held, then its stack lines", () => {
+      const { repo, number, url, kind, title, stack } = overReview.wait.thread;
+      const summary = {
+        repo,
+        number,
+        url,
+        kind,
+        title,
+        ...(stack && { stack }),
+      };
+      const resting = { repo: "example", thread: summary };
+      expect(
+        texts(describeDetail(resting, sharedCloseDetail, reading).body),
+      ).toEqual(["last activity 3h ago · bob"]);
+      expect(
+        texts(describeDetail(resting, overReviewDetail, reading).stack),
+      ).toEqual([
+        "example stack 3 · 2 of 3 · → main",
+        "below #11 merged, above #13 close",
+      ]);
+    });
+  });
+
   describe("a stacked pull request", () => {
     it("ends with its place in the stack and its neighbours, dimmed", () => {
       const { stack } = describeDetail(overReview, overReviewDetail, reading);

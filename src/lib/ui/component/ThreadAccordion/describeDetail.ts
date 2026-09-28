@@ -5,9 +5,10 @@ import type {
   Reviewer,
   ThreadDetail,
 } from "../../../provider/index.js";
+import type { ThreadSummary } from "../../../waits/index.js";
 import { loginCells } from "../../constants.js";
 import describeClock from "../../describeClock.js";
-import type { DetailLine, DetailText } from "./types.js";
+import type { DetailLine, DetailText, RestingThread } from "./types.js";
 
 /** What the details are read with, besides the row and the details. */
 export interface Reading {
@@ -112,19 +113,27 @@ function describeChecks({ checks }: ThreadDetail): DetailLine {
   return line(`checks passed ${total} of ${total}`);
 }
 
-/** The thread's age and owners, its last activity, and its labels. */
-function describeClose(row: WaitRow, detail: ThreadDetail, reading: Reading) {
-  const { now } = reading;
-  const { thread, owners } = row.wait;
+/**
+ * The thread's age and owners, its last activity, and its labels. A
+ * thread whose facts are not held, such as a closed one, shows its last
+ * activity alone.
+ */
+function describeClose(
+  { thread, owners }: RestingThread,
+  detail: ThreadDetail,
+  { now }: Reading,
+) {
   const latest = detail.messages.at(-1);
+  const activity = line(
+    `last activity ${describeAge(detail.updatedAt, now)} ago${latest ? ` · ${latest.author.login}` : ""}`,
+  );
+  if (!("createdAt" in thread)) return [activity];
   const labels = thread.labels.map(decodeLabel).join(" · ") || "none";
   return [
     line(
-      `age ${describeAge(thread.createdAt, now)} · owner ${owners.join(", ") || "unassigned"}`,
+      `age ${describeAge(thread.createdAt, now)} · owner ${owners || "unassigned"}`,
     ),
-    line(
-      `last activity ${describeAge(detail.updatedAt, now)} ago${latest ? ` · ${latest.author.login}` : ""}`,
-    ),
+    activity,
     line(`labels ${labels}`),
   ];
 }
@@ -134,8 +143,12 @@ function describeClose(row: WaitRow, detail: ThreadDetail, reading: Reading) {
  * stack and which place, then its neighbours below and above, each with
  * its state, or the kind of its running wait while it is open.
  */
-function describeStack(row: WaitRow, detail: ThreadDetail, reading: Reading) {
-  const { stack } = row.wait.thread;
+function describeStack(
+  repo: string,
+  { stack }: ThreadSummary,
+  detail: ThreadDetail,
+  reading: Reading,
+) {
   if (!stack) return [];
   const { number, position, size, base } = stack;
   const describeNeighbour = (side: string, place: number) => {
@@ -143,7 +156,7 @@ function describeStack(row: WaitRow, detail: ThreadDetail, reading: Reading) {
     if (!member) return [];
     const state =
       member.state === "open"
-        ? (reading.waiting[`${row.repo}#${member.number}`] ?? "open")
+        ? (reading.waiting[`${repo}#${member.number}`] ?? "open")
         : member.state;
     return [`${side} #${member.number} ${state}`];
   };
@@ -153,7 +166,7 @@ function describeStack(row: WaitRow, detail: ThreadDetail, reading: Reading) {
   ];
   return [
     line(
-      `${row.repo} stack ${number} · ${position} of ${size} · → ${base}`,
+      `${repo} stack ${number} · ${position} of ${size} · → ${base}`,
       "muted",
     ),
     ...(neighbours.length > 0 ? [line(neighbours.join(", "), "muted")] : []),
@@ -163,7 +176,12 @@ function describeStack(row: WaitRow, detail: ThreadDetail, reading: Reading) {
 const bodies = {
   response: describeReply,
   review: describeReview,
-  close: describeClose,
+  close: ({ repo, wait }: WaitRow, detail: ThreadDetail, reading: Reading) =>
+    describeClose(
+      { repo, thread: wait.thread, owners: wait.owners.join(", ") },
+      detail,
+      reading,
+    ),
 } as const;
 
 /**
@@ -172,17 +190,24 @@ const bodies = {
  * when, then when the reply began and its target; a review shows who
  * asked and when, the pushes since, the files and lines changed, and the
  * checks; a close shows the thread's age and owners, its last activity
- * and its labels as `group=value`. A reply and a review first name the
- * owners when the row cuts a person's login. A stacked pull request adds the stack
- * lines. Text is given whole: the accordion fits it to its five lines.
+ * and its labels as `group=value`, and so does a thread no wait runs on.
+ * A reply and a review first name the owners when the row cuts a
+ * person's login. A stacked pull request adds the stack lines. Text is
+ * given whole: the accordion fits it to its five lines.
  */
 export default function describeDetail(
-  row: WaitRow,
+  row: WaitRow | RestingThread,
   detail: ThreadDetail,
   reading: Reading,
 ): DetailText {
+  if (!("wait" in row)) {
+    return {
+      body: describeClose(row, detail, reading),
+      stack: describeStack(row.repo, row.thread, detail, reading),
+    };
+  }
   return {
     body: bodies[row.wait.kind](row, detail, reading),
-    stack: describeStack(row, detail, reading),
+    stack: describeStack(row.repo, row.wait.thread, detail, reading),
   };
 }
