@@ -5,6 +5,11 @@ export default defineConfig({
   // terminal interface renders through OpenTUI's React reconciler, so JSX
   // imports its runtime from there.
   oxc: { jsx: { runtime: "automatic", importSource: "@opentui/react" } },
+  // OpenTUI ships one build for Bun and one for Node. Bun loads the Bun
+  // build for the packages vitest leaves to it, so the files vitest reads
+  // itself take the Bun build too: two copies of OpenTUI's classes would
+  // not recognise each other's objects.
+  ssr: { resolve: { conditions: ["bun"] } },
   test: {
     include: ["src/**/*.test.{ts,tsx}"],
     coverage: {

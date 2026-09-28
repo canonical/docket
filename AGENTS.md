@@ -65,6 +65,7 @@
 - `src/application/main.ts` runs when it is imported: it is the program's entry, not a library module.
 - vitest runs under Bun (`bunx --bun vitest`), the runtime the executable is built on, never under Node.
 - vitest compiles JSX with oxc, so JSX options belong under `oxc` in `vitest.config.ts`; it ignores esbuild's.
+- vitest resolves packages under the `bun` condition, so a test loads OpenTUI's Bun build, as the executable does: with its Node build beside, a renderer does not recognise the components React makes for it.
 - A test of the terminal interface presses keys inside `screen.redraw(() => …)`, which lets React's updates settle before the screen is read back.
 - OpenTUI's own declaration files fail to type-check, so `tsconfig.json` skips declaration files; every source file is still checked.
 - `src/scripts/check-identity.ts` holds the refused words, so it is the one file the identity check skips.
