@@ -1,6 +1,7 @@
 import { quotedNote } from "./constants.js";
 import describeDataAge from "./describeDataAge.js";
 import quote from "./quote.js";
+import quoteShellWord from "./quoteShellWord.js";
 import renderFreshness from "./renderFreshness.js";
 import renderJson from "./renderJson.js";
 import sanitize from "./sanitize.js";
@@ -52,7 +53,9 @@ export default function renderPlan(plan: WritePlan): string {
   const remove = listMissing(current, applied ?? wanted);
   const keep = listMissing(current, remove);
   const unchanged = add.length === 0 && remove.length === 0;
-  const confirm = `docket ${action} ${reference} ${wanted.join(" ")} --confirm`;
+  const confirm = ["docket", action, reference, ...wanted, "--confirm"]
+    .map((word) => quoteShellWord(word))
+    .join(" ");
   if (format === "json") {
     const data = {
       action,

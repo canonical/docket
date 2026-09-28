@@ -99,6 +99,13 @@ describe("renderPlan", () => {
     });
   });
 
+  it("gives the command that applies the plan as the words asked for, each one shell word", () => {
+    const spaced = { ...plan, wanted: ["bob carol", "dave;touch x"] };
+    expect(renderPlan(spaced)).toContain(
+      "`docket assign example#12 'bob carol' 'dave;touch x' --confirm`\n",
+    );
+  });
+
   it("prints no control sequence a login could carry", () => {
     const hostile = { ...plan, current: ["alice\u001b[2J"] };
     expect(renderPlan(hostile)).toContain('- remove "alice"\n');
