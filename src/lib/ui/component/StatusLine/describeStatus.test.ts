@@ -4,6 +4,7 @@ import describeStatus from "./describeStatus.js";
 import {
   FullRefresh,
   FullRefreshRefused,
+  Offline,
   RateLimited,
   RefreshFailed,
   Refreshing,
@@ -28,7 +29,19 @@ describe("describeStatus", () => {
     });
   });
 
-  it("names a failed refresh and the time of the data shown", () => {
+  it("says docket is offline when GitHub gave no answer in time, with the time of the data shown", () => {
+    expect(describeAt(statusOf(Offline))).toEqual({
+      kind: "error",
+      text: "✗ offline · data from 10:12",
+    });
+  });
+
+  it("says docket is offline with no data yet", () => {
+    const status = { ...statusOf(Offline), syncedAt: undefined };
+    expect(describeAt(status)).toEqual({ kind: "error", text: "✗ offline" });
+  });
+
+  it("names any other failed refresh and the time of the data shown", () => {
     expect(describeAt(statusOf(RefreshFailed))).toEqual({
       kind: "error",
       text: "✗ refresh failed · data from 10:12",

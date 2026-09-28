@@ -23,9 +23,14 @@ const settled: CacheStatus = {
   failure: undefined,
 };
 
-const failed: ProviderError = Object.assign(
+const timedOut: ProviderError = Object.assign(
   new Error("GitHub gave no answer within 30 seconds."),
   { code: "GITHUB_TIMED_OUT", recovery: "refresh" } as const,
+);
+
+const refused: ProviderError = Object.assign(
+  new Error("GitHub refused the request."),
+  { code: "GITHUB_REQUEST_FAILED", recovery: "refresh" } as const,
 );
 
 const base = {
@@ -51,14 +56,26 @@ export const RateLimited: Story<StatusLineProps> = {
   },
 };
 
-/** The last refresh failed; the data shown is from before it. */
+/** GitHub gave no answer in time; the data shown is from before. */
+export const Offline: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: {
+      ...settled,
+      syncedAt: new Date("2026-09-28T10:12:00Z"),
+      failure: timedOut,
+    },
+  },
+};
+
+/** GitHub refused the last refresh; the data shown is from before it. */
 export const RefreshFailed: Story<StatusLineProps> = {
   args: {
     ...base,
     status: {
       ...settled,
       syncedAt: new Date("2026-09-28T10:12:00Z"),
-      failure: failed,
+      failure: refused,
     },
   },
 };

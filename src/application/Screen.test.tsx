@@ -138,8 +138,8 @@ describe("Screen", () => {
         "  ✗ The provider failed with",
         "  GITHUB_TIMED_OUT",
       ]);
-      expect(drawn.lines.at(10)).toBe("✗ refresh failed");
-      expect(drawn.look("✗ refresh")?.fg).toBe(tokens["color.text.error"]);
+      expect(drawn.lines.at(10)).toBe("✗ offline");
+      expect(drawn.look("✗ offline")?.fg).toBe(tokens["color.text.error"]);
     });
 
     it("stands in a notice for the list when gh gives no token, with no status", async () => {

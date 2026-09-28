@@ -13,8 +13,9 @@ const describeClock = (at: Date, timezone: string) =>
 
 /**
  * Chooses the one message the status line shows for the cache's state.
- * The first that applies wins: an error; the progress of a full refresh;
- * a refresh in the background; a short notice, such as when a full
+ * The first that applies wins: an error, which says `rate limited`,
+ * `offline` when GitHub gave no answer in time, or else `refresh failed`;
+ * the progress of a full refresh; a refresh in the background; a short notice, such as when a full
  * refresh is available again; and otherwise how old the data is. With no
  * data and nothing happening there is no message.
  */
@@ -33,7 +34,9 @@ export default function describeStatus(
     const what =
       failure.code === "GITHUB_RATE_LIMITED"
         ? "rate limited"
-        : "refresh failed";
+        : failure.code === "GITHUB_TIMED_OUT"
+          ? "offline"
+          : "refresh failed";
     const from = syncedAt
       ? ` · data from ${describeClock(syncedAt, timezone)}`
       : "";
