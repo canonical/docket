@@ -42,6 +42,25 @@ describe("answerWrite", () => {
     },
   );
 
+  it("plans from the assignees GitHub records now, not from the cache", async () => {
+    // The cache holds alice; since then, bob took her place on GitHub.
+    const setAssignees = vi.fn(recordedProvider().setAssignees);
+    const provider = recordedProvider({
+      readAssignees: async () => [{ login: "bob", type: "user" }],
+      setAssignees,
+    });
+    const plan = openSession(home, ["assign", "example#12", "alice"], provider);
+    await answerWrite(plan.session);
+    expect(plan.out()).toContain('- add "alice"\n- remove "bob"\n');
+    const { session } = openSession(
+      home,
+      ["assign", "example#12", "alice", "--confirm"],
+      provider,
+    );
+    expect(await answerWrite(session)).toBe(0);
+    expect(setAssignees).toHaveBeenCalledWith(parserFix, ["alice"]);
+  });
+
   it("sets the whole set with --confirm, and prints what GitHub records", async () => {
     const provider = recordedProvider({
       setAssignees: vi.fn(recordedProvider().setAssignees),

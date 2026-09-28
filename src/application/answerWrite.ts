@@ -84,9 +84,12 @@ export default async function answerWrite(session: Session): Promise<number> {
       `run docket show ${reference.text} to see the thread`,
     );
   }
+  // The plan starts from the set GitHub records now: the cache can be as
+  // old as --max-age, and a plan from it could skip a change or undo one
+  // made since.
   const current =
-    command === "assign"
-      ? thread.assignees.map(({ login }) => login)
+    command === "assign" && isAssignable(thread)
+      ? (await provider.readAssignees(thread)).map(({ login }) => login)
       : (await provider.reviewCandidates(thread)).requested.map(nameReviewer);
   const plan = {
     action: command === "assign" ? "assign" : "review",
