@@ -6,9 +6,9 @@ const [first, , soon] = recordedOwed().groups.at(0)?.rows ?? [];
 if (!first || !soon) throw new Error("the recording has waits");
 
 describe("renderWaitRow", () => {
-  it("gives an agent one complete line, the title quoted and the due time absolute", () => {
+  it("gives an agent one complete line, the title and the author quoted and the due time absolute", () => {
     expect(renderWaitRow(soon, "llm", "Europe/Paris", "standard")).toEqual([
-      '- example#15 · "Crash on start" · reply · unassigned · 4h left, due soon · due 2026-09-28 16:00 Europe/Paris',
+      '- example#15 · "Crash on start" · reply · author "carol" · unassigned · 4h left, due soon · due 2026-09-28 16:00 Europe/Paris',
     ]);
   });
 

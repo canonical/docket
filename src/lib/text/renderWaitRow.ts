@@ -45,6 +45,7 @@ function renderLlmRow(row: WaitRow, timezone: string, detail: Detail): string {
     described.reference,
     quote(row.title.text),
     described.kind,
+    `author ${quote(row.author.text)}`,
     describeOwners(described.owners.map((login) => quote(login))),
     describeDistance(described),
     `due ${described.due}`,
@@ -79,7 +80,8 @@ function renderPlainRow(
 
 /**
  * Writes one running wait: for an agent, one complete line with the title
- * quoted, the owners, the distance and the absolute due time; for a
+ * quoted, the author of what waits, the owners, the distance and the
+ * absolute due time; for a
  * person, the reference line, the title, then the owners and marks.
  * `detailed` adds when the wait started and its target.
  */
