@@ -1,15 +1,7 @@
 import { describeAge } from "../../../activity/index.js";
 import type { CacheStatus } from "../../../cache/index.js";
+import describeClock from "../../describeClock.js";
 import type { StatusMessage } from "./types.js";
-
-/** Writes the time of day of `at` in `timezone`, such as `14:20`. */
-const describeClock = (at: Date, timezone: string) =>
-  new Intl.DateTimeFormat("en-GB", {
-    timeZone: timezone,
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).format(at);
 
 /**
  * Chooses the one message the status line shows for the cache's state.

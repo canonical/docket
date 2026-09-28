@@ -15,6 +15,7 @@ export {
   type StatusLineProps,
 } from "./component/index.js";
 export { default as createKeymap } from "./createKeymap.js";
+export { default as describeClock } from "./describeClock.js";
 export {
   type KeyCommand,
   type UseCommandsProps,
