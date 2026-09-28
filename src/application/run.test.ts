@@ -1,3 +1,4 @@
+// Longer than 500 lines because every route a call takes through run is tested here, end to end, on one temporary home.
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,6 +12,7 @@ import {
   recordedNow,
   recordedProvider,
 } from "../testing/recorded.js";
+import type { TerminalView } from "./types.js";
 
 let home: Home;
 
@@ -45,6 +47,51 @@ describe("run", () => {
         '- example#15 · "Crash on start" · close · unassigned · 29d left · due 2026-11-06 16:00 Europe/Paris',
         "",
       ]);
+    });
+
+    it("opens the terminal interface on the shared cache when alone in a terminal", async () => {
+      const views: TerminalView[] = [];
+      const { code, out, err } = await home.call([], {
+        interactive: true,
+        openTerminal: async (view) => {
+          views.push(view);
+          return 0;
+        },
+      });
+      expect([code, out, err]).toEqual([0, "", ""]);
+      const [view] = views;
+      expect(view?.watched.map(({ name }) => name)).toEqual([
+        "example",
+        "docs",
+      ]);
+      expect(view?.mode).toBe("owed");
+      expect(view?.settings.time.timezone).toBe("Europe/Paris");
+      expect(view?.now()).toEqual(recordedNow);
+      expect(view && "cache" in view.source).toBe(true);
+    });
+
+    it("opens the terminal interface on activity for docket activity in a terminal, without --format", async () => {
+      const views: TerminalView[] = [];
+      const openTerminal = async (view: TerminalView) => {
+        views.push(view);
+        return 0;
+      };
+      const opened = await home.call(["activity"], {
+        interactive: true,
+        openTerminal,
+      });
+      expect([opened.code, opened.out, opened.err]).toEqual([0, "", ""]);
+      expect(views.map(({ mode }) => mode)).toEqual(["activity"]);
+      const named = await home.call(["activity", "--format", "plain"], {
+        interactive: true,
+      });
+      expect(named.out).toMatch(/^activity · /);
+      const piped = await home.call(["activity"], {
+        interactive: true,
+        interactiveInput: false,
+      });
+      expect(piped.out).toMatch(/^activity · /);
+      expect(views).toHaveLength(1);
     });
 
     it("prints plain text in a terminal, and whatever --format names", async () => {

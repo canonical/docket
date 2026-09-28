@@ -2,7 +2,14 @@
   "extends": "@canonical/typescript-config-react",
   "compilerOptions": {
     "resolveJsonModule": true,
-    "types": ["bun"]
+    "types": ["bun"],
+    // The terminal interface renders through OpenTUI's React reconciler, so
+    // JSX imports its runtime from there.
+    "jsxImportSource": "@opentui/react",
+    // OpenTUI's own declarations fail to type-check, against themselves and
+    // against @types/react. This skips declaration files only: every source
+    // file of docket is still checked in full.
+    "skipLibCheck": true
   },
   "include": ["src", "vitest.config.ts"]
 }

@@ -5,7 +5,11 @@
   "packageRules": [
     {
       "description": "The terminal renderer is pinned to one exact version, and a new version is adopted by hand after it is checked on screen.",
-      "matchPackageNames": ["@opentui/core", "@opentui/react"],
+      "matchPackageNames": [
+        "@opentui/core",
+        "@opentui/keymap",
+        "@opentui/react"
+      ],
       "enabled": false
     }
   ]

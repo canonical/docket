@@ -15,7 +15,7 @@
 - `bun run check:licences`: refuses any production dependency whose licence is not on the permissive list in `src/scripts/check-licences.ts`.
 - `bun run check:structure`: checks the source tree's shape against the conventions below: exports and file names, barrels, folders, the direction of imports between domains, and file length.
 - `bun run self-test`: proves the identity, secret, advisory, licence and structure gates can each fail, by running each against a scratch fixture it must reject.
-- `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>`, `assign <reference> <login>…`, `review <reference> <login or org/team>…` and `config`; `--help` after any of them gives its flags, an example and its exit codes.
+- `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>`, `assign <reference> <login>…`, `review <reference> <login or org/team>…` and `config`; `--help` after any of them gives its flags, an example and its exit codes. When a terminal gives both the input and the output, `docket` alone opens the terminal interface on owed instead, and `docket activity` without `--format` opens it on activity; piped or captured, every call prints text. `?` lists its keys and `q` quits.
 
 ## Conventions
 
@@ -39,9 +39,14 @@
 - Every string from GitHub or from a repository's file goes through `sanitize` before it is printed, and `llm` output marks it as quoted data: each title, login, team, label, check name, file path and branch in double quotes, and comments as `>` lines.
 - `assign` and `review` print a plan and change nothing unless given `--confirm`, and never send a change that alters nothing.
 - Text mode reads threads, and activity's events, through the cache with `--max-age` (300 seconds by default) and never starts the refresh cycle.
-- Each watched repository's `.github/docket.yaml` is read from its default branch through the cache with `--max-age`, as the threads are. An invalid one gives that repository the built-in defaults for the sections it may declare and marks its rows; one GitHub fails to give leaves the personal file's settings, with a warning.
+- Each watched repository's `.github/docket.yaml` is read from its default branch through the cache with `--max-age`, as the threads are. An invalid one gives that repository the built-in defaults for the sections it may declare and marks its rows; one GitHub fails to give leaves the personal file's settings, with a warning. The terminal interface opens before it reads them, on the built-in defaults and the personal file, starts reading them after its first frame and applies them once they have all arrived, so a slow or unreachable GitHub never holds up the screen.
+- The terminal interface sits in `src/lib/ui/`, a folder per block under its kind (`layout/`, `subcomponent/`, `component/`): `Name.tsx`, `Name.stories.tsx`, `Name.test.tsx`, `types.ts` and `index.ts`. A block takes its width as a prop and draws within it, trimming or wrapping with `trimText` and `wrapText`, which count display cells with `Bun.stringWidth`, never characters. The pane needs 40 columns (`MIN_COLUMNS` in `src/lib/ui/layout/Pane/Pane.tsx`) and below that only says so.
+- Stories follow Component Story Format, typed by `src/testing/stories.ts`, and the block's tests draw them through OpenTUI's test renderer with `draw()` from `src/testing/terminal.tsx`, asserting the characters and colours of each line at 40 columns and at one wider width.
+- Every colour comes from `tokens` in `src/lib/tokens/`, which names meanings, never colours, and each colour on screen is paired with a symbol or a word.
+- Keys are bound through OpenTUI's keymap, in the one global layer of `src/application/Screen.tsx`. Each command carries its help label (`desc`), its `group`, an optional key-bar `hint` and `notes`; the help and the key bar read them back with `useCommands`, so a key changes only where it is bound.
+- The terminal interface starts the refresh cycle when it opens and stops it when it closes, in `src/application/openTerminal.tsx`, and nowhere else. It reads the cache's status and threads with `useSyncExternalStore`.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
-- Every implementation file under `src/lib/` and `src/application/` has its own unit tests beside it, as `<name>.test.ts`, with `describe` blocks named for its export; barrels, `types.ts` and `constants.ts` have none. Each `it()` states an outcome a caller can observe.
+- Every implementation file under `src/lib/` and `src/application/` has its own unit tests beside it, as `<name>.test.ts` (`.test.tsx` for a file holding JSX), with `describe` blocks named for its export; barrels, `types.ts` and `constants.ts` have none. Each `it()` states an outcome a caller can observe.
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.
 - Tests of the GitHub provider stub `fetch` with `fakeGitHub()` from `src/testing/github.ts`, which answers with responses in the shapes GitHub gives, and run under fake timers, settling each call with `settle()` so the throttling plugin's waits pass at once. No test reaches the network.
 - Tests of the text interface answer from `recordedProvider()` in `src/testing/recorded.ts` at `recordedNow`, and compare whole outputs line by line. `makeHome()` and `openSession()` in `src/testing/docket.ts` run a call, or one command, on a temporary configuration and cache.
@@ -61,6 +66,9 @@
 - `src/application/main.ts` runs when it is imported: it is the program's entry, not a library module.
 - vitest runs under Bun (`bunx --bun vitest`), the runtime the executable is built on, never under Node.
 - vitest compiles JSX with oxc, so JSX options belong under `oxc` in `vitest.config.ts`; it ignores esbuild's.
+- vitest resolves packages under the `bun` condition, so a test loads OpenTUI's Bun build, as the executable does: with its Node build beside, a renderer does not recognise the components React makes for it.
+- A test of the terminal interface presses keys inside `screen.redraw(() => …)`, which lets React's updates settle before the screen is read back.
+- OpenTUI's own declaration files fail to type-check, so `tsconfig.json` skips declaration files; every source file is still checked.
 - `src/scripts/check-identity.ts` holds the refused words, so it is the one file the identity check skips.
 - The audit and its self-test query the advisory database, and the first gitleaks run through nix downloads it, so `bun run ci` needs the network.
 - GitHub Actions does not run for this repository, so the local `bun run ci` is the gate: paste its output into the pull request's QA section.

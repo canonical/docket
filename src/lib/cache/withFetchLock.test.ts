@@ -150,6 +150,23 @@ describe("withFetchLock", () => {
     expect(await readdir(directory)).toEqual([]);
   }, 20_000);
 
+  it("leaves no lock behind when the process ends while its task waits on an answer", async () => {
+    const quitter = spawn(process.execPath, [
+      "src/testing/lockQuitter.ts",
+      directory,
+    ]);
+    let said = "";
+    quitter.stdout.on("data", (chunk: Buffer) => {
+      said += chunk.toString();
+    });
+    expect(await once(quitter, "exit")).toEqual([0, null]);
+    expect(said.trim()).toBe("holding");
+    expect(await readdir(directory)).toEqual([]);
+    const started = Date.now();
+    expect(await withFetchLock(directory, async () => "ran")).toBe("ran");
+    expect(Date.now() - started).toBeLessThan(1_000);
+  }, 20_000);
+
   it("leaves alone, as it exits, the lock another process took over while its failing task stalled", async () => {
     const start = (script: string) => {
       const child = spawn(process.execPath, [script, directory]);

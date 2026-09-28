@@ -1,11 +1,17 @@
 import type { Cache } from "../lib/cache/index.js";
-import type { PersonalFile, Repo, Resolved } from "../lib/config/index.js";
-import type { Provider } from "../lib/provider/index.js";
+import type {
+  PersonalFile,
+  Repo,
+  Resolved,
+  Settings,
+} from "../lib/config/index.js";
+import type { Capability, Provider } from "../lib/provider/index.js";
 import type {
   CommandName,
   Detail,
   Format,
   Freshness,
+  Problem,
 } from "../lib/text/index.js";
 
 /** What the process gives docket: its arguments, its world and its output. */
@@ -15,6 +21,11 @@ export interface Context {
   readonly environment: Readonly<Record<string, string | undefined>>;
   /** Whether a terminal shows the output, rather than a pipe or a file. */
   readonly interactive: boolean;
+  /**
+   * Whether a terminal gives the input, rather than a pipe or a file, so
+   * that keys can be read from it.
+   */
+  readonly interactiveInput: boolean;
   /** Writes the answer. */
   readonly write: (text: string) => void;
   /** Writes an error. */
@@ -27,6 +38,11 @@ export interface Context {
    * @throws ProviderError `GH_*` when gh gives no token.
    */
   readonly connect: (host: string) => Promise<Provider>;
+  /**
+   * Opens the terminal interface on `view`, and gives the exit code once
+   * it is quit.
+   */
+  readonly openTerminal: (view: TerminalView) => Promise<number>;
   readonly version: string;
 }
 
@@ -36,6 +52,8 @@ export interface Invocation {
   /** The arguments after the command's name. */
   readonly positionals: readonly string[];
   readonly format: Format;
+  /** Whether `--format` named the format, rather than the output choosing it. */
+  readonly formatGiven: boolean;
   readonly detail: Detail;
   /** How old cached data may be, in milliseconds. */
   readonly maxAge: number;
@@ -83,3 +101,51 @@ export interface Session {
     warnings?: Freshness["warnings"],
   ) => Freshness;
 }
+
+/** The two modes of the terminal interface. */
+export type TerminalMode = "owed" | "activity";
+
+/** What the terminal interface shows, and where its data comes from. */
+export interface TerminalView {
+  /** The mode it opens on. */
+  readonly mode: TerminalMode;
+  /** The current time, read whenever an age is measured. */
+  readonly now: () => Date;
+  /**
+   * The settings that hold across repositories: the activity windows
+   * and the time zone times are written in.
+   */
+  readonly settings: Settings;
+  /**
+   * Each watched repository, in the configuration's order, with the
+   * settings it opens on: the built-in defaults and the personal file,
+   * until its own file is read.
+   */
+  readonly watched: readonly Watched[];
+  /**
+   * The shared cache, the facts the provider supplies and a reading of
+   * the repositories' own files, or why gh gave no token.
+   */
+  readonly source:
+    | {
+        readonly cache: Cache;
+        readonly capabilities: ReadonlySet<Capability>;
+        /**
+         * Reads each watched repository's own file, called once the
+         * interface has opened, so a slow or unreachable GitHub never
+         * holds up the first frame. It never rejects: a failure comes back
+         * as the problem the interface shows in place of the list.
+         */
+        readonly readWatched: () => Promise<WatchedFiles>;
+      }
+    | { readonly problem: Problem };
+}
+
+/**
+ * Each watched repository with the settings its own file gives it, or the
+ * failure that stopped the files being read, such as GitHub refusing gh's
+ * token.
+ */
+export type WatchedFiles =
+  | { readonly watched: readonly Watched[] }
+  | { readonly problem: Problem };

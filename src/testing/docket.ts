@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import parseArguments from "../application/parseArguments.js";
 import run from "../application/run.js";
-import type { Context, Session } from "../application/types.js";
+import type { Context, Session, TerminalView } from "../application/types.js";
 import { createCache, locateCacheDirectory } from "../lib/cache/index.js";
 import { parseFile, resolveSettings } from "../lib/config/index.js";
 import type { Provider } from "../lib/provider/index.js";
@@ -26,6 +26,10 @@ time:
 activity: [72h, 1w]
 `;
 
+/** Fails the call: it asked for the terminal interface, which it should not. */
+const refuseTerminal = () =>
+  Promise.reject(new Error("the call opened the terminal interface"));
+
 /** What one call printed, and how it exited. */
 export interface Outcome {
   readonly code: number;
@@ -36,13 +40,20 @@ export interface Outcome {
 /** A folder holding docket's configuration and cache for one test. */
 export interface Home {
   readonly root: string;
-  /** Runs docket with `args`, as a piped call unless `interactive`. */
+  /**
+   * Runs docket with `args`, as a piped call unless `interactive`, which
+   * makes a terminal both the output and, unless `interactiveInput` says
+   * otherwise, the input.
+   */
   call(
     args: readonly string[],
     options?: {
       readonly provider?: Provider | (() => Promise<Provider>);
       readonly interactive?: boolean;
+      readonly interactiveInput?: boolean;
       readonly now?: Date;
+      /** Stands in for the terminal interface, which a test cannot open. */
+      readonly openTerminal?: (view: TerminalView) => Promise<number>;
     },
   ): Promise<Outcome>;
   remove(): Promise<void>;
@@ -73,6 +84,8 @@ export async function makeHome(
           XDG_CACHE_HOME: join(root, "cache"),
         },
         interactive: options.interactive ?? false,
+        interactiveInput:
+          options.interactiveInput ?? options.interactive ?? false,
         write: (text) => {
           out += text;
         },
@@ -81,6 +94,7 @@ export async function makeHome(
         },
         now: () => options.now ?? recordedNow,
         connect: async () => (typeof given === "function" ? given() : given),
+        openTerminal: options.openTerminal ?? refuseTerminal,
         version: "1.2.3",
       });
       return { code, out, err };
@@ -119,6 +133,7 @@ export function openSession(
     args,
     environment,
     interactive: false,
+    interactiveInput: false,
     write: (text) => {
       out += text;
     },
@@ -127,6 +142,7 @@ export function openSession(
     },
     now: () => now,
     connect: async () => provider,
+    openTerminal: refuseTerminal,
     version: "1.2.3",
   };
   const session: Session = {

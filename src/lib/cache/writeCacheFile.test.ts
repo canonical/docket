@@ -1,3 +1,5 @@
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { readdirSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -89,5 +91,22 @@ describe("writeCacheFile", () => {
     await mkdir(join(file, "in-the-way"), { recursive: true });
     await expect(writeCacheFile(file, stateOf([]), ignore)).rejects.toThrow();
     expect(await readdir(join(root, "docket"))).toEqual(["snapshots.json"]);
+  });
+
+  it("leaves the old file whole when the process ends before the new one takes its place", async () => {
+    await writeCacheFile(file, stateOf([thread({ number: 1 })]), ignore);
+    const writer = spawn(process.execPath, [
+      "src/testing/writeQuitter.ts",
+      file,
+    ]);
+    expect(await once(writer, "exit")).toEqual([0, null]);
+    const read = await readCacheFile(file);
+    expect(read?.state.queries[0]?.state.data).toEqual([thread({ number: 1 })]);
+    // The new contents stay in their temporary file, which no reader opens.
+    const left = (await readdir(join(root, "docket"))).sort();
+    expect(left).toEqual([
+      "snapshots.json",
+      expect.stringMatching(/^snapshots\.json\..+\.tmp$/),
+    ]);
   });
 });

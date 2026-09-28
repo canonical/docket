@@ -62,7 +62,7 @@ const catalogue: readonly Command[] = [
     notes: [
       "Rows run most overdue first, measured as a share of each wait's own target, so a reply 12 hours over a 24-hour target ranks above a close 12 hours over a 5-day one.",
       "Targets count working time on the configured workdays and time zone.",
-      "`docket` with no command prints the same list.",
+      "`docket` with no command prints the same list when piped, and opens the terminal interface on it in a terminal.",
     ],
     flags: [
       {
@@ -88,6 +88,7 @@ const catalogue: readonly Command[] = [
     notes: [
       "Threads run by their newest event, newest first, with their events under them.",
       "Windows count working time, so a 24h window on a Monday morning reaches back to Friday morning.",
+      "In a terminal, with no `--format`, `docket activity` opens the terminal interface on activity; piped or captured, or given `--format`, it prints the list.",
     ],
     flags: [
       {

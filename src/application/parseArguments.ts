@@ -158,6 +158,7 @@ export default function parseArguments(
       format:
         formats.find((entry) => entry === values.format) ??
         chooseFormat(interactive),
+      formatGiven: values.format !== undefined,
       detail: details.find((entry) => entry === values.detail) ?? defaultDetail,
       maxAge: Number(seconds) * 1000,
       by: choose("by"),

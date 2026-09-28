@@ -195,14 +195,14 @@ describe("createClient", () => {
     expect(answer.status).toBe(200);
   });
 
-  it("names GITHUB_REQUEST_FAILED when GitHub cannot be reached", async () => {
+  it("names GITHUB_UNREACHABLE when GitHub cannot be reached", async () => {
     vi.stubGlobal("fetch", async () => {
       throw new TypeError("fetch failed");
     });
     const error = await failure(client().request("GET /rate_limit"));
     expect(error).toMatchObject({
-      code: "GITHUB_REQUEST_FAILED",
-      message: "docket could not get an answer from GitHub.",
+      code: "GITHUB_UNREACHABLE",
+      message: "docket could not reach github.com: the request got no answer.",
     });
   });
 
@@ -279,14 +279,14 @@ describe("createClient", () => {
     }
   });
 
-  it("names GITHUB_REQUEST_FAILED, even when allowed, when GitHub cannot be reached", async () => {
+  it("names GITHUB_UNREACHABLE, even when allowed, when GitHub cannot be reached", async () => {
     vi.stubGlobal("fetch", async () => {
       throw new TypeError("fetch failed");
     });
     const error = await failure(
       client().query(viewer, {}, { allowMissing: true }),
     );
-    expect(error).toMatchObject({ code: "GITHUB_REQUEST_FAILED" });
+    expect(error).toMatchObject({ code: "GITHUB_UNREACHABLE" });
   });
 
   it("names GITHUB_REQUEST_FAILED when a page of a list is refused", async () => {

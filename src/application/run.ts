@@ -12,7 +12,9 @@ import answerActivity from "./answerActivity.js";
 import answerConfig from "./answerConfig.js";
 import answerOwed from "./answerOwed.js";
 import answerShow from "./answerShow.js";
+import answerTerminal from "./answerTerminal.js";
 import answerWrite from "./answerWrite.js";
+import chooseTerminalMode from "./chooseTerminalMode.js";
 import describeFailure from "./describeFailure.js";
 import isNamedError from "./isNamedError.js";
 import parseArguments from "./parseArguments.js";
@@ -28,9 +30,12 @@ const answers = {
 } as const;
 
 /**
- * Answers one call of docket in text: parses it, reads the personal file,
- * asks gh for a token, and answers the command from the shared cache,
- * which also holds each watched repository's own file.
+ * Answers one call of docket: parses it, reads the personal file, asks gh
+ * for a token, and answers the command from the shared cache, which also
+ * holds each watched repository's own file. In a terminal, `docket` alone
+ * opens the terminal interface instead, on owed, and `docket activity`
+ * without `--format` on activity; a missing prerequisite then shows there
+ * rather than as text.
  * Text mode never refreshes in the background: it fetches only when the
  * cached data is older than `--max-age`.
  *
@@ -40,7 +45,8 @@ const answers = {
  * stop prints a named code and a recovery step.
  *
  * @note Impure: reads the personal file, asks gh for a token, reads and
- * writes the cache, asks GitHub, and writes the answer.
+ * writes the cache, asks GitHub, and writes the answer or hands the
+ * terminal to the interface until it is closed.
  */
 export default async function run(context: Context): Promise<number> {
   let format: Format = chooseFormat(context.interactive);
@@ -91,6 +97,17 @@ export default async function run(context: Context): Promise<number> {
         invocation,
         personal,
         resolved,
+        connection,
+      );
+    }
+    const mode = chooseTerminalMode(context, invocation);
+    if (mode) {
+      return await answerTerminal(
+        context,
+        mode,
+        invocation.maxAge,
+        personal.outcome?.layer,
+        settings,
         connection,
       );
     }

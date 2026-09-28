@@ -99,6 +99,16 @@ describe("describeFailure", () => {
     });
   });
 
+  it("names GITHUB_UNREACHABLE when the request got no answer, naming the host", () => {
+    const refused = { status: 500, cause: new TypeError("Unable to connect.") };
+    expect(described(refused)).toEqual({
+      code: "GITHUB_UNREACHABLE",
+      message: "docket could not reach github.com: the request got no answer.",
+      recovery:
+        "check the network connection and https://www.githubstatus.com, then refresh",
+    });
+  });
+
   it("reads a server error or no answer as GitHub out of reach", () => {
     const outOfReach = {
       code: "GITHUB_REQUEST_FAILED",
