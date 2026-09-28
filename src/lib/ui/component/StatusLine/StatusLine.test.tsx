@@ -6,6 +6,7 @@ import {
   ActionDone,
   ActionFailed,
   Blank,
+  BudgetPaused,
   DetailsPaused,
   FullRefresh,
   Idle,
@@ -69,10 +70,34 @@ describe("StatusLine", () => {
     expect(screen.look("idle")?.fg).toBe(tokens["color.text.muted"]);
   });
 
-  it("dims details paused after how old the data is", async () => {
+  it("dims details paused on the right side, apart from how old the data is", async () => {
     const screen = await draw(<StatusLine {...DetailsPaused.args} />, 40);
-    expect(screen.lines.at(0)).toBe("synced 2m ago · details paused");
+    expect(screen.lines.at(0)).toBe(
+      `synced 2m ago${" ".repeat(13)}details paused`,
+    );
     expect(screen.look("details")?.fg).toBe(tokens["color.text.muted"]);
+  });
+
+  it("says details paused beside the refresh paused below the budget floor, and leaves it out where the two sides would meet", async () => {
+    const wide = await draw(
+      <StatusLine {...BudgetPaused.args} width={60} />,
+      60,
+    );
+    expect(wide.lines.at(0)).toBe(
+      `refresh paused · resumes 13:00${" ".repeat(16)}details paused`,
+    );
+    const narrow = await draw(<StatusLine {...BudgetPaused.args} />, 40);
+    expect(narrow.lines.at(0)).toBe("refresh paused · resumes 13:00");
+  });
+
+  it("hides details paused while the left side shows an error or the pane is idle", async () => {
+    const limited = await draw(
+      <StatusLine {...RateLimited.args} detailsPaused />,
+      40,
+    );
+    expect(limited.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
+    const idle = await draw(<StatusLine {...Idle.args} detailsPaused />, 40);
+    expect(idle.lines.at(0)).toBe("synced 25m ago · idle · any key wakes");
   });
 
   it("stays blank with no cache", async () => {

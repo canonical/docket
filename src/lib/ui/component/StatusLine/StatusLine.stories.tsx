@@ -155,6 +155,21 @@ export const DetailsPaused: Story<StatusLineProps> = {
   args: { ...base, status: settled, detailsPaused: true },
 };
 
+/**
+ * Below the budget floor: neither the list nor the details spend a point,
+ * and at 40 columns the two sides would meet, so the right is left out.
+ */
+export const BudgetPaused: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: {
+      ...settled,
+      paused: { until: new Date("2026-09-28T13:00:00Z"), reason: "budget" },
+    },
+    detailsPaused: true,
+  },
+};
+
 /** No cache: gh is missing or not signed in. */
 export const Blank: Story<StatusLineProps> = {
   args: base,

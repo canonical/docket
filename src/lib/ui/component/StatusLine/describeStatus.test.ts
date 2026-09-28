@@ -4,7 +4,6 @@ import describeStatus from "./describeStatus.js";
 import {
   ActionDone,
   ActionFailed,
-  DetailsPaused,
   FullRefresh,
   FullRefreshRefused,
   Idle,
@@ -34,16 +33,6 @@ describe("describeStatus", () => {
       kind: "freshness",
       text: "synced 25m ago · idle · any key wakes",
     });
-  });
-
-  it("follows how old the data is with details paused once their hour's budget is spent, unless the pane is idle", () => {
-    const { status } = DetailsPaused.args;
-    expect(
-      describeStatus(status, now, "UTC", names, undefined, "active", true),
-    ).toEqual({ kind: "freshness", text: "synced 2m ago · details paused" });
-    expect(
-      describeStatus(status, now, "UTC", names, undefined, "idle", true)?.text,
-    ).toBe("synced 2m ago · idle · any key wakes");
   });
 
   it("says nothing of attention while the pane is active or waking", () => {

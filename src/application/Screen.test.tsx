@@ -1627,7 +1627,9 @@ describe("Screen", { timeout: 15_000 }, () => {
         ...view,
         source: { ...view.source, details },
       });
-      expect(screen.lines.at(-2)).toBe("synced 0m ago · details paused");
+      expect(screen.lines.at(-2)).toBe(
+        `synced 0m ago${" ".repeat(13)}details paused`,
+      );
     });
 
     it("reads the selected thread's details and those of the rows around it in one request on opening, so moving to them reads nothing", async () => {

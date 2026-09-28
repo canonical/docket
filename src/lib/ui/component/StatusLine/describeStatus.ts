@@ -14,8 +14,7 @@ const resultShown = 5_000;
  * action, for 5 seconds after it; the progress of a full refresh; a
  * refresh in the background; a short notice, such as when a full refresh
  * is available again; and otherwise how old the data is, followed, while
- * the pane is idle, by `idle · any key wakes`, and otherwise, while
- * reading details has spent the hour's budget, by `details paused`. With no data and nothing
+ * the pane is idle, by `idle · any key wakes`. With no data and nothing
  * happening there is no message, and with no cache only an action's
  * result.
  */
@@ -26,7 +25,6 @@ export default function describeStatus(
   names: Readonly<Record<string, string>>,
   action?: ActionResult,
   attention?: AttentionState,
-  detailsPaused = false,
 ): StatusMessage | undefined {
   const paused = status?.paused;
   const failure = status?.failure;
@@ -70,12 +68,7 @@ export default function describeStatus(
     return { kind: "notice", text };
   }
   if (syncedAt) {
-    const suffix =
-      attention === "idle"
-        ? " · idle · any key wakes"
-        : detailsPaused
-          ? " · details paused"
-          : "";
+    const suffix = attention === "idle" ? " · idle · any key wakes" : "";
     const text = `synced ${describeAge(syncedAt, now)} ago${suffix}`;
     return { kind: "freshness", text };
   }

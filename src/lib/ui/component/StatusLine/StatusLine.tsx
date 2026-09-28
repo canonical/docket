@@ -21,9 +21,13 @@ const colours: Readonly<Record<StatusMessage["kind"], string>> = {
 };
 
 /**
- * docket's own state, one message at a time. The cases are listed in
- * priority order: the first that applies is the one shown, and the line
- * stays blank when none does (the prerequisite frames).
+ * docket's own state. The left side is the list's, one message at a
+ * time: the cases are listed in priority order, the first that applies
+ * is the one shown, and the side stays blank when none does (the
+ * prerequisite frames). The right side is the details', dimmed:
+ * `details paused` while reading them spends nothing, hidden while the
+ * left side shows an error or the pane is idle, since nothing is read
+ * then, and dropped when the two sides would meet.
  *
  * `import { StatusLine } from "../lib/ui/index.js";`
  *
@@ -46,11 +50,22 @@ const StatusLine = ({
     names,
     action,
     attention,
-    detailsPaused,
   );
+  const left = message ? trimText(message.text, width) : "";
+  const right =
+    detailsPaused && message?.kind !== "error" && attention !== "idle"
+      ? "details paused"
+      : "";
+  // At least one cell apart, or the right side is left out.
+  const gap = width - Bun.stringWidth(left) - Bun.stringWidth(right);
   return (
     <text fg={message ? colours[message.kind] : tokens["color.text"]}>
-      {message ? trimText(message.text, width) : ""}
+      {left}
+      {right && gap > 0 && (
+        <span fg={tokens["color.text.muted"]}>
+          {`${" ".repeat(gap)}${right}`}
+        </span>
+      )}
     </text>
   );
 };

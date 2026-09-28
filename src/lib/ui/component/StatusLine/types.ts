@@ -41,8 +41,8 @@ export interface StatusLineProps {
    */
   attention?: AttentionState;
   /**
-   * Whether reading details spent the hour's budget, so only the selected
-   * thread's are read, which the freshness of an active pane then says.
+   * Whether reading details is held back, by the hour's budget for them or
+   * the budget floor, which the right side of an active pane then says.
    */
   detailsPaused?: boolean;
   /** The instant ages and waits are measured at. */
