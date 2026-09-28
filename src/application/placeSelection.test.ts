@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { findActivityRow } from "../testing/activity.js";
 import {
   draftClose,
   overReview,
@@ -11,7 +12,7 @@ import placeSelection from "./placeSelection.js";
 const rows = [overReview, soonReply, draftClose];
 const on = (place: number, row = rows[place] ?? overReview) => ({
   place,
-  wait: identifyRow(row),
+  row: identifyRow(row),
 });
 
 describe("placeSelection", () => {
@@ -27,15 +28,21 @@ describe("placeSelection", () => {
     expect(
       placeSelection([sharedClose, overReview, sharedClose], {
         place: 2,
-        wait: identifyRow(sharedClose),
+        row: identifyRow(sharedClose),
       }),
     ).toBe(2);
   });
 
   it("keeps its place, within the list, when the wait is gone", () => {
-    const gone = { place: 2, wait: "example#99 close " };
+    const gone = { place: 2, row: "example#99 close " };
     expect(placeSelection(rows, gone)).toBe(2);
     expect(placeSelection(rows.slice(0, 2), gone)).toBe(1);
     expect(placeSelection([], gone)).toBe(0);
+  });
+
+  it("follows activity's thread when newer events move it", () => {
+    const [first, second] = [findActivityRow(12), findActivityRow(15)];
+    const selected = { place: 0, row: identifyRow(first) };
+    expect(placeSelection([second, first], selected)).toBe(1);
   });
 });

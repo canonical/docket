@@ -7,7 +7,12 @@ import ActivityList from "./ActivityList.js";
 describe("ActivityList", () => {
   it("heads each kind of thread, with every thread's events nested under it, at 40 columns", async () => {
     const screen = await draw(
-      <ActivityList list={recordedActivity("kind")} width={40} />,
+      <ActivityList
+        list={recordedActivity("kind")}
+        selected={0}
+        width={40}
+        height={20}
+      />,
       40,
     );
     expect(screen.lines.slice(0, 12)).toEqual([
@@ -29,7 +34,12 @@ describe("ActivityList", () => {
 
   it("lists the threads without headings when not grouped, at 60 columns", async () => {
     const screen = await draw(
-      <ActivityList list={recordedActivity("none")} width={60} />,
+      <ActivityList
+        list={recordedActivity("none")}
+        selected={0}
+        width={60}
+        height={20}
+      />,
       60,
     );
     expect(screen.lines.slice(0, 3)).toEqual([
@@ -38,5 +48,38 @@ describe("ActivityList", () => {
       `    ✗ checks failed (lint)${" ".repeat(31)}25m`,
     ]);
     expect(screen.look("✗ checks failed")?.fg).toBe(tokens["color.text.error"]);
+  });
+
+  it("gives the selected thread the selection background, and never a heading", async () => {
+    const screen = await draw(
+      <ActivityList
+        list={recordedActivity("kind")}
+        selected={1}
+        width={40}
+        height={20}
+      />,
+      40,
+    );
+    const selected = tokens["color.background.selected"];
+    expect(screen.look("Fix the parser")?.bg).toBe(selected);
+    expect(screen.look("docs#4")?.bg).not.toBe(selected);
+    expect(screen.look("PULL REQUESTS")?.bg).not.toBe(selected);
+  });
+
+  it("scrolls to keep the selected thread whole, with its heading when it leads its group", async () => {
+    const screen = await draw(
+      <ActivityList
+        list={recordedActivity("kind")}
+        selected={1}
+        width={40}
+        height={6}
+      />,
+      40,
+    );
+    expect(screen.lines.slice(0, 3)).toEqual([
+      "PULL REQUESTS",
+      " ┃example#12 PR                      25m",
+      " ┃Fix the parser · alice",
+    ]);
   });
 });

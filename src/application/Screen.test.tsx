@@ -458,14 +458,20 @@ describe("Screen", () => {
       );
     });
 
-    it("keeps owed's selection while activity is shown, where the keys move nothing", async () => {
+    it("keeps a selection for each mode, so switching back finds it where it was", async () => {
       const screen = await showRecorded();
-      const activity = await press(screen, "l", "j");
-      expect(activity.lines.join("\n")).not.toContain("▌");
-      expect(activity.lines.at(11)).toBe("←→ mode g grp t time ?");
+      await press(screen, "j", "l");
+      const activity = await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(1)).toBe("ISSUES");
+        return drawn;
+      });
+      expect(activity.look("docs#4")?.bg).toBe(
+        tokens["color.background.selected"],
+      );
       const owed = await press(screen, "h");
       expect(owed.lines.at(1)).toBe(
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
       );
     });
 
@@ -576,8 +582,24 @@ describe("Screen", () => {
         "",
         "2 threads · 3 events",
         "synced 0m ago",
-        "←→ mode g grp t time ?",
+        "←→ mode ↑↓ sel g grp t time ?",
       ]);
+    });
+
+    it("moves the selection over the threads with j and k, never onto a heading", async () => {
+      const screen = await showActivity(40);
+      const selected = tokens["color.background.selected"];
+      expect(screen.look("docs#4")?.bg).toBe(selected);
+      const down = await press(screen, "j");
+      expect(down.look("Fix the parser")?.bg).toBe(selected);
+      expect(down.look("docs#4")?.bg).not.toBe(selected);
+      expect(down.look("PULL REQUESTS")?.bg).not.toBe(selected);
+      expect((await press(screen, "down")).look("Fix the parser")?.bg).toBe(
+        selected,
+      );
+      const up = await press(screen, "k", "up");
+      expect(up.look("docs#4")?.bg).toBe(selected);
+      expect(up.look("ISSUES")?.bg).not.toBe(selected);
     });
 
     it("regroups with g and reaches further back with t, at 60 columns", async () => {
@@ -713,7 +735,7 @@ describe("Screen", () => {
       expect(owed.lines.at(0)).toBe("owed");
       expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
       const activity = await press(screen, "right");
-      expect(activity.lines.at(11)).toBe("←→ mode g grp t time ?");
+      expect(activity.lines.at(11)).toBe("←→ mode ↑↓ sel g grp t time ?");
       expect(activity.look("t")?.bold).toBe(true);
     });
 
