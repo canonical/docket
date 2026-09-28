@@ -6,6 +6,7 @@ import {
   ActionDone,
   ActionFailed,
   Blank,
+  DetailsPaused,
   FullRefresh,
   Idle,
   RateLimited,
@@ -66,6 +67,12 @@ describe("StatusLine", () => {
     const screen = await draw(<StatusLine {...Idle.args} />, 40);
     expect(screen.lines.at(0)).toBe("synced 25m ago · idle · any key wakes");
     expect(screen.look("idle")?.fg).toBe(tokens["color.text.muted"]);
+  });
+
+  it("dims details paused after how old the data is", async () => {
+    const screen = await draw(<StatusLine {...DetailsPaused.args} />, 40);
+    expect(screen.lines.at(0)).toBe("synced 2m ago · details paused");
+    expect(screen.look("details")?.fg).toBe(tokens["color.text.muted"]);
   });
 
   it("stays blank with no cache", async () => {

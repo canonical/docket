@@ -33,6 +33,7 @@ const StatusLine = ({
   status,
   action,
   attention,
+  detailsPaused,
   now,
   timezone,
   names,
@@ -45,6 +46,7 @@ const StatusLine = ({
     names,
     action,
     attention,
+    detailsPaused,
   );
   return (
     <text fg={message ? colours[message.kind] : tokens["color.text"]}>

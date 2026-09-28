@@ -1551,6 +1551,15 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(attention.press).toHaveBeenCalledTimes(2);
     });
 
+    it("says details are paused once reading them spent the hour's budget", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const view = viewOf(cache);
+      const source = { ...view.source, isDetailCapped: () => true };
+      const screen = await show({ ...view, source });
+      expect(screen.lines.at(-2)).toBe("synced 0m ago · details paused");
+    });
+
     it("opens activity at the window and grouping the call names, and t steps on from there", async () => {
       const [, , threeDays] = recordedSettings.activity;
       const view = {

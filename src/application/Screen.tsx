@@ -465,6 +465,7 @@ export default function Screen({
           status={problem ? undefined : shownStatus}
           action={action}
           attention={attentionState}
+          detailsPaused={"cache" in source && source.isDetailCapped?.(at)}
           now={at}
           timezone={settings.time.timezone}
           names={Object.fromEntries(

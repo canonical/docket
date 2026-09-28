@@ -40,6 +40,11 @@ export interface StatusLineProps {
    * says, with the key that wakes it. Active when not given.
    */
   attention?: AttentionState;
+  /**
+   * Whether reading details spent the hour's budget, so only the selected
+   * thread's are read, which the freshness of an active pane then says.
+   */
+  detailsPaused?: boolean;
   /** The instant ages and waits are measured at. */
   now: Date;
   /** The time zone a time of day is written in, such as `Europe/Paris`. */

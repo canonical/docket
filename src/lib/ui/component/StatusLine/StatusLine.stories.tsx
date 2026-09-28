@@ -150,6 +150,11 @@ export const Idle: Story<StatusLineProps> = {
   },
 };
 
+/** Reading details spent the hour's budget: only the selected thread's are read. */
+export const DetailsPaused: Story<StatusLineProps> = {
+  args: { ...base, status: settled, detailsPaused: true },
+};
+
 /** No cache: gh is missing or not signed in. */
 export const Blank: Story<StatusLineProps> = {
   args: base,

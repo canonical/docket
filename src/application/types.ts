@@ -158,6 +158,11 @@ export interface TerminalView {
          */
         readonly readDetail: (thread: ThreadSummary) => Promise<ThreadDetail>;
         /**
+         * Whether reading details has spent the hour's budget at `at`,
+         * which the status line then says. Never, when not given.
+         */
+        readonly isDetailCapped?: (at: Date) => boolean;
+        /**
          * Reads from GitHub, never the cache, whom an editor offers for
          * `thread` and the set it holds.
          */
