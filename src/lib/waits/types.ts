@@ -99,6 +99,13 @@ export interface Wait {
   readonly thread: Thread;
   readonly kind: WaitKind;
   /**
+   * The author of what is waiting: for a reply, of the latest message
+   * from outside the team; for a review, of the pull request; for a close,
+   * of the thread. The owners say who owes the next move, the author who
+   * waits on it.
+   */
+  readonly author: Author;
+  /**
    * The logins, or the team, the wait belongs to. It is empty when nobody
    * is assigned, which the views show as `unassigned`.
    */
