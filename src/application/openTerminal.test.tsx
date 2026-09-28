@@ -100,7 +100,14 @@ describe("openTerminal", () => {
         readDetail: async () => parserFixDetail,
       },
     });
-    await vi.waitFor(() => expect(snapshot).toHaveBeenCalled());
+    await vi.waitFor(async () => {
+      expect(snapshot).toHaveBeenCalled();
+      await setup.renderOnce();
+      // The keys work once the key bar, drawn from them, shows.
+      expect(setup.captureCharFrame()).toContain(
+        "←→ mode ↑↓ sel ⏎ open g grp ?",
+      );
+    });
     setup.mockInput.pressKey("q");
     const started = Date.now();
     expect(await closed).toBe(0);
