@@ -366,6 +366,32 @@ describe("useEditor", () => {
       );
     });
 
+    it("gives GitHub's reason for a change it will not make, and says to apply again", async () => {
+      const refused = Object.assign(
+        new Error("GitHub refused the request: dave is not a collaborator."),
+        {
+          code: "GITHUB_REQUEST_FAILED",
+          recovery: "change what GitHub's reason names, then refresh",
+        },
+      );
+      const provider = recordedProvider({
+        setAssignees: () => Promise.reject(refused),
+      });
+      const opened = await settle(
+        await press(await showRecorded(provider, 60, 20), "a"),
+      );
+      const refusal = await settle(
+        await press(opened, "down", "down", "space", "return"),
+        isAnswered,
+      );
+      expect(readRegion(refusal).slice(7, 10)).toEqual([
+        "  ✗ GitHub refused the request: dave is not a collaborator",
+        "  Recovery: change what GitHub's reason names, then apply",
+        "  again",
+      ]);
+      expect(refusal.lines.at(0)).toBe("assigning example#12");
+    });
+
     it("stays open with WRITE_INCOMPLETE's words when GitHub records less than was set", async () => {
       const provider = recordedProvider({
         setAssignees: async () => [],

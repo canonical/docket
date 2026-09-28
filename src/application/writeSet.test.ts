@@ -208,4 +208,53 @@ describe("writeSet", () => {
       writeSet(await target(provider), assignBob),
     ).rejects.toMatchObject({ code: "GITHUB_REQUEST_FAILED" });
   });
+
+  it("ends a refusal's recovery with the face's own way to retry", async () => {
+    const refused = Object.assign(new Error("GitHub refused the request."), {
+      code: "GITHUB_REQUEST_FAILED",
+      recovery: "change what GitHub's reason names, then refresh",
+    });
+    const provider = recordedProvider({
+      setReviewers: () => Promise.reject(refused),
+    });
+    await expect(
+      writeSet(await target(provider), {
+        ...assignBob,
+        action: "review",
+        wanted: ["carol"],
+      }),
+    ).rejects.toMatchObject({
+      code: "GITHUB_REQUEST_FAILED",
+      message: "GitHub refused the request.",
+      recovery: "change what GitHub's reason names, then apply again",
+    });
+  });
+
+  it("ends the recovery of a read that failed with the face's own way to retry", async () => {
+    const timedOut = Object.assign(new Error("GitHub gave no answer."), {
+      code: "GITHUB_TIMED_OUT",
+      recovery: "check the network connection, then refresh",
+    });
+    const provider = recordedProvider({
+      readAssignees: () => Promise.reject(timedOut),
+    });
+    await expect(
+      writeSet(await target(provider), {
+        ...assignBob,
+        retry: "run the command again",
+      }),
+    ).rejects.toMatchObject({
+      recovery: "check the network connection, then run the command again",
+    });
+  });
+
+  it("lets a failure without a name through as it is", async () => {
+    const defect = new Error("a defect");
+    const provider = recordedProvider({
+      setAssignees: () => Promise.reject(defect),
+    });
+    await expect(writeSet(await target(provider), assignBob)).rejects.toBe(
+      defect,
+    );
+  });
 });

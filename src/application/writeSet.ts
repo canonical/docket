@@ -51,6 +51,23 @@ export interface WriteTarget {
   readonly cache: Cache;
 }
 
+/**
+ * A provider's recovery ends by refreshing, the terminal's way to try
+ * again, which an open editor and text mode each do their own way: the
+ * error thrown ends with `retry` instead.
+ */
+const retryWith =
+  (retry: string) =>
+  (error: unknown): never => {
+    const tail = ", then refresh";
+    if (!isNamedError(error) || !error.recovery.endsWith(tail)) throw error;
+    const { code, message, recovery } = error;
+    throw Object.assign(new Error(message), {
+      code,
+      recovery: `${recovery.slice(0, -tail.length)}, then ${retry}`,
+    });
+  };
+
 /** `org/team` names a team; anything else a person. */
 const readReviewer = (name: string): Reviewer =>
   name.includes("/") ? { team: name } : { login: name, type: "user" };
@@ -75,24 +92,34 @@ const isSameSet = (a: readonly string[], b: readonly string[]) =>
  *
  * @note Impure: reads GitHub, writes the change to it when asked to
  * apply, and refreshes the cache after it.
- * @throws ProviderError when GitHub refuses the change or a read.
+ * @throws ProviderError when GitHub refuses the change or a read, its
+ * recovery ending with `retry`.
  */
 export default async function writeSet(
   { provider, cache }: WriteTarget,
   request: WriteRequest,
 ): Promise<WriteOutcome> {
   const { action, thread, reference, wanted, apply, format, retry } = request;
+  const fail = retryWith(retry);
   const current =
     action === "assign" && isAssignable(thread)
-      ? (await provider.readAssignees(thread)).map(({ login }) => login)
-      : (await provider.reviewCandidates(thread)).requested.map(nameReviewer);
+      ? (await provider.readAssignees(thread).catch(fail)).map(
+          ({ login }) => login,
+        )
+      : (await provider.reviewCandidates(thread).catch(fail)).requested.map(
+          nameReviewer,
+        );
   if (!apply || isSameSet(current, wanted)) return { current };
   const applied =
     action === "assign" && isAssignable(thread)
-      ? (await provider.setAssignees(thread, wanted)).map(({ login }) => login)
-      : (await provider.setReviewers(thread, wanted.map(readReviewer))).map(
-          nameReviewer,
-        );
+      ? (await provider.setAssignees(thread, wanted).catch(fail)).map(
+          ({ login }) => login,
+        )
+      : (
+          await provider
+            .setReviewers(thread, wanted.map(readReviewer))
+            .catch(fail)
+        ).map(nameReviewer);
   // The change is made whatever the refresh meets, so a failure is only a
   // warning.
   let warning: Problem | undefined;
