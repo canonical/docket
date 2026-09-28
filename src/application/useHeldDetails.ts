@@ -87,6 +87,10 @@ export default function useHeldDetails({
       return held.shown;
     }
     const reading = read(thread);
+    // The details held from before the thread changed stay on screen
+    // until the new ones settle, so a change never draws `loading…` over
+    // details already shown. After a failed read nothing is held, and the
+    // read draws `loading…` until it settles.
     const next: HeldDetail = {
       version,
       shown: held && !held.failed ? held.shown : reading,
