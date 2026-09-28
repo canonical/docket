@@ -55,7 +55,7 @@ const throughCache =
 /**
  * Draws what the hook gives, one line: the list's summary and the age of
  * its newest thread, the code of its problem, or `reading` while it has
- * nothing. `change` sets new props, as the screen would.
+ * nothing. `change` sets the props it names, as the screen would.
  *
  * @param makeReader Makes the source's reading of events from its cache.
  */
@@ -126,7 +126,7 @@ describe("useActivity", () => {
     expect(reader).not.toHaveBeenCalled();
   });
 
-  it("moves the ages with the clock without reading again", async () => {
+  it("moves the ages with the clock without another read", async () => {
     let reads = 0;
     const { change, read } = await probe((cache) => (repo, since) => {
       reads += 1;
@@ -138,7 +138,7 @@ describe("useActivity", () => {
     expect(reads).toBe(2);
   });
 
-  it("reads again at each sync, and shows nothing for a new window until its events are in", async () => {
+  it("reads at each sync, and shows nothing for a window t steps to until its events are in", async () => {
     let reads = 0;
     let wait: Promise<CachedEvents> | undefined;
     const { change, read } = await probe((cache) => (repo, since) => {

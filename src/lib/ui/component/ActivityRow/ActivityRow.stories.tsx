@@ -15,7 +15,7 @@ export const Stacked: Story<ActivityRowProps> = {
   args: { row: findActivityRow(12), width: 40 },
 };
 
-/** A draft pull request nobody owns. */
+/** A draft pull request with no owner. */
 export const Draft: Story<ActivityRowProps> = {
   args: { row: findActivityRow(14), width: 40 },
 };

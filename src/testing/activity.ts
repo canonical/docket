@@ -24,7 +24,7 @@ const parserFix = thread({
   assignees: [alice],
 });
 
-/** A draft pull request example-sync opened, which nobody owns. */
+/** A draft pull request example-sync opened, with no owner. */
 const bump = thread({
   number: 14,
   kind: "pullRequest",

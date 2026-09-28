@@ -20,7 +20,7 @@ export interface UseActivityProps {
   readonly threads: readonly Thread[] | undefined;
   /**
    * When the cache last synced. Each sync of the refresh cycle reads the
-   * events again, through the cache's maximum age.
+   * events, through the cache's maximum age.
    */
   readonly syncedAt: Date | undefined;
   /** Whether activity is on screen; nothing is read while it is not. */
@@ -51,11 +51,12 @@ type Read = { readonly window: Duration } & (
 
 /**
  * Reads activity's events through the cache, and builds its list from
- * them at every instant the screen is drawn at. The events are read again
- * when the window, the watched repositories or the cache's last sync
- * change; a list already shown for the window stays while they are. When
- * GitHub or the cache fails, the events the cache holds for the window
- * answer, however old: the status line already says what went wrong.
+ * them at every instant the screen is drawn at. The events are read
+ * whenever the window, the watched repositories or the cache's last
+ * sync change; a list already shown for the window stays while they
+ * are. When GitHub or the cache fails, the events the cache holds for the
+ * window answer, however old: the status line already says what went
+ * wrong.
  *
  * @note Impure: reads the cache, which asks GitHub when its events are
  * older than the call's maximum age.
@@ -74,7 +75,7 @@ export default function useActivity({
   const [read, setRead] = useState<Read>();
   const reading = shown && threads !== undefined && "cache" in source;
   const synced = syncedAt?.getTime();
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the last sync is named so that every sync reads the events again.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the last sync is named so that each sync reads the events.
   useEffect(() => {
     if (!reading || !("cache" in source)) return;
     const { cache, readEvents } = source;
