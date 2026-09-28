@@ -10,7 +10,9 @@
  * - `request-budget`: the stand-in holds another request open beside
  *   each one docket sends, and the entry must see two open at once.
  * - `working-clock`: the stand-in answers every recorded instant an hour
- *   later, and the entry must see the replies fall due at other times.
+ *   later, and the entry must see the replies fall due at other times;
+ *   then the stand-in's clock reads an hour later, and the entry must see
+ *   less time left, which shows it reads the clock it is given.
  *
  * `hostile-text` checks its own detector against every hostile word, on
  * every run.
@@ -59,7 +61,17 @@ const proofs: readonly Proof[] = [
     failure:
       "× carries a reply asked on Friday at 16:00 over the weekend to Monday at 16:00",
   },
+  {
+    entry: "working-clock",
+    standInBreak: "later",
+    failure:
+      "× leaves 15 hours at 01:00 on Monday in the configured time zone, while it is still Sunday in UTC",
+  },
 ];
+
+/** How the report names `proof`: its entry, and its break when it has one. */
+const nameProof = ({ entry, standInBreak }: Proof) =>
+  standInBreak ? `${entry} (${standInBreak})` : entry;
 
 /** Runs `proof`'s entry broken, and says whether it failed as it must. */
 const checkProof = async (proof: Proof): Promise<boolean> => {
@@ -95,7 +107,7 @@ const checkProof = async (proof: Proof): Promise<boolean> => {
 
 const unproved: string[] = [];
 for (const proof of proofs) {
-  if (!(await checkProof(proof))) unproved.push(proof.entry);
+  if (!(await checkProof(proof))) unproved.push(nameProof(proof));
 }
 
 if (unproved.length > 0) {
@@ -105,5 +117,5 @@ if (unproved.length > 0) {
   process.exit(1);
 }
 console.error(
-  `\nprove: ${proofs.map(({ entry }) => entry).join(", ")} each failed when broken, as they must.`,
+  `\nprove: ${proofs.map(nameProof).join(", ")} each failed when broken, as they must.`,
 );

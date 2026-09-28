@@ -26,7 +26,8 @@
  *
  * - `overlap`: each request docket sends finds another already open, as
  *   if docket had sent two at once;
- * - `shift`: every instant in a recorded answer is an hour later.
+ * - `shift`: every instant in a recorded answer is an hour later;
+ * - `later`: the clock reads an hour after `GUARANTEES_NOW`.
  *
  * @note Impure: replaces two globals and appends to a file.
  */
@@ -46,12 +47,17 @@ if (!GUARANTEES_NOW || !GUARANTEES_RECORDING || !GUARANTEES_REQUESTS) {
 }
 // A misspelt break would leave the stand-in whole, and the entry it was
 // meant to break would pass as though it could not fail.
-if (GUARANTEES_BREAK && !["overlap", "shift"].includes(GUARANTEES_BREAK)) {
+if (
+  GUARANTEES_BREAK &&
+  !["overlap", "shift", "later"].includes(GUARANTEES_BREAK)
+) {
   throw new Error(
-    `the stand-in has no break \`${GUARANTEES_BREAK}\`: overlap or shift`,
+    `the stand-in has no break \`${GUARANTEES_BREAK}\`: overlap, shift or later`,
   );
 }
-const fixed = new Date(GUARANTEES_NOW).getTime();
+const fixed =
+  new Date(GUARANTEES_NOW).getTime() +
+  (GUARANTEES_BREAK === "later" ? 3_600_000 : 0);
 const recording: Recording = (await import(GUARANTEES_RECORDING)).default;
 const log = GUARANTEES_REQUESTS;
 appendFileSync(
