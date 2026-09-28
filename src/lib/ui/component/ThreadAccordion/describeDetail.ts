@@ -35,15 +35,19 @@ const nameReviewer = (reviewer: Reviewer) =>
 const decodeLabel = (label: string) => label.replace(/^([^:=]+):\s*/, "$1=");
 
 /**
- * The owners, whole, when the row cuts any of their logins: only the
- * close body names them otherwise. It comes first, so no message pushes it
- * out of the five lines.
+ * The owners, whole, when the row cuts a person's login: only the close
+ * body names them otherwise. It comes first, so no message pushes it out
+ * of the five lines. A team's name, `organisation/team`, never earns the
+ * line, cut or not: on a stacked review the line would push the checks
+ * out, and nearly every team's name is longer than a login's room.
  */
 function describeCutOwners({ owner, owners }: WaitRow): DetailLine[] {
   const names = [owner, ...(owners?.fields ?? [])].flatMap((field) =>
     field ? [field.text] : [],
   );
-  const cut = names.some((name) => Bun.stringWidth(name) > loginCells);
+  const cut = names.some(
+    (name) => !name.includes("/") && Bun.stringWidth(name) > loginCells,
+  );
   return cut ? [line(`owner ${names.join(", ")}`)] : [];
 }
 
@@ -169,7 +173,7 @@ const bodies = {
  * asked and when, the pushes since, the files and lines changed, and the
  * checks; a close shows the thread's age and owners, its last activity
  * and its labels as `group=value`. A reply and a review first name the
- * owners when the row cuts a login. A stacked pull request adds the stack
+ * owners when the row cuts a person's login. A stacked pull request adds the stack
  * lines. Text is given whole: the accordion fits it to its five lines.
  */
 export default function describeDetail(

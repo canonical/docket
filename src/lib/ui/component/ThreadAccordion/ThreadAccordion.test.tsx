@@ -59,6 +59,22 @@ describe("ThreadAccordion", () => {
       ]);
     });
 
+    it("keeps a stacked review's checks in its five lines when the row cuts only a team", async () => {
+      const row = measureRow({
+        ...Review.args.row.wait,
+        owners: ["example-org/reviewers"],
+      });
+      const screen = await open({ ...Review.args, row });
+      expect(screen.lines.slice(0, 6)).toEqual([
+        "  asked by alice 3d ago",
+        "  1 push since · 2 files · +65 −12",
+        "  ✗ checks: 1 of 2 failed (lint)",
+        "  example stack 3 · 2 of 3 · → main",
+        "  below #11 merged, above #13 close",
+        "",
+      ]);
+    });
+
     it("shows a reply's message in full, wrapped, then when it began, in five lines", async () => {
       const screen = await open(Reply.args);
       expect(screen.lines.slice(0, 6)).toEqual([

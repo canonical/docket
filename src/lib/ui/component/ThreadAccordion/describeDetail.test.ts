@@ -90,9 +90,9 @@ describe("describeDetail", () => {
         ...overReview.wait,
         owners: ["example-org/reviewers"],
       });
-      expect(
-        texts(describeDetail(team, detail, reading).body).slice(0, 2),
-      ).toEqual(["owner example-org/reviewers", "asked by carol 2h ago"]);
+      expect(texts(describeDetail(team, detail, reading).body).at(0)).toBe(
+        "asked by carol 2h ago",
+      );
     });
 
     it("counts from when the wait began when no request is recorded, in plural", () => {
@@ -221,6 +221,21 @@ describe("describeDetail, for an owner the row cuts", () => {
     const row = ownedBy(overReview, ["alice", "bob", "carol-at-example-org"]);
     expect(firstLine(row, overReviewDetail)).toBe(
       "owner alice, bob, carol-at-example-org",
+    );
+  });
+
+  it("leaves a team the row cuts to the row, with no owner line", () => {
+    const row = ownedBy(overReview, ["example-org/reviewers"]);
+    expect(firstLine(row, overReviewDetail)).toBe("asked by alice 3d ago");
+  });
+
+  it("names every owner whole, a team among them, when the row cuts a person's login", () => {
+    const row = ownedBy(overReview, [
+      "example-org/reviewers",
+      "carol-at-example-org",
+    ]);
+    expect(firstLine(row, overReviewDetail)).toBe(
+      "owner example-org/reviewers, carol-at-example-org",
     );
   });
 });
