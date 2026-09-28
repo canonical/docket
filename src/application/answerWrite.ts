@@ -26,6 +26,9 @@ const readReviewer = (name: string): Reviewer =>
  *
  * @returns 3 when GitHub records less than was asked for, with
  * `WRITE_INCOMPLETE`; a refusal throws the provider's error.
+ *
+ * @note Impure: reads the cache and GitHub, writes the change to GitHub
+ * on `--confirm`, and prints the plan or its result.
  */
 export default async function answerWrite(session: Session): Promise<number> {
   const { context, invocation, watched, provider } = session;
