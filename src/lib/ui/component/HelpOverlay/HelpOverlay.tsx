@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import type { KeyCommand } from "../../hooks/index.js";
 import trimText from "../../trimText.js";
+import { GroupHeading } from "../GroupHeading/index.js";
 import type { HelpOverlayProps } from "./types.js";
 
 /** The indent of a key, in display cells. */
@@ -42,12 +43,7 @@ const HelpOverlay = ({
     <box flexDirection="column">
       {groupCommands(commands).map(([group, lines]) => (
         <box key={group} flexDirection="column" flexShrink={0} marginTop={1}>
-          <text
-            fg={tokens["color.text"]}
-            attributes={tokens["typography.weight.bold"]}
-          >
-            {trimText(group, width)}
-          </text>
+          <GroupHeading text={group} width={width} />
           {lines.map((line) => {
             const keys = trimText(writeKeys(line), width - indent);
             const gap = " ".repeat(
