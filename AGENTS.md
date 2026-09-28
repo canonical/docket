@@ -5,7 +5,7 @@
 - `bun install`: installs the exact toolchain that `bun.lock` records.
 - `bun run ci`: runs every gate below in order, and passes only when all of them pass. A pull request is ready when it passes locally.
 - `bun run build`: type-checks the shipped sources with `tsconfig.build.json`, then compiles `src/application/main.ts` into one Linux x64 executable at `dist/docket`.
-- `bun run check`: runs Biome's formatter and linter over the repository, then type-checks everything under `src/` with `tsconfig.json`.
+- `bun run check`: runs Biome's formatter and linter over the repository, then type-checks everything under `src/` and `guarantees/` with `tsconfig.json`.
 - `bunx biome check --write`: applies Biome's formatting and safe lint fixes.
 - `bun run test`: runs the unit tests with vitest under Bun.
 - `bun run test:coverage`: runs them with v8 coverage, and fails below 100% of the lines, branches, functions and statements in `src/application/` and `src/lib/`.
@@ -13,8 +13,11 @@
 - `bun run check:secrets`: scans every commit and every staged or unstaged change with gitleaks. It uses `gitleaks` from PATH, or runs it through `nix run nixpkgs#gitleaks` when only nix is installed.
 - `bun run check:audit`: refuses any dependency with a published advisory (`bun audit`).
 - `bun run check:licences`: refuses any production dependency whose licence is not on the permissive list in `src/scripts/check-licences.ts`.
-- `bun run check:structure`: checks the source tree's shape against the conventions below: exports and file names, barrels, folders, the direction of imports between domains, and file length.
+- `bun run check:structure`: checks the source tree's shape against the conventions below: exports and file names, barrels, folders, the direction of imports between domains, file length, and that the guarantees corpus imports nothing under `src/`.
 - `bun run self-test`: proves the identity, secret, advisory, licence and structure gates can each fail, by running each against a scratch fixture it must reject.
+- `bun run guarantees`: runs the guarantees corpus's `pr` tier, `guarantees/corpus.toml`'s entries one at a time; `bun guarantees/invoker.ts run <entry>` runs one.
+- `bun run guarantees:accept <entry>`: runs one entry and saves what it prints under `guarantees/goldens/`; the only way a saved output is written.
+- `bun run guarantees:prove`: breaks the corpus on purpose, one entry at a time, and requires each entry to fail for its break: a saved output moved aside for `text-output`, a request held open beside docket's for `request-budget`, and recorded instants an hour late for `working-clock`.
 - `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>`, `assign <reference> <login>…`, `review <reference> <login or org/team>…` and `config`; `--help` after any of them gives its flags, an example and its exit codes. When a terminal gives both the input and the output, `docket` alone opens the terminal interface on owed instead, and `docket activity` without `--format` opens it on activity; piped or captured, every call prints text. `?` lists its keys and `q` quits.
 
 ## Conventions
@@ -26,7 +29,7 @@
 - An implementation file under `src/lib/` or `src/application/` exports one value, as its default, and is named after it: `rows.ts` holds `export default function rows`. It may also export the types of its own signature. `types.ts` exports only types and `constants.ts` only named constants.
 - A folder's `index.ts` is a barrel: only named re-exports, such as `export { default as rows } from "./rows.js"`, reaching a file beside it or a child folder's `index.js`. It never uses `export *`, and no import uses a `#` path alias.
 - No folder is named for a property, such as `utils/`, `helpers/`, `shared/` or `types/`. The exception is `common/` inside a terminal component under `src/lib/ui/`, which holds its subcomponents.
-- Imports between domains point one way, and `src/scripts/check-structure.ts` holds the table: the model domains import only each other; the view models import the model, and activity also imports owed, whose field types and owner naming both lists share; the port imports the model's types; the adapter and the cache import the port and the model; the text, token and interface domains import the view models, the tokens and the port's types, and the text and interface domains also the cache's types, to show its status, and the model's types, to show a thread's facts and the settings in effect. Only `src/application/` imports everything. Nothing in `src/lib/` imports `src/application/`, `src/testing/` or `src/scripts/`, and nothing in `src/` imports `guarantees/`.
+- Imports between domains point one way, and `src/scripts/check-structure.ts` holds the table: the model domains import only each other; the view models import the model, and activity also imports owed, whose field types and owner naming both lists share; the port imports the model's types; the adapter and the cache import the port and the model; the text, token and interface domains import the view models, the tokens and the port's types, and the text and interface domains also the cache's types, to show its status, and the model's types, to show a thread's facts and the settings in effect. Only `src/application/` imports everything. Nothing in `src/lib/` imports `src/application/`, `src/testing/` or `src/scripts/`, and nothing in `src/` imports `guarantees/`, nor anything in `guarantees/` `src/`.
 - Nothing under `src/lib/` reads the system clock. The current time is an argument, so every result is the same under test.
 - The model domains derive everything from facts a provider records, such as who wrote a comment and when, and infer none. A rule GitHub does not apply, such as "the author is the assignee", is never applied here.
 - The view models (`owed`, `activity`) give each piece of text as a field marked trimmed or wrapped, and never cut it to a width: only a face knows its width, and it measures display cells. They cap no field either: how much room a slot gets, such as the owner on a terminal row, belongs to the face that trims it, and a face that never trims shows every field whole.
@@ -50,6 +53,8 @@
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.
 - Tests of the GitHub provider stub `fetch` with `fakeGitHub()` from `src/testing/github.ts`, which answers with responses in the shapes GitHub gives, and run under fake timers, settling each call with `settle()` so the throttling plugin's waits pass at once. No test reaches the network.
 - Tests of the text interface answer from `recordedProvider()` in `src/testing/recorded.ts` at `recordedNow`, and compare whole outputs line by line. `makeHome()` and `openSession()` in `src/testing/docket.ts` run a call, or one command, on a temporary configuration and cache.
+- The guarantees corpus runs docket as its own process, `bun --preload guarantees/standIn.ts src/application/main.ts`, in a temporary home with a stand-in `gh` on `PATH`. The stand-in fixes `new Date()` at the instant a guarantee names and answers `fetch` from a recording under `guarantees/fixtures/`, written in GitHub's response shapes. A guarantee reads only the output, the exit code and the requests sent.
+- A guarantee is a test file and a row in `guarantees/corpus.toml`. A missing saved output fails its entry, and the tier's `expect = "fail"` entry must fail for the tier to pass.
 - Fixtures and examples use neutral names only: `alice`, `bob`, `example.com`, `example-org/example-repo`.
 - Commit subjects follow Conventional Commits, with the domain as the scope. Commits are normal commits: no amending and no force-pushing.
 - A pull request fills `.github/PULL_REQUEST_TEMPLATE.md`.
@@ -71,4 +76,5 @@
 - OpenTUI's own declaration files fail to type-check, so `tsconfig.json` skips declaration files; every source file is still checked.
 - `src/scripts/check-identity.ts` holds the refused words, so it is the one file the identity check skips.
 - The audit and its self-test query the advisory database, and the first gitleaks run through nix downloads it, so `bun run ci` needs the network.
+- The throttling plugin spaces GraphQL requests a second apart, and the guarantees send them for real to the stand-in, so the tier takes about a minute.
 - GitHub Actions does not run for this repository, so the local `bun run ci` is the gate: paste its output into the pull request's QA section.

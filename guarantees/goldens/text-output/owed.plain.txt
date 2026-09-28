@@ -1,0 +1,25 @@
+exit 0
+--- out
+owed
+synced 0m ago
+2 over · 1 soon · 3 on track
+
+example#12 · reply · 4d over
+  Fix the parser
+  alice · checks failing · example stack 3, 2 of 3
+example#12 · close · 2h over
+  Fix the parser
+  alice · checks failing · example stack 3, 2 of 3
+example#15 · reply · 4h left, due soon
+  Crash on start
+  unassigned
+docs#4 · close · 10d left
+  Where do tokens live?
+  alice, bob
+example#12 · review · 1d left
+  Fix the parser
+  bob · checks failing · example stack 3, 2 of 3
+example#15 · close · 29d left
+  Crash on start
+  unassigned
+--- err

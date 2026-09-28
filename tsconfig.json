@@ -11,5 +11,5 @@
     // file of docket is still checked in full.
     "skipLibCheck": true
   },
-  "include": ["src", "vitest.config.ts"]
+  "include": ["src", "guarantees", "vitest.config.ts"]
 }

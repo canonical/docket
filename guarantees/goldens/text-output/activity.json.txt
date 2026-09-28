@@ -1,0 +1,112 @@
+exit 0
+--- out
+{
+  "mode": "activity",
+  "window": "72h",
+  "grouping": "kind",
+  "data": {
+    "syncedAt": "2026-09-28T10:00:00.000Z",
+    "ageSeconds": 0,
+    "warnings": []
+  },
+  "counts": {
+    "threads": 3,
+    "events": 6
+  },
+  "groups": [
+    {
+      "kind": "issue",
+      "threads": [
+        {
+          "reference": "docs#4",
+          "title": "Where do tokens live?",
+          "kind": "issue",
+          "owners": [
+            "alice",
+            "bob"
+          ],
+          "draft": false,
+          "stack": null,
+          "invalidRepositoryFile": false,
+          "events": [
+            {
+              "kind": "labelled",
+              "label": "kind=docs",
+              "bot": true,
+              "actor": "example-sync",
+              "at": "2026-09-27T18:00:00.000Z"
+            }
+          ]
+        },
+        {
+          "reference": "example#15",
+          "title": "Crash on start",
+          "kind": "issue",
+          "owners": [],
+          "draft": false,
+          "stack": null,
+          "invalidRepositoryFile": false,
+          "events": [
+            {
+              "kind": "opened",
+              "bot": false,
+              "actor": "carol",
+              "at": "2026-09-25T14:00:00.000Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "pullRequest",
+      "threads": [
+        {
+          "reference": "example#12",
+          "title": "Fix the parser",
+          "kind": "pullRequest",
+          "owners": [
+            "alice"
+          ],
+          "draft": false,
+          "stack": {
+            "number": 3,
+            "position": 2,
+            "size": 3,
+            "base": "main"
+          },
+          "invalidRepositoryFile": false,
+          "events": [
+            {
+              "kind": "checksFailed",
+              "checks": [
+                "lint"
+              ],
+              "bot": true,
+              "actor": "example-sync",
+              "at": "2026-09-28T09:35:00.000Z"
+            },
+            {
+              "kind": "reviewRequested",
+              "bot": false,
+              "actor": "alice",
+              "at": "2026-09-28T07:00:00.000Z"
+            },
+            {
+              "kind": "commented",
+              "bot": false,
+              "actor": "dave",
+              "at": "2026-09-25T07:00:00.000Z"
+            },
+            {
+              "kind": "pushed",
+              "bot": false,
+              "actor": "dave",
+              "at": "2026-09-24T12:00:00.000Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+--- err

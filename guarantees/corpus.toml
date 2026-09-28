@@ -1,0 +1,49 @@
+# The register: one table per guarantee, named for what it pins.
+#
+# The row says what the test file cannot say about itself:
+#
+#   kind    determinism | golden | conformance | budget
+#           What sort of fact the entry pins.
+#   tier    pr
+#           When it runs: `pr` on every pull request, in `bun run ci`.
+#   file    The test file, relative to this folder.
+#   select  The name of the file's top-level `describe`, which the invoker
+#           hands vitest as `-t`. A run that executes no test fails.
+#   expect  pass | fail
+#           `fail` marks the entry built to fail. A tier is green only when
+#           that entry failed as a test and every other entry passed.
+
+[working-clock]
+kind   = "determinism"
+tier   = "pr"
+file   = "working-clock.test.ts"
+select = "working-clock"
+expect = "pass"
+
+[text-output]
+kind   = "golden"
+tier   = "pr"
+file   = "text-output.test.ts"
+select = "text-output"
+expect = "pass"
+
+[hostile-text]
+kind   = "conformance"
+tier   = "pr"
+file   = "hostile-text.test.ts"
+select = "hostile-text"
+expect = "pass"
+
+[request-budget]
+kind   = "budget"
+tier   = "pr"
+file   = "request-budget.test.ts"
+select = "request-budget"
+expect = "pass"
+
+[corpus-can-fail]
+kind   = "conformance"
+tier   = "pr"
+file   = "selftest/corpus-can-fail.test.ts"
+select = "corpus-can-fail"
+expect = "fail"

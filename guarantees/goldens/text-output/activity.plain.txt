@@ -1,0 +1,25 @@
+exit 0
+--- out
+activity · 72h · by kind
+synced 0m ago
+3 threads · 6 events
+
+ISSUES
+docs#4 · issue · 16h
+  Where do tokens live?
+  alice, bob
+  example-sync labelled kind=docs (bot) · 16h ago
+example#15 · issue · 2d
+  Crash on start
+  unassigned
+  carol opened · 2d ago
+
+PULL REQUESTS
+example#12 · PR · 25m
+  Fix the parser
+  alice · example stack 3, 2 of 3
+  checks failed (lint) (bot) · 25m ago
+  alice requested review · 3h ago
+  dave commented · 3d ago
+  dave pushed · 3d ago
+--- err
