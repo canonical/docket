@@ -16,7 +16,7 @@ export interface UseHeldDetailsProps {
 /**
  * Result of the useHeldDetails hook: the details the accordion is given
  * for `thread`, read with `read` unless those held were read at
- * `version`, the thread's last change as the list has it.
+ * `version`, what the list shows of the thread's last change.
  */
 export type UseHeldDetailsResult = (
   read: (thread: ThreadSummary) => Promise<ThreadDetail>,
@@ -29,7 +29,7 @@ const identifyThread = ({ repo, number }: ThreadSummary) => `${repo}#${number}`;
 
 /** What is held of one thread's details. */
 interface HeldDetail {
-  /** The thread's last change, as the list had it when the read began. */
+  /** The thread's version, as the list had it when the read began. */
   readonly version: string;
   /**
    * What the accordion is given: the latest read once it has settled, and

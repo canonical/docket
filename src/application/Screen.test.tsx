@@ -791,6 +791,44 @@ describe("Screen", () => {
       expect(readNumbers(readDetail)).toEqual([12, 12]);
     });
 
+    it("shows a review's finished checks once a refresh brings them, though GitHub records no change to the thread", async () => {
+      let threads: readonly Thread[] = [
+        { ...parserFix, checks: "running" },
+        crash,
+        tokensGuide,
+      ];
+      const { promise, resolve } = Promise.withResolvers<ThreadDetail>();
+      const readDetail = readForever();
+      readDetail.mockResolvedValueOnce({
+        ...parserFixDetail,
+        checks: [
+          { name: "lint", state: "running" },
+          { name: "test", state: "passing" },
+        ],
+      });
+      readDetail.mockResolvedValue(parserFixDetail);
+      const { screen, refresh } = await showRefreshing(
+        readDetail,
+        () => threads,
+      );
+      const running = await press(screen, "j", "j", "j", "j");
+      expect(running.lines).toContain("  checks running 1 of 2");
+      readDetail.mockReturnValueOnce(promise);
+      threads = [{ ...parserFix, checks: "passing" }, crash, tokensGuide];
+      const finishing = await refresh();
+      expect(finishing.lines).toContain("  checks running 1 of 2");
+      resolve({
+        ...parserFixDetail,
+        checks: [
+          { name: "lint", state: "passing" },
+          { name: "test", state: "passing" },
+        ],
+      });
+      expect(await drawFrames(screen)).not.toContain("loading…");
+      const finished = await screen.redraw();
+      expect(finished.lines).toContain("  checks passed 2 of 2");
+    });
+
     it("gives the reason in place of the earlier details when a changed thread's read fails, never drawing loading", async () => {
       let threads = recordedThreads;
       const { promise, reject } = Promise.withResolvers<ThreadDetail>();

@@ -102,8 +102,9 @@ function describeHold(
   return undefined;
 }
 
-/** A thread's last change, as GitHub records it. */
-const describeVersion = ({ updatedAt }: Thread) => `${updatedAt.getTime()}`;
+/** A thread's last change, as GitHub records it, and its checks. */
+const describeVersion = ({ updatedAt, checks }: Thread) =>
+  `${updatedAt.getTime()}|${checks ?? ""}`;
 
 /** The thread a row names, in either mode. */
 const summarize = (row: WaitRow | ActivityThread) =>
@@ -320,10 +321,12 @@ export default function Screen({
     editor.follow(drawnSelection.current?.reference.text);
   });
   // A thread's details are read once for each change GitHub records on it,
-  // whatever copy of the data a refresh brings. A thread the data does not
-  // hold, such as a closed one in activity, has no record of its last
-  // change, and is read once for each newest event its row shows. The
-  // details of a thread that left both the data and the list on screen
+  // and once for each change the list's roll-up of its checks shows, since
+  // checks finish without GitHub recording a change to the thread. Any
+  // other copy of the data a refresh brings reads nothing. A thread the
+  // data does not hold, such as a closed one in activity, has no record of
+  // its last change, and is read once for each newest event its row shows.
+  // The details of a thread that left both the data and the list on screen
   // are let go.
   const readHeld = useHeldDetails({
     kept: [...(cached?.threads ?? []), ...rows.map(summarize)],
