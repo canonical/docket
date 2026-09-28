@@ -39,6 +39,12 @@ export {
 } from "./hooks/index.js";
 export { Pane, type PaneProps } from "./layout/index.js";
 export {
+  countPickerLines,
+  PeoplePicker,
+  type PeoplePickerProps,
+  type PickerOption,
+} from "./pattern/index.js";
+export {
   PaneHeader,
   type PaneHeaderProps,
 } from "./subcomponent/index.js";
