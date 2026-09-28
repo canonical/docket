@@ -19,18 +19,28 @@ afterEach(async () => {
 });
 
 describe("answerWrite", () => {
-  it("prints the plan and changes nothing without --confirm", async () => {
-    const setAssignees = vi.fn();
-    const { session, out } = openSession(
-      home,
-      ["assign", "example#12", "bob"],
-      recordedProvider({ setAssignees }),
-    );
-    expect(await answerWrite(session)).toBe(0);
-    expect(out()).toContain('- add "bob"\n- remove "alice"\n');
-    expect(out()).toContain("`docket assign example#12 bob --confirm`");
-    expect(setAssignees).not.toHaveBeenCalled();
-  });
+  it.each([
+    ["assign", "bob", '- add "bob"\n- remove "alice"\n'],
+    ["review", "carol", '- add "carol"\n- remove "bob"\n'],
+  ] as const)(
+    "prints the plan of %s and changes nothing without --confirm",
+    async (command, name, changes) => {
+      const setAssignees = vi.fn();
+      const setReviewers = vi.fn();
+      const { session, out } = openSession(
+        home,
+        [command, "example#12", name],
+        recordedProvider({ setAssignees, setReviewers }),
+      );
+      expect(await answerWrite(session)).toBe(0);
+      expect(out()).toContain(changes);
+      expect(out()).toContain(
+        `\`docket ${command} example#12 ${name} --confirm\``,
+      );
+      expect(setAssignees).not.toHaveBeenCalled();
+      expect(setReviewers).not.toHaveBeenCalled();
+    },
+  );
 
   it("sets the whole set with --confirm, and prints what GitHub records", async () => {
     const provider = recordedProvider({
