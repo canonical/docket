@@ -1,5 +1,6 @@
 import type { Duration } from "../clock/index.js";
 import type { Origin, Repo, Resolved } from "../config/index.js";
+import { noTeamNotice } from "../owed/index.js";
 import { quotedNote } from "./constants.js";
 import quote from "./quote.js";
 import renderJson from "./renderJson.js";
@@ -122,7 +123,9 @@ function describeSettings({ settings, origins, repositoryErrors }: Resolved) {
 
 /**
  * Writes `docket config`: where the personal file is, whether gh gives a
- * token, the settings that hold across repositories, then the settings in
+ * token, that every comment starts a reply wait while the personal file
+ * lists nobody as team, as owed's notice says, the settings that hold
+ * across repositories, then the settings in
  * effect for each repository. Every value names the file that set it, and
  * each listed person their group and why. A repository's file comes from
  * GitHub, so its values are made safe to print.
@@ -134,6 +137,7 @@ export default function renderConfig(answer: ConfigAnswer): string {
   const found = personal.found
     ? "found"
     : "not found, so built-in defaults apply";
+  const teamListed = [...shared.settings.people.values()].includes("team");
   if (format === "json") {
     const { settings, origins } = shared;
     const data = {
@@ -145,6 +149,7 @@ export default function renderConfig(answer: ConfigAnswer): string {
           }
         : { signedIn: true, host: settings.hosts.at(0), login },
       warnings: warnings.map(describeProblem),
+      teamListed,
       repos: settings.repos,
       activity: settings.activity.map(formatDuration),
       hosts: settings.hosts,
@@ -173,6 +178,14 @@ export default function renderConfig(answer: ConfigAnswer): string {
     warnings.length > 0
       ? ["", renderProblems(warnings, format, "Warning").trimEnd()]
       : [];
+  // An agent reads words where a person reads the symbol.
+  const teamLines = teamListed
+    ? []
+    : [
+        "",
+        `${llm ? "Warning:" : "✗"} ${noTeamNotice.reason}`,
+        `Recovery: ${noTeamNotice.recovery}`,
+      ];
   const sections = [
     [
       llm ? "# config" : "config",
@@ -180,6 +193,7 @@ export default function renderConfig(answer: ConfigAnswer): string {
       ...(llm ? [quotedNote] : []),
       ...ghLines,
       ...warningLines,
+      ...teamLines,
     ],
     [
       llm ? "## every repository" : "every repository",

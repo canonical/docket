@@ -37,7 +37,7 @@ describe("renderConfig", () => {
     ]);
   });
 
-  it("gives a person why gh gave no token, and says when no personal file exists", () => {
+  it("gives a person why gh gave no token, says when no personal file exists, and that without a team every comment waits", () => {
     const builtIn = resolvedPersonal(false);
     const text = renderConfig({
       personal: { path: "/config/docket/docket.yaml", found: false },
@@ -59,6 +59,9 @@ describe("renderConfig", () => {
       "gh is not signed in to github.com.",
       "Recovery: run gh auth login",
       "",
+      "✗ no team in docket.yaml, so every comment starts a reply wait",
+      "Recovery: list the team under people: in the personal file, then run docket config",
+      "",
       "every repository",
       "  repos (built-in default): none",
       "  activity (built-in default): 24h, 48h, 72h, 1w",
@@ -73,6 +76,7 @@ describe("renderConfig", () => {
     expect(data).toMatchObject({
       personalFile: { path: "/config/docket/docket.yaml", found: true },
       gh: { signedIn: true, host: "github.com", login: "alice" },
+      teamListed: true,
       activity: ["24h", "1w"],
       hosts: ["github.com"],
       origins: { repos: "personal", activity: "personal", hosts: "personal" },
@@ -114,6 +118,21 @@ describe("renderConfig", () => {
         recovery: "install it",
       },
     });
+  });
+
+  it("tells an agent in words, and a program as data, that no team is listed", () => {
+    const teamless = {
+      ...shared,
+      settings: { ...shared.settings, people: new Map() },
+    };
+    const text = renderConfig({ ...answer, shared: teamless });
+    expect(text).toContain(
+      "\n\nWarning: no team in docket.yaml, so every comment starts a reply wait\nRecovery: list the team under people: in the personal file, then run docket config\n\n## every repository",
+    );
+    const data = JSON.parse(
+      renderConfig({ ...answer, shared: teamless, format: "json" }),
+    );
+    expect(data.teamListed).toBe(false);
   });
 
   it("strips control sequences from values a repository's file could carry", () => {
