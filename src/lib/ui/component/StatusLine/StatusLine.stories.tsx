@@ -115,6 +115,32 @@ export const FullRefreshRefused: Story<StatusLineProps> = {
   },
 };
 
+/** The user's own action failed a second ago, over how old the data is. */
+export const ActionFailed: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: { ...settled, refreshing: true },
+    action: {
+      failed: true,
+      text: "could not open the browser",
+      at: new Date("2026-09-28T11:59:59Z"),
+    },
+  },
+};
+
+/** The user's own action went through a second ago. */
+export const ActionDone: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: settled,
+    action: {
+      failed: false,
+      text: "assigned alice",
+      at: new Date("2026-09-28T11:59:59Z"),
+    },
+  },
+};
+
 /** No cache: gh is missing or not signed in. */
 export const Blank: Story<StatusLineProps> = {
   args: base,

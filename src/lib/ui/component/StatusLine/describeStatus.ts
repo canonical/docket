@@ -1,24 +1,32 @@
 import { describeAge } from "../../../activity/index.js";
 import type { CacheStatus } from "../../../cache/index.js";
 import describeClock from "../../describeClock.js";
-import type { StatusMessage } from "./types.js";
+import type { ActionResult, StatusMessage } from "./types.js";
+
+/** How long, in milliseconds, the result of the user's own action stays. */
+const resultShown = 5_000;
 
 /**
- * Chooses the one message the status line shows for the cache's state.
- * The first that applies wins: an error, which says `rate limited`,
- * `offline` when a request got no answer, at all or in time, or else
- * `refresh failed`; the progress of a full refresh; a refresh in the
- * background; a short notice, such as when a full refresh is available
- * again; and otherwise how old the data is. With no data and nothing
- * happening there is no message.
+ * Chooses the one message the status line shows for the cache's state
+ * and the user's last action. The first that applies wins: an error,
+ * which says `rate limited`, `offline` when a request got no answer, at
+ * all or in time, or else `refresh failed`; the result of the user's own
+ * action, for 5 seconds after it; the progress of a full refresh; a
+ * refresh in the background; a short notice, such as when a full refresh
+ * is available again; and otherwise how old the data is. With no data
+ * and nothing happening there is no message, and with no cache only an
+ * action's result.
  */
 export default function describeStatus(
-  status: CacheStatus,
+  status: CacheStatus | undefined,
   now: Date,
   timezone: string,
   names: Readonly<Record<string, string>>,
+  action?: ActionResult,
 ): StatusMessage | undefined {
-  const { syncedAt, paused, failure, fullRefresh } = status;
+  const paused = status?.paused;
+  const failure = status?.failure;
+  const syncedAt = status?.syncedAt;
   if (paused?.reason === "rateLimit") {
     const text = `✗ rate limited · resumes ${describeClock(paused.until, timezone)}`;
     return { kind: "error", text };
@@ -36,8 +44,14 @@ export default function describeStatus(
       : "";
     return { kind: "error", text: `✗ ${what}${from}` };
   }
-  if (fullRefresh) {
-    const { repo, position, count, fetched, total } = fullRefresh;
+  if (action && now.getTime() - action.at.getTime() < resultShown) {
+    return action.failed
+      ? { kind: "actionFailed", text: `✗ ${action.text}` }
+      : { kind: "action", text: `✓ ${action.text}` };
+  }
+  if (!status) return undefined;
+  if (status.fullRefresh) {
+    const { repo, position, count, fetched, total } = status.fullRefresh;
     const text = `full refresh · ${names[repo] ?? repo} ${position}/${count} · pages ${fetched}/${total}`;
     return { kind: "progress", text };
   }

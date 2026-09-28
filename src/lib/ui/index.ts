@@ -1,4 +1,5 @@
 export {
+  type ActionResult,
   CountsLine,
   type CountsLineProps,
   countRowLines,
