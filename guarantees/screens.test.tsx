@@ -1,11 +1,11 @@
 /**
- * The terminal's screens, as a person sees them: every story of every
- * terminal component, drawn through OpenTUI's test renderer at 40 columns
- * and at 60, and compared with its saved copy, the characters of each
- * line and then the colours and weight of each run of text on it. A
- * story names a state worth pinning, so a component's stories file is
- * the list of its screens: a new story is drawn and compared from the
- * first run, and until its copy is saved it fails.
+ * The terminal's screens, as a person sees them: every story under
+ * `src/`, drawn through OpenTUI's test renderer at 40 columns and at 60,
+ * and compared with its saved copy, the characters of each line and then
+ * the colours and weight of each run of text on it. A story names a state
+ * worth pinning, so a stories file is the list of its screens: a new
+ * story is drawn and compared from the first run, and until its copy is
+ * saved it fails.
  *
  * Below 40 columns the pane says only that it needs 40.
  *
@@ -27,7 +27,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import expectGolden from "./expectGolden.js";
 
 const repoRoot = resolve(import.meta.dirname, "..");
-const storyFiles = /^src\/lib\/ui\/.+\.stories\.tsx$/;
+const storyFiles = /^src\/.+\.stories\.tsx$/;
 
 /** The widths every story is drawn at: the least the pane allows, and one wider. */
 const widths = [40, 60];
@@ -47,15 +47,13 @@ interface StoryFile {
   readonly [name: string]: unknown;
 }
 
-const paths = [
-  ...new Bun.Glob("src/lib/ui/**/*.stories.tsx").scanSync(repoRoot),
-]
+const paths = [...new Bun.Glob("src/**/*.stories.tsx").scanSync(repoRoot)]
   .map((path) => path.replaceAll("\\", "/"))
   .sort();
 
 const loadStoryFile = async (path: string): Promise<StoryFile> => {
   if (!storyFiles.test(path)) {
-    throw new Error(`${path} is not a component's stories file`);
+    throw new Error(`${path} is not a stories file`);
   }
   return import(`${repoRoot}/${path}`);
 };
@@ -200,7 +198,7 @@ const storiesOf = (file: StoryFile) =>
   );
 
 describe("screens", () => {
-  it("finds the stories of the terminal's components", () => {
+  it("finds the stories under src/", () => {
     expect(paths.length).toBeGreaterThan(0);
   });
 
