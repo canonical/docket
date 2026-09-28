@@ -6,6 +6,7 @@ import fetchEvents from "./fetchEvents.js";
 import fetchFile from "./fetchFile.js";
 import fetchSnapshot from "./fetchSnapshot.js";
 import fetchThreadDetail from "./fetchThreadDetail.js";
+import fetchThreadDetails from "./fetchThreadDetails.js";
 import fetchViewer from "./fetchViewer.js";
 import fragments from "./fragments.js";
 import listAssignableUsers from "./listAssignableUsers.js";
@@ -62,6 +63,7 @@ export default async function createProvider(
     refreshVolatile: (threads) => refreshChecks(client, threads),
     events: (repo, since) => fetchEvents(client, repo, since),
     threadDetail: (thread) => fetchThreadDetail(client, thread),
+    threadDetails: (threads) => fetchThreadDetails(client, threads),
     assignableUsers: (repo) => listAssignableUsers(client, repo),
     reviewCandidates: (pull) => listReviewCandidates(client, pull),
     readAssignees: (thread) => fetchAssignees(client, thread),

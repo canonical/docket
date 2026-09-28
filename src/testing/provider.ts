@@ -41,6 +41,7 @@ export function fakeProvider(overrides: Partial<Provider> = {}): Provider {
     refreshVolatile: async () => [],
     events: unused("events"),
     threadDetail: unused("threadDetail"),
+    threadDetails: unused("threadDetails"),
     assignableUsers: unused("assignableUsers"),
     reviewCandidates: unused("reviewCandidates"),
     readAssignees: unused("readAssignees"),

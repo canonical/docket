@@ -226,6 +226,14 @@ export interface Provider {
   /** The events on `repo`'s threads at or after `since`, for activity. */
   events(repo: string, since: Date): Promise<readonly ThreadEvent[]>;
   threadDetail(thread: ThreadSummary): Promise<ThreadDetail>;
+  /**
+   * The details of every thread given, in the order given, read in one
+   * request, which costs no more than reading one when there are few:
+   * `undefined` in the place of a thread the provider no longer finds.
+   */
+  threadDetails(
+    threads: readonly ThreadSummary[],
+  ): Promise<readonly (ThreadDetail | undefined)[]>;
   /** Everyone who can be assigned in `repo`. */
   assignableUsers(repo: string): Promise<readonly Account[]>;
   reviewCandidates(pullRequest: ThreadSummary): Promise<ReviewCandidates>;

@@ -1,117 +1,25 @@
-import type {
-  DetailMessage,
-  RequestDetail,
-  StackMember,
-  ThreadDetail,
-} from "../provider/index.js";
+import type { ThreadDetail } from "../provider/index.js";
 import type { ThreadSummary } from "../waits/index.js";
+import detailFields from "./detailFields.js";
 import fragments from "./fragments.js";
 import GitHubError from "./GitHubError.js";
-import readAccount from "./readAccount.js";
-import readAuthor from "./readAuthor.js";
-import readCheck from "./readCheck.js";
-import readReviewer from "./readReviewer.js";
+import readThreadDetail, { type DetailNode } from "./readThreadDetail.js";
 import splitRepo from "./splitRepo.js";
-import type {
-  ActorNode,
-  CheckNode,
-  Client,
-  ReviewerNode,
-  WrittenNode,
-} from "./types.js";
-
-const { account, assignees, check, labels, requestedReviewer } = fragments;
-const written = `${fragments.written} body`;
-const comments = `comments(last: 3) { nodes { ${written} createdAt } }`;
-// The facts every kind of thread has; a discussion has no assignees.
-const facts = `createdAt updatedAt ${labels}`;
+import type { Client } from "./types.js";
 
 const document = `query Detail($owner: String!, $name: String!, $number: Int!,
   $issue: Boolean!, $pull: Boolean!, $discussion: Boolean!) {
   ${fragments.rateLimit}
   repository(owner: $owner, name: $name) {
-    issue(number: $number) @include(if: $issue) {
-      ${facts} ${assignees} ${comments}
-    }
+    issue(number: $number) @include(if: $issue) { ${detailFields.issue} }
     discussion(number: $number) @include(if: $discussion) {
-      ${facts} ${comments}
+      ${detailFields.discussion}
     }
     pullRequest(number: $number) @include(if: $pull) {
-      ${facts} ${assignees} ${comments}
-      reviews(last: 3) { nodes { ${written} submittedAt } }
-      timelineItems(last: 30, itemTypes: [REVIEW_REQUESTED_EVENT]) {
-        nodes {
-          ... on ReviewRequestedEvent {
-            createdAt actor { ${account} }
-            ${requestedReviewer}
-          }
-        }
-      }
-      files(first: 100) { nodes { path additions deletions } }
-      commits(last: 1) {
-        nodes {
-          commit {
-            statusCheckRollup {
-              contexts(first: 50) { nodes { ${check} } }
-            }
-          }
-        }
-      }
-      stack { entries(first: 20) { nodes { position pullRequest { number state } } } }
+      ${detailFields.pullRequest}
     }
   }
 }`;
-
-type MessageNode = WrittenNode & { readonly body: string };
-
-interface DetailNode {
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly labels: { readonly nodes: readonly { readonly name: string }[] };
-  readonly assignees?: { readonly nodes: readonly NonNullable<ActorNode>[] };
-  readonly comments: {
-    readonly nodes: readonly (MessageNode & { readonly createdAt: string })[];
-  };
-  readonly reviews?: {
-    readonly nodes: readonly (MessageNode & {
-      readonly submittedAt: string | null;
-    })[];
-  };
-  readonly timelineItems?: {
-    readonly nodes: readonly {
-      readonly createdAt: string;
-      readonly actor: ActorNode;
-      readonly requestedReviewer: ReviewerNode;
-    }[];
-  };
-  readonly files?: {
-    readonly nodes: readonly {
-      readonly path: string;
-      readonly additions: number;
-      readonly deletions: number;
-    }[];
-  } | null;
-  readonly commits?: {
-    readonly nodes: readonly {
-      readonly commit: {
-        readonly statusCheckRollup: {
-          readonly contexts: { readonly nodes: readonly CheckNode[] };
-        } | null;
-      };
-    }[];
-  };
-  readonly stack?: {
-    readonly entries: {
-      readonly nodes: readonly {
-        readonly position: number;
-        readonly pullRequest: {
-          readonly number: number;
-          readonly state: string;
-        };
-      }[];
-    };
-  } | null;
-}
 
 interface Answer {
   readonly repository: {
@@ -120,12 +28,6 @@ interface Answer {
     readonly discussion?: DetailNode | null;
   };
 }
-
-const readMessage = (node: MessageNode, at: string): DetailMessage => ({
-  author: readAuthor(node),
-  at: new Date(at),
-  body: node.body,
-});
 
 /**
  * Fetches what a thread's details show: its age, labels and assignees,
@@ -161,45 +63,5 @@ export default async function fetchThreadDetail(
       { step: "check the thread still exists" },
     );
   }
-  const messages = [
-    ...node.comments.nodes.map((comment) =>
-      readMessage(comment, comment.createdAt),
-    ),
-    ...(node.reviews?.nodes ?? []).flatMap((review) =>
-      review.submittedAt ? [readMessage(review, review.submittedAt)] : [],
-    ),
-  ].sort((a, b) => a.at.getTime() - b.at.getTime());
-  const requests = (node.timelineItems?.nodes ?? []).flatMap(
-    (event): RequestDetail[] => {
-      const reviewer = readReviewer(event.requestedReviewer);
-      if (!reviewer) return [];
-      return [
-        {
-          reviewer,
-          requester: readAccount(event.actor),
-          at: new Date(event.createdAt),
-        },
-      ];
-    },
-  );
-  const contexts =
-    node.commits?.nodes.at(-1)?.commit.statusCheckRollup?.contexts.nodes ?? [];
-  const stack = node.stack?.entries.nodes.map(
-    ({ position, pullRequest }): StackMember => ({
-      position,
-      number: pullRequest.number,
-      state: pullRequest.state.toLowerCase() as StackMember["state"],
-    }),
-  );
-  return {
-    createdAt: new Date(node.createdAt),
-    updatedAt: new Date(node.updatedAt),
-    labels: node.labels.nodes.map(({ name }) => name),
-    assignees: (node.assignees?.nodes ?? []).map(readAccount),
-    messages,
-    requests,
-    files: node.files?.nodes ?? [],
-    checks: contexts.map(readCheck).map(({ name, state }) => ({ name, state })),
-    ...(stack ? { stack } : {}),
-  };
+  return readThreadDetail(node);
 }
