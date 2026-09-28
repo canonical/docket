@@ -18,7 +18,7 @@ const detail: Flag = {
   choices: details,
   default: defaultDetail,
   description:
-    "How much each item shows: summary gives the counts alone, detailed adds when each wait started, its target, and every message, file and check.",
+    "How much each item shows: summary gives the counts alone, and detailed adds when each wait started and every message, file and check. A wait's target shows at detailed in plain and llm, and at every level in JSON.",
 };
 
 const maxAge: Flag = {

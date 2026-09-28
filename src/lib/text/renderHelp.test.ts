@@ -32,7 +32,7 @@ Flags:
   --format plain|llm|json
       How the answer is written: plain text for a person, condensed Markdown for an agent (llm), or JSON for a program. In JSON, every key, and every value docket names, such as a kind or a state, is a fixed camelCase identifier rather than an on-screen word: the configuration's \`next-move\` is \`nextMove\`. A wait's \`target\` is written in working hours, and its \`overdue\` is a share of it, so \`overdue\` times \`target\` is the working time past due, or left while negative. Default: plain in a terminal, llm when the output is piped or captured.
   --detail summary|standard|detailed
-      How much each item shows: summary gives the counts alone, detailed adds when each wait started, its target, and every message, file and check. Default: standard.
+      How much each item shows: summary gives the counts alone, and detailed adds when each wait started and every message, file and check. A wait's target shows at detailed in plain and llm, and at every level in JSON. Default: standard.
   --max-age <seconds>
       How old the cached data may be before docket fetches from GitHub; 0 always fetches. Default: 300.
   --help
