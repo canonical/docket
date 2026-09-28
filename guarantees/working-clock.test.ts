@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { makeHome } from "./docket.js";
+import makeHome from "./makeHome.js";
 
 /**
  * Working time counts the configured workdays whole, in the configured

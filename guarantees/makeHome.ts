@@ -1,15 +1,3 @@
-/**
- * Runs docket the way a user does, as its own process: `bun` on
- * `src/application/main.ts`, in a temporary home holding a personal file,
- * an empty cache folder and a `gh` that answers with a token no account
- * holds. The stand-in (`standIn.ts`) is preloaded to fix the clock and
- * answer for GitHub from a recording.
- *
- * Nothing here imports docket's sources: a guarantee sees only what a
- * user sees, the output, the exit code and the requests sent to GitHub.
- *
- * @note Impure: writes a temporary folder and starts processes.
- */
 import {
   chmodSync,
   mkdirSync,
@@ -20,33 +8,27 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import type { Outcome, SentRequest } from "./types.js";
+import fixture from "./fixture.js";
+import type { Home, SentRequest } from "./types.js";
 
 const corpusRoot = import.meta.dirname;
 const entry = resolve(corpusRoot, "../src/application/main.ts");
 const standIn = resolve(corpusRoot, "standIn.ts");
 
-/** The file under `fixtures/` a guarantee reads. */
-export const fixture = (name: string) => resolve(corpusRoot, "fixtures", name);
-
-/** How one call is made. */
-export interface Call {
-  /** The instant docket reads as now, such as `2026-09-28T10:00:00Z`. */
-  readonly now: string;
-  /** The recording module under `fixtures/`, such as `team`, that answers for GitHub. */
-  readonly recording: string;
-  /** The machine's time zone, which no output may depend on. */
-  readonly machineZone?: string;
-}
-
-/** A temporary home, and docket run in it. */
-export interface Home {
-  call(args: readonly string[], call: Call): Promise<Outcome>;
-  remove(): void;
-}
-
-/** Makes a home whose personal file is `personalFile`. */
-export function makeHome(personalFile: string): Home {
+/**
+ * Makes a home whose personal file is `personalFile`, and runs docket in
+ * it the way a user does, as its own process: `bun` on
+ * `src/application/main.ts`, in a temporary home holding the personal
+ * file, an empty cache folder and a `gh` that answers with a token no
+ * account holds. The stand-in (`standIn.ts`) is preloaded to fix the
+ * clock and answer for GitHub from a recording.
+ *
+ * Nothing here imports docket's sources: a guarantee sees only what a
+ * user sees, the output, the exit code and the requests sent to GitHub.
+ *
+ * @note Impure: writes a temporary folder and starts processes.
+ */
+export default function makeHome(personalFile: string): Home {
   const root = mkdtempSync(join(tmpdir(), "docket-guarantee-"));
   mkdirSync(join(root, "config", "docket"), { recursive: true });
   writeFileSync(join(root, "config", "docket", "docket.yaml"), personalFile);

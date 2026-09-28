@@ -8,7 +8,7 @@ The unit tests beside the code pin behaviour from inside. The corpus pins it fro
 
 ## What a call runs against
 
-`docket.ts` runs each call in a temporary home: a personal file, an empty cache folder, and a `gh` on `PATH` that answers with a token no account holds. Nothing of the machine's own environment reaches docket.
+`makeHome.ts` runs each call in a temporary home: a personal file, an empty cache folder, and a `gh` on `PATH` that answers with a token no account holds. Nothing of the machine's own environment reaches docket.
 
 `standIn.ts` is preloaded into that process (`bun --preload`) and stands in for the two things outside docket that a guarantee has to fix, without any change to docket's code:
 

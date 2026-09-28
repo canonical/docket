@@ -37,3 +37,28 @@ export interface Outcome {
   readonly err: string;
   readonly requests: readonly SentRequest[];
 }
+
+/** How one call is made. */
+export interface Call {
+  /** The instant docket reads as now, such as `2026-09-28T10:00:00Z`. */
+  readonly now: string;
+  /** The recording module under `fixtures/`, such as `team`, that answers for GitHub. */
+  readonly recording: string;
+  /** The machine's time zone, which no output may depend on. */
+  readonly machineZone?: string;
+}
+
+/** A temporary home, and docket run in it. */
+export interface Home {
+  call(args: readonly string[], call: Call): Promise<Outcome>;
+  remove(): void;
+}
+
+/** The text written on GitHub that a recording carries. */
+export interface Words {
+  readonly title: string;
+  readonly comment: string;
+  readonly label: string;
+  readonly check: string;
+  readonly branch: string;
+}

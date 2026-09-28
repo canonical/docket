@@ -70,11 +70,6 @@ export const checkRun = (
   checkSuite: { app: { slug: "example-sync" } },
 });
 
-/** The answer to a request for a repository's own file: there is none. */
-export const noFile: RecordedAnswer = {
-  data: { repository: { object: null } },
-};
-
 /**
  * The answer to the free check for changes: a list of one issue, tagged
  * `tag`. A request sending the tag back is answered "not modified".
@@ -83,9 +78,6 @@ export const probe = (tag: string): RecordedAnswer => ({
   headers: { etag: `"${tag}"` },
   body: [{ number: 1 }],
 });
-
-/** The repository activity feed, holding no push. */
-export const noPushes: RecordedAnswer = { body: [] };
 
 /** A snapshot answer: the three lists of a repository's open threads. */
 export const snapshot = (

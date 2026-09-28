@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { afterAll, describe, expect, it } from "vitest";
-import { fixture, makeHome } from "./docket.js";
-import { hostileWords } from "./fixtures/hostile.js";
+import fixture from "./fixture.js";
+import hostileWords from "./fixtures/hostileWords.js";
+import makeHome from "./makeHome.js";
 
 /**
  * Text written on GitHub reaches docket's output, and anyone on GitHub

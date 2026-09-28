@@ -1,4 +1,5 @@
-import { issueNode, noFile, probe, snapshot } from "./shapes.js";
+import { noFile } from "./constants.js";
+import { issueNode, probe, snapshot } from "./shapes.js";
 
 const repo = "example-org/example-repo";
 

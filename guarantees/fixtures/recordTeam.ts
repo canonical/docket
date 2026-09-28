@@ -1,26 +1,16 @@
-import type { Recording } from "../types.js";
+import type { Recording, Words } from "../types.js";
+import { noFile, noPushes } from "./constants.js";
 import {
   bot,
   checkRun,
   comment,
   issueNode,
-  noFile,
-  noPushes,
   page,
   probe,
   snapshot,
   stackEntry,
   user,
 } from "./shapes.js";
-
-/** The text written on GitHub that a recording carries. */
-export interface Words {
-  readonly title: string;
-  readonly comment: string;
-  readonly label: string;
-  readonly check: string;
-  readonly branch: string;
-}
 
 const repo = "example-org/example-repo";
 const docs = "example-org/example-docs";

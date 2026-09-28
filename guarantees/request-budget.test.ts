@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { afterAll, describe, expect, it } from "vitest";
-import { fixture, makeHome } from "./docket.js";
+import fixture from "./fixture.js";
+import makeHome from "./makeHome.js";
 import type { SentRequest } from "./types.js";
 
 /**
