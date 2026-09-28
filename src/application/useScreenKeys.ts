@@ -43,8 +43,8 @@ export interface UseScreenKeysProps {
   /** The mode on screen: `t` acts in activity alone. */
   readonly mode: TerminalMode;
   /**
-   * Whether the help is open, which `esc` then closes and which turns the
-   * page and end keys off.
+   * Whether the help is open, which `esc` then closes, and which turns
+   * every key but the help's and `q` off.
    */
   readonly help: boolean;
   /** Whether an editor is open, which turns every key but the help's off. */
@@ -113,33 +113,28 @@ export default function useScreenKeys({
           notes: ["(opens the accordion)"],
           run: () => latest.current.moveSelection(1),
         },
-        // Neither a page nor an end moves a selection the help hides.
         {
           name: "selection.pageUp",
           desc: "a page up or down",
           group: "List",
-          enabled: !help,
           run: () => latest.current.movePage(-1),
         },
         {
           name: "selection.pageDown",
           desc: "a page up or down",
           group: "List",
-          enabled: !help,
           run: () => latest.current.movePage(1),
         },
         {
           name: "selection.first",
           desc: "the first or last thread",
           group: "List",
-          enabled: !help,
           run: () => latest.current.moveToEnd(-1),
         },
         {
           name: "selection.last",
           desc: "the first or last thread",
           group: "List",
-          enabled: !help,
           run: () => latest.current.moveToEnd(1),
         },
         {
@@ -208,12 +203,17 @@ export default function useScreenKeys({
           group: "App",
           run: () => latest.current.quit(),
         },
-        // An open editor takes the typing, so no other key but help runs.
-      ].map((command) =>
-        editorOpen && !command.name.startsWith("help.")
-          ? { ...command, enabled: false }
-          : command,
-      ),
+      ].map((command) => {
+        // An open editor takes the typing, so no key but the help's runs;
+        // and no key acts on what the help hides, so while it shows only
+        // its own keys and quitting run.
+        const runs = command.name.startsWith("help.")
+          ? true
+          : editorOpen
+            ? false
+            : !help || command.name === "app.quit";
+        return runs ? command : { ...command, enabled: false };
+      }),
       bindings: [
         { key: "left", cmd: "mode.previous" },
         { key: "h", cmd: "mode.previous" },

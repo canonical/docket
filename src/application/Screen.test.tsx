@@ -571,15 +571,44 @@ describe("Screen", () => {
       expect((await press(screen, "home")).lines.at(1)).toBe(first.lines.at(1));
     });
 
-    it("leaves the selection where it is when a page or end key is pressed under the help or in an editor", async () => {
+    it("leaves the selection where it is when a page or end key is pressed in an editor", async () => {
       const screen = await showRecorded();
-      await press(screen, "?", "pagedown", "end", "?");
       const assigning = await press(screen, "a");
       expect(assigning.lines.at(0)).toBe("assigning example#12");
       await press(screen, "pagedown", "end");
       const closed = await press(screen, "escape");
       expect(closed.lines.at(1)).toBe(
         `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      );
+    });
+
+    it("acts on nothing the help hides, and every key acts again once it closes", async () => {
+      const provider = recordedProvider();
+      const snapshot = vi.fn(provider.snapshot);
+      const cache = await openCache({ ...provider, snapshot });
+      await cache.refresh();
+      const open = vi.fn(openNothing);
+      const view = { ...viewOf(cache), openInBrowser: open };
+      const screen = await (await show(view)).redraw();
+      const before = screen.lines;
+      snapshot.mockClear();
+      await press(screen, "?");
+      await press(
+        screen,
+        ...["up", "k", "down", "j", "pageup", "pagedown", "home", "end"],
+        ...["return", "a", "r", "g", "t", "left", "h", "right", "l", "R"],
+      );
+      const closed = await press(screen, "?");
+      expect(closed.lines).toEqual(before);
+      expect(open).not.toHaveBeenCalled();
+      expect(snapshot).not.toHaveBeenCalled();
+      await press(screen, "right", "?", "t", "g", "escape");
+      expect((await screen.redraw()).lines.at(0)).toBe(
+        `activity${" ".repeat(19)}24h · by kind`,
+      );
+      const moved = await press(screen, "left", "j");
+      expect(moved.lines.at(1)).toBe(
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
       );
     });
 
