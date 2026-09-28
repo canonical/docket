@@ -14,7 +14,6 @@ import {
   ThreadAccordion,
   ThreadRow,
 } from "../lib/ui/index.js";
-import type { Thread } from "../lib/waits/index.js";
 import findThreadState from "./findThreadState.js";
 import listWaiting from "./listWaiting.js";
 
@@ -31,8 +30,6 @@ export interface ActivityListProps {
    * each thread's current state.
    */
   readonly waits: readonly WaitRow[];
-  /** The cached threads, whose facts the accordion shows for a thread at rest. */
-  readonly threads: readonly Thread[];
   /** The instant ages are measured at. */
   readonly now: Date;
   /** The time zone a time of day is written in. */
@@ -68,7 +65,6 @@ export default function ActivityList({
   selected,
   readDetail,
   waits,
-  threads,
   now,
   timezone,
   width,
@@ -102,7 +98,7 @@ export default function ActivityList({
             <ThreadRow row={row} selected={chosen} width={width} />
             {chosen && (
               <ThreadAccordion
-                row={findThreadState(row, waits, threads)}
+                row={findThreadState(row, waits)}
                 detail={readDetail(row)}
                 waiting={waiting}
                 now={now}

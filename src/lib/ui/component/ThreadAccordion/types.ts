@@ -1,6 +1,6 @@
 import type { WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
-import type { Thread, ThreadSummary } from "../../../waits/index.js";
+import type { ThreadSummary } from "../../../waits/index.js";
 
 /**
  * One piece of the accordion's text, wrapped to the pane, and the
@@ -24,17 +24,18 @@ export interface DetailText {
 
 /**
  * A thread no wait runs on, such as a closed one in activity, which the
- * accordion shows with the close body.
+ * accordion shows with the close body, from the thread's details.
  */
 export interface RestingThread {
   /** The short name of its repository, which the stack lines name. */
   readonly repo: string;
+  /** The thread, whose place in a stack gives the stack lines. */
+  readonly thread: ThreadSummary;
   /**
-   * The thread, with its recorded facts when they are held: they give its
-   * age and labels. A closed thread's facts are not held.
+   * Its owners as its row names them, such as `alice, bob` or
+   * `unassigned`. Absent when the row names none, as for a closed thread:
+   * its assignees that are not bots stand in.
    */
-  readonly thread: Thread | ThreadSummary;
-  /** Its owners as its row names them, such as `alice, bob` or `unassigned`. */
   readonly owners?: string;
 }
 

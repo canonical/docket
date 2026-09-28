@@ -4,7 +4,13 @@ import {
   sharedCloseDetail,
   soonReplyDetail,
 } from "../../../../testing/details.js";
-import { at, carol, thread } from "../../../../testing/facts.js";
+import {
+  alice,
+  at,
+  carol,
+  exampleSync,
+  thread,
+} from "../../../../testing/facts.js";
 import { recordedNow } from "../../../../testing/recorded.js";
 import {
   draftClose,
@@ -156,7 +162,7 @@ describe("describeDetail", () => {
       const row = measureRow({});
       const { body } = describeDetail(
         row,
-        { ...sharedCloseDetail, messages: [] },
+        { ...sharedCloseDetail, messages: [], labels: [] },
         reading,
       );
       expect(texts(body)).toEqual([
@@ -168,7 +174,7 @@ describe("describeDetail", () => {
   });
 
   describe("a thread no wait runs on", () => {
-    it("gives the close body from its facts, with the owners its row names", () => {
+    it("gives the close body from its details, with the owners its row names", () => {
       const resting = {
         repo: "example",
         thread: sharedClose.wait.thread,
@@ -182,20 +188,18 @@ describe("describeDetail", () => {
       ]);
     });
 
-    it("gives its last activity alone when its facts are not held, then its stack lines", () => {
-      const { repo, number, url, kind, title, stack } = overReview.wait.thread;
-      const summary = {
-        repo,
-        number,
-        url,
-        kind,
-        title,
-        ...(stack && { stack }),
-      };
-      const resting = { repo: "example", thread: summary };
+    it("gives a closed thread its age, its assignees that are not bots as owners, and its labels, then its stack lines", () => {
+      const resting = { repo: "example", thread: overReview.wait.thread };
+      const closed = { ...sharedCloseDetail, assignees: [alice, exampleSync] };
+      expect(texts(describeDetail(resting, closed, reading).body)).toEqual([
+        "age 6d · owner alice",
+        "last activity 3h ago · bob",
+        "labels priority=high · kind=bug · area/icons",
+      ]);
+      const unassigned = { ...sharedCloseDetail, assignees: [exampleSync] };
       expect(
-        texts(describeDetail(resting, sharedCloseDetail, reading).body),
-      ).toEqual(["last activity 3h ago · bob"]);
+        describeDetail(resting, unassigned, reading).body.at(0)?.text,
+      ).toBe("age 6d · owner unassigned");
       expect(
         texts(describeDetail(resting, overReviewDetail, reading).stack),
       ).toEqual([

@@ -421,7 +421,6 @@ export default function Screen({
         waits={buildOwed(threads, watched, "none", at).groups.flatMap(
           (group) => group.rows,
         )}
-        threads={threads}
         now={at}
         timezone={settings.time.timezone}
         width={width}

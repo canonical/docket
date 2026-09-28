@@ -5,6 +5,7 @@ import {
   pendingDetail,
   sharedCloseDetail,
 } from "../testing/details.js";
+import { alice, exampleSync } from "../testing/facts.js";
 import { recordedActivity, recordedNow } from "../testing/recorded.js";
 import { overReview } from "../testing/rows.js";
 import { draw, drawSuspending } from "../testing/terminal.js";
@@ -14,7 +15,6 @@ import ActivityList, { type ActivityListProps } from "./ActivityList.js";
 const reading: Omit<ActivityListProps, "list" | "selected" | "width"> = {
   readDetail: () => pendingDetail,
   waits: [],
-  threads: [],
   now: recordedNow,
   timezone: "Europe/Paris",
   height: 20,
@@ -130,22 +130,37 @@ describe("ActivityList", () => {
     ]);
   });
 
-  it("shows a thread no wait runs on with its last activity", async () => {
+  it("shows a closed thread no wait runs on with its age, owner and labels", async () => {
+    // A closed thread's facts are not held, so its row names no owner.
+    const list = recordedActivity("kind");
+    const closed = {
+      ...list,
+      groups: list.groups.map((group) => ({
+        ...group,
+        rows: group.rows.map(({ owner: _, owners: __, ...row }) => row),
+      })),
+    };
     const screen = await drawSuspending(
       <ActivityList
         {...reading}
-        list={recordedActivity("kind")}
+        list={closed}
         selected={0}
-        readDetail={async () => sharedCloseDetail}
+        readDetail={async () => ({
+          ...sharedCloseDetail,
+          labels: ["kind: docs"],
+          assignees: [alice, exampleSync],
+        })}
         width={40}
       />,
       40,
       20,
     );
-    expect(screen.lines.slice(3, 6)).toEqual([
-      "  alice, bob",
+    expect(screen.lines.slice(1, 6)).toEqual([
+      "  docs#4 issue                       16h",
+      "  Where do tokens live?",
+      "  age 6d · owner alice",
       "  last activity 3h ago · bob",
-      "",
+      "  labels kind=docs",
     ]);
   });
 

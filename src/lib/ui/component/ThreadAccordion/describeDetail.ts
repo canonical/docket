@@ -114,26 +114,29 @@ function describeChecks({ checks }: ThreadDetail): DetailLine {
 }
 
 /**
- * The thread's age and owners, its last activity, and its labels. A
- * thread whose facts are not held, such as a closed one, shows its last
- * activity alone.
+ * The thread's age and owners, its last activity, and its labels, as its
+ * details give them. The owners are the row's when it names them; a
+ * thread whose row names none, such as a closed one, takes its assignees
+ * that are not bots.
  */
 function describeClose(
-  { thread, owners }: RestingThread,
+  { owners }: Pick<RestingThread, "owners">,
   detail: ThreadDetail,
   { now }: Reading,
 ) {
   const latest = detail.messages.at(-1);
-  const activity = line(
-    `last activity ${describeAge(detail.updatedAt, now)} ago${latest ? ` · ${latest.author.login}` : ""}`,
-  );
-  if (!("createdAt" in thread)) return [activity];
-  const labels = thread.labels.map(decodeLabel).join(" · ") || "none";
+  const assigned = detail.assignees
+    .filter(({ type }) => type !== "bot")
+    .map(({ login }) => login)
+    .join(", ");
+  const labels = detail.labels.map(decodeLabel).join(" · ") || "none";
   return [
     line(
-      `age ${describeAge(thread.createdAt, now)} · owner ${owners || "unassigned"}`,
+      `age ${describeAge(detail.createdAt, now)} · owner ${(owners ?? assigned) || "unassigned"}`,
     ),
-    activity,
+    line(
+      `last activity ${describeAge(detail.updatedAt, now)} ago${latest ? ` · ${latest.author.login}` : ""}`,
+    ),
     line(`labels ${labels}`),
   ];
 }
@@ -176,12 +179,8 @@ function describeStack(
 const bodies = {
   response: describeReply,
   review: describeReview,
-  close: ({ repo, wait }: WaitRow, detail: ThreadDetail, reading: Reading) =>
-    describeClose(
-      { repo, thread: wait.thread, owners: wait.owners.join(", ") },
-      detail,
-      reading,
-    ),
+  close: ({ wait }: WaitRow, detail: ThreadDetail, reading: Reading) =>
+    describeClose({ owners: wait.owners.join(", ") }, detail, reading),
 } as const;
 
 /**

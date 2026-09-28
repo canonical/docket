@@ -23,6 +23,7 @@ import {
   recordedProvider,
   recordedRepos,
   recordedSettings,
+  recordedThreads,
   recordedWatched,
 } from "../testing/recorded.js";
 import {
@@ -58,8 +59,20 @@ const readRecorded = async (): Promise<WatchedFiles> => ({
   watched: recordedWatched(),
 });
 
-/** Reads every thread's details as the recording's pull request's. */
-const readRecordedDetail = async () => parserFixDetail;
+/**
+ * Reads every thread's details as the recording's pull request's, with the
+ * thread's own age, labels and assignees when the recording holds it.
+ */
+const readRecordedDetail = async (
+  thread: ThreadSummary,
+): Promise<ThreadDetail> => {
+  const facts = recordedThreads.find(
+    ({ repo, number }) => repo === thread.repo && number === thread.number,
+  );
+  if (!facts) return parserFixDetail;
+  const { createdAt, labels, assignees } = facts;
+  return { ...parserFixDetail, createdAt, labels, assignees };
+};
 
 /** Opens nothing, and says it opened. */
 const openNothing = async (_url: string) => {};
