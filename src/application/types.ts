@@ -213,3 +213,15 @@ export interface Candidates {
    */
   readonly offered: readonly string[];
 }
+
+/**
+ * The thread `a` or `r` acts on: the selected row's reference, and the
+ * thread as the cache holds it. The cache holds open threads alone, so
+ * the thread is absent for one activity shows that was not open at the
+ * last refresh, such as one closed since.
+ */
+export interface SelectedThread {
+  /** `example#12`. */
+  readonly reference: string;
+  readonly thread?: Thread;
+}

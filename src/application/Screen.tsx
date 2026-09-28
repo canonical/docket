@@ -44,7 +44,12 @@ import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
 import placeSelection, { type Selection } from "./placeSelection.js";
-import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
+import type {
+  SelectedThread,
+  TerminalMode,
+  TerminalView,
+  WatchedFiles,
+} from "./types.js";
 import useActivity from "./useActivity.js";
 import useEditor from "./useEditor.js";
 import useScreenKeys from "./useScreenKeys.js";
@@ -199,10 +204,19 @@ export default function Screen({
       return { ...current, [mode]: { place, row: identifyRow(row) } };
     });
 
-  // `a` and `r` act in owed, where every row is a wait's.
-  const selectedWait = () => {
+  // The thread `a` and `r` act on, in either mode: an owed row carries
+  // its thread, and an activity row names one the cache holds while it
+  // is open.
+  const selectThread = (): SelectedThread | undefined => {
     const row = drawnSelection.current;
-    return row && "wait" in row ? row : undefined;
+    if (!row) return undefined;
+    const reference = row.reference.text;
+    if ("wait" in row) return { reference, thread: row.wait.thread };
+    const { repo, number } = row.thread;
+    const thread = cached?.threads.find(
+      (each) => each.repo === repo && each.number === number,
+    );
+    return thread ? { reference, thread } : { reference };
   };
   const { active, bound } = useScreenKeys({
     mode,
@@ -231,7 +245,7 @@ export default function Screen({
           : setActivityGrouping((current) => cycle(activityGroupings, current)),
       nextWindow: () =>
         setWindow((current) => cycle(settings.activity, current)),
-      edit: (action) => editor.start(action, selectedWait()),
+      edit: (action) => editor.start(action, selectThread()),
       toggleHelp: () => setHelp((open) => !open),
       closeHelp: () => setHelp(false),
       refresh: () => void cache?.fullRefresh(),
@@ -401,6 +415,7 @@ export default function Screen({
         timezone={settings.time.timezone}
         width={width}
         height={height - 4}
+        {...(slot && { editor: slot })}
       />
     );
   }

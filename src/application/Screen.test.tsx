@@ -675,7 +675,7 @@ describe("Screen", () => {
         "",
         "2 threads · 3 events",
         "synced 0m ago",
-        "←→ mode ↑↓ sel ⏎ open g grp t time ?",
+        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       ]);
     });
 
@@ -738,6 +738,96 @@ describe("Screen", () => {
         "https://github.com/example-org/example-docs/issues/4",
         "https://github.com/example-org/example-repo/pull/12",
         "https://github.com/example-org/example-docs/issues/4",
+      ]);
+    });
+
+    it("opens the editor under activity's selected thread with a, as in owed, and closes it with esc", async () => {
+      const screen = await showActivity(40);
+      await press(screen, "a");
+      const opened = await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines).not.toContain("  loading…");
+        return drawn;
+      });
+      expect(opened.lines).toEqual([
+        "assigning docs#4",
+        "ISSUES",
+        "  docs#4 issue                       16h",
+        "  Where do tokens live?",
+        "  alice, bob",
+        "  filter:",
+        "  ☑ alice",
+        "  ☑ bob",
+        "  ☐ carol",
+        "  ☐ dave",
+        "    example-sync labelled kind=docs  16h",
+        "PULL REQUESTS",
+        "",
+        "2 threads · 3 events",
+        "synced 0m ago",
+        "type filter ↑↓ ␣ tick ⏎ apply esc ?",
+      ]);
+      const closed = await press(screen, "escape");
+      expect(closed.lines.slice(0, 3)).toEqual([
+        `activity${" ".repeat(19)}24h · by kind`,
+        "ISSUES",
+        "  docs#4 issue                       16h",
+      ]);
+    });
+
+    it("refuses a review on activity's selected issue, under its row", async () => {
+      const screen = await showActivity(40);
+      const refused = await press(screen, "r");
+      expect(refused.lines).toEqual([
+        `activity${" ".repeat(19)}24h · by kind`,
+        "ISSUES",
+        "  docs#4 issue                       16h",
+        "  Where do tokens live?",
+        "  alice, bob",
+        "  ✗ docs#4 is not a pull request, so no",
+        "  review can be requested on it",
+        "  Recovery: select a pull request, then",
+        "  press r",
+        "    example-sync labelled kind=docs  16h",
+        "PULL REQUESTS",
+        "",
+        "",
+        "2 threads · 3 events",
+        "✗ review refused",
+        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
+      ]);
+    });
+
+    it("refuses both on a thread activity shows that was not open at the last refresh", async () => {
+      const cache = await openCache(
+        recordedProvider({
+          snapshot: async (repo) => ({
+            threads: recordedThreads.filter(
+              (thread) => thread.repo === repo && thread.number !== 4,
+            ),
+            cursor: { since: "2026-09-28T09:59:00Z" },
+          }),
+        }),
+      );
+      const screen = await showActivity(40, cache);
+      const refused = await press(screen, "a");
+      expect(refused.lines).toEqual([
+        `activity${" ".repeat(19)}24h · by kind`,
+        "ISSUES",
+        "  docs#4 issue                       16h",
+        "  Where do tokens live?",
+        "  ✗ docs#4 was not open at the last",
+        "  refresh",
+        "  Recovery: open it with ⏎ and change it",
+        "  on GitHub",
+        "    example-sync labelled kind=docs  16h",
+        "PULL REQUESTS",
+        "",
+        "",
+        "",
+        "2 threads · 3 events",
+        "✗ assign refused",
+        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       ]);
     });
 
@@ -897,7 +987,7 @@ describe("Screen", () => {
       expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
       const activity = await press(screen, "right");
       expect(activity.lines.at(11)).toBe(
-        "←→ mode ↑↓ sel ⏎ open g grp t time ?",
+        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       );
       expect(activity.look("t")?.bold).toBe(true);
     });

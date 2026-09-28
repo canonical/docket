@@ -1,6 +1,6 @@
-import type { WaitRow } from "../lib/owed/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import isAssignable from "./isAssignable.js";
+import type { SelectedThread } from "./types.js";
 import type { WriteAction } from "./writeSet.js";
 
 /** Why a key cannot open its editor, and what to do instead. */
@@ -15,17 +15,17 @@ export type EditorChoice =
   | { readonly refusal: Refusal };
 
 /**
- * Whether `a` or `r` can open its editor on the selected row: assigning
+ * Whether `a` or `r` can open its editor on the selected thread: assigning
  * takes an issue or a pull request, and requesting review only a pull
  * request. Nothing selected, as on a heading, a stack or an empty list,
- * refuses both.
+ * refuses both, as does a thread that was not open at the last refresh.
  */
 export default function chooseEditor(
   action: WriteAction,
-  row: WaitRow | undefined,
+  selected: SelectedThread | undefined,
 ): EditorChoice {
   const key = action === "assign" ? "a" : "r";
-  if (!row) {
+  if (!selected) {
     const what =
       action === "assign" ? "no issue or pull request" : "no pull request";
     return {
@@ -35,8 +35,15 @@ export default function chooseEditor(
       },
     };
   }
-  const { thread } = row.wait;
-  const reference = row.reference.text;
+  const { reference, thread } = selected;
+  if (!thread) {
+    return {
+      refusal: {
+        reason: `${reference} was not open at the last refresh`,
+        recovery: "open it with ⏎ and change it on GitHub",
+      },
+    };
+  }
   if (action === "assign" && !isAssignable(thread)) {
     return {
       refusal: {

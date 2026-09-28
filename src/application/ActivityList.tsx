@@ -40,6 +40,12 @@ export interface ActivityListProps {
   readonly width: number;
   /** The lines the list region has. */
   readonly height: number;
+  /**
+   * What stands in the accordion's place under the selected thread, such
+   * as an editor, and the lines it takes. The row then gives up its
+   * selection background to the option under the editor's cursor.
+   */
+  readonly editor?: { readonly node: ReactNode; readonly lines: number };
 }
 
 /**
@@ -71,6 +77,7 @@ export default function ActivityList({
   timezone,
   width,
   height,
+  editor,
 }: ActivityListProps): ReactNode {
   const blocks: Block[] = [];
   let place = 0;
@@ -92,12 +99,13 @@ export default function ActivityList({
         key: row.reference.text,
         lines:
           countRowLines(row, width) +
-          (chosen ? accordionHeight : 0) +
+          (chosen ? (editor?.lines ?? accordionHeight) : 0) +
           row.events.length,
         node: (
           <>
-            <ThreadRow row={row} selected={chosen} width={width} />
-            {chosen && (
+            <ThreadRow row={row} selected={chosen && !editor} width={width} />
+            {chosen && editor?.node}
+            {chosen && !editor && (
               <ThreadAccordion
                 row={findThreadState(row, waits)}
                 detail={readDetail(row)}

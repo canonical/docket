@@ -1,12 +1,11 @@
 import { useBindings } from "@opentui/keymap/react";
 import { useRef, useState } from "react";
-import type { WaitRow } from "../lib/owed/index.js";
 import type { ActionResult, PeoplePickerProps } from "../lib/ui/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import chooseEditor, { type Refusal } from "./chooseEditor.js";
 import describeFailure from "./describeFailure.js";
 import listCandidates from "./listCandidates.js";
-import type { TerminalView } from "./types.js";
+import type { SelectedThread, TerminalView } from "./types.js";
 import type { WriteAction, WriteOutcome } from "./writeSet.js";
 
 /** What the editor reads and writes through: the view's source, once connected. */
@@ -42,8 +41,11 @@ export interface UseEditorResult {
   readonly picker?: Omit<PeoplePickerProps, "width">;
   /** Why the last `a` or `r` did not open, while the selection stays put. */
   readonly refusal?: Refusal;
-  /** Opens the editor for `action` on `row`, or says why it cannot. */
-  readonly start: (action: WriteAction, row: WaitRow | undefined) => void;
+  /** Opens the editor for `action` on `selected`, or says why it cannot. */
+  readonly start: (
+    action: WriteAction,
+    selected: SelectedThread | undefined,
+  ) => void;
   /**
    * Hears the reference of the row selected on each frame, or none: an
    * editor belongs to its row, and a refusal to the selection it was
@@ -144,11 +146,11 @@ export default function useEditor({
     );
   };
 
-  const start = (action: WriteAction, row: WaitRow | undefined) => {
+  const start = (action: WriteAction, selected: SelectedThread | undefined) => {
     const { source, findTeam, now, onResult } = latest.current;
-    const choice = chooseEditor(action, row);
+    const choice = chooseEditor(action, selected);
     if ("refusal" in choice) {
-      setRefused({ ...choice.refusal, selected: row?.reference.text });
+      setRefused({ ...choice.refusal, selected: selected?.reference });
       onResult({ failed: true, text: `${action} refused`, at: now() });
       return;
     }

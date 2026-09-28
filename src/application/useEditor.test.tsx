@@ -830,7 +830,12 @@ describe("useEditor", () => {
         <WithKeys>
           <Harness
             source={undefined}
-            start={(editor) => editor.start("assign", row)}
+            start={(editor) =>
+              editor.start("assign", {
+                reference: row.reference.text,
+                thread: row.wait.thread,
+              })
+            }
           />
         </WithKeys>,
         40,

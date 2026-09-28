@@ -118,15 +118,15 @@ describe("useScreenKeys", () => {
     ]);
   });
 
-  it("moves to the next time window in activity alone, and opens an editor in owed alone, while the help lists every key in both modes", async () => {
+  it("moves to the next time window in activity alone, and opens an editor in either mode, while the help lists every key in both modes", async () => {
     const { ran, change, screen } = await bind();
     const owed = await press(screen, "t");
     await screen.redraw(() => change({ mode: "activity" }));
     const activity = await press(screen, "t", "a", "r");
-    expect(ran).toEqual(["nextWindow"]);
+    expect(ran).toEqual(["nextWindow", "edit assign", "edit review"]);
     expect([owed, activity].map(({ lines }) => lines.slice(0, 2))).toEqual([
       ["← → ↑ ↓ ⏎ g a r ? R q", "← → g t ↑ ↓ ⏎ a r ? esc R q"],
-      ["← → ↑ ↓ ⏎ g t ? R q", "← → g t ↑ ↓ ⏎ a r ? esc R q"],
+      ["← → ↑ ↓ ⏎ g t a r ? R q", "← → g t ↑ ↓ ⏎ a r ? esc R q"],
     ]);
   });
 

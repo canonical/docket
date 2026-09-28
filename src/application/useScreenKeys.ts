@@ -16,7 +16,7 @@ export interface ScreenActions {
   readonly nextGrouping: () => void;
   /** Shows activity's next time window. */
   readonly nextWindow: () => void;
-  /** Opens the editor for `action` on the selected row. */
+  /** Opens the editor for `action` on the selected thread, in either mode. */
   readonly edit: (action: WriteAction) => void;
   /** Shows the help, or hides it. */
   readonly toggleHelp: () => void;
@@ -29,7 +29,7 @@ export interface ScreenActions {
 
 /** Props for the useScreenKeys hook. */
 export interface UseScreenKeysProps {
-  /** The mode on screen: `t` acts in activity, and `a` and `r` in owed. */
+  /** The mode on screen: `t` acts in activity alone. */
   readonly mode: TerminalMode;
   /** Whether the help is open, which `esc` then closes. */
   readonly help: boolean;
@@ -126,7 +126,6 @@ export default function useScreenKeys({
           desc: "assign",
           group: "Thread",
           hint: "",
-          enabled: mode === "owed",
           run: () => latest.current.edit("assign"),
         },
         {
@@ -134,7 +133,6 @@ export default function useScreenKeys({
           desc: "request review",
           group: "Thread",
           hint: "",
-          enabled: mode === "owed",
           run: () => latest.current.edit("review"),
         },
         {
