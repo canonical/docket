@@ -188,6 +188,7 @@ export default function Screen({
     findTeam: (repo) => listTeam(watched, repo),
     now,
     onResult: setAction,
+    covered: help,
   });
   const moveSelection = (step: number) =>
     setSelections((current) => {

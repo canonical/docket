@@ -491,6 +491,30 @@ describe("useEditor", () => {
       expect(cancelled.lines.at(0)).toBe("owed");
     });
 
+    it("acts on no key but ? while the help covers it, and applies once the help closes", async () => {
+      const { provider, setAssignees } = recordAssignees();
+      const opened = await settle(
+        await press(await showRecorded(provider), "a"),
+      );
+      const ticked = await press(opened, "down", "space");
+      const help = await press(ticked, "?", "return", "space", "escape");
+      // The recording answers a write at once, so one sent has landed here.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const covered = await help.redraw();
+      expect(setAssignees).not.toHaveBeenCalled();
+      expect(covered.lines.at(0)).toBe("help");
+      const back = await press(covered, "?");
+      expect(back.lines.at(0)).toBe("assigning example#12");
+      expect(back.lines.at(-2)).toBe("synced 0m ago");
+      expect(readRegion(back).slice(3, 5)).toEqual(["  ☑ alice", "  ☑ bob"]);
+      const applied = await settle(await press(back, "return"), isAnswered);
+      expect(setAssignees).toHaveBeenCalledWith(expect.anything(), [
+        "alice",
+        "bob",
+      ]);
+      expect(applied.lines.at(-2)).toBe("✓ assigned alice, bob");
+    });
+
     it("keeps its keys once a pane too narrow to draw it widens again", async () => {
       const { provider, setAssignees } = recordAssignees();
       const opened = await settle(
@@ -727,6 +751,7 @@ describe("useEditor", () => {
         findTeam: () => [],
         now: () => recordedNow,
         onResult: () => {},
+        covered: false,
       });
       const [started, setStarted] = useState(false);
       if (!started) {

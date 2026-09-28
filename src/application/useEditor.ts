@@ -25,6 +25,11 @@ export interface UseEditorProps {
   readonly now: () => Date;
   /** Shows the result of applying, or of a refused key, on the status line. */
   readonly onResult: (result: ActionResult) => void;
+  /**
+   * True while the help covers the editor, which turns its keys off, so
+   * none acts on what is out of sight.
+   */
+  readonly covered: boolean;
 }
 
 /** Result of the useEditor hook. */
@@ -100,8 +105,8 @@ const typeToFilter = () => {};
 /**
  * The editor that `a` and `r` open under the selected row: its state,
  * the reading of whom it offers, its keys and the write it applies. Its
- * keys sit in their own layer, which acts while an editor is open: typing
- * filters, the arrows move, `␣` ticks or unticks, `⏎` applies the whole
+ * keys sit in their own layer, which acts while an editor is open and the
+ * help does not cover it: typing filters, the arrows move, `␣` ticks or unticks, `⏎` applies the whole
  * set and `esc` cancels. The layer stays registered while no editor is
  * open, so the help lists its keys.
  *
@@ -113,6 +118,7 @@ export default function useEditor({
   findTeam,
   now,
   onResult,
+  covered,
 }: UseEditorProps): UseEditorResult {
   const [editing, setEditing] = useState<Editing>();
   const [refused, setRefused] = useState<Refused>();
@@ -292,10 +298,10 @@ export default function useEditor({
           hint: "",
           run: () => setEditing(undefined),
         },
-        // On exactly while an editor is open, never by the focus: the
-        // filter is drawn anew after the help, or after a pane too narrow
-        // for it, and the keys outlast it.
-      ].map((command) => ({ ...command, enabled: open })),
+        // On exactly while an editor is open and in sight, never by the
+        // focus: the filter is drawn anew after the help, or after a pane
+        // too narrow for it, and the keys outlast it.
+      ].map((command) => ({ ...command, enabled: open && !covered })),
       bindings: [
         { key: "up", cmd: "editor.previous" },
         { key: "down", cmd: "editor.next" },
@@ -304,7 +310,7 @@ export default function useEditor({
         { key: "escape", cmd: "editor.cancel" },
       ],
     }),
-    [open],
+    [open, covered],
   );
 
   if (!editing) {
