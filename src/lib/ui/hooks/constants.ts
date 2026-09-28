@@ -4,6 +4,8 @@ export const keySymbols: Readonly<Record<string, string>> = {
   right: "→",
   up: "↑",
   down: "↓",
+  pageup: "⇞",
+  pagedown: "⇟",
   return: "⏎",
   space: "␣",
   escape: "esc",

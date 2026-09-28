@@ -10,6 +10,16 @@ export interface ScreenActions {
   readonly switchMode: (mode: TerminalMode) => void;
   /** Moves the selection by `step` rows, up when it is negative. */
   readonly moveSelection: (step: number) => void;
+  /**
+   * Moves the selection by as many rows as the list shows, up when
+   * `direction` is negative.
+   */
+  readonly movePage: (direction: -1 | 1) => void;
+  /**
+   * Moves the selection to the first thread when `direction` is negative,
+   * and to the last otherwise.
+   */
+  readonly moveToEnd: (direction: -1 | 1) => void;
   /** Opens the selected thread's page in the browser. */
   readonly openSelected: () => void;
   /** Shows the mode's next grouping. */
@@ -32,7 +42,10 @@ export interface ScreenActions {
 export interface UseScreenKeysProps {
   /** The mode on screen: `t` acts in activity alone. */
   readonly mode: TerminalMode;
-  /** Whether the help is open, which `esc` then closes. */
+  /**
+   * Whether the help is open, which `esc` then closes, and which turns
+   * every key but the help's and `q` off.
+   */
   readonly help: boolean;
   /** Whether an editor is open, which turns every key but the help's off. */
   readonly editorOpen: boolean;
@@ -101,6 +114,30 @@ export default function useScreenKeys({
           run: () => latest.current.moveSelection(1),
         },
         {
+          name: "selection.pageUp",
+          desc: "a page up or down",
+          group: "List",
+          run: () => latest.current.movePage(-1),
+        },
+        {
+          name: "selection.pageDown",
+          desc: "a page up or down",
+          group: "List",
+          run: () => latest.current.movePage(1),
+        },
+        {
+          name: "selection.first",
+          desc: "the first or last thread",
+          group: "List",
+          run: () => latest.current.moveToEnd(-1),
+        },
+        {
+          name: "selection.last",
+          desc: "the first or last thread",
+          group: "List",
+          run: () => latest.current.moveToEnd(1),
+        },
+        {
           name: "thread.open",
           desc: "open in the browser",
           group: "Thread",
@@ -166,12 +203,17 @@ export default function useScreenKeys({
           group: "App",
           run: () => latest.current.quit(),
         },
-        // An open editor takes the typing, so no other key but help runs.
-      ].map((command) =>
-        editorOpen && !command.name.startsWith("help.")
-          ? { ...command, enabled: false }
-          : command,
-      ),
+      ].map((command) => {
+        // An open editor takes the typing, so no key but the help's runs;
+        // and no key acts on what the help hides, so while it shows only
+        // its own keys and quitting run.
+        const runs = command.name.startsWith("help.")
+          ? true
+          : editorOpen
+            ? false
+            : !help || command.name === "app.quit";
+        return runs ? command : { ...command, enabled: false };
+      }),
       bindings: [
         { key: "left", cmd: "mode.previous" },
         { key: "h", cmd: "mode.previous" },
@@ -181,6 +223,10 @@ export default function useScreenKeys({
         { key: "k", cmd: "selection.previous" },
         { key: "down", cmd: "selection.next" },
         { key: "j", cmd: "selection.next" },
+        { key: "pageup", cmd: "selection.pageUp" },
+        { key: "pagedown", cmd: "selection.pageDown" },
+        { key: "home", cmd: "selection.first" },
+        { key: "end", cmd: "selection.last" },
         { key: "return", cmd: "thread.open" },
         { key: "a", cmd: "thread.assign" },
         { key: "r", cmd: "thread.review" },

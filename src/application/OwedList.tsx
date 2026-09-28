@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import type { OwedList as List, WaitRow } from "../lib/owed/index.js";
 import type { ThreadDetail } from "../lib/provider/index.js";
 import {
@@ -33,11 +33,18 @@ export interface OwedListProps {
    * background to the option under the editor's cursor.
    */
   readonly editor?: { readonly node: ReactNode; readonly lines: number };
+  /**
+   * Told, after each draw, how many rows the list shows, headings not
+   * counted, which is how far a page moves the selection.
+   */
+  readonly onShownRows: (rows: number) => void;
 }
 
 /** One heading, or one row with the accordion when it is selected. */
 interface Block {
   readonly key: string;
+  /** Whether the block holds a row, rather than a heading. */
+  readonly row: boolean;
   readonly lines: number;
   readonly node: ReactNode;
 }
@@ -58,6 +65,7 @@ export default function OwedList({
   width,
   height,
   editor,
+  onShownRows,
 }: OwedListProps): ReactNode {
   const waiting = listWaiting(list.groups.flatMap((group) => group.rows));
   const blocks: Block[] = [];
@@ -67,7 +75,7 @@ export default function OwedList({
   for (const { heading, rows } of list.groups) {
     if (heading) {
       const node = <GroupHeading text={heading.text} width={width} />;
-      blocks.push({ key: heading.text, lines: 1, node });
+      blocks.push({ key: heading.text, row: false, lines: 1, node });
     }
     for (const row of rows) {
       const open = place === selected;
@@ -77,6 +85,7 @@ export default function OwedList({
       }
       blocks.push({
         key: `${heading?.text ?? ""} ${identifyRow(row)}`,
+        row: true,
         lines:
           countRowLines(row, width) +
           (open ? (editor?.lines ?? accordionHeight) : 0),
@@ -101,6 +110,10 @@ export default function OwedList({
     }
   }
   const shown = useListScroll({ blocks, from, to, room: height });
+  const shownRows = shown.filter(({ row }) => row).length;
+  useEffect(() => {
+    onShownRows(shownRows);
+  });
   return (
     <box flexDirection="column" height={height} overflow="hidden">
       {shown.map(({ key, node }) => (

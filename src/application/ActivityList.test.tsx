@@ -19,6 +19,7 @@ const reading: Omit<ActivityListProps, "list" | "selected" | "width"> = {
   now: recordedNow,
   timezone: "Europe/Paris",
   height: 20,
+  onShownRows: () => {},
 };
 
 describe("ActivityList", () => {
@@ -215,6 +216,28 @@ describe("ActivityList", () => {
       " ┃example#12 PR                      25m",
       " ┃Fix the parser · alice",
     ]);
+  });
+
+  it("tells how many threads it shows, headings not counted", async () => {
+    const shown: number[] = [];
+    const drawShown = (height: number) =>
+      drawSuspending(
+        <ActivityList
+          {...reading}
+          readDetail={async () => overReviewDetail}
+          list={recordedActivity("kind")}
+          selected={1}
+          width={40}
+          height={height}
+          onShownRows={(rows) => shown.push(rows)}
+        />,
+        40,
+        height,
+      );
+    await drawShown(12);
+    expect(shown.at(-1)).toBe(1);
+    await drawShown(20);
+    expect(shown.at(-1)).toBe(2);
   });
 
   it("scrolls back up to the threads above once the region grows tall enough", async () => {

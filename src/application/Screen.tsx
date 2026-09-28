@@ -195,12 +195,20 @@ export default function Screen({
     onResult: setAction,
     covered: help,
   });
-  const moveSelection = (step: number) =>
+  // How many rows the list showed last: how far a page moves the selection.
+  const pageRows = useRef(1);
+  const recordShownRows = (rows: number) => {
+    pageRows.current = Math.max(1, rows);
+  };
+  // Every move stops at the first or the last row, never past it.
+  const moveTo = (choose: (place: number, last: number) => number) =>
     setSelections((current) => {
       const rows = drawnRows.current;
-      const place = placeSelection(rows, current[mode]) + step;
+      const last = rows.length - 1;
+      const chosen = choose(placeSelection(rows, current[mode]), last);
+      const place = Math.max(0, Math.min(last, chosen));
       const row = rows.at(place);
-      if (!row || place < 0) return current;
+      if (!row) return current;
       return { ...current, [mode]: { place, row: identifyRow(row) } };
     });
 
@@ -224,7 +232,11 @@ export default function Screen({
     editorOpen: editor.open,
     actions: {
       switchMode: setMode,
-      moveSelection,
+      moveSelection: (step) => moveTo((place) => place + step),
+      movePage: (direction) =>
+        moveTo((place) => place + direction * pageRows.current),
+      moveToEnd: (direction) =>
+        moveTo((_place, last) => (direction < 0 ? 0 : last)),
       // Only a row is ever selected, in either mode, so a heading or a
       // stack never opens.
       openSelected: () => {
@@ -380,6 +392,7 @@ export default function Screen({
         timezone={settings.time.timezone}
         width={width}
         height={height - 4}
+        onShownRows={recordShownRows}
         {...(slot && { editor: slot })}
       />
     );
@@ -415,6 +428,7 @@ export default function Screen({
         timezone={settings.time.timezone}
         width={width}
         height={height - 4}
+        onShownRows={recordShownRows}
         {...(slot && { editor: slot })}
       />
     );

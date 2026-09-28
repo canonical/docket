@@ -18,6 +18,8 @@ function noting(ran: string[], label?: string): ScreenActions {
   return {
     switchMode: note("switchMode"),
     moveSelection: note("moveSelection"),
+    movePage: note("movePage"),
+    moveToEnd: note("moveToEnd"),
     openSelected: note("openSelected"),
     nextGrouping: note("nextGrouping"),
     nextWindow: note("nextWindow"),
@@ -61,6 +63,17 @@ function probe(start: Partial<State> = {}) {
   return { ran, change: (state: Partial<State>) => change(state), Probe };
 }
 
+/**
+ * What the terminal sends for a key the mock input names no helper for:
+ * the page keys as their escape sequences, home and end by their names.
+ */
+const sequences: Readonly<Record<string, string>> = {
+  pageup: "\u001B[5~",
+  pagedown: "\u001B[6~",
+  home: "HOME",
+  end: "END",
+};
+
 /** Presses `keys` one after another and reads the screen back. */
 async function press(screen: Screen, ...keys: string[]) {
   let drawn = screen;
@@ -71,7 +84,7 @@ async function press(screen: Screen, ...keys: string[]) {
         input.pressArrow(key);
       } else if (key === "return") input.pressEnter();
       else if (key === "escape") input.pressEscape();
-      else input.pressKey(key);
+      else input.pressKey(sequences[key] ?? key);
     });
     // The input reads a lone escape only once no sequence follows it.
     if (key === "escape") {
@@ -101,7 +114,8 @@ describe("useScreenKeys", () => {
     const { ran, screen } = await bind();
     await press(
       screen,
-      ...["left", "h", "right", "l", "up", "k", "down", "j", "return", "g"],
+      ...["left", "h", "right", "l", "up", "k", "down", "j"],
+      ...["pageup", "pagedown", "home", "end", "return", "g"],
       ...["a", "r", "?", "R", "q"],
     );
     expect(ran).toEqual([
@@ -113,6 +127,10 @@ describe("useScreenKeys", () => {
       "moveSelection -1",
       "moveSelection 1",
       "moveSelection 1",
+      "movePage -1",
+      "movePage 1",
+      "moveToEnd -1",
+      "moveToEnd 1",
       "openSelected",
       "nextGrouping",
       "edit assign",
@@ -130,8 +148,14 @@ describe("useScreenKeys", () => {
     const activity = await press(screen, "t", "a", "r");
     expect(ran).toEqual(["nextWindow", "edit assign", "edit review"]);
     expect([owed, activity].map(({ lines }) => lines.slice(0, 2))).toEqual([
-      ["← → ↑ ↓ ⏎ g a r ? R q", "← → g t ↑ ↓ ⏎ a r ? esc R q"],
-      ["← → ↑ ↓ ⏎ g t a r ? R q", "← → g t ↑ ↓ ⏎ a r ? esc R q"],
+      [
+        "← → ↑ ↓ ⇞ ⇟ home end ⏎ g a r ? R q",
+        "← → g t ↑ ↓ ⇞ ⇟ home end ⏎ a r ? esc R q",
+      ],
+      [
+        "← → ↑ ↓ ⇞ ⇟ home end ⏎ g t a r ? R q",
+        "← → g t ↑ ↓ ⇞ ⇟ home end ⏎ a r ? esc R q",
+      ],
     ]);
   });
 
@@ -150,9 +174,29 @@ describe("useScreenKeys", () => {
     expect(ran).toEqual(["closeHelp"]);
   });
 
+  it("runs only the help's keys and q while the help shows, and every key again once it closes", async () => {
+    const { ran, change, screen } = await bind({
+      mode: "activity",
+      help: true,
+    });
+    await press(
+      screen,
+      ...["left", "h", "right", "l", "up", "k", "down", "j"],
+      ...["pageup", "pagedown", "home", "end", "return", "a", "r", "g", "t"],
+      ...["R", "q", "?", "escape"],
+    );
+    expect(ran).toEqual(["quit", "toggleHelp", "closeHelp"]);
+    await screen.redraw(() => change({ help: false }));
+    await press(screen, "j", "t");
+    expect(ran.slice(3)).toEqual(["moveSelection 1", "nextWindow"]);
+  });
+
   it("runs only the help's keys while an editor is open", async () => {
     const { ran, screen } = await bind({ editorOpen: true, help: true });
-    const drawn = await press(screen, "j", "a", "q", "R", "?", "escape");
+    const drawn = await press(
+      screen,
+      ...["j", "pagedown", "home", "a", "q", "R", "?", "escape"],
+    );
     expect(ran).toEqual(["toggleHelp", "closeHelp"]);
     expect(drawn.lines.at(0)).toBe("? esc");
   });

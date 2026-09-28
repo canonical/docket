@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import type {
   ThreadRow as ActivityThread,
   ActivityList as List,
@@ -46,6 +46,11 @@ export interface ActivityListProps {
    * selection background to the option under the editor's cursor.
    */
   readonly editor?: { readonly node: ReactNode; readonly lines: number };
+  /**
+   * Told, after each draw, how many rows the list shows, headings not
+   * counted, which is how far a page moves the selection.
+   */
+  readonly onShownRows: (rows: number) => void;
 }
 
 /**
@@ -54,6 +59,8 @@ export interface ActivityListProps {
  */
 interface Block {
   readonly key: string;
+  /** Whether the block holds a row, rather than a heading. */
+  readonly row: boolean;
   readonly lines: number;
   readonly node: ReactNode;
 }
@@ -78,6 +85,7 @@ export default function ActivityList({
   width,
   height,
   editor,
+  onShownRows,
 }: ActivityListProps): ReactNode {
   const blocks: Block[] = [];
   let place = 0;
@@ -86,7 +94,7 @@ export default function ActivityList({
   for (const { heading, rows } of list.groups) {
     if (heading) {
       const node = <GroupHeading text={heading.text} width={width} />;
-      blocks.push({ key: heading.text, lines: 1, node });
+      blocks.push({ key: heading.text, row: false, lines: 1, node });
     }
     for (const row of rows) {
       const chosen = place === selected;
@@ -97,6 +105,7 @@ export default function ActivityList({
       }
       blocks.push({
         key: row.reference.text,
+        row: true,
         lines:
           countRowLines(row, width) +
           (chosen ? (editor?.lines ?? accordionHeight) : 0) +
@@ -131,6 +140,10 @@ export default function ActivityList({
     }
   }
   const shown = useListScroll({ blocks, from, to, room: height });
+  const shownRows = shown.filter(({ row }) => row).length;
+  useEffect(() => {
+    onShownRows(shownRows);
+  });
   return (
     <box flexDirection="column" height={height} overflow="hidden">
       {shown.map(({ key, node }) => (
