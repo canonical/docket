@@ -8,7 +8,7 @@
 - `bun run check`: runs Biome's formatter and linter over the repository, then type-checks everything under `src/` and `guarantees/` with `tsconfig.json`.
 - `bunx biome check --write`: applies Biome's formatting and safe lint fixes.
 - `bun run test`: runs the unit tests with vitest under Bun.
-- `bun run test:coverage`: runs them with v8 coverage, and fails below 100% of the lines, branches, functions and statements in `src/application/` and `src/lib/`.
+- `bun run test:coverage`: runs them with v8 coverage, and fails below 100% of the lines, branches, functions and statements in `src/application/` and `src/lib/`, the application's stories aside: the `screens` guarantee draws them, not the unit suite.
 - `bun run check:identity`: refuses home paths, personal logins outside the attribution fields, real repositories in fixtures, internal tool names, words that describe the project's history, and planning identifiers.
 - `bun run check:secrets`: scans every commit and every staged or unstaged change with gitleaks. It uses `gitleaks` from PATH, or runs it through `nix run nixpkgs#gitleaks` when only nix is installed.
 - `bun run check:audit`: refuses any dependency with a published advisory (`bun audit`).
