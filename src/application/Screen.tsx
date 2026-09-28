@@ -280,8 +280,9 @@ export default function Screen({
   // A thread's details are read once for each copy of the data: moving the
   // selection back to a thread shows what was read, and each refresh
   // brings a copy that reads its own.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: see above.
   const details = useMemo(
-    () => ({ of: cached, read: new Map<string, Promise<ThreadDetail>>() }),
+    () => new Map<string, Promise<ThreadDetail>>(),
     [cached],
   );
 
@@ -315,9 +316,8 @@ export default function Screen({
   } else if (owed && readThreadDetail) {
     const readDetail = (row: WaitRow) => {
       const key = row.reference.text;
-      const reading =
-        details.read.get(key) ?? readThreadDetail(row.wait.thread);
-      details.read.set(key, reading);
+      const reading = details.get(key) ?? readThreadDetail(row.wait.thread);
+      details.set(key, reading);
       return reading;
     };
     region = (
