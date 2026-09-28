@@ -47,6 +47,11 @@ describe("HelpOverlay", () => {
     expect(screen.lines.slice(0, lines.length)).toEqual(lines);
   });
 
+  it("cuts off at the bottom of a short pane, every line whole", async () => {
+    const screen = await draw(<HelpOverlay {...Keys.args} />, 40, 6);
+    expect(screen.lines).toEqual(lines.slice(0, 6));
+  });
+
   it("cuts a label that crosses a narrow pane with an ellipsis", async () => {
     const screen = await draw(
       <HelpOverlay {...Keys.args} width={24} />,

@@ -41,7 +41,7 @@ const HelpOverlay = ({
   return (
     <box flexDirection="column">
       {groupCommands(commands).map(([group, lines]) => (
-        <box key={group} flexDirection="column" marginTop={1}>
+        <box key={group} flexDirection="column" flexShrink={0} marginTop={1}>
           <text
             fg={tokens["color.text"]}
             attributes={tokens["typography.weight.bold"]}
@@ -55,7 +55,7 @@ const HelpOverlay = ({
             );
             const room = width - indent - Bun.stringWidth(keys) - gap.length;
             return (
-              <box key={line.label} flexDirection="column">
+              <box key={line.label} flexDirection="column" flexShrink={0}>
                 <text fg={tokens["color.text"]}>
                   {pad}
                   <span attributes={tokens["typography.weight.bold"]}>
