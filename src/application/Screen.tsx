@@ -409,6 +409,13 @@ export default function Screen({
         width={width}
       />
     );
+  } else if (mode === "activity" && !activity) {
+    // No list is held for the window yet: on opening, and after t.
+    region = (
+      <box paddingLeft={indent}>
+        <text fg={tokens["color.text"]}>refresh in progress…</text>
+      </box>
+    );
   }
   if (listed && threads && readThreadDetail) {
     region = (

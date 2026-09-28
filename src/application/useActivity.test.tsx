@@ -138,7 +138,7 @@ describe("useActivity", () => {
     expect(reads).toBe(2);
   });
 
-  it("reads at each sync, and shows nothing for a window t steps to until its events are in", async () => {
+  it("reads at each sync, and gives no list for a window t steps to until its events are in", async () => {
     let reads = 0;
     let wait: Promise<CachedEvents> | undefined;
     const { change, read } = await probe((cache) => (repo, since) => {

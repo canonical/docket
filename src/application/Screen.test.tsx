@@ -571,14 +571,53 @@ describe("Screen", () => {
         width,
         16,
       );
-      await vi.waitFor(async () =>
-        expect((await screen.redraw()).lines.slice(1, 3).join("")).not.toBe(""),
-      );
-      await vi.waitFor(async () =>
-        expect((await screen.redraw()).lines).not.toContain("  loading…"),
-      );
+      await vi.waitFor(async () => {
+        const { lines } = await screen.redraw();
+        expect(lines.slice(1, 3).join("")).not.toBe("");
+        expect(lines).not.toContain("  refresh in progress…");
+        expect(lines).not.toContain("  loading…");
+      });
       return screen.redraw();
     }
+
+    it("says refresh in progress while the events are read, on opening and after t", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      let gate = Promise.withResolvers<void>();
+      const view = viewOf(cache);
+      const source = {
+        ...view.source,
+        readEvents: async (repo: string, since: Date) => {
+          await gate.promise;
+          return cache.readEvents(repo, since, 300_000);
+        },
+      };
+      const screen = await show({ ...view, mode: "activity", source });
+      expect((await screen.redraw()).lines.slice(1, 3)).toEqual([
+        "",
+        "  refresh in progress…",
+      ]);
+      gate.resolve();
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.at(9)).toBe(
+          "2 threads · 3 events",
+        ),
+      );
+      gate = Promise.withResolvers<void>();
+      const wider = await press(screen, "t");
+      expect(wider.lines.slice(0, 3)).toEqual([
+        `activity${" ".repeat(19)}48h · by kind`,
+        "",
+        "  refresh in progress…",
+      ]);
+      expect(wider.lines.at(9)).toBe("");
+      gate.resolve();
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.at(9)).toBe(
+          "2 threads · 4 events",
+        ),
+      );
+    });
 
     it("lists each thread with its events under it, by kind, and counts them at 40 columns", async () => {
       const screen = await showActivity(40);
