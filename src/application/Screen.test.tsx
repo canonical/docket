@@ -548,13 +548,6 @@ describe("Screen", () => {
       expect(failed.look("✗ could")?.fg).toBe(tokens["color.text.error"]);
     });
 
-    it("opens nothing in activity, where nothing is selected", async () => {
-      const open = vi.fn(openNothing);
-      const screen = await showRecorded(readRecordedDetail, open);
-      await press(screen, "l", "return");
-      expect(open).not.toHaveBeenCalled();
-    });
-
     it("opens nothing when nothing is owed", async () => {
       const open = vi.fn(openNothing);
       const cache = await openCache(fakeProvider());
@@ -567,10 +560,18 @@ describe("Screen", () => {
 
   describe("activity", () => {
     /** Opens the recording's activity on a pane 16 lines tall. */
-    async function showActivity(width: number, cache?: Cache) {
+    async function showActivity(
+      width: number,
+      cache?: Cache,
+      openInBrowser = openNothing,
+    ) {
       const opened = cache ?? (await openCache(recordedProvider()));
       await opened.refresh();
-      const view = { ...viewOf(opened), mode: "activity" } as const;
+      const view = {
+        ...viewOf(opened),
+        mode: "activity",
+        openInBrowser,
+      } as const;
       const screen = await draw(
         <WithKeys>
           <Screen {...view} onQuit={() => {}} />
@@ -644,7 +645,7 @@ describe("Screen", () => {
         "",
         "2 threads · 3 events",
         "synced 0m ago",
-        "←→ mode ↑↓ sel g grp t time ?",
+        "←→ mode ↑↓ sel ⏎ open g grp t time ?",
       ]);
     });
 
@@ -695,6 +696,19 @@ describe("Screen", () => {
       expect(new Set(measured)).toEqual(
         new Set(["example-org/example-repo#12"]),
       );
+    });
+
+    it("opens the selected thread's page, as GitHub gives it, with ⏎, and never a heading", async () => {
+      const opened: string[] = [];
+      const screen = await showActivity(40, undefined, async (url) => {
+        opened.push(url);
+      });
+      await press(screen, "return", "j", "return", "k", "k", "return");
+      expect(opened).toEqual([
+        "https://github.com/example-org/example-docs/issues/4",
+        "https://github.com/example-org/example-repo/pull/12",
+        "https://github.com/example-org/example-docs/issues/4",
+      ]);
     });
 
     it("regroups with g and reaches further back with t, at 60 columns", async () => {
@@ -852,7 +866,9 @@ describe("Screen", () => {
       expect(owed.lines.at(0)).toBe("owed");
       expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
       const activity = await press(screen, "right");
-      expect(activity.lines.at(11)).toBe("←→ mode ↑↓ sel g grp t time ?");
+      expect(activity.lines.at(11)).toBe(
+        "←→ mode ↑↓ sel ⏎ open g grp t time ?",
+      );
       expect(activity.look("t")?.bold).toBe(true);
     });
 

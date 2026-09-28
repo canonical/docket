@@ -225,12 +225,13 @@ export default function Screen({
           desc: "open in the browser",
           group: "Thread",
           hint: "open",
-          enabled: mode === "owed",
-          // Only a row is ever selected, so a heading never opens.
+          // Only a row is ever selected, in either mode, so a heading or a
+          // stack never opens.
           run: () => {
             const row = drawnSelection.current;
-            if (!row || !("wait" in row)) return;
-            openInBrowser(row.wait.thread.url).catch(() =>
+            if (!row) return;
+            const { url } = "wait" in row ? row.wait.thread : row.thread;
+            openInBrowser(url).catch(() =>
               setAction({
                 failed: true,
                 text: "could not open the browser",
