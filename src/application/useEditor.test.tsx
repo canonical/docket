@@ -499,6 +499,44 @@ describe("useEditor", () => {
       expect(after.lines.at(-2)).toBe("✗ assign refused");
     });
 
+    it("keeps a refusal that arrives after another editor opened out of that editor", async () => {
+      const { promise, reject } = Promise.withResolvers<never>();
+      const provider = recordedProvider({ setAssignees: () => promise });
+      const opened = await settle(
+        await press(await showRecorded(provider, 40, 20), "a"),
+      );
+      const next = await settle(
+        await press(opened, "space", "return", "escape", "j", "j", "a"),
+      );
+      expect(next.lines.at(0)).toBe("assigning example#15");
+      reject(providerError("GITHUB_REQUEST_FAILED"));
+      const after = await settle(next, isAnswered);
+      expect(after.lines.at(0)).toBe("assigning example#15");
+      expect(after.lines.join("\n")).not.toContain("GITHUB_REQUEST_FAILED");
+      expect(after.lines.at(-2)).toBe("✗ assign refused");
+    });
+
+    it("leaves another editor open when a write from a closed one succeeds", async () => {
+      const { promise, resolve } = Promise.withResolvers<void>();
+      const { provider, setAssignees } = recordAssignees();
+      const slow = recordedProvider({
+        ...provider,
+        setAssignees: async (thread, logins) => {
+          await promise;
+          return setAssignees(thread, logins);
+        },
+      });
+      const opened = await settle(await press(await showRecorded(slow), "a"));
+      const next = await settle(
+        await press(opened, "space", "return", "escape", "j", "j", "a"),
+      );
+      expect(next.lines.at(0)).toBe("assigning example#15");
+      resolve();
+      const after = await settle(next, isAnswered);
+      expect(after.lines.at(-2)).toBe("✓ unassigned");
+      expect(after.lines.at(0)).toBe("assigning example#15");
+    });
+
     it("closes once its thread leaves the list", async () => {
       let closed = false;
       const provider = recordedProvider({

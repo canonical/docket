@@ -116,8 +116,8 @@ export default function useEditor({
 }: UseEditorProps): UseEditorResult {
   const [editing, setEditing] = useState<Editing>();
   const [refused, setRefused] = useState<Refused>();
-  // Each opening is numbered, so a reading that arrives after its editor
-  // closed, or after another opened, is dropped.
+  // Each opening is numbered, so a reading, or the answer to a write,
+  // that arrives after another editor opened never reaches it.
   const opened = useRef(0);
   const current = useRef(editing);
   current.current = editing;
@@ -208,8 +208,14 @@ export default function useEditor({
     if (!source || !editor?.names || editor.unread || editor.writing) return;
     const { action, thread, reference, names, ticked } = editor;
     const wanted = names.filter((name) => ticked.has(name.toLowerCase()));
+    // A write outlives its editor once another opens, so its answer then
+    // tells only the status line, never the editor open since.
+    const opening = opened.current;
+    const update = (
+      change: (open: Editing | undefined) => Editing | undefined,
+    ) => opening === opened.current && setEditing(change);
     const refuse = (notice: Refusal) => {
-      setEditing((open) => open && { ...open, notice, writing: false });
+      update((open) => open && { ...open, notice, writing: false });
       onResult({ failed: true, text: `${action} refused`, at: now() });
     };
     setEditing({ ...editor, writing: true });
@@ -227,7 +233,7 @@ export default function useEditor({
       refuse({ reason: dropFullStop(message), recovery });
       return;
     }
-    setEditing(undefined);
+    update(() => undefined);
     if (applied) {
       onResult({
         failed: false,
