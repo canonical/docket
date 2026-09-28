@@ -102,7 +102,7 @@ afterEach(() => {
   });
 });
 
-const hex = (colour: CapturedSpan["fg"]) =>
+const formatHex = (colour: CapturedSpan["fg"]) =>
   `#${colour
     .toInts()
     .map((part) => part.toString(16).padStart(2, "0"))
@@ -116,7 +116,7 @@ const hex = (colour: CapturedSpan["fg"]) =>
 const describeColours = (span: CapturedSpan) =>
   process.env.GUARANTEES_BREAK === "uncoloured"
     ? ""
-    : ` fg ${hex(span.fg)} bg ${hex(span.bg)}`;
+    : ` fg ${formatHex(span.fg)} bg ${formatHex(span.bg)}`;
 
 const attributeNames = Object.entries(TextAttributes).filter(
   ([name]) => name !== "NONE",
@@ -186,7 +186,7 @@ async function drawScreen(node: ReactNode, width: number): Promise<string> {
         const blank =
           span.text.trim() === "" &&
           background !== undefined &&
-          hex(span.bg) === hex(background);
+          formatHex(span.bg) === formatHex(background);
         return blank
           ? []
           : [
@@ -214,7 +214,7 @@ function drawStory(file: StoryFile, story: Story, width: number) {
   return drawScreen(<Component {...args} />, width);
 }
 
-const storiesOf = (file: StoryFile) =>
+const listStories = (file: StoryFile) =>
   Object.entries(file).filter(
     (entry): entry is [string, Story] => entry[0] !== "default",
   );
@@ -226,8 +226,8 @@ describe("screens", () => {
 
   for (const [index, file] of files.entries()) {
     const { title } = file.default;
-    describe(`${title} (${paths[index]})`, () => {
-      for (const [name, story] of storiesOf(file)) {
+    describe(`${title} (${paths.at(index)})`, () => {
+      for (const [name, story] of listStories(file)) {
         for (const width of widths) {
           it(`draws ${name} at ${width} columns as its saved copy shows`, async () => {
             const screen = await drawStory(file, story, width);
@@ -241,7 +241,7 @@ describe("screens", () => {
   for (const { title, story: named } of narrow) {
     it(`says only that ${title}'s ${named} needs 40 columns when drawn at ${narrowWidth}`, async () => {
       const file = files.find(({ default: meta }) => meta.title === title);
-      const story = storiesOf(file ?? ({} as StoryFile)).find(
+      const story = listStories(file ?? ({} as StoryFile)).find(
         ([name]) => name === named,
       );
       if (!file || !story) {
