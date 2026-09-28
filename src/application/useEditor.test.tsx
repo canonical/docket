@@ -2,9 +2,8 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { BoxRenderable } from "@opentui/core";
 import { useKeymap } from "@opentui/keymap/react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type Cache, createCache } from "../lib/cache/index.js";
 import type { Provider } from "../lib/provider/index.js";
@@ -428,15 +427,46 @@ describe("useEditor", () => {
       );
     });
 
-    it("keeps its state behind the help, which ? still opens", async () => {
+    it("keeps its state behind the help, which ? still opens, and its keys once the help closes", async () => {
       const opened = await settle(await press(await showRecorded(), "a"));
       const help = await press(opened, "c", "?");
       expect(help.lines.at(0)).toBe("help");
       const back = await press(help, "?");
-      expect(readRegion(back).slice(2, 4)).toEqual([
+      expect(readRegion(back).slice(2, 5)).toEqual([
         "  filter: c",
         "  ☑ alice",
+        "  ☐ carol",
       ]);
+      expect(back.lines.at(-1)).toBe("type filter ↑↓ ␣ tick ⏎ apply esc ?");
+      const ticked = await press(back, "down", "space");
+      expect(readRegion(ticked).slice(2, 5)).toEqual([
+        "  filter: c",
+        "  ☑ alice",
+        "  ☑ carol",
+      ]);
+      const cancelled = await press(ticked, "escape");
+      expect(cancelled.lines.at(0)).toBe("owed");
+    });
+
+    it("keeps its keys once a pane too narrow to draw it widens again", async () => {
+      const { provider, setAssignees } = recordAssignees();
+      const opened = await settle(
+        await press(await showRecorded(provider), "a"),
+      );
+      opened.setup.resize(30, 16);
+      const narrow = await opened.redraw();
+      expect(narrow.lines.at(0)).toBe("docket needs 40 columns");
+      opened.setup.resize(40, 16);
+      const wide = await opened.redraw();
+      expect(wide.lines.at(-1)).toBe("type filter ↑↓ ␣ tick ⏎ apply esc ?");
+      const ticked = await press(wide, "down", "space");
+      expect(readRegion(ticked).slice(3, 5)).toEqual(["  ☑ alice", "  ☑ bob"]);
+      const applied = await settle(await press(ticked, "return"), isAnswered);
+      expect(setAssignees).toHaveBeenCalledWith(expect.anything(), [
+        "alice",
+        "bob",
+      ]);
+      expect(applied.lines.at(-2)).toBe("✓ assigned alice, bob");
     });
 
     it("drops whom GitHub offers once its editor has closed", async () => {
@@ -611,10 +641,8 @@ describe("useEditor", () => {
       readonly start: (editor: ReturnType<typeof useEditor>) => void;
       readonly source: UseEditorProps["source"];
     }) {
-      const scope = useRef<BoxRenderable>(null);
       const editor = useEditor({
         source,
-        scope,
         findTeam: () => [],
         now: () => recordedNow,
         onResult: () => {},
@@ -625,7 +653,7 @@ describe("useEditor", () => {
         start(editor);
       }
       return (
-        <box ref={scope}>
+        <box>
           <text>{editor.title ?? "closed"}</text>
           {editor.picker && <text>{editor.picker.filter}</text>}
         </box>

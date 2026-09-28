@@ -19,7 +19,6 @@ const MIN_COLUMNS = 40;
  * @implements apps_docket.layout.pane
  */
 const Pane = ({
-  ref,
   width,
   header,
   children,
@@ -29,7 +28,6 @@ const Pane = ({
   help,
 }: PaneProps): ReactNode => (
   <box
-    ref={ref}
     flexDirection="column"
     width="100%"
     height="100%"

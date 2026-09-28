@@ -1,6 +1,5 @@
-import type { BoxRenderable } from "@opentui/core";
 import { useBindings } from "@opentui/keymap/react";
-import { type RefObject, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { WaitRow } from "../lib/owed/index.js";
 import type { ActionResult, PeoplePickerProps } from "../lib/ui/index.js";
 import type { Thread } from "../lib/waits/index.js";
@@ -20,12 +19,6 @@ type EditorSource = Pick<
 export interface UseEditorProps {
   /** Where the editor reads and writes, or none while gh gives no token. */
   readonly source: EditorSource | undefined;
-  /**
-   * The pane: the editor's filter is the one thing in it that takes the
-   * focus, so the editor's keys, scoped to it, apply exactly while an
-   * editor is on screen.
-   */
-  readonly scope: RefObject<BoxRenderable | null>;
   /** The logins `repo` groups as its team, which assigning offers first. */
   readonly findTeam: (repo: string) => readonly string[];
   /** The current time, which dates an action's result. */
@@ -107,17 +100,16 @@ const typeToFilter = () => {};
 /**
  * The editor that `a` and `r` open under the selected row: its state,
  * the reading of whom it offers, its keys and the write it applies. Its
- * keys sit in their own layer, active only while the editor's filter has
- * the focus: typing filters, the arrows move, `␣` ticks or unticks, `⏎`
- * applies the whole set and `esc` cancels. The layer stays registered
- * while no editor is open, so the help lists its keys.
+ * keys sit in their own layer, which acts while an editor is open: typing
+ * filters, the arrows move, `␣` ticks or unticks, `⏎` applies the whole
+ * set and `esc` cancels. The layer stays registered while no editor is
+ * open, so the help lists its keys.
  *
  * @note Impure: reads GitHub when an editor opens, and writes to it when
  * one applies.
  */
 export default function useEditor({
   source,
-  scope,
   findTeam,
   now,
   onResult,
@@ -245,10 +237,9 @@ export default function useEditor({
     }
   };
 
+  const open = editing !== undefined;
   useBindings(
     () => ({
-      targetRef: scope,
-      targetMode: "focus-within",
       // Above the global layer, so the key bar lists the editor's keys first.
       priority: 1,
       commands: [
@@ -295,7 +286,10 @@ export default function useEditor({
           hint: "",
           run: () => setEditing(undefined),
         },
-      ],
+        // On exactly while an editor is open, never by the focus: the
+        // filter is drawn anew after the help, or after a pane too narrow
+        // for it, and the keys outlast it.
+      ].map((command) => ({ ...command, enabled: open })),
       bindings: [
         { key: "up", cmd: "editor.previous" },
         { key: "down", cmd: "editor.next" },
@@ -304,7 +298,7 @@ export default function useEditor({
         { key: "escape", cmd: "editor.cancel" },
       ],
     }),
-    [],
+    [open],
   );
 
   if (!editing) {

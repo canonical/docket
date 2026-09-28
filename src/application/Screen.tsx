@@ -1,4 +1,3 @@
-import type { BoxRenderable } from "@opentui/core";
 import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
@@ -184,10 +183,8 @@ export default function Screen({
   // so a binding never holds a list older than the one on screen.
   const drawnRows = useRef<readonly (WaitRow | ActivityThread)[]>([]);
   const drawnSelection = useRef<WaitRow | ActivityThread>(undefined);
-  const pane = useRef<BoxRenderable>(null);
   const editor = useEditor({
     source: "cache" in source ? source : undefined,
-    scope: pane,
     findTeam: (repo) => listTeam(watched, repo),
     now,
     onResult: setAction,
@@ -408,7 +405,6 @@ export default function Screen({
 
   return (
     <Pane
-      ref={pane}
       width={width}
       header={
         help ? (
