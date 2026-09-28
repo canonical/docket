@@ -73,7 +73,7 @@ export type TextErrorCode =
   | "USAGE_UNKNOWN_COMMAND"
   /** A flag the command does not take. */
   | "USAGE_UNKNOWN_FLAG"
-  /** A flag's value outside what it accepts. */
+  /** A flag's value, or an argument, outside what it accepts. */
   | "USAGE_INVALID_VALUE"
   /** An argument the command needs is missing. */
   | "USAGE_MISSING_ARGUMENT"

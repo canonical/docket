@@ -18,6 +18,12 @@ const isAssignable = (thread: Thread): thread is Thread & Assignable =>
 const readReviewer = (name: string): Reviewer =>
   name.includes("/") ? { team: name } : { login: name, type: "user" };
 
+/** A GitHub login: letters, digits and single hyphens, 39 at most. */
+const loginShape = /^[A-Za-z0-9](?:-?[A-Za-z0-9]){0,38}$/;
+
+/** A team as `org/team`: the organisation's login, then the team's slug. */
+const teamShape = /^[A-Za-z0-9](?:-?[A-Za-z0-9]){0,38}\/[A-Za-z0-9][\w-]*$/;
+
 /**
  * Answers `docket assign` and `docket review`, plan first: without
  * `--confirm` it prints the change it would make and changes nothing;
@@ -48,6 +54,20 @@ export default async function answerWrite(session: Session): Promise<number> {
     fail(
       "USAGE_MISSING_ARGUMENT",
       `docket ${command} needs at least one ${who} after the reference.`,
+      recovery,
+    );
+  }
+  // Only a name GitHub could give passes: a login, and for a review an
+  // `org/team` name. A space, quote or shell character would otherwise
+  // change the command the plan prints for applying it.
+  const isName = (name: string) =>
+    loginShape.test(name) || (command === "review" && teamShape.test(name));
+  const invalid = wanted.find((name) => !isName(name));
+  if (invalid !== undefined) {
+    const who = command === "assign" ? "a login" : "a login or an org/team";
+    fail(
+      "USAGE_INVALID_VALUE",
+      `\`${invalid}\` is not ${who} as GitHub writes one.`,
       recovery,
     );
   }

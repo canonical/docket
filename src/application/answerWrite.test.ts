@@ -187,6 +187,21 @@ describe("answerWrite", () => {
       "USAGE_INVALID_REFERENCE",
       "names a stack",
     ],
+    [
+      ["assign", "example#12", "bob carol"],
+      "USAGE_INVALID_VALUE",
+      "`bob carol` is not a login as GitHub writes one.",
+    ],
+    [
+      ["assign", "example#12", "example-org/reviewers"],
+      "USAGE_INVALID_VALUE",
+      "`example-org/reviewers` is not a login",
+    ],
+    [
+      ["review", "example#12", "bob;touch example"],
+      "USAGE_INVALID_VALUE",
+      "is not a login or an org/team as GitHub writes one.",
+    ],
   ] as const)("refuses %j with %s", async (args, code, words) => {
     const { session } = openSession(home, args);
     await expect(answerWrite(session)).rejects.toMatchObject({
