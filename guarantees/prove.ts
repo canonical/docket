@@ -13,9 +13,10 @@
  *   later, and the entry must see the replies fall due at other times;
  *   then the stand-in's clock reads an hour later, and the entry must see
  *   less time left, which shows it reads the clock it is given.
- *
  * - `hostile-text`: docket's JSON writes each string as it was given,
- *   and the entry must find the control characters a program reads back.
+ *   and the entry must find the control characters a program reads back;
+ *   then a string on its own is written without its quotes, and the entry
+ *   must find a branch printed bare in `llm` output.
  *   It also checks its own pattern against every hostile word, on every
  *   run.
  *
@@ -74,6 +75,11 @@ const proofs: readonly Proof[] = [
     standInBreak: "unsanitized",
     failure:
       "× gives a pull request's base branch without its sequences in json",
+  },
+  {
+    entry: "hostile-text",
+    standInBreak: "unquoted",
+    failure: "× quotes every branch in llm output",
   },
 ];
 

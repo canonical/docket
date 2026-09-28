@@ -30,10 +30,13 @@
  * - `later`: the clock reads an hour after `GUARANTEES_NOW`;
  * - `unsanitized`: `JSON.stringify` writes every string as it was given,
  *   whatever the replacer docket passes it would make of it, as if
- *   docket's JSON let text written on GitHub through untouched.
+ *   docket's JSON let text written on GitHub through untouched;
+ * - `unquoted`: `JSON.stringify` writes a string given on its own
+ *   without its double quotes, as if docket printed text written on
+ *   GitHub bare where an agent reads it.
  *
- * @note Impure: replaces two globals, a third under `unsanitized`, and
- * appends to a file.
+ * @note Impure: replaces two globals, a third under `unsanitized` or
+ * `unquoted`, and appends to a file.
  */
 import { appendFileSync } from "node:fs";
 import type { Recording, SentRequest } from "./types.js";
@@ -53,10 +56,12 @@ if (!GUARANTEES_NOW || !GUARANTEES_RECORDING || !GUARANTEES_REQUESTS) {
 // meant to break would pass as though it could not fail.
 if (
   GUARANTEES_BREAK &&
-  !["overlap", "shift", "later", "unsanitized"].includes(GUARANTEES_BREAK)
+  !["overlap", "shift", "later", "unsanitized", "unquoted"].includes(
+    GUARANTEES_BREAK,
+  )
 ) {
   throw new Error(
-    `the stand-in has no break \`${GUARANTEES_BREAK}\`: overlap, shift, later or unsanitized`,
+    `the stand-in has no break \`${GUARANTEES_BREAK}\`: overlap, shift, later, unsanitized or unquoted`,
   );
 }
 if (GUARANTEES_BREAK === "unsanitized") {
@@ -78,6 +83,13 @@ if (GUARANTEES_BREAK === "unsanitized") {
         : (replacer as undefined),
       space as number | undefined,
     )) as typeof JSON.stringify;
+}
+if (GUARANTEES_BREAK === "unquoted") {
+  const stringify = JSON.stringify;
+  JSON.stringify = ((value: unknown, ...rest: unknown[]) =>
+    typeof value === "string" && rest.length === 0
+      ? value
+      : stringify(value, ...(rest as [undefined]))) as typeof JSON.stringify;
 }
 const fixed =
   new Date(GUARANTEES_NOW).getTime() +

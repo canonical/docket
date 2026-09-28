@@ -10,9 +10,9 @@ import makeHome from "./makeHome.js";
  * name carrying terminal control sequences are printed without them, in
  * every format, on standard output and standard error, and every string
  * a program reads back from `json` output is free of them, a pull
- * request's base branch included. In `llm` output,
- * which an agent reads, titles appear in double quotes and comments as
- * `>` lines, so a comment addressed to the agent stays data.
+ * request's base branch included. In `llm` output, which an agent reads,
+ * titles, labels, check names and branches appear in double quotes and
+ * comments as `>` lines, so a comment addressed to the agent stays data.
  */
 const home = makeHome(readFileSync(findFixture("example.yaml"), "utf8"));
 afterAll(() => home.remove());
@@ -41,6 +41,9 @@ const call = (args: readonly string[]) => {
  */
 // biome-ignore lint/suspicious/noControlCharactersInRegex: these are the characters looked for.
 const control = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/;
+
+/** What the hostile label, check name and branch read as once printed. */
+const printedWords = { label: "kind=bug", check: "lint", branch: "main" };
 
 /** Every string in `value`, however deeply it is held. */
 const collectStrings = (value: unknown): string[] => {
@@ -112,6 +115,25 @@ describe("hostile-text", () => {
       }
     }
   });
+
+  // A comment's `>` lines can hold the same words, quoted another way.
+  for (const [field, word] of Object.entries(printedWords)) {
+    it(`quotes every ${field} in llm output`, async () => {
+      const lines: string[] = [];
+      for (const command of commands) {
+        const { out } = await call([...command, "--format", "llm"]);
+        lines.push(
+          ...out
+            .split("\n")
+            .filter((line) => !line.startsWith(">") && line.includes(word)),
+        );
+      }
+      expect(lines.length).toBeGreaterThan(0);
+      expect(
+        lines.filter((line) => line.replaceAll(`"${word}"`, "").includes(word)),
+      ).toEqual([]);
+    });
+  }
 
   it("prints a comment addressed to the agent only as quoted lines in llm output", async () => {
     const { out } = await call(["show", "example#12", "--format", "llm"]);
