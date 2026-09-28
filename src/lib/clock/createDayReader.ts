@@ -1,4 +1,7 @@
-import type { Weekday, WorkingClock } from "./types.js";
+import createLocalTimeReader, {
+  type LocalTime,
+} from "./createLocalTimeReader.js";
+import type { WorkingClock } from "./types.js";
 
 /** One calendar day in the clock's zone, as a span of instants. */
 export interface Day {
@@ -11,51 +14,7 @@ export interface Day {
   readonly working: boolean;
 }
 
-interface LocalTime {
-  /** The local calendar date, as the UTC midnight that shares its digits. */
-  readonly date: number;
-  /** How far the local wall clock runs ahead of UTC, in milliseconds. */
-  readonly offset: number;
-  readonly weekday: Weekday;
-}
-
 const dayMilliseconds = 86_400_000;
-
-function createLocalTimeReader(
-  timezone: string,
-): (instant: number) => LocalTime {
-  const format = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    hourCycle: "h23",
-    weekday: "short",
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-  });
-  return (instant) => {
-    const parts = Object.fromEntries(
-      format.formatToParts(instant).map(({ type, value }) => [type, value]),
-    );
-    const date = Date.UTC(
-      Number(parts.year),
-      Number(parts.month) - 1,
-      Number(parts.day),
-    );
-    const wall =
-      date +
-      ((Number(parts.hour) * 60 + Number(parts.minute)) * 60 +
-        Number(parts.second)) *
-        1000;
-    return {
-      date,
-      offset: wall - Math.floor(instant / 1000) * 1000,
-      weekday: String(parts.weekday).toLowerCase() as Weekday,
-    };
-  };
-}
 
 /** An instant, and the local time the clock's zone shows at it. */
 interface Reading {

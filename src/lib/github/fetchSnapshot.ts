@@ -1,4 +1,4 @@
-import type { Cursor, Snapshot } from "../provider/index.js";
+import type { Cursor, PageProgress, Snapshot } from "../provider/index.js";
 import type { Push, Thread } from "../waits/index.js";
 import {
   fullPageSize,
@@ -42,12 +42,12 @@ const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
   repository(owner: $owner, name: $name) {
     issues(first: $size, after: $issuesAfter, states: $issueStates,
       filterBy: { since: $since }, ${order}) @include(if: $withIssues) {
-      ${pageInfo}
+      ${pageInfo} totalCount
       nodes { ${thread} }
     }
     pullRequests(first: $size, after: $pullsAfter, states: $pullStates, ${order})
       @include(if: $withPulls) {
-      ${pageInfo}
+      ${pageInfo} totalCount
       nodes {
         ${thread}
         isDraft headRefName isCrossRepository
@@ -61,7 +61,7 @@ const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
     }
     discussions(first: $size, after: $discussionsAfter, states: $discussionStates, ${order})
       @include(if: $withDiscussions) {
-      ${pageInfo}
+      ${pageInfo} totalCount
       nodes {
         number title createdAt updatedAt closed ${written}
         labels(first: 10) { nodes { name } }
@@ -78,7 +78,12 @@ const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
  * any state, so a thread that closed or merged replaces its open copy;
  * without, only the open threads. Issues are filtered by GitHub itself.
  */
-function readLists(client: Client, repo: string, since: string | undefined) {
+function readLists(
+  client: Client,
+  repo: string,
+  since: string | undefined,
+  onPage: ((progress: PageProgress) => void) | undefined,
+) {
   const open = since === undefined;
   return fetchLists<IssueNode, PullNode, DiscussionNode>(
     client,
@@ -92,6 +97,7 @@ function readLists(client: Client, repo: string, since: string | undefined) {
       discussionStates: open ? ["OPEN"] : ["OPEN", "CLOSED"],
     },
     since === undefined ? undefined : new Date(since),
+    onPage,
   );
 }
 
@@ -143,14 +149,16 @@ async function findPushes(
  *
  * @note Impure: reads from GitHub.
  * @param teamMembers Gives the logins of a team named `organisation/team`.
+ * @param onPage Hears of each page of the lists as it arrives.
  */
 export default async function fetchSnapshot(
   client: Client,
   repo: string,
   cursor: Cursor | null,
   teamMembers: (team: string) => Promise<readonly string[]>,
+  onPage?: (progress: PageProgress) => void,
 ): Promise<Snapshot> {
-  const lists = await readLists(client, repo, cursor?.since);
+  const lists = await readLists(client, repo, cursor?.since, onPage);
   const open = lists.pullRequests.filter(({ state }) => state === "OPEN");
   const teams = new Set(
     open.flatMap(({ requested }) =>

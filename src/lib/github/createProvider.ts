@@ -54,8 +54,8 @@ export default async function createProvider(
     return members;
   };
   return {
-    snapshot: (repo, cursor) =>
-      fetchSnapshot(client, repo, cursor, teamMembers),
+    snapshot: (repo, cursor, onPage) =>
+      fetchSnapshot(client, repo, cursor, teamMembers, onPage),
     refreshVolatile: (threads) => refreshChecks(client, threads),
     events: (repo, since) => fetchEvents(client, repo, since),
     threadDetail: (thread) => fetchThreadDetail(client, thread),

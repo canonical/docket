@@ -8,6 +8,7 @@ export type {
   Cursor,
   DetailMessage,
   FileChange,
+  PageProgress,
   Provider,
   ProviderError,
   ProviderErrorCode,

@@ -1,7 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
-import { hourMilliseconds } from "./constants.js";
+import { hourMilliseconds, weekdays } from "./constants.js";
+import createDayReader from "./createDayReader.js";
 import measureWorkingTime from "./measureWorkingTime.js";
 import type { WorkingClock } from "./types.js";
+
+/** Counts working time one day at a time, the plainest correct way. */
+function walkDayByDay(start: Date, end: Date, clock: WorkingClock): number {
+  const readDay = createDayReader(clock);
+  const until = end.getTime();
+  let total = 0;
+  for (let from = start.getTime(); from < until; ) {
+    const day = readDay(from);
+    if (day.working) total += Math.min(day.end, until) - day.start;
+    from = day.end;
+  }
+  return total;
+}
 
 const paris: WorkingClock = {
   workdays: ["mon", "tue", "wed", "thu", "fri"],
@@ -79,15 +93,58 @@ describe("measureWorkingTime", () => {
     ).toBe(hours(25));
   });
 
-  it("reads the zone's calendar about once per day of the span", () => {
+  it("counts a week in which the zone changes its clock and back at its real length", () => {
+    // Recife kept summer time only from 8 to 15 October 2000: a Sunday of
+    // 23 hours and a Saturday of 25, less than seven days apart.
+    const start = new Date("2000-10-08T02:30:00Z");
+    const end = new Date("2000-10-18T02:30:00Z");
+    const sundays = { workdays: ["sun"], timezone: "America/Recife" } as const;
+    const saturdays = { ...sundays, workdays: ["sat"] } as const;
+    expect(measureWorkingTime(start, end, sundays)).toBe(
+      walkDayByDay(start, end, sundays),
+    );
+    expect(measureWorkingTime(start, end, sundays)).toBe(hours(47));
+    expect(measureWorkingTime(start, end, saturdays)).toBe(hours(25.5));
+  });
+
+  it("reads the zone's calendar a few times a week rather than once a day", () => {
     const reads = vi.spyOn(Intl.DateTimeFormat.prototype, "formatToParts");
     expect(
-      between("2026-09-01T12:00+02:00", "2026-10-01T12:00+02:00", paris),
-    ).toBe(hours(22 * 24));
-    // The span touches 31 days: one reading for each, and one more for the
-    // instant it starts at, mid-day.
-    expect(reads).toHaveBeenCalledTimes(32);
+      between("2024-09-02T12:00+02:00", "2026-08-31T12:00+02:00", paris),
+    ).toBe(hours(520 * 24));
+    // Under half as many readings as the 729 days the span touches: two
+    // a week, at its end and midweek.
+    expect(reads.mock.calls.length).toBeLessThan(729 / 2);
     reads.mockRestore();
+  });
+
+  it("gives what walking the span day by day gives, over random spans and zones", () => {
+    let seed = 20_260_927;
+    const random = () => {
+      seed = (seed * 1_103_515_245 + 12_345) % 2 ** 31;
+      return seed / 2 ** 31;
+    };
+    const zones = [
+      "UTC",
+      "Europe/Paris",
+      "America/Santiago",
+      "Australia/Lord_Howe",
+      "Pacific/Apia",
+      "Asia/Kolkata",
+      "America/Sao_Paulo",
+    ];
+    const year = 365 * 24 * hourMilliseconds;
+    for (let run = 0; run < 150; run += 1) {
+      const clock: WorkingClock = {
+        workdays: weekdays.filter(() => random() < 0.6),
+        timezone: zones[Math.floor(random() * zones.length)] as string,
+      };
+      const start = new Date(Date.UTC(2005, 0, 1) + random() * 25 * year);
+      const end = new Date(start.getTime() + random() * 3 * year);
+      expect(measureWorkingTime(start, end, clock)).toBe(
+        walkDayByDay(start, end, clock),
+      );
+    }
   });
 
   it("counts no time for a date the zone skipped", () => {

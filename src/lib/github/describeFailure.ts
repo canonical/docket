@@ -1,9 +1,12 @@
+import { requestTimeout } from "./constants.js";
 import GitHubError from "./GitHubError.js";
 
 /** The parts of Octokit's errors that are read; none holds the token. */
 interface Failure {
   readonly status?: number;
   readonly message?: string;
+  /** What `fetch` threw, when the request got no answer. */
+  readonly cause?: { readonly name?: string };
   readonly response?: {
     readonly headers?: Readonly<Record<string, string | number | undefined>>;
   };
@@ -47,6 +50,13 @@ export default function describeFailure(
       at
         ? `wait for the limit to reset at ${at}, then refresh`
         : "wait for the limit to reset, then refresh",
+    );
+  }
+  if (failure.cause?.name === "TimeoutError") {
+    return new GitHubError(
+      "GITHUB_TIMED_OUT",
+      `GitHub gave no answer within ${requestTimeout / 1000} seconds.`,
+      "check the network connection and https://www.githubstatus.com, then refresh",
     );
   }
   const reported = failure.errors?.at(0)?.message;

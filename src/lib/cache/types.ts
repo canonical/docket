@@ -1,0 +1,154 @@
+import type { DehydratedState } from "@tanstack/query-core";
+import type {
+  Cursor,
+  PageProgress,
+  Provider,
+  ProviderError,
+} from "../provider/index.js";
+import type { Thread } from "../waits/index.js";
+import type CacheError from "./CacheError.js";
+
+/**
+ * The named codes of the cache's own errors. This is the one list of
+ * them. Callers and scripts depend on the codes, so a code is never
+ * renamed or reused.
+ */
+export type CacheErrorCode = "CACHE_LOCK_TIMED_OUT" | "CACHE_REFRESH_FAILED";
+
+/** What the cache keeps for one repository. */
+export interface RepoCache {
+  /** The open threads. */
+  readonly threads: readonly Thread[];
+  /** Where the next snapshot since a cursor starts. */
+  readonly cursor: Cursor | null;
+  /** What the next check for changes passes, when the provider has one. */
+  readonly tag: string | undefined;
+  /** When every thread was last fetched, rather than those since a cursor. */
+  readonly reconciledAt: Date;
+}
+
+/** What the cache file holds, for every docket process. */
+export interface CacheFile {
+  /** TanStack Query's dehydrated cache: one query per repository. */
+  readonly state: DehydratedState;
+  /**
+   * When the last full refresh started, in whichever process, so its
+   * cooldown holds across processes. Absent before the first.
+   */
+  readonly fullRefreshAt: Date | undefined;
+}
+
+/** The threads of every watched repository, and how old they are. */
+export interface CachedThreads {
+  readonly threads: readonly Thread[];
+  /**
+   * When the least recently synced repository was synced: the age of the
+   * data as a whole. Absent while a repository has no data yet.
+   */
+  readonly syncedAt: Date | undefined;
+}
+
+/**
+ * How far fetching every repository whole has come, while nothing is
+ * shown for it: on the first run, or after a full refresh. The pages are
+ * those of the repository being fetched, 0 of 0 until its first page.
+ */
+export interface FullRefreshProgress extends PageProgress {
+  readonly repo: string;
+  /** Its place in the list of repositories, from 1. */
+  readonly position: number;
+  /** How many repositories the list holds. */
+  readonly count: number;
+}
+
+/** What the faces show of the cache's own state, whatever the provider. */
+export interface CacheStatus {
+  /** When the data was last synced, as `CachedThreads` gives it. */
+  readonly syncedAt: Date | undefined;
+  /** True while a refresh fetches. */
+  readonly refreshing: boolean;
+  /** The progress of fetching everything, while nothing is shown. */
+  readonly fullRefresh: FullRefreshProgress | undefined;
+  /** When a full refresh is available again, after one was refused. */
+  readonly fullRefreshAvailableAt: Date | undefined;
+  /**
+   * Until when the refresh cycle pauses, and why: the budget ran low, or
+   * the provider refused a request for its rate limit.
+   */
+  readonly paused:
+    | { readonly until: Date; readonly reason: "budget" | "rateLimit" }
+    | undefined;
+  /**
+   * What stopped the last refresh, such as no answer from the network. The
+   * threads fetched before stay, and `syncedAt` gives their age.
+   */
+  readonly failure: ProviderError | CacheError | undefined;
+}
+
+/** Where the cache keeps its data, and where it fetches it from. */
+export interface CacheOptions {
+  /** The only way to the data: the cache knows no provider behind it. */
+  readonly provider: Provider;
+  /** The watched repositories, as `owner/name`. */
+  readonly repos: readonly string[];
+  /** The cache folder, which other docket processes share. */
+  readonly directory: string;
+  /** The current time, read whenever an age is measured. */
+  readonly now: () => Date;
+}
+
+/**
+ * The shared cache of the watched repositories' threads: one snapshot
+ * query per repository, kept on disk for every docket process.
+ */
+export interface Cache {
+  /**
+   * The threads held in memory, as last loaded or fetched: the same value
+   * on every call until they change.
+   */
+  threads(): CachedThreads;
+  /**
+   * Loads what other processes wrote to the cache file, keeping only data
+   * newer than what is held.
+   */
+  load(): Promise<void>;
+  /**
+   * The threads, no older than `maxAge` milliseconds. Older data is
+   * synced under the fetch lock, unless the process that held it before
+   * already did.
+   *
+   * @throws ProviderError when the provider fails.
+   * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
+   * the fetch lock for longer than the wait allows.
+   */
+  read(maxAge: number): Promise<CachedThreads>;
+  /**
+   * One step of the refresh cycle: syncs data older than the refresh
+   * interval, unless the budget is low or the cycle is paused. It never
+   * throws: whatever stops it is kept in the status, a provider error or
+   * a wait for the fetch lock that runs out with its own code, and any
+   * other, such as a full disk, as `CACHE_REFRESH_FAILED`.
+   */
+  refresh(): Promise<void>;
+  /**
+   * Discards the cached data, here and in the file, and fetches every
+   * repository whole, reporting its progress in the status. One is
+   * refused within `fullRefreshCooldown` of the last, in any process,
+   * checked under the fetch lock so two asked together fetch once, and
+   * the status then
+   * says when one is available. It never throws: whatever stops it is
+   * kept in the status, as `refresh` keeps it.
+   */
+  fullRefresh(): Promise<void>;
+  /**
+   * Reloads the cache whenever another process writes it, watching the
+   * cache folder: the file itself is replaced on every write.
+   *
+   * @returns Stops watching.
+   */
+  watch(): () => void;
+  /** The cache's state: the same value on every call until it changes. */
+  status(): CacheStatus;
+  /** Calls `listener` whenever the threads or the status change. */
+  subscribe(listener: () => void): () => void;
+}

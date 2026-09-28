@@ -30,3 +30,11 @@ export const capabilities: ReadonlySet<Capability> = new Set<Capability>([
   "pushes",
   "changeProbe",
 ]);
+
+/**
+ * How long, in milliseconds, one request to GitHub may take, answer and
+ * all, before it is abandoned. GitHub gives up on a query after 10
+ * seconds, so a request still open long after that hangs on a connection
+ * that will never answer.
+ */
+export const requestTimeout = 30_000;

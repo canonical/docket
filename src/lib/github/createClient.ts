@@ -5,6 +5,7 @@ import { retry } from "@octokit/plugin-retry";
 import { throttling } from "@octokit/plugin-throttling";
 import Bottleneck from "bottleneck";
 import type { Budget } from "../provider/index.js";
+import { requestTimeout } from "./constants.js";
 import describeFailure from "./describeFailure.js";
 import type { Client, RestResponse } from "./types.js";
 
@@ -68,6 +69,26 @@ const onlyMissing = (error: unknown): error is { readonly data: unknown } => {
 };
 
 /**
+ * Sends a request with `fetch`, abandoning it once it has taken
+ * `requestTimeout`, answer and all. The timer is left to run out after
+ * the answer, since the answer's body is read after `fetch` settles, and
+ * it holds no process open.
+ */
+const fetchInTime = (
+  input: Parameters<typeof fetch>[0],
+  init?: RequestInit,
+): Promise<Response> => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    controller.abort(
+      new DOMException("GitHub gave no answer in time.", "TimeoutError"),
+    );
+  }, requestTimeout);
+  timer.unref();
+  return fetch(input, { ...init, signal: controller.signal });
+};
+
+/**
  * Builds the client every operation of the adapter goes through: Octokit
  * with its throttling and retry plugins, so docket writes no throttling,
  * back-off or retry of its own.
@@ -101,6 +122,7 @@ export default function createClient(
     // The retry plugin would otherwise send a 429 three more times, a few
     // seconds apart, whatever wait GitHub named.
     retry: { doNotRetry: [400, 401, 403, 404, 410, 422, 429, 451] },
+    request: { fetch: fetchInTime },
   });
   let budget: Budget | undefined;
   // Every GraphQL answer carries the rate figures its document asks for,

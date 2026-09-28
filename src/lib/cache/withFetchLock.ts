@@ -1,0 +1,97 @@
+/*
+ * What the fetch lock guarantees:
+ * - at most one docket process fetches at a time;
+ * - a lock another process owns is never deleted;
+ * - nothing waits without end: every wait has a bound;
+ * - no lock this process adopted is left behind.
+ */
+import { mkdir } from "node:fs/promises";
+import { join } from "node:path";
+import { lock } from "proper-lockfile";
+import CacheError from "./CacheError.js";
+import { lockName, lockTiming } from "./constants.js";
+import identifyFile from "./identifyFile.js";
+
+/** Turns a wait for the lock that ran out into a `CacheError`. */
+const describeWait = (error: unknown): never => {
+  if ((error as { code?: unknown }).code !== "ELOCKED") throw error;
+  throw new CacheError(
+    "CACHE_LOCK_TIMED_OUT",
+    `Another docket process kept fetching for more than ${lockTiming.retries.maxRetryTime / 1000} seconds.`,
+    "try again once the other docket process has fetched, or close it",
+  );
+};
+
+/**
+ * Runs `task` while holding the fetch lock of the cache folder, so only
+ * one docket process fetches at a time. Neither TanStack Query nor Octokit
+ * coordinates separate processes; this lock does.
+ *
+ * When the lock is lost while `task` runs, to a process that judged it
+ * abandoned, `task`'s result is dropped and it runs again under the lock
+ * taken anew: `task` reads the cache first, so it finds the other
+ * process's data and fetches only if that is still needed. A lost lock is
+ * never given up: it belongs to the process that took it.
+ *
+ * @note Impure: creates the folder and the lock in the filesystem.
+ * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds the
+ * lock for longer than `lockTiming` waits.
+ */
+export default async function withFetchLock<T>(
+  directory: string,
+  task: () => Promise<T>,
+): Promise<T> {
+  // The lock library resolves the real path of what it locks, which
+  // therefore exists first.
+  await mkdir(directory, { recursive: true, mode: 0o700 });
+  const lockfilePath = join(directory, lockName);
+  for (;;) {
+    let lost = false;
+    const forgotten = Promise.withResolvers<void>();
+    const release = await lock(directory, {
+      ...lockTiming,
+      lockfilePath,
+      onCompromised: () => {
+        lost = true;
+        forgotten.resolve();
+      },
+    }).catch(describeWait);
+    const held = await identifyFile(lockfilePath);
+    let outcome: { readonly value: T } | { readonly error: unknown };
+    try {
+      outcome = { value: await task() };
+    } catch (error) {
+      outcome = { error };
+    }
+    // The library hears that its lock was taken only when its next touch
+    // of the lock comes due, which a process that stalled runs late, and
+    // it gives up whatever lock it finds. The lock in the folder says at
+    // once whether it is still this one.
+    if ((await identifyFile(lockfilePath)) !== held) lost = true;
+    // Until that touch, the library still counts a lost lock as this
+    // process's, and removes it when the process exits: the lock of the
+    // process that took it over. A failed task can end the process, so the
+    // library is let forget the lock first, which it does within one
+    // `update`, since the lock it touches is gone or another's. When the
+    // other process takes the lock between the library's check of the lock
+    // and its touch, the library touches the other's lock and keeps it as
+    // its own for good, keeping it fresh so that no process can take it.
+    // The wait for that ends after `stale`, and the lock is then given up:
+    // by then the other process, at its own touch, found a time it did not
+    // set and dropped its claim, so the lock is this process's alone. The
+    // task then runs again, or fails, as for a lock the library forgot.
+    if (lost) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const kept = await Promise.race([
+        forgotten.promise.then(() => false),
+        new Promise<boolean>((resolve) => {
+          timer = setTimeout(() => resolve(true), lockTiming.stale);
+        }),
+      ]);
+      clearTimeout(timer);
+      if (kept) await release();
+    } else await release();
+    if ("error" in outcome) throw outcome.error;
+    if (!lost) return outcome.value;
+  }
+}

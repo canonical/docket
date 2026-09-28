@@ -56,6 +56,16 @@ export interface Snapshot {
   readonly cursor: Cursor | null;
 }
 
+/**
+ * How far a snapshot has read: pages fetched out of the total. Each page
+ * reads the next part of every list at once, so the total is the page
+ * count of the longest list. A snapshot since a cursor may stop before it.
+ */
+export interface PageProgress {
+  readonly fetched: number;
+  readonly total: number;
+}
+
 /** The answer of the check for changes in a repository. */
 export interface ChangeProbe {
   /** False when nothing the check covers changed since `tag`. */
@@ -162,7 +172,8 @@ export type ProviderErrorCode =
   | "GH_NOT_SIGNED_IN"
   | "GH_TIMED_OUT"
   | "GITHUB_RATE_LIMITED"
-  | "GITHUB_REQUEST_FAILED";
+  | "GITHUB_REQUEST_FAILED"
+  | "GITHUB_TIMED_OUT";
 
 /**
  * An error a provider throws. It never carries the token, a request's
@@ -181,9 +192,13 @@ export interface ProviderError extends Error {
 export interface Provider {
   /**
    * The threads of `repo` changed since `cursor`, or every open thread
-   * when it is `null`.
+   * when it is `null`. `onPage` hears of each page as it arrives.
    */
-  snapshot(repo: string, cursor: Cursor | null): Promise<Snapshot>;
+  snapshot(
+    repo: string,
+    cursor: Cursor | null,
+    onPage?: (progress: PageProgress) => void,
+  ): Promise<Snapshot>;
   /**
    * The checks of the given pull requests, which change without marking
    * a pull request as updated.

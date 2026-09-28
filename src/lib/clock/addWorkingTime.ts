@@ -29,9 +29,12 @@ export default function addWorkingTime(
     if (day.working) remaining -= day.end - day.start;
     day = readDay(day.end);
     // From a local midnight, seven days on at the same offset is local
-    // midnight again. No zone changes its clock and back within a week, so
-    // the week between holds each workday once at 24 hours, and it is
-    // skipped whole rather than walked day by day.
+    // midnight again. A zone that changes its clock and back within those
+    // days would keep the offset equal at both ends, and some have, as
+    // three in Brazil did in October 2000. Those changes fall at a local
+    // midnight, and each skip starts at one, so no week skipped holds
+    // both. The week between holds each workday once at 24 hours, and it
+    // is skipped whole rather than walked day by day.
     while (remaining > workingWeek) {
       const later = readDay(day.start + weekMilliseconds);
       if (later.offset !== day.offset) break;

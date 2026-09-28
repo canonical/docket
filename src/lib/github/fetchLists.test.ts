@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fakeGitHub,
+  issueNode,
   page,
+  pullNode,
   repository,
   settle,
   token,
@@ -12,7 +14,7 @@ import fetchLists from "./fetchLists.js";
 let github: ReturnType<typeof fakeGitHub>;
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({ now: new Date("2026-09-28T10:00:00Z") });
   github = fakeGitHub();
   vi.stubGlobal("fetch", github.fetch);
 });
@@ -22,7 +24,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const document = "query Lists { repository { id } }";
+const document =
+  "query Lists { repository { issues pullRequests discussions } }";
 const node = (number: number, updatedAt: string) => ({ number, updatedAt });
 const fetch = (since?: Date) =>
   settle(
@@ -42,6 +45,21 @@ const paging = () =>
       ),
     ),
   );
+
+/** Reads the lists with a page size of 50, gathering the progress heard. */
+async function readProgress() {
+  const progress: unknown[] = [];
+  await settle(
+    fetchLists(
+      createClient(token, "github.com", "1.2.3"),
+      document,
+      { size: 50 },
+      undefined,
+      (step) => progress.push(step),
+    ),
+  );
+  return progress;
+}
 
 describe("fetchLists", () => {
   it("reads the three lists together, one query for all of them", async () => {
@@ -141,5 +159,39 @@ describe("fetchLists", () => {
     expect(lists.issues.map(({ number }) => number)).toEqual([1]);
     expect(lists.pullRequests.map(({ number }) => number)).toEqual([2]);
     expect(github.sent).toHaveLength(1);
+  });
+
+  describe("progress", () => {
+    it("reports each page fetched out of the pages the longest list needs", async () => {
+      github.graphql(
+        "Lists",
+        repository({
+          issues: { ...page([issueNode()]), totalCount: 1 },
+          pullRequests: { ...page([pullNode()], "pulls-1"), totalCount: 51 },
+          discussions: { ...page([]), totalCount: 0 },
+        }),
+        repository({ pullRequests: page([pullNode({ number: 4 })]) }),
+      );
+      expect(await readProgress()).toEqual([
+        { fetched: 1, total: 2 },
+        { fetched: 2, total: 2 },
+      ]);
+    });
+
+    it("counts the pages read when the lists give no total", async () => {
+      github.graphql(
+        "Lists",
+        repository({
+          issues: page([issueNode()], "issues-1"),
+          pullRequests: page([]),
+          discussions: page([]),
+        }),
+        repository({ issues: page([issueNode({ number: 5 })]) }),
+      );
+      expect(await readProgress()).toEqual([
+        { fetched: 1, total: 1 },
+        { fetched: 2, total: 2 },
+      ]);
+    });
   });
 });
