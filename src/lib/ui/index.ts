@@ -1,7 +1,5 @@
 export {
   type ActionResult,
-  ActivityRow,
-  type ActivityRowProps,
   CountsLine,
   type CountsLineProps,
   countRowLines,

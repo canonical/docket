@@ -23,3 +23,8 @@ export const Soon: Story<MarginProps> = {
 export const OnTrackThreeLines: Story<MarginProps> = {
   args: { state: "onTrack", stacked: true, lines: 3 },
 };
+
+/** A pull request in a stack, in activity, where no clock runs. */
+export const NoClock: Story<MarginProps> = {
+  args: { stacked: true, lines: 2 },
+};

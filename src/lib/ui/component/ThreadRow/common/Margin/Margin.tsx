@@ -16,7 +16,8 @@ const markerColours: Readonly<Record<WaitState, string>> = {
 
 /**
  * The two-cell margin at the left of a thread row. Column 1 is the state
- * marker `▌`, on the first line only; column 2 is the stack rule `┃`, on
+ * marker `▌`, on the first line only, and blank when nothing runs a
+ * clock, as in activity; column 2 is the stack rule `┃`, on
  * every line of a pull request in a stack, dimmed, because it means only
  * "in a stack": neighbouring rules may belong to different stacks.
  *
@@ -28,7 +29,9 @@ const Margin = ({ state, stacked, lines }: MarginProps): ReactNode => (
       // The lines of a margin never reorder, so their place is their key.
       // biome-ignore lint/suspicious/noArrayIndexKey: see above.
       <text key={line}>
-        <span fg={markerColours[state]}>{line === 0 ? "▌" : " "}</span>
+        <span fg={state && markerColours[state]}>
+          {line === 0 && state ? "▌" : " "}
+        </span>
         <span fg={tokens["color.text.muted"]}>{stacked ? "┃" : " "}</span>
       </text>
     ))}

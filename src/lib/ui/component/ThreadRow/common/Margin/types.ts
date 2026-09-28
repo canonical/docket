@@ -4,10 +4,11 @@ import type { WaitState } from "../../../../../owed/index.js";
 export interface MarginProps {
   /**
    * Where the wait stands against its target, which colours the state
-   * marker.
+   * marker. Absent in activity, where nothing runs a clock, so the column
+   * is blank.
    * Maps to DSL role: state marker (cardinality: 0..1)
    */
-  state: WaitState;
+  state?: WaitState;
   /**
    * Whether the pull request sits in a stack, drawn as the stack rule.
    * Maps to DSL role: stack rule (cardinality: 0..1)

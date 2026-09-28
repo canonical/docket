@@ -1,3 +1,4 @@
+import { findActivityRow } from "../../../../testing/activity.js";
 import {
   draftClose,
   overReview,
@@ -33,4 +34,24 @@ export const DraftClose: Story<ThreadRowProps> = {
 /** A close three people own, each named on a third line. */
 export const SharedClose: Story<ThreadRowProps> = {
   args: { row: sharedClose, width: 40 },
+};
+
+/** In activity: a pull request in a stack, with one owner, its newest event 20m old. */
+export const ActivityStacked: Story<ThreadRowProps> = {
+  args: { row: findActivityRow(12), width: 40 },
+};
+
+/** In activity: a draft pull request with no owner. */
+export const ActivityDraft: Story<ThreadRowProps> = {
+  args: { row: findActivityRow(14), width: 40 },
+};
+
+/** In activity: an issue two people own, named on a third line. */
+export const ActivityTwoOwners: Story<ThreadRowProps> = {
+  args: { row: findActivityRow(15), width: 40 },
+};
+
+/** In activity: an issue in a repository whose own file is invalid. */
+export const ActivityInvalidFile: Story<ThreadRowProps> = {
+  args: { row: findActivityRow(4), width: 40 },
 };

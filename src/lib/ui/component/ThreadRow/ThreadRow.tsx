@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { WaitRow, WaitState } from "../../../owed/index.js";
+import type { WaitState } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
 import fitPieces from "../../fitPieces.js";
@@ -28,9 +28,10 @@ const distanceColours: Readonly<Record<WaitState, string>> = {
 /**
  * The runs after the title on the second line: the owner, `draft`
  * dimmed, then each field in trouble in the error colour, each after its
- * symbol so the colour is never the only sign.
+ * symbol so the colour is never the only sign. Failing checks are a
+ * field in trouble of a running wait; activity tells of them as an event.
  */
-function listMarks(row: WaitRow): Piece[] {
+function listMarks(row: ThreadRowProps["row"]): Piece[] {
   const text = tokens["color.text"];
   const error = tokens["color.text.error"];
   return [
@@ -40,7 +41,7 @@ function listMarks(row: WaitRow): Piece[] {
     ...(row.draft
       ? [{ text: ` ${row.draft.text}`, fg: tokens["color.text.muted"] }]
       : []),
-    ...(row.wait.thread.checks === "failing"
+    ...("wait" in row && row.wait.thread.checks === "failing"
       ? [{ text: " ✗ checks", fg: error }]
       : []),
     ...(row.invalidFile
@@ -65,10 +66,14 @@ const drawLine = (pieces: readonly Piece[], width: number) => (
 /**
  * One thread in the list, two lines tall. The first line carries the
  * margin, the reference, the kind and the distance; the second the title,
- * the owner and any field in trouble. When two or more people own the
- * wait, a third line lists every one of them, so the row's height says
- * how many own it. Selection is the only background, and it covers every
- * line of the selected row.
+ * the owner and any field in trouble. The same row serves both modes: in
+ * owed the kind is the kind of wait and the figure is the distance to
+ * target, coloured with the state the margin marks; in activity the kind
+ * is the kind of thread and the figure is the age of the newest event, in
+ * the plain text colour, and the state marker is blank. When two or more
+ * people own the thread, a third line lists every one of them, so the
+ * row's height says how many own it. Selection is the only background,
+ * and it covers every line of the selected row.
  *
  * `import { ThreadRow } from "../lib/ui/index.js";`
  *
@@ -78,6 +83,7 @@ const ThreadRow = ({ row, selected, width }: ThreadRowProps): ReactNode => {
   const inner = width - marginCells;
   const text = tokens["color.text"];
   const distance = row.distance.text;
+  const state = "state" in row ? row.state : undefined;
   const head = trimText(
     `${row.reference.text} ${row.kind.text}`,
     inner - Bun.stringWidth(distance) - 1,
@@ -101,17 +107,13 @@ const ThreadRow = ({ row, selected, width }: ThreadRowProps): ReactNode => {
         selected ? tokens["color.background.selected"] : undefined
       }
     >
-      <Margin
-        state={row.state}
-        stacked={row.stacked}
-        lines={2 + owners.length}
-      />
+      <Margin state={state} stacked={row.stacked} lines={2 + owners.length} />
       <box flexDirection="column" width={inner}>
         {drawLine(
           [
             { text: head, fg: text },
             { text: gap, fg: text },
-            { text: distance, fg: distanceColours[row.state] },
+            { text: distance, fg: state ? distanceColours[state] : text },
           ],
           inner,
         )}

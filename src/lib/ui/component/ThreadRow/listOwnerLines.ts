@@ -1,8 +1,8 @@
-import type { WaitRow } from "../../../owed/index.js";
 import { loginCells } from "../../constants.js";
 import trimText from "../../trimText.js";
 import wrapText from "../../wrapText.js";
 import { marginCells } from "./constants.js";
+import type { ThreadRowProps } from "./types.js";
 
 /**
  * The third line of a row that two or more people own, wrapped to as many
@@ -11,7 +11,10 @@ import { marginCells } from "./constants.js";
  *
  * @param width The width of the pane, in display cells.
  */
-export default function listOwnerLines(row: WaitRow, width: number): string[] {
+export default function listOwnerLines(
+  row: ThreadRowProps["row"],
+  width: number,
+): string[] {
   if (!row.owners) return [];
   const logins = row.owners.fields.map(({ text }) =>
     trimText(text, loginCells),

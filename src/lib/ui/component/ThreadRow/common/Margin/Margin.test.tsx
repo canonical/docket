@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import { draw } from "../../../../../../testing/terminal.js";
 import { tokens } from "../../../../../tokens/index.js";
 import Margin from "./Margin.js";
-import { OnTrackThreeLines, OverInStack, Soon } from "./Margin.stories.js";
+import {
+  NoClock,
+  OnTrackThreeLines,
+  OverInStack,
+  Soon,
+} from "./Margin.stories.js";
 
 describe("Margin", () => {
   it("marks a wait over its target in the error colour, the stack rule dimmed on both lines", async () => {
@@ -22,5 +27,10 @@ describe("Margin", () => {
     const screen = await draw(<Margin {...OnTrackThreeLines.args} />, 40);
     expect(screen.lines.slice(0, 4)).toEqual(["▌┃", " ┃", " ┃", ""]);
     expect(screen.look("▌")?.fg).toBe(tokens["color.border"]);
+  });
+
+  it("leaves the state marker blank when no clock runs, keeping the stack rule", async () => {
+    const screen = await draw(<Margin {...NoClock.args} />, 40);
+    expect(screen.lines.slice(0, 3)).toEqual([" ┃", " ┃", ""]);
   });
 });
