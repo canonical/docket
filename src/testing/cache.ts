@@ -33,7 +33,7 @@ export function holdCache(
   events: readonly ThreadEvent[] = [],
 ): Cache {
   const syncedAt = status.syncedAt ?? new Date(0);
-  const eventsOf = (repo: string, since = new Date(0)): CachedEvents => ({
+  const findHeldEvents = (repo: string, since = new Date(0)): CachedEvents => ({
     events: events.filter(
       (event) => event.thread.repo === repo && event.at >= since,
     ),
@@ -44,8 +44,8 @@ export function holdCache(
     load: async () => {},
     read: async () => threads,
     refreshRepo: async () => {},
-    findEvents: eventsOf,
-    readEvents: async (repo, since) => eventsOf(repo, since),
+    findEvents: findHeldEvents,
+    readEvents: async (repo, since) => findHeldEvents(repo, since),
     readFile: async () => ({ text: undefined, syncedAt }),
     refresh: async () => {},
     fullRefresh: async () => {},
