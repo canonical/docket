@@ -15,6 +15,7 @@ export { default as renderPlan } from "./renderPlan.js";
 export { default as renderProblems } from "./renderProblems.js";
 export type { ShownThread, ThreadAnswer } from "./renderThread.js";
 export { default as renderThread } from "./renderThread.js";
+export { default as sanitize } from "./sanitize.js";
 export type {
   Command,
   CommandName,
