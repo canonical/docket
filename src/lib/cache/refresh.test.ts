@@ -86,6 +86,46 @@ describe("the refresh step of createCache", () => {
     expect(cache.status().paused).toBeUndefined();
   });
 
+  it("runs only the free checks below the floor: data a check finds unchanged is synced, a change waits for the reset", async () => {
+    const docs = "example-org/example-docs";
+    let remaining = fullBudget.remaining;
+    const probe = vi.fn(async (name: string, tag: string | undefined) => ({
+      changed: tag === undefined || name === docs,
+      tag: `"${name}"`,
+    }));
+    const provider = counting({
+      probe,
+      snapshot: vi.fn(async () => ({
+        threads: [thread({ kind: "pullRequest", checks: "running" })],
+        cursor: null,
+      })),
+      budget: async () => ({ ...fullBudget, remaining }),
+      refreshVolatile: vi.fn(async () => []),
+    });
+    const cache = createCache({
+      provider,
+      repos: [repo, docs],
+      directory,
+      now: () => clock,
+    });
+    await cache.refresh();
+    const synced = clock;
+    remaining = 999;
+    later(2 * minute);
+    await cache.refresh();
+    expect(provider.snapshot).toHaveBeenCalledTimes(2);
+    expect(provider.refreshVolatile).toHaveBeenCalledTimes(1);
+    expect(probe).toHaveBeenLastCalledWith(docs, `"${docs}"`);
+    expect(cache.status()).toMatchObject({
+      syncedAt: synced,
+      paused: { until: fullBudget.resetAt, reason: "budget" },
+    });
+    later(2 * minute);
+    await cache.refresh();
+    expect(probe).toHaveBeenCalledTimes(6);
+    expect(provider.snapshot).toHaveBeenCalledTimes(2);
+  });
+
   it("pauses until the budget resets when the provider refuses for its rate limit", async () => {
     const cache = open(
       counting({ snapshot: failing(providerError("GITHUB_RATE_LIMITED")) }),
@@ -96,6 +136,17 @@ describe("the refresh step of createCache", () => {
       failure: undefined,
       refreshing: false,
     });
+  });
+
+  it("asks nothing, not even the free checks, while the provider refuses for its rate limit", async () => {
+    const probe = vi.fn(async () => ({ changed: true, tag: undefined }));
+    const snapshot = failing(providerError("GITHUB_RATE_LIMITED"));
+    const cache = open(counting({ snapshot, probe }));
+    await cache.refresh();
+    later(30 * minute);
+    await cache.refresh();
+    expect(snapshot).toHaveBeenCalledOnce();
+    expect(probe).toHaveBeenCalledOnce();
   });
 
   it("keeps the rate limit as the failure when the budget cannot be read", async () => {

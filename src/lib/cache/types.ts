@@ -113,8 +113,9 @@ export interface CacheStatus {
   /** When a full refresh is available again, after one was refused. */
   readonly fullRefreshAvailableAt: Date | undefined;
   /**
-   * Until when the refresh cycle pauses, and why: the budget ran low, or
-   * the provider refused a request for its rate limit.
+   * Until when the refresh cycle pauses, and why: the budget ran low, and
+   * only the free checks for changes run, or the provider refused a
+   * request for its rate limit, and nothing runs.
    */
   readonly paused:
     | { readonly until: Date; readonly reason: "budget" | "rateLimit" }
@@ -224,7 +225,9 @@ export interface Cache {
   readViewer(maxAge: number): Promise<CachedViewer>;
   /**
    * One step of the refresh cycle: syncs data older than the refresh
-   * interval, unless the budget is low or the cycle is paused. It never
+   * interval, unless the provider refused a request for its rate limit.
+   * While the budget is low it spends none of it: only the free checks
+   * for changes run, until the budget resets. It never
    * throws: whatever stops it is kept in the status, a provider error or
    * a wait for the fetch lock that runs out with its own code, and any
    * other, such as a full disk, as `CACHE_REFRESH_FAILED`.

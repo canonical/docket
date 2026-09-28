@@ -7,11 +7,11 @@ import applyChecks from "./applyChecks.js";
 import classifyFolderFailure from "./classifyFolderFailure.js";
 import classifyRefreshFailure from "./classifyRefreshFailure.js";
 import {
-  budgetFloor,
   cacheFileName,
   fullRefreshCooldown,
   refreshInterval,
 } from "./constants.js";
+import findBudgetFloor from "./findBudgetFloor.js";
 import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeSnapshot from "./mergeSnapshot.js";
@@ -229,8 +229,12 @@ export default function createCache({
     return running.length === 0 ? [] : provider.refreshVolatile(running);
   };
 
-  /** Fetches every repository, the lock held. */
-  const fetchAll = async () => {
+  /**
+   * Fetches every repository, the lock held. Without `spend`, only the
+   * free check for changes runs, and a repository it sees changed keeps
+   * its data and its date.
+   */
+  const fetchAll = async (spend = true) => {
     publish({ refreshing: true });
     try {
       // Every repository is dated from before its fetch, so the data is
@@ -241,23 +245,28 @@ export default function createCache({
         const previous = entry(repo);
         // A repository with nothing to show is fetched whole while the
         // list waits for it, so its progress is reported.
-        const onPage = previous
-          ? undefined
-          : (pages: PageProgress) =>
-              publish({
-                fullRefresh: {
-                  repo,
-                  position: index + 1,
-                  count: repos.length,
-                  ...pages,
-                },
-              });
+        const onPage =
+          previous || !spend
+            ? undefined
+            : (pages: PageProgress) =>
+                publish({
+                  fullRefresh: {
+                    repo,
+                    position: index + 1,
+                    count: repos.length,
+                    ...pages,
+                  },
+                });
         onPage?.({ fetched: 0, total: 0 });
-        const value = await syncRepo(provider, repo, previous, at, onPage);
+        const value = await syncRepo(provider, repo, previous, at, {
+          spend,
+          onPage,
+        });
+        if (!value) continue;
         synced.set(repo, value);
         store(repo, value, at);
       }
-      const refreshed = await refreshChecks([...synced.values()]);
+      const refreshed = spend ? await refreshChecks([...synced.values()]) : [];
       for (const [repo, value] of synced) {
         const threads = applyChecks(value.threads, refreshed);
         store(repo, { ...value, threads }, at);
@@ -274,12 +283,12 @@ export default function createCache({
   /**
    * Syncs every repository under the fetch lock, unless the data is
    * younger than `maxAge` once the lock is held: the process that held it
-   * before may have fetched it.
+   * before may have fetched it. `spend` is `fetchAll`'s.
    */
-  const sync = (maxAge: number) =>
+  const sync = (maxAge: number, spend = true) =>
     withFetchLock(directory, async () => {
       await load();
-      if (!isFresh(maxAge)) await fetchAll();
+      if (!isFresh(maxAge)) await fetchAll(spend);
     });
 
   /**
@@ -417,15 +426,17 @@ export default function createCache({
     },
     async refresh() {
       const at = now();
-      if (status.paused && at < status.paused.until) return;
+      const { paused } = status;
+      if (paused && at < paused.until && paused.reason === "rateLimit") return;
       try {
-        const { limit, remaining, resetAt } = await provider.budget();
-        if (at < resetAt && remaining < limit * budgetFloor) {
-          publish({ paused: { until: resetAt, reason: "budget" } });
-        } else {
-          await sync(refreshInterval);
-          publish({ paused: undefined, failure: undefined });
-        }
+        // Below the floor the free checks still run, so the data a check
+        // finds unchanged stays current and a change waits for the reset.
+        const floor =
+          paused && at < paused.until
+            ? paused
+            : await findBudgetFloor(provider, at);
+        await sync(refreshInterval, !floor);
+        publish({ paused: floor, failure: undefined });
       } catch (error) {
         publish(await classifyRefreshFailure(error, provider));
       }
