@@ -24,8 +24,19 @@ describe("describeWaitData", () => {
       draft: false,
       checksFailing: false,
       stack: null,
+      invalidRepositoryFile: false,
       target: "24h",
     });
+  });
+
+  it("says when the wait's repository has an invalid file of its own", () => {
+    const marked = {
+      ...soon,
+      invalidFile: { text: "invalid repository file", fit: "trimmed" },
+    } as const;
+    expect(describeWaitData(marked, "standard").invalidRepositoryFile).toBe(
+      true,
+    );
   });
 
   it("gives the target at every level, so overdue times target is the working time past due", () => {

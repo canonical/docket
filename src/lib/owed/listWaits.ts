@@ -1,4 +1,5 @@
 import buildRow from "./buildRow.js";
+import { invalidFileMark } from "./constants.js";
 import countStates from "./countStates.js";
 import type { RepoWaits, WaitList } from "./types.js";
 
@@ -11,15 +12,24 @@ import type { RepoWaits, WaitList } from "./types.js";
  * a reply 12 hours past a 24-hour target ranks above a close 12 hours
  * past a 5-day one. Waits that stand equal keep the order given.
  *
- * @param repos The watched repositories, in the configuration's order.
+ * @param repos The watched repositories, in the configuration's order. A
+ * repository whose own file is invalid has each of its rows marked.
  */
 export default function listWaits(
   repos: readonly RepoWaits[],
   now: Date,
 ): WaitList {
   const rows = repos
-    .flatMap(({ repo, time, waits }) =>
-      waits.map((wait) => buildRow(wait, repo.name, time, now)),
+    .flatMap(({ repo, time, waits, invalidFile }) =>
+      waits.map((wait) => {
+        const row = buildRow(wait, repo.name, time, now);
+        return invalidFile
+          ? {
+              ...row,
+              invalidFile: { text: invalidFileMark, fit: "trimmed" as const },
+            }
+          : row;
+      }),
     )
     .sort((a, b) => b.overdue - a.overdue);
   const counts = countStates(rows);

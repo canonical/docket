@@ -12,7 +12,7 @@ import type { Session } from "./types.js";
  * too old, and writes the answer.
  */
 export default async function answerOwed(session: Session): Promise<number> {
-  const { context, invocation, resolved } = session;
+  const { context, invocation, watched } = session;
   const grouping = owedGroupings.find((entry) => entry === invocation.by);
   if (!grouping) {
     fail(
@@ -22,7 +22,7 @@ export default async function answerOwed(session: Session): Promise<number> {
     );
   }
   const { threads, syncedAt, warnings } = await readThreads(session);
-  const list = buildOwed(threads, resolved.settings, grouping, context.now());
+  const list = buildOwed(threads, watched, grouping, context.now());
   context.write(
     renderOwed({
       list,

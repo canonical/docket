@@ -232,6 +232,11 @@ export interface Provider {
   teamMembers(team: Pick<Team, "team">): Promise<readonly string[]>;
   /** Whether anything changed in `repo` since the check that gave `tag`. */
   probe(repo: string, tag: string | undefined): Promise<ChangeProbe>;
+  /**
+   * The text of the file at `path` on `repo`'s default branch, or
+   * `undefined` when there is none.
+   */
+  readFile(repo: string, path: string): Promise<string | undefined>;
   /** The rate budget left. */
   budget(): Promise<Budget>;
   /** The login of the account the provider acts as. */

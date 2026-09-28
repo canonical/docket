@@ -97,6 +97,7 @@ describe("renderActivity", () => {
       owners: ["alice", "bob"],
       draft: false,
       stack: null,
+      invalidRepositoryFile: false,
       events: [
         {
           kind: "labelled",
@@ -148,6 +149,29 @@ describe("renderActivity", () => {
     expect(answer("plain")).toContain(
       "  Fix the parser\n  draft · example stack",
     );
+  });
+
+  it("marks a row of a repository whose own file is invalid, in every format", () => {
+    const list = recordedActivity("none");
+    const [row] = list.groups.at(0)?.rows ?? [];
+    if (!row) throw new Error("the recording has events");
+    const marked = {
+      ...row,
+      invalidFile: { text: "invalid repository file", fit: "trimmed" },
+    } as const;
+    const answer = (format: Format) =>
+      renderActivity({
+        list: { ...list, groups: [{ rows: [marked] }] },
+        freshness,
+        format,
+        detail: "standard",
+      });
+    expect(answer("llm")).toContain("· invalid repository file · newest event");
+    expect(answer("plain")).toContain("3, 2 of 3 · invalid repository file\n");
+    expect(
+      JSON.parse(answer("json")).groups.at(0).threads.at(0)
+        .invalidRepositoryFile,
+    ).toBe(true);
   });
 
   it("strips control sequences from a hostile title and event", () => {

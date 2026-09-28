@@ -108,4 +108,29 @@ describe("listEvents", () => {
     expect(list.rows).toEqual([]);
     expect(list.summary.text).toBe("0 threads · 0 events");
   });
+
+  it("marks every row of a repository whose own file is invalid, and no other", () => {
+    const list = listEvents(
+      [
+        {
+          repo: example,
+          people,
+          threads: [],
+          events: [comment(one, "2026-09-28T09:00+02:00")],
+          invalidFile: true,
+        },
+        {
+          repo: docs,
+          people,
+          threads: [],
+          events: [comment(onDocs, "2026-09-28T08:00+02:00")],
+        },
+      ],
+      now,
+    );
+    expect(list.rows.map((row) => [row.repo, row.invalidFile])).toEqual([
+      ["example", { text: "invalid repository file", fit: "trimmed" }],
+      ["docs", undefined],
+    ]);
+  });
 });

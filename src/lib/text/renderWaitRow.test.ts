@@ -38,4 +38,17 @@ describe("renderWaitRow", () => {
       "  alice · draft · checks failing · example stack 3, 2 of 3",
     );
   });
+
+  it("marks a row of a repository whose own file is invalid, for a person and an agent", () => {
+    const marked = {
+      ...soon,
+      invalidFile: { text: "invalid repository file", fit: "trimmed" },
+    } as const;
+    expect(renderWaitRow(marked, "plain", "UTC", "standard").at(2)).toBe(
+      "  unassigned · invalid repository file",
+    );
+    expect(renderWaitRow(marked, "llm", "UTC", "standard").at(0)).toMatch(
+      / · due 2026-09-28 14:00 UTC · invalid repository file$/,
+    );
+  });
 });

@@ -154,4 +154,20 @@ describe("listWaits, against targets written in days", () => {
     expect(states(owed)).toEqual(expected);
     expect(owed.summary.text).toBe("3 over · 2 soon · 6 on track");
   });
+
+  it("marks every row of a repository whose own file is invalid, and no other", () => {
+    const { rows } = listWaits(
+      [
+        { repo: example, time, waits: [wait()], invalidFile: true },
+        { repo: docs, time, waits: [wait({ thread: onDocs })] },
+      ],
+      now,
+    );
+    expect(rows.map((row) => [row.repo, row.invalidFile])).toEqual(
+      expect.arrayContaining([
+        ["example", { text: "invalid repository file", fit: "trimmed" }],
+        ["docs", undefined],
+      ]),
+    );
+  });
 });

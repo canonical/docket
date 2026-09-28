@@ -2,8 +2,8 @@ import type { Repo } from "../lib/config/index.js";
 import fail from "./fail.js";
 
 /** A thread, or a stack, named by a watched repository's short name. */
-export interface Reference {
-  readonly repo: Repo;
+export interface Reference<R extends Repo = Repo> {
+  readonly repo: R;
   readonly number: number;
   /** Whether the number is a stack's rather than a thread's. */
   readonly stack: boolean;
@@ -22,11 +22,11 @@ export interface Reference {
  * `USAGE_INVALID_REFERENCE` when it is badly written or names no watched
  * repository.
  */
-export default function parseReference(
+export default function parseReference<R extends Repo>(
   words: readonly string[],
-  repos: readonly Repo[],
+  repos: readonly R[],
   command: string,
-): Reference {
+): Reference<R> {
   const [first] = words;
   if (first === undefined) {
     fail(

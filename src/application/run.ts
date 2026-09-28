@@ -1,6 +1,5 @@
 import { createCache, locateCacheDirectory } from "../lib/cache/index.js";
 import { readPersonalFile, resolveSettings } from "../lib/config/index.js";
-import type { Provider } from "../lib/provider/index.js";
 import {
   chooseExitCode,
   chooseFormat,
@@ -16,7 +15,8 @@ import answerShow from "./answerShow.js";
 import describeFailure from "./describeFailure.js";
 import isNamedError from "./isNamedError.js";
 import parseArguments from "./parseArguments.js";
-import type { Context, Session } from "./types.js";
+import readRepositoryFiles from "./readRepositoryFiles.js";
+import type { Connection, Context, Session } from "./types.js";
 
 const answers = {
   owed: answerOwed,
@@ -26,7 +26,8 @@ const answers = {
 
 /**
  * Answers one call of docket in text: parses it, reads the personal file,
- * asks gh for a token, and answers the command from the shared cache.
+ * asks gh for a token, and answers the command from the shared cache,
+ * which also holds each watched repository's own file.
  * Text mode never refreshes in the background: it fetches only when the
  * cached data is older than `--max-age`.
  *
@@ -62,10 +63,20 @@ export default async function run(context: Context): Promise<number> {
     if (personal.outcome?.ok === false) return stop(personal.outcome.errors);
     const resolved = resolveSettings(personal.outcome?.layer, undefined);
     const { settings } = resolved;
-    // The provider gh's token opens, or why gh gave no token.
-    let connection: Provider | Problem;
+    // The provider gh's token opens, with the cache on it, or why gh gave
+    // no token.
+    let connection: Connection | Problem;
     try {
-      connection = await context.connect(settings.hosts.at(0) ?? "github.com");
+      const provider = await context.connect(
+        settings.hosts.at(0) ?? "github.com",
+      );
+      const cache = createCache({
+        provider,
+        repos: settings.repos.map(({ repo }) => repo),
+        directory: locateCacheDirectory(context.environment),
+        now: context.now,
+      });
+      connection = { provider, cache };
     } catch (error) {
       if (!isNamedError(error)) throw error;
       const { code, message, recovery } = error;
@@ -81,25 +92,26 @@ export default async function run(context: Context): Promise<number> {
       );
     }
     if ("code" in connection) return stop([connection]);
-    const provider = connection;
-    const cache = createCache({
-      provider,
-      repos: settings.repos.map(({ repo }) => repo),
-      directory: locateCacheDirectory(context.environment),
-      now: context.now,
-    });
+    const { provider, cache } = connection;
+    const files = await readRepositoryFiles(
+      cache,
+      invocation.maxAge,
+      personal.outcome?.layer,
+      settings.repos,
+    );
     const session: Session = {
       context,
       invocation,
       personal,
       resolved,
+      watched: files.watched,
       provider,
       cache,
       describeFreshness: (syncedAt, warnings = []) => ({
         now: context.now(),
         syncedAt,
         timezone: settings.time.timezone,
-        warnings,
+        warnings: [...files.warnings, ...warnings],
       }),
     };
     return await answers[invocation.command](session);

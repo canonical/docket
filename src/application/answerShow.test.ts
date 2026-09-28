@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { parseFile, resolveSettings } from "../lib/config/index.js";
 import { type Home, makeHome, openSession } from "../testing/docket.js";
 import { parserFix, recordedProvider } from "../testing/recorded.js";
 import answerShow from "./answerShow.js";
@@ -47,6 +48,28 @@ describe("answerShow", () => {
     expect(out().indexOf("## example#12")).toBeGreaterThan(0);
     expect(out().indexOf("## example#12")).toBeLessThan(
       out().indexOf("## example#13"),
+    );
+  });
+
+  it("measures the thread's waits on its repository's own settings", async () => {
+    const { session, out } = openSession(home, ["show", "docs#4"]);
+    const personal = session.personal.outcome?.ok
+      ? session.personal.outcome.layer
+      : undefined;
+    const resolved = resolveSettings(
+      personal,
+      parseFile(
+        "version: 1\ntargets:\n  close:\n    issue: 40d\n",
+        "repository",
+      ),
+    );
+    const watched = session.watched.map((repo) =>
+      repo.name === "docs" ? { ...repo, resolved } : repo,
+    );
+    await answerShow({ ...session, watched });
+    // Opened 1 September, the issue is due 40 working days later.
+    expect(out()).toContain(
+      '· close · owners "alice", "bob" · 20d left · due 2026-10-27 10:00 Europe/Paris\n',
     );
   });
 

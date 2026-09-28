@@ -398,4 +398,59 @@ describe("run", () => {
       );
     });
   });
+
+  describe("repository files", () => {
+    it("applies a repository's own file, and marks the rows of one whose file is invalid", async () => {
+      const provider = recordedProvider({
+        readFile: async (repo) =>
+          repo === "example-org/example-docs"
+            ? "version: 1\ntargetz: {}\n"
+            : "version: 1\ntargets:\n  close:\n    issue: 40d\n",
+      });
+      const { code, out } = await home.call(["owed"], { provider });
+      expect(code).toBe(0);
+      expect(out).toContain(
+        '- example#15 · "Crash on start" · close · unassigned · 39d left',
+      );
+      expect(out).toMatch(/- docs#4 · .+ · invalid repository file\n/);
+      const shown = await home.call(["show", "docs#4"], { provider });
+      expect(shown.out).toContain("· invalid repository file");
+    });
+
+    it("reads each repository's file once per --max-age, across calls and commands", async () => {
+      const provider = recordedProvider({
+        readFile: vi.fn(async () => undefined),
+      });
+      await home.call(["owed"], { provider });
+      await home.call(["activity"], { provider, now: later(1) });
+      await home.call(["config"], { provider, now: later(2) });
+      await home.call(["owed"], { provider, now: later(4) });
+      // Two watched repositories, one read each.
+      expect(provider.readFile).toHaveBeenCalledTimes(2);
+      await home.call(["owed"], { provider, now: later(5) });
+      expect(provider.readFile).toHaveBeenCalledTimes(4);
+      await home.call(["owed", "--max-age", "0"], { provider, now: later(5) });
+      expect(provider.readFile).toHaveBeenCalledTimes(6);
+    });
+
+    it("answers with a warning when GitHub fails to give a repository's file", async () => {
+      const provider = recordedProvider({
+        readFile: () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
+      });
+      const { code, out } = await home.call(["owed"], { provider });
+      expect(code).toBe(0);
+      expect(out).toContain(
+        "## Warning: GITHUB_TIMED_OUT\ndocket could not read .github/docket.yaml of example-org/example-repo",
+      );
+    });
+
+    it("exits 2 when GitHub refuses gh's token while reading a repository's file", async () => {
+      const provider = recordedProvider({
+        readFile: () => Promise.reject(providerError("GH_NOT_SIGNED_IN")),
+      });
+      const { code, err } = await home.call(["owed"], { provider });
+      expect(code).toBe(2);
+      expect(err).toContain("## Error: GH_NOT_SIGNED_IN\n");
+    });
+  });
 });

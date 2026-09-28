@@ -330,3 +330,71 @@ describe("createCache, for events", () => {
     ).rejects.toMatchObject({ code: "CACHE_UNUSABLE" });
   });
 });
+
+describe("createCache, for a repository's own file", () => {
+  const path = ".github/docket.yaml";
+  /** A provider whose repository holds `text` at the path, or no file. */
+  const withFile = (text: string | undefined) =>
+    fakeProvider({ readFile: vi.fn(async () => text) });
+
+  it("reads a repository's file once, then answers from the cache while it is younger than the maximum age", async () => {
+    const provider = withFile("version: 1\n");
+    const first = await open(provider).readFile(repo, path, 5 * minute);
+    expect(first).toEqual({ text: "version: 1\n", syncedAt: clock });
+    clock = new Date(clock.getTime() + 4 * minute);
+    // Another process, reading the file this one wrote.
+    const again = await open(provider).readFile(repo, path, 5 * minute);
+    expect(again).toEqual(first);
+    expect(provider.readFile).toHaveBeenCalledTimes(1);
+    expect(provider.readFile).toHaveBeenCalledWith(repo, path);
+  });
+
+  it("keeps a repository's lack of a file as it keeps a file", async () => {
+    const provider = withFile(undefined);
+    const cache = open(provider);
+    await cache.readFile(repo, path, 5 * minute);
+    const again = await open(provider).readFile(repo, path, 5 * minute);
+    expect(again).toEqual({ text: undefined, syncedAt: clock });
+    expect(provider.readFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads once when two readers want the file together", async () => {
+    const first = withFile("version: 1\n");
+    const second = withFile("version: 1\n");
+    const [one, two] = await Promise.all([
+      open(first).readFile(repo, path, 5 * minute),
+      open(second).readFile(repo, path, 5 * minute),
+    ]);
+    expect(one).toEqual(two);
+    const reads =
+      vi.mocked(first.readFile).mock.calls.length +
+      vi.mocked(second.readFile).mock.calls.length;
+    expect(reads).toBe(1);
+  });
+
+  it("reads the file again once it is as old as the maximum age, and each repository's apart", async () => {
+    const provider = withFile("version: 1\n");
+    const cache = open(provider, [repo, docs]);
+    await cache.readFile(repo, path, 5 * minute);
+    await cache.readFile(docs, path, 5 * minute);
+    expect(provider.readFile).toHaveBeenCalledTimes(2);
+    clock = new Date(clock.getTime() + 5 * minute);
+    await cache.readFile(repo, path, 5 * minute);
+    expect(provider.readFile).toHaveBeenCalledTimes(3);
+  });
+
+  it("throws the provider's error, and CACHE_UNUSABLE for a folder it cannot make", async () => {
+    const limited = fakeProvider({
+      readFile: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+    });
+    await expect(
+      open(limited).readFile(repo, path, 5 * minute),
+    ).rejects.toMatchObject({ code: "GITHUB_RATE_LIMITED" });
+    const file = join(root, "file");
+    await writeFile(file, "");
+    const cache = open(withFile("version: 1\n"), [repo], join(file, "docket"));
+    await expect(cache.readFile(repo, path, 5 * minute)).rejects.toMatchObject({
+      code: "CACHE_UNUSABLE",
+    });
+  });
+});

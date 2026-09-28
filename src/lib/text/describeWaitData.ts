@@ -25,6 +25,7 @@ export default function describeWaitData(row: WaitRow, detail: Detail) {
     draft: row.draft !== undefined,
     checksFailing: thread.checks === "failing",
     stack: thread.stack ?? null,
+    invalidRepositoryFile: row.invalidFile !== undefined,
     target: `${row.targetHours}h`,
     ...(detail === "detailed" ? { started: started.toISOString() } : {}),
   };

@@ -28,6 +28,11 @@ export interface RepoEvents {
    */
   readonly threads: readonly Thread[];
   readonly events: readonly WindowEvent[];
+  /**
+   * Whether the repository's own file is invalid, so its settings are the
+   * built-in defaults.
+   */
+  readonly invalidFile?: boolean;
 }
 
 /** One event under its thread: who did what, and how long ago. */
@@ -68,6 +73,8 @@ export interface ThreadRow {
   readonly owners?: FieldList;
   /** The thread's events, newest first. */
   readonly events: readonly EventLine[];
+  /** `invalid repository file`, when the repository's own file is invalid. */
+  readonly invalidFile?: Field;
 }
 
 /** A section of the list; without a heading when the list is not grouped. */

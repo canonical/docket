@@ -21,6 +21,7 @@ function describeRow(row: WaitRow, timezone: string) {
     draft: row.draft !== undefined,
     checksFailing: thread.checks === "failing",
     stack: thread.stack && describeStack(row.repo, thread.stack),
+    invalidFile: row.invalidFile?.text,
   };
 }
 
@@ -34,6 +35,7 @@ const listMarks = (described: Described) => [
   ...(described.draft ? ["draft"] : []),
   ...(described.checksFailing ? ["checks failing"] : []),
   ...(described.stack ? [described.stack] : []),
+  ...(described.invalidFile ? [described.invalidFile] : []),
 ];
 
 /** One row as one complete line, for an agent. */

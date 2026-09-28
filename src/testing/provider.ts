@@ -47,6 +47,7 @@ export function fakeProvider(overrides: Partial<Provider> = {}): Provider {
     setReviewers: unused("setReviewers"),
     teamMembers: unused("teamMembers"),
     probe: async () => ({ changed: true, tag: undefined }),
+    readFile: async () => undefined,
     budget: async () => fullBudget,
     viewer: unused("viewer"),
     capabilities: () => everyCapability,

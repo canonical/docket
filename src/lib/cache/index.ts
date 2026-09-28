@@ -6,6 +6,7 @@ export { default as startRefreshCycle } from "./startRefreshCycle.js";
 export type {
   Cache,
   CachedEvents,
+  CachedFile,
   CachedThreads,
   CacheErrorCode,
   CacheOptions,

@@ -8,6 +8,7 @@ import { type Duration, measureDuration } from "../lib/clock/index.js";
 import type { Settings } from "../lib/config/index.js";
 import { selectEvents, type ThreadEvent } from "../lib/events/index.js";
 import type { Thread } from "../lib/waits/index.js";
+import type { Watched } from "./types.js";
 
 const day = 86_400_000;
 
@@ -24,8 +25,9 @@ function findEarliest(window: Duration, settings: Settings, now: Date): Date {
 
 /**
  * Builds activity: the events GitHub records on each watched repository
- * within the window of working time before `now`, under their threads.
- * The threads give each row its owners.
+ * within the window of working time before `now`, on that repository's
+ * working clock, under their threads. The threads give each row its
+ * owners. The rows of a repository whose own file is invalid are marked.
  *
  * @param readEvents Gives the events of a repository at or after a time.
  * @note Impure: reads the events of each watched repository through
@@ -34,26 +36,24 @@ function findEarliest(window: Duration, settings: Settings, now: Date): Date {
 export default async function buildActivity(
   readEvents: (repo: string, since: Date) => Promise<readonly ThreadEvent[]>,
   threads: readonly Thread[],
-  settings: Settings,
+  watched: readonly Watched[],
   window: Duration,
   grouping: ActivityGrouping,
   now: Date,
 ): Promise<ActivityList> {
-  const since = findEarliest(window, settings, now);
   const repos = [];
-  for (const repo of settings.repos) {
+  for (const repo of watched) {
+    const { settings, repositoryErrors } = repo.resolved;
+    const since = findEarliest(window, settings, now);
     const events = await readEvents(repo.repo, since);
     repos.push({
       repo,
       people: settings.people,
       threads: threads.filter((thread) => thread.repo === repo.repo),
       events: selectEvents(events, window, now, settings),
+      invalidFile: repositoryErrors.length > 0,
     });
   }
   const list = listEvents(repos, now);
-  return groupEvents(
-    list,
-    { mode: "activity", window, grouping },
-    settings.repos,
-  );
+  return groupEvents(list, { mode: "activity", window, grouping }, watched);
 }

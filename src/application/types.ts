@@ -1,5 +1,5 @@
 import type { Cache } from "../lib/cache/index.js";
-import type { PersonalFile, Resolved } from "../lib/config/index.js";
+import type { PersonalFile, Repo, Resolved } from "../lib/config/index.js";
 import type { Provider } from "../lib/provider/index.js";
 import type {
   CommandName,
@@ -43,16 +43,40 @@ export interface Invocation {
   readonly window: string | undefined;
 }
 
+/** A watched repository, with the settings in effect for it. */
+export interface Watched extends Repo {
+  /**
+   * The settings from the built-in defaults, the personal file and the
+   * repository's own file, and that file's errors when it is invalid.
+   */
+  readonly resolved: Resolved;
+}
+
+/** The provider gh's token opened, and the shared cache on it. */
+export interface Connection {
+  readonly provider: Provider;
+  readonly cache: Cache;
+}
+
 /** Everything a command needs once the call, the settings and gh are ready. */
 export interface Session {
   readonly context: Context;
   readonly invocation: Invocation;
   readonly personal: PersonalFile;
-  /** The settings in effect, from the built-in defaults and the personal file. */
+  /**
+   * The settings that hold across repositories, from the built-in
+   * defaults and the personal file: the repositories watched, the
+   * activity windows, the host and the time zone times are written in.
+   */
   readonly resolved: Resolved;
+  /** Each watched repository, in the configuration's order, with its settings. */
+  readonly watched: readonly Watched[];
   readonly provider: Provider;
   readonly cache: Cache;
-  /** How old data synced at `syncedAt` is, with the warnings in force. */
+  /**
+   * How old data synced at `syncedAt` is, with the warnings in force:
+   * `warnings`, after any repository file GitHub failed to give.
+   */
   readonly describeFreshness: (
     syncedAt: Date | undefined,
     warnings?: Freshness["warnings"],

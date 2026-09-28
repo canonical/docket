@@ -177,6 +177,7 @@ describe("createProvider", () => {
       body: { data: { organization: null } },
     });
     github.rest(`GET /repos/${repo}/issues`, { status: 304 });
+    github.graphql("File", repository({ object: null }));
     github.graphql("Viewer", {
       body: { data: { rateLimit, viewer: { login: "alice" } } },
     });
@@ -192,10 +193,11 @@ describe("createProvider", () => {
         provider.setReviewers(pull, []),
         provider.teamMembers({ team: "example-org/reviewers" }),
         provider.probe(repo, 'W/"one"'),
+        provider.readFile(repo, ".github/docket.yaml"),
         provider.viewer(),
       ]),
     );
-    expect(github.sent).toHaveLength(14);
+    expect(github.sent).toHaveLength(15);
     for (const sent of github.sent) {
       expect(sent.headers.get("authorization")).toBe(`token ${token}`);
     }
