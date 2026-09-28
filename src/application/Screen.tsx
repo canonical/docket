@@ -11,6 +11,7 @@ import {
   activityGroupings,
   describeAddress as describeActivityAddress,
 } from "../lib/activity/index.js";
+import type { Attention } from "../lib/cache/index.js";
 import {
   describeNoTeam,
   describeAddress as describeOwedAddress,
@@ -50,6 +51,7 @@ import type {
   WatchedFiles,
 } from "./types.js";
 import useActivity from "./useActivity.js";
+import useAttention from "./useAttention.js";
 import useEditor from "./useEditor.js";
 import useHeldDetails from "./useHeldDetails.js";
 import useScreenKeys from "./useScreenKeys.js";
@@ -91,7 +93,8 @@ const unselected: Selection = { place: 0, row: "" };
  * status and the keys, or the help over all but the header. The keys are
  * bound in one global layer, beside the layer of the editor that `a` and
  * `r` open, and the help and the key bar are drawn from the keymap's
- * command catalogue.
+ * command catalogue. Every key, whatever it does, counts as attention: it
+ * keeps the pane active, or wakes an idle one, and still acts.
  */
 export default function Screen({
   mode: openingMode,
@@ -102,12 +105,18 @@ export default function Screen({
   settings,
   watched: opening,
   source,
+  attention,
   onQuit,
-}: TerminalView & { readonly onQuit: () => void }): ReactNode {
+}: TerminalView & {
+  /** The pane's attention, which the refresh cycle follows, if it runs. */
+  readonly attention?: Pick<Attention, "press">;
+  readonly onQuit: () => void;
+}): ReactNode {
   const { width, height } = useTerminalDimensions();
   // Below the narrowest pane the screen shows only that it needs more
   // columns, so no key but `q` acts on the list or the editor it hides.
   const narrow = width < minColumns;
+  useAttention({ attention });
   const cache = "cache" in source ? source.cache : undefined;
   const readWatched = "cache" in source ? source.readWatched : undefined;
   const readThreadDetail = "cache" in source ? source.readDetail : undefined;

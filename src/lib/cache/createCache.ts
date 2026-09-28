@@ -9,6 +9,7 @@ import classifyRefreshFailure from "./classifyRefreshFailure.js";
 import {
   cacheFileName,
   fullRefreshCooldown,
+  idleInterval,
   refreshInterval,
 } from "./constants.js";
 import findBudgetFloor from "./findBudgetFloor.js";
@@ -16,7 +17,7 @@ import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeSnapshot from "./mergeSnapshot.js";
 import readCacheFile from "./readCacheFile.js";
-import syncRepo from "./syncRepo.js";
+import syncRepo, { type SyncOptions } from "./syncRepo.js";
 import type {
   Cache,
   CachedEvents,
@@ -230,11 +231,15 @@ export default function createCache({
   };
 
   /**
-   * Fetches every repository, the lock held. Without `spend`, only the
-   * free check for changes runs, and a repository it sees changed keeps
-   * its data and its date.
+   * Fetches every repository, the lock held, as `syncRepo` does with
+   * `options`, and reads the checks still running again when `checks`
+   * says so and points may be spent.
    */
-  const fetchAll = async (spend = true) => {
+  const fetchAll = async ({
+    spend = true,
+    reconcile = true,
+    checks = true,
+  }: SyncOptions & { readonly checks?: boolean } = {}) => {
     publish({ refreshing: true });
     try {
       // Every repository is dated from before its fetch, so the data is
@@ -260,13 +265,15 @@ export default function createCache({
         onPage?.({ fetched: 0, total: 0 });
         const value = await syncRepo(provider, repo, previous, at, {
           spend,
+          reconcile,
           onPage,
         });
         if (!value) continue;
         synced.set(repo, value);
         store(repo, value, at);
       }
-      const refreshed = spend ? await refreshChecks([...synced.values()]) : [];
+      const refreshed =
+        spend && checks ? await refreshChecks([...synced.values()]) : [];
       for (const [repo, value] of synced) {
         const threads = applyChecks(value.threads, refreshed);
         store(repo, { ...value, threads }, at);
@@ -283,12 +290,12 @@ export default function createCache({
   /**
    * Syncs every repository under the fetch lock, unless the data is
    * younger than `maxAge` once the lock is held: the process that held it
-   * before may have fetched it. `spend` is `fetchAll`'s.
+   * before may have fetched it. `options` are `fetchAll`'s.
    */
-  const sync = (maxAge: number, spend = true) =>
+  const sync = (maxAge: number, options?: Parameters<typeof fetchAll>[0]) =>
     withFetchLock(directory, async () => {
       await load();
-      if (!isFresh(maxAge)) await fetchAll(spend);
+      if (!isFresh(maxAge)) await fetchAll(options);
     });
 
   /**
@@ -424,7 +431,7 @@ export default function createCache({
         throw classifyFolderFailure(error, directory);
       }
     },
-    async refresh() {
+    async refresh(attention = "active") {
       const at = now();
       const { paused } = status;
       if (paused && at < paused.until && paused.reason === "rateLimit") return;
@@ -435,7 +442,11 @@ export default function createCache({
           paused && at < paused.until
             ? paused
             : await findBudgetFloor(provider, at);
-        await sync(refreshInterval, !floor);
+        const idle = attention === "idle";
+        // Waking catches up at once, whatever another pane fetched.
+        const maxAge =
+          attention === "waking" ? 0 : idle ? idleInterval : refreshInterval;
+        await sync(maxAge, { spend: !floor, reconcile: !idle, checks: !idle });
         publish({ paused: floor, failure: undefined });
       } catch (error) {
         publish(await classifyRefreshFailure(error, provider));

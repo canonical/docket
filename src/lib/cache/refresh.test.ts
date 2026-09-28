@@ -66,6 +66,42 @@ describe("the refresh step of createCache", () => {
     expect(provider.snapshot).not.toHaveBeenCalled();
   });
 
+  it("syncs an idle pane's data only once it is 30 minutes old, without the checks refresh or the whole hourly fetch", async () => {
+    const running = thread({ kind: "pullRequest", checks: "running" });
+    const provider = counting({
+      snapshot: vi.fn(async () => ({ threads: [running], cursor: null })),
+      refreshVolatile: vi.fn(async () => []),
+    });
+    const cache = open(provider);
+    await cache.refresh();
+    later(29 * minute);
+    await cache.refresh("idle");
+    expect(provider.snapshot).toHaveBeenCalledTimes(1);
+    later(46 * minute);
+    await cache.refresh("idle");
+    expect(provider.snapshot).toHaveBeenCalledTimes(2);
+    expect(provider.snapshot).toHaveBeenLastCalledWith(repo, null);
+    expect(provider.refreshVolatile).toHaveBeenCalledTimes(1);
+    expect(cache.status().syncedAt).toEqual(clock);
+  });
+
+  it("syncs at once on waking, however fresh, with the checks refresh and the whole fetch once it is due", async () => {
+    const running = thread({ kind: "pullRequest", checks: "running" });
+    const provider = counting({
+      snapshot: vi.fn(async () => ({ threads: [running], cursor: null })),
+      refreshVolatile: vi.fn(async () => []),
+    });
+    const cache = open(provider);
+    await cache.refresh();
+    later(minute);
+    await cache.refresh("waking");
+    expect(provider.snapshot).toHaveBeenCalledTimes(2);
+    expect(provider.refreshVolatile).toHaveBeenCalledTimes(2);
+    later(60 * minute);
+    await cache.refresh("waking");
+    expect(provider.snapshot).toHaveBeenLastCalledWith(repo, null, undefined);
+  });
+
   it("pauses until the budget resets when less than a fifth of it remains", async () => {
     const provider = counting({
       budget: vi.fn(async () => ({ ...fullBudget, remaining: 999 })),

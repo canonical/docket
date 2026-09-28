@@ -12,6 +12,12 @@ export interface SyncOptions {
    * for a sync that may spend.
    */
   readonly spend?: boolean;
+  /**
+   * Whether the whole fetch runs when the last is `reconcileInterval` old.
+   * Without it, the repository is fetched whole only when nothing is
+   * cached, and otherwise since its cursor.
+   */
+  readonly reconcile?: boolean;
   /** Hears of each page of a whole fetch. */
   readonly onPage?: (progress: PageProgress) => void;
 }
@@ -36,7 +42,7 @@ export default async function syncRepo(
   repo: string,
   previous: RepoCache | undefined,
   at: Date,
-  { spend = true, onPage }: SyncOptions = {},
+  { spend = true, reconcile = true, onPage }: SyncOptions = {},
 ): Promise<RepoCache | undefined> {
   const check = async (held: string | undefined) =>
     provider.capabilities().has("changeProbe")
@@ -50,7 +56,8 @@ export default async function syncRepo(
   const { changed, tag } = await check(previous?.tag);
   if (
     !previous ||
-    at.getTime() - previous.reconciledAt.getTime() >= reconcileInterval
+    (reconcile &&
+      at.getTime() - previous.reconciledAt.getTime() >= reconcileInterval)
   ) {
     const { threads, cursor } = await provider.snapshot(repo, null, onPage);
     return {

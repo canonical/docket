@@ -1532,6 +1532,19 @@ describe("Screen", { timeout: 15_000 }, () => {
   });
 
   describe("keys", () => {
+    it("counts every key as attention, and the key still acts", async () => {
+      const attention = { press: vi.fn() };
+      const view = viewOf(await openCache(fakeProvider()));
+      const screen = await drawSuspending(
+        <WithKeys>
+          <Screen {...view} attention={attention} onQuit={() => {}} />
+        </WithKeys>,
+        40,
+      );
+      expect((await press(screen, "left", "?")).lines.at(0)).toBe("help");
+      expect(attention.press).toHaveBeenCalledTimes(2);
+    });
+
     it("opens activity at the window and grouping the call names, and t steps on from there", async () => {
       const [, , threeDays] = recordedSettings.activity;
       const view = {

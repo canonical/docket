@@ -127,6 +127,28 @@ export interface CacheStatus {
   readonly failure: ProviderError | CacheError | undefined;
 }
 
+/**
+ * Whether anyone is using a terminal pane, which sets how the refresh
+ * cycle runs: `active` while a key was pressed within `idleAfter`;
+ * `idle` after that; and `waking` from the first key after that until
+ * the cycle has caught up.
+ */
+export type AttentionState = "active" | "idle" | "waking";
+
+/** The attention of one terminal pane. */
+export interface Attention {
+  /** The pane's state: the same value on every call until it changes. */
+  state(): AttentionState;
+  /** A key was pressed: it keeps the pane active, or wakes an idle one. */
+  press(): void;
+  /** The refresh cycle has caught up after waking: the pane is active. */
+  settle(): void;
+  /** Calls `listener` whenever the state changes. */
+  subscribe(listener: () => void): () => void;
+  /** Stops the timer that turns the pane idle, when the pane closes. */
+  stop(): void;
+}
+
 /** Where the cache keeps its data, and where it fetches it from. */
 export interface CacheOptions {
   /** The only way to the data: the cache knows no provider behind it. */
@@ -224,15 +246,19 @@ export interface Cache {
    */
   readViewer(maxAge: number): Promise<CachedViewer>;
   /**
-   * One step of the refresh cycle: syncs data older than the refresh
-   * interval, unless the provider refused a request for its rate limit.
-   * While the budget is low it spends none of it: only the free checks
-   * for changes run, until the budget resets. It never
+   * One step of the refresh cycle, as `attention` sets it, unless the
+   * provider refused a request for its rate limit. `active`, the default,
+   * syncs data older than the refresh interval, with the checks refresh
+   * and the whole hourly fetch when it is due; `idle` syncs data older
+   * than the idle interval, without the checks refresh, and leaves the
+   * whole fetch until the pane wakes; `waking` syncs at once, as
+   * `active` does. While the budget is low it spends none of it: only
+   * the free checks for changes run, until the budget resets. It never
    * throws: whatever stops it is kept in the status, a provider error or
    * a wait for the fetch lock that runs out with its own code, and any
    * other, such as a full disk, as `CACHE_REFRESH_FAILED`.
    */
-  refresh(): Promise<void>;
+  refresh(attention?: AttentionState): Promise<void>;
   /**
    * Discards the cached data, here and in the file, and fetches every
    * repository whole, reporting its progress in the status. One is
