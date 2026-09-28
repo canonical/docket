@@ -30,12 +30,17 @@ export interface SentRequest {
   readonly tag: string | undefined;
 }
 
-/** What one call of docket printed, how it exited, and what it asked GitHub. */
+/** What one call of docket printed, how it exited, what it asked GitHub, and the time zone it ran in. */
 export interface Outcome {
   readonly code: number;
   readonly out: string;
   readonly err: string;
   readonly requests: readonly SentRequest[];
+  /**
+   * The time zone docket's process ran in, as that process read it; none
+   * when the stand-in never loaded.
+   */
+  readonly machineZone: string | undefined;
 }
 
 /** How one call is made. */

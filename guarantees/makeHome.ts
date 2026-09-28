@@ -72,11 +72,17 @@ export default function makeHome(personalFile: string): Home {
         new Response(child.stderr).text(),
         child.exited,
       ]);
-      const requests = readFileSync(log, "utf8")
+      const [ran, ...sent] = readFileSync(log, "utf8")
         .split("\n")
         .filter((line) => line !== "")
-        .map((line) => JSON.parse(line) as SentRequest);
-      return { code, out, err, requests };
+        .map((line) => JSON.parse(line));
+      return {
+        code,
+        out,
+        err,
+        requests: sent as SentRequest[],
+        machineZone: (ran as { machineZone: string } | undefined)?.machineZone,
+      };
     },
     remove() {
       rmSync(root, { recursive: true, force: true });

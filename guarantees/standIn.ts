@@ -13,6 +13,9 @@
  *   `GUARANTEES_REQUESTS` names, one JSON line each. An answer arrives a
  *   few milliseconds after its request, so two requests sent together
  *   overlap and the log shows it.
+ * - The machine: the first line of that file is the time zone this
+ *   process runs in, as the process itself reads it, so a caller can see
+ *   that the machine's time zone it asked for reached docket.
  *
  * A request the recording holds no answer for gets a 404 naming it, which
  * docket reports as a failure, so a recording that falls behind docket
@@ -51,6 +54,10 @@ if (GUARANTEES_BREAK && !["overlap", "shift"].includes(GUARANTEES_BREAK)) {
 const fixed = new Date(GUARANTEES_NOW).getTime();
 const recording: Recording = (await import(GUARANTEES_RECORDING)).default;
 const log = GUARANTEES_REQUESTS;
+appendFileSync(
+  log,
+  `${JSON.stringify({ machineZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}\n`,
+);
 
 const RealDate = Date;
 class FixedDate extends RealDate {

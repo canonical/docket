@@ -46,22 +46,26 @@ interface Wait {
   readonly due: string;
 }
 
-/** Each issue's reply as `owed` gives it at `now`, by issue. */
+/**
+ * Each issue's reply as `owed` gives it at `now`, by issue, and the time
+ * zone docket ran in.
+ */
 const findReplies = async (
   home: (typeof homes)[keyof typeof homes],
   now: string,
   machineZone: string,
 ) => {
-  const { code, out, err } = await home.call(["owed", "--format", "json"], {
+  const outcome = await home.call(["owed", "--format", "json"], {
     now,
     recording: "clock",
     machineZone,
   });
+  const { code, out, err } = outcome;
   expect({ code, err }).toEqual({ code: 0, err: "" });
   const { groups } = JSON.parse(out) as {
     groups: { waits: Wait[] }[];
   };
-  return Object.fromEntries(
+  const replies = Object.fromEntries(
     groups
       .flatMap(({ waits }) => waits)
       .filter(({ kind }) => kind === "response")
@@ -73,6 +77,7 @@ const findReplies = async (
         { state, hoursOver: overdue * Number.parseFloat(target), due },
       ]),
   );
+  return { replies, ranIn: outcome.machineZone };
 };
 
 // Each call is made once, and every assertion about it reads the same
@@ -93,32 +98,32 @@ const readReplies = (
 
 describe("working-clock", () => {
   it("carries a reply asked on Friday at 16:00 over the weekend to Monday at 16:00", async () => {
-    const replies = await readReplies("paris");
+    const { replies } = await readReplies("paris");
     expect(replies["example#1"]?.due).toBe("2026-09-28T14:00:00.000Z");
   });
 
   it("keeps Monday at 16:00 when the clocks go back over the weekend", async () => {
-    const replies = await readReplies("paris");
+    const { replies } = await readReplies("paris");
     expect(replies["example#2"]?.due).toBe("2026-10-26T15:00:00.000Z");
   });
 
   it("keeps Monday at 16:00 when the clocks go forward over the weekend", async () => {
-    const replies = await readReplies("newYork");
+    const { replies } = await readReplies("newYork");
     expect(replies["example#3"]?.due).toBe("2027-03-15T20:00:00.000Z");
   });
 
   it("starts a reply asked on a local Saturday at the start of Monday", async () => {
-    const replies = await readReplies("paris");
+    const { replies } = await readReplies("paris");
     expect(replies["example#4"]?.due).toBe("2026-09-28T22:00:00.000Z");
   });
 
   it("counts the same instant in the configured time zone, where it is still Friday", async () => {
-    const replies = await readReplies("newYork");
+    const { replies } = await readReplies("newYork");
     expect(replies["example#4"]?.due).toBe("2026-09-29T02:00:00.000Z");
   });
 
   it("leaves 15 hours at 01:00 on Monday in the configured time zone, while it is still Sunday in UTC", async () => {
-    const replies = await readReplies("paris", parisMondayNight);
+    const { replies } = await readReplies("paris", parisMondayNight);
     expect(replies["example#1"]).toMatchObject({
       state: "onTrack",
       hoursOver: expect.closeTo(-15),
@@ -126,7 +131,7 @@ describe("working-clock", () => {
   });
 
   it("counts none of the weekend in what is left", async () => {
-    const replies = await readReplies("paris", parisSaturday);
+    const { replies } = await readReplies("paris", parisSaturday);
     expect(replies["example#1"]).toMatchObject({
       state: "onTrack",
       hoursOver: expect.closeTo(-16),
@@ -134,7 +139,7 @@ describe("working-clock", () => {
   });
 
   it("leaves 6 hours at 10:00 on the Monday after the clocks go back", async () => {
-    const replies = await readReplies("paris", parisMondayAfterChange);
+    const { replies } = await readReplies("paris", parisMondayAfterChange);
     expect(replies["example#2"]).toMatchObject({
       state: "onTrack",
       hoursOver: expect.closeTo(-6),
@@ -142,7 +147,7 @@ describe("working-clock", () => {
   });
 
   it("counts how far a reply is over in working days", async () => {
-    const replies = await readReplies("paris", parisMondayAfterChange);
+    const { replies } = await readReplies("paris", parisMondayAfterChange);
     expect(replies["example#1"]).toMatchObject({
       state: "over",
       // 19 working days of 24 hours, and 18 hours of the 20th.
@@ -156,7 +161,10 @@ describe("working-clock", () => {
     for (const zone of zones) {
       answers.push(await readReplies("paris", parisMondayNight, zone));
     }
-    expect(answers.at(1)).toEqual(answers.at(0));
-    expect(answers.at(2)).toEqual(answers.at(0));
+    // A machine zone that never reached docket would compare one zone
+    // with itself.
+    expect(answers.map(({ ranIn }) => ranIn)).toEqual(zones);
+    expect(answers.at(1)?.replies).toEqual(answers.at(0)?.replies);
+    expect(answers.at(2)?.replies).toEqual(answers.at(0)?.replies);
   });
 });

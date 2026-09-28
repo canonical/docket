@@ -13,7 +13,8 @@ The unit tests beside the code pin behaviour from inside. The corpus pins it fro
 `standIn.ts` is preloaded into that process (`bun --preload`) and stands in for the two things outside docket that a guarantee has to fix, without any change to docket's code:
 
 - the clock: `new Date()` gives the instant the guarantee names;
-- GitHub: `fetch` answers from a recording under `fixtures/`, logs every request, and answers a request that sends back an entity tag with "not modified", as GitHub does.
+- GitHub: `fetch` answers from a recording under `fixtures/`, logs every request, and answers a request that sends back an entity tag with "not modified", as GitHub does;
+- the machine: the time zone its process runs in is written first in the request log, so an entry can check that the zone it asked for reached docket.
 
 The recordings are written in GitHub's own response shapes, from GitHub's API, with neutral names only.
 
