@@ -16,6 +16,7 @@ export default async function main(): Promise<void> {
     args: process.argv.slice(2),
     environment: process.env,
     interactive: process.stdout.isTTY === true,
+    interactiveInput: process.stdin.isTTY === true,
     write: (text) => process.stdout.write(text),
     writeError: (text) => process.stderr.write(text),
     now: () => new Date(),

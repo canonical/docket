@@ -57,6 +57,7 @@ describe("openTerminal", () => {
   it("draws owed, refreshes while open, and exits 0 once q closes it", async () => {
     const { cache, snapshot } = await openCache();
     const { setup, closed } = await open({
+      mode: "owed",
       now: () => recordedNow,
       settings: recordedSettings,
       watched: recordedWatched(),
@@ -82,6 +83,7 @@ describe("openTerminal", () => {
     const snapshot = vi.fn(() => new Promise<never>(() => {}));
     const { cache } = await openCache(snapshot);
     const { setup, closed } = await open({
+      mode: "owed",
       now: () => recordedNow,
       settings: recordedSettings,
       watched: recordedWatched(),
@@ -100,6 +102,7 @@ describe("openTerminal", () => {
 
   it("never refreshes when gh gave no token", async () => {
     const { setup, closed } = await open({
+      mode: "owed",
       now: () => recordedNow,
       settings: recordedSettings,
       watched: [],

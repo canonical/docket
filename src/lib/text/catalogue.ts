@@ -88,6 +88,7 @@ const catalogue: readonly Command[] = [
     notes: [
       "Threads run by their newest event, newest first, with their events under them.",
       "Windows count working time, so a 24h window on a Monday morning reaches back to Friday morning.",
+      "In a terminal, with no `--format`, `docket activity` opens the terminal interface on activity; piped or captured, or given `--format`, it prints the list.",
     ],
     flags: [
       {

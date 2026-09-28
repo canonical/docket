@@ -14,6 +14,7 @@ import answerOwed from "./answerOwed.js";
 import answerShow from "./answerShow.js";
 import answerTerminal from "./answerTerminal.js";
 import answerWrite from "./answerWrite.js";
+import chooseTerminalMode from "./chooseTerminalMode.js";
 import describeFailure from "./describeFailure.js";
 import isNamedError from "./isNamedError.js";
 import parseArguments from "./parseArguments.js";
@@ -31,9 +32,10 @@ const answers = {
 /**
  * Answers one call of docket: parses it, reads the personal file, asks gh
  * for a token, and answers the command from the shared cache, which also
- * holds each watched repository's own file. `docket` alone in a terminal
- * opens the terminal interface instead, on owed, and a missing
- * prerequisite then shows there rather than as text.
+ * holds each watched repository's own file. In a terminal, `docket` alone
+ * opens the terminal interface instead, on owed, and `docket activity`
+ * without `--format` on activity; a missing prerequisite then shows there
+ * rather than as text.
  * Text mode never refreshes in the background: it fetches only when the
  * cached data is older than `--max-age`.
  *
@@ -48,7 +50,6 @@ const answers = {
  */
 export default async function run(context: Context): Promise<number> {
   let format: Format = chooseFormat(context.interactive);
-  const terminal = context.interactive && context.args.length === 0;
   // The first problem decides the exit code.
   const stop = (problems: readonly [Problem, ...Problem[]]) => {
     context.writeError(renderProblems(problems, format));
@@ -99,9 +100,11 @@ export default async function run(context: Context): Promise<number> {
         connection,
       );
     }
-    if (terminal) {
+    const mode = chooseTerminalMode(context, invocation);
+    if (mode) {
       return await answerTerminal(
         context,
+        mode,
         invocation.maxAge,
         personal.outcome?.layer,
         settings,

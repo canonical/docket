@@ -64,9 +64,34 @@ describe("run", () => {
         "example",
         "docs",
       ]);
+      expect(view?.mode).toBe("owed");
       expect(view?.settings.time.timezone).toBe("Europe/Paris");
       expect(view?.now()).toEqual(recordedNow);
       expect(view && "cache" in view.source).toBe(true);
+    });
+
+    it("opens the terminal interface on activity for docket activity in a terminal, without --format", async () => {
+      const views: TerminalView[] = [];
+      const openTerminal = async (view: TerminalView) => {
+        views.push(view);
+        return 0;
+      };
+      const opened = await home.call(["activity"], {
+        interactive: true,
+        openTerminal,
+      });
+      expect([opened.code, opened.out, opened.err]).toEqual([0, "", ""]);
+      expect(views.map(({ mode }) => mode)).toEqual(["activity"]);
+      const named = await home.call(["activity", "--format", "plain"], {
+        interactive: true,
+      });
+      expect(named.out).toMatch(/^activity · /);
+      const piped = await home.call(["activity"], {
+        interactive: true,
+        interactiveInput: false,
+      });
+      expect(piped.out).toMatch(/^activity · /);
+      expect(views).toHaveLength(1);
     });
 
     it("prints plain text in a terminal, and whatever --format names", async () => {

@@ -30,7 +30,7 @@ import {
   useCommands,
 } from "../lib/ui/index.js";
 import buildOwed from "./buildOwed.js";
-import type { TerminalView, WatchedFiles } from "./types.js";
+import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
@@ -92,6 +92,7 @@ const readNothing = () => undefined;
  * its command catalogue.
  */
 export default function Screen({
+  mode: openingMode,
   now,
   settings,
   watched: opening,
@@ -137,7 +138,7 @@ export default function Screen({
   const [firstOwed] = owedChoices;
   const [firstActivity] = activityGroupings;
   const [firstWindow] = settings.activity;
-  const [mode, setMode] = useState<"owed" | "activity">("owed");
+  const [mode, setMode] = useState<TerminalMode>(openingMode);
   const [owedGrouping, setOwedGrouping] = useState(firstOwed);
   const [activityGrouping, setActivityGrouping] = useState(firstActivity);
   const [window, setWindow] = useState(firstWindow);

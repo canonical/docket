@@ -36,6 +36,7 @@ describe("main", () => {
       args: process.argv.slice(2),
       environment: process.env,
       interactive: process.stdout.isTTY === true,
+      interactiveInput: process.stdin.isTTY === true,
       version: manifest.version,
     });
     context.write("out");
@@ -49,6 +50,7 @@ describe("main", () => {
       manifest.version,
     );
     const view: TerminalView = {
+      mode: "owed",
       now: () => recordedNow,
       settings: recordedSettings,
       watched: [],

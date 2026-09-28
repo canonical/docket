@@ -15,7 +15,7 @@
 - `bun run check:licences`: refuses any production dependency whose licence is not on the permissive list in `src/scripts/check-licences.ts`.
 - `bun run check:structure`: checks the source tree's shape against the conventions below: exports and file names, barrels, folders, the direction of imports between domains, and file length.
 - `bun run self-test`: proves the identity, secret, advisory, licence and structure gates can each fail, by running each against a scratch fixture it must reject.
-- `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>`, `assign <reference> <login>…`, `review <reference> <login or org/team>…` and `config`; `--help` after any of them gives its flags, an example and its exit codes. With no command in a terminal, it opens the terminal interface on owed instead; `?` lists its keys and `q` quits.
+- `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>`, `assign <reference> <login>…`, `review <reference> <login or org/team>…` and `config`; `--help` after any of them gives its flags, an example and its exit codes. When a terminal gives both the input and the output, `docket` alone opens the terminal interface on owed instead, and `docket activity` without `--format` opens it on activity; piped or captured, every call prints text. `?` lists its keys and `q` quits.
 
 ## Conventions
 

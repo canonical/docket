@@ -60,7 +60,7 @@ export default function renderHelp(name?: CommandName): string {
       (entry) => `  ${entry.name.padEnd(width)}  ${entry.answers}`,
     ),
     "",
-    "With no command, docket opens the terminal interface on owed in a terminal, and prints owed when piped.",
+    "With no command, docket opens the terminal interface on owed in a terminal, and prints owed when piped or captured. `docket activity` opens it on activity in the same way, unless `--format` is given.",
     "",
     "Flags:",
     "  --help",

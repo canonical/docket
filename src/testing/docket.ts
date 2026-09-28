@@ -40,12 +40,17 @@ export interface Outcome {
 /** A folder holding docket's configuration and cache for one test. */
 export interface Home {
   readonly root: string;
-  /** Runs docket with `args`, as a piped call unless `interactive`. */
+  /**
+   * Runs docket with `args`, as a piped call unless `interactive`, which
+   * makes a terminal both the output and, unless `interactiveInput` says
+   * otherwise, the input.
+   */
   call(
     args: readonly string[],
     options?: {
       readonly provider?: Provider | (() => Promise<Provider>);
       readonly interactive?: boolean;
+      readonly interactiveInput?: boolean;
       readonly now?: Date;
       /** Stands in for the terminal interface, which a test cannot open. */
       readonly openTerminal?: (view: TerminalView) => Promise<number>;
@@ -79,6 +84,8 @@ export async function makeHome(
           XDG_CACHE_HOME: join(root, "cache"),
         },
         interactive: options.interactive ?? false,
+        interactiveInput:
+          options.interactiveInput ?? options.interactive ?? false,
         write: (text) => {
           out += text;
         },
@@ -126,6 +133,7 @@ export function openSession(
     args,
     environment,
     interactive: false,
+    interactiveInput: false,
     write: (text) => {
       out += text;
     },

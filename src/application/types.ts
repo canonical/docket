@@ -21,6 +21,11 @@ export interface Context {
   readonly environment: Readonly<Record<string, string | undefined>>;
   /** Whether a terminal shows the output, rather than a pipe or a file. */
   readonly interactive: boolean;
+  /**
+   * Whether a terminal gives the input, rather than a pipe or a file, so
+   * that keys can be read from it.
+   */
+  readonly interactiveInput: boolean;
   /** Writes the answer. */
   readonly write: (text: string) => void;
   /** Writes an error. */
@@ -47,6 +52,8 @@ export interface Invocation {
   /** The arguments after the command's name. */
   readonly positionals: readonly string[];
   readonly format: Format;
+  /** Whether `--format` named the format, rather than the output choosing it. */
+  readonly formatGiven: boolean;
   readonly detail: Detail;
   /** How old cached data may be, in milliseconds. */
   readonly maxAge: number;
@@ -95,8 +102,13 @@ export interface Session {
   ) => Freshness;
 }
 
+/** The two modes of the terminal interface. */
+export type TerminalMode = "owed" | "activity";
+
 /** What the terminal interface shows, and where its data comes from. */
 export interface TerminalView {
+  /** The mode it opens on. */
+  readonly mode: TerminalMode;
   /** The current time, read whenever an age is measured. */
   readonly now: () => Date;
   /**

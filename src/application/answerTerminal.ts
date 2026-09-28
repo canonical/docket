@@ -6,10 +6,15 @@ import {
 import type { Problem } from "../lib/text/index.js";
 import describeFailure from "./describeFailure.js";
 import readRepositoryFiles from "./readRepositoryFiles.js";
-import type { Connection, Context, WatchedFiles } from "./types.js";
+import type {
+  Connection,
+  Context,
+  TerminalMode,
+  WatchedFiles,
+} from "./types.js";
 
 /**
- * Opens the terminal interface on owed at once: on the shared cache of
+ * Opens the terminal interface on `mode` at once: on the shared cache of
  * every watched repository, each on the built-in defaults and the
  * personal file, with a reading of each repository's own file that the
  * interface starts once it has opened. When gh gives no token, it opens
@@ -25,6 +30,7 @@ import type { Connection, Context, WatchedFiles } from "./types.js";
  */
 export default async function answerTerminal(
   context: Context,
+  mode: TerminalMode,
   maxAge: number,
   personal: Layer | undefined,
   settings: Settings,
@@ -33,7 +39,7 @@ export default async function answerTerminal(
   const { now, openTerminal } = context;
   if ("code" in connection) {
     const source = { problem: connection };
-    return openTerminal({ now, settings, watched: [], source });
+    return openTerminal({ mode, now, settings, watched: [], source });
   }
   const { provider, cache } = connection;
   const readWatched = async (): Promise<WatchedFiles> => {
@@ -52,6 +58,7 @@ export default async function answerTerminal(
     }
   };
   return openTerminal({
+    mode,
     now,
     settings,
     watched: settings.repos.map((repo) => ({

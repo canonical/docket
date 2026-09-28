@@ -52,6 +52,7 @@ function viewOf(
   readWatched = readRecorded,
 ): TerminalView {
   return {
+    mode: "owed",
     now: () => recordedNow,
     settings: recordedSettings,
     watched: recordedWatched(),
@@ -185,6 +186,7 @@ describe("Screen", () => {
 
     it("stands in a notice for the list when gh gives no token, with no status", async () => {
       const view: TerminalView = {
+        mode: "owed",
         now: () => recordedNow,
         settings: recordedSettings,
         watched: [],
@@ -346,6 +348,16 @@ describe("Screen", () => {
   });
 
   describe("keys", () => {
+    it("opens on activity when the call asks for it, and switches back to owed", async () => {
+      const view = {
+        ...viewOf(await openCache(fakeProvider())),
+        mode: "activity",
+      } as const;
+      const screen = await (await show(view)).redraw();
+      expect(screen.lines.at(0)).toBe(`activity${" ".repeat(19)}24h · by kind`);
+      expect((await press(screen, "left")).lines.at(0)).toBe("owed");
+    });
+
     it("switches mode with the arrows and h and l, naming only the mode shown, and never wraps", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       expect((await press(screen, "left")).lines.at(0)).toBe("owed");

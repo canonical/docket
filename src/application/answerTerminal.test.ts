@@ -43,6 +43,7 @@ async function openOn(given: Provider | Problem) {
     args: [],
     environment: {},
     interactive: true,
+    interactiveInput: true,
     write: () => {},
     writeError: () => {},
     now: () => recordedNow,
@@ -55,6 +56,7 @@ async function openOn(given: Provider | Problem) {
   };
   const code = await answerTerminal(
     context,
+    "owed",
     300_000,
     undefined,
     recordedSettings,
@@ -79,6 +81,7 @@ describe("answerTerminal", () => {
       resolvedPersonal(false),
       resolvedPersonal(false),
     ]);
+    expect(view?.mode).toBe("owed");
     expect(view?.settings).toBe(recordedSettings);
     expect(view?.now()).toEqual(recordedNow);
     const source = cacheOf(view);
