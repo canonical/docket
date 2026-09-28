@@ -128,6 +128,21 @@ const describeAttributes = (attributes: number) =>
     .join("");
 
 /**
+ * A screen's lines. `GUARANTEES_BREAK=reordered`, which
+ * `bun run guarantees:prove` alone sets, moves the fourth line up to
+ * second: on owed's first frame, the accordion's first line drawn above
+ * its selected row, as a list that composed the two the other way round
+ * would draw it. The entry is then seen to fail when a frame's
+ * composition changes, and not only a block.
+ */
+function reorderLines(lines: readonly string[]): readonly string[] {
+  if (process.env.GUARANTEES_BREAK !== "reordered") return lines;
+  const moved = [...lines];
+  moved.splice(1, 0, ...moved.splice(3, 1));
+  return moved;
+}
+
+/**
  * Draws `node` on a screen `width` columns wide and writes it out: the
  * characters of each line, then each run of text by line and column with
  * its colours and weight, one to a line, so a difference points at the
@@ -151,11 +166,13 @@ async function drawScreen(node: ReactNode, width: number): Promise<string> {
     await setup.flush();
   });
   await setup.renderOnce();
-  const lines = setup
-    .captureCharFrame()
-    .split("\n")
-    .slice(0, height)
-    .map((line) => line.trimEnd());
+  const lines = reorderLines(
+    setup
+      .captureCharFrame()
+      .split("\n")
+      .slice(0, height)
+      .map((line) => line.trimEnd()),
+  );
   const shown = lines.findLastIndex((line) => line !== "") + 1;
   const background = setup.captureSpans().lines.at(-1)?.spans.at(0)?.bg;
   const runs = setup

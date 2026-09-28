@@ -22,7 +22,11 @@
  * - `screens`: one saved screen is moved aside, and the entry must fail
  *   for the missing copy; then each run of text is written without its
  *   colours, and the entry must find the screens differ from their saved
- *   copies, which shows the copies pin the colours.
+ *   copies, which shows the copies pin the colours; then the fourth line
+ *   of each screen is moved up to second, which on owed's first frame
+ *   draws the accordion above its selected row, and the entry must find
+ *   the composed screen differs from its saved copy, which shows the
+ *   copies pin how a frame is put together.
  *
  * The invoker's verdict is read from its own report line, not from how
  * it exited: a register that does not parse exits non-zero too, without
@@ -98,6 +102,12 @@ const proofs: readonly Proof[] = [
     brokenBy: "uncoloured",
     failure:
       "the output differs from goldens/screens/component/ThreadRow/OverReviewSelected.40.txt",
+  },
+  {
+    entry: "screens",
+    brokenBy: "reordered",
+    failure:
+      "the output differs from goldens/screens/application/Screen/Owed.40.txt",
   },
 ];
 
