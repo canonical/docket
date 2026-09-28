@@ -3,6 +3,8 @@ export {
   type CountsLineProps,
   EmptyState,
   type EmptyStateProps,
+  GroupHeading,
+  type GroupHeadingProps,
   HelpOverlay,
   type HelpOverlayProps,
   KeyBar,
