@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { recordedOwed } from "../../testing/recorded.js";
+import { at, wait } from "../../testing/facts.js";
+import {
+  recordedNow,
+  recordedOwed,
+  recordedRepos,
+} from "../../testing/recorded.js";
+import { listWaits } from "../owed/index.js";
 import describeWaitData from "./describeWaitData.js";
 
 const [first, , soon] = recordedOwed().groups.at(0)?.rows ?? [];
@@ -26,6 +32,27 @@ describe("describeWaitData", () => {
     const standard = describeWaitData(first, "standard");
     expect(standard).toMatchObject({ overdue: 49 / 12, target: "24h" });
     expect(standard.overdue * 24).toBe(98);
+  });
+
+  it("gives a target written in weeks in working hours on the repository's clock", () => {
+    const sixDays = {
+      workdays: ["mon", "tue", "wed", "thu", "fri", "sat"],
+      timezone: "Europe/Paris",
+    } as const;
+    const weekly = wait({
+      target: { amount: 1, unit: "w" },
+      due: at("2026-09-25T12:00+02:00"),
+    });
+    const [repo] = recordedRepos;
+    if (!repo) throw new Error("the recording watches a repository");
+    const [row] = listWaits(
+      [{ repo, time: sixDays, waits: [weekly] }],
+      recordedNow,
+    ).rows;
+    if (!row) throw new Error("the list has the wait");
+    const data = describeWaitData(row, "standard");
+    expect(data).toMatchObject({ overdue: 1 / 3, target: "144h" });
+    expect(data.overdue * 144).toBe(48);
   });
 
   it("adds when the wait started at the detailed level", () => {

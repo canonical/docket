@@ -65,6 +65,12 @@ export interface WaitRow {
    * positive once over, negative while time is left. Rows sort on it.
    */
   readonly overdue: number;
+  /**
+   * The target's length in working hours, on the clock of the wait's
+   * repository: a working week is 24 hours for each workday, so `1w` is
+   * 120 hours on a Monday-to-Friday clock and 144 on a six-day one.
+   */
+  readonly targetHours: number;
   /** Whether the pull request sits in a stack, shown by the margin rule. */
   readonly stacked: boolean;
   /** `example#12`. */
