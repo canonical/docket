@@ -11,7 +11,6 @@ import {
   activityGroupings,
   describeAddress as describeActivityAddress,
 } from "../lib/activity/index.js";
-import type { CacheStatus } from "../lib/cache/index.js";
 import {
   describeAddress as describeOwedAddress,
   owedGroupings,
@@ -22,7 +21,6 @@ import {
   type ActionResult,
   CountsLine,
   countPickerLines,
-  describeClock,
   EmptyState,
   HelpOverlay,
   KeyBar,
@@ -39,6 +37,7 @@ import type { Thread } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
+import describeHold from "./describeHold.js";
 import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
@@ -68,39 +67,6 @@ function cycle<T>(list: readonly T[], item: T): T {
 
 /** Reads a sentence as a line on screen, which ends without a full stop. */
 const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
-
-/**
- * Why the first fetch cannot go on, and what to do about it, or nothing
- * while a refresh runs or none has stopped. The reasons come in the order
- * the status line names them: a rate limit, what stopped the last
- * refresh, then a pause to spare the request budget. A pause stops the
- * refresh without a failure, so without this the list would say
- * `refresh in progress…` until it resumes.
- */
-function describeHold(
-  status: CacheStatus,
-  timezone: string,
-): { readonly reason: string; readonly recovery: string } | undefined {
-  const { refreshing, paused, failure } = status;
-  if (refreshing) return undefined;
-  const resume = (until: Date) =>
-    `wait: docket resumes at ${describeClock(until, timezone)}`;
-  if (paused?.reason === "rateLimit") {
-    const reason = "GitHub refused requests for its rate limit";
-    return { reason, recovery: resume(paused.until) };
-  }
-  if (failure) {
-    return {
-      reason: dropFullStop(failure.message),
-      recovery: failure.recovery,
-    };
-  }
-  if (paused) {
-    const reason = "docket paused the refresh to spare the request budget";
-    return { reason, recovery: resume(paused.until) };
-  }
-  return undefined;
-}
 
 /** A thread's last change, as GitHub records it, and its checks. */
 const describeVersion = ({ updatedAt, checks }: Thread) =>
@@ -372,7 +338,11 @@ export default function Screen({
   } else if (!threads) {
     const held = status && describeHold(status, settings.time.timezone);
     region = held ? (
-      <Notice reason={held.reason} recovery={held.recovery} width={width} />
+      <Notice
+        reason={dropFullStop(held.reason)}
+        recovery={held.recovery}
+        width={width}
+      />
     ) : (
       <box flexDirection="column" paddingLeft={indent}>
         <text fg={tokens["color.text"]}>refresh in progress…</text>
