@@ -163,6 +163,10 @@ describe("renderThread", () => {
     expect(summary).not.toHaveProperty("files");
     expect(summary.messages).toEqual([]);
     expect(summary.requests).toEqual([]);
+    expect(summary.waits.at(0)).toMatchObject({
+      overdue: 49 / 12,
+      target: "24h",
+    });
   });
 
   it("shows an issue without checks, stack or files, and says when nothing is owed", () => {

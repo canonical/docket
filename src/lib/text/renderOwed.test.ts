@@ -156,6 +156,10 @@ describe("renderOwed", () => {
     });
     const standard = JSON.parse(render("json").join("\n"));
     expect(standard.groups.at(0).waits.at(2)).not.toHaveProperty("started");
+    expect(standard.groups.at(0).waits.at(0)).toMatchObject({
+      overdue: 49 / 12,
+      target: "24h",
+    });
   });
 
   it("names each section of a program's data by its identifier, never its heading", () => {

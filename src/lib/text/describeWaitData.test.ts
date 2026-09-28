@@ -18,10 +18,17 @@ describe("describeWaitData", () => {
       draft: false,
       checksFailing: false,
       stack: null,
+      target: "24h",
     });
   });
 
-  it("adds when the wait started and its target at the detailed level", () => {
+  it("gives the target at every level, so overdue times target is the working time past due", () => {
+    const standard = describeWaitData(first, "standard");
+    expect(standard).toMatchObject({ overdue: 49 / 12, target: "24h" });
+    expect(standard.overdue * 24).toBe(98);
+  });
+
+  it("adds when the wait started at the detailed level", () => {
     expect(describeWaitData(first, "detailed")).toMatchObject({
       started: "2026-09-21T08:00:00.000Z",
       target: "24h",
