@@ -1,3 +1,4 @@
+// Longer than 500 lines because the snapshot is one query over three lists, each checked here against what the query asks for and what the answer gives.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bob } from "../../testing/facts.js";
 import {
@@ -12,6 +13,7 @@ import {
   repository,
   restUser,
   type Sent,
+  selectNodeFields,
   settle,
   token,
   user,
@@ -115,6 +117,15 @@ describe("fetchSnapshot", () => {
       expect.objectContaining({ number: 3, kind: "discussion", open: true }),
     ]);
     expect(cursor).toEqual({ since: "2026-09-23T07:59:00.000Z" });
+  });
+
+  it("asks for what each issue, pull request and discussion opens with", async () => {
+    github.graphql("Snapshot", lists([], [], []));
+    await snapshot();
+    const query = String(github.sent.at(0)?.body?.query);
+    for (const list of ["issues", "pullRequests", "discussions"]) {
+      expect(selectNodeFields(query, list)).toContain("bodyText");
+    }
   });
 
   it("reads each list's next page, and only the lists with pages left", async () => {

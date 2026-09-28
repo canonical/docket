@@ -112,6 +112,29 @@ export async function settle<T>(promise: Promise<T>): Promise<T> {
   return promise;
 }
 
+/**
+ * The fields `query` asks for on each node of `list`, the selections
+ * nested under them left out.
+ */
+export function selectNodeFields(query: string, list: string): string[] {
+  const open = query.indexOf(
+    "{",
+    query.indexOf("nodes {", query.indexOf(`${list}(`)),
+  );
+  let depth = 0;
+  let close = open;
+  do {
+    if (query.at(close) === "{") depth += 1;
+    if (query.at(close) === "}") depth -= 1;
+    close += 1;
+  } while (depth > 0);
+  let fields = query.slice(open + 1, close - 1);
+  while (/\{[^{}]*\}/.test(fields)) {
+    fields = fields.replace(/\{[^{}]*\}/g, "");
+  }
+  return fields.split(/\s+/);
+}
+
 /** The rate figures every GraphQL answer carries. */
 export const rateLimit = {
   limit: 5000,
