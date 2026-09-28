@@ -24,7 +24,7 @@ const readReviewer = (name: string): Reviewer =>
  * with it, it sets the whole set asked for and prints what GitHub then
  * records. A plan that changes nothing is never sent.
  *
- * @returns 3 when GitHub records less than was asked for, with
+ * @returns 3 when GitHub records a set other than the one asked for, with
  * `WRITE_INCOMPLETE`; a refusal throws the provider's error.
  *
  * @note Impure: reads the cache and GitHub, writes the change to GitHub
@@ -92,20 +92,30 @@ export default async function answerWrite(session: Session): Promise<number> {
           nameReviewer,
         );
   context.write(renderPlan({ ...plan, applied }));
+  // The set is written whole, so it falls short both when GitHub leaves
+  // out a name asked for and when it keeps one that was to go.
   const recorded = lowerNames(applied);
+  const asked = lowerNames(wanted);
   const left = wanted.filter((name) => !recorded.has(name.toLowerCase()));
-  if (left.length === 0) return 0;
+  const kept = applied.filter((name) => !asked.has(name.toLowerCase()));
+  if (left.length === 0 && kept.length === 0) return 0;
   // A login or team name reads as quoted data for an agent, as in the plan.
-  const names = left
-    .map((name) => (format === "llm" ? quote(name) : name))
-    .join(", ");
+  const formatNames = (names: readonly string[]) =>
+    names.map((name) => (format === "llm" ? quote(name) : name)).join(", ");
+  const shortfalls = [
+    ...(left.length > 0 ? [`did not record ${formatNames(left)}`] : []),
+    ...(kept.length > 0 ? [`still records ${formatNames(kept)}`] : []),
+  ];
   context.writeError(
     renderProblems(
       [
         {
           code: "WRITE_INCOMPLETE",
-          message: `GitHub did not record ${names} on ${reference.text}.`,
-          recovery: `check that ${names} can be ${command === "assign" ? "assigned" : "asked for a review"} in ${reference.repo.repo}, then run the command again`,
+          message: `GitHub ${shortfalls.join(" and ")} on ${reference.text}.`,
+          recovery:
+            left.length > 0
+              ? `check that ${formatNames(left)} can be ${command === "assign" ? "assigned" : "asked for a review"} in ${reference.repo.repo}, then run the command again`
+              : `run docket show ${reference.text} to see whom GitHub records, then run the command again`,
         },
       ],
       format,

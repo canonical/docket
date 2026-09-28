@@ -117,6 +117,24 @@ describe("answerWrite", () => {
     );
   });
 
+  it("returns 3 with WRITE_INCOMPLETE when GitHub keeps someone the set leaves out", async () => {
+    const provider = recordedProvider({
+      setAssignees: async () => [
+        { login: "alice", type: "user" },
+        { login: "bob", type: "user" },
+      ],
+    });
+    const { session, err } = openSession(
+      home,
+      ["assign", "example#12", "bob", "--confirm"],
+      provider,
+    );
+    expect(await answerWrite(session)).toBe(3);
+    expect(err()).toBe(
+      '## Error: WRITE_INCOMPLETE\nGitHub still records "alice" on example#12.\nRecovery: run docket show example#12 to see whom GitHub records, then run the command again\n',
+    );
+  });
+
   it("lets GitHub's refusal through", async () => {
     const provider = recordedProvider({
       setAssignees: () =>
