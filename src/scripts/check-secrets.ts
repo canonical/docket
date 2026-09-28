@@ -26,11 +26,31 @@ const scans = [
   ["git", "--redact", "--no-banner", "--pre-commit"],
 ];
 
-function check(root: string, output: "inherit" | "pipe"): [number, string] {
+/**
+ * The caller's environment without git's own variables. Git exports
+ * `GIT_DIR`, `GIT_INDEX_FILE` and their kin into the commands it runs, as
+ * under `git rebase --exec`, and a caller may set them. Left in place, they
+ * point the self-test's git and gitleaks at the enclosing repository, which
+ * then gains the scratch commit, token and all.
+ */
+const scratchEnvironment = Object.fromEntries(
+  Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")),
+);
+
+/**
+ * The gate proper passes no `env`: it scans the repository the caller's git
+ * names, so a commit checked under `git rebase --exec` is the one scanned.
+ */
+function check(
+  root: string,
+  output: "inherit" | "pipe",
+  env?: Record<string, string | undefined>,
+): [number, string] {
   let exitCode = 0;
   let log = "";
   for (const scan of scans) {
     const run = Bun.spawnSync([...gitleaks(), ...scan, root], {
+      env,
       stdout: output,
       stderr: output,
     });
@@ -64,13 +84,13 @@ function selfTest(): number {
           "commit.gpgsign=false",
           ...args,
         ],
-        { cwd: root },
+        { cwd: root, env: scratchEnvironment },
       );
     git("init", "-q");
     writeFileSync(join(root, "settings.env"), `TOKEN=${generatedToken()}\n`);
     git("add", "settings.env");
     git("commit", "-q", "-m", "settings");
-    const [exitCode, log] = check(root, "pipe");
+    const [exitCode, log] = check(root, "pipe", scratchEnvironment);
     if (exitCode === 0 || !log.includes("leaks found")) {
       console.error("secrets self-test: the committed token was not rejected");
       console.error(log);
