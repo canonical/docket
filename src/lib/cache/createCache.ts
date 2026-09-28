@@ -17,9 +17,11 @@ import readCacheFile from "./readCacheFile.js";
 import syncRepo from "./syncRepo.js";
 import type {
   Cache,
+  CachedEvents,
   CachedThreads,
   CacheOptions,
   CacheStatus,
+  EventsCache,
   RepoCache,
 } from "./types.js";
 import withFetchLock from "./withFetchLock.js";
@@ -39,7 +41,8 @@ const isNamedError = (error: unknown): error is ProviderError | CacheError =>
  * the cache folder by every docket process.
  *
  * Each repository is one TanStack Query query holding its `RepoCache`,
- * dated by when it was synced. The file is TanStack's dehydrated cache,
+ * dated by when it was synced, and one holding the events activity reads,
+ * dated by when they were fetched. The file is TanStack's dehydrated cache,
  * and loading it hydrates, which replaces a query's data only with newer
  * data, so a process never goes back to older threads.
  */
@@ -65,6 +68,26 @@ export default function createCache({
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
   const store = (repo: string, value: RepoCache, at: Date) =>
     client.setQueryData(key(repo), value, { updatedAt: at.getTime() });
+
+  const eventsKey = (repo: string) => ["events", repo];
+
+  /** The events held for `repo` from `since` on, when they reach back to it. */
+  const findEvents = (repo: string, since: Date): CachedEvents | undefined => {
+    const state = client.getQueryState<EventsCache>(eventsKey(repo));
+    const held = state?.data;
+    if (!state || !held || held.since > since) return undefined;
+    return {
+      events: held.events.filter(({ at }) => at >= since),
+      syncedAt: new Date(state.dataUpdatedAt),
+    };
+  };
+  /** The events held for `repo` from `since` on, younger than `maxAge`. */
+  const findFreshEvents = (repo: string, since: Date, maxAge: number) => {
+    const held = findEvents(repo, since);
+    return held && now().getTime() - held.syncedAt.getTime() < maxAge
+      ? held
+      : undefined;
+  };
 
   const syncedAt = (): Date | undefined => {
     const times = repos.map(
@@ -262,6 +285,32 @@ export default function createCache({
   return {
     threads: () => shown,
     load,
+    findEvents,
+    async readEvents(repo, since, maxAge) {
+      try {
+        await load();
+        const cached = findFreshEvents(repo, since, maxAge);
+        if (cached) return cached;
+        return await withFetchLock(directory, async () => {
+          // The process that held the lock before may have fetched them.
+          await load();
+          const fetched = findFreshEvents(repo, since, maxAge);
+          if (fetched) return fetched;
+          // Dated from before the fetch, so they are never taken as newer
+          // than they are.
+          const at = now();
+          const events = await provider.events(repo, since);
+          const value: EventsCache = { since, events };
+          client.setQueryData(eventsKey(repo), value, {
+            updatedAt: at.getTime(),
+          });
+          await save();
+          return { events, syncedAt: at };
+        });
+      } catch (error) {
+        throw classifyFolderFailure(error, directory);
+      }
+    },
     async read(maxAge) {
       try {
         await load();

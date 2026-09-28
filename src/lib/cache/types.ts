@@ -1,4 +1,5 @@
 import type { DehydratedState } from "@tanstack/query-core";
+import type { ThreadEvent } from "../events/index.js";
 import type {
   Cursor,
   PageProgress,
@@ -31,6 +32,13 @@ export interface RepoCache {
   readonly reconciledAt: Date;
 }
 
+/** What the cache keeps of one repository's events. */
+export interface EventsCache {
+  /** How far back the events reach: every event at or after it is held. */
+  readonly since: Date;
+  readonly events: readonly ThreadEvent[];
+}
+
 /** What the cache file holds, for every docket process. */
 export interface CacheFile {
   /** TanStack Query's dehydrated cache: one query per repository. */
@@ -50,6 +58,12 @@ export interface CachedThreads {
    * data as a whole. Absent while a repository has no data yet.
    */
   readonly syncedAt: Date | undefined;
+}
+
+/** The events of one repository, and when they were fetched. */
+export interface CachedEvents {
+  readonly events: readonly ThreadEvent[];
+  readonly syncedAt: Date;
 }
 
 /**
@@ -102,8 +116,9 @@ export interface CacheOptions {
 }
 
 /**
- * The shared cache of the watched repositories' threads: one snapshot
- * query per repository, kept on disk for every docket process.
+ * The shared cache of the watched repositories' threads and events: one
+ * snapshot query and one events query per repository, kept on disk for
+ * every docket process.
  */
 export interface Cache {
   /**
@@ -127,6 +142,24 @@ export interface Cache {
    * when the cache folder cannot be made, read or written.
    */
   read(maxAge: number): Promise<CachedThreads>;
+  /**
+   * The events held for `repo` at or after `since`, however old, as last
+   * loaded or fetched; nothing when those held do not reach back to
+   * `since`.
+   */
+  findEvents(repo: string, since: Date): CachedEvents | undefined;
+  /**
+   * The events on `repo`'s threads at or after `since`, no older than
+   * `maxAge` milliseconds. Otherwise they are fetched under the fetch
+   * lock, unless the process that held it before already did, and kept
+   * in the cache file for every docket process.
+   *
+   * @throws ProviderError when the provider fails.
+   * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
+   * the fetch lock for longer than the wait allows, and `CACHE_UNUSABLE`
+   * when the cache folder cannot be made, read or written.
+   */
+  readEvents(repo: string, since: Date, maxAge: number): Promise<CachedEvents>;
   /**
    * One step of the refresh cycle: syncs data older than the refresh
    * interval, unless the budget is low or the cycle is paused. It never

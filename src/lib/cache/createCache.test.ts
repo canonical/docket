@@ -4,12 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { thread } from "../../testing/facts.js";
+import { alice, thread } from "../../testing/facts.js";
 import {
   everyCapability,
   fakeProvider,
   providerError,
 } from "../../testing/provider.js";
+import type { ThreadEvent } from "../events/index.js";
 import type { Provider } from "../provider/index.js";
 import createCache from "./createCache.js";
 
@@ -235,5 +236,97 @@ describe("createCache", () => {
     const read = await open(provider, []).read(5 * minute);
     expect(read).toEqual({ threads: [], syncedAt: undefined });
     expect(provider.snapshot).not.toHaveBeenCalled();
+  });
+});
+
+describe("createCache, for events", () => {
+  const since = new Date("2026-09-20T10:00:00Z");
+  /** A provider with one comment on the repository, a day before the clock. */
+  const withEvents = (overrides: Partial<Provider> = {}) =>
+    fakeProvider({
+      events: vi.fn(
+        async (): Promise<readonly ThreadEvent[]> => [
+          {
+            kind: "commented",
+            thread: thread(),
+            actor: alice,
+            at: new Date("2026-09-27T10:00:00Z"),
+          },
+        ],
+      ),
+      ...overrides,
+    });
+
+  it("fetches a repository's events once, then answers from the cache while they are younger than the maximum age", async () => {
+    const provider = withEvents();
+    const first = await open(provider).readEvents(repo, since, 5 * minute);
+    expect(first.syncedAt).toEqual(clock);
+    expect(first.events.map(({ kind }) => kind)).toEqual(["commented"]);
+    clock = new Date(clock.getTime() + 4 * minute);
+    // Another process, reading the file this one wrote.
+    const again = await open(provider).readEvents(
+      repo,
+      new Date(since.getTime() + 4 * minute),
+      5 * minute,
+    );
+    expect(again).toEqual(first);
+    expect(provider.events).toHaveBeenCalledTimes(1);
+  });
+
+  it("fetches once when two readers want the events together", async () => {
+    const first = withEvents();
+    const second = withEvents();
+    const [one, two] = await Promise.all([
+      open(first).readEvents(repo, since, 5 * minute),
+      open(second).readEvents(repo, since, 5 * minute),
+    ]);
+    expect(one).toEqual(two);
+    const fetches =
+      vi.mocked(first.events).mock.calls.length +
+      vi.mocked(second.events).mock.calls.length;
+    expect(fetches).toBe(1);
+  });
+
+  it("fetches again once the events are as old as the maximum age, or reach back less far than asked", async () => {
+    const provider = withEvents();
+    const cache = open(provider);
+    await cache.readEvents(repo, since, 5 * minute);
+    clock = new Date(clock.getTime() + 5 * minute);
+    await cache.readEvents(repo, since, 5 * minute);
+    expect(provider.events).toHaveBeenCalledTimes(2);
+    const earlier = new Date(since.getTime() - minute);
+    await cache.readEvents(repo, earlier, 5 * minute);
+    expect(provider.events).toHaveBeenLastCalledWith(repo, earlier);
+    expect(provider.events).toHaveBeenCalledTimes(3);
+  });
+
+  it("holds the events however old, from the time asked on, and none it never fetched", async () => {
+    const provider = withEvents();
+    const cache = open(provider);
+    expect(cache.findEvents(repo, since)).toBeUndefined();
+    await cache.readEvents(repo, since, 5 * minute);
+    clock = new Date(clock.getTime() + 60 * minute);
+    expect(cache.findEvents(repo, since)?.events).toHaveLength(1);
+    expect(
+      cache.findEvents(repo, new Date("2026-09-28T00:00:00Z"))?.events,
+    ).toEqual([]);
+    expect(
+      cache.findEvents(repo, new Date(since.getTime() - 1)),
+    ).toBeUndefined();
+  });
+
+  it("throws the provider's error, and CACHE_UNUSABLE for a folder it cannot make", async () => {
+    const limited = withEvents({
+      events: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+    });
+    await expect(
+      open(limited).readEvents(repo, since, 5 * minute),
+    ).rejects.toMatchObject({ code: "GITHUB_RATE_LIMITED" });
+    const file = join(root, "file");
+    await writeFile(file, "");
+    const cache = open(withEvents(), [repo], join(file, "docket"));
+    await expect(
+      cache.readEvents(repo, since, 5 * minute),
+    ).rejects.toMatchObject({ code: "CACHE_UNUSABLE" });
   });
 });
