@@ -29,3 +29,16 @@ export const waitWords: Readonly<Record<WaitKind, string>> = {
   review: "review",
   close: "close",
 };
+
+/**
+ * What owed says above its rows while the settings list nobody as team.
+ * Every login then counts as outside the team, so every comment starts a
+ * reply wait, the maintainers' own included: the list is wrong rather
+ * than full, and nothing on a row says so. The close and review waits
+ * stay right, so the rows still show.
+ */
+export const noTeamNotice = {
+  reason: "no team in docket.yaml, so every comment starts a reply wait",
+  recovery:
+    "list the team under people: in the personal file, then run docket config",
+} as const;

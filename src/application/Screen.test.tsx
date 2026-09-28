@@ -508,6 +508,43 @@ describe("Screen", () => {
       expect(screen.lines.at(9)).toBe("0 over · 0 soon · 0 on track");
     });
 
+    it("opens owed with the notice while no team is listed, the rows below it, and activity without it", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const teamless = { ...recordedSettings, people: new Map() };
+      const view = { ...viewOf(cache), settings: teamless };
+      const screen = await show(view, 40, () => {}, 16);
+      const owed = await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(6)).toMatch(/^▌┃example#12 reply/);
+        return drawn;
+      });
+      expect(owed.lines.slice(1, 6)).toEqual([
+        "  ✗ no team in docket.yaml, so every",
+        "  comment starts a reply wait",
+        "  Recovery: list the team under people:",
+        "  in the personal file, then run",
+        "  docket config",
+      ]);
+      await press(screen, "right");
+      expect((await screen.redraw()).lines.join("\n")).not.toContain("no team");
+    });
+
+    it("keeps the notice above nothing owed while no team is listed", async () => {
+      const cache = await openCache(fakeProvider());
+      await cache.refresh();
+      const teamless = { ...recordedSettings, people: new Map() };
+      const view = { ...viewOf(cache), settings: teamless };
+      const screen = await (await show(view, 60)).redraw();
+      expect(screen.lines.slice(2, 7)).toEqual([
+        "  ✗ no team in docket.yaml, so every comment starts a reply",
+        "  wait",
+        "  Recovery: list the team under people: in the personal",
+        "  file, then run docket config",
+        "  nothing owed",
+      ]);
+    });
+
     it("says nothing is owed when no repository is watched", async () => {
       const cache = await openCache(fakeProvider(), []);
       const readNone = async () => ({ watched: [], viewer: "alice" });

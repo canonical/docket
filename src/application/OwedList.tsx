@@ -5,9 +5,11 @@ import {
   accordionHeight,
   countRowLines,
   GroupHeading,
+  Notice,
   ThreadAccordion,
   ThreadRow,
   useListScroll,
+  wrapNotice,
 } from "../lib/ui/index.js";
 import identifyRow from "./identifyRow.js";
 import listWaiting from "./listWaiting.js";
@@ -27,6 +29,11 @@ export interface OwedListProps {
   readonly width: number;
   /** The lines the list region has. */
   readonly height: number;
+  /**
+   * A reason and its recovery that stay above the rows, such as the
+   * settings listing no team, while the rows scroll beneath.
+   */
+  readonly notice?: { readonly reason: string; readonly recovery: string };
   /**
    * What stands in the accordion's place under the selected row, such as
    * an editor, and the lines it takes. The row then gives up its selection
@@ -50,11 +57,12 @@ interface Block {
 }
 
 /**
- * owed's list: each group's heading, then its rows, with the accordion
- * open under the selected row. Only the rows move the selection, so a
- * heading is never selected. The list scrolls as little as it must to
- * keep the selected row and its accordion whole in view, with its
- * group's heading when it is the group's first row.
+ * owed's list, under the notice when there is one: each group's heading,
+ * then its rows, with the accordion open under the selected row. Only the
+ * rows move the selection, so a heading is never selected. The list
+ * scrolls as little as it must to keep the selected row and its accordion
+ * whole in view, with its group's heading when it is the group's first
+ * row; the notice stays put.
  */
 export default function OwedList({
   list,
@@ -64,6 +72,7 @@ export default function OwedList({
   timezone,
   width,
   height,
+  notice,
   editor,
   onShownRows,
 }: OwedListProps): ReactNode {
@@ -109,13 +118,20 @@ export default function OwedList({
       place += 1;
     }
   }
-  const shown = useListScroll({ blocks, from, to, room: height });
+  // The notice draws two cells in, as it does in place of the list.
+  const noticeLines = notice
+    ? Object.values(
+        wrapNotice(notice.reason, notice.recovery, width - 2),
+      ).flat().length
+    : 0;
+  const shown = useListScroll({ blocks, from, to, room: height - noticeLines });
   const shownRows = shown.filter(({ row }) => row).length;
   useEffect(() => {
     onShownRows(shownRows);
   });
   return (
     <box flexDirection="column" height={height} overflow="hidden">
+      {notice && <Notice {...notice} width={width} />}
       {shown.map(({ key, node }) => (
         <box key={key} flexDirection="column" flexShrink={0}>
           {node}

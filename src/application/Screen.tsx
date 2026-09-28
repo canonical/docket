@@ -13,6 +13,7 @@ import {
 } from "../lib/activity/index.js";
 import {
   describeAddress as describeOwedAddress,
+  noTeamNotice,
   owedGroupings,
   type WaitRow,
 } from "../lib/owed/index.js";
@@ -323,6 +324,10 @@ export default function Screen({
       };
 
   // The list region: rows once the data is in, or what stands in for them.
+  // owed opens with a notice while the personal file lists no team.
+  const teamless = [...settings.people.values()].includes("team")
+    ? undefined
+    : noTeamNotice;
   let region: ReactNode = null;
   if (problem) {
     const { message, recovery } = problem;
@@ -354,7 +359,12 @@ export default function Screen({
       </box>
     );
   } else if (owed?.groups.length === 0) {
-    region = <EmptyState message="nothing owed" width={width} />;
+    region = (
+      <box flexDirection="column">
+        {teamless && <Notice {...teamless} width={width} />}
+        <EmptyState message="nothing owed" width={width} />
+      </box>
+    );
   } else if (owed && readThreadDetail) {
     region = (
       <OwedList
@@ -372,6 +382,7 @@ export default function Screen({
         width={width}
         height={height - 4}
         onShownRows={recordShownRows}
+        {...(teamless && { notice: teamless })}
         {...(slot && { editor: slot })}
       />
     );
