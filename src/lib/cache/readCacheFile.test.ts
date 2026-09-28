@@ -24,11 +24,14 @@ describe("readCacheFile", () => {
     expect(await readCacheFile(file)).toBeUndefined();
     await writeFile(file, JSON.stringify({ format: 0, state: {} }));
     expect(await readCacheFile(file)).toBeUndefined();
-    // Threads in the layout before carry no address on GitHub.
+    // Threads in layout 1 carry no address on GitHub.
     await writeFile(file, JSON.stringify({ format: 1, state: {} }));
     expect(await readCacheFile(file)).toBeUndefined();
-    // Threads in layout 2 carry no message's text and no requester.
+    // Threads in layout 2 carry no time of their last change.
     await writeFile(file, JSON.stringify({ format: 2, state: {} }));
+    expect(await readCacheFile(file)).toBeUndefined();
+    // Threads in layout 3 carry no text of what was written, and no requester.
+    await writeFile(file, JSON.stringify({ format: 3, state: {} }));
     expect(await readCacheFile(file)).toBeUndefined();
   });
 
