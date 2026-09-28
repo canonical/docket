@@ -2,7 +2,7 @@
 #
 # The row says what the test file cannot say about itself:
 #
-#   kind    determinism | golden | conformance
+#   kind    determinism | golden | conformance | budget
 #           What sort of fact the entry pins.
 #   tier    pr
 #           When it runs: `pr` on every pull request, in `bun run ci`.
@@ -32,6 +32,13 @@ kind   = "conformance"
 tier   = "pr"
 file   = "hostile-text.test.ts"
 select = "hostile-text"
+expect = "pass"
+
+[request-budget]
+kind   = "budget"
+tier   = "pr"
+file   = "request-budget.test.ts"
+select = "request-budget"
 expect = "pass"
 
 [corpus-can-fail]

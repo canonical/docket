@@ -30,9 +30,10 @@ const docs = "example-org/example-docs";
  * request dave opened from a fork, assigned to alice, with bob asked for
  * a review, failing checks and second in a stack of three; an issue carol
  * opened on Friday; and a documentation issue alice opened and a bot
- * labelled. `words` gives the text written on GitHub.
+ * labelled. `words` gives the text written on GitHub, and `tag` the
+ * entity tag the check for changes answers with.
  */
-export default function recordTeam(words: Words): Recording {
+export default function recordTeam(words: Words, tag = "first"): Recording {
   const parserFix = {
     ...issueNode({
       number: 12,
@@ -95,8 +96,8 @@ export default function recordTeam(words: Words): Recording {
   return {
     [`File ${repo}`]: noFile,
     [`File ${docs}`]: noFile,
-    [`GET /repos/${repo}/issues`]: probe("first-example"),
-    [`GET /repos/${docs}/issues`]: probe("first-docs"),
+    [`GET /repos/${repo}/issues`]: probe(`${tag}-example`),
+    [`GET /repos/${docs}/issues`]: probe(`${tag}-docs`),
     [`GET /repos/${repo}/activity`]: noPushes,
     [`GET /repos/${docs}/activity`]: noPushes,
     [`Snapshot ${repo}`]: snapshot([crash], [parserFix]),
