@@ -141,6 +141,15 @@ export const ActionDone: Story<StatusLineProps> = {
   },
 };
 
+/** No key for 20 minutes: the pane refreshes slowly until one wakes it. */
+export const Idle: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: { ...settled, syncedAt: new Date("2026-09-28T11:35:00Z") },
+    attention: "idle",
+  },
+};
+
 /** No cache: gh is missing or not signed in. */
 export const Blank: Story<StatusLineProps> = {
   args: base,

@@ -1532,15 +1532,21 @@ describe("Screen", { timeout: 15_000 }, () => {
   });
 
   describe("keys", () => {
-    it("counts every key as attention, and the key still acts", async () => {
-      const attention = { press: vi.fn() };
-      const view = viewOf(await openCache(fakeProvider()));
+    it("counts every key as attention, and the key still acts; an idle pane says so and which key wakes it", async () => {
+      const attention = {
+        press: vi.fn(),
+        state: () => "idle" as const,
+        subscribe: () => () => {},
+      };
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
       const screen = await drawSuspending(
         <WithKeys>
-          <Screen {...view} attention={attention} onQuit={() => {}} />
+          <Screen {...viewOf(cache)} attention={attention} onQuit={() => {}} />
         </WithKeys>,
         40,
       );
+      expect(screen.lines.at(-2)).toBe("synced 0m ago · idle · any key wakes");
       expect((await press(screen, "left", "?")).lines.at(0)).toBe("help");
       expect(attention.press).toHaveBeenCalledTimes(2);
     });

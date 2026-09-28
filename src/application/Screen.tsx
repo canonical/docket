@@ -11,7 +11,6 @@ import {
   activityGroupings,
   describeAddress as describeActivityAddress,
 } from "../lib/activity/index.js";
-import type { Attention } from "../lib/cache/index.js";
 import {
   describeNoTeam,
   describeAddress as describeOwedAddress,
@@ -51,7 +50,7 @@ import type {
   WatchedFiles,
 } from "./types.js";
 import useActivity from "./useActivity.js";
-import useAttention from "./useAttention.js";
+import useAttention, { type UseAttentionProps } from "./useAttention.js";
 import useEditor from "./useEditor.js";
 import useHeldDetails from "./useHeldDetails.js";
 import useScreenKeys from "./useScreenKeys.js";
@@ -107,16 +106,13 @@ export default function Screen({
   source,
   attention,
   onQuit,
-}: TerminalView & {
-  /** The pane's attention, which the refresh cycle follows, if it runs. */
-  readonly attention?: Pick<Attention, "press">;
-  readonly onQuit: () => void;
-}): ReactNode {
+}: TerminalView &
+  Partial<UseAttentionProps> & { readonly onQuit: () => void }): ReactNode {
   const { width, height } = useTerminalDimensions();
   // Below the narrowest pane the screen shows only that it needs more
   // columns, so no key but `q` acts on the list or the editor it hides.
   const narrow = width < minColumns;
-  useAttention({ attention });
+  const attentionState = useAttention({ attention });
   const cache = "cache" in source ? source.cache : undefined;
   const readWatched = "cache" in source ? source.readWatched : undefined;
   const readThreadDetail = "cache" in source ? source.readDetail : undefined;
@@ -468,6 +464,7 @@ export default function Screen({
         <StatusLine
           status={problem ? undefined : shownStatus}
           action={action}
+          attention={attentionState}
           now={at}
           timezone={settings.time.timezone}
           names={Object.fromEntries(

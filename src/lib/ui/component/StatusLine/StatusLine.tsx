@@ -32,12 +32,20 @@ const colours: Readonly<Record<StatusMessage["kind"], string>> = {
 const StatusLine = ({
   status,
   action,
+  attention,
   now,
   timezone,
   names,
   width,
 }: StatusLineProps): ReactNode => {
-  const message = describeStatus(status, now, timezone, names, action);
+  const message = describeStatus(
+    status,
+    now,
+    timezone,
+    names,
+    action,
+    attention,
+  );
   return (
     <text fg={message ? colours[message.kind] : tokens["color.text"]}>
       {message ? trimText(message.text, width) : ""}

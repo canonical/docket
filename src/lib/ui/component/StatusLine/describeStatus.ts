@@ -1,5 +1,5 @@
 import { describeAge } from "../../../activity/index.js";
-import type { CacheStatus } from "../../../cache/index.js";
+import type { AttentionState, CacheStatus } from "../../../cache/index.js";
 import describeClock from "../../describeClock.js";
 import type { ActionResult, StatusMessage } from "./types.js";
 
@@ -13,9 +13,10 @@ const resultShown = 5_000;
  * all or in time, or else `refresh failed`; the result of the user's own
  * action, for 5 seconds after it; the progress of a full refresh; a
  * refresh in the background; a short notice, such as when a full refresh
- * is available again; and otherwise how old the data is. With no data
- * and nothing happening there is no message, and with no cache only an
- * action's result.
+ * is available again; and otherwise how old the data is, followed, while
+ * the pane is idle, by `idle · any key wakes`. With no data and nothing
+ * happening there is no message, and with no cache only an action's
+ * result.
  */
 export default function describeStatus(
   status: CacheStatus | undefined,
@@ -23,6 +24,7 @@ export default function describeStatus(
   timezone: string,
   names: Readonly<Record<string, string>>,
   action?: ActionResult,
+  attention?: AttentionState,
 ): StatusMessage | undefined {
   const paused = status?.paused;
   const failure = status?.failure;
@@ -66,7 +68,8 @@ export default function describeStatus(
     return { kind: "notice", text };
   }
   if (syncedAt) {
-    const text = `synced ${describeAge(syncedAt, now)} ago`;
+    const idle = attention === "idle" ? " · idle · any key wakes" : "";
+    const text = `synced ${describeAge(syncedAt, now)} ago${idle}`;
     return { kind: "freshness", text };
   }
   return undefined;

@@ -1,12 +1,23 @@
 import { useRenderer } from "@opentui/react";
-import { useEffect } from "react";
-import type { Attention } from "../lib/cache/index.js";
+import { useEffect, useSyncExternalStore } from "react";
+import type { Attention, AttentionState } from "../lib/cache/index.js";
 
 /** Props for the useAttention hook. */
 export interface UseAttentionProps {
   /** The pane's attention, which the refresh cycle follows, if it runs. */
-  readonly attention: Pick<Attention, "press"> | undefined;
+  readonly attention:
+    | Pick<Attention, "press" | "state" | "subscribe">
+    | undefined;
 }
+
+/**
+ * Result of the useAttention hook: the pane's state, `active` when no
+ * refresh cycle runs to follow it.
+ */
+export type UseAttentionResult = AttentionState;
+
+const ignoreChanges = () => () => {};
+const readActive = (): AttentionState => "active";
 
 /**
  * Counts every key the terminal sends as the pane's attention, whatever
@@ -16,7 +27,9 @@ export interface UseAttentionProps {
  *
  * @note Impure: listens to the renderer's keys while mounted.
  */
-export default function useAttention({ attention }: UseAttentionProps): void {
+export default function useAttention({
+  attention,
+}: UseAttentionProps): UseAttentionResult {
   const { keyInput } = useRenderer();
   useEffect(() => {
     if (!attention) return;
@@ -26,4 +39,8 @@ export default function useAttention({ attention }: UseAttentionProps): void {
       keyInput.off("keypress", press);
     };
   }, [keyInput, attention]);
+  return useSyncExternalStore(
+    attention?.subscribe ?? ignoreChanges,
+    attention?.state ?? readActive,
+  );
 }

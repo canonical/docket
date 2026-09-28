@@ -7,6 +7,7 @@ import {
   ActionFailed,
   Blank,
   FullRefresh,
+  Idle,
   RateLimited,
   Refreshing,
   Synced,
@@ -59,6 +60,12 @@ describe("StatusLine", () => {
     const screen = await draw(<StatusLine {...ActionDone.args} />, 40);
     expect(screen.lines.at(0)).toBe("✓ assigned alice");
     expect(screen.look("✓ assigned")?.fg).toBe(tokens["color.text.success"]);
+  });
+
+  it("dims an idle pane's freshness and the key that wakes it, whole at 40 columns", async () => {
+    const screen = await draw(<StatusLine {...Idle.args} />, 40);
+    expect(screen.lines.at(0)).toBe("synced 25m ago · idle · any key wakes");
+    expect(screen.look("idle")?.fg).toBe(tokens["color.text.muted"]);
   });
 
   it("stays blank with no cache", async () => {
