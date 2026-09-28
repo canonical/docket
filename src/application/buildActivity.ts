@@ -5,7 +5,7 @@ import {
   listEvents,
 } from "../lib/activity/index.js";
 import type { Duration } from "../lib/clock/index.js";
-import { selectEvents, type ThreadEvent } from "../lib/events/index.js";
+import type { TimedEvent } from "../lib/events/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import type { Watched } from "./types.js";
 
@@ -15,11 +15,13 @@ import type { Watched } from "./types.js";
  * working clock, under their threads. The threads give each row its
  * owners. The rows of a repository whose own file is invalid are marked.
  *
- * @param events Each repository's events, by its `owner/name`, reaching
- * back far enough for the window; a repository with none given has none.
+ * @param events Each repository's events, timed against the window on its
+ * own clock, by its `owner/name`, reaching back far enough for the window;
+ * a repository with none given has none. Which are inside the window at
+ * `now` is read from their times, so no working time is counted here.
  */
 export default function buildActivity(
-  events: ReadonlyMap<string, readonly ThreadEvent[]>,
+  events: ReadonlyMap<string, readonly TimedEvent[]>,
   threads: readonly Thread[],
   watched: readonly Watched[],
   window: Duration,
@@ -32,7 +34,9 @@ export default function buildActivity(
       repo,
       people: settings.people,
       threads: threads.filter((thread) => thread.repo === repo.repo),
-      events: selectEvents(events.get(repo.repo) ?? [], window, now, settings),
+      events: (events.get(repo.repo) ?? [])
+        .filter(({ until }) => until >= now)
+        .map(({ event }) => event),
       invalidFile: repositoryErrors.length > 0,
     };
   });

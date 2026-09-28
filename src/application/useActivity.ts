@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { ActivityGrouping, ActivityList } from "../lib/activity/index.js";
 import type { CacheError } from "../lib/cache/index.js";
 import type { Duration } from "../lib/clock/index.js";
-import type { ThreadEvent } from "../lib/events/index.js";
+import type { TimedEvent } from "../lib/events/index.js";
 import type { ProviderError } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
 import type { Thread } from "../lib/waits/index.js";
@@ -53,7 +53,7 @@ export type UseActivityResult =
 /** What was read last, and for which window. */
 type Read = { readonly window: Duration } & (
   | {
-      readonly events: ReadonlyMap<string, readonly ThreadEvent[]>;
+      readonly events: ReadonlyMap<string, readonly TimedEvent[]>;
       readonly failure?: Failure;
     }
   | { readonly problem: Problem }

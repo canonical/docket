@@ -62,35 +62,40 @@ export type EventKind = ThreadEvent["kind"];
 /** An event inside the window, marked when a bot made it. */
 export type WindowEvent = ThreadEvent & { readonly bot: boolean };
 
+/** An event marked when a bot made it, and the last instant it is inside a window. */
+export interface TimedEvent {
+  readonly event: WindowEvent;
+  /** Adding the window to the event: it is inside the window until then. */
+  readonly until: Date;
+}
+
 /**
- * Keeps the events that happened within `window` of working time before
- * `now`, in the order given. Every kind of event is kept, whoever made it,
- * the reader's own included, and events by bots are marked rather than
- * dropped.
+ * Times each event against `window` of working time, in the order given,
+ * so that which events are inside it at any instant is one comparison
+ * each: an event is inside the window at `now` while its `until` is `now`
+ * or later. Every kind of event is timed, whoever made it, the reader's
+ * own included, and events by bots are marked rather than dropped.
  *
- * An event is inside the window while adding the window to it reaches
- * `now` or later, so the time between counts only workdays: on a
- * Monday-to-Friday clock, a 24-hour window on Monday morning reaches back
- * to Friday morning, weekend included.
+ * Adding the window counts only workdays: on a Monday-to-Friday clock, a
+ * 24-hour window on Monday morning reaches back to Friday morning,
+ * weekend included.
  *
- * An event dated after `now` is kept. Its date comes from GitHub's clock,
- * which decides what is fresh, never the reader's: a reader whose clock
- * runs behind GitHub's still sees the latest events, their own included.
+ * An event dated after `now` is inside the window. Its date comes from
+ * GitHub's clock, which decides what is fresh, never the reader's: a
+ * reader whose clock runs behind GitHub's still sees the latest events,
+ * their own included.
  *
  * @param settings The settings in effect for the events' repository.
  */
-export default function selectEvents(
+export default function timeEvents(
   events: readonly ThreadEvent[],
   window: Duration,
-  now: Date,
   settings: Settings,
-): WindowEvent[] {
+): TimedEvent[] {
   const { time, people } = settings;
   const length = measureDuration(window, time);
-  return events
-    .filter((event) => addWorkingTime(event.at, length, time) >= now)
-    .map((event) => ({
-      ...event,
-      bot: classify(event.actor, people) === "bot",
-    }));
+  return events.map((event) => ({
+    event: { ...event, bot: classify(event.actor, people) === "bot" },
+    until: addWorkingTime(event.at, length, time),
+  }));
 }

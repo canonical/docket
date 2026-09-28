@@ -8,6 +8,7 @@ import {
   type CachedEvents,
   createCache,
 } from "../lib/cache/index.js";
+import { addWorkingTime } from "../lib/clock/index.js";
 import { everyCapability, providerError } from "../testing/provider.js";
 import {
   parserFixDetail,
@@ -21,6 +22,13 @@ import {
 import { draw } from "../testing/terminal.js";
 import type { TerminalView } from "./types.js";
 import useActivity, { type UseActivityProps } from "./useActivity.js";
+
+// The working clock is watched, not replaced, to count how often a list
+// built at each tick counts working time.
+vi.mock("../lib/clock/index.js", async (importOriginal) => {
+  const clock = await importOriginal<typeof import("../lib/clock/index.js")>();
+  return { ...clock, addWorkingTime: vi.fn(clock.addWorkingTime) };
+});
 
 const folders: string[] = [];
 afterEach(async () => {
@@ -138,6 +146,16 @@ describe("useActivity", () => {
     await change({ at: later });
     expect(await read()).toBe("2 threads · 3 events · 1h");
     expect(reads).toBe(2);
+  });
+
+  it("times the events once for each read, however often the clock ticks", async () => {
+    const { change, read } = await probe(throughCache);
+    await vi.waitFor(async () => expect(await read()).toMatch(/25m$/));
+    const counted = vi.mocked(addWorkingTime).mock.calls.length;
+    await change({ at: later });
+    await change({ at: new Date(later.getTime() + 1_000) });
+    expect(await read()).toBe("2 threads · 3 events · 1h");
+    expect(vi.mocked(addWorkingTime).mock.calls.length).toBe(counted);
   });
 
   it("reads at each sync, and gives no list for a window t steps to until its events are in", async () => {

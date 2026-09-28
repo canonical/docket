@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { timeEvents } from "../lib/events/index.js";
 import {
   recordedEvents,
   recordedNow,
@@ -22,7 +23,7 @@ const twoClocks = [
 ];
 
 describe("readWindowEvents", () => {
-  it("gives each repository's events by its owner/name", async () => {
+  it("gives each repository's events by its owner/name, timed against the window", async () => {
     const read = async (repo: string) =>
       recordedEvents.filter(({ thread }) => thread.repo === repo);
     const events = await readWindowEvents(
@@ -36,7 +37,11 @@ describe("readWindowEvents", () => {
       "example-org/example-docs",
     ]);
     expect(events.get("example-org/example-docs")).toEqual(
-      recordedEvents.filter(({ thread }) => thread.number === 4),
+      timeEvents(
+        recordedEvents.filter(({ thread }) => thread.number === 4),
+        window,
+        recordedSettings,
+      ),
     );
   });
 
@@ -54,6 +59,18 @@ describe("readWindowEvents", () => {
       "example-org/example-docs",
       new Date("2026-09-13T10:00:00Z"),
     );
+  });
+
+  it("times each repository's events on its own clock", async () => {
+    const read = async (repo: string) =>
+      recordedEvents.filter(({ thread }) => thread.repo === repo);
+    const events = await readWindowEvents(read, twoClocks, window, recordedNow);
+    // 72 working hours from Friday 09:00 end on Wednesday 09:00 on five
+    // workdays; from Sunday evening on Monday and Tuesday, they fill both
+    // days and the Monday after, ending at midnight into Tuesday.
+    expect(
+      [...events.values()].map((timed) => timed.at(0)?.until.toISOString()),
+    ).toEqual(["2026-09-30T07:00:00.000Z", "2026-10-05T22:00:00.000Z"]);
   });
 
   it("reaches back as far as each repository's own clock needs", async () => {

@@ -1,6 +1,10 @@
 import { type Duration, measureDuration } from "../lib/clock/index.js";
 import type { Settings } from "../lib/config/index.js";
-import type { ThreadEvent } from "../lib/events/index.js";
+import {
+  type ThreadEvent,
+  type TimedEvent,
+  timeEvents,
+} from "../lib/events/index.js";
 import type { Watched } from "./types.js";
 
 const day = 86_400_000;
@@ -19,10 +23,12 @@ function findEarliest(window: Duration, settings: Settings, now: Date): Date {
 /**
  * Reads the events of each watched repository from far enough back that
  * every event inside the window of working time before `now`, on that
- * repository's own clock, is among them.
+ * repository's own clock, is among them, and times each against the
+ * window on that clock once, so a list built at any later instant
+ * compares instants rather than counting working time again.
  *
  * @param readEvents Gives the events of a repository at or after a time.
- * @returns Each repository's events, by its `owner/name`.
+ * @returns Each repository's events, timed, by its `owner/name`.
  * @note Impure: reads the events of each watched repository through
  * `readEvents`, one repository at a time.
  */
@@ -31,11 +37,15 @@ export default async function readWindowEvents(
   watched: readonly Watched[],
   window: Duration,
   now: Date,
-): Promise<ReadonlyMap<string, readonly ThreadEvent[]>> {
-  const events = new Map<string, readonly ThreadEvent[]>();
+): Promise<ReadonlyMap<string, readonly TimedEvent[]>> {
+  const events = new Map<string, readonly TimedEvent[]>();
   for (const { repo, resolved } of watched) {
-    const since = findEarliest(window, resolved.settings, now);
-    events.set(repo, await readEvents(repo, since));
+    const { settings } = resolved;
+    const since = findEarliest(window, settings, now);
+    events.set(
+      repo,
+      timeEvents(await readEvents(repo, since), window, settings),
+    );
   }
   return events;
 }

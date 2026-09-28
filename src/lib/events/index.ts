@@ -1,2 +1,7 @@
-export type { EventKind, ThreadEvent, WindowEvent } from "./selectEvents.js";
-export { default as selectEvents } from "./selectEvents.js";
+export type {
+  EventKind,
+  ThreadEvent,
+  TimedEvent,
+  WindowEvent,
+} from "./timeEvents.js";
+export { default as timeEvents } from "./timeEvents.js";

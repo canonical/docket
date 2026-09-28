@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ThreadEvent } from "../lib/events/index.js";
+import { type ThreadEvent, timeEvents } from "../lib/events/index.js";
 import { at, dave } from "../testing/facts.js";
 import {
   parserFix,
@@ -12,15 +12,31 @@ import {
   tokensGuide,
 } from "../testing/recorded.js";
 import buildActivity from "./buildActivity.js";
+import type { Watched } from "./types.js";
 
 const window = { amount: 72, unit: "h" } as const;
 
-/** The recording's events, by repository. */
-const recorded = new Map(
-  recordedWatched().map(({ repo }) => [
-    repo,
-    recordedEvents.filter(({ thread }) => thread.repo === repo),
-  ]),
+/** Times each repository's events against the window on its own clock. */
+const timeAll = (
+  events: ReadonlyMap<string, readonly ThreadEvent[]>,
+  watched: readonly Watched[],
+) =>
+  new Map(
+    watched.map(({ repo, resolved }) => [
+      repo,
+      timeEvents(events.get(repo) ?? [], window, resolved.settings),
+    ]),
+  );
+
+/** The recording's events, by repository, timed. */
+const recorded = timeAll(
+  new Map(
+    recordedWatched().map(({ repo }) => [
+      repo,
+      recordedEvents.filter(({ thread }) => thread.repo === repo),
+    ]),
+  ),
+  recordedWatched(),
 );
 
 /** example on a Monday-to-Friday clock, docs on a Monday-and-Tuesday one. */
@@ -71,7 +87,7 @@ describe("buildActivity", () => {
       [tokensGuide.repo, [commented(tokensGuide)]],
     ]);
     const list = buildActivity(
-      events,
+      timeAll(events, twoClocks),
       recordedThreads,
       twoClocks,
       window,
@@ -85,6 +101,43 @@ describe("buildActivity", () => {
         .flatMap(({ rows }) => rows)
         .map(({ reference }) => reference.text),
     ).toEqual(["docs#4"]);
+  });
+
+  it("reads which events are inside the window from their times alone", () => {
+    const commented = (at: Date): ThreadEvent => ({
+      kind: "commented",
+      thread: parserFix,
+      actor: dave,
+      at,
+    });
+    const inside = commented(at("2026-09-01T10:00+02:00"));
+    const outside = commented(recordedNow);
+    const events = new Map([
+      [
+        parserFix.repo,
+        [
+          { event: { ...inside, bot: false }, until: recordedNow },
+          {
+            event: { ...outside, bot: false },
+            until: at("2026-09-28T11:59+02:00"),
+          },
+        ],
+      ],
+    ]);
+    const list = buildActivity(
+      events,
+      recordedThreads,
+      recordedWatched(),
+      window,
+      "none",
+      recordedNow,
+    );
+    expect(
+      list.groups
+        .at(0)
+        ?.rows.at(0)
+        ?.events.map(({ age }) => age.text),
+    ).toEqual(["27d"]);
   });
 
   it("marks the rows of a repository whose own file is invalid", () => {
