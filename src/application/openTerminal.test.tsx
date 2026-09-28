@@ -78,6 +78,26 @@ describe("openTerminal", () => {
     expect(setup.renderer.isDestroyed).toBe(true);
   });
 
+  it("closes at once while a request GitHub never answers is waiting", async () => {
+    const snapshot = vi.fn(() => new Promise<never>(() => {}));
+    const { cache } = await openCache(snapshot);
+    const { setup, closed } = await open({
+      now: () => recordedNow,
+      settings: recordedSettings,
+      watched: recordedWatched(),
+      source: {
+        cache,
+        capabilities: everyCapability,
+        readWatched: () => new Promise(() => {}),
+      },
+    });
+    await vi.waitFor(() => expect(snapshot).toHaveBeenCalled());
+    setup.mockInput.pressKey("q");
+    const started = Date.now();
+    expect(await closed).toBe(0);
+    expect(Date.now() - started).toBeLessThan(1_000);
+  });
+
   it("never refreshes when gh gave no token", async () => {
     const { setup, closed } = await open({
       now: () => recordedNow,
