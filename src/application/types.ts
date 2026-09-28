@@ -1,11 +1,17 @@
 import type { Cache } from "../lib/cache/index.js";
-import type { PersonalFile, Repo, Resolved } from "../lib/config/index.js";
-import type { Provider } from "../lib/provider/index.js";
+import type {
+  PersonalFile,
+  Repo,
+  Resolved,
+  Settings,
+} from "../lib/config/index.js";
+import type { Capability, Provider } from "../lib/provider/index.js";
 import type {
   CommandName,
   Detail,
   Format,
   Freshness,
+  Problem,
 } from "../lib/text/index.js";
 
 /** What the process gives docket: its arguments, its world and its output. */
@@ -27,6 +33,11 @@ export interface Context {
    * @throws ProviderError `GH_*` when gh gives no token.
    */
   readonly connect: (host: string) => Promise<Provider>;
+  /**
+   * Opens the terminal interface on `view`, and gives the exit code once
+   * it is quit.
+   */
+  readonly openTerminal: (view: TerminalView) => Promise<number>;
   readonly version: string;
 }
 
@@ -82,4 +93,27 @@ export interface Session {
     syncedAt: Date | undefined,
     warnings?: Freshness["warnings"],
   ) => Freshness;
+}
+
+/** What the terminal interface shows, and where its data comes from. */
+export interface TerminalView {
+  /** The current time, read whenever an age is measured. */
+  readonly now: () => Date;
+  /**
+   * The settings that hold across repositories: the activity windows
+   * and the time zone times are written in.
+   */
+  readonly settings: Settings;
+  /** Each watched repository, in the configuration's order, with its settings. */
+  readonly watched: readonly Watched[];
+  /**
+   * The shared cache and the facts the provider supplies, or why gh gave
+   * no token.
+   */
+  readonly source:
+    | {
+        readonly cache: Cache;
+        readonly capabilities: ReadonlySet<Capability>;
+      }
+    | { readonly problem: Problem };
 }

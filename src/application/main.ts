@@ -1,5 +1,6 @@
 import manifest from "../../package.json" with { type: "json" };
 import { createProvider } from "../lib/github/index.js";
+import openTerminal from "./openTerminal.js";
 import run from "./run.js";
 
 /**
@@ -18,6 +19,7 @@ export default async function main(): Promise<void> {
     writeError: (text) => process.stderr.write(text),
     now: () => new Date(),
     connect: (host) => createProvider(host, manifest.version),
+    openTerminal,
     version: manifest.version,
   });
 }

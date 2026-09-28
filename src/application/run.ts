@@ -12,6 +12,7 @@ import answerActivity from "./answerActivity.js";
 import answerConfig from "./answerConfig.js";
 import answerOwed from "./answerOwed.js";
 import answerShow from "./answerShow.js";
+import answerTerminal from "./answerTerminal.js";
 import answerWrite from "./answerWrite.js";
 import describeFailure from "./describeFailure.js";
 import isNamedError from "./isNamedError.js";
@@ -28,9 +29,11 @@ const answers = {
 } as const;
 
 /**
- * Answers one call of docket in text: parses it, reads the personal file,
- * asks gh for a token, and answers the command from the shared cache,
- * which also holds each watched repository's own file.
+ * Answers one call of docket: parses it, reads the personal file, asks gh
+ * for a token, and answers the command from the shared cache, which also
+ * holds each watched repository's own file. `docket` alone in a terminal
+ * opens the terminal interface instead, on owed, and a missing
+ * prerequisite then shows there rather than as text.
  * Text mode never refreshes in the background: it fetches only when the
  * cached data is older than `--max-age`.
  *
@@ -40,10 +43,12 @@ const answers = {
  * stop prints a named code and a recovery step.
  *
  * @note Impure: reads the personal file, asks gh for a token, reads and
- * writes the cache, asks GitHub, and writes the answer.
+ * writes the cache, asks GitHub, and writes the answer or hands the
+ * terminal to the interface until it is closed.
  */
 export default async function run(context: Context): Promise<number> {
   let format: Format = chooseFormat(context.interactive);
+  const terminal = context.interactive && context.args.length === 0;
   // The first problem decides the exit code.
   const stop = (problems: readonly [Problem, ...Problem[]]) => {
     context.writeError(renderProblems(problems, format));
@@ -91,6 +96,15 @@ export default async function run(context: Context): Promise<number> {
         invocation,
         personal,
         resolved,
+        connection,
+      );
+    }
+    if (terminal) {
+      return await answerTerminal(
+        context,
+        invocation.maxAge,
+        personal.outcome?.layer,
+        settings,
         connection,
       );
     }

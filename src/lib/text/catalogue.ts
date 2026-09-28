@@ -62,7 +62,7 @@ const catalogue: readonly Command[] = [
     notes: [
       "Rows run most overdue first, measured as a share of each wait's own target, so a reply 12 hours over a 24-hour target ranks above a close 12 hours over a 5-day one.",
       "Targets count working time on the configured workdays and time zone.",
-      "`docket` with no command prints the same list.",
+      "`docket` with no command prints the same list when piped, and opens the terminal interface on it in a terminal.",
     ],
     flags: [
       {

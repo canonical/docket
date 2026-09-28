@@ -15,7 +15,7 @@
 - `bun run check:licences`: refuses any production dependency whose licence is not on the permissive list in `src/scripts/check-licences.ts`.
 - `bun run check:structure`: checks the source tree's shape against the conventions below: exports and file names, barrels, folders, the direction of imports between domains, and file length.
 - `bun run self-test`: proves the identity, secret, advisory, licence and structure gates can each fail, by running each against a scratch fixture it must reject.
-- `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>`, `assign <reference> <login>…`, `review <reference> <login or org/team>…` and `config`; `--help` after any of them gives its flags, an example and its exit codes.
+- `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>`, `assign <reference> <login>…`, `review <reference> <login or org/team>…` and `config`; `--help` after any of them gives its flags, an example and its exit codes. With no command in a terminal, it opens the terminal interface on owed instead; `?` lists its keys and `q` quits.
 
 ## Conventions
 
@@ -43,7 +43,8 @@
 - The terminal interface sits in `src/lib/ui/`, a folder per block under its kind (`layout/`, `subcomponent/`, `component/`): `Name.tsx`, `Name.stories.tsx`, `Name.test.tsx`, `types.ts` and `index.ts`. A block takes its width as a prop and draws within it, trimming or wrapping with `trimText` and `wrapText`, which count display cells with `Bun.stringWidth`, never characters. The pane needs 40 columns (`MIN_COLUMNS` in `src/lib/ui/layout/Pane/Pane.tsx`) and below that only says so.
 - Stories follow Component Story Format, typed by `src/testing/stories.ts`, and the block's tests draw them through OpenTUI's test renderer with `draw()` from `src/testing/terminal.tsx`, asserting the characters and colours of each line at 40 columns and at one wider width.
 - Every colour comes from `tokens` in `src/lib/tokens/`, which names meanings, never colours, and each colour on screen is paired with a symbol or a word.
-- Keys are bound through OpenTUI's keymap. Each command carries its help label (`desc`), its `group`, an optional key-bar `hint` and `notes`; the help and the key bar read them back with `useCommands`, so a key changes only where it is bound.
+- Keys are bound through OpenTUI's keymap, in the one global layer of `src/application/Screen.tsx`. Each command carries its help label (`desc`), its `group`, an optional key-bar `hint` and `notes`; the help and the key bar read them back with `useCommands`, so a key changes only where it is bound.
+- The terminal interface starts the refresh cycle when it opens and stops it when it closes, in `src/application/openTerminal.tsx`, and nowhere else. It reads the cache's status and threads with `useSyncExternalStore`.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
 - Every implementation file under `src/lib/` and `src/application/` has its own unit tests beside it, as `<name>.test.ts` (`.test.tsx` for a file holding JSX), with `describe` blocks named for its export; barrels, `types.ts` and `constants.ts` have none. Each `it()` states an outcome a caller can observe.
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.

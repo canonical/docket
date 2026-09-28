@@ -6,6 +6,8 @@ const run = vi.fn(async (_context: Context) => 3);
 vi.mock("./run.js", () => ({ default: run }));
 const createProvider = vi.fn(async () => ({}));
 vi.mock("../lib/github/index.js", () => ({ createProvider }));
+const openTerminal = vi.fn(async () => 0);
+vi.mock("./openTerminal.js", () => ({ default: openTerminal }));
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -40,5 +42,6 @@ describe("main", () => {
       "example.com",
       manifest.version,
     );
+    expect(context.openTerminal).toBe(openTerminal);
   });
 });
