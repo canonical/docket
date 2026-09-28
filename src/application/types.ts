@@ -5,7 +5,12 @@ import type {
   Resolved,
   Settings,
 } from "../lib/config/index.js";
-import type { Capability, Provider } from "../lib/provider/index.js";
+import type { OwedGrouping } from "../lib/owed/index.js";
+import type {
+  Capability,
+  Provider,
+  ThreadDetail,
+} from "../lib/provider/index.js";
 import type {
   CommandName,
   Detail,
@@ -13,6 +18,7 @@ import type {
   Freshness,
   Problem,
 } from "../lib/text/index.js";
+import type { ThreadSummary } from "../lib/waits/index.js";
 
 /** What the process gives docket: its arguments, its world and its output. */
 export interface Context {
@@ -109,8 +115,15 @@ export type TerminalMode = "owed" | "activity";
 export interface TerminalView {
   /** The mode it opens on. */
   readonly mode: TerminalMode;
+  /**
+   * The grouping owed opens on, which `docket owed --by` names: the
+   * header and the call name one address.
+   */
+  readonly owedGrouping: OwedGrouping;
   /** The current time, read whenever an age is measured. */
   readonly now: () => Date;
+  /** Opens a thread's page in the browser, and rejects when it cannot. */
+  readonly openInBrowser: (url: string) => Promise<void>;
   /**
    * The settings that hold across repositories: the activity windows
    * and the time zone times are written in.
@@ -130,6 +143,11 @@ export interface TerminalView {
     | {
         readonly cache: Cache;
         readonly capabilities: ReadonlySet<Capability>;
+        /**
+         * Reads a thread's details from the provider, for the accordion
+         * under the selected row.
+         */
+        readonly readDetail: (thread: ThreadSummary) => Promise<ThreadDetail>;
         /**
          * Reads each watched repository's own file, called once the
          * interface has opened, so a slow or unreachable GitHub never

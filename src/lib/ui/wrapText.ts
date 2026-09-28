@@ -1,3 +1,4 @@
+import { sanitize } from "../text/index.js";
 import trimText from "./trimText.js";
 
 /** A space that joins two words so no line breaks between them. */
@@ -22,11 +23,16 @@ function splitWord(word: string, width: number): string[] {
  * Wraps `text` into lines of at most `width` display cells, breaking only
  * at spaces. Words joined by a no-break space stay on one line and are
  * shown with an ordinary space; a single word wider than a line is split.
+ * As `trimText` does, it removes escape sequences and control characters
+ * first, and flows a line break as a space.
  */
 export default function wrapText(text: string, width: number): string[] {
   const lines: string[] = [];
   let line = "";
-  for (const word of text.split(" ").flatMap((w) => splitWord(w, width))) {
+  const words = sanitize(text)
+    .split(" ")
+    .flatMap((word) => splitWord(word, width));
+  for (const word of words) {
     if (line === "") line = word;
     else if (Bun.stringWidth(`${line} ${word}`) <= width)
       line = `${line} ${word}`;

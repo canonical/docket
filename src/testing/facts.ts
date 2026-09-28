@@ -49,6 +49,7 @@ export function thread(facts: Partial<Thread> = {}): Thread {
   return {
     repo: "example-org/example-repo",
     number: 1,
+    url: "https://github.com/example-org/example-repo/issues/1",
     kind: "issue",
     title: "Example thread",
     author: dave,

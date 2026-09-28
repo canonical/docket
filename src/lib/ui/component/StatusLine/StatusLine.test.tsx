@@ -3,6 +3,8 @@ import { draw } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import StatusLine from "./StatusLine.js";
 import {
+  ActionDone,
+  ActionFailed,
   Blank,
   FullRefresh,
   RateLimited,
@@ -45,6 +47,18 @@ describe("StatusLine", () => {
       60,
     );
     expect(screen.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
+  });
+
+  it("draws a failed action's result with its ✗ in the error colour", async () => {
+    const screen = await draw(<StatusLine {...ActionFailed.args} />, 40);
+    expect(screen.lines.at(0)).toBe("✗ could not open the browser");
+    expect(screen.look("✗ could")?.fg).toBe(tokens["color.text.error"]);
+  });
+
+  it("draws an action's result with its ✓ in the success colour", async () => {
+    const screen = await draw(<StatusLine {...ActionDone.args} />, 40);
+    expect(screen.lines.at(0)).toBe("✓ assigned alice");
+    expect(screen.look("✓ assigned")?.fg).toBe(tokens["color.text.success"]);
   });
 
   it("stays blank with no cache", async () => {

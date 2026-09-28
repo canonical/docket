@@ -34,6 +34,8 @@ export const buildComment = (
 /** An open issue, as the snapshot query gives it. */
 export const buildIssueNode = (fields: {
   readonly number: number;
+  /** The thread's page on GitHub. */
+  readonly url: string;
   readonly title: string;
   readonly createdAt: string;
   readonly author: string;
@@ -44,6 +46,7 @@ export const buildIssueNode = (fields: {
   readonly updatedAt?: string;
 }) => ({
   number: fields.number,
+  url: fields.url,
   title: fields.title,
   createdAt: fields.createdAt,
   updatedAt: fields.updatedAt ?? fields.createdAt,

@@ -1,10 +1,16 @@
+// Longer than 500 lines because the one screen is tested here whole, through the keys its one layer binds, on a cache of the recording.
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type Cache, createCache } from "../lib/cache/index.js";
-import type { Capability, Provider } from "../lib/provider/index.js";
+import type {
+  Capability,
+  Provider,
+  ThreadDetail,
+} from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
+import type { ThreadSummary } from "../lib/waits/index.js";
 import {
   everyCapability,
   fakeProvider,
@@ -12,13 +18,18 @@ import {
   providerError,
 } from "../testing/provider.js";
 import {
+  parserFixDetail,
   recordedNow,
   recordedProvider,
   recordedRepos,
   recordedSettings,
   recordedWatched,
 } from "../testing/recorded.js";
-import { type Screen as Drawn, draw, WithKeys } from "../testing/terminal.js";
+import {
+  type Screen as Drawn,
+  drawSuspending,
+  WithKeys,
+} from "../testing/terminal.js";
 import Screen from "./Screen.js";
 import type { TerminalView, WatchedFiles } from "./types.js";
 
@@ -46,27 +57,39 @@ const readRecorded = async (): Promise<WatchedFiles> => ({
   watched: recordedWatched(),
 });
 
+/** Reads every thread's details as the recording's pull request's. */
+const readRecordedDetail = async () => parserFixDetail;
+
+/** Opens nothing, and says it opened. */
+const openNothing = async (_url: string) => {};
+
 function viewOf(
   cache: Cache,
   capabilities: ReadonlySet<Capability> = everyCapability,
   readWatched = readRecorded,
+  readDetail: (
+    thread: ThreadSummary,
+  ) => Promise<ThreadDetail> = readRecordedDetail,
+  openInBrowser = openNothing,
 ): TerminalView {
   return {
     mode: "owed",
+    owedGrouping: "none",
     now: () => recordedNow,
+    openInBrowser,
     settings: recordedSettings,
     watched: recordedWatched(),
-    source: { cache, capabilities, readWatched },
+    source: { cache, capabilities, readWatched, readDetail },
   };
 }
 
-function show(view: TerminalView, width = 40, onQuit = () => {}) {
-  return draw(
+function show(view: TerminalView, width = 40, onQuit = () => {}, height = 12) {
+  return drawSuspending(
     <WithKeys>
       <Screen {...view} onQuit={onQuit} />
     </WithKeys>,
     width,
-    12,
+    height,
   );
 }
 
@@ -75,14 +98,38 @@ async function press(screen: Drawn, ...keys: string[]) {
   let drawn = screen;
   for (const key of keys) {
     drawn = await drawn.redraw(() => {
-      if (key === "left" || key === "right") {
+      if (key === "left" || key === "right" || key === "up" || key === "down") {
         screen.setup.mockInput.pressArrow(key);
+      } else if (key === "return") {
+        screen.setup.mockInput.pressEnter();
       } else {
         screen.setup.mockInput.pressKey(key);
       }
     });
   }
   return drawn;
+}
+
+/**
+ * The screen on the recording, its data in, with `readDetail` for the
+ * accordion and `openInBrowser` for a thread's page.
+ */
+async function showRecorded(
+  readDetail: (
+    thread: ThreadSummary,
+  ) => Promise<ThreadDetail> = readRecordedDetail,
+  openInBrowser = openNothing,
+) {
+  const cache = await openCache(recordedProvider());
+  await cache.refresh();
+  const view = viewOf(
+    cache,
+    everyCapability,
+    readRecorded,
+    readDetail,
+    openInBrowser,
+  );
+  return (await show(view)).redraw();
 }
 
 describe("Screen", () => {
@@ -103,7 +150,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp ?",
       ]);
       expect(screen.look("refresh in progress")).toMatchObject({
         fg: tokens["color.text"],
@@ -187,7 +234,9 @@ describe("Screen", () => {
     it("stands in a notice for the list when gh gives no token, with no status", async () => {
       const view: TerminalView = {
         mode: "owed",
+        owedGrouping: "none",
         now: () => recordedNow,
+        openInBrowser: openNothing,
         settings: recordedSettings,
         watched: [],
         source: {
@@ -212,7 +261,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp ?",
       ]);
     });
   });
@@ -300,22 +349,33 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp ?",
       ]);
     });
   });
 
   describe("with data", () => {
-    it("counts owed and leaves the list to its rows, the status dimmed", async () => {
+    it("lists owed's rows with the first selected and its details open, counted, the status dimmed", async () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const screen = await (await show(viewOf(cache))).redraw();
-      expect(screen.lines.slice(9)).toEqual([
+      expect(screen.lines).toEqual([
+        "owed",
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        " ┃Fix the parser · alice ✗ checks",
+        "  dave · 3d ago",
+        "  Rebased on main. Could someone look",
+        "  again?",
+        "  example stack 3 · 2 of 3 · → main",
+        "  below #11 merged, above #13 open",
+        "",
         "2 over · 1 soon · 3 on track",
         "synced 0m ago",
-        "←→ mode g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp ?",
       ]);
-      expect(screen.lines.slice(1, 9).every((line) => line === "")).toBe(true);
+      expect(screen.look("example#12 reply")?.bg).toBe(
+        tokens["color.background.selected"],
+      );
       expect(screen.look("synced")?.fg).toBe(tokens["color.text.muted"]);
     });
 
@@ -347,6 +407,133 @@ describe("Screen", () => {
     });
   });
 
+  describe("the selection", () => {
+    it("moves down with j and ↓ and up with k and ↑, scrolling the list, never past either end", async () => {
+      const screen = await showRecorded();
+      const down = await press(screen, "j");
+      expect(down.lines.slice(1, 4)).toEqual([
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
+        " ┃Fix the parser · alice ✗ checks",
+        "  age 7d · owner alice",
+      ]);
+      expect(down.lines.join("\n")).not.toContain("example#12 reply");
+      expect(down.look("example#12 close")?.bg).toBe(
+        tokens["color.background.selected"],
+      );
+      const back = await press(screen, "up");
+      expect(back.lines.at(1)).toBe(
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      );
+      expect((await press(screen, "k")).lines.at(1)).toBe(back.lines.at(1));
+      const last = await press(screen, "down", "j", "j", "j", "j", "j");
+      expect(last.lines.at(1)).toBe(
+        `▌ example#15 close${" ".repeat(14)}29d left`,
+      );
+    });
+
+    it("stays on its wait when the grouping changes, and never lands on a heading", async () => {
+      const screen = await showRecorded();
+      const grouped = await press(screen, "j", "g");
+      expect(grouped.lines.slice(0, 2)).toEqual([
+        `owed${" ".repeat(28)}by owner`,
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
+      ]);
+      const first = await press(screen, "k");
+      expect(first.lines.slice(1, 3)).toEqual([
+        "alice",
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      ]);
+      expect(first.look("alice")?.bg).not.toBe(
+        tokens["color.background.selected"],
+      );
+      expect((await press(screen, "k")).lines.slice(1, 3)).toEqual(
+        first.lines.slice(1, 3),
+      );
+    });
+
+    it("keeps owed's selection while activity is shown, where the keys move nothing", async () => {
+      const screen = await showRecorded();
+      const activity = await press(screen, "l", "j");
+      expect(activity.lines.slice(1, 9).every((line) => line === "")).toBe(
+        true,
+      );
+      expect(activity.lines.at(11)).toBe("←→ mode g grp t time ?");
+      const owed = await press(screen, "h");
+      expect(owed.lines.at(1)).toBe(
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      );
+    });
+
+    it("reads a thread's details once, however often the selection returns to it", async () => {
+      const readDetail = vi.fn(
+        async (_thread: ThreadSummary) => parserFixDetail,
+      );
+      const screen = await showRecorded(readDetail);
+      await press(screen, "j", "j", "k", "k");
+      expect(readDetail.mock.calls.map(([thread]) => thread.number)).toEqual([
+        12, 15,
+      ]);
+    });
+
+    it("reads a thread's details again when the selection comes back after they failed, never while it stays", async () => {
+      const readDetail = vi.fn(
+        async (_thread: ThreadSummary) => parserFixDetail,
+      );
+      readDetail.mockRejectedValueOnce(providerError("GITHUB_TIMED_OUT"));
+      const screen = await showRecorded(readDetail);
+      await new Promise((done) => setTimeout(done, 1_100));
+      const failed = await screen.redraw();
+      expect(failed.lines.at(3)).toBe("  ✗ failed: The provider failed with");
+      expect(readDetail).toHaveBeenCalledOnce();
+      const back = await press(screen, "j", "j", "k", "k");
+      expect(back.lines.at(3)).toBe("  dave · 3d ago");
+      expect(readDetail.mock.calls.map(([thread]) => thread.number)).toEqual([
+        12, 15, 12,
+      ]);
+    });
+  });
+
+  describe("opening a thread", () => {
+    it("opens the selected row's page, as GitHub gives it, with ⏎, and never a heading", async () => {
+      const opened: string[] = [];
+      const screen = await showRecorded(readRecordedDetail, async (url) => {
+        opened.push(url);
+      });
+      await press(screen, "j", "j", "return");
+      await press(screen, "g", "k", "k", "k", "k", "return");
+      expect(opened).toEqual([
+        "https://github.com/example-org/example-repo/issues/15",
+        "https://github.com/example-org/example-repo/pull/12",
+      ]);
+    });
+
+    it("says on the status line, in the error colour, when the browser cannot be opened", async () => {
+      const screen = await showRecorded(readRecordedDetail, () =>
+        Promise.reject(new Error("xdg-open exited with code 3")),
+      );
+      await press(screen, "return");
+      const failed = await screen.redraw();
+      expect(failed.lines.at(10)).toBe("✗ could not open the browser");
+      expect(failed.look("✗ could")?.fg).toBe(tokens["color.text.error"]);
+    });
+
+    it("opens nothing in activity, where nothing is selected", async () => {
+      const open = vi.fn(openNothing);
+      const screen = await showRecorded(readRecordedDetail, open);
+      await press(screen, "l", "return");
+      expect(open).not.toHaveBeenCalled();
+    });
+
+    it("opens nothing when nothing is owed", async () => {
+      const open = vi.fn(openNothing);
+      const cache = await openCache(fakeProvider());
+      await cache.refresh();
+      const view = { ...viewOf(cache), openInBrowser: open };
+      await press(await (await show(view)).redraw(), "return");
+      expect(open).not.toHaveBeenCalled();
+    });
+  });
+
   describe("keys", () => {
     it("opens on activity when the call asks for it, and switches back to owed", async () => {
       const view = {
@@ -356,6 +543,22 @@ describe("Screen", () => {
       const screen = await (await show(view)).redraw();
       expect(screen.lines.at(0)).toBe(`activity${" ".repeat(19)}24h · by kind`);
       expect((await press(screen, "left")).lines.at(0)).toBe("owed");
+    });
+
+    it("opens owed on the grouping the call names, ungrouped when that is by stack with no stacks", async () => {
+      const cache = await openCache(fakeProvider());
+      const byOwner = { ...viewOf(cache), owedGrouping: "owner" } as const;
+      expect((await show(byOwner)).lines.at(0)).toBe(
+        `owed${" ".repeat(28)}by owner`,
+      );
+      const withoutStacks = new Set(
+        [...everyCapability].filter((each) => each !== "stacks"),
+      );
+      const byStack = {
+        ...viewOf(cache, withoutStacks),
+        owedGrouping: "stack",
+      } as const;
+      expect((await show(byStack)).lines.at(0)).toBe("owed");
     });
 
     it("switches mode with the arrows and h and l, naming only the mode shown, and never wraps", async () => {
@@ -414,14 +617,15 @@ describe("Screen", () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       const owed = await press(screen, "t");
       expect(owed.lines.at(0)).toBe("owed");
-      expect(owed.lines.at(11)).toBe("←→ mode g grp ?");
+      expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
       const activity = await press(screen, "right");
       expect(activity.lines.at(11)).toBe("←→ mode g grp t time ?");
       expect(activity.look("t")?.bold).toBe(true);
     });
 
     it("shows every key with ?, grouped, and hides it again", async () => {
-      const screen = await show(viewOf(await openCache(fakeProvider())));
+      const view = viewOf(await openCache(fakeProvider()));
+      const screen = await show(view, 40, () => {}, 24);
       const help = await press(screen, "?");
       expect(help.lines).toEqual([
         "help",
@@ -434,8 +638,20 @@ describe("Screen", () => {
         "           owed: most overdue first",
         "           activity: newest first",
         "",
+        "List",
+        "  ↑ ↓  k j move the selection",
+        "           (opens the accordion)",
+        "",
+        "Thread",
+        "  ⏎        open in the browser",
+        "",
         "App",
         "  ?        show or hide help",
+        "  R        full refresh",
+        "  q        quit",
+        "",
+        "  windows are counted in working time",
+        "",
       ]);
       expect((await press(screen, "?")).lines.at(0)).toBe("owed");
     });
@@ -466,6 +682,23 @@ describe("Screen", () => {
     });
   });
 
+  describe("height", () => {
+    it("shows the rows scrolled out above once the pane grows tall enough", async () => {
+      const screen = await showRecorded();
+      const short = await press(screen, "j");
+      expect(short.lines.at(1)).toBe(
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
+      );
+      screen.setup.resize(40, 30);
+      const tall = await screen.redraw();
+      expect(tall.lines.slice(1, 4)).toEqual([
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        " ┃Fix the parser · alice ✗ checks",
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
+      ]);
+    });
+  });
+
   describe("width", () => {
     it("shows only that it needs 40 columns when narrowed, and the screen again when widened", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
@@ -475,7 +708,7 @@ describe("Screen", () => {
       screen.setup.resize(60, 12);
       const wide = await screen.redraw();
       expect(wide.lines.at(0)).toBe("owed");
-      expect(wide.lines.at(11)).toBe("←→ mode g grp ?");
+      expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
     });
   });
 });

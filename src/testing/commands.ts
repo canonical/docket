@@ -14,6 +14,15 @@ const switchMode: KeyCommand = {
   notes: ["docket opens owed"],
 };
 
+const moveSelection: KeyCommand = {
+  keys: ["↑", "↓"],
+  alternates: ["k", "j"],
+  label: "move the selection",
+  hint: "sel",
+  group: "List",
+  notes: ["(opens the accordion)"],
+};
+
 const nextGrouping: KeyCommand = {
   keys: ["g"],
   alternates: [],
@@ -54,13 +63,23 @@ const app: readonly KeyCommand[] = [
 /** The keys that work in owed, where the time window does not apply. */
 export const owedCommands: readonly KeyCommand[] = [
   switchMode,
+  moveSelection,
   nextGrouping,
   ...app,
 ];
 
-/** The keys that work in activity, and every key the help lists. */
+/** The keys that work in activity, where the selection does not move. */
 export const activityCommands: readonly KeyCommand[] = [
   switchMode,
+  nextGrouping,
+  nextWindow,
+  ...app,
+];
+
+/** Every key the help lists. */
+export const everyCommand: readonly KeyCommand[] = [
+  switchMode,
+  moveSelection,
   nextGrouping,
   nextWindow,
   ...app,

@@ -61,6 +61,9 @@ grant(["text", "ui"], ["cache"], "types");
 // A face shows a thread's facts and the settings in effect, so it names the
 // model's types, and only its types: it never computes a fact itself.
 grant(["text", "ui"], model, "types");
+// Both faces draw what GitHub writes, so the interface makes it safe to
+// draw with the text domain's rule rather than a copy that could drift.
+grant(["ui"], ["text"], "values");
 
 const propertyFolders = new Set([
   "common",

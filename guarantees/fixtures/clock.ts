@@ -7,6 +7,7 @@ const repo = "example-org/example-repo";
 const buildOpened = (number: number, createdAt: string) =>
   buildIssueNode({
     number,
+    url: `https://github.com/${repo}/issues/${number}`,
     title: `Opened ${createdAt}`,
     createdAt,
     author: "bob",

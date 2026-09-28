@@ -1,8 +1,12 @@
 export {
+  type ActionResult,
   CountsLine,
   type CountsLineProps,
+  countRowLines,
   EmptyState,
   type EmptyStateProps,
+  GroupHeading,
+  type GroupHeadingProps,
   HelpOverlay,
   type HelpOverlayProps,
   KeyBar,
@@ -13,7 +17,12 @@ export {
   type ProgressLineProps,
   StatusLine,
   type StatusLineProps,
+  ThreadAccordion,
+  type ThreadAccordionProps,
+  ThreadRow,
+  type ThreadRowProps,
 } from "./component/index.js";
+export { accordionHeight } from "./constants.js";
 export { default as createKeymap } from "./createKeymap.js";
 export { default as describeClock } from "./describeClock.js";
 export {
@@ -22,6 +31,7 @@ export {
   type UseCommandsResult,
   useCommands,
 } from "./hooks/index.js";
+export { default as keepInView } from "./keepInView.js";
 export { Pane, type PaneProps } from "./layout/index.js";
 export {
   PaneHeader,

@@ -12,6 +12,7 @@ describe("readIssue", () => {
     expect(read()).toEqual({
       repo: "example-org/example-repo",
       number: 1,
+      url: "https://github.com/example-org/example-repo/issues/1",
       kind: "issue",
       title: "Example issue",
       author: dave,

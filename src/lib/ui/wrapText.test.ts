@@ -31,4 +31,10 @@ describe("wrapText", () => {
   it("splits a word wider than a line without losing a character", () => {
     expect(wrapText("abcdefghij", 4)).toEqual(["abcd", "efgh", "ij"]);
   });
+
+  it("wraps a text written on GitHub without its escape sequences, its line breaks flowed", () => {
+    expect(
+      wrapText("Rebased\u001b[31m on main.\n\nCould you look?", 16),
+    ).toEqual(["Rebased on main.", "Could you look?"]);
+  });
 });

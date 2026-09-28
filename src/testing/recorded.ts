@@ -56,6 +56,7 @@ export const recordedSettings: Settings = {
 export const parserFix: Thread = {
   repo: "example-org/example-repo",
   number: 12,
+  url: "https://github.com/example-org/example-repo/pull/12",
   kind: "pullRequest",
   title: "Fix the parser",
   stack: { number: 3, position: 2, size: 3, base: "main" },
@@ -76,6 +77,7 @@ export const parserFix: Thread = {
 export const crash: Thread = {
   repo: "example-org/example-repo",
   number: 15,
+  url: "https://github.com/example-org/example-repo/issues/15",
   kind: "issue",
   title: "Crash on start",
   author: carol,
@@ -94,6 +96,7 @@ export const crash: Thread = {
 export const tokensGuide: Thread = {
   repo: "example-org/example-docs",
   number: 4,
+  url: "https://github.com/example-org/example-docs/issues/4",
   kind: "issue",
   title: "Where do tokens live?",
   author: alice,

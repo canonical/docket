@@ -32,6 +32,7 @@ describe("readPullRequest", () => {
     expect(read()).toEqual({
       repo: "example-org/example-repo",
       number: 2,
+      url: "https://github.com/example-org/example-repo/pull/2",
       kind: "pullRequest",
       title: "Example pull request",
       author: alice,

@@ -5,17 +5,36 @@ import type { CacheStatus } from "../../../cache/index.js";
  * decides its colour, and ranks it against the others.
  */
 export interface StatusMessage {
-  readonly kind: "error" | "progress" | "refreshing" | "notice" | "freshness";
+  readonly kind:
+    | "error"
+    | "actionFailed"
+    | "action"
+    | "progress"
+    | "refreshing"
+    | "notice"
+    | "freshness";
   readonly text: string;
+}
+
+/** The result of something the user did, such as opening a thread. */
+export interface ActionResult {
+  /** Whether it failed: the line then marks it `✗`, else `✓`. */
+  readonly failed: boolean;
+  /** What happened, in plain words, such as `could not open the browser`. */
+  readonly text: string;
+  /** When it happened: the line shows it for 5 seconds from then. */
+  readonly at: Date;
 }
 
 /** Props for the StatusLine component. */
 export interface StatusLineProps {
   /**
-   * The cache's state, or none while docket has no cache: the line is
-   * then blank.
+   * The cache's state, or none while docket has no cache: the line then
+   * shows only an action's result.
    */
   status?: CacheStatus;
+  /** The result of the user's last action, if any. */
+  action?: ActionResult;
   /** The instant ages and waits are measured at. */
   now: Date;
   /** The time zone a time of day is written in, such as `Europe/Paris`. */

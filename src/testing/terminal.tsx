@@ -9,7 +9,7 @@ import type { TestRendererSetup } from "@opentui/core/testing";
 import { KeymapProvider } from "@opentui/keymap/react";
 import { useRenderer } from "@opentui/react";
 import { testRender } from "@opentui/react/test-utils";
-import { act, type ReactNode, useMemo } from "react";
+import { act, type ReactNode, useMemo, useState } from "react";
 import { afterEach } from "vitest";
 import createKeymap from "../lib/ui/createKeymap.js";
 
@@ -88,6 +88,27 @@ export async function draw(
   drawn.push(setup);
   await setup.renderOnce();
   return read(setup);
+}
+
+/**
+ * Draws `node` as `draw` does, but mounts it inside an awaited `act`, as
+ * React needs for a component that suspends, such as one that waits on
+ * details from GitHub: `draw` mounts at once, and React never retries a
+ * boundary that suspended during that first mount.
+ */
+export async function drawSuspending(
+  node: ReactNode,
+  width: number,
+  height = 12,
+): Promise<Screen> {
+  let mount = () => {};
+  const Later = () => {
+    const [shown, setShown] = useState(false);
+    mount = () => setShown(true);
+    return shown ? node : null;
+  };
+  const screen = await draw(<Later />, width, height);
+  return screen.redraw(() => mount());
 }
 
 /**

@@ -14,6 +14,10 @@ const lines = [
   "           owed: most overdue first",
   "           activity: newest first",
   "",
+  "List",
+  "  ↑ ↓  k j move the selection",
+  "           (opens the accordion)",
+  "",
   "App",
   "  ?        show or hide help",
   "  R        full refresh",
@@ -24,12 +28,12 @@ const lines = [
 
 describe("HelpOverlay", () => {
   it("lists every key under its group, labels in one column, at 40 columns", async () => {
-    const screen = await draw(<HelpOverlay {...Keys.args} />, 40, 16);
+    const screen = await draw(<HelpOverlay {...Keys.args} />, 40, 20);
     expect(screen.lines.slice(0, lines.length)).toEqual(lines);
   });
 
   it("draws the group headings and the keys in bold, the labels not", async () => {
-    const screen = await draw(<HelpOverlay {...Keys.args} />, 40, 16);
+    const screen = await draw(<HelpOverlay {...Keys.args} />, 40, 20);
     expect(screen.look("Mode")).toMatchObject({
       fg: tokens["color.text"],
       bold: true,
@@ -42,7 +46,7 @@ describe("HelpOverlay", () => {
     const screen = await draw(
       <HelpOverlay {...Keys.args} width={60} />,
       60,
-      16,
+      20,
     );
     expect(screen.lines.slice(0, lines.length)).toEqual(lines);
   });
@@ -56,7 +60,7 @@ describe("HelpOverlay", () => {
     const screen = await draw(
       <HelpOverlay {...Keys.args} width={24} />,
       24,
-      16,
+      20,
     );
     expect(screen.lines.at(2)).toBe("  ← →  h l switch mode …");
   });

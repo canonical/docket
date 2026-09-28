@@ -14,6 +14,7 @@ import answerOwed from "./answerOwed.js";
 import answerShow from "./answerShow.js";
 import answerTerminal from "./answerTerminal.js";
 import answerWrite from "./answerWrite.js";
+import chooseOwedGrouping from "./chooseOwedGrouping.js";
 import chooseTerminalMode from "./chooseTerminalMode.js";
 import describeFailure from "./describeFailure.js";
 import isNamedError from "./isNamedError.js";
@@ -33,9 +34,10 @@ const answers = {
  * Answers one call of docket: parses it, reads the personal file, asks gh
  * for a token, and answers the command from the shared cache, which also
  * holds each watched repository's own file. In a terminal, `docket` alone
- * opens the terminal interface instead, on owed, and `docket activity`
- * without `--format` on activity; a missing prerequisite then shows there
- * rather than as text.
+ * and `docket owed` without `--format` open the terminal interface
+ * instead, on owed at `--by`'s grouping, and `docket activity` without
+ * `--format` on activity; a missing prerequisite then shows there rather
+ * than as text.
  * Text mode never refreshes in the background: it fetches only when the
  * cached data is older than `--max-age`.
  *
@@ -105,6 +107,7 @@ export default async function run(context: Context): Promise<number> {
       return await answerTerminal(
         context,
         mode,
+        chooseOwedGrouping(invocation),
         invocation.maxAge,
         personal.outcome?.layer,
         settings,

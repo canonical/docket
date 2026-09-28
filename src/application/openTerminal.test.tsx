@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createCache } from "../lib/cache/index.js";
 import { everyCapability, fakeProvider } from "../testing/provider.js";
 import {
+  parserFixDetail,
   recordedNow,
   recordedRepos,
   recordedSettings,
@@ -58,13 +59,16 @@ describe("openTerminal", () => {
     const { cache, snapshot } = await openCache();
     const { setup, closed } = await open({
       mode: "owed",
+      owedGrouping: "none",
       now: () => recordedNow,
+      openInBrowser: async () => {},
       settings: recordedSettings,
       watched: recordedWatched(),
       source: {
         cache,
         capabilities: everyCapability,
         readWatched: async () => ({ watched: recordedWatched() }),
+        readDetail: async () => parserFixDetail,
       },
     });
     await vi.waitFor(() => expect(snapshot).toHaveBeenCalledTimes(2));
@@ -72,7 +76,7 @@ describe("openTerminal", () => {
       await setup.renderOnce();
       const frame = setup.captureCharFrame();
       expect(frame).toContain("nothing owed");
-      expect(frame).toContain("←→ mode g grp ?");
+      expect(frame).toContain("←→ mode ↑↓ sel ⏎ open g grp ?");
     });
     setup.mockInput.pressKey("q");
     expect(await closed).toBe(0);
@@ -84,13 +88,16 @@ describe("openTerminal", () => {
     const { cache } = await openCache(snapshot);
     const { setup, closed } = await open({
       mode: "owed",
+      owedGrouping: "none",
       now: () => recordedNow,
+      openInBrowser: async () => {},
       settings: recordedSettings,
       watched: recordedWatched(),
       source: {
         cache,
         capabilities: everyCapability,
         readWatched: () => new Promise(() => {}),
+        readDetail: async () => parserFixDetail,
       },
     });
     await vi.waitFor(() => expect(snapshot).toHaveBeenCalled());
@@ -103,7 +110,9 @@ describe("openTerminal", () => {
   it("never refreshes when gh gave no token", async () => {
     const { setup, closed } = await open({
       mode: "owed",
+      owedGrouping: "none",
       now: () => recordedNow,
+      openInBrowser: async () => {},
       settings: recordedSettings,
       watched: [],
       source: {
@@ -119,7 +128,7 @@ describe("openTerminal", () => {
       const frame = setup.captureCharFrame();
       expect(frame).toContain("✗ gh is not signed in to github.com");
       // The keys work once the key bar, drawn from them, shows.
-      expect(frame).toContain("←→ mode g grp ?");
+      expect(frame).toContain("←→ mode ↑↓ sel ⏎ open g grp ?");
     });
     setup.mockInput.pressKey("q");
     expect(await closed).toBe(0);

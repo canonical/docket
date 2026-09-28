@@ -5,11 +5,15 @@ import describeStatus from "./describeStatus.js";
 import type { StatusLineProps, StatusMessage } from "./types.js";
 
 /**
- * The colour of each kind of message: an error takes the field-health
- * colour beside its `✗`, and freshness is context, so it is dimmed.
+ * The colour of each kind of message: an error, and an action that
+ * failed, take the field-health colour beside their `✗`, an action that
+ * went through takes the success colour beside its `✓`, and freshness is
+ * context, so it is dimmed.
  */
 const colours: Readonly<Record<StatusMessage["kind"], string>> = {
   error: tokens["color.text.error"],
+  actionFailed: tokens["color.text.error"],
+  action: tokens["color.text.success"],
   progress: tokens["color.text"],
   refreshing: tokens["color.text"],
   notice: tokens["color.text"],
@@ -27,12 +31,13 @@ const colours: Readonly<Record<StatusMessage["kind"], string>> = {
  */
 const StatusLine = ({
   status,
+  action,
   now,
   timezone,
   names,
   width,
 }: StatusLineProps): ReactNode => {
-  const message = status && describeStatus(status, now, timezone, names);
+  const message = describeStatus(status, now, timezone, names, action);
   return (
     <text fg={message ? colours[message.kind] : tokens["color.text"]}>
       {message ? trimText(message.text, width) : ""}

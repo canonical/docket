@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import trimText from "../../trimText.js";
+import fitPieces from "../../fitPieces.js";
 import type { KeyBarProps } from "./types.js";
 
 /** A run of the bar's text: a key, its label, or the gap between hints. */
@@ -8,22 +8,6 @@ interface Piece {
   readonly id: string;
   readonly text: string;
   readonly look: "key" | "label" | "gap";
-}
-
-/** Cuts the piece that crosses `width` with `…`, dropping the rest. */
-function fitPieces(pieces: readonly Piece[], width: number): Piece[] {
-  const fitted: Piece[] = [];
-  let room = width;
-  for (const piece of pieces) {
-    const cells = Bun.stringWidth(piece.text);
-    if (cells > room) {
-      fitted.push({ ...piece, text: trimText(piece.text, room) });
-      break;
-    }
-    fitted.push(piece);
-    room -= cells;
-  }
-  return fitted;
 }
 
 /**

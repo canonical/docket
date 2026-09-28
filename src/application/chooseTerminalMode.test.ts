@@ -11,7 +11,7 @@ function modeOf(
   const request = parseArguments(args, interactive);
   if (request.kind !== "command") throw new Error("the call is a command");
   return chooseTerminalMode(
-    { args, interactive, interactiveInput },
+    { interactive, interactiveInput },
     request.invocation,
   );
 }
@@ -33,6 +33,14 @@ describe("chooseTerminalMode", () => {
         );
       });
 
+      it("opens owed for docket owed without --format, whatever its grouping, only when both are terminals", () => {
+        for (const args of [["owed"], ["owed", "--by", "owner"]]) {
+          expect(modeOf(args, interactive, interactiveInput)).toBe(
+            both ? "owed" : undefined,
+          );
+        }
+      });
+
       it("opens activity without --format only when both are terminals", () => {
         expect(modeOf(["activity"], interactive, interactiveInput)).toBe(
           both ? "activity" : undefined,
@@ -46,24 +54,22 @@ describe("chooseTerminalMode", () => {
         ).toBe(both ? "activity" : undefined);
       });
 
-      it("prints activity as text whenever --format is given", () => {
-        for (const format of ["plain", "llm", "json"]) {
-          expect(
-            modeOf(
-              ["activity", "--format", format],
-              interactive,
-              interactiveInput,
-            ),
-          ).toBeUndefined();
+      it("prints owed and activity as text whenever --format is given", () => {
+        for (const command of ["owed", "activity"]) {
+          for (const format of ["plain", "llm", "json"]) {
+            expect(
+              modeOf(
+                [command, "--format", format],
+                interactive,
+                interactiveInput,
+              ),
+            ).toBeUndefined();
+          }
         }
       });
 
       it("prints every other command as text", () => {
-        for (const args of [
-          ["owed"],
-          ["owed", "--format", "plain"],
-          ["config"],
-        ]) {
+        for (const args of [["config"], ["show", "example#1"]]) {
           expect(modeOf(args, interactive, interactiveInput)).toBeUndefined();
         }
       });

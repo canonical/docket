@@ -51,7 +51,9 @@ describe("main", () => {
     );
     const view: TerminalView = {
       mode: "owed",
+      owedGrouping: "none",
       now: () => recordedNow,
+      openInBrowser: async () => {},
       settings: recordedSettings,
       watched: [],
       source: {

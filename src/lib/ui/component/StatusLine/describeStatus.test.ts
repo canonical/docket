@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { CacheStatus } from "../../../cache/index.js";
 import describeStatus from "./describeStatus.js";
 import {
+  ActionDone,
+  ActionFailed,
   FullRefresh,
   FullRefreshRefused,
   Offline,
@@ -135,6 +137,52 @@ describe("describeStatus", () => {
       kind: "freshness",
       text: "synced 2m ago",
     });
+  });
+
+  it("puts a failed action's result, marked ✗, before a refresh in progress", () => {
+    const { status, action } = ActionFailed.args;
+    expect(describeStatus(status, now, "UTC", names, action)).toEqual({
+      kind: "actionFailed",
+      text: "✗ could not open the browser",
+    });
+  });
+
+  it("marks an action that went through ✓, before how old the data is", () => {
+    const { status, action } = ActionDone.args;
+    expect(describeStatus(status, now, "UTC", names, action)).toEqual({
+      kind: "action",
+      text: "✓ assigned alice",
+    });
+  });
+
+  it("keeps an action's result for 5 seconds, then drops it", () => {
+    const { status, action } = ActionFailed.args;
+    const describeLater = (ms: number) =>
+      describeStatus(
+        status,
+        new Date(now.getTime() + ms),
+        "UTC",
+        names,
+        action,
+      );
+    expect(describeLater(3_999)?.kind).toBe("actionFailed");
+    expect(describeLater(4_000)?.kind).toBe("refreshing");
+  });
+
+  it("puts an error before an action's result", () => {
+    const { action } = ActionFailed.args;
+    const status = statusOf(RefreshFailed);
+    expect(describeStatus(status, now, "UTC", names, action)?.kind).toBe(
+      "error",
+    );
+  });
+
+  it("shows an action's result with no cache", () => {
+    const { action } = ActionFailed.args;
+    expect(describeStatus(undefined, now, "UTC", names, action)?.text).toBe(
+      "✗ could not open the browser",
+    );
+    expect(describeStatus(undefined, now, "UTC", names)).toBeUndefined();
   });
 
   it("says nothing with no data and nothing happening", () => {

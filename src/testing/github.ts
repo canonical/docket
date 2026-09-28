@@ -152,6 +152,7 @@ export const comment = (
  */
 export const issueNode = (fields: Record<string, unknown> = {}) => ({
   number: 1,
+  url: "https://github.com/example-org/example-repo/issues/1",
   title: "Example issue",
   createdAt: "2026-09-22T08:00:00Z",
   updatedAt: "2026-09-22T08:00:00Z",
@@ -171,6 +172,7 @@ export const issueNode = (fields: Record<string, unknown> = {}) => ({
 export const pullNode = (fields: Record<string, unknown> = {}) => ({
   ...issueNode({
     number: 2,
+    url: "https://github.com/example-org/example-repo/pull/2",
     title: "Example pull request",
     author: user("alice"),
     authorAssociation: "MEMBER",
@@ -199,6 +201,7 @@ export const pullNode = (fields: Record<string, unknown> = {}) => ({
 /** An open discussion by dave, as the snapshot query gives it. */
 export const discussionNode = (fields: Record<string, unknown> = {}) => ({
   number: 3,
+  url: "https://github.com/example-org/example-repo/discussions/3",
   title: "Example discussion",
   createdAt: "2026-09-22T08:00:00Z",
   updatedAt: "2026-09-22T08:00:00Z",

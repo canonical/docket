@@ -7,9 +7,11 @@ import type { Provider } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
 import { fakeProvider, providerError } from "../testing/provider.js";
 import {
+  parserFixDetail,
   recordedNow,
   recordedProvider,
   recordedSettings,
+  recordedThreads,
   resolvedPersonal,
 } from "../testing/recorded.js";
 import answerTerminal from "./answerTerminal.js";
@@ -57,6 +59,7 @@ async function openOn(given: Provider | Problem) {
   const code = await answerTerminal(
     context,
     "owed",
+    "owner",
     300_000,
     undefined,
     recordedSettings,
@@ -82,6 +85,7 @@ describe("answerTerminal", () => {
       resolvedPersonal(false),
     ]);
     expect(view?.mode).toBe("owed");
+    expect(view?.owedGrouping).toBe("owner");
     expect(view?.settings).toBe(recordedSettings);
     expect(view?.now()).toEqual(recordedNow);
     const source = cacheOf(view);
@@ -103,6 +107,13 @@ describe("answerTerminal", () => {
     const files = await cacheOf(view).readWatched();
     if (!("watched" in files)) throw new Error("the files were read");
     expect(files.watched.map(({ name }) => name)).toEqual(["example", "docs"]);
+  });
+
+  it("reads a thread's details from the provider, for the accordion", async () => {
+    const { view } = await openOn(recordedProvider());
+    const [thread] = recordedThreads;
+    if (!thread) throw new Error("the recording has a thread");
+    expect(await cacheOf(view).readDetail(thread)).toEqual(parserFixDetail);
   });
 
   it("opens on why gh gave no token", async () => {

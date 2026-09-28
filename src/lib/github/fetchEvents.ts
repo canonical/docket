@@ -32,7 +32,7 @@ const pullItems = `${issueItems}
   ... on MergedEvent { ${actor} }`;
 const issueTypes =
   "ISSUE_COMMENT, CLOSED_EVENT, REOPENED_EVENT, ASSIGNED_EVENT, LABELED_EVENT";
-const opened = `number title createdAt updatedAt author { ${account} }`;
+const opened = `number url title createdAt updatedAt author { ${account} }`;
 
 const document = `query Events($owner: String!, $name: String!, $since: DateTime!,
   $issuesAfter: String, $pullsAfter: String, $discussionsAfter: String,
@@ -85,6 +85,7 @@ interface ItemNode {
 
 interface OpenedNode {
   readonly number: number;
+  readonly url: string;
   readonly title: string;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -177,6 +178,7 @@ const summarise = (
   return {
     repo,
     number: node.number,
+    url: node.url,
     kind,
     title: node.title,
     ...(stack ? { stack } : {}),
