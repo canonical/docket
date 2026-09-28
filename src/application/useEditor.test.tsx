@@ -518,13 +518,13 @@ describe("useEditor", () => {
       expect(cancelled.lines.at(0)).toBe("owed");
     });
 
-    it("acts on no key but ? while the help covers it, and applies once the help closes", async () => {
+    it("acts on none of its keys while the help covers it, and applies once the help closes", async () => {
       const { provider, setAssignees } = recordAssignees();
       const opened = await settle(
         await press(await showRecorded(provider), "a"),
       );
       const ticked = await press(opened, "down", "space");
-      const help = await press(ticked, "?", "return", "space", "escape");
+      const help = await press(ticked, "?", "return", "space");
       // The recording answers a write at once, so one sent has landed here.
       await new Promise((resolve) => setTimeout(resolve, 50));
       const covered = await help.redraw();
@@ -540,6 +540,22 @@ describe("useEditor", () => {
         "bob",
       ]);
       expect(applied.lines.at(-2)).toBe("✓ assigned alice, bob");
+    });
+
+    it("closes only the help on esc, keeping the editor and its ticks", async () => {
+      const { provider, setAssignees } = recordAssignees();
+      const opened = await settle(
+        await press(await showRecorded(provider), "a"),
+      );
+      const ticked = await press(opened, "down", "space");
+      const back = await press(ticked, "?", "escape");
+      expect(back.lines.at(0)).toBe("assigning example#12");
+      expect(back.lines.at(-1)).toBe("type filter ↑↓ ␣ tick ⏎ apply esc ?");
+      expect(readRegion(back).slice(3, 5)).toEqual(["  ☑ alice", "  ☑ bob"]);
+      expect(setAssignees).not.toHaveBeenCalled();
+      const cancelled = await press(back, "escape");
+      expect(cancelled.lines.at(0)).toBe("owed");
+      expect(setAssignees).not.toHaveBeenCalled();
     });
 
     it("keeps its keys once a pane too narrow to draw it widens again", async () => {

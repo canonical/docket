@@ -29,12 +29,14 @@ function probe(start: Partial<State> = {}) {
     nextWindow: note("nextWindow"),
     edit: note("edit"),
     toggleHelp: note("toggleHelp"),
+    closeHelp: note("closeHelp"),
     refresh: note("refresh"),
     quit: note("quit"),
   };
   function Probe() {
     const [state, setState] = useState<State>({
       mode: "owed",
+      help: false,
       editorOpen: false,
       ...start,
     });
@@ -63,8 +65,14 @@ async function press(screen: Screen, ...keys: string[]) {
       if (key === "left" || key === "right" || key === "up" || key === "down") {
         input.pressArrow(key);
       } else if (key === "return") input.pressEnter();
+      else if (key === "escape") input.pressEscape();
       else input.pressKey(key);
     });
+    // The input reads a lone escape only once no sequence follows it.
+    if (key === "escape") {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      drawn = await drawn.redraw();
+    }
   }
   return drawn;
 }
@@ -117,16 +125,24 @@ describe("useScreenKeys", () => {
     const activity = await press(screen, "t", "a", "r");
     expect(ran).toEqual(["nextWindow"]);
     expect([owed, activity].map(({ lines }) => lines.slice(0, 2))).toEqual([
-      ["← → ↑ ↓ ⏎ g a r ? R q", "← → g t ↑ ↓ ⏎ a r ? R q"],
-      ["← → ↑ ↓ ⏎ g t ? R q", "← → g t ↑ ↓ ⏎ a r ? R q"],
+      ["← → ↑ ↓ ⏎ g a r ? R q", "← → g t ↑ ↓ ⏎ a r ? esc R q"],
+      ["← → ↑ ↓ ⏎ g t ? R q", "← → g t ↑ ↓ ⏎ a r ? esc R q"],
     ]);
   });
 
-  it("runs only ? while an editor is open", async () => {
-    const { ran, screen } = await bind({ editorOpen: true });
-    const drawn = await press(screen, "j", "a", "q", "R", "?");
-    expect(ran).toEqual(["toggleHelp"]);
-    expect(drawn.lines.at(0)).toBe("?");
+  it("closes the help with esc only while it is open", async () => {
+    const { ran, change, screen } = await bind();
+    await press(screen, "escape");
+    await screen.redraw(() => change({ help: true }));
+    await press(screen, "escape");
+    expect(ran).toEqual(["closeHelp"]);
+  });
+
+  it("runs only the help's keys while an editor is open", async () => {
+    const { ran, screen } = await bind({ editorOpen: true, help: true });
+    const drawn = await press(screen, "j", "a", "q", "R", "?", "escape");
+    expect(ran).toEqual(["toggleHelp", "closeHelp"]);
+    expect(drawn.lines.at(0)).toBe("? esc");
   });
 
   it("lists the groups in the help's order, from the mode down to the app", async () => {

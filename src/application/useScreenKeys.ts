@@ -20,6 +20,8 @@ export interface ScreenActions {
   readonly edit: (action: WriteAction) => void;
   /** Shows the help, or hides it. */
   readonly toggleHelp: () => void;
+  /** Hides the help. */
+  readonly closeHelp: () => void;
   /** Discards the cached data and fetches everything again. */
   readonly refresh: () => void;
   readonly quit: () => void;
@@ -29,6 +31,8 @@ export interface ScreenActions {
 export interface UseScreenKeysProps {
   /** The mode on screen: `t` acts in activity, and `a` and `r` in owed. */
   readonly mode: TerminalMode;
+  /** Whether the help is open, which `esc` then closes. */
+  readonly help: boolean;
   /** Whether an editor is open, which turns every key but the help's off. */
   readonly editorOpen: boolean;
   readonly actions: ScreenActions;
@@ -52,6 +56,7 @@ const helpGroups = ["Mode", "List", "Thread", "Editor", "App"];
  */
 export default function useScreenKeys({
   mode,
+  help,
   editorOpen,
   actions,
 }: UseScreenKeysProps): UseScreenKeysResult {
@@ -140,6 +145,16 @@ export default function useScreenKeys({
           run: () => latest.current.toggleHelp(),
         },
         {
+          name: "help.close",
+          desc: "close help",
+          group: "App",
+          hint: "",
+          // Off while the help is closed, so `esc` reaches an open
+          // editor's cancel.
+          enabled: help,
+          run: () => latest.current.closeHelp(),
+        },
+        {
           name: "refresh.full",
           desc: "full refresh",
           group: "App",
@@ -153,7 +168,7 @@ export default function useScreenKeys({
         },
         // An open editor takes the typing, so no other key but help runs.
       ].map((command) =>
-        editorOpen && command.name !== "help.toggle"
+        editorOpen && !command.name.startsWith("help.")
           ? { ...command, enabled: false }
           : command,
       ),
@@ -172,11 +187,12 @@ export default function useScreenKeys({
         { key: "g", cmd: "grouping.next" },
         { key: "t", cmd: "window.next" },
         { key: "?", cmd: "help.toggle" },
+        { key: "escape", cmd: "help.close" },
         { key: "shift+r", cmd: "refresh.full" },
         { key: "q", cmd: "app.quit" },
       ],
     }),
-    [mode, editorOpen],
+    [mode, help, editorOpen],
   );
   const active = useCommands({ visibility: "active" });
   const bound = useCommands({ visibility: "registered" }).toSorted(

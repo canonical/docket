@@ -152,10 +152,17 @@ async function press(screen: Drawn, ...keys: string[]) {
         screen.setup.mockInput.pressArrow(key);
       } else if (key === "return") {
         screen.setup.mockInput.pressEnter();
+      } else if (key === "escape") {
+        screen.setup.mockInput.pressEscape();
       } else {
         screen.setup.mockInput.pressKey(key);
       }
     });
+    // The input reads a lone escape only once no sequence follows it.
+    if (key === "escape") {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      drawn = await drawn.redraw();
+    }
   }
   return drawn;
 }
@@ -897,7 +904,7 @@ describe("Screen", () => {
 
     it("shows every key with ?, grouped, and hides it again", async () => {
       const view = viewOf(await openCache(fakeProvider()));
-      const screen = await show(view, 40, () => {}, 33);
+      const screen = await show(view, 40, () => {}, 34);
       const help = await press(screen, "?");
       expect(help.lines).toEqual([
         "help",
@@ -928,6 +935,7 @@ describe("Screen", () => {
         "",
         "App",
         "  ?        show or hide help",
+        "  esc      close help",
         "  R        full refresh",
         "  q        quit",
         "",
@@ -935,6 +943,15 @@ describe("Screen", () => {
         "",
       ]);
       expect((await press(screen, "?")).lines.at(0)).toBe("owed");
+    });
+
+    it("closes the help with esc, in owed and in activity", async () => {
+      const screen = await show(viewOf(await openCache(fakeProvider())));
+      expect((await press(screen, "?")).lines.at(0)).toBe("help");
+      expect((await press(screen, "escape")).lines.at(0)).toBe("owed");
+      await press(screen, "right");
+      expect((await press(screen, "?")).lines.at(0)).toBe("help");
+      expect((await press(screen, "escape")).lines.at(0)).toMatch(/^activity /);
     });
 
     it("discards the cache and fetches everything again with R", async () => {

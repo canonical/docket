@@ -206,6 +206,7 @@ export default function Screen({
   };
   const { active, bound } = useScreenKeys({
     mode,
+    help,
     editorOpen: editor.open,
     actions: {
       switchMode: setMode,
@@ -232,6 +233,7 @@ export default function Screen({
         setWindow((current) => cycle(settings.activity, current)),
       edit: (action) => editor.start(action, selectedWait()),
       toggleHelp: () => setHelp((open) => !open),
+      closeHelp: () => setHelp(false),
       refresh: () => void cache?.fullRefresh(),
       quit: onQuit,
     },
