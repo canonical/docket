@@ -20,6 +20,18 @@
 |  Crash on start · unassigned
 |
 |
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
 |2 over · 1 soon · 3 on track
 |refreshing…
 |←→ mode ↑↓ sel ⏎ open g grp a r ?
@@ -64,16 +76,16 @@ runs
 18:1 "▌" fg #454b68ff bg #161821ff
 18:3 "example#15 close                                  29d left" fg #c6c8d1ff bg #161821ff
 19:3 "Crash on start · unassigned" fg #c6c8d1ff bg #161821ff
-22:1 "2 over · 1 soon · 3 on track" fg #c6c8d1ff bg #161821ff
-23:1 "refreshing…" fg #c6c8d1ff bg #161821ff
-24:1 "←→" fg #c6c8d1ff bg #161821ff bold
-24:3 " mode" fg #6b7089ff bg #161821ff
-24:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
-24:11 " sel" fg #6b7089ff bg #161821ff
-24:16 "⏎" fg #c6c8d1ff bg #161821ff bold
-24:17 " open" fg #6b7089ff bg #161821ff
-24:23 "g" fg #c6c8d1ff bg #161821ff bold
-24:24 " grp" fg #6b7089ff bg #161821ff
-24:29 "a" fg #c6c8d1ff bg #161821ff bold
-24:31 "r" fg #c6c8d1ff bg #161821ff bold
-24:33 "?" fg #c6c8d1ff bg #161821ff bold
+34:1 "2 over · 1 soon · 3 on track" fg #c6c8d1ff bg #161821ff
+35:1 "refreshing…" fg #c6c8d1ff bg #161821ff
+36:1 "←→" fg #c6c8d1ff bg #161821ff bold
+36:3 " mode" fg #6b7089ff bg #161821ff
+36:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
+36:11 " sel" fg #6b7089ff bg #161821ff
+36:16 "⏎" fg #c6c8d1ff bg #161821ff bold
+36:17 " open" fg #6b7089ff bg #161821ff
+36:23 "g" fg #c6c8d1ff bg #161821ff bold
+36:24 " grp" fg #6b7089ff bg #161821ff
+36:29 "a" fg #c6c8d1ff bg #161821ff bold
+36:31 "r" fg #c6c8d1ff bg #161821ff bold
+36:33 "?" fg #c6c8d1ff bg #161821ff bold

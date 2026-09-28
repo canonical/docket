@@ -23,6 +23,15 @@
 |  ↑ ↓      move
 |  ␣        toggle
 |  ⏎        apply
+|  esc      cancel
+|
+|App
+|  ?        show or hide help
+|  esc      close help
+|  R        full refresh
+|  q        quit
+|
+|  windows are counted in working time
 
 runs
 1:1 "help" fg #c6c8d1ff bg #161821ff bold
@@ -56,3 +65,15 @@ runs
 23:4 "        toggle" fg #c6c8d1ff bg #161821ff
 24:3 "⏎" fg #c6c8d1ff bg #161821ff bold
 24:4 "        apply" fg #c6c8d1ff bg #161821ff
+25:3 "esc" fg #c6c8d1ff bg #161821ff bold
+25:6 "      cancel" fg #c6c8d1ff bg #161821ff
+27:1 "App" fg #c6c8d1ff bg #161821ff bold
+28:3 "?" fg #c6c8d1ff bg #161821ff bold
+28:4 "        show or hide help" fg #c6c8d1ff bg #161821ff
+29:3 "esc" fg #c6c8d1ff bg #161821ff bold
+29:6 "      close help" fg #c6c8d1ff bg #161821ff
+30:3 "R" fg #c6c8d1ff bg #161821ff bold
+30:4 "        full refresh" fg #c6c8d1ff bg #161821ff
+31:3 "q" fg #c6c8d1ff bg #161821ff bold
+31:4 "        quit" fg #c6c8d1ff bg #161821ff
+33:1 "  windows are counted in working time" fg #c6c8d1ff bg #161821ff

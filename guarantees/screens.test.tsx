@@ -31,8 +31,12 @@ const storyFiles = /^src\/.+\.stories\.tsx$/;
 
 /** The widths every story is drawn at: the least the pane allows, and one wider. */
 const widths = [40, 60];
-/** Room enough for the tallest story; blank lines below the last are left out. */
-const height = 24;
+/**
+ * The approved frames' height. The composed screen and the pane fill it,
+ * so every group of a frame is drawn whole; a shorter story ends at its
+ * last line, the blank lines below it left out.
+ */
+const height = 36;
 /** How narrow the screens drawn too narrow are. */
 const narrowWidth = 32;
 /** The screens drawn too narrow: the pane alone, and the composed screen. */

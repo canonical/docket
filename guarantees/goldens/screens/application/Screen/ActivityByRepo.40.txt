@@ -20,6 +20,18 @@
 |
 |
 |
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
 |2 threads · 4 events
 |synced 2m ago
 |←→ mode ↑↓ sel ⏎ open g grp t time a r ?
@@ -48,18 +60,18 @@ runs
 15:3 "Where do tokens live?" fg #c6c8d1ff bg #161821ff
 16:3 "alice, bob" fg #c6c8d1ff bg #161821ff
 17:1 "    example-sync labelled kind=docs  16h" fg #6b7089ff bg #161821ff
-22:1 "2 threads · 4 events" fg #c6c8d1ff bg #161821ff
-23:1 "synced 2m ago" fg #6b7089ff bg #161821ff
-24:1 "←→" fg #c6c8d1ff bg #161821ff bold
-24:3 " mode" fg #6b7089ff bg #161821ff
-24:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
-24:11 " sel" fg #6b7089ff bg #161821ff
-24:16 "⏎" fg #c6c8d1ff bg #161821ff bold
-24:17 " open" fg #6b7089ff bg #161821ff
-24:23 "g" fg #c6c8d1ff bg #161821ff bold
-24:24 " grp" fg #6b7089ff bg #161821ff
-24:29 "t" fg #c6c8d1ff bg #161821ff bold
-24:30 " time" fg #6b7089ff bg #161821ff
-24:36 "a" fg #c6c8d1ff bg #161821ff bold
-24:38 "r" fg #c6c8d1ff bg #161821ff bold
-24:40 "?" fg #c6c8d1ff bg #161821ff bold
+34:1 "2 threads · 4 events" fg #c6c8d1ff bg #161821ff
+35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
+36:1 "←→" fg #c6c8d1ff bg #161821ff bold
+36:3 " mode" fg #6b7089ff bg #161821ff
+36:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
+36:11 " sel" fg #6b7089ff bg #161821ff
+36:16 "⏎" fg #c6c8d1ff bg #161821ff bold
+36:17 " open" fg #6b7089ff bg #161821ff
+36:23 "g" fg #c6c8d1ff bg #161821ff bold
+36:24 " grp" fg #6b7089ff bg #161821ff
+36:29 "t" fg #c6c8d1ff bg #161821ff bold
+36:30 " time" fg #6b7089ff bg #161821ff
+36:36 "a" fg #c6c8d1ff bg #161821ff bold
+36:38 "r" fg #c6c8d1ff bg #161821ff bold
+36:40 "?" fg #c6c8d1ff bg #161821ff bold
