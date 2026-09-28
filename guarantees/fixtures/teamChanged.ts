@@ -2,7 +2,7 @@ import recordTeam from "./recordTeam.js";
 
 /**
  * The team's recording once something changed on each repository: the
- * check for changes answers with a new tag.
+ * check for changes answers with a different tag.
  */
 export default recordTeam(
   {

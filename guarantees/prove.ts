@@ -3,7 +3,7 @@
  * saved output aside, runs `text-output`, and succeeds only when that
  * entry failed an assertion for the missing copy. A golden entry that
  * passed without its saved output would be recording on absence, and
- * every later change would pass as the new saved output.
+ * whatever docket printed next would pass as the saved output.
  *
  * The invoker's verdict is read from its own report line, not from how
  * it exited: a register that does not parse exits non-zero too, without
