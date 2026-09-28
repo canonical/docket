@@ -86,6 +86,7 @@ async function openCache(
 /** Reads the repositories' files as the recording's settings. */
 const readRecorded = async (): Promise<WatchedFiles> => ({
   watched: recordedWatched(),
+  viewer: "alice",
 });
 
 /**
@@ -416,7 +417,7 @@ describe("Screen", () => {
       expect((await screen.redraw()).lines.at(9)).toBe(
         "2 over · 1 soon · 3 on track",
       );
-      resolve({ watched: generous });
+      resolve({ watched: generous, viewer: "alice" });
       await promise;
       expect((await screen.redraw()).lines.at(9)).toBe(
         "0 over · 0 soon · 6 on track",
@@ -509,7 +510,7 @@ describe("Screen", () => {
 
     it("says nothing is owed when no repository is watched", async () => {
       const cache = await openCache(fakeProvider(), []);
-      const readNone = async () => ({ watched: [] });
+      const readNone = async () => ({ watched: [], viewer: "alice" });
       const view = { ...viewOf(cache, everyCapability, readNone), watched: [] };
       const screen = await (await show(view)).redraw();
       expect(screen.lines.at(2)).toBe("  nothing owed");

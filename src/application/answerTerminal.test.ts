@@ -107,11 +107,12 @@ describe("answerTerminal", () => {
     await vi.waitFor(() => expect(readFile).toHaveBeenCalledOnce());
   });
 
-  it("reads each repository's settings once the interface asks", async () => {
+  it("reads each repository's settings, and whom gh is signed in as, once the interface asks", async () => {
     const { view } = await openOn(recordedProvider());
     const files = await cacheOf(view).readWatched();
     if (!("watched" in files)) throw new Error("the files were read");
     expect(files.watched.map(({ name }) => name)).toEqual(["example", "docs"]);
+    expect(files.viewer).toBe("alice");
   });
 
   it("reads a thread's details from the provider, for the accordion", async () => {

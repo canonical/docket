@@ -61,6 +61,28 @@ describe("buildActivity", () => {
     expect(list).toEqual(recordedActivity("kind"));
   });
 
+  it("marks the viewer among the owners", () => {
+    const list = buildActivity(
+      recorded,
+      recordedThreads,
+      recordedWatched(),
+      window,
+      "none",
+      recordedNow,
+      "alice",
+    );
+    const owners = list.groups
+      .flatMap(({ rows }) => rows)
+      .flatMap(({ owner, owners }) => owners?.fields ?? (owner ? [owner] : []))
+      .flatMap((owner) => ("viewer" in owner ? [owner] : []));
+    expect(
+      owners.filter(({ viewer }) => viewer).map(({ text }) => text),
+    ).toContain("alice");
+    expect(
+      owners.filter(({ viewer }) => !viewer).map(({ text }) => text),
+    ).not.toContain("alice");
+  });
+
   it("lists nothing for a repository whose events were not given", () => {
     const list = buildActivity(
       new Map(),

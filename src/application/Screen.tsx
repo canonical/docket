@@ -149,7 +149,8 @@ export default function Screen({
   useEffect(() => {
     void readWatched?.().then(setFiles);
   }, [readWatched]);
-  const watched = files && "watched" in files ? files.watched : opening;
+  const read = files && "watched" in files ? files : undefined;
+  const watched = read?.watched ?? opening;
   const problem =
     "problem" in source
       ? source.problem
@@ -292,7 +293,7 @@ export default function Screen({
       : undefined;
   const owed =
     threads && mode === "owed"
-      ? buildOwed(threads, watched, owedGrouping, at)
+      ? buildOwed(threads, watched, owedGrouping, at, read?.viewer)
       : undefined;
   const activity = useActivity({
     source,
@@ -304,6 +305,7 @@ export default function Screen({
     grouping: activityGrouping,
     now,
     at,
+    viewer: read?.viewer,
   });
   const room = width - indent;
   const listed = activity && "list" in activity ? activity.list : undefined;

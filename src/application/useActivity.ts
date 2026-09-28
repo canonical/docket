@@ -35,6 +35,8 @@ export interface UseActivityProps {
   readonly now: () => Date;
   /** The instant the list is built at, so ages move with the clock. */
   readonly at: Date;
+  /** The login gh is signed in with, once it is known. */
+  readonly viewer?: string;
 }
 
 /** A failure of GitHub or the cache, which the status line names. */
@@ -91,6 +93,7 @@ export default function useActivity({
   grouping,
   now,
   at,
+  viewer,
 }: UseActivityProps): UseActivityResult {
   const [read, setRead] = useState<Read>();
   const reading = shown && threads !== undefined && "cache" in source;
@@ -134,7 +137,7 @@ export default function useActivity({
   if ("problem" in read) return { problem: read.problem };
   const { events, failure } = read;
   return {
-    list: buildActivity(events, threads, watched, window, grouping, at),
+    list: buildActivity(events, threads, watched, window, grouping, at, viewer),
     ...(failure && { failure }),
   };
 }

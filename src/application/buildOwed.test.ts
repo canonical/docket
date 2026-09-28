@@ -18,6 +18,24 @@ describe("buildOwed", () => {
     }
   });
 
+  it("marks the viewer among the people each row names", () => {
+    const owed = buildOwed(
+      recordedThreads,
+      recordedWatched(),
+      "none",
+      recordedNow,
+      "alice",
+    );
+    const rows = owed.groups.flatMap(({ rows }) => rows);
+    const assignedToAlice = rows.find(
+      ({ owner }) => owner?.text === "alice",
+    )?.owner;
+    expect(assignedToAlice).toMatchObject({ group: "team", viewer: true });
+    expect(
+      rows.every(({ author }) => author.viewer === (author.text === "alice")),
+    ).toBe(true);
+  });
+
   it("leaves out threads of repositories no longer watched", () => {
     const watched = recordedWatched().slice(1);
     const owed = buildOwed(recordedThreads, watched, "none", recordedNow);

@@ -205,7 +205,7 @@ function connectRecording({
   return {
     cache,
     capabilities: everyCapability,
-    readWatched: async () => ({ watched: recordedWatched() }),
+    readWatched: async () => ({ watched: recordedWatched(), viewer: "alice" }),
     readDetail: read,
     readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
     readCandidates: github

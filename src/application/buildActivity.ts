@@ -19,6 +19,8 @@ import type { Watched } from "./types.js";
  * own clock, by its `owner/name`, reaching back far enough for the window;
  * a repository with none given has none. Which are inside the window at
  * `now` is read from their times, so no working time is counted here.
+ * @param viewer The login gh is signed in with, when it is known, which
+ * marks the viewer among the owners.
  */
 export default function buildActivity(
   events: ReadonlyMap<string, readonly TimedEvent[]>,
@@ -27,6 +29,7 @@ export default function buildActivity(
   window: Duration,
   grouping: ActivityGrouping,
   now: Date,
+  viewer?: string,
 ): ActivityList {
   const repos = watched.map((repo) => {
     const { settings, repositoryErrors } = repo.resolved;
@@ -40,6 +43,6 @@ export default function buildActivity(
       invalidFile: repositoryErrors.length > 0,
     };
   });
-  const list = listEvents(repos, now);
+  const list = listEvents(repos, now, viewer);
   return groupEvents(list, { mode: "activity", window, grouping }, watched);
 }
