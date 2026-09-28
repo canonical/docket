@@ -42,8 +42,17 @@ export type ThreadEvent = EventFacts &
       }
     | {
         readonly kind: "pushed";
-        /** How many commits the push carried. */
-        readonly commits: number;
+        /**
+         * How many commits the push carried. Absent when the provider
+         * cannot count them, such as after a force push.
+         */
+        readonly commits?: number;
+      }
+    | {
+        /** The checks on the pull request's head commit failed. */
+        readonly kind: "checksFailed";
+        /** The names of the checks that failed, such as `lint`. */
+        readonly checks: readonly string[];
       }
   );
 

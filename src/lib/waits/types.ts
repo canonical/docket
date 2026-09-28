@@ -48,6 +48,12 @@ export interface Push {
   readonly at: Date;
 }
 
+/**
+ * The combined state of the checks on a pull request's head commit: all
+ * passed, at least one failed, or some still running.
+ */
+export type Checks = "passing" | "failing" | "running";
+
 /** A thread and the facts recorded on it. */
 export interface Thread extends ThreadSummary {
   readonly author: Author;
@@ -64,6 +70,11 @@ export interface Thread extends ThreadSummary {
   readonly reviewRequests: readonly ReviewRequest[];
   /** The pushes of commits, on a pull request. */
   readonly pushes: readonly Push[];
+  /**
+   * The checks on a pull request's head commit. Absent when no check ran
+   * on it, and on issues and discussions.
+   */
+  readonly checks?: Checks;
 }
 
 /**

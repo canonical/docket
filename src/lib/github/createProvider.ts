@@ -1,0 +1,82 @@
+import type { Budget, Provider } from "../provider/index.js";
+import { capabilities } from "./constants.js";
+import createClient from "./createClient.js";
+import fetchEvents from "./fetchEvents.js";
+import fetchSnapshot from "./fetchSnapshot.js";
+import fetchThreadDetail from "./fetchThreadDetail.js";
+import fragments from "./fragments.js";
+import listAssignableUsers from "./listAssignableUsers.js";
+import listReviewCandidates from "./listReviewCandidates.js";
+import listTeamMembers from "./listTeamMembers.js";
+import probeChanges from "./probeChanges.js";
+import readToken from "./readToken.js";
+import refreshChecks from "./refreshChecks.js";
+import setAssignees from "./setAssignees.js";
+import setReviewers from "./setReviewers.js";
+
+const budgetDocument = `query Budget { ${fragments.rateLimit} }`;
+
+interface BudgetAnswer {
+  readonly rateLimit: {
+    readonly limit: number;
+    readonly remaining: number;
+    readonly resetAt: string;
+  };
+}
+
+/**
+ * Connects to GitHub as the account `gh` is signed in with. The token is
+ * read once, here, and stays inside the provider: no operation returns
+ * it, and no error carries it.
+ *
+ * @note Impure: runs `gh`, and every operation reads from or writes to
+ * GitHub.
+ * @param host The GitHub host of the watched repositories, as the
+ * configuration's `hosts` names it, such as `github.com`.
+ * @param version docket's version, sent in the User-Agent GitHub requires.
+ * @throws GitHubError `GH_NOT_INSTALLED`, `GH_NOT_SIGNED_IN` or
+ * `GH_TIMED_OUT` when `gh` gives no token.
+ */
+export default async function createProvider(
+  host: string,
+  version: string,
+): Promise<Provider> {
+  const client = createClient(await readToken(host), host, version);
+  // Every incremental snapshot sees the newest thread again, so a team
+  // requested on it would be read every cycle. Teams change rarely, so
+  // each team's members are read once and kept while the provider lives.
+  const teams = new Map<string, readonly string[]>();
+  const teamMembers = async (team: string) => {
+    const known = teams.get(team);
+    if (known) return known;
+    const members = await listTeamMembers(client, team);
+    teams.set(team, members);
+    return members;
+  };
+  return {
+    snapshot: (repo, cursor) =>
+      fetchSnapshot(client, repo, cursor, teamMembers),
+    refreshVolatile: (threads) => refreshChecks(client, threads),
+    events: (repo, since) => fetchEvents(client, repo, since),
+    threadDetail: (thread) => fetchThreadDetail(client, thread),
+    assignableUsers: (repo) => listAssignableUsers(client, repo),
+    reviewCandidates: (pull) => listReviewCandidates(client, pull),
+    setAssignees: (thread, logins) => setAssignees(client, thread, logins),
+    setReviewers: (pull, reviewers) => setReviewers(client, pull, reviewers),
+    teamMembers: ({ team }) => teamMembers(team),
+    probe: (repo, tag) => probeChanges(client, repo, tag),
+    async budget(): Promise<Budget> {
+      // Asking for the rate figures alone is not charged, so the first
+      // call costs nothing; later ones reuse the latest answer's figures.
+      const known = client.lastBudget();
+      if (known) return known;
+      const { rateLimit } = await client.query<BudgetAnswer>(
+        budgetDocument,
+        {},
+      );
+      const { limit, remaining, resetAt } = rateLimit;
+      return { limit, remaining, resetAt: new Date(resetAt) };
+    },
+    capabilities: () => capabilities,
+  };
+}
