@@ -8,15 +8,18 @@ import type { SentRequest } from "./types.js";
  * proposed for GitHub's limits, and docket never has two requests open
  * at once, as GitHub asks of its clients.
  *
- * The budget, per repository, comes from measured costs: a whole fetch
- * costs 16 points, a fetch of what changed about 2, and the check for
- * changes, answered "not modified", nothing. A refresh sends the check
- * and one query a page of threads; the recording's lists fit one page.
- * The reading of each repository's own file belongs to the call, not to
- * the refresh, so it is left out of the count.
+ * The budget, per repository, is what docket's page sizes cost: a whole
+ * fetch asks for 50 threads a page and costs 8 points, a fetch of what
+ * changed about 2, and the check for changes, answered "not modified",
+ * nothing. A whole fetch at 100 threads a page costs twice as much and
+ * took 7.2 of the 10 seconds GitHub allows a query, so a return to it
+ * fails here. A refresh sends the check and one query a page of threads;
+ * the recording's lists fit one page. The reading of each repository's
+ * own file belongs to the call, not to the refresh, so it is left out of
+ * the count.
  */
 const budget = {
-  whole: { points: 16, requests: 2 },
+  whole: { points: 8, requests: 2 },
   changed: { points: 2, requests: 2 },
   unchanged: { points: 0, requests: 1 },
 };
