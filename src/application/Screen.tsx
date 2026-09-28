@@ -38,6 +38,7 @@ import {
 import type { ThreadSummary } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
+import buildThreadWaits from "./buildThreadWaits.js";
 import identifyRow from "./identifyRow.js";
 import OwedList from "./OwedList.js";
 import placeSelection, { type Selection } from "./placeSelection.js";
@@ -429,9 +430,9 @@ export default function Screen({
         readDetail={(row) =>
           readOnce(readThreadDetail, row.reference.text, row.thread)
         }
-        waits={buildOwed(threads, watched, "none", at).groups.flatMap(
-          (group) => group.rows,
-        )}
+        measureWaits={(row) =>
+          buildThreadWaits(row.thread, threads, watched, at)
+        }
         now={at}
         timezone={settings.time.timezone}
         width={width}

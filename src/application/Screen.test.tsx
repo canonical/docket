@@ -10,7 +10,7 @@ import type {
   ThreadDetail,
 } from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
-import type { ThreadSummary } from "../lib/waits/index.js";
+import { findWaits, type ThreadSummary } from "../lib/waits/index.js";
 import {
   everyCapability,
   fakeProvider,
@@ -34,6 +34,13 @@ import {
 } from "../testing/terminal.js";
 import Screen from "./Screen.js";
 import type { TerminalView, WatchedFiles } from "./types.js";
+
+// The measuring of waits is watched, not replaced, to see which threads a
+// redraw measures.
+vi.mock("../lib/waits/index.js", async (importOriginal) => {
+  const waits = await importOriginal<typeof import("../lib/waits/index.js")>();
+  return { ...waits, findWaits: vi.fn(waits.findWaits) };
+});
 
 const folders: string[] = [];
 afterEach(async () => {
@@ -674,6 +681,20 @@ describe("Screen", () => {
         "  below #11 merged, above #13 open",
         `    ✗ checks failed (lint)${" ".repeat(31)}25m`,
       ]);
+    });
+
+    it("measures only the selected thread and its stack as the screen redraws", async () => {
+      const screen = await showActivity(40);
+      vi.mocked(findWaits).mockClear();
+      await press(screen, "j");
+      await screen.redraw();
+      const measured = vi
+        .mocked(findWaits)
+        .mock.calls.map(([thread]) => `${thread.repo}#${thread.number}`);
+      expect(measured.length).toBeGreaterThan(0);
+      expect(new Set(measured)).toEqual(
+        new Set(["example-org/example-repo#12"]),
+      );
     });
 
     it("regroups with g and reaches further back with t, at 60 columns", async () => {

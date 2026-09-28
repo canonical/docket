@@ -26,10 +26,12 @@ export interface ActivityListProps {
   /** Reads the details of the selected thread for its accordion. */
   readonly readDetail: (row: ActivityThread) => Promise<ThreadDetail>;
   /**
-   * owed's rows, most pressing first, whose waits tell the accordion
-   * each thread's current state.
+   * Measures owed's rows of a thread and the other pull requests of its
+   * stack, most pressing first, whose waits tell the selected thread's
+   * accordion its current state and the kinds its stack lines name. Only
+   * the selected thread is measured.
    */
-  readonly waits: readonly WaitRow[];
+  readonly measureWaits: (row: ActivityThread) => readonly WaitRow[];
   /** The instant ages are measured at. */
   readonly now: Date;
   /** The time zone a time of day is written in. */
@@ -64,14 +66,13 @@ export default function ActivityList({
   list,
   selected,
   readDetail,
-  waits,
+  measureWaits,
   now,
   timezone,
   width,
   height,
 }: ActivityListProps): ReactNode {
   const [first, setFirst] = useState(0);
-  const waiting = listWaiting(waits);
   const blocks: Block[] = [];
   let place = 0;
   let from = 0;
@@ -83,6 +84,7 @@ export default function ActivityList({
     }
     for (const row of rows) {
       const chosen = place === selected;
+      const waits = chosen ? measureWaits(row) : [];
       if (chosen) {
         to = blocks.length;
         from = heading && row === rows.at(0) ? to - 1 : to;
@@ -100,7 +102,7 @@ export default function ActivityList({
               <ThreadAccordion
                 row={findThreadState(row, waits)}
                 detail={readDetail(row)}
-                waiting={waiting}
+                waiting={listWaiting(waits)}
                 now={now}
                 timezone={timezone}
                 width={width}

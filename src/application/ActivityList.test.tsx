@@ -14,7 +14,7 @@ import ActivityList, { type ActivityListProps } from "./ActivityList.js";
 /** A list whose details are still being read, with no wait running. */
 const reading: Omit<ActivityListProps, "list" | "selected" | "width"> = {
   readDetail: () => pendingDetail,
-  waits: [],
+  measureWaits: () => [],
   now: recordedNow,
   timezone: "Europe/Paris",
   height: 20,
@@ -117,7 +117,7 @@ describe("ActivityList", () => {
         list={recordedActivity("kind")}
         selected={1}
         readDetail={async () => overReviewDetail}
-        waits={[overReview]}
+        measureWaits={() => [overReview]}
         width={40}
       />,
       40,
