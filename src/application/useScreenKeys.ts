@@ -24,6 +24,7 @@ export interface ScreenActions {
   readonly closeHelp: () => void;
   /** Discards the cached data and fetches everything again. */
   readonly refresh: () => void;
+  /** Closes docket. */
   readonly quit: () => void;
 }
 
@@ -35,6 +36,7 @@ export interface UseScreenKeysProps {
   readonly help: boolean;
   /** Whether an editor is open, which turns every key but the help's off. */
   readonly editorOpen: boolean;
+  /** What each key does, as the frame on show gives it. */
   readonly actions: ScreenActions;
 }
 
