@@ -6,10 +6,11 @@ import type { StatusMessage } from "./types.js";
 /**
  * Chooses the one message the status line shows for the cache's state.
  * The first that applies wins: an error, which says `rate limited`,
- * `offline` when GitHub gave no answer in time, or else `refresh failed`;
- * the progress of a full refresh; a refresh in the background; a short notice, such as when a full
- * refresh is available again; and otherwise how old the data is. With no
- * data and nothing happening there is no message.
+ * `offline` when a request got no answer, at all or in time, or else
+ * `refresh failed`; the progress of a full refresh; a refresh in the
+ * background; a short notice, such as when a full refresh is available
+ * again; and otherwise how old the data is. With no data and nothing
+ * happening there is no message.
  */
 export default function describeStatus(
   status: CacheStatus,
@@ -26,7 +27,8 @@ export default function describeStatus(
     const what =
       failure.code === "GITHUB_RATE_LIMITED"
         ? "rate limited"
-        : failure.code === "GITHUB_TIMED_OUT"
+        : failure.code === "GITHUB_TIMED_OUT" ||
+            failure.code === "GITHUB_UNREACHABLE"
           ? "offline"
           : "refresh failed";
     const from = syncedAt

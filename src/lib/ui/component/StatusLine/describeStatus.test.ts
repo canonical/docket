@@ -36,6 +36,20 @@ describe("describeStatus", () => {
     });
   });
 
+  it("says docket is offline when a request got no answer at all", () => {
+    const unreachable = Object.assign(
+      new Error(
+        "docket could not reach github.com: the request got no answer.",
+      ),
+      { code: "GITHUB_UNREACHABLE", recovery: "refresh" } as const,
+    );
+    const status = { ...statusOf(Offline), failure: unreachable };
+    expect(describeAt(status)).toEqual({
+      kind: "error",
+      text: "✗ offline · data from 10:12",
+    });
+  });
+
   it("says docket is offline with no data yet", () => {
     const status = { ...statusOf(Offline), syncedAt: undefined };
     expect(describeAt(status)).toEqual({ kind: "error", text: "✗ offline" });
