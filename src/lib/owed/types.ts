@@ -72,7 +72,10 @@ export interface RepoWaits {
   /** The working clock of the repository's settings. */
   readonly time: WorkingClock;
   readonly waits: readonly Wait[];
-  /** The people of the repository's settings, which give each login its group. */
+  /**
+   * Each login's group in the repository, as `gatherPeople` gives it
+   * from the settings and the threads.
+   */
   readonly people: People;
   /**
    * Whether the repository's own file is invalid, so its settings are the

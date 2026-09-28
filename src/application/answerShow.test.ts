@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseFile, resolveSettings } from "../lib/config/index.js";
 import { type Home, makeHome, openSession } from "../testing/docket.js";
+import { carol, thread } from "../testing/facts.js";
 import { parserFix, recordedProvider } from "../testing/recorded.js";
 import answerShow from "./answerShow.js";
 
@@ -71,6 +72,29 @@ describe("answerShow", () => {
     expect(out()).toContain(
       '· close · author "alice" · owners "alice", "bob" · 20d left · due 2026-10-27 10:00 Europe/Paris\n',
     );
+  });
+
+  it("gives an author the group their writing elsewhere in the repository shows", async () => {
+    const unmarked = thread({ number: 7, author: { ...carol, member: false } });
+    const provider = recordedProvider({
+      snapshot: async (repo) => ({
+        threads:
+          repo === unmarked.repo ? [thread({ author: carol }), unmarked] : [],
+        cursor: null,
+      }),
+    });
+    const { session, out } = openSession(
+      home,
+      ["show", "example#7", "--format", "json"],
+      provider,
+    );
+    await answerShow(session);
+    const [{ waits }] = JSON.parse(out()).threads;
+    const authors = waits.map(({ author }: { author: object }) => author);
+    expect(authors).toEqual([
+      { login: "carol", group: "internal" },
+      { login: "carol", group: "internal" },
+    ]);
   });
 
   it("refuses more than one reference", async () => {

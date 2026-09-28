@@ -19,7 +19,10 @@ export interface ActivityAddress {
 export interface RepoEvents {
   /** The repository, with the short name its references use. */
   readonly repo: Repo;
-  /** The people of the repository's settings, which tell bots apart. */
+  /**
+   * Each login's group in the repository, as `gatherPeople` gives it
+   * from the settings and the threads, which tells bots apart.
+   */
   readonly people: People;
   /**
    * The threads' recorded facts, which give a row its owners and its

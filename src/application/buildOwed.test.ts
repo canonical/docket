@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { thread } from "../testing/facts.js";
+import { carol, thread } from "../testing/facts.js";
 import {
   recordedNow,
   recordedOwed,
@@ -36,6 +36,22 @@ describe("buildOwed", () => {
         ({ author }) => (author.group === "you") === (author.text === "alice"),
       ),
     ).toBe(true);
+  });
+
+  it("gives a login one group as author and as owner on the same row", () => {
+    const opened = thread({
+      author: carol,
+      assignees: [{ login: "carol", type: "user" }],
+    });
+    const owed = buildOwed([opened], recordedWatched(), "none", recordedNow);
+    const rows = owed.groups.flatMap(({ rows }) => rows);
+    expect(rows.map(({ kind }) => kind.text)).toEqual(["reply", "close"]);
+    for (const { author, owner } of rows) {
+      expect([author, owner]).toEqual([
+        { text: "carol", fit: "trimmed", group: "internal" },
+        { text: "carol", fit: "trimmed", group: "internal" },
+      ]);
+    }
   });
 
   it("leaves out threads of repositories no longer watched", () => {

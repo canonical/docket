@@ -1,4 +1,4 @@
-import { listWaits } from "../lib/owed/index.js";
+import { gatherPeople, listWaits } from "../lib/owed/index.js";
 import { renderThread, type ShownThread } from "../lib/text/index.js";
 import { findWaits } from "../lib/waits/index.js";
 import fail from "./fail.js";
@@ -29,13 +29,17 @@ export default async function answerShow(session: Session): Promise<number> {
   const { threads, syncedAt, warnings } = await readThreads(session);
   const now = context.now();
   const shown: ShownThread[] = [];
+  const people = gatherPeople(
+    threads.filter((thread) => thread.repo === reference.repo.repo),
+    settings.people,
+  );
   for (const thread of findThreads(threads, reference)) {
     const { rows } = listWaits(
       [
         {
           repo: reference.repo,
           time: settings.time,
-          people: settings.people,
+          people,
           waits: findWaits(thread, settings),
           invalidFile: repositoryErrors.length > 0,
         },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type ThreadEvent, timeEvents } from "../lib/events/index.js";
-import { at, dave } from "../testing/facts.js";
+import { at, carol, dave, thread } from "../testing/facts.js";
 import {
   parserFix,
   recordedActivity,
@@ -81,6 +81,33 @@ describe("buildActivity", () => {
         .map(({ text }) => text);
     expect(named(true)).toContain("alice");
     expect(named(false)).not.toContain("alice");
+  });
+
+  it("gives an owner the group their own writing on the repository shows", () => {
+    const opened = thread({
+      author: carol,
+      assignees: [{ login: "carol", type: "user" }],
+    });
+    const event: ThreadEvent = {
+      kind: "commented",
+      thread: opened,
+      actor: carol,
+      at: at("2026-09-28T10:00+02:00"),
+    };
+    const watched = recordedWatched();
+    const list = buildActivity(
+      timeAll(new Map([[opened.repo, [event]]]), watched),
+      [opened],
+      watched,
+      window,
+      "none",
+      recordedNow,
+    );
+    expect(list.groups.at(0)?.rows.at(0)?.owner).toEqual({
+      text: "carol",
+      fit: "trimmed",
+      group: "internal",
+    });
   });
 
   it("lists nothing for a repository whose events were not given", () => {
