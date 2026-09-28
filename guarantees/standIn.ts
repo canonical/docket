@@ -27,9 +27,13 @@
  * - `overlap`: each request docket sends finds another already open, as
  *   if docket had sent two at once;
  * - `shift`: every instant in a recorded answer is an hour later;
- * - `later`: the clock reads an hour after `GUARANTEES_NOW`.
+ * - `later`: the clock reads an hour after `GUARANTEES_NOW`;
+ * - `unsanitized`: `JSON.stringify` writes every string as it was given,
+ *   whatever the replacer docket passes it would make of it, as if
+ *   docket's JSON let text written on GitHub through untouched.
  *
- * @note Impure: replaces two globals and appends to a file.
+ * @note Impure: replaces two globals, a third under `unsanitized`, and
+ * appends to a file.
  */
 import { appendFileSync } from "node:fs";
 import type { Recording, SentRequest } from "./types.js";
@@ -49,11 +53,31 @@ if (!GUARANTEES_NOW || !GUARANTEES_RECORDING || !GUARANTEES_REQUESTS) {
 // meant to break would pass as though it could not fail.
 if (
   GUARANTEES_BREAK &&
-  !["overlap", "shift", "later"].includes(GUARANTEES_BREAK)
+  !["overlap", "shift", "later", "unsanitized"].includes(GUARANTEES_BREAK)
 ) {
   throw new Error(
-    `the stand-in has no break \`${GUARANTEES_BREAK}\`: overlap, shift or later`,
+    `the stand-in has no break \`${GUARANTEES_BREAK}\`: overlap, shift, later or unsanitized`,
   );
+}
+if (GUARANTEES_BREAK === "unsanitized") {
+  const stringify = JSON.stringify;
+  // A string is handed back as it was held, and anything else goes to
+  // docket's replacer, which also writes the dates of its cache.
+  const keepStrings = (
+    replacer: (this: unknown, key: string, value: unknown) => unknown,
+  ) =>
+    function (this: Record<string, unknown>, key: string, value: unknown) {
+      const held = this[key];
+      return typeof held === "string" ? held : replacer.call(this, key, value);
+    };
+  JSON.stringify = ((value: unknown, replacer?: unknown, space?: unknown) =>
+    stringify(
+      value,
+      typeof replacer === "function"
+        ? keepStrings(replacer as Parameters<typeof keepStrings>[0])
+        : (replacer as undefined),
+      space as number | undefined,
+    )) as typeof JSON.stringify;
 }
 const fixed =
   new Date(GUARANTEES_NOW).getTime() +

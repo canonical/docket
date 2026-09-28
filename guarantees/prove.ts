@@ -14,8 +14,10 @@
  *   then the stand-in's clock reads an hour later, and the entry must see
  *   less time left, which shows it reads the clock it is given.
  *
- * `hostile-text` checks its own detector against every hostile word, on
- * every run.
+ * - `hostile-text`: docket's JSON writes each string as it was given,
+ *   and the entry must find the control characters a program reads back.
+ *   It also checks its own pattern against every hostile word, on every
+ *   run.
  *
  * The invoker's verdict is read from its own report line, not from how
  * it exited: a register that does not parse exits non-zero too, without
@@ -66,6 +68,12 @@ const proofs: readonly Proof[] = [
     standInBreak: "later",
     failure:
       "× leaves 15 hours at 01:00 on Monday in the configured time zone, while it is still Sunday in UTC",
+  },
+  {
+    entry: "hostile-text",
+    standInBreak: "unsanitized",
+    failure:
+      "× gives a pull request's base branch without its sequences in json",
   },
 ];
 
