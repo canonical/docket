@@ -259,6 +259,21 @@ export const GhNotInstalled: Story<ScreenFrameProps> = {
   },
 };
 
+/** gh is not signed in: the reason and the recovery stand in for the list. */
+export const GhNotSignedIn: Story<ScreenFrameProps> = {
+  args: {
+    ...recording,
+    watched: [],
+    source: {
+      problem: {
+        code: "GH_NOT_SIGNED_IN",
+        message: "gh is not signed in to github.com.",
+        recovery: "run gh auth login",
+      },
+    },
+  },
+};
+
 /** The help, open over all but the header. */
 export const Help: Story<ScreenFrameProps> = {
   args: { ...recording, run: ["help.toggle"] },
