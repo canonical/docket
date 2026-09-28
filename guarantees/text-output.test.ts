@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { afterAll, describe, it } from "vitest";
 import { fixture, makeHome } from "./docket.js";
-import expectGolden from "./golden.js";
+import expectGolden from "./expectGolden.js";
 
 /**
  * What `owed` and `activity` print, in each format, from the team's
