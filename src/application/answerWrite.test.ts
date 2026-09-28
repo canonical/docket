@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type Home, makeHome, openSession } from "../testing/docket.js";
+import { bob } from "../testing/facts.js";
 import { providerError } from "../testing/provider.js";
 import {
   parserFix,
   recordedProvider,
+  recordedThreads,
   tokensGuide,
 } from "../testing/recorded.js";
 import answerWrite from "./answerWrite.js";
@@ -152,6 +154,72 @@ describe("answerWrite", () => {
     expect(err()).toBe(
       '## Error: WRITE_INCOMPLETE\nGitHub still records "alice" on example#12.\nRecovery: run docket show example#12 to see whom GitHub records, then run the command again\n',
     );
+  });
+
+  it("refreshes the thread in the cache, so a later call reads the change", async () => {
+    // GitHub gives the thread with bob once the write is made.
+    let written = false;
+    const provider = recordedProvider({
+      snapshot: async (repo) => ({
+        threads: recordedThreads
+          .filter((thread) => thread.repo === repo)
+          .map((thread) =>
+            written && thread.number === 12
+              ? { ...thread, assignees: [bob] }
+              : thread,
+          ),
+        cursor: { since: "2026-09-28T09:59:00Z" },
+      }),
+      setAssignees: async () => {
+        written = true;
+        return [bob];
+      },
+    });
+    const write = openSession(
+      home,
+      ["assign", "example#12", "bob", "--confirm"],
+      provider,
+    );
+    expect(await answerWrite(write.session)).toBe(0);
+    const later = openSession(home, ["show", "example#12"], provider);
+    const { threads } = await later.session.cache.read(5 * 60_000);
+    const shown = threads.find(({ number }) => number === 12);
+    expect(shown?.assignees).toEqual([bob]);
+  });
+
+  it("warns, and still reports the write made, when the refresh after it fails", async () => {
+    let written = false;
+    const provider = recordedProvider({
+      snapshot: async (repo) => {
+        if (written) throw providerError("GITHUB_RATE_LIMITED");
+        return recordedProvider().snapshot(repo, null);
+      },
+      setAssignees: async () => {
+        written = true;
+        return [bob];
+      },
+    });
+    const { session, out, err } = openSession(
+      home,
+      ["assign", "example#12", "bob", "--confirm"],
+      provider,
+    );
+    expect(await answerWrite(session)).toBe(0);
+    expect(out()).toContain('are now: "bob".');
+    expect(err()).toBe(
+      "## Warning: GITHUB_RATE_LIMITED\nThe provider failed with GITHUB_RATE_LIMITED.\nRecovery: try again\n",
+    );
+    const broken = openSession(
+      home,
+      ["assign", "example#12", "alice", "--confirm"],
+      recordedProvider({
+        snapshot: async () => {
+          throw new Error("a defect");
+        },
+        readAssignees: async () => [bob],
+      }),
+    );
+    await expect(answerWrite(broken.session)).rejects.toThrow("a defect");
   });
 
   it("lets GitHub's refusal through", async () => {

@@ -3,6 +3,7 @@ import { quote, renderPlan, renderProblems } from "../lib/text/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import fail from "./fail.js";
 import findThreads from "./findThreads.js";
+import isNamedError from "./isNamedError.js";
 import parseReference from "./parseReference.js";
 import readThreads from "./readThreads.js";
 import type { Session } from "./types.js";
@@ -34,7 +35,8 @@ const teamShape = /^[A-Za-z0-9](?:-?[A-Za-z0-9]){0,38}\/[A-Za-z0-9][\w-]*$/;
  * `WRITE_INCOMPLETE`; a refusal throws the provider's error.
  *
  * @note Impure: reads the cache and GitHub, writes the change to GitHub
- * on `--confirm`, and prints the plan or its result.
+ * on `--confirm` and refreshes the cache after it, and prints the plan
+ * or its result.
  */
 export default async function answerWrite(session: Session): Promise<number> {
   const { context, invocation, watched, provider } = session;
@@ -115,6 +117,18 @@ export default async function answerWrite(session: Session): Promise<number> {
           nameReviewer,
         );
   context.write(renderPlan({ ...plan, applied }));
+  // The cache refreshes the thread's repository, so a later call reads
+  // the change rather than a copy from before it. The change is made
+  // whatever the refresh meets, so a failure is only a warning.
+  try {
+    await session.cache.refreshRepo(thread.repo);
+  } catch (error) {
+    if (!isNamedError(error)) throw error;
+    const { code, message, recovery } = error;
+    context.writeError(
+      renderProblems([{ code, message, recovery }], format, "Warning"),
+    );
+  }
   // The set is written whole, so it falls short both when GitHub leaves
   // out a name asked for and when it keeps one that was to go.
   const recorded = lowerNames(applied);
