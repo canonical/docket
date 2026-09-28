@@ -44,4 +44,20 @@ describe("openInBrowser", () => {
       "xdg-open exited with code 3",
     );
   });
+
+  it.each([
+    ["an option", "--help"],
+    ["a file", "file:///etc/passwd"],
+    ["another scheme", "vscode://file/etc/passwd"],
+    ["another host", "https://example.com/example-org/example-repo/pull/12"],
+    ["plain http", "http://github.com/example-org/example-repo/pull/12"],
+  ])(
+    "fails, starting nothing, for %s rather than a GitHub page",
+    async (_, address) => {
+      await expect(openInBrowser(address)).rejects.toThrow(
+        `not a GitHub address: ${address}`,
+      );
+      expect(spawn).not.toHaveBeenCalled();
+    },
+  );
 });
