@@ -39,7 +39,7 @@ A detector in the corpus can go blind without anything in docket changing, and a
 
 | Entry | Kind | What it pins |
 |---|---|---|
-| `working-clock` | determinism | A 24-hour reply target set on Friday at 16:00 falls due on Monday at 16:00, across weekends, time zones and the change to and from daylight saving time; the machine's own time zone changes nothing. |
+| `working-clock` | determinism | A 24-hour reply target set on Friday at 16:00 falls due on Monday at 16:00, across weekends, time zones and the change to and from daylight saving time. What is left before a reply is due, or how far past it is, counts working time only, in the configured time zone: on a weekend, across midnight there while UTC is still on the day before, and after the clocks go back. The machine's own time zone changes none of it. |
 | `text-output` | golden | What `owed` and `activity` print in `plain`, `llm` and `json`, from a fixed recording at a fixed instant. |
 | `hostile-text` | conformance | Control sequences in a title, a comment, a label, a check name and a branch name are never printed; in `llm` output titles are in double quotes and comments are `>` lines. |
 | `request-budget` | budget | A refresh every 120 seconds stays within the points and requests proposed for GitHub's limits, and docket never has two requests open at once. |
