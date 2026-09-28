@@ -1,6 +1,7 @@
 import { mkdirSync, watch as watchFolder } from "node:fs";
 import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
+import type { Account } from "../people/index.js";
 import type { PageProgress, ProviderError } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
 import CacheError from "./CacheError.js";
@@ -69,6 +70,26 @@ export default function createCache({
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
+
+  // Assignees set before GitHub answers, by thread: each holds only while
+  // its repository's data is the copy it was made on, so any newer fetch
+  // or load replaces it. They live apart from the queries, so no save
+  // writes them to the file and no other process reads a set unconfirmed.
+  const patches = new Map<
+    string,
+    { readonly held: RepoCache; readonly assignees: readonly Account[] }
+  >();
+  const patchKey = (repo: string, number: number) => `${repo}#${number}`;
+  /** `repo`'s threads as held, each patch that still holds applied. */
+  const listThreads = (repo: string) => {
+    const held = entry(repo);
+    return (held?.threads ?? []).map((thread) => {
+      const patch = patches.get(patchKey(repo, thread.number));
+      return patch && patch.held === held
+        ? { ...thread, assignees: patch.assignees }
+        : thread;
+    });
+  };
   const store = (repo: string, value: RepoCache, at: Date) =>
     client.setQueryData(key(repo), value, { updatedAt: at.getTime() });
 
@@ -130,6 +151,8 @@ export default function createCache({
   // useSyncExternalStore, which needs the same value back until then.
   let shown: CachedThreads = { threads: [], syncedAt: undefined };
   let shownData = repos.map(() => ({ data: undefined as unknown, at: 0 }));
+  let shownPatches = 0;
+  let patchCount = 0;
   let status: CacheStatus = {
     syncedAt: undefined,
     refreshing: false,
@@ -149,14 +172,18 @@ export default function createCache({
       const state = client.getQueryState(key(repo));
       return { data: state?.data, at: state?.dataUpdatedAt ?? 0 };
     });
-    const threadsChanged = data.some(
-      (now, index) =>
-        now.data !== shownData[index]?.data || now.at !== shownData[index]?.at,
-    );
+    const threadsChanged =
+      shownPatches !== patchCount ||
+      data.some(
+        (now, index) =>
+          now.data !== shownData[index]?.data ||
+          now.at !== shownData[index]?.at,
+      );
     if (threadsChanged) {
       shownData = data;
+      shownPatches = patchCount;
       shown = {
-        threads: repos.flatMap((repo) => entry(repo)?.threads ?? []),
+        threads: repos.flatMap(listThreads),
         syncedAt: syncedAt(),
       };
     }
@@ -433,6 +460,21 @@ export default function createCache({
         );
       });
       return () => watcher.close();
+    },
+    patchAssignees({ repo, number }, assignees) {
+      const held = entry(repo);
+      if (!held) return () => {};
+      const id = patchKey(repo, number);
+      const patch = { held, assignees };
+      patches.set(id, patch);
+      patchCount++;
+      publish();
+      return () => {
+        if (patches.get(id) !== patch) return;
+        patches.delete(id);
+        patchCount++;
+        publish();
+      };
     },
     status: () => status,
     subscribe(listener) {
