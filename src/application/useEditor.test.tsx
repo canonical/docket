@@ -145,6 +145,17 @@ const isEditorClosed = (drawn: Drawn) => drawn.lines.at(0) === "owed";
 /** The lines of the list region: under the header, above the counts. */
 const readRegion = (screen: Drawn) => screen.lines.slice(1, -3);
 
+/** A read GitHub refused, whose recovery is a step, then to refresh. */
+const unreadable = Object.assign(
+  new Error("GitHub refused a request with status 404."),
+  {
+    code: "GITHUB_REQUEST_FAILED",
+    recovery:
+      "check that your gh account can read the repository, then refresh",
+    step: "check that your gh account can read the repository",
+  },
+);
+
 /** A provider on the recording that records the assignees it is given. */
 function recordAssignees(overrides: Partial<Provider> = {}) {
   let assignees: readonly string[] | undefined;
@@ -455,6 +466,21 @@ describe("useEditor", () => {
       expect(after.lines.at(-2)).toBe("synced 0m ago");
     });
 
+    it("says to close, refresh and open it again with a when GitHub could not give whom it offers", async () => {
+      const provider = recordedProvider({
+        readAssignees: () => Promise.reject(unreadable),
+      });
+      const opened = await settle(
+        await press(await showRecorded(provider, 60, 20), "a"),
+      );
+      expect(readRegion(opened).slice(3, 7)).toEqual([
+        "  ✗ GitHub refused a request with status 404",
+        "  Recovery: check that your gh account can read the",
+        "  repository, then close the editor with esc, refresh with",
+        "  R, then open it again with a",
+      ]);
+    });
+
     it("cancels with esc, sending nothing, and gives the keys back to the list", async () => {
       const { provider, setAssignees } = recordAssignees();
       const opened = await settle(
@@ -681,6 +707,21 @@ describe("useEditor", () => {
         isAnswered,
       );
       expect(applied.lines.at(-2)).toBe("✓ no review requested");
+    });
+
+    it("says to close, refresh and open it again with r when GitHub could not give whom it offers", async () => {
+      const provider = recordedProvider({
+        reviewCandidates: () => Promise.reject(unreadable),
+      });
+      const opened = await settle(
+        await press(await showRecorded(provider, 60, 20), "r"),
+      );
+      expect(readRegion(opened).slice(3, 7)).toEqual([
+        "  ✗ GitHub refused a request with status 404",
+        "  Recovery: check that your gh account can read the",
+        "  repository, then close the editor with esc, refresh with",
+        "  R, then open it again with r",
+      ]);
     });
 
     it("refuses on an issue, under its row, and says review refused", async () => {

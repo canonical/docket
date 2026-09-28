@@ -83,6 +83,9 @@ interface Refused extends Refusal {
 
 const titles = { assign: "assigning", review: "requesting review" } as const;
 
+/** The key that opens each editor. */
+const keys = { assign: "a", review: "r" } as const;
+
 /** A notice's reason is a line on screen, which ends without a full stop. */
 const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
 
@@ -176,7 +179,17 @@ export default function useEditor({
       },
       (error: unknown) => {
         const { message, recovery } = describeFailure(error);
-        const notice = { reason: dropFullStop(message), recovery };
+        // `R` is off while an editor is open, so trying again closes it.
+        const retry = `close the editor with esc, refresh with R, then open it again with ${keys[action]}`;
+        const notice = {
+          reason: dropFullStop(message),
+          recovery:
+            error instanceof Error &&
+            "step" in error &&
+            typeof error.step === "string"
+              ? `${error.step}, then ${retry}`
+              : recovery,
+        };
         update((editor) => ({ ...editor, names: [], unread: true, notice }));
       },
     );
