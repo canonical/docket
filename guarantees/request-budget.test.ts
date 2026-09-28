@@ -9,10 +9,9 @@ import type { SentRequest } from "./types.js";
  * proposed for GitHub's limits, and docket never has two requests open
  * at once, as GitHub asks of its clients. An open terminal pane stays
  * within it over a day: left without a key, it checks each repository at
- * most every 30 minutes once 20 minutes have passed, spends no points on
- * the list while nothing changes, and reads the selected thread's details
- * at most once a check; scrolled through, it reads details at most a
- * point a request, within 300 points an hour.
+ * most every 30 minutes once 20 minutes have passed, sends nothing else,
+ * and so spends no points while nothing changes; scrolled through, it
+ * reads details at most a point a request, within 300 points an hour.
  *
  * The budget, per repository, is what docket's page sizes cost: a whole
  * fetch asks for 50 threads a page and costs 8 points, a fetch of what
@@ -240,14 +239,12 @@ describe("request-budget", () => {
     }
   }, 180_000);
 
-  it("spends no points on the list while an idle pane sees nothing change, and reads details at most once a check", async () => {
+  it("spends no points while an idle pane sees nothing change, and sends only the checks", async () => {
     const sent = await sentIdle();
     expect(sent.length).toBeGreaterThan(0);
-    const graphql = sent.filter(({ url }) => url.endsWith("/graphql"));
-    expect(graphql.filter((request) => !isDetailRead(request))).toEqual([]);
+    expect(sent.filter(({ url }) => url.endsWith("/graphql"))).toEqual([]);
     const cycles = (day - idleAfter) / idleInterval;
-    expect(graphql.length).toBeLessThanOrEqual(cycles);
-    expect(sent.length).toBeLessThanOrEqual(cycles * (repositories + 1));
+    expect(sent.length).toBeLessThanOrEqual(cycles * repositories);
   }, 180_000);
 
   it("reads details at most a point a request, within 300 points an hour, while a pane is scrolled", async () => {
