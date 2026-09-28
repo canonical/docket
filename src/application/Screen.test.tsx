@@ -775,6 +775,25 @@ describe("Screen", () => {
       ]);
     });
 
+    it("opens the editor with a on a thread synced after activity opened", async () => {
+      const cache = await openCache(recordedProvider());
+      const view = { ...viewOf(cache), mode: "activity" } as const;
+      const screen = await show(view, 40, () => {}, 16);
+      await cache.refresh();
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.at(2)).toBe(
+          "  docs#4 issue                       16h",
+        ),
+      );
+      await press(screen, "a");
+      const opened = await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines).toContain("  ☐ carol");
+        return drawn;
+      });
+      expect(opened.lines.at(0)).toBe("assigning docs#4");
+    });
+
     it("refuses a review on activity's selected issue, under its row", async () => {
       const screen = await showActivity(40);
       const refused = await press(screen, "r");

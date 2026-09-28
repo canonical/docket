@@ -6,22 +6,16 @@ import useScreenKeys, {
   type UseScreenKeysProps,
 } from "./useScreenKeys.js";
 
-/** The screen's state the keys read, which a test sets as the screen would. */
-type State = Omit<UseScreenKeysProps, "actions">;
+/** The screen's state and actions, which a test sets as the screen would. */
+type State = UseScreenKeysProps;
 
-/**
- * Binds the keys on `start`, noting each action a key runs in `ran`, and
- * draws the keys that act now, the keys of every command bound, and the
- * groups of those commands, each once, in the order the help lists them.
- */
-function probe(start: Partial<State> = {}) {
-  const ran: string[] = [];
-  let change: (state: Partial<State>) => void = () => {};
+/** Actions that each note their call in `ran`, after `label` when given. */
+function noting(ran: string[], label?: string): ScreenActions {
   const note =
     (name: string) =>
     (...args: unknown[]) =>
-      ran.push([name, ...args].join(" "));
-  const actions: ScreenActions = {
+      ran.push([label, name, ...args].filter(Boolean).join(" "));
+  return {
     switchMode: note("switchMode"),
     moveSelection: note("moveSelection"),
     openSelected: note("openSelected"),
@@ -33,15 +27,26 @@ function probe(start: Partial<State> = {}) {
     refresh: note("refresh"),
     quit: note("quit"),
   };
+}
+
+/**
+ * Binds the keys on `start`, noting each action a key runs in `ran`, and
+ * draws the keys that act now, the keys of every command bound, and the
+ * groups of those commands, each once, in the order the help lists them.
+ */
+function probe(start: Partial<State> = {}) {
+  const ran: string[] = [];
+  let change: (state: Partial<State>) => void = () => {};
   function Probe() {
     const [state, setState] = useState<State>({
       mode: "owed",
       help: false,
       editorOpen: false,
+      actions: noting(ran),
       ...start,
     });
     change = (next) => setState((current) => ({ ...current, ...next }));
-    const { active, bound } = useScreenKeys({ ...state, actions });
+    const { active, bound } = useScreenKeys(state);
     const groups = bound
       .map(({ group }) => group)
       .filter((group, place, all) => all.indexOf(group) === place);
@@ -128,6 +133,13 @@ describe("useScreenKeys", () => {
       ["← → ↑ ↓ ⏎ g a r ? R q", "← → g t ↑ ↓ ⏎ a r ? esc R q"],
       ["← → ↑ ↓ ⏎ g t a r ? R q", "← → g t ↑ ↓ ⏎ a r ? esc R q"],
     ]);
+  });
+
+  it("runs the actions the screen gave last, though nothing else changed", async () => {
+    const { ran, change, screen } = await bind();
+    await screen.redraw(() => change({ actions: noting(ran, "later") }));
+    await press(screen, "a", "g");
+    expect(ran).toEqual(["later edit assign", "later nextGrouping"]);
   });
 
   it("closes the help with esc only while it is open", async () => {
