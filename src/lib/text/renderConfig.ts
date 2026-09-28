@@ -1,5 +1,6 @@
 import type { Duration } from "../clock/index.js";
 import type { Origin, Repo, Resolved } from "../config/index.js";
+import { quotedNote } from "./constants.js";
 import quote from "./quote.js";
 import renderJson from "./renderJson.js";
 import renderProblems from "./renderProblems.js";
@@ -58,29 +59,30 @@ const describeProblem = ({ code, message, recovery }: Problem) => ({
 
 /**
  * The sections a repository's own file may declare, as lines of text,
- * then each error of that file when it is invalid.
+ * then each error of that file when it is invalid. A repository's file is
+ * written on GitHub, so `write` gives each value, and each error's
+ * message and recovery, which repeat the file's text: quoted as data for
+ * an agent, made safe to print for a person.
  */
-function writeRepositoryLines({
-  settings,
-  origins,
-  repositoryErrors,
-}: Resolved): string[] {
+function writeRepositoryLines(
+  { settings, origins, repositoryErrors }: Resolved,
+  write: (text: string) => string,
+): string[] {
   const { time, targets, exempt } = settings;
   const { nextMove, close } = targets;
-  const listed = listPeople({ settings }).map(
-    ({ login, group }) => `${login} ${group}`,
+  const listed = [...settings.people].map(
+    ([login, group]) => `${write(login)} ${group}`,
   );
+  const labels = exempt.close.map((label) => write(label));
   return [
-    `people (${originWords[origins.people]}): ${formatList(listed)}`,
-    `time (${originWords[origins.time]}): workdays ${time.workdays.join(", ")}, timezone ${sanitize(time.timezone)}`,
+    `people (${originWords[origins.people]}): ${listed.join(", ") || "none"}`,
+    `time (${originWords[origins.time]}): workdays ${time.workdays.join(", ")}, timezone ${write(time.timezone)}`,
     `targets (${originWords[origins.targets]}): next-move.response ${formatDuration(nextMove.response)}, next-move.review ${formatDuration(nextMove.review)}, close.issue ${formatDuration(close.issue)}, close.pull-request ${formatDuration(close.pullRequest)}, close.discussion ${formatDuration(close.discussion)}`,
-    `exempt (${originWords[origins.exempt]}): close ${formatList(exempt.close)}`,
-    ...repositoryErrors
-      .map(describeProblem)
-      .map(
-        ({ code, message, recovery }) =>
-          `repository file invalid, so built-in defaults apply: ${code} ${message} Recovery: ${recovery}`,
-      ),
+    `exempt (${originWords[origins.exempt]}): close ${labels.join(", ") || "none"}`,
+    ...repositoryErrors.map(
+      ({ code, message, recovery }) =>
+        `repository file invalid, so built-in defaults apply: ${code} ${write(message)} Recovery: ${write(recovery)}`,
+    ),
   ];
 }
 
@@ -175,6 +177,7 @@ export default function renderConfig(answer: ConfigAnswer): string {
     [
       llm ? "# config" : "config",
       `Personal file: ${personal.path}, ${found}.`,
+      ...(llm ? [quotedNote] : []),
       ...ghLines,
       ...warningLines,
     ],
@@ -185,7 +188,7 @@ export default function renderConfig(answer: ConfigAnswer): string {
     ],
     ...repositories.map(({ repo, resolved }) => [
       llm ? `## ${repo.name} (${repo.repo})` : `${repo.name} (${repo.repo})`,
-      ...writeRepositoryLines(resolved).map(formatItem),
+      ...writeRepositoryLines(resolved, llm ? quote : sanitize).map(formatItem),
     ]),
   ];
   return `${sections.map((lines) => lines.join("\n")).join("\n\n")}\n`;

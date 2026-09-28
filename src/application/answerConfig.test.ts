@@ -32,7 +32,7 @@ describe("answerConfig", () => {
     expect(code).toBe(0);
     expect(out).toContain('gh: signed in to github.com as "alice".');
     expect(out).toContain(
-      "## example (example-org/example-repo)\n- people (personal file): alice team, bob team\n",
+      '## example (example-org/example-repo)\n- people (personal file): "alice" team, "bob" team\n',
     );
     expect(out).toContain("## docs (example-org/example-docs)\n");
   });
@@ -77,7 +77,7 @@ describe("answerConfig", () => {
       }),
     );
     expect(code).toBe(0);
-    expect(out).toContain("- exempt (repository file): close wontfix\n");
+    expect(out).toContain('- exempt (repository file): close "wontfix"\n');
     expect(out).toContain(
       "- repository file invalid, so built-in defaults apply: CONFIG_UNKNOWN_KEY",
     );
@@ -91,7 +91,7 @@ describe("answerConfig", () => {
     );
     expect(code).toBe(2);
     expect(out).toContain("## Error: GH_NOT_SIGNED_IN\n");
-    expect(out).toContain("- people (personal file): alice team, bob team");
+    expect(out).toContain('- people (personal file): "alice" team, "bob" team');
   });
 
   it("rethrows a failure that has no named code", async () => {
