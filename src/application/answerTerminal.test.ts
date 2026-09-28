@@ -126,11 +126,18 @@ describe("answerTerminal", () => {
     });
   });
 
-  it("lets a failure without a named code through", async () => {
+  it("gives a failure without a named code as UNEXPECTED_FAILURE, never rejecting", async () => {
     const provider = fakeProvider({
       readFile: () => Promise.reject(new Error("disk on fire")),
     });
     const { view } = await openOn(provider);
-    await expect(cacheOf(view).readWatched()).rejects.toThrow("disk on fire");
+    expect(await cacheOf(view).readWatched()).toEqual({
+      problem: {
+        code: "UNEXPECTED_FAILURE",
+        message:
+          "docket stopped on a failure it has no name for: disk on fire.",
+        recovery: "run the command again; if it keeps failing, report it",
+      },
+    });
   });
 });

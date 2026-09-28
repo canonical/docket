@@ -271,6 +271,36 @@ describe("Screen", () => {
       ]);
       expect(screen.lines.slice(9, 11)).toEqual(["", ""]);
     });
+
+    it("stands in a failure no code names for the list, with its recovery and no status", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const readFailed = async () => ({
+        problem: {
+          code: "UNEXPECTED_FAILURE",
+          message:
+            "docket stopped on a failure it has no name for: disk on fire.",
+          recovery: "run the command again; if it keeps failing, report it",
+        } as const,
+      });
+      const screen = await (
+        await show(viewOf(cache, everyCapability, readFailed))
+      ).redraw();
+      expect(screen.lines).toEqual([
+        "owed",
+        "",
+        "  ✗ docket stopped on a failure it has",
+        "  no name for: disk on fire",
+        "  Recovery: run the command again; if it",
+        "  keeps failing, report it",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "←→ mode g grp ?",
+      ]);
+    });
   });
 
   describe("with data", () => {

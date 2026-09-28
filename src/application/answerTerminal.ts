@@ -4,7 +4,7 @@ import {
   type Settings,
 } from "../lib/config/index.js";
 import type { Problem } from "../lib/text/index.js";
-import isNamedError from "./isNamedError.js";
+import describeFailure from "./describeFailure.js";
 import readRepositoryFiles from "./readRepositoryFiles.js";
 import type { Connection, Context, WatchedFiles } from "./types.js";
 
@@ -46,9 +46,9 @@ export default async function answerTerminal(
       );
       return { watched };
     } catch (error) {
-      if (!isNamedError(error)) throw error;
-      const { code, message, recovery } = error;
-      return { problem: { code, message, recovery } };
+      // The interface is already open, so a failure is shown in it, as a
+      // named problem, rather than thrown where nothing can catch it.
+      return { problem: describeFailure(error) };
     }
   };
   return openTerminal({

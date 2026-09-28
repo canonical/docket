@@ -121,7 +121,8 @@ export interface TerminalView {
         /**
          * Reads each watched repository's own file, called once the
          * interface has opened, so a slow or unreachable GitHub never
-         * holds up the first frame.
+         * holds up the first frame. It never rejects: a failure comes back
+         * as the problem the interface shows in place of the list.
          */
         readonly readWatched: () => Promise<WatchedFiles>;
       }
@@ -129,8 +130,9 @@ export interface TerminalView {
 }
 
 /**
- * Each watched repository with the settings its own file gives it, or why
- * GitHub refused gh's token while the files were read.
+ * Each watched repository with the settings its own file gives it, or the
+ * failure that stopped the files being read, such as GitHub refusing gh's
+ * token.
  */
 export type WatchedFiles =
   | { readonly watched: readonly Watched[] }
