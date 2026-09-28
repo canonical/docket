@@ -52,6 +52,12 @@ export interface Watched extends Repo {
   readonly resolved: Resolved;
 }
 
+/** The provider gh's token opened, and the shared cache on it. */
+export interface Connection {
+  readonly provider: Provider;
+  readonly cache: Cache;
+}
+
 /** Everything a command needs once the call, the settings and gh are ready. */
 export interface Session {
   readonly context: Context;

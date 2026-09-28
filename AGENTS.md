@@ -38,7 +38,7 @@
 - The help and the reading of the arguments are drawn from the command catalogue, `src/lib/text/catalogue.ts`, and nowhere else: a command, a flag, its choices or its default change there, with the hand-written help.
 - Every string from GitHub or from a repository's file goes through `sanitize` before it is printed, and `llm` output marks it as quoted data: each title, login, label, check name, file path and branch in double quotes, and comments as `>` lines.
 - Text mode reads threads, and activity's events, through the cache with `--max-age` (300 seconds by default) and never starts the refresh cycle.
-- Each call reads every watched repository's `.github/docket.yaml` from its default branch. An invalid one gives that repository the built-in defaults for the sections it may declare and marks its rows; one GitHub fails to give leaves the personal file's settings, with a warning.
+- Each watched repository's `.github/docket.yaml` is read from its default branch through the cache with `--max-age`, as the threads are. An invalid one gives that repository the built-in defaults for the sections it may declare and marks its rows; one GitHub fails to give leaves the personal file's settings, with a warning.
 - A source file stays within 500 lines, unless its first line reads `// Longer than 500 lines because …` with the reason.
 - Every implementation file under `src/lib/` and `src/application/` has its own unit tests beside it, as `<name>.test.ts`, with `describe` blocks named for its export; barrels, `types.ts` and `constants.ts` have none. Each `it()` states an outcome a caller can observe.
 - Tests mock only at boundaries: the network, the filesystem, timers and `process`.

@@ -1,10 +1,10 @@
+import type { Cache } from "../lib/cache/index.js";
 import {
   type Layer,
   parseFile,
   type Repo,
   resolveSettings,
 } from "../lib/config/index.js";
-import type { Provider } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
 import isNamedError from "./isNamedError.js";
 import type { Watched } from "./types.js";
@@ -19,7 +19,8 @@ export interface RepositoryFiles {
 }
 
 /**
- * Reads each watched repository's own file from GitHub and decides the
+ * Reads each watched repository's own file through the shared cache, no
+ * older than `maxAge` milliseconds, as the threads are, and decides the
  * settings in effect for it, over the personal file and the built-in
  * defaults. A repository without a file takes the personal file's
  * settings; one whose file is invalid takes the built-in defaults for
@@ -29,12 +30,14 @@ export interface RepositoryFiles {
  * repository on the personal file's settings, with the failure as a
  * warning, so an answer from cached data can still be given.
  *
- * @note Impure: reads from GitHub.
+ * @note Impure: reads the cache, which asks GitHub when a file it holds
+ * is too old.
  * @throws Error a `GH_*` failure, which no settings fix, and any failure
  * without a named code.
  */
 export default async function readRepositoryFiles(
-  provider: Provider,
+  cache: Cache,
+  maxAge: number,
   personal: Layer | undefined,
   repos: readonly Repo[],
 ): Promise<RepositoryFiles> {
@@ -42,7 +45,7 @@ export default async function readRepositoryFiles(
   const warnings: Problem[] = [];
   for (const repo of repos) {
     try {
-      const text = await provider.readFile(repo.repo, repositoryFile);
+      const { text } = await cache.readFile(repo.repo, repositoryFile, maxAge);
       const outcome =
         text === undefined ? undefined : parseFile(text, "repository");
       watched.push({ ...repo, resolved: resolveSettings(personal, outcome) });

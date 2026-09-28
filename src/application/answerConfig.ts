@@ -1,5 +1,4 @@
 import type { PersonalFile, Resolved } from "../lib/config/index.js";
-import type { Provider } from "../lib/provider/index.js";
 import {
   type ConfigAnswer,
   chooseExitCode,
@@ -8,27 +7,30 @@ import {
 } from "../lib/text/index.js";
 import isNamedError from "./isNamedError.js";
 import readRepositoryFiles from "./readRepositoryFiles.js";
-import type { Context, Invocation, Watched } from "./types.js";
+import type { Connection, Context, Invocation, Watched } from "./types.js";
 
 /**
  * Answers `docket config`: the settings in effect for each watched
- * repository, with its own file read from GitHub, where each came from,
+ * repository, with its own file read through the cache under the
+ * default maximum age, as the other commands read it, where each came from,
  * and the account gh is signed in with. When gh gives no token, or GitHub
  * does not answer, it says why and exits with that problem's code: 2 for
  * gh, 3 for GitHub; each repository then shows the settings the personal
  * file and the built-in defaults give.
  *
- * @param connection The provider gh's token opened, or why gh gave none.
+ * @param connection The provider gh's token opened, with the cache on
+ * it, or why gh gave no token.
  *
- * @note Impure: asks GitHub which account gh is signed in with, and
- * writes the answer.
+ * @note Impure: reads the cache, which asks GitHub for a repository's
+ * file it holds too old, asks GitHub which account gh is signed in with,
+ * and writes the answer.
  */
 export default async function answerConfig(
   context: Context,
   invocation: Invocation,
   personal: PersonalFile,
   resolved: Resolved,
-  connection: Provider | Problem,
+  connection: Connection | Problem,
 ): Promise<number> {
   const { repos } = resolved.settings;
   const layer = personal.outcome?.ok ? personal.outcome.layer : undefined;
@@ -43,11 +45,12 @@ export default async function answerConfig(
   } else {
     try {
       ({ watched, warnings } = await readRepositoryFiles(
-        connection,
+        connection.cache,
+        invocation.maxAge,
         layer,
         repos,
       ));
-      gh = { login: await connection.viewer() };
+      gh = { login: await connection.provider.viewer() };
     } catch (error) {
       if (!isNamedError(error)) throw error;
       const { code, message, recovery } = error;

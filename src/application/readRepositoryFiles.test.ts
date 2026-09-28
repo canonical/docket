@@ -1,5 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseFile } from "../lib/config/index.js";
+import type { Provider } from "../lib/provider/index.js";
+import { type Home, makeHome, openSession } from "../testing/docket.js";
 import { providerError } from "../testing/provider.js";
 import { recordedProvider, recordedRepos } from "../testing/recorded.js";
 import readRepositoryFiles from "./readRepositoryFiles.js";
@@ -16,13 +18,30 @@ const files: Record<string, string> = {
   "example-org/example-docs": "version: 1\ntargetz: {}\n",
 };
 
+let home: Home;
+
+beforeEach(async () => {
+  home = await makeHome();
+});
+
+afterEach(async () => {
+  await home.remove();
+});
+
+/** Reads the recording's repositories' files through a cache on `provider`. */
+const readWith = (provider: Provider) =>
+  readRepositoryFiles(
+    openSession(home, ["owed"], provider).session.cache,
+    300_000,
+    layer,
+    recordedRepos,
+  );
+
 describe("readRepositoryFiles", () => {
   it("reads each repository's file from its default branch, over the personal file", async () => {
     const readFile = vi.fn(async (repo: string) => files[repo]);
-    const { watched, warnings } = await readRepositoryFiles(
+    const { watched, warnings } = await readWith(
       recordedProvider({ readFile }),
-      layer,
-      recordedRepos,
     );
     expect(readFile).toHaveBeenCalledWith(
       "example-org/example-repo",
@@ -43,11 +62,7 @@ describe("readRepositoryFiles", () => {
   });
 
   it("gives a repository without a file the personal file's settings", async () => {
-    const { watched } = await readRepositoryFiles(
-      recordedProvider(),
-      layer,
-      recordedRepos,
-    );
+    const { watched } = await readWith(recordedProvider());
     expect(watched.at(0)?.resolved.origins.targets).toBe("personal");
     expect(watched.at(0)?.resolved.repositoryErrors).toEqual([]);
   });
@@ -59,10 +74,8 @@ describe("readRepositoryFiles", () => {
       }
       return undefined;
     });
-    const { watched, warnings } = await readRepositoryFiles(
+    const { watched, warnings } = await readWith(
       recordedProvider({ readFile }),
-      layer,
-      recordedRepos,
     );
     expect(watched.map(({ name }) => name)).toEqual(["example", "docs"]);
     expect(watched.at(1)?.resolved.origins.targets).toBe("personal");
@@ -83,8 +96,6 @@ describe("readRepositoryFiles", () => {
     const provider = recordedProvider({
       readFile: () => Promise.reject(failure),
     });
-    await expect(
-      readRepositoryFiles(provider, layer, recordedRepos),
-    ).rejects.toBe(failure);
+    await expect(readWith(provider)).rejects.toBe(failure);
   });
 });

@@ -417,6 +417,22 @@ describe("run", () => {
       expect(shown.out).toContain("· invalid repository file");
     });
 
+    it("reads each repository's file once per --max-age, across calls and commands", async () => {
+      const provider = recordedProvider({
+        readFile: vi.fn(async () => undefined),
+      });
+      await home.call(["owed"], { provider });
+      await home.call(["activity"], { provider, now: later(1) });
+      await home.call(["config"], { provider, now: later(2) });
+      await home.call(["owed"], { provider, now: later(4) });
+      // Two watched repositories, one read each.
+      expect(provider.readFile).toHaveBeenCalledTimes(2);
+      await home.call(["owed"], { provider, now: later(5) });
+      expect(provider.readFile).toHaveBeenCalledTimes(4);
+      await home.call(["owed", "--max-age", "0"], { provider, now: later(5) });
+      expect(provider.readFile).toHaveBeenCalledTimes(6);
+    });
+
     it("answers with a warning when GitHub fails to give a repository's file", async () => {
       const provider = recordedProvider({
         readFile: () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
