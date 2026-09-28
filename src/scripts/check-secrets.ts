@@ -11,6 +11,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import readEnvironmentWithoutGit from "./readEnvironmentWithoutGit.js";
 
 function gitleaks(): string[] {
   if (Bun.which("gitleaks")) return ["gitleaks"];
@@ -26,11 +27,23 @@ const scans = [
   ["git", "--redact", "--no-banner", "--pre-commit"],
 ];
 
-function check(root: string, output: "inherit" | "pipe"): [number, string] {
+/**
+ * The gate proper passes no `env`: it scans the repository the caller's git
+ * names, so a commit checked under `git rebase --exec` is the one scanned.
+ * The self-test passes the environment without git's own variables, so
+ * gitleaks scans the fixture and the enclosing repository never gains the
+ * scratch commit, token and all.
+ */
+function check(
+  root: string,
+  output: "inherit" | "pipe",
+  env?: Record<string, string>,
+): [number, string] {
   let exitCode = 0;
   let log = "";
   for (const scan of scans) {
     const run = Bun.spawnSync([...gitleaks(), ...scan, root], {
+      env,
       stdout: output,
       stderr: output,
     });
@@ -51,6 +64,7 @@ function generatedToken(): string {
 
 function selfTest(): number {
   const root = mkdtempSync(join(tmpdir(), "secrets-fixture-"));
+  const env = readEnvironmentWithoutGit();
   try {
     const git = (...args: string[]) =>
       Bun.spawnSync(
@@ -64,13 +78,13 @@ function selfTest(): number {
           "commit.gpgsign=false",
           ...args,
         ],
-        { cwd: root },
+        { cwd: root, env },
       );
     git("init", "-q");
     writeFileSync(join(root, "settings.env"), `TOKEN=${generatedToken()}\n`);
     git("add", "settings.env");
     git("commit", "-q", "-m", "settings");
-    const [exitCode, log] = check(root, "pipe");
+    const [exitCode, log] = check(root, "pipe", env);
     if (exitCode === 0 || !log.includes("leaks found")) {
       console.error("secrets self-test: the committed token was not rejected");
       console.error(log);

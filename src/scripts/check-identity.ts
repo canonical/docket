@@ -12,6 +12,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import readEnvironmentWithoutGit from "./readEnvironmentWithoutGit.js";
 
 type Rule = {
   name: string;
@@ -69,10 +70,16 @@ const rules: Rule[] = [
 
 type Finding = { file: string; line: number; rule: string; text: string };
 
-function listFiles(root: string): string[] {
+/**
+ * The gate proper passes no `env`: it lists the files of the repository the
+ * caller's git names, so a commit checked under `git rebase --exec` is the
+ * one scanned. The self-test passes the environment without git's own
+ * variables, so the listing reads the fixture's files.
+ */
+function listFiles(root: string, env?: Record<string, string>): string[] {
   const listing = Bun.spawnSync(
     ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
-    { cwd: root },
+    { cwd: root, env },
   );
   if (listing.exitCode !== 0) {
     throw new Error(`git ls-files failed in ${root}: ${listing.stderr}`);
@@ -80,9 +87,12 @@ function listFiles(root: string): string[] {
   return listing.stdout.toString().split("\0").filter(Boolean);
 }
 
-async function scan(root: string): Promise<Finding[]> {
+async function scan(
+  root: string,
+  env?: Record<string, string>,
+): Promise<Finding[]> {
   const findings: Finding[] = [];
-  for (const file of listFiles(root)) {
+  for (const file of listFiles(root, env)) {
     if (file === self) continue;
     const handle = Bun.file(join(root, file));
     if (!(await handle.exists())) continue;
@@ -144,8 +154,9 @@ const allowed: Record<string, string> = {
 
 async function selfTest(): Promise<number> {
   const root = mkdtempSync(join(tmpdir(), "identity-fixture-"));
+  const env = readEnvironmentWithoutGit();
   try {
-    Bun.spawnSync(["git", "init", "-q"], { cwd: root });
+    Bun.spawnSync(["git", "init", "-q"], { cwd: root, env });
     const files = { ...allowed };
     for (const [file, [, text]] of Object.entries(breaks)) files[file] = text;
     files["package.json"] =
@@ -154,7 +165,7 @@ async function selfTest(): Promise<number> {
       mkdirSync(dirname(join(root, file)), { recursive: true });
       writeFileSync(join(root, file), `${text}\n`);
     }
-    const findings = await scan(root);
+    const findings = await scan(root, env);
     const failures: string[] = [];
     for (const [file, [rule]] of Object.entries(breaks)) {
       if (!findings.some((f) => f.file === file && f.rule === rule)) {
