@@ -6,6 +6,7 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import readEnvironmentWithoutGit from "../scripts/readEnvironmentWithoutGit.js";
 
 /** A throwaway repository. */
 export interface Repository {
@@ -39,20 +40,6 @@ export const pointings: Record<
     GIT_INDEX_FILE: join(gitDirectory, "index"),
   }),
 };
-
-/**
- * The caller's environment without git's own variables. A test run under
- * `git rebase --exec` inherits `GIT_DIR` and its kin, which would point the
- * throwaway repository's set-up at the enclosing one.
- */
-export function readEnvironmentWithoutGit(): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(process.env).filter(
-      (entry): entry is [string, string] =>
-        !entry[0].startsWith("GIT_") && entry[1] !== undefined,
-    ),
-  );
-}
 
 /**
  * Creates a repository in a temporary folder, with one commit by alice and a

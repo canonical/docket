@@ -12,6 +12,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import readEnvironmentWithoutGit from "./readEnvironmentWithoutGit.js";
 
 type Rule = {
   name: string;
@@ -70,24 +71,12 @@ const rules: Rule[] = [
 type Finding = { file: string; line: number; rule: string; text: string };
 
 /**
- * The caller's environment without git's own variables. Git exports
- * `GIT_DIR`, `GIT_INDEX_FILE` and their kin into the commands it runs, as
- * under `git rebase --exec`, and a caller may set them. Left in place, they
- * point the self-test's git at the enclosing repository: `git init` changes
- * its config, and the listing reads its files instead of the fixture's.
- */
-const scratchEnvironment = Object.fromEntries(
-  Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")),
-);
-
-type Environment = Record<string, string | undefined>;
-
-/**
  * The gate proper passes no `env`: it lists the files of the repository the
  * caller's git names, so a commit checked under `git rebase --exec` is the
- * one scanned.
+ * one scanned. The self-test passes the environment without git's own
+ * variables, so the listing reads the fixture's files.
  */
-function listFiles(root: string, env?: Environment): string[] {
+function listFiles(root: string, env?: Record<string, string>): string[] {
   const listing = Bun.spawnSync(
     ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
     { cwd: root, env },
@@ -98,7 +87,10 @@ function listFiles(root: string, env?: Environment): string[] {
   return listing.stdout.toString().split("\0").filter(Boolean);
 }
 
-async function scan(root: string, env?: Environment): Promise<Finding[]> {
+async function scan(
+  root: string,
+  env?: Record<string, string>,
+): Promise<Finding[]> {
   const findings: Finding[] = [];
   for (const file of listFiles(root, env)) {
     if (file === self) continue;
@@ -162,11 +154,9 @@ const allowed: Record<string, string> = {
 
 async function selfTest(): Promise<number> {
   const root = mkdtempSync(join(tmpdir(), "identity-fixture-"));
+  const env = readEnvironmentWithoutGit();
   try {
-    Bun.spawnSync(["git", "init", "-q"], {
-      cwd: root,
-      env: scratchEnvironment,
-    });
+    Bun.spawnSync(["git", "init", "-q"], { cwd: root, env });
     const files = { ...allowed };
     for (const [file, [, text]] of Object.entries(breaks)) files[file] = text;
     files["package.json"] =
@@ -175,7 +165,7 @@ async function selfTest(): Promise<number> {
       mkdirSync(dirname(join(root, file)), { recursive: true });
       writeFileSync(join(root, file), `${text}\n`);
     }
-    const findings = await scan(root, scratchEnvironment);
+    const findings = await scan(root, env);
     const failures: string[] = [];
     for (const [file, [rule]] of Object.entries(breaks)) {
       if (!findings.some((f) => f.file === file && f.rule === rule)) {

@@ -3,8 +3,8 @@ import {
   makeRepository,
   pointings,
   type Repository,
-  readEnvironmentWithoutGit,
 } from "../testing/repository.js";
+import readEnvironmentWithoutGit from "./readEnvironmentWithoutGit.js";
 
 describe("check-identity --self-test", () => {
   let repository: Repository;
