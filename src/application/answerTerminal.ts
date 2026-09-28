@@ -7,6 +7,7 @@ import type { OwedGrouping } from "../lib/owed/index.js";
 import type { Problem } from "../lib/text/index.js";
 import describeFailure from "./describeFailure.js";
 import openInBrowser from "./openInBrowser.js";
+import readCandidates from "./readCandidates.js";
 import readRepositoryFiles from "./readRepositoryFiles.js";
 import type {
   Connection,
@@ -15,6 +16,7 @@ import type {
   TerminalView,
   WatchedFiles,
 } from "./types.js";
+import writeFromTerminal from "./writeFromTerminal.js";
 
 /**
  * Opens the terminal interface on `mode` at once, with owed grouped by
@@ -92,6 +94,9 @@ export default async function answerTerminal(
       capabilities: provider.capabilities(),
       readWatched,
       readDetail: (thread) => provider.threadDetail(thread),
+      readCandidates: (action, thread) =>
+        readCandidates(provider, action, thread),
+      write: (request) => writeFromTerminal({ provider, cache }, request),
       readEvents: (repo, since) => cache.readEvents(repo, since, maxAge),
     },
   });

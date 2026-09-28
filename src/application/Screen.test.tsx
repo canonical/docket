@@ -10,7 +10,11 @@ import type {
   ThreadDetail,
 } from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
-import { findWaits, type ThreadSummary } from "../lib/waits/index.js";
+import {
+  findWaits,
+  type Thread,
+  type ThreadSummary,
+} from "../lib/waits/index.js";
 import {
   everyCapability,
   fakeProvider,
@@ -32,8 +36,11 @@ import {
   drawSuspending,
   WithKeys,
 } from "../testing/terminal.js";
+import readCandidates from "./readCandidates.js";
 import Screen from "./Screen.js";
 import type { TerminalView, WatchedFiles } from "./types.js";
+import writeFromTerminal from "./writeFromTerminal.js";
+import type { WriteAction, WriteRequest } from "./writeSet.js";
 
 // The measuring of waits is watched, not replaced, to see which threads a
 // redraw measures.
@@ -84,6 +91,20 @@ const readRecordedDetail = async (
 /** Opens nothing, and says it opened. */
 const openNothing = async (_url: string) => {};
 
+/**
+ * The editors' reading and writing, as the terminal wires them, on
+ * `provider` and the cache.
+ */
+function wireEdits(cache: Cache, provider: Provider = recordedProvider()) {
+  return {
+    readCandidates: (action: WriteAction, thread: Thread) =>
+      readCandidates(provider, action, thread),
+    write: (
+      request: Pick<WriteRequest, "action" | "thread" | "reference" | "wanted">,
+    ) => writeFromTerminal({ provider, cache }, request),
+  };
+}
+
 function viewOf(
   cache: Cache,
   capabilities: ReadonlySet<Capability> = everyCapability,
@@ -92,6 +113,7 @@ function viewOf(
     thread: ThreadSummary,
   ) => Promise<ThreadDetail> = readRecordedDetail,
   openInBrowser = openNothing,
+  edits = wireEdits(cache),
 ): TerminalView {
   return {
     mode: "owed",
@@ -106,6 +128,7 @@ function viewOf(
       readWatched,
       readDetail,
       readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
+      ...edits,
     },
   };
 }
@@ -129,10 +152,17 @@ async function press(screen: Drawn, ...keys: string[]) {
         screen.setup.mockInput.pressArrow(key);
       } else if (key === "return") {
         screen.setup.mockInput.pressEnter();
+      } else if (key === "escape") {
+        screen.setup.mockInput.pressEscape();
       } else {
         screen.setup.mockInput.pressKey(key);
       }
     });
+    // The input reads a lone escape only once no sequence follows it.
+    if (key === "escape") {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      drawn = await drawn.redraw();
+    }
   }
   return drawn;
 }
@@ -177,7 +207,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel ⏎ open g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
       expect(screen.look("refresh in progress")).toMatchObject({
         fg: tokens["color.text"],
@@ -288,7 +318,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel ⏎ open g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
     });
   });
@@ -376,7 +406,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel ⏎ open g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
     });
   });
@@ -398,7 +428,7 @@ describe("Screen", () => {
         "",
         "2 over · 1 soon · 3 on track",
         "synced 0m ago",
-        "←→ mode ↑↓ sel ⏎ open g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
       expect(screen.look("example#12 reply")?.bg).toBe(
         tokens["color.background.selected"],
@@ -645,7 +675,7 @@ describe("Screen", () => {
         "",
         "2 threads · 3 events",
         "synced 0m ago",
-        "←→ mode ↑↓ sel ⏎ open g grp t time ?",
+        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       ]);
     });
 
@@ -708,6 +738,115 @@ describe("Screen", () => {
         "https://github.com/example-org/example-docs/issues/4",
         "https://github.com/example-org/example-repo/pull/12",
         "https://github.com/example-org/example-docs/issues/4",
+      ]);
+    });
+
+    it("opens the editor under activity's selected thread with a, as in owed, and closes it with esc", async () => {
+      const screen = await showActivity(40);
+      await press(screen, "a");
+      const opened = await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines).not.toContain("  loading…");
+        return drawn;
+      });
+      expect(opened.lines).toEqual([
+        "assigning docs#4",
+        "ISSUES",
+        "  docs#4 issue                       16h",
+        "  Where do tokens live?",
+        "  alice, bob",
+        "  filter:",
+        "  ☑ alice",
+        "  ☑ bob",
+        "  ☐ carol",
+        "  ☐ dave",
+        "    example-sync labelled kind=docs  16h",
+        "PULL REQUESTS",
+        "",
+        "2 threads · 3 events",
+        "synced 0m ago",
+        "type filter ↑↓ ␣ tick ⏎ apply esc ?",
+      ]);
+      const closed = await press(screen, "escape");
+      expect(closed.lines.slice(0, 3)).toEqual([
+        `activity${" ".repeat(19)}24h · by kind`,
+        "ISSUES",
+        "  docs#4 issue                       16h",
+      ]);
+    });
+
+    it("opens the editor with a on a thread synced after activity opened", async () => {
+      const cache = await openCache(recordedProvider());
+      const view = { ...viewOf(cache), mode: "activity" } as const;
+      const screen = await show(view, 40, () => {}, 16);
+      await cache.refresh();
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.at(2)).toBe(
+          "  docs#4 issue                       16h",
+        ),
+      );
+      await press(screen, "a");
+      const opened = await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines).toContain("  ☐ carol");
+        return drawn;
+      });
+      expect(opened.lines.at(0)).toBe("assigning docs#4");
+    });
+
+    it("refuses a review on activity's selected issue, under its row", async () => {
+      const screen = await showActivity(40);
+      const refused = await press(screen, "r");
+      expect(refused.lines).toEqual([
+        `activity${" ".repeat(19)}24h · by kind`,
+        "ISSUES",
+        "  docs#4 issue                       16h",
+        "  Where do tokens live?",
+        "  alice, bob",
+        "  ✗ docs#4 is not a pull request, so no",
+        "  review can be requested on it",
+        "  Recovery: select a pull request, then",
+        "  press r",
+        "    example-sync labelled kind=docs  16h",
+        "PULL REQUESTS",
+        "",
+        "",
+        "2 threads · 3 events",
+        "✗ review refused",
+        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
+      ]);
+    });
+
+    it("refuses both on a thread activity shows that was not open at the last refresh", async () => {
+      const cache = await openCache(
+        recordedProvider({
+          snapshot: async (repo) => ({
+            threads: recordedThreads.filter(
+              (thread) => thread.repo === repo && thread.number !== 4,
+            ),
+            cursor: { since: "2026-09-28T09:59:00Z" },
+          }),
+        }),
+      );
+      const screen = await showActivity(40, cache);
+      const refused = await press(screen, "a");
+      expect(refused.lines).toEqual([
+        `activity${" ".repeat(19)}24h · by kind`,
+        "ISSUES",
+        "  docs#4 issue                       16h",
+        "  Where do tokens live?",
+        "  ✗ docs#4 was not open at the last",
+        "  refresh",
+        "  Recovery: open it with ⏎ and change it",
+        "  on GitHub",
+        "    example-sync labelled kind=docs  16h",
+        "PULL REQUESTS",
+        "",
+        "",
+        "",
+        "2 threads · 3 events",
+        "✗ assign refused",
+        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       ]);
     });
 
@@ -864,17 +1003,17 @@ describe("Screen", () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       const owed = await press(screen, "t");
       expect(owed.lines.at(0)).toBe("owed");
-      expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
+      expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
       const activity = await press(screen, "right");
       expect(activity.lines.at(11)).toBe(
-        "←→ mode ↑↓ sel ⏎ open g grp t time ?",
+        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       );
       expect(activity.look("t")?.bold).toBe(true);
     });
 
     it("shows every key with ?, grouped, and hides it again", async () => {
       const view = viewOf(await openCache(fakeProvider()));
-      const screen = await show(view, 40, () => {}, 24);
+      const screen = await show(view, 40, () => {}, 34);
       const help = await press(screen, "?");
       expect(help.lines).toEqual([
         "help",
@@ -893,9 +1032,19 @@ describe("Screen", () => {
         "",
         "Thread",
         "  ⏎        open in the browser",
+        "  a        assign",
+        "  r        request review",
+        "",
+        "Editor",
+        "  type     filter",
+        "  ↑ ↓      move",
+        "  ␣        toggle",
+        "  ⏎        apply",
+        "  esc      cancel",
         "",
         "App",
         "  ?        show or hide help",
+        "  esc      close help",
         "  R        full refresh",
         "  q        quit",
         "",
@@ -903,6 +1052,15 @@ describe("Screen", () => {
         "",
       ]);
       expect((await press(screen, "?")).lines.at(0)).toBe("owed");
+    });
+
+    it("closes the help with esc, in owed and in activity", async () => {
+      const screen = await show(viewOf(await openCache(fakeProvider())));
+      expect((await press(screen, "?")).lines.at(0)).toBe("help");
+      expect((await press(screen, "escape")).lines.at(0)).toBe("owed");
+      await press(screen, "right");
+      expect((await press(screen, "?")).lines.at(0)).toBe("help");
+      expect((await press(screen, "escape")).lines.at(0)).toMatch(/^activity /);
     });
 
     it("discards the cache and fetches everything again with R", async () => {
@@ -957,7 +1115,7 @@ describe("Screen", () => {
       screen.setup.resize(60, 12);
       const wide = await screen.redraw();
       expect(wide.lines.at(0)).toBe("owed");
-      expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
+      expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
     });
   });
 });

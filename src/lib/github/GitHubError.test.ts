@@ -18,6 +18,23 @@ describe("GitHubError", () => {
     });
   });
 
+  it("says to refresh after a step, and keeps the step apart", () => {
+    const error = new GitHubError(
+      "GITHUB_TIMED_OUT",
+      "GitHub gave no answer.",
+      { step: "check the network connection" },
+    );
+    expect(error).toMatchObject({
+      recovery: "check the network connection, then refresh",
+      step: "check the network connection",
+    });
+  });
+
+  it("keeps no step apart from a recovery that ends otherwise", () => {
+    const error = new GitHubError("GH_NOT_SIGNED_IN", "No token.", "log in");
+    expect(error.step).toBeUndefined();
+  });
+
   it("names itself in its text", () => {
     const error = new GitHubError("GH_NOT_SIGNED_IN", "No token.", "log in");
     expect(String(error)).toBe("GitHubError: No token.");

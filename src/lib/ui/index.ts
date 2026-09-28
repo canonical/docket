@@ -24,6 +24,8 @@ export {
   type ThreadAccordionProps,
   ThreadRow,
   type ThreadRowProps,
+  type WrappedNotice,
+  wrapNotice,
 } from "./component/index.js";
 export { accordionHeight } from "./constants.js";
 export { default as createKeymap } from "./createKeymap.js";
@@ -38,6 +40,12 @@ export {
   useListScroll,
 } from "./hooks/index.js";
 export { Pane, type PaneProps } from "./layout/index.js";
+export {
+  countPickerLines,
+  PeoplePicker,
+  type PeoplePickerProps,
+  type PickerOption,
+} from "./pattern/index.js";
 export {
   PaneHeader,
   type PaneHeaderProps,

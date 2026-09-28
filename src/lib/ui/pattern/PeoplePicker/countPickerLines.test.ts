@@ -1,0 +1,31 @@
+import { describe, expect, it } from "vitest";
+import countPickerLines from "./countPickerLines.js";
+import {
+  Assigning,
+  Loading,
+  Refused,
+  Scrolled,
+} from "./PeoplePicker.stories.js";
+
+describe("countPickerLines", () => {
+  it("counts the filter and each option", () => {
+    expect(countPickerLines(Assigning.args)).toBe(5);
+  });
+
+  it("counts five options at most", () => {
+    expect(countPickerLines(Scrolled.args)).toBe(6);
+  });
+
+  it("counts the loading line while the options are read", () => {
+    expect(countPickerLines(Loading.args)).toBe(2);
+  });
+
+  it("counts only the filter when nothing matches", () => {
+    expect(countPickerLines({ ...Assigning.args, options: [] })).toBe(1);
+  });
+
+  it("counts the notice's lines as they wrap at the width", () => {
+    expect(countPickerLines(Refused.args)).toBe(7);
+    expect(countPickerLines({ ...Refused.args, width: 80 })).toBe(5);
+  });
+});

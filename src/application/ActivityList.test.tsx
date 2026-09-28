@@ -111,6 +111,40 @@ describe("ActivityList", () => {
     ]);
   });
 
+  it("draws an editor in the accordion's place under the selected thread, above its events, which gives up its background", async () => {
+    const editor = {
+      node: (
+        <>
+          <text>{"  filter:"}</text>
+          <text>{"  ☑ alice"}</text>
+        </>
+      ),
+      lines: 2,
+    };
+    const screen = await draw(
+      <ActivityList
+        {...reading}
+        list={recordedActivity("kind")}
+        selected={0}
+        width={40}
+        editor={editor}
+      />,
+      40,
+      20,
+    );
+    expect(screen.lines.slice(1, 7)).toEqual([
+      "  docs#4 issue                       16h",
+      "  Where do tokens live?",
+      "  alice, bob",
+      "  filter:",
+      "  ☑ alice",
+      "    example-sync labelled kind=docs  16h",
+    ]);
+    expect(screen.look("docs#4")?.bg).not.toBe(
+      tokens["color.background.selected"],
+    );
+  });
+
   it("shows the running wait of the selected thread, its current state", async () => {
     const screen = await drawSuspending(
       <ActivityList

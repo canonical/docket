@@ -1,5 +1,6 @@
 import type { DehydratedState } from "@tanstack/query-core";
 import type { ThreadEvent } from "../events/index.js";
+import type { Account } from "../people/index.js";
 import type {
   Cursor,
   PageProgress,
@@ -227,6 +228,20 @@ export interface Cache {
    * @returns Stops watching.
    */
   watch(): () => void;
+  /**
+   * Shows `assignees` as the thread's set at once, before GitHub answers a
+   * write of it: in this process's memory only, never in the cache file,
+   * so no other process reads a set GitHub has not confirmed. The data
+   * keeps its date, so any newer fetch or load replaces the patch, and the
+   * listeners hear of it. A thread whose repository holds nothing yet is
+   * left alone.
+   *
+   * @returns Takes the patch back, unless a newer one replaced it.
+   */
+  patchAssignees(
+    thread: Pick<Thread, "repo" | "number">,
+    assignees: readonly Account[],
+  ): () => void;
   /** The cache's state: the same value on every call until it changes. */
   status(): CacheStatus;
   /** Calls `listener` whenever the threads or the status change. */

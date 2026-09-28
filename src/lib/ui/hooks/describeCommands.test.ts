@@ -84,6 +84,24 @@ describe("describeCommands", () => {
     expect(describeCommands(entries).at(0)?.keys).toEqual([]);
   });
 
+  it("shows what runs a command no key runs, such as typing", async () => {
+    const entries = await bind([
+      { name: "filter", key: [], desc: "filter", shown: "type" },
+    ]);
+    expect(describeCommands(entries).at(0)?.keys).toEqual(["type"]);
+  });
+
+  it("shows the space and escape keys as ␣ and esc", async () => {
+    const entries = await bind([
+      { name: "tick", key: ["space"], desc: "toggle" },
+      { name: "cancel", key: ["escape"], desc: "cancel" },
+    ]);
+    expect(describeCommands(entries).map(({ keys }) => keys)).toEqual([
+      ["␣"],
+      ["esc"],
+    ]);
+  });
+
   it("names a command with no label or group by its name, and leaves it out of the bar", async () => {
     const entries = await bind([{ name: "quit", key: ["q"] }]);
     expect(describeCommands(entries)).toEqual([

@@ -7,7 +7,12 @@ export {
 } from "./GroupHeading/index.js";
 export { HelpOverlay, type HelpOverlayProps } from "./HelpOverlay/index.js";
 export { KeyBar, type KeyBarProps } from "./KeyBar/index.js";
-export { Notice, type NoticeProps } from "./Notice/index.js";
+export {
+  Notice,
+  type NoticeProps,
+  type WrappedNotice,
+  wrapNotice,
+} from "./Notice/index.js";
 export { ProgressLine, type ProgressLineProps } from "./ProgressLine/index.js";
 export {
   type ActionResult,

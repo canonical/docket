@@ -27,6 +27,12 @@ export interface OwedListProps {
   readonly width: number;
   /** The lines the list region has. */
   readonly height: number;
+  /**
+   * What stands in the accordion's place under the selected row, such as
+   * an editor, and the lines it takes. The row then gives up its selection
+   * background to the option under the editor's cursor.
+   */
+  readonly editor?: { readonly node: ReactNode; readonly lines: number };
 }
 
 /** One heading, or one row with the accordion when it is selected. */
@@ -51,6 +57,7 @@ export default function OwedList({
   timezone,
   width,
   height,
+  editor,
 }: OwedListProps): ReactNode {
   const waiting = listWaiting(list.groups.flatMap((group) => group.rows));
   const blocks: Block[] = [];
@@ -70,11 +77,14 @@ export default function OwedList({
       }
       blocks.push({
         key: `${heading?.text ?? ""} ${identifyRow(row)}`,
-        lines: countRowLines(row, width) + (open ? accordionHeight : 0),
+        lines:
+          countRowLines(row, width) +
+          (open ? (editor?.lines ?? accordionHeight) : 0),
         node: (
           <>
-            <ThreadRow row={row} selected={open} width={width} />
-            {open && (
+            <ThreadRow row={row} selected={open && !editor} width={width} />
+            {open && editor?.node}
+            {open && !editor && (
               <ThreadAccordion
                 row={row}
                 detail={readDetail(row)}

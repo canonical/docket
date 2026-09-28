@@ -1,4 +1,3 @@
-import { useBindings } from "@opentui/keymap/react";
 import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
@@ -24,6 +23,7 @@ import { tokens } from "../lib/tokens/index.js";
 import {
   type ActionResult,
   CountsLine,
+  countPickerLines,
   describeClock,
   EmptyState,
   HelpOverlay,
@@ -31,19 +31,28 @@ import {
   Notice,
   Pane,
   PaneHeader,
+  PeoplePicker,
   ProgressLine,
   StatusLine,
-  useCommands,
+  wrapNotice,
 } from "../lib/ui/index.js";
 import type { ThreadSummary } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
 import identifyRow from "./identifyRow.js";
+import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
 import placeSelection, { type Selection } from "./placeSelection.js";
-import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
+import type {
+  SelectedThread,
+  TerminalMode,
+  TerminalView,
+  WatchedFiles,
+} from "./types.js";
 import useActivity from "./useActivity.js";
+import useEditor from "./useEditor.js";
+import useScreenKeys from "./useScreenKeys.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
@@ -104,8 +113,9 @@ const unselected: Selection = { place: 0, row: "" };
  * The terminal interface's one screen: owed or activity, with the header
  * naming the mode and its address, the list region, the counts, the
  * status and the keys, or the help over all but the header. The keys are
- * bound in one global layer, and the help and the key bar are drawn from
- * its command catalogue.
+ * bound in one global layer, beside the layer of the editor that `a` and
+ * `r` open, and the help and the key bar are drawn from the keymap's
+ * command catalogue.
  */
 export default function Screen({
   mode: openingMode,
@@ -178,6 +188,13 @@ export default function Screen({
   // so a binding never holds a list older than the one on screen.
   const drawnRows = useRef<readonly (WaitRow | ActivityThread)[]>([]);
   const drawnSelection = useRef<WaitRow | ActivityThread>(undefined);
+  const editor = useEditor({
+    source: "cache" in source ? source : undefined,
+    findTeam: (repo) => listTeam(watched, repo),
+    now,
+    onResult: setAction,
+    covered: help,
+  });
   const moveSelection = (step: number) =>
     setSelections((current) => {
       const rows = drawnRows.current;
@@ -187,116 +204,54 @@ export default function Screen({
       return { ...current, [mode]: { place, row: identifyRow(row) } };
     });
 
-  useBindings(
-    () => ({
-      commands: [
-        {
-          name: "mode.previous",
-          desc: "switch mode (owed ↔ activity)",
-          group: "Mode",
-          hint: "mode",
-          run: () => setMode("owed"),
-        },
-        {
-          name: "mode.next",
-          desc: "switch mode (owed ↔ activity)",
-          group: "Mode",
-          hint: "mode",
-          notes: ["docket opens owed"],
-          run: () => setMode("activity"),
-        },
-        {
-          name: "selection.previous",
-          desc: "move the selection",
-          group: "List",
-          hint: "sel",
-          run: () => moveSelection(-1),
-        },
-        {
-          name: "selection.next",
-          desc: "move the selection",
-          group: "List",
-          hint: "sel",
-          notes: ["(opens the accordion)"],
-          run: () => moveSelection(1),
-        },
-        {
-          name: "thread.open",
-          desc: "open in the browser",
-          group: "Thread",
-          hint: "open",
-          // Only a row is ever selected, in either mode, so a heading or a
-          // stack never opens.
-          run: () => {
-            const row = drawnSelection.current;
-            if (!row) return;
-            const { url } = "wait" in row ? row.wait.thread : row.thread;
-            openInBrowser(url).catch(() =>
-              setAction({
-                failed: true,
-                text: "could not open the browser",
-                at: now(),
-              }),
-            );
-          },
-        },
-        {
-          name: "grouping.next",
-          desc: "next grouping",
-          group: "Mode",
-          hint: "grp",
-          run: () =>
-            mode === "owed"
-              ? setOwedGrouping((current) => cycle(owedChoices, current))
-              : setActivityGrouping((current) =>
-                  cycle(activityGroupings, current),
-                ),
-        },
-        {
-          name: "window.next",
-          desc: "next time window (activity)",
-          group: "Mode",
-          hint: "time",
-          notes: ["owed: most overdue first", "activity: newest first"],
-          enabled: mode === "activity",
-          run: () => setWindow((current) => cycle(settings.activity, current)),
-        },
-        {
-          name: "help.toggle",
-          desc: "show or hide help",
-          group: "App",
-          hint: "",
-          run: () => setHelp((open) => !open),
-        },
-        {
-          name: "refresh.full",
-          desc: "full refresh",
-          group: "App",
-          run: () => void cache?.fullRefresh(),
-        },
-        { name: "app.quit", desc: "quit", group: "App", run: onQuit },
-      ],
-      bindings: [
-        { key: "left", cmd: "mode.previous" },
-        { key: "h", cmd: "mode.previous" },
-        { key: "right", cmd: "mode.next" },
-        { key: "l", cmd: "mode.next" },
-        { key: "up", cmd: "selection.previous" },
-        { key: "k", cmd: "selection.previous" },
-        { key: "down", cmd: "selection.next" },
-        { key: "j", cmd: "selection.next" },
-        { key: "return", cmd: "thread.open" },
-        { key: "g", cmd: "grouping.next" },
-        { key: "t", cmd: "window.next" },
-        { key: "?", cmd: "help.toggle" },
-        { key: "shift+r", cmd: "refresh.full" },
-        { key: "q", cmd: "app.quit" },
-      ],
-    }),
-    [mode, cache, onQuit, openInBrowser, now],
-  );
-  const active = useCommands({ visibility: "active" });
-  const bound = useCommands({ visibility: "registered" });
+  // The thread `a` and `r` act on, in either mode: an owed row carries
+  // its thread, and an activity row names one the cache holds while it
+  // is open.
+  const selectThread = (): SelectedThread | undefined => {
+    const row = drawnSelection.current;
+    if (!row) return undefined;
+    const reference = row.reference.text;
+    if ("wait" in row) return { reference, thread: row.wait.thread };
+    const { repo, number } = row.thread;
+    const thread = cached?.threads.find(
+      (each) => each.repo === repo && each.number === number,
+    );
+    return thread ? { reference, thread } : { reference };
+  };
+  const { active, bound } = useScreenKeys({
+    mode,
+    help,
+    editorOpen: editor.open,
+    actions: {
+      switchMode: setMode,
+      moveSelection,
+      // Only a row is ever selected, in either mode, so a heading or a
+      // stack never opens.
+      openSelected: () => {
+        const row = drawnSelection.current;
+        if (!row) return;
+        const { url } = "wait" in row ? row.wait.thread : row.thread;
+        openInBrowser(url).catch(() =>
+          setAction({
+            failed: true,
+            text: "could not open the browser",
+            at: now(),
+          }),
+        );
+      },
+      nextGrouping: () =>
+        mode === "owed"
+          ? setOwedGrouping((current) => cycle(owedChoices, current))
+          : setActivityGrouping((current) => cycle(activityGroupings, current)),
+      nextWindow: () =>
+        setWindow((current) => cycle(settings.activity, current)),
+      edit: (action) => editor.start(action, selectThread()),
+      toggleHelp: () => setHelp((open) => !open),
+      closeHelp: () => setHelp(false),
+      refresh: () => void cache?.fullRefresh(),
+      quit: onQuit,
+    },
+  });
 
   const header =
     mode === "owed"
@@ -335,6 +290,7 @@ export default function Screen({
   useEffect(() => {
     drawnRows.current = rows;
     drawnSelection.current = rows.at(placeSelection(rows, selections[mode]));
+    editor.follow(drawnSelection.current?.reference.text);
   });
   // A thread's details are read once for each copy of the data: moving the
   // selection back to a thread shows what was read, and each refresh
@@ -365,6 +321,24 @@ export default function Screen({
     return reading;
   };
 
+  // What stands in the accordion's place: the open editor, or why a key
+  // could not open one.
+  const { picker, refusal } = editor;
+  const refused = refusal && (
+    <Notice reason={refusal.reason} recovery={refusal.recovery} width={width} />
+  );
+  const slot = picker
+    ? {
+        node: <PeoplePicker {...picker} width={width} />,
+        lines: countPickerLines({ ...picker, width }),
+      }
+    : refusal && {
+        node: refused,
+        lines: Object.values(
+          wrapNotice(refusal.reason, refusal.recovery, room),
+        ).flat().length,
+      };
+
   // The list region: rows once the data is in, or what stands in for them.
   let region: ReactNode = null;
   if (problem) {
@@ -376,6 +350,8 @@ export default function Screen({
         width={width}
       />
     );
+  } else if (refused && rows.length === 0) {
+    region = refused;
   } else if (!threads) {
     const held = status && describeHold(status, settings.time.timezone);
     region = held ? (
@@ -404,6 +380,7 @@ export default function Screen({
         timezone={settings.time.timezone}
         width={width}
         height={height - 4}
+        {...(slot && { editor: slot })}
       />
     );
   } else if (activity && "problem" in activity) {
@@ -438,6 +415,7 @@ export default function Screen({
         timezone={settings.time.timezone}
         width={width}
         height={height - 4}
+        {...(slot && { editor: slot })}
       />
     );
   }
@@ -451,8 +429,8 @@ export default function Screen({
           <PaneHeader title="help" width={width} />
         ) : (
           <PaneHeader
-            title={header.title.text}
-            address={header.address?.text}
+            title={editor.title ?? header.title.text}
+            address={editor.title ? undefined : header.address?.text}
             width={width}
           />
         )

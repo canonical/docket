@@ -91,4 +91,21 @@ describe("setReviewers", () => {
     ]);
     expect(writes()).toEqual([]);
   });
+
+  it("gives GitHub's reason when it will not request a review", async () => {
+    github.rest(`GET ${route}`, standing([], []));
+    github.rest(`POST ${route}`, {
+      status: 422,
+      body: {
+        message: "Validation Failed",
+        errors: [{ message: "dave is not a collaborator" }],
+      },
+    });
+    await expect(request(person("dave"))).rejects.toMatchObject({
+      code: "GITHUB_REQUEST_FAILED",
+      message:
+        "GitHub refused the request: Validation Failed: dave is not a collaborator.",
+      recovery: "change what GitHub's reason names, then refresh",
+    });
+  });
 });

@@ -19,8 +19,9 @@ const readText = (value: unknown) =>
 /**
  * Describes the keymap's commands as the help and the key bar show them:
  * each command's label (`desc`), group, key-bar hint and notes, with its
- * keys. Neighbouring commands with the same label and group share one
- * line, their first keys side by side.
+ * keys, or for a command no key runs what it names instead (`shown`).
+ * Neighbouring commands with the same label and group share one line,
+ * their first keys side by side.
  */
 export default function describeCommands(
   entries: readonly CommandEntry<Renderable, KeyEvent>[],
@@ -31,8 +32,11 @@ export default function describeCommands(
       showKey(sequence),
     );
     const hint = readText(command.hint);
+    // A command no key runs, such as typing into a filter, names what
+    // runs it instead.
+    const shown = first ?? readText(command.shown);
     const line: KeyCommand = {
-      keys: first === undefined ? [] : [first],
+      keys: shown === undefined ? [] : [shown],
       alternates: others,
       label: readText(command.desc) ?? command.name,
       ...(hint === undefined ? {} : { hint }),
