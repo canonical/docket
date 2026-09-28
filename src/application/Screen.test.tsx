@@ -708,6 +708,28 @@ describe("Screen", () => {
       ]);
       expect(screen.lines.at(13)).toBe("");
     });
+
+    it("lists the repositories that read beside one that fails, the status naming the failure", async () => {
+      const cache = await openCache(
+        recordedProvider({
+          events: async (repo) => {
+            if (repo === "example-org/example-docs") {
+              throw providerError("GITHUB_TIMED_OUT");
+            }
+            return recordedProvider().events(repo, recordedNow);
+          },
+        }),
+      );
+      const screen = await showActivity(40, cache);
+      expect(screen.lines.slice(1, 3)).toEqual([
+        "PULL REQUESTS",
+        " ┃example#12 PR                      25m",
+      ]);
+      expect(screen.lines.slice(13, 15)).toEqual([
+        "1 thread · 2 events",
+        "✗ offline · data from 12:00",
+      ]);
+    });
   });
 
   describe("keys", () => {

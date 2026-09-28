@@ -322,6 +322,10 @@ export default function Screen({
   });
   const room = width - indent;
   const listed = activity && "list" in activity ? activity.list : undefined;
+  // A failure reading activity's events leaves the rows held, and the
+  // status line names it as it names a failed refresh.
+  const failure = activity && "list" in activity ? activity.failure : undefined;
+  const shownStatus = status && failure ? { ...status, failure } : status;
   const rows: readonly (WaitRow | ActivityThread)[] =
     (owed ?? listed)?.groups.flatMap(
       (group): readonly (WaitRow | ActivityThread)[] => group.rows,
@@ -458,7 +462,7 @@ export default function Screen({
       }
       status={
         <StatusLine
-          status={problem ? undefined : status}
+          status={problem ? undefined : shownStatus}
           action={action}
           now={at}
           timezone={settings.time.timezone}

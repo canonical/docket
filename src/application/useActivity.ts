@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import type { ActivityGrouping, ActivityList } from "../lib/activity/index.js";
+import type { CacheError } from "../lib/cache/index.js";
 import type { Duration } from "../lib/clock/index.js";
 import type { ThreadEvent } from "../lib/events/index.js";
+import type { ProviderError } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import buildActivity from "./buildActivity.js";
 import describeFailure from "./describeFailure.js";
+import isNamedError from "./isNamedError.js";
 import readWindowEvents from "./readWindowEvents.js";
 import type { TerminalView, Watched } from "./types.js";
 
@@ -34,29 +37,46 @@ export interface UseActivityProps {
   readonly at: Date;
 }
 
+/** A failure of GitHub or the cache, which the status line names. */
+type Failure = ProviderError | CacheError;
+
 /**
- * activity's list, or why its events could not be read, or nothing while
- * they are being read for the window on screen.
+ * activity's list, with what failed while reading its events when
+ * something did; or why no repository's events could be read; or nothing
+ * while they are being read for the window on screen.
  */
 export type UseActivityResult =
-  | { readonly list: ActivityList }
+  | { readonly list: ActivityList; readonly failure?: Failure }
   | { readonly problem: Problem }
   | undefined;
 
 /** What was read last, and for which window. */
 type Read = { readonly window: Duration } & (
-  | { readonly events: ReadonlyMap<string, readonly ThreadEvent[]> }
+  | {
+      readonly events: ReadonlyMap<string, readonly ThreadEvent[]>;
+      readonly failure?: Failure;
+    }
   | { readonly problem: Problem }
 );
+
+/**
+ * Whether `error` is a failure GitHub or the cache names, such as no
+ * answer from the network, which the other repositories' reads outlive.
+ * Any other error is a defect, and stops the whole read.
+ */
+const isFailure = (error: unknown): error is Failure => isNamedError(error);
 
 /**
  * Reads activity's events through the cache, and builds its list from
  * them at every instant the screen is drawn at. The events are read
  * whenever the window, the watched repositories or the cache's last
  * sync change; a list already shown for the window stays while they
- * are. When GitHub or the cache fails, the events the cache holds for the
- * window answer, however old: the status line already says what went
- * wrong.
+ * are. When GitHub or the cache fails for a repository, the events the
+ * cache holds for it answer, however old and however far back they
+ * reach, and the failure goes with the list for the status line to name.
+ * A repository with none held has none, so one failure never takes the
+ * others' rows away; only when every repository fails with none held does
+ * the failure stand in for the list.
  *
  * @note Impure: reads the cache, which asks GitHub when its events are
  * older than the call's maximum age.
@@ -80,17 +100,27 @@ export default function useActivity({
     if (!reading || !("cache" in source)) return;
     const { cache, readEvents } = source;
     let current = true;
+    let failure: Failure | undefined;
+    let missing = 0;
     const readHeld = async (repo: string, since: Date) => {
       try {
         return (await readEvents(repo, since)).events;
       } catch (error) {
-        const held = cache.findEvents(repo, since);
-        if (!held) throw error;
-        return held.events;
+        if (!isFailure(error)) throw error;
+        failure ??= error;
+        const held = cache.findEvents(repo);
+        if (!held) missing += 1;
+        return held?.events ?? [];
       }
     };
     readWindowEvents(readHeld, watched, window, now()).then(
-      (events) => current && setRead({ window, events }),
+      (events) =>
+        current &&
+        setRead(
+          failure && missing === watched.length
+            ? { window, problem: describeFailure(failure) }
+            : { window, events, ...(failure && { failure }) },
+        ),
       (error: unknown) =>
         current && setRead({ window, problem: describeFailure(error) }),
     );
@@ -102,7 +132,9 @@ export default function useActivity({
     return undefined;
   }
   if ("problem" in read) return { problem: read.problem };
+  const { events, failure } = read;
   return {
-    list: buildActivity(read.events, threads, watched, window, grouping, at),
+    list: buildActivity(events, threads, watched, window, grouping, at),
+    ...(failure && { failure }),
   };
 }

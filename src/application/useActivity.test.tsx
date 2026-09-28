@@ -53,8 +53,9 @@ const throughCache =
     cache.readEvents(repo, since, 300_000);
 
 /**
- * Draws what the hook gives, one line: the list's summary and the age of
- * its newest thread, the code of its problem, or `reading` while it has
+ * Draws what the hook gives, one line: the list's summary, the age of
+ * its newest thread and the code of what failed while reading, if
+ * anything did; the code of its problem; or `reading` while it has
  * nothing. `change` sets the props it names, as the screen would.
  *
  * @param makeReader Makes the source's reading of events from its cache.
@@ -91,9 +92,10 @@ async function probe(
     if ("problem" in result) return <text>{result.problem.code}</text>;
     const { summary, groups } = result.list;
     const age = groups.at(0)?.rows.at(0)?.distance.text ?? "-";
-    return <text>{`${summary.text} · ${age}`}</text>;
+    const failed = result.failure ? ` · ${result.failure.code}` : "";
+    return <text>{`${summary.text} · ${age}${failed}`}</text>;
   }
-  const screen = await draw(<Probe />, 40, 1);
+  const screen = await draw(<Probe />, 60, 1);
   return {
     change: (next: Partial<UseActivityProps>) =>
       screen.redraw(() => setNext(next)),
@@ -190,7 +192,45 @@ describe("useActivity", () => {
     failing = true;
     await change({ syncedAt: later, at: later });
     await vi.waitFor(async () =>
-      expect(await read()).toBe("2 threads · 3 events · 1h"),
+      expect(await read()).toBe("2 threads · 3 events · 1h · GITHUB_TIMED_OUT"),
+    );
+  });
+
+  it("lists the other repositories' events, with the failure, when one fails with none held", async () => {
+    const { read } = await probe((cache) => (repo, since) => {
+      if (repo === "example-org/example-docs") {
+        return Promise.reject(providerError("GITHUB_TIMED_OUT"));
+      }
+      return throughCache(cache)(repo, since);
+    });
+    await vi.waitFor(async () =>
+      expect(await read()).toBe("1 thread · 2 events · 25m · GITHUB_TIMED_OUT"),
+    );
+  });
+
+  it("lists the events held when t widens the window past them and reading fails", async () => {
+    let failing = false;
+    const { change, read } = await probe((cache) => (repo, since) => {
+      if (failing) return Promise.reject(providerError("GITHUB_TIMED_OUT"));
+      return throughCache(cache)(repo, since);
+    });
+    await vi.waitFor(async () => expect(await read()).toMatch(/^2 threads/));
+    failing = true;
+    // Two weeks reach further back than the one day's read.
+    await change({ window: { amount: 2, unit: "w" } });
+    await vi.waitFor(async () =>
+      expect(await read()).toBe(
+        "2 threads · 4 events · 25m · GITHUB_TIMED_OUT",
+      ),
+    );
+  });
+
+  it("gives a failure no code names, which no held events answer", async () => {
+    const { read } = await probe(
+      () => () => Promise.reject(new Error("a defect")),
+    );
+    await vi.waitFor(async () =>
+      expect(await read()).toBe("UNEXPECTED_FAILURE"),
     );
   });
 
