@@ -20,3 +20,16 @@ export const detailBudgetPerHour = 300;
  * something changed. An idle pane stops it, which bounds it by attention.
  */
 export const selectedThreadInterval = 60_000;
+
+/**
+ * How long, in milliseconds, the selection rests after a move before the
+ * details near it are read, so moving through the list reads once, where
+ * it stops.
+ */
+export const detailRest = 200;
+
+/**
+ * How old, in milliseconds, a thread's details may be before the
+ * selection resting on it, or near it, reads them again: 30 seconds.
+ */
+export const detailStaleAfter = 30_000;

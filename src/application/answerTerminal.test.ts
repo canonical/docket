@@ -142,7 +142,7 @@ describe("answerTerminal", () => {
     const [thread] = recordedThreads;
     if (!thread) throw new Error("the recording has a thread");
     expect(await cacheOf(view).readDetail(thread)).toEqual(parserFixDetail);
-    expect(cacheOf(view).isDetailCapped?.(new Date())).toBe(false);
+    expect(cacheOf(view).details?.isCapped(new Date())).toBe(false);
   });
 
   it("gives the editors whom GitHub offers, and writes as a confirmed text write does", async () => {

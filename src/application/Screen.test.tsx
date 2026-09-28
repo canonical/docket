@@ -45,6 +45,7 @@ import {
   WithKeys,
 } from "../testing/terminal.js";
 import { waitUntil } from "../testing/wait.js";
+import createDetailReader from "./createDetailReader.js";
 import readCandidates from "./readCandidates.js";
 import Screen from "./Screen.js";
 import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
@@ -104,6 +105,10 @@ const readRecordedDetail = async (
   const { createdAt, labels, assignees } = facts;
   return { ...parserFixDetail, createdAt, labels, assignees };
 };
+
+/** Reads several threads' details at once, each as `readRecordedDetail`. */
+const readRecordedDetails = (threads: readonly ThreadSummary[]) =>
+  Promise.all(threads.map(readRecordedDetail));
 
 /** Opens nothing, and says it opened. */
 const openNothing = async (_url: string) => {};
@@ -1616,9 +1621,38 @@ describe("Screen", { timeout: 15_000 }, () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const view = viewOf(cache);
-      const source = { ...view.source, isDetailCapped: () => true };
-      const screen = await show({ ...view, source });
+      const reader = createDetailReader(vi.fn(readRecordedDetails));
+      const details = { ...reader, isCapped: () => true };
+      const screen = await show({
+        ...view,
+        source: { ...view.source, details },
+      });
       expect(screen.lines.at(-2)).toBe("synced 0m ago · details paused");
+    });
+
+    it("reads the selected thread's details and those of the rows around it in one request on opening, so moving to them reads nothing", async () => {
+      const readDetails = vi.fn(readRecordedDetails);
+      const readDetail = vi.fn(readRecordedDetail);
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const view = viewOf(cache, everyCapability, readRecorded, readDetail);
+      const details = createDetailReader(readDetails);
+      const screen = await show({
+        ...view,
+        source: { ...view.source, details },
+      });
+      await vi.waitFor(async () => {
+        await screen.redraw();
+        expect(readDetails).toHaveBeenCalledOnce();
+      });
+      const [asked] = readDetails.mock.calls.at(0) ?? [];
+      expect(asked?.length).toBeGreaterThan(1);
+      const moved = await press(screen, "down", "down", "down");
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await moved.redraw();
+      expect(readDetails).toHaveBeenCalledOnce();
+      expect(readDetail).not.toHaveBeenCalled();
+      expect(moved.lines).not.toContain("  loading…");
     });
 
     it("opens activity at the window and grouping the call names, and t steps on from there", async () => {

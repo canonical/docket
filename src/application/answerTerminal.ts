@@ -102,7 +102,7 @@ export default async function answerTerminal(
       readWatched,
       readViewer: () => provider.viewer(),
       readDetail: (thread) => readOneDetail(details, thread, now()),
-      isDetailCapped: (at) => details.isCapped(at),
+      details,
       readCandidates: (action, thread) =>
         readCandidates(provider, action, thread),
       write: (request) => writeFromTerminal({ provider, cache }, request),

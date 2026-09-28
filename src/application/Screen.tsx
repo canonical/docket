@@ -50,6 +50,7 @@ import useActivity from "./useActivity.js";
 import useAttention, { type UseAttentionProps } from "./useAttention.js";
 import useEditor from "./useEditor.js";
 import useHeldDetails from "./useHeldDetails.js";
+import useReadAhead from "./useReadAhead.js";
 import useScreenKeys from "./useScreenKeys.js";
 import useSelectedWatch from "./useSelectedWatch.js";
 import useViewer from "./useViewer.js";
@@ -299,10 +300,26 @@ export default function Screen({
   });
   useSelectedWatch({
     cache,
-    selected:
-      selectedRow &&
-      ("wait" in selectedRow ? selectedRow.wait.thread : selectedRow.thread),
+    selected: selectedRow && summarize(selectedRow),
     attention: attentionState,
+  });
+  // A row's version: its thread's last change, or, for a thread the data
+  // does not hold, which only an activity row names, its newest event.
+  const findVersion = (row: WaitRow | ActivityThread) => {
+    const facts = findFacts(row);
+    if (facts) return describeVersion(facts);
+    return `${(row as ActivityThread).events.at(0)?.event.at.getTime()}`;
+  };
+  const ahead = useReadAhead({
+    reader: "cache" in source ? source.details : undefined,
+    rows: rows.map((row) => ({
+      thread: summarize(row),
+      version: findVersion(row),
+    })),
+    selected: placeSelection(rows, selections[mode]),
+    attention: attentionState,
+    paused: status?.paused !== undefined,
+    now,
   });
   // A thread's details are read once for each change GitHub records on it,
   // and once for each change the list's roll-up of its checks shows, since
@@ -319,6 +336,20 @@ export default function Screen({
       return row && summarize(row);
     },
   });
+  /** The details the accordion under a row is given: read ahead, or alone. */
+  const readRowDetail = (
+    row: WaitRow | ActivityThread,
+    readAlone: NonNullable<typeof readThreadDetail>,
+  ) => {
+    const version = findVersion(row);
+    const read = ahead.read ?? readAlone;
+    const thread = summarize(row);
+    return readHeld(
+      (each) => read(each, version),
+      thread,
+      ahead.version(thread, version),
+    );
+  };
 
   // What stands in the accordion's place: the open editor, or why a key
   // could not open one.
@@ -361,13 +392,7 @@ export default function Screen({
       <OwedList
         list={owed}
         selected={placeSelection(rows, selections.owed)}
-        readDetail={(row) =>
-          readHeld(
-            readThreadDetail,
-            row.wait.thread,
-            describeVersion(row.wait.thread),
-          )
-        }
+        readDetail={(row) => readRowDetail(row, readThreadDetail)}
         now={at}
         timezone={settings.time.timezone}
         width={width}
@@ -383,13 +408,7 @@ export default function Screen({
       <ActivityList
         list={listed}
         selected={placeSelection(rows, selections.activity)}
-        readDetail={(row) => {
-          const facts = findFacts(row);
-          const version = facts
-            ? describeVersion(facts)
-            : `${row.events.at(0)?.event.at.getTime()}`;
-          return readHeld(readThreadDetail, row.thread, version);
-        }}
+        readDetail={(row) => readRowDetail(row, readThreadDetail)}
         measureWaits={(row) =>
           buildThreadWaits(row.thread, threads, watched, at)
         }
@@ -428,7 +447,7 @@ export default function Screen({
           status={problem ? undefined : shownStatus}
           action={action}
           attention={attentionState}
-          detailsPaused={"cache" in source && source.isDetailCapped?.(at)}
+          detailsPaused={"cache" in source && source.details?.isCapped(at)}
           now={at}
           timezone={settings.time.timezone}
           names={Object.fromEntries(
