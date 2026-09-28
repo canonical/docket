@@ -2,8 +2,10 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type Cache, createCache } from "../lib/cache/index.js";
+import type { ThreadEvent } from "../lib/events/index.js";
 import type {
   Capability,
   Provider,
@@ -15,6 +17,8 @@ import {
   type Thread,
   type ThreadSummary,
 } from "../lib/waits/index.js";
+import { pendingDetail } from "../testing/details.js";
+import { bob } from "../testing/facts.js";
 import {
   everyCapability,
   fakeProvider,
@@ -22,13 +26,17 @@ import {
   providerError,
 } from "../testing/provider.js";
 import {
+  crash,
+  parserFix,
   parserFixDetail,
+  recordedEvents,
   recordedNow,
   recordedProvider,
   recordedRepos,
   recordedSettings,
   recordedThreads,
   recordedWatched,
+  tokensGuide,
 } from "../testing/recorded.js";
 import {
   type Screen as Drawn,
@@ -38,7 +46,7 @@ import {
 } from "../testing/terminal.js";
 import readCandidates from "./readCandidates.js";
 import Screen from "./Screen.js";
-import type { TerminalView, WatchedFiles } from "./types.js";
+import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
 import writeFromTerminal from "./writeFromTerminal.js";
 import type { WriteAction, WriteRequest } from "./writeSet.js";
 
@@ -56,15 +64,22 @@ afterEach(async () => {
   }
 });
 
-/** A cache of the recording's repositories in a folder of its own. */
-async function openCache(provider: Provider, repos = recordedRepos) {
+/**
+ * A cache of the recording's repositories in a folder of its own, read
+ * at `now`.
+ */
+async function openCache(
+  provider: Provider,
+  repos = recordedRepos,
+  now = () => recordedNow,
+) {
   const directory = await mkdtemp(join(tmpdir(), "docket-screen-"));
   folders.push(directory);
   return createCache({
     provider,
     repos: repos.map(({ repo }) => repo),
     directory,
-    now: () => recordedNow,
+    now,
   });
 }
 
@@ -198,6 +213,43 @@ async function showRecorded(
     openInBrowser,
   );
   return (await show(view)).redraw();
+}
+
+/**
+ * The screen on a cache whose snapshots give the open threads of
+ * `threads`, and whose events are `events`, as they stand at each
+ * refresh, with `readDetail` for the accordion, opened on `mode`.
+ * `refresh` moves the clock on three minutes, so the data is old enough
+ * to fetch again, refreshes, and reads the screen back.
+ */
+async function showRefreshing(
+  readDetail: (thread: ThreadSummary) => Promise<ThreadDetail>,
+  threads: () => readonly Thread[] = () => recordedThreads,
+  mode: TerminalMode = "owed",
+  events: () => readonly ThreadEvent[] = () => recordedEvents,
+) {
+  let clock = recordedNow;
+  const provider = recordedProvider({
+    snapshot: async (repo) => ({
+      threads: threads().filter((thread) => thread.repo === repo),
+      cursor: { since: "2026-09-28T09:59:00Z" },
+    }),
+    events: async (repo) =>
+      events().filter(({ thread }) => thread.repo === repo),
+  });
+  const cache = await openCache(provider, recordedRepos, () => clock);
+  await cache.refresh();
+  const view = {
+    ...viewOf(cache, everyCapability, readRecorded, readDetail),
+    mode,
+  };
+  const screen = await (await show(view)).redraw();
+  const refresh = async () => {
+    clock = new Date(clock.getTime() + 180_000);
+    await act(() => cache.refresh());
+    return screen.redraw();
+  };
+  return { screen, cache, refresh };
 }
 
 describe("Screen", () => {
@@ -663,6 +715,215 @@ describe("Screen", () => {
       expect(readDetail.mock.calls.map(([thread]) => thread.number)).toEqual([
         12, 15, 12,
       ]);
+    });
+  });
+
+  describe("a refresh", () => {
+    /** Reads every thread's details as a read that never arrives. */
+    const readForever = () =>
+      vi.fn((_thread: ThreadSummary): Promise<ThreadDetail> => pendingDetail);
+
+    /**
+     * Ten frames as the renderer draws them, a millisecond apart, read
+     * outside React's act, which would settle every update before a frame
+     * is read.
+     */
+    const drawFrames = async (screen: Drawn) => {
+      const frames: string[] = [];
+      for (let frame = 0; frame < 10; frame += 1) {
+        await new Promise((done) => setTimeout(done, 1));
+        await screen.setup.renderOnce();
+        frames.push(screen.setup.captureCharFrame());
+      }
+      return frames.join("\n");
+    };
+
+    /** The numbers of the threads `readDetail` has read, in order. */
+    const readNumbers = (readDetail: ReturnType<typeof readForever>) =>
+      readDetail.mock.calls.map(([thread]) => thread.number);
+
+    it("keeps the selected thread's details on screen, read once, when a refresh brings a new copy of the data", async () => {
+      const readDetail = readForever();
+      readDetail.mockResolvedValueOnce(parserFixDetail);
+      const { screen, cache, refresh } = await showRefreshing(readDetail);
+      expect(screen.lines.at(3)).toBe("  dave · 3d ago");
+      const before = cache.threads();
+      const refreshed = await refresh();
+      expect(cache.threads()).not.toBe(before);
+      expect(refreshed.lines.at(3)).toBe("  dave · 3d ago");
+      expect(readNumbers(readDetail)).toEqual([12]);
+    });
+
+    it("reads a thread's details again once GitHub records a change to it, showing the earlier ones until the new arrive", async () => {
+      let threads = recordedThreads;
+      const { promise, resolve } = Promise.withResolvers<ThreadDetail>();
+      const readDetail = readForever();
+      readDetail.mockResolvedValueOnce(parserFixDetail);
+      readDetail.mockReturnValueOnce(promise);
+      const { screen, refresh } = await showRefreshing(
+        readDetail,
+        () => threads,
+      );
+      threads = [
+        { ...parserFix, updatedAt: new Date("2026-09-28T11:50+02:00") },
+        crash,
+        tokensGuide,
+      ];
+      const changing = await refresh();
+      expect(changing.lines.at(3)).toBe("  dave · 3d ago");
+      expect(readNumbers(readDetail)).toEqual([12, 12]);
+      const reply = {
+        author: bob,
+        at: new Date("2026-09-28T11:50+02:00"),
+        body: "Merging it.",
+      };
+      resolve({
+        ...parserFixDetail,
+        messages: [...parserFixDetail.messages, reply],
+      });
+      expect(await drawFrames(screen)).not.toContain("loading…");
+      const changed = await screen.redraw();
+      expect(changed.lines.slice(3, 5)).toEqual([
+        "  bob · 10m ago",
+        "  Merging it.",
+      ]);
+      await refresh();
+      expect(readNumbers(readDetail)).toEqual([12, 12]);
+    });
+
+    it("gives the reason in place of the earlier details when a changed thread's read fails, never drawing loading", async () => {
+      let threads = recordedThreads;
+      const { promise, reject } = Promise.withResolvers<ThreadDetail>();
+      const readDetail = readForever();
+      readDetail.mockResolvedValueOnce(parserFixDetail);
+      readDetail.mockReturnValueOnce(promise);
+      const { screen, refresh } = await showRefreshing(
+        readDetail,
+        () => threads,
+      );
+      threads = [
+        { ...parserFix, updatedAt: new Date("2026-09-28T11:50+02:00") },
+        crash,
+        tokensGuide,
+      ];
+      await refresh();
+      reject(providerError("GITHUB_TIMED_OUT"));
+      expect(await drawFrames(screen)).not.toContain("loading…");
+      const failed = await screen.redraw();
+      expect(failed.lines.at(3)).toBe("  ✗ failed: The provider failed with");
+    });
+
+    it("keeps a failed read's reason through a refresh, reading again only when the selection comes back", async () => {
+      const readDetail = readForever();
+      readDetail.mockRejectedValueOnce(providerError("GITHUB_TIMED_OUT"));
+      readDetail.mockResolvedValue(parserFixDetail);
+      const { screen, refresh } = await showRefreshing(readDetail);
+      const refreshed = await refresh();
+      expect(refreshed.lines.at(3)).toBe(
+        "  ✗ failed: The provider failed with",
+      );
+      expect(readNumbers(readDetail)).toEqual([12]);
+      const back = await press(screen, "j", "j", "k", "k");
+      expect(back.lines.at(3)).toBe("  dave · 3d ago");
+      expect(readNumbers(readDetail)).toEqual([12, 15, 12]);
+    });
+
+    it("lets go of a thread's details once it leaves the data, and reads them again when it comes back", async () => {
+      let threads = recordedThreads;
+      const readDetail = readForever();
+      readDetail.mockResolvedValue(parserFixDetail);
+      const { screen, refresh } = await showRefreshing(
+        readDetail,
+        () => threads,
+      );
+      threads = [{ ...parserFix, open: false }, crash, tokensGuide];
+      const gone = await refresh();
+      expect(gone.lines.join("\n")).not.toContain("example#12");
+      threads = recordedThreads;
+      await refresh();
+      const back = await press(screen, "k", "k", "k", "k", "k", "k");
+      expect(back.lines.at(1)).toBe(
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      );
+      expect(readNumbers(readDetail).filter((n) => n === 12)).toEqual([12, 12]);
+    });
+
+    /**
+     * Activity's screen once its selected thread's details are drawn, on
+     * a cache whose snapshots give `threads` and whose events are
+     * `events`, reading the details once and never after.
+     */
+    const showActivityRefreshing = async (
+      threads?: () => readonly Thread[],
+      events?: () => readonly ThreadEvent[],
+    ) => {
+      const readDetail = readForever();
+      readDetail.mockImplementationOnce(readRecordedDetail);
+      const shown = await showRefreshing(
+        readDetail,
+        threads,
+        "activity",
+        events,
+      );
+      const drawn = await vi.waitFor(async () => {
+        const { lines } = await shown.screen.redraw();
+        expect(lines.at(1)).toBe("  docs#4 issue                       16h");
+        expect(lines.join("\n")).not.toContain("loading…");
+        return lines;
+      });
+      return { ...shown, readDetail, drawn };
+    };
+
+    it("keeps activity's selected thread's details on screen, read once, when a refresh brings a new copy of the data", async () => {
+      const { screen, cache, refresh, readDetail, drawn } =
+        await showActivityRefreshing();
+      const before = cache.threads();
+      await refresh();
+      expect(cache.threads()).not.toBe(before);
+      expect(await drawFrames(screen)).not.toContain("loading…");
+      expect((await screen.redraw()).lines.slice(0, 9)).toEqual(
+        drawn.slice(0, 9),
+      );
+      expect(readNumbers(readDetail)).toEqual([4]);
+    });
+
+    it("keeps the details of a thread activity shows and the data does not hold, read once, through refreshes", async () => {
+      const { screen, refresh, readDetail, drawn } =
+        await showActivityRefreshing(() =>
+          recordedThreads.filter(({ number }) => number !== 4),
+        );
+      await refresh();
+      await refresh();
+      expect(await drawFrames(screen)).not.toContain("loading…");
+      expect((await screen.redraw()).lines.slice(0, 9)).toEqual(
+        drawn.slice(0, 9),
+      );
+      expect(readNumbers(readDetail)).toEqual([4]);
+    });
+
+    it("reads again the details of a thread the data does not hold once its row shows a newer event, keeping the earlier ones on screen", async () => {
+      let events = recordedEvents;
+      const { screen, refresh, readDetail, drawn } =
+        await showActivityRefreshing(
+          () => recordedThreads.filter(({ number }) => number !== 4),
+          () => events,
+        );
+      events = [
+        ...recordedEvents,
+        {
+          kind: "commented",
+          thread: tokensGuide,
+          actor: bob,
+          at: recordedNow,
+        },
+      ];
+      await refresh();
+      await refresh();
+      await vi.waitFor(() => expect(readNumbers(readDetail)).toEqual([4, 4]));
+      expect(await drawFrames(screen)).not.toContain("loading…");
+      expect((await screen.redraw()).lines.slice(2, 6)).toEqual(
+        drawn.slice(2, 6),
+      );
     });
   });
 
