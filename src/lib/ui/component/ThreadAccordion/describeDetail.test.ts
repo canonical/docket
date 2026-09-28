@@ -13,6 +13,7 @@ import {
   sharedClose,
   soonReply,
 } from "../../../../testing/rows.js";
+import type { WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import describeDetail from "./describeDetail.js";
 
@@ -89,9 +90,9 @@ describe("describeDetail", () => {
         ...overReview.wait,
         owners: ["example-org/reviewers"],
       });
-      expect(describeDetail(team, detail, reading).body.at(0)?.text).toBe(
-        "asked by carol 2h ago",
-      );
+      expect(
+        texts(describeDetail(team, detail, reading).body).slice(0, 2),
+      ).toEqual(["owner example-org/reviewers", "asked by carol 2h ago"]);
     });
 
     it("counts from when the wait began when no request is recorded, in plural", () => {
@@ -194,5 +195,32 @@ describe("describeDetail", () => {
       );
       expect(texts(stack)).toEqual(["example stack 3 · 2 of 3 · → main"]);
     });
+  });
+});
+
+describe("describeDetail, for an owner the row cuts", () => {
+  const ownedBy = (row: WaitRow, owners: readonly string[]) =>
+    measureRow({ ...row.wait, owners });
+  const firstLine = (row: WaitRow, detail: ThreadDetail) =>
+    texts(describeDetail(row, detail, reading).body).at(0);
+
+  it("names the owner whole, first, for every kind of wait", () => {
+    const owners = ["carol-at-example-org"];
+    expect(firstLine(ownedBy(soonReply, owners), soonReplyDetail)).toBe(
+      "owner carol-at-example-org",
+    );
+    expect(firstLine(ownedBy(overReview, owners), overReviewDetail)).toBe(
+      "owner carol-at-example-org",
+    );
+    expect(firstLine(ownedBy(draftClose, owners), sharedCloseDetail)).toBe(
+      "age 6d · owner carol-at-example-org",
+    );
+  });
+
+  it("names every owner whole when the row cuts any of them", () => {
+    const row = ownedBy(overReview, ["alice", "bob", "carol-at-example-org"]);
+    expect(firstLine(row, overReviewDetail)).toBe(
+      "owner alice, bob, carol-at-example-org",
+    );
   });
 });

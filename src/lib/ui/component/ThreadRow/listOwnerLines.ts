@@ -1,7 +1,8 @@
 import type { WaitRow } from "../../../owed/index.js";
+import { loginCells } from "../../constants.js";
 import trimText from "../../trimText.js";
 import wrapText from "../../wrapText.js";
-import { loginCells, marginCells } from "./constants.js";
+import { marginCells } from "./constants.js";
 
 /**
  * The third line of a row that two or more people own, wrapped to as many

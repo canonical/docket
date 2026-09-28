@@ -5,6 +5,7 @@ import type {
   Reviewer,
   ThreadDetail,
 } from "../../../provider/index.js";
+import { loginCells } from "../../constants.js";
 import describeClock from "../../describeClock.js";
 import type { DetailLine, DetailText } from "./types.js";
 
@@ -33,6 +34,19 @@ const nameReviewer = (reviewer: Reviewer) =>
  */
 const decodeLabel = (label: string) => label.replace(/^([^:=]+):\s*/, "$1=");
 
+/**
+ * The owners, whole, when the row cuts any of their logins: only the
+ * close body names them otherwise. It comes first, so no message pushes it
+ * out of the five lines.
+ */
+function describeCutOwners({ owner, owners }: WaitRow): DetailLine[] {
+  const names = [owner, ...(owners?.fields ?? [])].flatMap((field) =>
+    field ? [field.text] : [],
+  );
+  const cut = names.some((name) => Bun.stringWidth(name) > loginCells);
+  return cut ? [line(`owner ${names.join(", ")}`)] : [];
+}
+
 /** The latest message in full, who wrote it, and when the reply began. */
 function describeReply(row: WaitRow, detail: ThreadDetail, reading: Reading) {
   const { now, timezone } = reading;
@@ -46,6 +60,7 @@ function describeReply(row: WaitRow, detail: ThreadDetail, reading: Reading) {
   }).format(started);
   const since = `waiting since ${day} ${describeClock(started, timezone)} · target ${target.amount}${target.unit}`;
   return [
+    ...describeCutOwners(row),
     line(`${author} · ${describeAge(at, now)} ago`),
     ...(latest ? [line(latest.body)] : []),
     { ...line(since), optional: true },
@@ -65,6 +80,7 @@ function describeReview(row: WaitRow, detail: ThreadDetail, reading: Reading) {
   const removed = detail.files.reduce((sum, file) => sum + file.deletions, 0);
   const age = `${describeAge(since, reading.now)} ago`;
   return [
+    ...describeCutOwners(row),
     line(asked ? `asked by ${asked.requester.login} ${age}` : `asked ${age}`),
     line(
       `${count(pushes, "push", "pushes")} since · ${count(detail.files.length, "file", "files")} · +${added} −${removed}`,
@@ -152,7 +168,8 @@ const bodies = {
  * when, then when the reply began and its target; a review shows who
  * asked and when, the pushes since, the files and lines changed, and the
  * checks; a close shows the thread's age and owners, its last activity
- * and its labels as `group=value`. A stacked pull request adds the stack
+ * and its labels as `group=value`. A reply and a review first name the
+ * owners when the row cuts a login. A stacked pull request adds the stack
  * lines. Text is given whole: the accordion fits it to its five lines.
  */
 export default function describeDetail(

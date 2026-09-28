@@ -5,6 +5,7 @@ import {
   overReviewDetail,
   soonReplyDetail,
 } from "../../../../testing/details.js";
+import { measureRow } from "../../../../testing/rows.js";
 import { drawSuspending } from "../../../../testing/terminal.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import { tokens } from "../../../tokens/index.js";
@@ -40,6 +41,22 @@ describe("ThreadAccordion", () => {
         tokens["color.text.muted"],
       );
       expect(screen.look("below #11")?.fg).toBe(tokens["color.text.muted"]);
+    });
+
+    it("names an owner the row cuts whole, first, before the review's body and the stack lines", async () => {
+      const row = measureRow({
+        ...Review.args.row.wait,
+        owners: ["carol-at-example-org"],
+      });
+      const screen = await open({ ...Review.args, row });
+      expect(screen.lines.slice(0, 6)).toEqual([
+        "  owner carol-at-example-org",
+        "  asked by alice 3d ago",
+        "  1 push since · 2 files · +65 −12…",
+        "  example stack 3 · 2 of 3 · → main",
+        "  below #11 merged, above #13 close",
+        "",
+      ]);
     });
 
     it("shows a reply's message in full, wrapped, then when it began, in five lines", async () => {

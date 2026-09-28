@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import type { WaitRow, WaitState } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
+import { loginCells } from "../../constants.js";
 import fitPieces from "../../fitPieces.js";
 import trimText from "../../trimText.js";
 import { Margin } from "./common/index.js";
-import { loginCells, marginCells } from "./constants.js";
+import { marginCells } from "./constants.js";
 import listOwnerLines from "./listOwnerLines.js";
 import type { ThreadRowProps } from "./types.js";
 
