@@ -59,6 +59,7 @@ async function openOn(given: Provider | Problem) {
   const code = await answerTerminal(
     context,
     "owed",
+    "owner",
     300_000,
     undefined,
     recordedSettings,
@@ -84,6 +85,7 @@ describe("answerTerminal", () => {
       resolvedPersonal(false),
     ]);
     expect(view?.mode).toBe("owed");
+    expect(view?.owedGrouping).toBe("owner");
     expect(view?.settings).toBe(recordedSettings);
     expect(view?.now()).toEqual(recordedNow);
     const source = cacheOf(view);

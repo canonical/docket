@@ -5,6 +5,7 @@ import type {
   Resolved,
   Settings,
 } from "../lib/config/index.js";
+import type { OwedGrouping } from "../lib/owed/index.js";
 import type {
   Capability,
   Provider,
@@ -114,6 +115,11 @@ export type TerminalMode = "owed" | "activity";
 export interface TerminalView {
   /** The mode it opens on. */
   readonly mode: TerminalMode;
+  /**
+   * The grouping owed opens on, which `docket owed --by` names: the
+   * header and the call name one address.
+   */
+  readonly owedGrouping: OwedGrouping;
   /** The current time, read whenever an age is measured. */
   readonly now: () => Date;
   /**

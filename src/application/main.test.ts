@@ -51,6 +51,7 @@ describe("main", () => {
     );
     const view: TerminalView = {
       mode: "owed",
+      owedGrouping: "none",
       now: () => recordedNow,
       settings: recordedSettings,
       watched: [],

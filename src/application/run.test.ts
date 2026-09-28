@@ -94,9 +94,35 @@ describe("run", () => {
       expect(views).toHaveLength(1);
     });
 
-    it("prints plain text in a terminal, and whatever --format names", async () => {
+    it("opens the terminal interface on owed at --by's grouping for docket owed in a terminal, without --format", async () => {
+      const views: TerminalView[] = [];
+      const openTerminal = async (view: TerminalView) => {
+        views.push(view);
+        return 0;
+      };
+      const opened = await home.call(["owed", "--by", "stack"], {
+        interactive: true,
+        openTerminal,
+      });
+      expect([opened.code, opened.out, opened.err]).toEqual([0, "", ""]);
+      await home.call([], { interactive: true, openTerminal });
+      await home.call(["activity", "--by", "repo"], {
+        interactive: true,
+        openTerminal,
+      });
+      expect(
+        views.map(({ mode, owedGrouping }) => [mode, owedGrouping]),
+      ).toEqual([
+        ["owed", "stack"],
+        ["owed", "none"],
+        ["activity", "none"],
+      ]);
+    });
+
+    it("prints plain text to a terminal it cannot read keys from, and whatever --format names", async () => {
       const plain = await home.call(["owed", "--by", "owner"], {
         interactive: true,
+        interactiveInput: false,
       });
       expect(plain.out).toMatch(/^owed · by owner\nsynced 0m ago\n/);
       const json = await home.call(["owed", "--format", "json"], {

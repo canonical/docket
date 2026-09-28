@@ -100,6 +100,7 @@ const readNothing = () => undefined;
  */
 export default function Screen({
   mode: openingMode,
+  owedGrouping: openingGrouping,
   now,
   settings,
   watched: opening,
@@ -147,7 +148,10 @@ export default function Screen({
   const [firstActivity] = activityGroupings;
   const [firstWindow] = settings.activity;
   const [mode, setMode] = useState<TerminalMode>(openingMode);
-  const [owedGrouping, setOwedGrouping] = useState(firstOwed);
+  // A call may name by stack when the provider has no stacks to group by.
+  const [owedGrouping, setOwedGrouping] = useState(
+    owedChoices.includes(openingGrouping) ? openingGrouping : firstOwed,
+  );
   const [activityGrouping, setActivityGrouping] = useState(firstActivity);
   const [window, setWindow] = useState(firstWindow);
   const [help, setHelp] = useState(false);

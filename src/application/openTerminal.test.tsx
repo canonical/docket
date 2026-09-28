@@ -59,6 +59,7 @@ describe("openTerminal", () => {
     const { cache, snapshot } = await openCache();
     const { setup, closed } = await open({
       mode: "owed",
+      owedGrouping: "none",
       now: () => recordedNow,
       settings: recordedSettings,
       watched: recordedWatched(),
@@ -86,6 +87,7 @@ describe("openTerminal", () => {
     const { cache } = await openCache(snapshot);
     const { setup, closed } = await open({
       mode: "owed",
+      owedGrouping: "none",
       now: () => recordedNow,
       settings: recordedSettings,
       watched: recordedWatched(),
@@ -106,6 +108,7 @@ describe("openTerminal", () => {
   it("never refreshes when gh gave no token", async () => {
     const { setup, closed } = await open({
       mode: "owed",
+      owedGrouping: "none",
       now: () => recordedNow,
       settings: recordedSettings,
       watched: [],

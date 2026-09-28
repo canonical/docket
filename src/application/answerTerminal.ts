@@ -3,6 +3,7 @@ import {
   resolveSettings,
   type Settings,
 } from "../lib/config/index.js";
+import type { OwedGrouping } from "../lib/owed/index.js";
 import type { Problem } from "../lib/text/index.js";
 import describeFailure from "./describeFailure.js";
 import readRepositoryFiles from "./readRepositoryFiles.js";
@@ -14,11 +15,12 @@ import type {
 } from "./types.js";
 
 /**
- * Opens the terminal interface on `mode` at once: on the shared cache of
- * every watched repository, each on the built-in defaults and the
- * personal file, with a reading of each repository's own file that the
- * interface starts once it has opened. When gh gives no token, it opens
- * on the reason and its recovery instead.
+ * Opens the terminal interface on `mode` at once, with owed grouped by
+ * `owedGrouping`: on the shared cache of every watched repository, each
+ * on the built-in defaults and the personal file, with a reading of each
+ * repository's own file that the interface starts once it has opened.
+ * When gh gives no token, it opens on the reason and its recovery
+ * instead.
  *
  * @note Impure: takes over the terminal until it is closed, and the
  * reading it hands the interface reads through the cache, which asks
@@ -31,6 +33,7 @@ import type {
 export default async function answerTerminal(
   context: Context,
   mode: TerminalMode,
+  owedGrouping: OwedGrouping,
   maxAge: number,
   personal: Layer | undefined,
   settings: Settings,
@@ -39,7 +42,14 @@ export default async function answerTerminal(
   const { now, openTerminal } = context;
   if ("code" in connection) {
     const source = { problem: connection };
-    return openTerminal({ mode, now, settings, watched: [], source });
+    return openTerminal({
+      mode,
+      owedGrouping,
+      now,
+      settings,
+      watched: [],
+      source,
+    });
   }
   const { provider, cache } = connection;
   const readWatched = async (): Promise<WatchedFiles> => {
@@ -59,6 +69,7 @@ export default async function answerTerminal(
   };
   return openTerminal({
     mode,
+    owedGrouping,
     now,
     settings,
     watched: settings.repos.map((repo) => ({

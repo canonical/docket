@@ -70,6 +70,7 @@ function viewOf(
 ): TerminalView {
   return {
     mode: "owed",
+    owedGrouping: "none",
     now: () => recordedNow,
     settings: recordedSettings,
     watched: recordedWatched(),
@@ -204,6 +205,7 @@ describe("Screen", () => {
     it("stands in a notice for the list when gh gives no token, with no status", async () => {
       const view: TerminalView = {
         mode: "owed",
+        owedGrouping: "none",
         now: () => recordedNow,
         settings: recordedSettings,
         watched: [],
@@ -465,6 +467,22 @@ describe("Screen", () => {
       const screen = await (await show(view)).redraw();
       expect(screen.lines.at(0)).toBe(`activity${" ".repeat(19)}24h · by kind`);
       expect((await press(screen, "left")).lines.at(0)).toBe("owed");
+    });
+
+    it("opens owed on the grouping the call names, ungrouped when that is by stack with no stacks", async () => {
+      const cache = await openCache(fakeProvider());
+      const byOwner = { ...viewOf(cache), owedGrouping: "owner" } as const;
+      expect((await show(byOwner)).lines.at(0)).toBe(
+        `owed${" ".repeat(28)}by owner`,
+      );
+      const withoutStacks = new Set(
+        [...everyCapability].filter((each) => each !== "stacks"),
+      );
+      const byStack = {
+        ...viewOf(cache, withoutStacks),
+        owedGrouping: "stack",
+      } as const;
+      expect((await show(byStack)).lines.at(0)).toBe("owed");
     });
 
     it("switches mode with the arrows and h and l, naming only the mode shown, and never wraps", async () => {
