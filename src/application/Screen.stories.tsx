@@ -205,7 +205,8 @@ function connectRecording({
   return {
     cache,
     capabilities: everyCapability,
-    readWatched: async () => ({ watched: recordedWatched(), viewer: "alice" }),
+    readWatched: async () => ({ watched: recordedWatched() }),
+    readViewer: async () => "alice",
     readDetail: read,
     readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
     readCandidates: github
@@ -255,7 +256,6 @@ export const OwedNoTeam: Story<ScreenFrameProps> = {
       ...connectRecording(),
       readWatched: async () => ({
         watched: recordedWatched(teamless),
-        viewer: "alice",
       }),
     },
   },

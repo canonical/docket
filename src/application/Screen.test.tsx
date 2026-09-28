@@ -86,7 +86,6 @@ async function openCache(
 /** Reads the repositories' files as the recording's settings. */
 const readRecorded = async (): Promise<WatchedFiles> => ({
   watched: recordedWatched(),
-  viewer: "alice",
 });
 
 /**
@@ -142,11 +141,18 @@ function viewOf(
       cache,
       capabilities,
       readWatched,
+      readViewer: async () => "alice",
       readDetail,
       readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
       ...edits,
     },
   };
+}
+
+/** The cache and readings a view reads from. */
+function cacheSourceOf({ source }: TerminalView) {
+  if (!("cache" in source)) throw new Error("the view reads a cache");
+  return source;
 }
 
 function show(view: TerminalView, width = 40, onQuit = () => {}, height = 12) {
@@ -417,7 +423,7 @@ describe("Screen", () => {
       expect((await screen.redraw()).lines.at(9)).toBe(
         "2 over · 1 soon · 3 on track",
       );
-      resolve({ watched: generous, viewer: "alice" });
+      resolve({ watched: generous });
       await promise;
       expect((await screen.redraw()).lines.at(9)).toBe(
         "0 over · 0 soon · 6 on track",
@@ -514,7 +520,6 @@ describe("Screen", () => {
       const teamless = { ...recordedSettings, people: new Map() };
       const readTeamless = async () => ({
         watched: recordedWatched(teamless),
-        viewer: "alice",
       });
       const view = {
         ...viewOf(cache, everyCapability, readTeamless),
@@ -544,7 +549,6 @@ describe("Screen", () => {
       const view = {
         ...viewOf(cache, everyCapability, async () => ({
           watched: recordedWatched(teamless),
-          viewer: "alice",
         })),
         settings: teamless,
         watched: recordedWatched(teamless),
@@ -584,7 +588,6 @@ describe("Screen", () => {
           ...recordedWatched().slice(0, 1),
           ...recordedWatched({ ...recordedSettings, people }).slice(1),
         ],
-        viewer: "alice",
       });
       const screen = await show(
         viewOf(cache, everyCapability, readDeclared),
@@ -606,10 +609,29 @@ describe("Screen", () => {
 
     it("says nothing is owed when no repository is watched", async () => {
       const cache = await openCache(fakeProvider(), []);
-      const readNone = async () => ({ watched: [], viewer: "alice" });
+      const readNone = async () => ({ watched: [] });
       const view = { ...viewOf(cache, everyCapability, readNone), watched: [] };
       const screen = await (await show(view)).redraw();
       expect(screen.lines.at(2)).toBe("  nothing owed");
+    });
+
+    it("shows the cached rows, the status naming the failure, when GitHub cannot say whom gh is signed in as", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const view = viewOf(cache);
+      const source = {
+        ...cacheSourceOf(view),
+        readViewer: () => Promise.reject(providerError("GITHUB_UNREACHABLE")),
+      };
+      const screen = await show({ ...view, source });
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.at(10)).toBe(
+          "✗ offline · data from 12:00",
+        ),
+      );
+      expect((await screen.redraw()).lines.at(1)).toMatch(
+        /^▌┃example#12 reply/,
+      );
     });
 
     it("reads the clock again as time passes", async () => {

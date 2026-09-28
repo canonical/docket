@@ -23,8 +23,8 @@ import writeFromTerminal from "./writeFromTerminal.js";
  * `owedGrouping`: on the shared cache of every watched repository, each
  * on the built-in defaults and the personal file, with a reading of each
  * repository's own file and of the login gh is signed in with, which the
- * interface starts once it has opened, and a reading of activity's events. When gh gives no token, it opens
- * on the reason and its recovery
+ * interface starts once it has opened, and a reading of activity's
+ * events. When gh gives no token, it opens on the reason and its recovery
  * instead.
  *
  * @note Impure: takes over the terminal until it is closed, and the
@@ -72,7 +72,7 @@ export default async function answerTerminal(
         personal,
         settings.repos,
       );
-      return { watched, viewer: await provider.viewer() };
+      return { watched };
     } catch (error) {
       // The interface is already open, so a failure is shown in it, as a
       // named problem, rather than thrown where nothing can catch it.
@@ -94,6 +94,7 @@ export default async function answerTerminal(
       cache,
       capabilities: provider.capabilities(),
       readWatched,
+      readViewer: () => provider.viewer(),
       readDetail: (thread) => provider.threadDetail(thread),
       readCandidates: (action, thread) =>
         readCandidates(provider, action, thread),

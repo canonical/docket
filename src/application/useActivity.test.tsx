@@ -76,7 +76,8 @@ async function probe(
   const source: TerminalView["source"] = {
     cache,
     capabilities: everyCapability,
-    readWatched: async () => ({ watched: recordedWatched(), viewer: "alice" }),
+    readWatched: async () => ({ watched: recordedWatched() }),
+    readViewer: async () => "alice",
     readDetail: async () => parserFixDetail,
     readCandidates: () => Promise.reject(new Error("no editor opens")),
     write: () => Promise.reject(new Error("no editor opens")),

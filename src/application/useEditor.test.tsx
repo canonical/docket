@@ -74,8 +74,8 @@ async function showOn(
       capabilities: everyCapability,
       readWatched: async () => ({
         watched: recordedWatched(),
-        viewer: "alice",
       }),
+      readViewer: async () => "alice",
       readDetail: async () => parserFixDetail,
       readCandidates: (action, thread) =>
         readCandidates(provider, action, thread),

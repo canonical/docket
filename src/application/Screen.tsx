@@ -53,6 +53,7 @@ import useActivity from "./useActivity.js";
 import useEditor from "./useEditor.js";
 import useHeldDetails from "./useHeldDetails.js";
 import useScreenKeys from "./useScreenKeys.js";
+import useViewer from "./useViewer.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
@@ -116,18 +117,21 @@ export default function Screen({
   useEffect(() => {
     void readWatched?.().then(setFiles);
   }, [readWatched]);
-  const read = files && "watched" in files ? files : undefined;
-  const watched = read?.watched ?? opening;
+  const watched = files && "watched" in files ? files.watched : opening;
+  const status = useSyncExternalStore(
+    cache?.subscribe ?? ignoreChanges,
+    cache?.status ?? readNothing,
+  );
+  const you = useViewer({
+    readViewer: "cache" in source ? source.readViewer : undefined,
+    syncedAt: status?.syncedAt,
+  });
   const problem =
     "problem" in source
       ? source.problem
       : files && "problem" in files
         ? files.problem
-        : undefined;
-  const status = useSyncExternalStore(
-    cache?.subscribe ?? ignoreChanges,
-    cache?.status ?? readNothing,
-  );
+        : you.problem;
   const cached = useSyncExternalStore(
     cache?.subscribe ?? ignoreChanges,
     cache?.threads ?? readNothing,
@@ -260,7 +264,7 @@ export default function Screen({
       : undefined;
   const owed =
     threads && mode === "owed"
-      ? buildOwed(threads, watched, owedGrouping, at, read?.viewer)
+      ? buildOwed(threads, watched, owedGrouping, at, you.viewer)
       : undefined;
   const activity = useActivity({
     source,
@@ -272,13 +276,16 @@ export default function Screen({
     grouping: activityGrouping,
     now,
     at,
-    viewer: read?.viewer,
+    viewer: you.viewer,
   });
   const room = width - indent;
   const listed = activity && "list" in activity ? activity.list : undefined;
-  // A failure reading activity's events leaves the rows held, and the
-  // status line names it as it names a failed refresh.
-  const failure = activity && "list" in activity ? activity.failure : undefined;
+  // A failure reading activity's events, or whom gh is signed in as,
+  // leaves the rows held, and the status line names it as it names a
+  // failed refresh.
+  const failure =
+    (activity && "list" in activity ? activity.failure : undefined) ??
+    you.failure;
   const shownStatus = status && failure ? { ...status, failure } : status;
   const rows: readonly (WaitRow | ActivityThread)[] =
     (owed ?? listed)?.groups.flatMap(

@@ -107,12 +107,33 @@ describe("answerTerminal", () => {
     await vi.waitFor(() => expect(readFile).toHaveBeenCalledOnce());
   });
 
-  it("reads each repository's settings, and whom gh is signed in as, once the interface asks", async () => {
+  it("reads each repository's settings once the interface asks", async () => {
     const { view } = await openOn(recordedProvider());
     const files = await cacheOf(view).readWatched();
     if (!("watched" in files)) throw new Error("the files were read");
     expect(files.watched.map(({ name }) => name)).toEqual(["example", "docs"]);
-    expect(files.viewer).toBe("alice");
+  });
+
+  it("reads whom gh is signed in as from GitHub, apart from the files", async () => {
+    const { view } = await openOn(recordedProvider());
+    expect(await cacheOf(view).readViewer()).toBe("alice");
+  });
+
+  it("reads the cached files offline, while GitHub cannot say whom gh is signed in as", async () => {
+    const warm = await openOn(recordedProvider());
+    await cacheOf(warm.view).readWatched();
+    const offline = () => Promise.reject(providerError("GITHUB_UNREACHABLE"));
+    const readFile = vi.fn(offline);
+    const { view } = await openOn(
+      recordedProvider({ readFile, viewer: offline }),
+    );
+    const files = await cacheOf(view).readWatched();
+    if (!("watched" in files)) throw new Error("the cached files answer");
+    expect(files.watched.map(({ name }) => name)).toEqual(["example", "docs"]);
+    expect(readFile).not.toHaveBeenCalled();
+    await expect(cacheOf(view).readViewer()).rejects.toMatchObject({
+      code: "GITHUB_UNREACHABLE",
+    });
   });
 
   it("reads a thread's details from the provider, for the accordion", async () => {
