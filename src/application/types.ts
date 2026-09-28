@@ -41,6 +41,7 @@ export interface Invocation {
   readonly maxAge: number;
   readonly by: string | undefined;
   readonly window: string | undefined;
+  readonly confirm: boolean;
 }
 
 /** A watched repository, with the settings in effect for it. */

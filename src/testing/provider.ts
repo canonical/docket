@@ -43,6 +43,7 @@ export function fakeProvider(overrides: Partial<Provider> = {}): Provider {
     threadDetail: unused("threadDetail"),
     assignableUsers: unused("assignableUsers"),
     reviewCandidates: unused("reviewCandidates"),
+    readAssignees: unused("readAssignees"),
     setAssignees: unused("setAssignees"),
     setReviewers: unused("setReviewers"),
     teamMembers: unused("teamMembers"),

@@ -29,10 +29,22 @@ const maxAge: Flag = {
     "How old the cached data may be before docket fetches from GitHub; 0 always fetches.",
 };
 
+const confirm: Flag = {
+  name: "confirm",
+  description:
+    "Applies the change. Without it, docket prints the change it would make and changes nothing.",
+};
+
 const readExits = {
   0: "docket answered, even when threads are over target, and also when it served cached data during a rate limit or an outage, with a warning.",
   2: "A prerequisite is missing: gh is not installed or not signed in, the personal configuration is invalid, or the call itself is not valid.",
   3: "No data could be obtained from GitHub or the cache.",
+} as const;
+
+const writeExits = {
+  0: "docket printed the plan, or applied it, or found nothing to change.",
+  2: readExits[2],
+  3: "GitHub refused the change or applied only part of it, or no data could be obtained.",
 } as const;
 
 /**
@@ -117,6 +129,30 @@ const catalogue: readonly Command[] = [
       2: readExits[2],
       3: "No data could be obtained from GitHub or the cache. show never answers from cached data alone, so it exits 3 during a rate limit or an outage.",
     },
+  },
+  {
+    name: "assign",
+    arguments: "<reference> <login>…",
+    answers:
+      "Sets the assignees of an issue or pull request to exactly the logins given, removing anyone else.",
+    notes: [
+      "The first call prints the plan, such as `add bob, remove alice`, and changes nothing; the same call with --confirm applies it.",
+    ],
+    flags: [confirm, format, maxAge],
+    example: "docket assign example#12 alice bob --confirm",
+    exits: writeExits,
+  },
+  {
+    name: "review",
+    arguments: "<reference> <login or org/team>…",
+    answers:
+      "Sets the reviews requested on a pull request to exactly the people and teams given, withdrawing any other request.",
+    notes: [
+      "A team is written `org/team`. The first call prints the plan and changes nothing; the same call with --confirm applies it.",
+    ],
+    flags: [confirm, format, maxAge],
+    example: "docket review example#12 bob example-org/reviewers",
+    exits: writeExits,
   },
   {
     name: "config",

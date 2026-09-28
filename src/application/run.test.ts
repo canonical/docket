@@ -252,6 +252,48 @@ describe("run", () => {
     );
   });
 
+  describe("docket assign and review", () => {
+    it("prints the plan and changes nothing without --confirm", async () => {
+      const setAssignees = vi.fn();
+      const provider = recordedProvider({ setAssignees });
+      const { code, out } = await home.call(["assign", "example#12", "bob"], {
+        provider,
+      });
+      expect(code).toBe(0);
+      expect(out).toContain('- add "bob"\n- remove "alice"\n');
+      expect(out).toContain("`docket assign example#12 bob --confirm`");
+      expect(setAssignees).not.toHaveBeenCalled();
+    });
+
+    it("exits 3 when GitHub records less than was asked for", async () => {
+      const provider = recordedProvider({
+        setAssignees: async () => [{ login: "bob", type: "user" }],
+      });
+      const { code, out, err } = await home.call(
+        ["assign", "example#12", "bob", "mallory", "--confirm"],
+        { provider },
+      );
+      expect(code).toBe(3);
+      expect(out).toContain('are now: "bob".');
+      expect(err).toBe(
+        '## Error: WRITE_INCOMPLETE\nGitHub did not record "mallory" on example#12.\nRecovery: check that "mallory" can be assigned in example-org/example-repo, then run the command again\n',
+      );
+    });
+
+    it("exits 3 when GitHub refuses the change", async () => {
+      const provider = recordedProvider({
+        setAssignees: () =>
+          Promise.reject(providerError("GITHUB_REQUEST_FAILED")),
+      });
+      const { code, err } = await home.call(
+        ["assign", "example#12", "bob", "--confirm"],
+        { provider },
+      );
+      expect(code).toBe(3);
+      expect(err).toContain("## Error: GITHUB_REQUEST_FAILED\n");
+    });
+  });
+
   describe("docket config", () => {
     it("shows the settings and that gh is signed in, exiting 0", async () => {
       const { code, out } = await home.call(["config"]);

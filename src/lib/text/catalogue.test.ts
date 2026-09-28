@@ -9,6 +9,8 @@ describe("catalogue", () => {
       "owed",
       "activity",
       "show",
+      "assign",
+      "review",
       "config",
     ]);
   });
@@ -53,5 +55,12 @@ describe("catalogue", () => {
       choices: activityGroupings,
       default: activityGroupings.at(0),
     });
+  });
+
+  it("gives --confirm only to the two writes", () => {
+    const confirming = catalogue.filter(({ flags }) =>
+      flags.some(({ name }) => name === "confirm"),
+    );
+    expect(confirming.map(({ name }) => name)).toEqual(["assign", "review"]);
   });
 });

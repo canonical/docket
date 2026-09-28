@@ -7,7 +7,7 @@ const [example] = recordedRepos;
 describe("parseReference", () => {
   it("reads a thread as <repo>#<number> and a stack as <repo> stack <number>", () => {
     expect(
-      parseReference(["example#12", "extra"], recordedRepos, "show"),
+      parseReference(["example#12", "alice"], recordedRepos, "assign"),
     ).toEqual({
       repo: example,
       number: 12,

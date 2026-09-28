@@ -212,6 +212,8 @@ export interface Provider {
   /** Everyone who can be assigned in `repo`. */
   assignableUsers(repo: string): Promise<readonly Account[]>;
   reviewCandidates(pullRequest: ThreadSummary): Promise<ReviewCandidates>;
+  /** The thread's assignees as GitHub records them now, never a copy. */
+  readAssignees(thread: Assignable): Promise<readonly Account[]>;
   /**
    * Makes `logins` the thread's whole set of assignees, removing anyone
    * else, and gives the set that results.

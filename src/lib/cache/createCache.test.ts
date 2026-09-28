@@ -398,3 +398,75 @@ describe("createCache, for a repository's own file", () => {
     });
   });
 });
+
+describe("createCache, after a write", () => {
+  it("brings a repository's changed threads up to date at once, for every process", async () => {
+    const provider = counting();
+    const cache = open(provider);
+    await cache.read(5 * minute);
+    const assigned = thread({ number: 1, assignees: [alice] });
+    vi.mocked(provider.snapshot).mockResolvedValueOnce({
+      threads: [assigned],
+      cursor: { since: "2026-09-28T10:00:00Z" },
+    });
+    const probe = vi.spyOn(provider, "probe");
+    clock = new Date(clock.getTime() + minute);
+    await cache.refreshRepo(repo);
+    expect(provider.snapshot).toHaveBeenLastCalledWith(repo, {
+      since: "2026-09-28T09:59:00Z",
+    });
+    expect(probe).not.toHaveBeenCalled();
+    expect(cache.threads()).toEqual({ threads: [assigned], syncedAt: clock });
+    const other = counting();
+    expect(await open(other).read(5 * minute)).toEqual({
+      threads: [assigned],
+      syncedAt: clock,
+    });
+    expect(other.snapshot).not.toHaveBeenCalled();
+  });
+
+  it("shows the checks still running on a changed pull request as they finished", async () => {
+    const provider = counting();
+    const cache = open(provider);
+    await cache.read(5 * minute);
+    const running = thread({
+      number: 1,
+      kind: "pullRequest",
+      checks: "running",
+    });
+    vi.mocked(provider.snapshot).mockResolvedValueOnce({
+      threads: [running],
+      cursor: { since: "2026-09-28T10:00:00Z" },
+    });
+    vi.spyOn(provider, "refreshVolatile").mockResolvedValueOnce([
+      { repo, number: 1, checks: "passing" },
+    ]);
+    await cache.refreshRepo(repo);
+    expect(cache.threads().threads).toEqual([
+      { ...running, checks: "passing" },
+    ]);
+  });
+
+  it("leaves a repository it holds nothing of for the next read to fetch whole", async () => {
+    const provider = counting();
+    await open(provider).refreshRepo(repo);
+    expect(provider.snapshot).not.toHaveBeenCalled();
+  });
+
+  it("throws the provider's error, and CACHE_UNUSABLE for a folder it cannot make", async () => {
+    const provider = counting();
+    const cache = open(provider);
+    await cache.read(5 * minute);
+    vi.mocked(provider.snapshot).mockRejectedValueOnce(
+      providerError("GITHUB_REQUEST_FAILED"),
+    );
+    await expect(cache.refreshRepo(repo)).rejects.toMatchObject({
+      code: "GITHUB_REQUEST_FAILED",
+    });
+    const file = join(root, "file");
+    await writeFile(file, "");
+    await expect(
+      open(counting(), [repo], join(file, "docket")).refreshRepo(repo),
+    ).rejects.toMatchObject({ code: "CACHE_UNUSABLE" });
+  });
+});

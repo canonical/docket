@@ -1,6 +1,7 @@
 import type { Budget, Provider } from "../provider/index.js";
 import { capabilities } from "./constants.js";
 import createClient from "./createClient.js";
+import fetchAssignees from "./fetchAssignees.js";
 import fetchEvents from "./fetchEvents.js";
 import fetchFile from "./fetchFile.js";
 import fetchSnapshot from "./fetchSnapshot.js";
@@ -63,6 +64,7 @@ export default async function createProvider(
     threadDetail: (thread) => fetchThreadDetail(client, thread),
     assignableUsers: (repo) => listAssignableUsers(client, repo),
     reviewCandidates: (pull) => listReviewCandidates(client, pull),
+    readAssignees: (thread) => fetchAssignees(client, thread),
     setAssignees: (thread, logins) => setAssignees(client, thread, logins),
     setReviewers: (pull, reviewers) => setReviewers(client, pull, reviewers),
     teamMembers: ({ team }) => teamMembers(team),

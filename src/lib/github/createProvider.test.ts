@@ -169,7 +169,11 @@ describe("createProvider", () => {
       }),
     );
     github.rest(`GET /repos/${repo}/teams`, { body: [] });
-    github.rest(`GET /repos/${repo}/issues/1`, { body: { assignees: [] } });
+    github.rest(
+      `GET /repos/${repo}/issues/1`,
+      { body: { assignees: [] } },
+      { body: { assignees: [] } },
+    );
     github.rest(`GET /repos/${repo}/pulls/2/requested_reviewers`, {
       body: { users: [], teams: [] },
     });
@@ -189,6 +193,7 @@ describe("createProvider", () => {
         provider.threadDetail(thread()),
         provider.assignableUsers(repo),
         provider.reviewCandidates(pull),
+        provider.readAssignees({ ...thread(), kind: "issue" }),
         provider.setAssignees({ ...thread(), kind: "issue" }, []),
         provider.setReviewers(pull, []),
         provider.teamMembers({ team: "example-org/reviewers" }),
@@ -197,7 +202,7 @@ describe("createProvider", () => {
         provider.viewer(),
       ]),
     );
-    expect(github.sent).toHaveLength(15);
+    expect(github.sent).toHaveLength(16);
     for (const sent of github.sent) {
       expect(sent.headers.get("authorization")).toBe(`token ${token}`);
     }

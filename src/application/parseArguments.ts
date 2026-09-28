@@ -21,11 +21,17 @@ export type Request =
 const flags: readonly Flag[] = catalogue.flatMap((command) => command.flags);
 
 /**
- * The flags any command may take, drawn from the catalogue, each taking a
- * value, with `--help` and `--version`; each command's list narrows them.
+ * The flags any command may take, drawn from the catalogue: a string for
+ * each that takes a value, a boolean for each switch, with `--help` and
+ * `--version`; each command's list narrows them.
  */
 const options: ParseArgsOptionsConfig = {
-  ...Object.fromEntries(flags.map(({ name }) => [name, { type: "string" }])),
+  ...Object.fromEntries(
+    flags.map(({ name, value }) => [
+      name,
+      { type: value === undefined ? "boolean" : "string" },
+    ]),
+  ),
   help: { type: "boolean" },
   version: { type: "boolean" },
 };
@@ -156,6 +162,7 @@ export default function parseArguments(
       maxAge: Number(seconds) * 1000,
       by: choose("by"),
       window: choose("window"),
+      confirm: values.confirm === true,
     },
   };
 }

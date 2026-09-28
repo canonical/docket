@@ -159,6 +159,19 @@ export interface Cache {
    */
   read(maxAge: number): Promise<CachedThreads>;
   /**
+   * Brings `repo`'s threads up to date at once, whatever their age: each
+   * thread changed since the last sync replaces its copy, under the fetch
+   * lock, and the cache file gives it to every docket process. A write
+   * calls it for the repository of the thread it changed. A repository
+   * with nothing held is left for the next read to fetch whole.
+   *
+   * @throws ProviderError when the provider fails.
+   * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
+   * the fetch lock for longer than the wait allows, and `CACHE_UNUSABLE`
+   * when the cache folder cannot be made, read or written.
+   */
+  refreshRepo(repo: string): Promise<void>;
+  /**
    * The events held for `repo` at or after `since`, however old, as last
    * loaded or fetched; nothing when those held do not reach back to
    * `since`.

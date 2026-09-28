@@ -24,7 +24,9 @@ describe("chooseExitCode", () => {
     "CACHE_LOCK_TIMED_OUT",
     "CACHE_REFRESH_FAILED",
     "THREAD_NOT_FOUND",
-  ] as const)("exits 3 for %s, when no data answers", (code) => {
+    "THREAD_KIND_UNSUPPORTED",
+    "WRITE_INCOMPLETE",
+  ] as const)("exits 3 for %s, no data or a refused change", (code) => {
     expect(chooseExitCode(code)).toBe(3);
   });
 });

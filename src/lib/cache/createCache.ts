@@ -13,6 +13,7 @@ import {
 } from "./constants.js";
 import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
+import mergeSnapshot from "./mergeSnapshot.js";
 import readCacheFile from "./readCacheFile.js";
 import syncRepo from "./syncRepo.js";
 import type {
@@ -349,6 +350,36 @@ export default function createCache({
           });
           await save();
           return { text, syncedAt: at };
+        });
+      } catch (error) {
+        throw classifyFolderFailure(error, directory);
+      }
+    },
+    async refreshRepo(repo) {
+      try {
+        await withFetchLock(directory, async () => {
+          await load();
+          const previous = entry(repo);
+          // With nothing held, the next read fetches the repository whole.
+          if (!previous) return;
+          // Dated from before the fetch, so it is never taken as newer
+          // than it is. No free check for changes runs first: the caller
+          // knows a thread changed, and the check can lag behind a write.
+          const at = now();
+          const changed = await provider.snapshot(repo, previous.cursor);
+          const value = {
+            ...previous,
+            threads: mergeSnapshot(previous.threads, changed.threads),
+            cursor: changed.cursor,
+          };
+          const refreshed = await refreshChecks([value]);
+          store(
+            repo,
+            { ...value, threads: applyChecks(value.threads, refreshed) },
+            at,
+          );
+          await save();
+          publish();
         });
       } catch (error) {
         throw classifyFolderFailure(error, directory);
