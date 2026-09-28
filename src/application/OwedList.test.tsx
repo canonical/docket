@@ -144,6 +144,23 @@ describe("OwedList", () => {
     expect(shown).toHaveBeenLastCalledWith(1);
   });
 
+  it("cuts the notice, never squeezing it, in a region shorter than it", async () => {
+    const screen = await drawList(
+      "none",
+      0,
+      40,
+      3,
+      undefined,
+      () => {},
+      noTeam,
+    );
+    expect(screen.lines).toEqual([
+      "  ✗ no team in docket.yaml, so every",
+      "  comment starts a reply wait",
+      "  Recovery: list the team under people:",
+    ]);
+  });
+
   it("takes fewer lines for the notice at 60 columns", async () => {
     const screen = await drawList(
       "none",

@@ -129,14 +129,36 @@ export default function OwedList({
   useEffect(() => {
     onShownRows(shownRows);
   });
+  // The notice and the rows each have a box of their own lines, so a
+  // selected row taller than the room left is cut at the bottom, and a
+  // box never gives up lines to the other, which would draw the notice's
+  // lines over one another. A region shorter than the notice cuts it.
   return (
     <box flexDirection="column" height={height} overflow="hidden">
-      {notice && <Notice {...notice} width={width} />}
-      {shown.map(({ key, node }) => (
-        <box key={key} flexDirection="column" flexShrink={0}>
-          {node}
+      {notice && (
+        <box
+          flexDirection="column"
+          flexShrink={0}
+          height={Math.min(noticeLines, height)}
+          overflow="hidden"
+        >
+          <box flexShrink={0}>
+            <Notice {...notice} width={width} />
+          </box>
         </box>
-      ))}
+      )}
+      <box
+        flexDirection="column"
+        flexShrink={0}
+        height={Math.max(height - noticeLines, 0)}
+        overflow="hidden"
+      >
+        {shown.map(({ key, node }) => (
+          <box key={key} flexDirection="column" flexShrink={0}>
+            {node}
+          </box>
+        ))}
+      </box>
     </box>
   );
 }

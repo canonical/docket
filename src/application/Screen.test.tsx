@@ -542,6 +542,51 @@ describe("Screen", () => {
       expect((await screen.redraw()).lines.join("\n")).not.toContain("no team");
     });
 
+    it.each([
+      [
+        16,
+        [
+          "▌ docs#4 reply                  18d over",
+          "  Where do tokens live?",
+          "  alice, bob",
+          "  dave · 3d ago",
+        ],
+      ],
+      [
+        14,
+        ["▌ docs#4 reply                  18d over", "  Where do tokens live?"],
+      ],
+    ])(
+      "keeps the notice whole above the selected row, cut below it, at 40 by %i",
+      async (height, rows) => {
+        const cache = await openCache(recordedProvider());
+        await cache.refresh();
+        const teamless = { ...recordedSettings, people: new Map() };
+        const readTeamless = async () => ({
+          watched: recordedWatched(teamless),
+        });
+        const view = {
+          ...viewOf(cache, everyCapability, readTeamless),
+          settings: teamless,
+        };
+        const screen = await show(view, 40, () => {}, height);
+        const owed = await vi.waitFor(async () => {
+          const drawn = await screen.redraw();
+          expect(drawn.lines.at(6)).toMatch(/^▌ docs#4 reply/);
+          return drawn;
+        });
+        expect(owed.lines.slice(1, 6 + rows.length)).toEqual([
+          "  ✗ no team in docket.yaml, so every",
+          "  comment starts a reply wait",
+          "  Recovery: list the team under people:",
+          "  in the personal file or in the",
+          "  repository's .github/docket.yaml",
+          ...rows,
+        ]);
+        expect(owed.lines.at(height - 3)).toMatch(/^\d+ over/);
+      },
+    );
+
     it("keeps the notice above nothing owed while no team is listed", async () => {
       const cache = await openCache(fakeProvider());
       await cache.refresh();
