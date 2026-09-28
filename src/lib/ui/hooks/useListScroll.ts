@@ -9,12 +9,14 @@ import type { UseListScrollProps, UseListScrollResult } from "./types.js";
  * the frame before, so the list moves only when the selection would
  * leave it, and a row is never drawn without its second line.
  */
-const useListScroll = <Block extends { readonly lines: number }>({
+export default function useListScroll<
+  Block extends { readonly lines: number },
+>({
   blocks,
   from,
   to,
   room,
-}: UseListScrollProps<Block>): UseListScrollResult<Block> => {
+}: UseListScrollProps<Block>): UseListScrollResult<Block> {
   const [first, setFirst] = useState(0);
   const top = keepInView(
     blocks.map(({ lines }) => lines),
@@ -30,6 +32,4 @@ const useListScroll = <Block extends { readonly lines: number }>({
     used += lines;
     return index === 0 || used <= room;
   });
-};
-
-export default useListScroll;
+}
