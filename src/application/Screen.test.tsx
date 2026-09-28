@@ -27,6 +27,7 @@ import {
 } from "../testing/recorded.js";
 import {
   type Screen as Drawn,
+  draw,
   drawSuspending,
   WithKeys,
 } from "../testing/terminal.js";
@@ -79,7 +80,13 @@ function viewOf(
     openInBrowser,
     settings: recordedSettings,
     watched: recordedWatched(),
-    source: { cache, capabilities, readWatched, readDetail },
+    source: {
+      cache,
+      capabilities,
+      readWatched,
+      readDetail,
+      readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
+    },
   };
 }
 
@@ -454,9 +461,7 @@ describe("Screen", () => {
     it("keeps owed's selection while activity is shown, where the keys move nothing", async () => {
       const screen = await showRecorded();
       const activity = await press(screen, "l", "j");
-      expect(activity.lines.slice(1, 9).every((line) => line === "")).toBe(
-        true,
-      );
+      expect(activity.lines.join("\n")).not.toContain("▌");
       expect(activity.lines.at(11)).toBe("←→ mode g grp t time ?");
       const owed = await press(screen, "h");
       expect(owed.lines.at(1)).toBe(
@@ -531,6 +536,81 @@ describe("Screen", () => {
       const view = { ...viewOf(cache), openInBrowser: open };
       await press(await (await show(view)).redraw(), "return");
       expect(open).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("activity", () => {
+    /** Opens the recording's activity on a pane 16 lines tall. */
+    async function showActivity(width: number, cache?: Cache) {
+      const opened = cache ?? (await openCache(recordedProvider()));
+      await opened.refresh();
+      const view = { ...viewOf(opened), mode: "activity" } as const;
+      const screen = await draw(
+        <WithKeys>
+          <Screen {...view} onQuit={() => {}} />
+        </WithKeys>,
+        width,
+        16,
+      );
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.slice(1, 3).join("")).not.toBe(""),
+      );
+      return screen.redraw();
+    }
+
+    it("lists each thread with its events under it, by kind, and counts them at 40 columns", async () => {
+      const screen = await showActivity(40);
+      expect(screen.lines).toEqual([
+        `activity${" ".repeat(19)}24h · by kind`,
+        "ISSUES",
+        "  docs#4 issue                       16h",
+        "  Where do tokens live?",
+        "  alice, bob",
+        "    example-sync labelled kind=docs  16h",
+        "PULL REQUESTS",
+        " ┃example#12 PR                      25m",
+        " ┃Fix the parser · alice",
+        "    ✗ checks failed (lint)           25m",
+        "    alice requested review            3h",
+        "",
+        "",
+        "2 threads · 3 events",
+        "synced 0m ago",
+        "←→ mode g grp t time ?",
+      ]);
+    });
+
+    it("regroups with g and reaches further back with t, at 60 columns", async () => {
+      const screen = await showActivity(60);
+      const byRepo = await press(screen, "g");
+      expect(byRepo.lines.slice(0, 2)).toEqual([
+        `activity${" ".repeat(39)}24h · by repo`,
+        "example",
+      ]);
+      const wider = await press(screen, "g", "t");
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.at(13)).toBe(
+          "2 threads · 4 events",
+        ),
+      );
+      expect(wider.lines.at(0)).toBe(`activity${" ".repeat(49)}48h`);
+      expect((await screen.redraw()).lines.at(5)).toBe(
+        `    dave commented${" ".repeat(40)}3d`,
+      );
+    });
+
+    it("stands the failure in for the list when no events are held for the window", async () => {
+      const cache = await openCache(
+        recordedProvider({
+          events: () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
+        }),
+      );
+      const screen = await showActivity(40, cache);
+      expect(screen.lines.slice(1, 3)).toEqual([
+        "",
+        "  ✗ The provider failed with",
+      ]);
+      expect(screen.lines.at(13)).toBe("");
     });
   });
 

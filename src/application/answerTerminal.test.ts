@@ -116,6 +116,19 @@ describe("answerTerminal", () => {
     expect(await cacheOf(view).readDetail(thread)).toEqual(parserFixDetail);
   });
 
+  it("reads activity's events through the cache, fetching them only when older than the maximum age", async () => {
+    const events = vi.fn(recordedProvider().events);
+    const { view } = await openOn(recordedProvider({ events }));
+    const since = new Date("2026-09-20T10:00:00Z");
+    const read = await cacheOf(view).readEvents(
+      "example-org/example-docs",
+      since,
+    );
+    expect(read.events.map(({ kind }) => kind)).toEqual(["labelled"]);
+    await cacheOf(view).readEvents("example-org/example-docs", since);
+    expect(events).toHaveBeenCalledOnce();
+  });
+
   it("opens on why gh gave no token", async () => {
     const problem = {
       code: "GH_NOT_INSTALLED",

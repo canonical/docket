@@ -1,4 +1,4 @@
-import type { Cache } from "../lib/cache/index.js";
+import type { Cache, CachedEvents } from "../lib/cache/index.js";
 import type {
   PersonalFile,
   Repo,
@@ -155,6 +155,14 @@ export interface TerminalView {
          * as the problem the interface shows in place of the list.
          */
         readonly readWatched: () => Promise<WatchedFiles>;
+        /**
+         * Reads the events of a repository at or after `since` through
+         * the cache, no older than the call's maximum age.
+         */
+        readonly readEvents: (
+          repo: string,
+          since: Date,
+        ) => Promise<CachedEvents>;
       }
     | { readonly problem: Problem };
 }

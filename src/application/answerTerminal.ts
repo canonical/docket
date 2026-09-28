@@ -19,14 +19,16 @@ import type {
  * Opens the terminal interface on `mode` at once, with owed grouped by
  * `owedGrouping`: on the shared cache of every watched repository, each
  * on the built-in defaults and the personal file, with a reading of each
- * repository's own file that the interface starts once it has opened.
- * When gh gives no token, it opens on the reason and its recovery
+ * repository's own file that the interface starts once it has opened,
+ * and a reading of activity's events. When gh gives no token, it opens
+ * on the reason and its recovery
  * instead.
  *
  * @note Impure: takes over the terminal until it is closed, and the
- * reading it hands the interface reads through the cache, which asks
- * GitHub when a file it holds is older than `maxAge`.
- * @param maxAge How old a cached repository file may be, in milliseconds.
+ * readings it hands the interface read through the cache, which asks
+ * GitHub when a file or the events it holds are older than `maxAge`.
+ * @param maxAge How old a cached repository file or cached events may be,
+ * in milliseconds.
  * @param connection The provider gh's token opens with the cache on it, or
  * why gh gave no token.
  * @returns The exit code the interface closes with.
@@ -84,6 +86,7 @@ export default async function answerTerminal(
       capabilities: provider.capabilities(),
       readWatched,
       readDetail: (thread) => provider.threadDetail(thread),
+      readEvents: (repo, since) => cache.readEvents(repo, since, maxAge),
     },
   });
 }

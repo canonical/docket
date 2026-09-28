@@ -34,11 +34,13 @@ import {
   StatusLine,
   useCommands,
 } from "../lib/ui/index.js";
+import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import identifyRow from "./identifyRow.js";
 import OwedList from "./OwedList.js";
 import placeSelection, { type Selection } from "./placeSelection.js";
 import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
+import useActivity from "./useActivity.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
@@ -296,6 +298,17 @@ export default function Screen({
     threads && mode === "owed"
       ? buildOwed(threads, watched, owedGrouping, at)
       : undefined;
+  const activity = useActivity({
+    source,
+    threads,
+    syncedAt: status?.syncedAt,
+    shown: mode === "activity",
+    watched,
+    window,
+    grouping: activityGrouping,
+    now,
+    at,
+  });
   const room = width - indent;
   const rows = owed ? owed.groups.flatMap((group) => group.rows) : [];
   useEffect(() => {
@@ -367,7 +380,19 @@ export default function Screen({
         height={height - 4}
       />
     );
+  } else if (activity && "problem" in activity) {
+    const { message, recovery } = activity.problem;
+    region = (
+      <Notice
+        reason={dropFullStop(message)}
+        recovery={recovery}
+        width={width}
+      />
+    );
   }
+  const listed = activity && "list" in activity ? activity.list : undefined;
+  if (listed) region = <ActivityList list={listed} width={width} />;
+  const summary = (owed ?? listed)?.summary.text;
 
   return (
     <Pane
@@ -383,7 +408,11 @@ export default function Screen({
           />
         )
       }
-      counts={owed && <CountsLine summary={owed.summary.text} width={width} />}
+      counts={
+        summary === undefined ? undefined : (
+          <CountsLine summary={summary} width={width} />
+        )
+      }
       status={
         <StatusLine
           status={problem ? undefined : status}
@@ -407,7 +436,7 @@ export default function Screen({
         ) : undefined
       }
     >
-      {owed && owed.groups.length > 0 ? (
+      {listed || (owed && owed.groups.length > 0) ? (
         region
       ) : (
         <box paddingTop={1}>{region}</box>
