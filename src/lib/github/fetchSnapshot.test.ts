@@ -94,6 +94,7 @@ describe("fetchSnapshot", () => {
         title: "Example issue",
         author: { login: "dave", type: "user", member: false },
         createdAt: new Date("2026-09-22T08:00:00Z"),
+        updatedAt: new Date("2026-09-22T08:00:00Z"),
         open: true,
         draft: false,
         labels: ["kind=bug"],

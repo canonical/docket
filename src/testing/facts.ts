@@ -54,6 +54,7 @@ export function thread(facts: Partial<Thread> = {}): Thread {
     title: "Example thread",
     author: dave,
     createdAt: at("2026-09-22T10:00+02:00"),
+    updatedAt: at("2026-09-22T10:00+02:00"),
     open: true,
     draft: false,
     labels: [],
