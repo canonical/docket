@@ -9,10 +9,24 @@ export default class GitHubError extends Error implements ProviderError {
   override readonly name = "GitHubError";
   readonly code: ProviderErrorCode;
   readonly recovery: string;
+  readonly step?: string;
 
-  constructor(code: ProviderErrorCode, message: string, recovery: string) {
+  /**
+   * @param recovery What to do, or `{ step }` for a recovery that is
+   * `step`, then to refresh.
+   */
+  constructor(
+    code: ProviderErrorCode,
+    message: string,
+    recovery: string | { readonly step: string },
+  ) {
     super(message);
     this.code = code;
-    this.recovery = recovery;
+    if (typeof recovery === "string") {
+      this.recovery = recovery;
+    } else {
+      this.recovery = `${recovery.step}, then refresh`;
+      this.step = recovery.step;
+    }
   }
 }

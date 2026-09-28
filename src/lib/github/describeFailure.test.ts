@@ -8,6 +8,7 @@ const described = (error: unknown) => {
     code: failure.code,
     message: failure.message,
     recovery: failure.recovery,
+    step: failure.step,
   };
 };
 
@@ -49,6 +50,7 @@ describe("describeFailure", () => {
           "GitHub is refusing requests from this account until 2026-09-28T11:00:00.000Z, because its rate limit is reached.",
         recovery:
           "wait for the limit to reset at 2026-09-28T11:00:00.000Z, then refresh",
+        step: "wait for the limit to reset at 2026-09-28T11:00:00.000Z",
       });
     });
 
@@ -60,6 +62,7 @@ describe("describeFailure", () => {
         message:
           "GitHub is refusing requests from this account, because its rate limit is reached.",
         recovery: "wait for the limit to reset, then refresh",
+        step: "wait for the limit to reset",
       });
     });
 
@@ -87,6 +90,7 @@ describe("describeFailure", () => {
         "GitHub answered with an error: Could not resolve to a Repository.",
       recovery:
         "check that your gh account can read the repository, then refresh",
+      step: "check that your gh account can read the repository",
     });
   });
 
@@ -110,6 +114,7 @@ describe("describeFailure", () => {
         message:
           "GitHub refused the request: Validation Failed: dave is not a collaborator.",
         recovery: "change what GitHub's reason names, then refresh",
+        step: "change what GitHub's reason names",
       });
     });
 
@@ -135,6 +140,7 @@ describe("describeFailure", () => {
       message: "GitHub refused a request with status 404.",
       recovery:
         "check that your gh account can read the repository, then refresh",
+      step: "check that your gh account can read the repository",
     });
   });
 
@@ -145,6 +151,7 @@ describe("describeFailure", () => {
       message: "docket could not reach github.com: the request got no answer.",
       recovery:
         "check the network connection and https://www.githubstatus.com, then refresh",
+      step: "check the network connection and https://www.githubstatus.com",
     });
   });
 
@@ -154,6 +161,7 @@ describe("describeFailure", () => {
       message: "docket could not get an answer from GitHub.",
       recovery:
         "check the network connection and https://www.githubstatus.com, then refresh",
+      step: "check the network connection and https://www.githubstatus.com",
     };
     expect(described({ status: 502 })).toEqual(outOfReach);
     expect(described(new TypeError("fetch failed"))).toEqual(outOfReach);

@@ -194,6 +194,12 @@ export interface ProviderError extends Error {
   readonly code: ProviderErrorCode;
   /** What to do so the next attempt works. */
   readonly recovery: string;
+  /**
+   * The recovery before its last part, when that part is to refresh: a
+   * face that cannot refresh from where the user is ends `step` with its
+   * own way to try again.
+   */
+  readonly step?: string;
 }
 
 /**

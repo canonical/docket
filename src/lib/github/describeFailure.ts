@@ -68,15 +68,15 @@ export default function describeFailure(
       "GITHUB_RATE_LIMITED",
       `GitHub is refusing requests from this account${at ? ` until ${at}` : ""}, because its rate limit is reached.`,
       at
-        ? `wait for the limit to reset at ${at}, then refresh`
-        : "wait for the limit to reset, then refresh",
+        ? { step: `wait for the limit to reset at ${at}` }
+        : { step: "wait for the limit to reset" },
     );
   }
   if (failure.cause?.name === "TimeoutError") {
     return new GitHubError(
       "GITHUB_TIMED_OUT",
       `GitHub gave no answer within ${requestTimeout / 1000} seconds.`,
-      "check the network connection and https://www.githubstatus.com, then refresh",
+      { step: "check the network connection and https://www.githubstatus.com" },
     );
   }
   if (failure.cause?.name === "TypeError") {
@@ -85,7 +85,7 @@ export default function describeFailure(
     return new GitHubError(
       "GITHUB_UNREACHABLE",
       `docket could not reach ${host}: the request got no answer.`,
-      "check the network connection and https://www.githubstatus.com, then refresh",
+      { step: "check the network connection and https://www.githubstatus.com" },
     );
   }
   const reported = failure.errors?.at(0)?.message;
@@ -95,7 +95,7 @@ export default function describeFailure(
     return new GitHubError(
       "GITHUB_REQUEST_FAILED",
       `GitHub answered with an error: ${reported}`,
-      "check that your gh account can read the repository, then refresh",
+      { step: "check that your gh account can read the repository" },
     );
   }
   const refusal = failure.status === 422 && readRefusal(failure);
@@ -106,19 +106,19 @@ export default function describeFailure(
     return new GitHubError(
       "GITHUB_REQUEST_FAILED",
       `GitHub refused the request: ${/[.?!]$/.test(refusal) ? refusal : `${refusal}.`}`,
-      "change what GitHub's reason names, then refresh",
+      { step: "change what GitHub's reason names" },
     );
   }
   if (failure.status !== undefined && failure.status < 500) {
     return new GitHubError(
       "GITHUB_REQUEST_FAILED",
       `GitHub refused a request with status ${failure.status}.`,
-      "check that your gh account can read the repository, then refresh",
+      { step: "check that your gh account can read the repository" },
     );
   }
   return new GitHubError(
     "GITHUB_REQUEST_FAILED",
     "docket could not get an answer from GitHub.",
-    "check the network connection and https://www.githubstatus.com, then refresh",
+    { step: "check the network connection and https://www.githubstatus.com" },
   );
 }

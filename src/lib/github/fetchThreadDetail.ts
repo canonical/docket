@@ -158,7 +158,7 @@ export default async function fetchThreadDetail(
     throw new GitHubError(
       "GITHUB_REQUEST_FAILED",
       `GitHub has no thread ${thread.number} in ${thread.repo}.`,
-      "check the thread still exists, then refresh",
+      { step: "check the thread still exists" },
     );
   }
   const messages = [
