@@ -665,6 +665,23 @@ describe("Screen", () => {
     });
   });
 
+  describe("height", () => {
+    it("shows the rows scrolled out above once the pane grows tall enough", async () => {
+      const screen = await showRecorded();
+      const short = await press(screen, "j");
+      expect(short.lines.at(1)).toBe(
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
+      );
+      screen.setup.resize(40, 30);
+      const tall = await screen.redraw();
+      expect(tall.lines.slice(1, 4)).toEqual([
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        " ┃Fix the parser · alice ✗ checks",
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
+      ]);
+    });
+  });
+
   describe("width", () => {
     it("shows only that it needs 40 columns when narrowed, and the screen again when widened", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));

@@ -22,6 +22,15 @@ describe("keepInView", () => {
     expect(keepInView(heights, 3, 3, 4, 0)).toBe(3);
   });
 
+  it("scrolls back up when the room grows, as far as the blocks below fill it", () => {
+    expect(keepInView([2, 7, 2, 3, 2, 2], 1, 1, 20, 1)).toBe(0);
+    expect(keepInView(heights, 3, 3, 16, 2)).toBe(1);
+  });
+
+  it("scrolls back up when blocks below go away", () => {
+    expect(keepInView([1, 2, 2, 7], 3, 3, 12, 2)).toBe(0);
+  });
+
   it("drops the heading before the selected row when both do not fit", () => {
     expect(keepInView([1, 7], 0, 1, 7, 0)).toBe(1);
   });
