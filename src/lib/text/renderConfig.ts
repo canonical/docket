@@ -1,5 +1,7 @@
 import type { Duration } from "../clock/index.js";
 import type { Origin, Repo, Resolved } from "../config/index.js";
+import quote from "./quote.js";
+import renderJson from "./renderJson.js";
 import renderProblems from "./renderProblems.js";
 import sanitize from "./sanitize.js";
 import type { Format, Problem } from "./types.js";
@@ -15,8 +17,11 @@ export interface ConfigAnswer {
   }[];
   /** The settings that hold across repositories, and their origins. */
   readonly shared: Resolved;
-  /** `undefined` when gh gave a token; otherwise why it did not. */
-  readonly gh: Problem | undefined;
+  /**
+   * The login gh is signed in with, or why gh gave no token or GitHub
+   * did not name its account.
+   */
+  readonly gh: { readonly login: string } | Problem;
   readonly format: Format;
 }
 
@@ -29,61 +34,60 @@ const originWords: Readonly<Record<Origin, string>> = {
   repository: "repository file",
 };
 
-const duration = ({ amount, unit }: Duration) => `${amount}${unit}`;
-const list = (values: readonly string[]) =>
+const formatDuration = ({ amount, unit }: Duration) => `${amount}${unit}`;
+const formatList = (values: readonly string[]) =>
   values.length > 0
     ? values.map((value) => sanitize(value)).join(", ")
     : "none";
 
-/** Each person listed in `people`, with the group and the file that says so. */
-const people = ({ settings, origins }: Sections) =>
+/** Each person listed in `people`, with the group the file gives. */
+const listPeople = ({ settings }: Pick<Resolved, "settings">) =>
   [...settings.people].map(([login, group]) => ({
     login: sanitize(login),
     group,
-    reason: `listed in the ${originWords[origins.people]}`,
   }));
 
 /** The sections a repository's own file may declare, as lines of text. */
-function repositoryLines({ settings, origins }: Sections): string[] {
+function writeRepositoryLines({ settings, origins }: Sections): string[] {
   const { time, targets, exempt } = settings;
   const { nextMove, close } = targets;
-  const listed = people({ settings, origins }).map(
+  const listed = listPeople({ settings }).map(
     ({ login, group }) => `${login} ${group}`,
   );
   return [
-    `people (${originWords[origins.people]}): ${list(listed)}`,
+    `people (${originWords[origins.people]}): ${formatList(listed)}`,
     `time (${originWords[origins.time]}): workdays ${time.workdays.join(", ")}, timezone ${sanitize(time.timezone)}`,
-    `targets (${originWords[origins.targets]}): next-move.response ${duration(nextMove.response)}, next-move.review ${duration(nextMove.review)}, close.issue ${duration(close.issue)}, close.pull-request ${duration(close.pullRequest)}, close.discussion ${duration(close.discussion)}`,
-    `exempt (${originWords[origins.exempt]}): close ${list(exempt.close)}`,
+    `targets (${originWords[origins.targets]}): next-move.response ${formatDuration(nextMove.response)}, next-move.review ${formatDuration(nextMove.review)}, close.issue ${formatDuration(close.issue)}, close.pull-request ${formatDuration(close.pullRequest)}, close.discussion ${formatDuration(close.discussion)}`,
+    `exempt (${originWords[origins.exempt]}): close ${formatList(exempt.close)}`,
   ];
 }
 
 /** The sections only the personal file may declare, as lines of text. */
-function sharedLines({ settings, origins }: Sections): string[] {
+function writeSharedLines({ settings, origins }: Sections): string[] {
   return [
-    `repos (${originWords[origins.repos]}): ${list(settings.repos.map(({ name, repo }) => `${name} ${repo}`))}`,
-    `activity (${originWords[origins.activity]}): ${settings.activity.map(duration).join(", ")}`,
-    `hosts (${originWords[origins.hosts]}): ${list(settings.hosts)}`,
+    `repos (${originWords[origins.repos]}): ${formatList(settings.repos.map(({ name, repo }) => `${name} ${repo}`))}`,
+    `activity (${originWords[origins.activity]}): ${settings.activity.map(formatDuration).join(", ")}`,
+    `hosts (${originWords[origins.hosts]}): ${formatList(settings.hosts)}`,
   ];
 }
 
 const fallback =
   "Anyone not listed in people: a bot account is bot, then a member of the organisation is internal, then anyone else is external.";
 
-function settingsData({ settings, origins }: Sections) {
+function describeSettings({ settings, origins }: Sections) {
   const { time, targets, exempt } = settings;
   return {
-    people: people({ settings, origins }),
+    people: listPeople({ settings }),
     time: { ...time, timezone: sanitize(time.timezone) },
     targets: {
       nextMove: {
-        response: duration(targets.nextMove.response),
-        review: duration(targets.nextMove.review),
+        response: formatDuration(targets.nextMove.response),
+        review: formatDuration(targets.nextMove.review),
       },
       close: {
-        issue: duration(targets.close.issue),
-        pullRequest: duration(targets.close.pullRequest),
-        discussion: duration(targets.close.discussion),
+        issue: formatDuration(targets.close.issue),
+        pullRequest: formatDuration(targets.close.pullRequest),
+        discussion: formatDuration(targets.close.discussion),
       },
     },
     exempt: { close: exempt.close.map((label) => sanitize(label)) },
@@ -100,6 +104,8 @@ function settingsData({ settings, origins }: Sections) {
  */
 export default function renderConfig(answer: ConfigAnswer): string {
   const { personal, repositories, shared, gh, format } = answer;
+  const problem = "code" in gh ? gh : undefined;
+  const login = "login" in gh ? sanitize(gh.login) : undefined;
   const found = personal.found
     ? "found"
     : "not found, so built-in defaults apply";
@@ -107,18 +113,18 @@ export default function renderConfig(answer: ConfigAnswer): string {
     const { settings, origins } = shared;
     const data = {
       personalFile: { path: personal.path, found: personal.found },
-      gh: gh
+      gh: problem
         ? {
             signedIn: false,
             error: {
-              code: gh.code,
-              message: sanitize(gh.message),
-              recovery: sanitize(gh.recovery),
+              code: problem.code,
+              message: sanitize(problem.message),
+              recovery: sanitize(problem.recovery),
             },
           }
-        : { signedIn: true, host: settings.hosts[0] },
+        : { signedIn: true, host: settings.hosts.at(0), login },
       repos: settings.repos,
-      activity: settings.activity.map(duration),
+      activity: settings.activity.map(formatDuration),
       hosts: settings.hosts,
       origins: {
         repos: origins.repos,
@@ -128,16 +134,19 @@ export default function renderConfig(answer: ConfigAnswer): string {
       repositories: repositories.map(({ repo, resolved }) => ({
         name: repo.name,
         repo: repo.repo,
-        ...settingsData(resolved),
+        ...describeSettings(resolved),
       })),
     };
-    return `${JSON.stringify(data, null, 2)}\n`;
+    return renderJson(data);
   }
   const llm = format === "llm";
-  const item = (line: string) => (llm ? `- ${line}` : `  ${line}`);
-  const ghLines = gh
-    ? ["", renderProblems([gh], format).trimEnd()]
-    : [`gh: signed in to ${shared.settings.hosts.join(", ")}.`];
+  const formatItem = (line: string) => (llm ? `- ${line}` : `  ${line}`);
+  const ghLines =
+    "code" in gh
+      ? ["", renderProblems([gh], format).trimEnd()]
+      : [
+          `gh: signed in to ${shared.settings.hosts.join(", ")} as ${llm ? quote(gh.login) : sanitize(gh.login)}.`,
+        ];
   const sections = [
     [
       llm ? "# config" : "config",
@@ -146,12 +155,12 @@ export default function renderConfig(answer: ConfigAnswer): string {
     ],
     [
       llm ? "## every repository" : "every repository",
-      ...sharedLines(shared).map(item),
-      item(fallback),
+      ...writeSharedLines(shared).map(formatItem),
+      formatItem(fallback),
     ],
     ...repositories.map(({ repo, resolved }) => [
       llm ? `## ${repo.name} (${repo.repo})` : `${repo.name} (${repo.repo})`,
-      ...repositoryLines(resolved).map(item),
+      ...writeRepositoryLines(resolved).map(formatItem),
     ]),
   ];
   return `${sections.map((lines) => lines.join("\n")).join("\n\n")}\n`;

@@ -1,4 +1,8 @@
-import type { WorkingClock } from "../clock/index.js";
+import {
+  hourMilliseconds,
+  measureDuration,
+  type WorkingClock,
+} from "../clock/index.js";
 import type { Wait } from "../waits/index.js";
 import { waitWords } from "./constants.js";
 import describeOwners from "./describeOwners.js";
@@ -24,6 +28,7 @@ export default function buildRow(
     repo,
     state,
     overdue,
+    targetHours: measureDuration(wait.target, time) / hourMilliseconds,
     stacked: thread.stack !== undefined,
     reference: { text: `${repo}#${thread.number}`, fit: "trimmed" },
     kind: { text: waitWords[wait.kind], fit: "trimmed" },

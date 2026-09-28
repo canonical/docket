@@ -5,6 +5,7 @@ export { default as locateCacheDirectory } from "./locateCacheDirectory.js";
 export { default as startRefreshCycle } from "./startRefreshCycle.js";
 export type {
   Cache,
+  CachedEvents,
   CachedThreads,
   CacheErrorCode,
   CacheOptions,

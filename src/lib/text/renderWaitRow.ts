@@ -26,27 +26,27 @@ function describeRow(row: WaitRow, timezone: string) {
 
 type Described = ReturnType<typeof describeRow>;
 
-const distanceWords = ({ distance, soon }: Described) =>
+const describeDistance = ({ distance, soon }: Described) =>
   soon ? `${distance}, due soon` : distance;
 
 /** The extras a row shows after its title, in words. */
-const marks = (described: Described) => [
+const listMarks = (described: Described) => [
   ...(described.draft ? ["draft"] : []),
   ...(described.checksFailing ? ["checks failing"] : []),
   ...(described.stack ? [described.stack] : []),
 ];
 
 /** One row as one complete line, for an agent. */
-function llmRow(row: WaitRow, timezone: string, detail: Detail): string {
+function renderLlmRow(row: WaitRow, timezone: string, detail: Detail): string {
   const described = describeRow(row, timezone);
   const parts = [
     described.reference,
     quote(row.title.text),
     described.kind,
-    describeOwners(described.owners),
-    distanceWords(described),
+    describeOwners(described.owners.map((login) => quote(login))),
+    describeDistance(described),
     `due ${described.due}`,
-    ...marks(described),
+    ...listMarks(described),
     ...(detail === "detailed"
       ? [`waiting since ${described.started}`, `target ${described.target}`]
       : []),
@@ -55,12 +55,16 @@ function llmRow(row: WaitRow, timezone: string, detail: Detail): string {
 }
 
 /** One row as a person reads it: the reference line, the title, the rest. */
-function plainRow(row: WaitRow, timezone: string, detail: Detail): string[] {
+function renderPlainRow(
+  row: WaitRow,
+  timezone: string,
+  detail: Detail,
+): string[] {
   const described = describeRow(row, timezone);
   const owners = described.owners.join(", ") || "unassigned";
-  const facts = [owners, ...marks(described)];
+  const facts = [owners, ...listMarks(described)];
   return [
-    `${described.reference} · ${described.kind} · ${distanceWords(described)}`,
+    `${described.reference} · ${described.kind} · ${describeDistance(described)}`,
     `  ${sanitize(row.title.text)}`,
     `  ${facts.join(" · ")}`,
     ...(detail === "detailed"
@@ -84,6 +88,6 @@ export default function renderWaitRow(
   detail: Detail,
 ): string[] {
   return format === "llm"
-    ? [llmRow(row, timezone, detail)]
-    : plainRow(row, timezone, detail);
+    ? [renderLlmRow(row, timezone, detail)]
+    : renderPlainRow(row, timezone, detail);
 }

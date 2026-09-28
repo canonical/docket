@@ -11,19 +11,25 @@ export type Detail = "summary" | "standard" | "detailed";
 /** The commands docket answers. */
 export type CommandName = "owed" | "activity" | "show" | "config";
 
-/** A flag a command takes, as its help describes it. */
-export interface Flag {
+/**
+ * A flag a command takes, as its help describes it. Every flag takes a
+ * value. What applies when it is left out is one value, `default`, or,
+ * when that depends on the call, a sentence, `fallback`: the help prints
+ * whichever the flag has.
+ */
+export type Flag = {
   /** The flag without its dashes, such as `max-age`. */
   readonly name: string;
   /** What the value is, such as `seconds`. */
   readonly value: string;
   /** The only values accepted, when the set is closed. */
   readonly choices?: readonly string[];
-  /** What applies when the flag is left out, as the help writes it. */
-  readonly fallback: string;
   /** One sentence saying what the flag changes. */
   readonly description: string;
-}
+} & (
+  | { readonly default: string; readonly fallback?: undefined }
+  | { readonly fallback: string; readonly default?: undefined }
+);
 
 /** A command, with everything its help says. */
 export interface Command {
@@ -51,14 +57,21 @@ export type TextErrorCode =
   | "USAGE_UNKNOWN_COMMAND"
   /** A flag the command does not take. */
   | "USAGE_UNKNOWN_FLAG"
-  /** A flag's value, or an argument, outside what it accepts. */
+  /** A flag's value outside what it accepts. */
   | "USAGE_INVALID_VALUE"
   /** An argument the command needs is missing. */
   | "USAGE_MISSING_ARGUMENT"
   /** A reference that names no watched repository, or is badly written. */
   | "USAGE_INVALID_REFERENCE"
   /** No open thread answers to the reference. */
-  | "THREAD_NOT_FOUND";
+  | "THREAD_NOT_FOUND"
+  /** An argument the command does not take, beyond those it does. */
+  | "USAGE_UNEXPECTED_ARGUMENT"
+  /**
+   * A failure no other code names, such as a defect: the last resort, so
+   * that every stop prints a code and a recovery step.
+   */
+  | "UNEXPECTED_FAILURE";
 
 /** Every named code a user can meet, whichever domain names it. */
 export type ErrorCode =

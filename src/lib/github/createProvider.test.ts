@@ -177,6 +177,9 @@ describe("createProvider", () => {
       body: { data: { organization: null } },
     });
     github.rest(`GET /repos/${repo}/issues`, { status: 304 });
+    github.graphql("Viewer", {
+      body: { data: { rateLimit, viewer: { login: "alice" } } },
+    });
     await settle(
       Promise.all([
         provider.snapshot(repo, null),
@@ -189,9 +192,10 @@ describe("createProvider", () => {
         provider.setReviewers(pull, []),
         provider.teamMembers({ team: "example-org/reviewers" }),
         provider.probe(repo, 'W/"one"'),
+        provider.viewer(),
       ]),
     );
-    expect(github.sent).toHaveLength(13);
+    expect(github.sent).toHaveLength(14);
     for (const sent of github.sent) {
       expect(sent.headers.get("authorization")).toBe(`token ${token}`);
     }

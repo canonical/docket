@@ -32,14 +32,14 @@ describe("renderActivity", () => {
       "2 threads · 4 events",
       "",
       "## ISSUES",
-      '- docs#4 · "Where do tokens live?" · issue · owners alice, bob · newest event 16h ago',
-      "  - example-sync labelled kind=docs (bot) · 16h ago, 2026-09-27 20:00 Europe/Paris",
+      '- docs#4 · "Where do tokens live?" · issue · owners "alice", "bob" · newest event 16h ago',
+      '  - "example-sync" labelled "kind=docs" (bot) · 16h ago, 2026-09-27 20:00 Europe/Paris',
       "",
       "## PULL REQUESTS",
-      '- example#12 · "Fix the parser" · pull request · owner alice · example stack 3, 2 of 3 · newest event 25m ago',
-      "  - checks failed (lint) (bot) · 25m ago, 2026-09-28 11:35 Europe/Paris",
-      "  - alice requested review · 3h ago, 2026-09-28 09:00 Europe/Paris",
-      "  - dave commented · 3d ago, 2026-09-25 09:00 Europe/Paris",
+      '- example#12 · "Fix the parser" · pull request · owner "alice" · example stack 3, 2 of 3 · newest event 25m ago',
+      '  - checks failed ("lint") (bot) · 25m ago, 2026-09-28 11:35 Europe/Paris',
+      '  - "alice" requested review · 3h ago, 2026-09-28 09:00 Europe/Paris',
+      '  - "dave" commented · 3d ago, 2026-09-25 09:00 Europe/Paris',
       "",
     ]);
   });
@@ -68,7 +68,7 @@ describe("renderActivity", () => {
   });
 
   it("adds each event's absolute time for a person at the detailed level", () => {
-    expect(render("plain", "detailed", "none")[7]).toBe(
+    expect(render("plain", "detailed", "none").at(7)).toBe(
       "  checks failed (lint) (bot) · 25m ago, 2026-09-28 11:35 Europe/Paris",
     );
   });
@@ -90,7 +90,7 @@ describe("renderActivity", () => {
       grouping: "none",
       counts: { threads: 2, events: 4 },
     });
-    expect(answer.groups[0].threads[1]).toEqual({
+    expect(answer.groups.at(0).threads.at(1)).toEqual({
       reference: "docs#4",
       title: "Where do tokens live?",
       kind: "issue",
@@ -100,24 +100,31 @@ describe("renderActivity", () => {
       events: [
         {
           kind: "labelled",
+          label: "kind=docs",
           actor: "example-sync",
           bot: true,
-          text: "example-sync labelled kind=docs",
           at: "2026-09-27T18:00:00.000Z",
         },
       ],
     });
     const byKind = JSON.parse(render("json").join("\n"));
-    expect(
-      byKind.groups.map(({ heading }: { heading: string }) => heading),
-    ).toEqual(["ISSUES", "PULL REQUESTS"]);
+    expect(byKind.groups.map(({ kind }: { kind: string }) => kind)).toEqual([
+      "issue",
+      "pullRequest",
+    ]);
+    const byRepo = JSON.parse(render("json", "standard", "repo").join("\n"));
+    expect(byRepo.groups.map(({ repo }: { repo: string }) => repo)).toEqual([
+      "example",
+      "docs",
+    ]);
+    expect(answer.groups.at(0)).not.toHaveProperty("heading");
     const summary = JSON.parse(render("json", "summary").join("\n"));
     expect(summary).not.toHaveProperty("groups");
   });
 
   it("names the owners as given: unassigned, one, or none when the thread's facts are missing", () => {
     const list = recordedActivity("none");
-    const [row] = list.groups[0]?.rows ?? [];
+    const [row] = list.groups.at(0)?.rows ?? [];
     if (!row) throw new Error("the recording has events");
     const rows = [
       { ...row, owner: { text: "unassigned", fit: "trimmed" } },
@@ -133,7 +140,9 @@ describe("renderActivity", () => {
       });
     expect(answer("llm")).toContain("pull request · unassigned ·");
     expect(answer("llm")).toContain("pull request · draft ·");
-    const [unassigned, unknown] = JSON.parse(answer("json")).groups[0].threads;
+    const [unassigned, unknown] = JSON.parse(answer("json")).groups.at(
+      0,
+    ).threads;
     expect(unassigned.owners).toEqual([]);
     expect(unknown.owners).toBeNull();
     expect(answer("plain")).toContain(
@@ -143,7 +152,7 @@ describe("renderActivity", () => {
 
   it("strips control sequences from a hostile title and event", () => {
     const list = recordedActivity("none");
-    const [row] = list.groups[0]?.rows ?? [];
+    const [row] = list.groups.at(0)?.rows ?? [];
     if (!row) throw new Error("the recording has events");
     const [line] = row.events;
     if (!line) throw new Error("the row has events");
@@ -153,6 +162,12 @@ describe("renderActivity", () => {
       events: [
         {
           ...line,
+          event: {
+            ...line.event,
+            kind: "labelled",
+            actor: { ...line.event.actor, login: "alice" },
+            label: "\u001b[31mred",
+          },
           text: { text: "alice labelled \u001b[31mred", fit: "trimmed" },
         },
       ],
@@ -165,7 +180,9 @@ describe("renderActivity", () => {
         detail: "standard",
       });
       expect(text).not.toContain("\u001b");
-      expect(text).toContain("alice labelled red");
+      expect(text).toMatch(
+        format === "json" ? /"label": "red"/ : /"?alice"? labelled "?red/,
+      );
     }
   });
 });

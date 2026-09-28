@@ -1,11 +1,18 @@
-import { describeAddress, type OwedList } from "../owed/index.js";
+import {
+  describeAddress,
+  type OwedGrouping,
+  type OwedList,
+  type WaitGroup,
+} from "../owed/index.js";
 import { quotedNote } from "./constants.js";
-import dataAge from "./dataAge.js";
+import describeDataAge from "./describeDataAge.js";
+import describeWaitData from "./describeWaitData.js";
+import quote from "./quote.js";
 import renderFreshness from "./renderFreshness.js";
+import renderJson from "./renderJson.js";
 import renderWaitRow from "./renderWaitRow.js";
 import sanitize from "./sanitize.js";
 import type { Detail, Format, Freshness } from "./types.js";
-import waitData from "./waitData.js";
 
 /** What owed prints: the list, how old its data is, and how to write it. */
 export interface OwedAnswer {
@@ -13,6 +20,51 @@ export interface OwedAnswer {
   readonly freshness: Freshness;
   readonly format: Format;
   readonly detail: Detail;
+}
+
+/**
+ * A section's heading for an agent, with what GitHub wrote quoted as
+ * data: the owner's login, or the branch a stack is merged onto, which
+ * ends a stack's heading.
+ */
+function quoteHeading(group: WaitGroup, grouping: OwedGrouping, text: string) {
+  const first = group.rows.at(0);
+  if (grouping === "owner" && first && first.wait.owners.length > 0) {
+    return quote(text);
+  }
+  const base = first?.stacked ? first.wait.thread.stack?.base : undefined;
+  if (grouping === "stack" && base && text.endsWith(base)) {
+    return `${sanitize(text.slice(0, -base.length))}${quote(base)}`;
+  }
+  return sanitize(text);
+}
+
+/**
+ * What a section holds, as data: the owner, `null` over the waits no one
+ * owns; the repository; or the stack, `null` over the pull requests in
+ * none. A section always holds a row.
+ */
+function describeGroupData(group: WaitGroup, grouping: OwedGrouping) {
+  const [first] = group.rows;
+  if (grouping === "owner") {
+    // The heading of an owner's section is the owner's login.
+    return { owner: first?.wait.owners.length ? group.heading?.text : null };
+  }
+  if (grouping === "repo") return { repo: first?.repo };
+  if (grouping === "stack") {
+    const stack = first?.stacked ? first.wait.thread.stack : undefined;
+    return {
+      stack: stack
+        ? {
+            repo: first?.repo,
+            number: stack.number,
+            size: stack.size,
+            base: stack.base,
+          }
+        : null,
+    };
+  }
+  return {};
 }
 
 /**
@@ -41,23 +93,27 @@ export default function renderOwed({
     const answer = {
       mode: list.address.mode,
       grouping: list.address.grouping,
-      data: dataAge(freshness),
+      data: describeDataAge(freshness),
       counts: list.counts,
       ...(detail === "summary"
         ? {}
         : {
             groups: groups.map((group) => ({
-              heading: group.heading?.text ?? null,
-              waits: group.rows.map((row) => waitData(row, detail)),
+              ...describeGroupData(group, list.address.grouping),
+              waits: group.rows.map((row) => describeWaitData(row, detail)),
             })),
           }),
     };
-    return `${JSON.stringify(answer, null, 2)}\n`;
+    return renderJson(answer);
   }
   const empty = detail !== "summary" && groups.length === 0;
   const llm = format === "llm";
   const sections = groups.map((group) => {
-    const heading = group.heading && sanitize(group.heading.text);
+    const heading =
+      group.heading &&
+      (llm
+        ? quoteHeading(group, list.address.grouping, group.heading.text)
+        : sanitize(group.heading.text));
     const rows = group.rows.flatMap((row) =>
       renderWaitRow(row, format, timezone, detail),
     );

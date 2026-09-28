@@ -234,5 +234,7 @@ export interface Provider {
   probe(repo: string, tag: string | undefined): Promise<ChangeProbe>;
   /** The rate budget left. */
   budget(): Promise<Budget>;
+  /** The login of the account the provider acts as. */
+  viewer(): Promise<string>;
   capabilities(): ReadonlySet<Capability>;
 }

@@ -1,27 +1,30 @@
+import { activityGroupings } from "../activity/index.js";
+import { owedGroupings } from "../owed/index.js";
+import { defaultDetail, details, formats } from "./constants.js";
 import type { Command, Flag } from "./types.js";
 
 const format: Flag = {
   name: "format",
   value: "format",
-  choices: ["plain", "llm", "json"],
+  choices: formats,
   fallback: "plain in a terminal, llm when the output is piped or captured",
   description:
-    "How the answer is written: plain text for a person, condensed Markdown for an agent (llm), or JSON for a program.",
+    "How the answer is written: plain text for a person, condensed Markdown for an agent (llm), or JSON for a program. In JSON, every key, and every value docket names, such as a kind or a state, is a fixed camelCase identifier rather than an on-screen word: the configuration's `next-move` is `nextMove`. A wait's `target` is written in working hours, and its `overdue` is a share of it, so `overdue` times `target` is the working time past due, or left while negative.",
 };
 
 const detail: Flag = {
   name: "detail",
   value: "level",
-  choices: ["summary", "standard", "detailed"],
-  fallback: "standard",
+  choices: details,
+  default: defaultDetail,
   description:
-    "How much each item shows: summary gives the counts alone, detailed adds when each wait started, its target, and every message, file and check.",
+    "How much each item shows: summary gives the counts alone, and detailed adds when each wait started and every message, file and check. A wait's target shows at detailed in plain and llm, and at every level in JSON.",
 };
 
 const maxAge: Flag = {
   name: "max-age",
   value: "seconds",
-  fallback: "300",
+  default: "300",
   description:
     "How old the cached data may be before docket fetches from GitHub; 0 always fetches.",
 };
@@ -33,9 +36,10 @@ const readExits = {
 } as const;
 
 /**
- * Every command docket answers, with the help each gives. `docket --help`
- * and `docket <command> --help` are drawn from this list alone, so the
- * help cannot drift from the commands.
+ * Every command docket answers, with the help each gives. `docket --help`,
+ * `docket <command> --help` and the reading of the arguments (each flag,
+ * its choices and its default) are drawn from this list alone, so neither
+ * the help nor the parser can drift from the commands.
  */
 const catalogue: readonly Command[] = [
   {
@@ -52,8 +56,8 @@ const catalogue: readonly Command[] = [
       {
         name: "by",
         value: "grouping",
-        choices: ["none", "owner", "repo", "stack"],
-        fallback: "none",
+        choices: owedGroupings,
+        default: "none",
         description:
           "Splits the list into sections: by owner, by repo, or by stack; a wait with two owners appears under each.",
       },
@@ -84,8 +88,8 @@ const catalogue: readonly Command[] = [
       {
         name: "by",
         value: "grouping",
-        choices: ["kind", "repo", "none"],
-        fallback: "kind",
+        choices: activityGroupings,
+        default: "kind",
         description:
           "Splits the list into sections: by kind of thread (ISSUES, PULL REQUESTS, DISCUSSIONS), by repo, or none.",
       },
@@ -104,16 +108,21 @@ const catalogue: readonly Command[] = [
     notes: [
       "A reference names a thread as `<repo>#<number>`, such as `example#12`, where `<repo>` is the short name in the configuration's `repos`. `<repo> stack <number>` shows every open pull request of a stack.",
       "The thread must be open: docket keeps only open threads.",
+      "The thread's details, such as its messages, checks and files, come from GitHub on every call; `--max-age` applies to the rest.",
     ],
     flags: [format, detail, maxAge],
     example: "docket show example#12",
-    exits: readExits,
+    exits: {
+      0: "docket answered, even when the thread is over target.",
+      2: readExits[2],
+      3: "No data could be obtained from GitHub or the cache. show never answers from cached data alone, so it exits 3 during a rate limit or an outage.",
+    },
   },
   {
     name: "config",
     arguments: "",
     answers:
-      "Which settings are in effect for each watched repository, which file set each one, how each listed person is classified, and whether gh is installed and signed in.",
+      "Which settings are in effect for each watched repository, which file set each one, how each listed person is classified, and which account gh is signed in with.",
     notes: [
       "The personal file is `docket/docket.yaml` in `$XDG_CONFIG_HOME`, or `~/.config` when it is unset.",
     ],
@@ -122,7 +131,7 @@ const catalogue: readonly Command[] = [
     exits: {
       0: "The settings are valid and gh is signed in.",
       2: "gh is not installed or not signed in, or the personal configuration is invalid; the output says which.",
-      3: "Never.",
+      3: "GitHub could not be reached to say which account gh is signed in with; the output says why.",
     },
   },
 ];

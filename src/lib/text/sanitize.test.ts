@@ -26,6 +26,17 @@ describe("sanitize", () => {
     expect(sanitize("over\rwritten\u0000\u0008\u007f")).toBe("overwritten");
   });
 
+  it("removes every C1 control, U+0080 to U+009F", () => {
+    const c1 = Array.from({ length: 32 }, (_, index) =>
+      String.fromCodePoint(0x80 + index),
+    );
+    // A control that opens a sequence or a string takes the text after it
+    // along, so each is checked apart.
+    expect(c1.map((control) => sanitize(`a${control}`))).toEqual(
+      c1.map(() => "a"),
+    );
+  });
+
   it("puts a field on one line, each run of breaks becoming one space", () => {
     expect(sanitize("one\n\ntwo\tthree\u2028four")).toBe("one two three four");
   });

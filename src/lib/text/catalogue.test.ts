@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { activityGroupings } from "../activity/index.js";
+import { owedGroupings } from "../owed/index.js";
 import catalogue from "./catalogue.js";
 
 describe("catalogue", () => {
@@ -26,8 +28,30 @@ describe("catalogue", () => {
     expect(flag("format")?.choices).toEqual(["plain", "llm", "json"]);
     expect(flag("detail")).toMatchObject({
       choices: ["summary", "standard", "detailed"],
-      fallback: "standard",
+      default: "standard",
     });
-    expect(flag("max-age")?.fallback).toBe("300");
+    expect(flag("max-age")?.default).toBe("300");
+  });
+
+  it("defaults each flag with choices to one of them, a grouping to the list's first", () => {
+    for (const { flags } of catalogue) {
+      for (const flag of flags) {
+        if (flag.choices && flag.default !== undefined) {
+          expect(flag.choices).toContain(flag.default);
+        }
+      }
+    }
+    const by = (name: string) =>
+      catalogue
+        .find((command) => command.name === name)
+        ?.flags.find((flag) => flag.name === "by");
+    expect(by("owed")).toMatchObject({
+      choices: owedGroupings,
+      default: owedGroupings.at(0),
+    });
+    expect(by("activity")).toMatchObject({
+      choices: activityGroupings,
+      default: activityGroupings.at(0),
+    });
   });
 });

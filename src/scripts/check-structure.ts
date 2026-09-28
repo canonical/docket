@@ -56,7 +56,8 @@ grant(surfaces, ["provider"], "types");
 // A face shows the cache's status, so it names the status's types; it
 // reaches the cache itself only through what the composition root passes.
 grant(["text", "ui"], ["cache"], "types");
-// A face shows a thread's facts and the settings in effect, never computes them.
+// A face shows a thread's facts and the settings in effect, so it names the
+// model's types, and only its types: it never computes a fact itself.
 grant(["text", "ui"], model, "types");
 
 const propertyFolders = new Set([
@@ -397,6 +398,10 @@ const breaks: Record<string, [string, string]> = {
     "dependencies",
     'import { findWaits } from "../waits/index.js";\nexport default function waits() { return findWaits; }',
   ],
+  "src/lib/ui/component/Facts/Facts.tsx": [
+    "dependencies",
+    'import { findWaits } from "../../../waits/index.js";\nexport default function Facts() { return findWaits; }',
+  ],
   "src/lib/tokens/palette.ts": [
     "dependencies",
     'import { port } from "../provider/index.js";\nexport default function palette() { return port; }',
@@ -430,8 +435,9 @@ const allowed: Record<string, string> = {
   "src/lib/ui/component/ThreadRow/ThreadRow.tsx": [
     'import type { Port } from "../../../provider/index.js";',
     'import type { CacheStatus } from "../../../cache/index.js";',
+    'import type { Thread } from "../../../waits/index.js";',
     'import rows from "../../../owed/index.js";',
-    "export default function ThreadRow(port: Port, status: CacheStatus) { return [port, status, rows]; }",
+    "export default function ThreadRow(port: Port, status: CacheStatus, thread: Thread) { return [port, status, thread, rows]; }",
   ].join("\n"),
   "src/lib/text/facts.ts": [
     'import type { Thread } from "../waits/index.js";',

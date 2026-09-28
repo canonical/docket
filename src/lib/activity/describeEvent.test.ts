@@ -39,7 +39,7 @@ describe("describeEvent", () => {
       { ...facts, kind: "pushed" },
       { ...facts, kind: "checksFailed", checks: ["lint", "test"] },
     ];
-    expect(events.map(describeEvent)).toEqual([
+    expect(events.map((event) => describeEvent(event))).toEqual([
       "alice assigned bob",
       "alice labelled kind=bug",
       "alice requested review",
@@ -47,6 +47,24 @@ describe("describeEvent", () => {
       "alice pushed 1 commit",
       "alice pushed",
       "checks failed (lint, test)",
+    ]);
+  });
+
+  it("marks every part written on GitHub the way the caller asks", () => {
+    const mark = (text: string) => `<${text}>`;
+    const events: ThreadEvent[] = [
+      { ...facts, kind: "assigned", assignee: "bob" },
+      { ...facts, kind: "labelled", label: "kind=bug" },
+      { ...facts, kind: "pushed", commits: 2 },
+      { ...facts, kind: "checksFailed", checks: ["lint", "test"] },
+      { ...facts, kind: "commented" },
+    ];
+    expect(events.map((event) => describeEvent(event, mark))).toEqual([
+      "<alice> assigned <bob>",
+      "<alice> labelled <kind=bug>",
+      "<alice> pushed 2 commits",
+      "checks failed (<lint>, <test>)",
+      "<alice> commented",
     ]);
   });
 });

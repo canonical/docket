@@ -19,6 +19,7 @@ describe("buildRow", () => {
       repo: "example",
       state: "over",
       overdue: 14 / 24,
+      targetHours: 24,
       stacked: false,
       reference: { text: "example#88", fit: "trimmed" },
       kind: { text: "reply", fit: "trimmed" },
