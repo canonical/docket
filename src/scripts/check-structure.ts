@@ -509,7 +509,7 @@ const allowed: Record<string, string> = {
   "src/lib/ui/component/ThreadRow/ThreadRow.test.tsx": "",
   "src/testing/alice.ts": 'export const alice = "alice";',
   "guarantees/entry.test.ts":
-    'import { makeHome } from "./docket.js";\nmakeHome;',
+    'import makeHome from "./makeHome.js";\nmakeHome;',
   "src/scripts/check.ts": 'import x from "../lib/owed/index.js";\nx;',
 };
 
