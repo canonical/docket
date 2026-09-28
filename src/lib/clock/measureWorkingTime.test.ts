@@ -118,7 +118,13 @@ describe("measureWorkingTime", () => {
     reads.mockRestore();
   });
 
-  it("gives what walking the span day by day gives, over random spans and zones", () => {
+  // The walk reads the zone once for each of about 82,000 local days, and
+  // the measure reads it about 27,000 times more: one to two seconds on an
+  // idle machine, and up to six under heavy load, past vitest's five-second
+  // default.
+  it("gives what walking the span day by day gives, over random spans and zones", {
+    timeout: 20_000,
+  }, () => {
     let seed = 20_260_927;
     const random = () => {
       seed = (seed * 1_103_515_245 + 12_345) % 2 ** 31;
