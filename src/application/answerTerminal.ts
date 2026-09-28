@@ -16,7 +16,7 @@ import type {
   TerminalView,
   WatchedFiles,
 } from "./types.js";
-import writeSet from "./writeSet.js";
+import writeFromTerminal from "./writeFromTerminal.js";
 
 /**
  * Opens the terminal interface on `mode` at once, with owed grouped by
@@ -96,13 +96,7 @@ export default async function answerTerminal(
       readDetail: (thread) => provider.threadDetail(thread),
       readCandidates: (action, thread) =>
         readCandidates(provider, action, thread),
-      // The editors write as text mode's confirmed writes do, and say in
-      // their own words how to retry.
-      write: (request) =>
-        writeSet(
-          { provider, cache },
-          { ...request, apply: true, format: "plain", retry: "apply again" },
-        ),
+      write: (request) => writeFromTerminal({ provider, cache }, request),
       readEvents: (repo, since) => cache.readEvents(repo, since, maxAge),
     },
   });

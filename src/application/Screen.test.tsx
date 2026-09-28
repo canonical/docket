@@ -39,7 +39,8 @@ import {
 import readCandidates from "./readCandidates.js";
 import Screen from "./Screen.js";
 import type { TerminalView, WatchedFiles } from "./types.js";
-import writeSet, { type WriteAction, type WriteRequest } from "./writeSet.js";
+import writeFromTerminal from "./writeFromTerminal.js";
+import type { WriteAction, WriteRequest } from "./writeSet.js";
 
 // The measuring of waits is watched, not replaced, to see which threads a
 // redraw measures.
@@ -100,11 +101,7 @@ function wireEdits(cache: Cache, provider: Provider = recordedProvider()) {
       readCandidates(provider, action, thread),
     write: (
       request: Pick<WriteRequest, "action" | "thread" | "reference" | "wanted">,
-    ) =>
-      writeSet(
-        { provider, cache },
-        { ...request, apply: true, format: "plain", retry: "apply again" },
-      ),
+    ) => writeFromTerminal({ provider, cache }, request),
   };
 }
 

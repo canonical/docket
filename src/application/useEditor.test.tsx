@@ -32,7 +32,7 @@ import readCandidates from "./readCandidates.js";
 import Screen from "./Screen.js";
 import type { TerminalView } from "./types.js";
 import useEditor, { type UseEditorProps } from "./useEditor.js";
-import writeSet from "./writeSet.js";
+import writeFromTerminal from "./writeFromTerminal.js";
 
 const folders: string[] = [];
 afterEach(async () => {
@@ -76,11 +76,7 @@ async function showOn(
       readDetail: async () => parserFixDetail,
       readCandidates: (action, thread) =>
         readCandidates(provider, action, thread),
-      write: (request) =>
-        writeSet(
-          { provider, cache },
-          { ...request, apply: true, format: "plain", retry: "apply again" },
-        ),
+      write: (request) => writeFromTerminal({ provider, cache }, request),
       readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
     },
   };
@@ -291,6 +287,27 @@ describe("useEditor", () => {
       expect(applied.lines.at(-2)).toBe("✓ assigned alice, carol");
       expect(applied.look("✓ assigned")?.fg).toBe(tokens["color.text.success"]);
       expect(applied.lines.at(3)).toBe(" ┃alice, carol");
+    });
+
+    it("shows the new set on the row at once, and takes it back when GitHub refuses", async () => {
+      const answer = Promise.withResolvers<never>();
+      const provider = recordedProvider({ setAssignees: () => answer.promise });
+      const opened = await settle(
+        await press(await showRecorded(provider, 40, 20), "a"),
+      );
+      const writing = await press(opened, "down", "space", "return");
+      expect(writing.lines.slice(1, 4)).toEqual([
+        "▌┃example#12 reply               4d over",
+        " ┃Fix the parser ✗ checks",
+        " ┃alice, bob",
+      ]);
+      answer.reject(providerError("GITHUB_REQUEST_FAILED"));
+      const refused = await settle(writing, isAnswered);
+      expect(refused.lines.at(-2)).toBe("✗ assign refused");
+      expect(refused.lines.slice(1, 3)).toEqual([
+        "▌┃example#12 reply               4d over",
+        " ┃Fix the parser · alice ✗ checks",
+      ]);
     });
 
     it("unassigns everyone once every box is unticked", async () => {
