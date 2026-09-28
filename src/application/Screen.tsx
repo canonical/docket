@@ -1,4 +1,3 @@
-import { useBindings } from "@opentui/keymap/react";
 import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
@@ -33,7 +32,6 @@ import {
   PaneHeader,
   ProgressLine,
   StatusLine,
-  useCommands,
 } from "../lib/ui/index.js";
 import type { ThreadSummary } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
@@ -44,6 +42,7 @@ import OwedList from "./OwedList.js";
 import placeSelection, { type Selection } from "./placeSelection.js";
 import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
 import useActivity from "./useActivity.js";
+import useScreenKeys from "./useScreenKeys.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
@@ -187,116 +186,36 @@ export default function Screen({
       return { ...current, [mode]: { place, row: identifyRow(row) } };
     });
 
-  useBindings(
-    () => ({
-      commands: [
-        {
-          name: "mode.previous",
-          desc: "switch mode (owed ↔ activity)",
-          group: "Mode",
-          hint: "mode",
-          run: () => setMode("owed"),
-        },
-        {
-          name: "mode.next",
-          desc: "switch mode (owed ↔ activity)",
-          group: "Mode",
-          hint: "mode",
-          notes: ["docket opens owed"],
-          run: () => setMode("activity"),
-        },
-        {
-          name: "selection.previous",
-          desc: "move the selection",
-          group: "List",
-          hint: "sel",
-          run: () => moveSelection(-1),
-        },
-        {
-          name: "selection.next",
-          desc: "move the selection",
-          group: "List",
-          hint: "sel",
-          notes: ["(opens the accordion)"],
-          run: () => moveSelection(1),
-        },
-        {
-          name: "thread.open",
-          desc: "open in the browser",
-          group: "Thread",
-          hint: "open",
-          // Only a row is ever selected, in either mode, so a heading or a
-          // stack never opens.
-          run: () => {
-            const row = drawnSelection.current;
-            if (!row) return;
-            const { url } = "wait" in row ? row.wait.thread : row.thread;
-            openInBrowser(url).catch(() =>
-              setAction({
-                failed: true,
-                text: "could not open the browser",
-                at: now(),
-              }),
-            );
-          },
-        },
-        {
-          name: "grouping.next",
-          desc: "next grouping",
-          group: "Mode",
-          hint: "grp",
-          run: () =>
-            mode === "owed"
-              ? setOwedGrouping((current) => cycle(owedChoices, current))
-              : setActivityGrouping((current) =>
-                  cycle(activityGroupings, current),
-                ),
-        },
-        {
-          name: "window.next",
-          desc: "next time window (activity)",
-          group: "Mode",
-          hint: "time",
-          notes: ["owed: most overdue first", "activity: newest first"],
-          enabled: mode === "activity",
-          run: () => setWindow((current) => cycle(settings.activity, current)),
-        },
-        {
-          name: "help.toggle",
-          desc: "show or hide help",
-          group: "App",
-          hint: "",
-          run: () => setHelp((open) => !open),
-        },
-        {
-          name: "refresh.full",
-          desc: "full refresh",
-          group: "App",
-          run: () => void cache?.fullRefresh(),
-        },
-        { name: "app.quit", desc: "quit", group: "App", run: onQuit },
-      ],
-      bindings: [
-        { key: "left", cmd: "mode.previous" },
-        { key: "h", cmd: "mode.previous" },
-        { key: "right", cmd: "mode.next" },
-        { key: "l", cmd: "mode.next" },
-        { key: "up", cmd: "selection.previous" },
-        { key: "k", cmd: "selection.previous" },
-        { key: "down", cmd: "selection.next" },
-        { key: "j", cmd: "selection.next" },
-        { key: "return", cmd: "thread.open" },
-        { key: "g", cmd: "grouping.next" },
-        { key: "t", cmd: "window.next" },
-        { key: "?", cmd: "help.toggle" },
-        { key: "shift+r", cmd: "refresh.full" },
-        { key: "q", cmd: "app.quit" },
-      ],
-    }),
-    [mode, cache, onQuit, openInBrowser, now],
-  );
-  const active = useCommands({ visibility: "active" });
-  const bound = useCommands({ visibility: "registered" });
+  const { active, bound } = useScreenKeys({
+    mode,
+    actions: {
+      switchMode: setMode,
+      moveSelection,
+      // Only a row is ever selected, in either mode, so a heading or a
+      // stack never opens.
+      openSelected: () => {
+        const row = drawnSelection.current;
+        if (!row) return;
+        const { url } = "wait" in row ? row.wait.thread : row.thread;
+        openInBrowser(url).catch(() =>
+          setAction({
+            failed: true,
+            text: "could not open the browser",
+            at: now(),
+          }),
+        );
+      },
+      nextGrouping: () =>
+        mode === "owed"
+          ? setOwedGrouping((current) => cycle(owedChoices, current))
+          : setActivityGrouping((current) => cycle(activityGroupings, current)),
+      nextWindow: () =>
+        setWindow((current) => cycle(settings.activity, current)),
+      toggleHelp: () => setHelp((open) => !open),
+      refresh: () => void cache?.fullRefresh(),
+      quit: onQuit,
+    },
+  });
 
   const header =
     mode === "owed"
