@@ -157,7 +157,13 @@ describe("createProvider", () => {
     github.graphql(
       "Detail",
       repository({
-        issue: { updatedAt: "2026-09-22T12:00:00Z", comments: { nodes: [] } },
+        issue: {
+          createdAt: "2026-09-21T08:00:00Z",
+          updatedAt: "2026-09-22T12:00:00Z",
+          labels: { nodes: [] },
+          assignees: { nodes: [] },
+          comments: { nodes: [] },
+        },
       }),
     );
     const assignable = repository({ assignableUsers: page([]) });

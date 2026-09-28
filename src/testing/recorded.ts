@@ -150,7 +150,10 @@ export const recordedEvents: readonly ThreadEvent[] = [
 
 /** Everything the details of the pull request show. */
 export const parserFixDetail: ThreadDetail = {
+  createdAt: at("2026-09-21T10:00+02:00"),
   updatedAt: at("2026-09-28T11:35+02:00"),
+  labels: ["kind=bug"],
+  assignees: [alice],
   messages: [
     {
       author: bob,

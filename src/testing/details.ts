@@ -13,7 +13,10 @@ import { alice, at, bob, dave } from "./facts.js";
  * request is merged.
  */
 export const overReviewDetail: ThreadDetail = {
+  createdAt: at("2026-09-22T10:00+02:00"),
   updatedAt: at("2026-09-28T11:35+02:00"),
+  labels: [],
+  assignees: [],
   messages: [],
   requests: [
     { reviewer: bob, requester: alice, at: at("2026-09-25T09:00+02:00") },
@@ -35,7 +38,10 @@ export const overReviewDetail: ThreadDetail = {
 
 /** The details of `soonReply`: dave's message of Sunday, unanswered. */
 export const soonReplyDetail: ThreadDetail = {
+  createdAt: at("2026-09-22T10:00+02:00"),
   updatedAt: at("2026-09-27T12:00+02:00"),
+  labels: [],
+  assignees: [],
   messages: [
     {
       author: dave,
@@ -50,7 +56,10 @@ export const soonReplyDetail: ThreadDetail = {
 
 /** The details of `sharedClose`: bob spoke last, three hours ago. */
 export const sharedCloseDetail: ThreadDetail = {
+  createdAt: at("2026-09-22T10:00+02:00"),
   updatedAt: at("2026-09-28T09:00+02:00"),
+  labels: ["priority: high", "kind=bug", "area/icons"],
+  assignees: [alice, bob, { login: "carol-at-example-org", type: "user" }],
   messages: [
     { author: bob, at: at("2026-09-28T09:00+02:00"), body: "Still open." },
   ],

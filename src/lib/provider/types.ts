@@ -115,10 +115,20 @@ export interface StackMember {
   readonly state: "open" | "closed" | "merged";
 }
 
-/** Everything a thread's details show that the snapshot leaves out. */
+/**
+ * Everything a thread's details show that the snapshot leaves out, and
+ * the facts the snapshot holds of an open thread only: its age, labels
+ * and assignees, which a closed thread shows too.
+ */
 export interface ThreadDetail {
+  /** When the thread was opened. */
+  readonly createdAt: Date;
   /** When anything on the thread last changed. */
   readonly updatedAt: Date;
+  /** Its labels' names, as written, such as `kind: bug`. */
+  readonly labels: readonly string[];
+  /** Its assignees; a discussion has none. */
+  readonly assignees: readonly Account[];
   /** The latest comments and reviews with their text, oldest first. */
   readonly messages: readonly DetailMessage[];
   /** The review requests, on a pull request, oldest first. */
