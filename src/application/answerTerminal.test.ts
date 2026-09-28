@@ -27,7 +27,10 @@ afterEach(() => rm(root, { recursive: true, force: true }));
  * Opens the interface on `given`, with the cache on it when it is a
  * provider, giving the view it was opened on.
  */
-async function openOn(given: Provider | Problem) {
+async function openOn(
+  given: Provider | Problem,
+  activity?: TerminalView["activity"],
+) {
   const connection =
     "code" in given
       ? given
@@ -64,6 +67,7 @@ async function openOn(given: Provider | Problem) {
     undefined,
     recordedSettings,
     connection,
+    activity,
   );
   return { code, view: views.at(0) };
 }
@@ -127,6 +131,22 @@ describe("answerTerminal", () => {
     expect(read.events.map(({ kind }) => kind)).toEqual(["labelled"]);
     await cacheOf(view).readEvents("example-org/example-docs", since);
     expect(events).toHaveBeenCalledOnce();
+  });
+
+  it("hands the interface the window and grouping activity opens on, with or without a token", async () => {
+    const activity = {
+      window: { amount: 72, unit: "h" },
+      grouping: "repo",
+    } as const;
+    const { view } = await openOn(recordedProvider(), activity);
+    expect(view?.activity).toEqual(activity);
+    const problem = {
+      code: "GH_NOT_INSTALLED",
+      message: "docket needs the GitHub CLI (gh).",
+      recovery: "install it",
+    } as const;
+    const refused = await openOn(problem, activity);
+    expect(refused.view?.activity).toEqual(activity);
   });
 
   it("opens on why gh gave no token", async () => {

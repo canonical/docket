@@ -1,3 +1,4 @@
+import type { ActivityAddress } from "../lib/activity/index.js";
 import type { Cache, CachedEvents } from "../lib/cache/index.js";
 import type {
   PersonalFile,
@@ -120,6 +121,13 @@ export interface TerminalView {
    * header and the call name one address.
    */
   readonly owedGrouping: OwedGrouping;
+  /**
+   * The window and grouping activity opens on: those `--window` and
+   * `--by` name when `docket activity` opens the interface, and the first
+   * of each when absent. The window is one of `settings.activity`, the
+   * list `t` steps through.
+   */
+  readonly activity?: Pick<ActivityAddress, "window" | "grouping">;
   /** The current time, read whenever an age is measured. */
   readonly now: () => Date;
   /** Opens a thread's page in the browser, and rejects when it cannot. */

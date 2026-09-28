@@ -12,6 +12,7 @@ import type {
   Connection,
   Context,
   TerminalMode,
+  TerminalView,
   WatchedFiles,
 } from "./types.js";
 
@@ -31,6 +32,8 @@ import type {
  * in milliseconds.
  * @param connection The provider gh's token opens with the cache on it, or
  * why gh gave no token.
+ * @param activity The window and grouping activity opens on, when the
+ * call names them.
  * @returns The exit code the interface closes with.
  */
 export default async function answerTerminal(
@@ -41,6 +44,7 @@ export default async function answerTerminal(
   personal: Layer | undefined,
   settings: Settings,
   connection: Connection | Problem,
+  activity?: TerminalView["activity"],
 ): Promise<number> {
   const { now, openTerminal } = context;
   if ("code" in connection) {
@@ -48,6 +52,7 @@ export default async function answerTerminal(
     return openTerminal({
       mode,
       owedGrouping,
+      activity,
       now,
       openInBrowser,
       settings,
@@ -74,6 +79,7 @@ export default async function answerTerminal(
   return openTerminal({
     mode,
     owedGrouping,
+    activity,
     now,
     openInBrowser,
     settings,

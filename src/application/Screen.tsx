@@ -104,6 +104,7 @@ const readNothing = () => undefined;
 export default function Screen({
   mode: openingMode,
   owedGrouping: openingGrouping,
+  activity: openingActivity,
   now,
   openInBrowser,
   settings,
@@ -156,8 +157,10 @@ export default function Screen({
   const [owedGrouping, setOwedGrouping] = useState(
     owedChoices.includes(openingGrouping) ? openingGrouping : firstOwed,
   );
-  const [activityGrouping, setActivityGrouping] = useState(firstActivity);
-  const [window, setWindow] = useState(firstWindow);
+  const [activityGrouping, setActivityGrouping] = useState(
+    openingActivity?.grouping ?? firstActivity,
+  );
+  const [window, setWindow] = useState(openingActivity?.window ?? firstWindow);
   const [help, setHelp] = useState(false);
   const [selection, setSelection] = useState<Selection>({ place: 0, wait: "" });
   const [action, setAction] = useState<ActionResult>();

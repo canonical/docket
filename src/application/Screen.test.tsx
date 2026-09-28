@@ -615,6 +615,20 @@ describe("Screen", () => {
   });
 
   describe("keys", () => {
+    it("opens activity at the window and grouping the call names, and t steps on from there", async () => {
+      const [, , threeDays] = recordedSettings.activity;
+      const view = {
+        ...viewOf(await openCache(fakeProvider())),
+        mode: "activity",
+        activity: { window: threeDays, grouping: "repo" },
+      } as const;
+      const screen = await (await show(view)).redraw();
+      expect(screen.lines.at(0)).toBe(`activity${" ".repeat(19)}72h · by repo`);
+      expect((await press(screen, "t")).lines.at(0)).toBe(
+        `activity${" ".repeat(20)}1w · by repo`,
+      );
+    });
+
     it("opens on activity when the call asks for it, and switches back to owed", async () => {
       const view = {
         ...viewOf(await openCache(fakeProvider())),

@@ -119,6 +119,27 @@ describe("run", () => {
       ]);
     });
 
+    it("opens activity at the window and grouping --window and --by name, and refuses one activity lacks before opening", async () => {
+      const views: TerminalView[] = [];
+      const openTerminal = async (view: TerminalView) => {
+        views.push(view);
+        return 0;
+      };
+      const terminal = { interactive: true, openTerminal };
+      await home.call(["activity", "--window", "1w", "--by", "repo"], terminal);
+      await home.call(["activity"], terminal);
+      await home.call([], terminal);
+      expect(views.map(({ activity }) => activity)).toEqual([
+        { window: { amount: 1, unit: "w" }, grouping: "repo" },
+        { window: { amount: 72, unit: "h" }, grouping: "kind" },
+        undefined,
+      ]);
+      const refused = await home.call(["activity", "--window", "5d"], terminal);
+      expect(refused.code).toBe(2);
+      expect(refused.err).toMatch(/USAGE_INVALID_VALUE/);
+      expect(views).toHaveLength(3);
+    });
+
     it("prints plain text to a terminal it cannot read keys from, and whatever --format names", async () => {
       const plain = await home.call(["owed", "--by", "owner"], {
         interactive: true,
