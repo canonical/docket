@@ -8,9 +8,9 @@
  *   `Date.now()` keeps running, because the request libraries space and
  *   time out requests with it, and a clock that never moves would never
  *   let one of their waits end.
- * - GitHub: `fetch` answers from the recording module `GUARANTEES_RECORDING`
- *   names, and appends each request it received to the file
- *   `GUARANTEES_REQUESTS` names, one JSON line each. An answer arrives a
+ * - GitHub: `fetch` answers from the recording under `fixtures/` that
+ *   `GUARANTEES_RECORDING` names, and appends each request it received
+ *   to the file `GUARANTEES_REQUESTS` names, one JSON line each. An answer arrives a
  *   few milliseconds after its request, so two requests sent together
  *   overlap and the log shows it.
  * - The machine: the first line of that file is the time zone this
@@ -94,7 +94,19 @@ if (GUARANTEES_BREAK === "unquoted") {
 const fixed =
   new Date(GUARANTEES_NOW).getTime() +
   (GUARANTEES_BREAK === "later" ? 3_600_000 : 0);
-const recording: Recording = (await import(GUARANTEES_RECORDING)).default;
+// Each recording is named here, so every module the corpus loads is one
+// the structure check can read.
+const recordings: Readonly<
+  Record<string, () => Promise<{ default: Recording }>>
+> = {
+  clock: () => import("./fixtures/clock.js"),
+  hostile: () => import("./fixtures/hostile.js"),
+  team: () => import("./fixtures/team.js"),
+  teamChanged: () => import("./fixtures/teamChanged.js"),
+};
+const load = recordings[GUARANTEES_RECORDING];
+if (!load) throw new Error(`no recording named ${GUARANTEES_RECORDING}`);
+const recording = (await load()).default;
 const log = GUARANTEES_REQUESTS;
 appendFileSync(
   log,

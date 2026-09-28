@@ -151,6 +151,23 @@ function importsOf(source: ts.SourceFile): Import[] {
   return found;
 }
 
+/** Whether the file calls `import()` with anything but a written path. */
+function hasUnreadImport(source: ts.SourceFile): boolean {
+  const visit = (node: ts.Node): boolean =>
+    (ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      !(node.arguments[0] && ts.isStringLiteral(node.arguments[0]))) ||
+    (ts.forEachChild(node, visit) ?? false);
+  return visit(source);
+}
+
+/** A terminal component's stories, as an import names them. */
+const isStory = (path: string) =>
+  /^src\/lib\/ui\/.+\.stories\.(js|tsx)$/.test(path);
+
+/** The one corpus file that loads the stories by a path it finds. */
+const storyLoader = "guarantees/screens.test.tsx";
+
 const hasModifier = (node: ts.Node, kind: ts.SyntaxKind) =>
   ts.canHaveModifiers(node) &&
   (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === kind);
@@ -343,9 +360,13 @@ function check(root: string): Finding[] {
 }
 
 /**
- * The guarantees corpus reaches docket only by running it, as a user
- * does, so a guarantee stays evidence independent of the code it pins:
- * none of its files imports anything under `src/`.
+ * The guarantees corpus reaches docket by running it, as a user does, so
+ * a guarantee stays evidence independent of the code it pins: none of its
+ * files imports anything under `src/`, except the terminal components'
+ * stories, which the `screens` entry draws. A story names the states
+ * worth pinning, and only drawing it shows them. An `import()` whose path
+ * the check cannot read could reach anything, so the corpus has one
+ * only in the file that loads the stories.
  */
 function checkCorpus(root: string, findings: Finding[]): void {
   if (!existsSync(join(root, "guarantees"))) return;
@@ -354,13 +375,21 @@ function checkCorpus(root: string, findings: Finding[]): void {
     const text = readFileSync(join(root, path), "utf8");
     const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest);
     for (const { specifier } of importsOf(source)) {
-      if (join(dirname(path), specifier).startsWith("src/")) {
+      const target = join(dirname(path), specifier);
+      if (target.startsWith("src/") && !isStory(target)) {
         findings.push({
           file: path,
           rule: "dependencies",
           message: `the guarantees corpus imports docket's sources: ${specifier}`,
         });
       }
+    }
+    if (path !== storyLoader && hasUnreadImport(source)) {
+      findings.push({
+        file: path,
+        rule: "dependencies",
+        message: `imports a path the check cannot read; only ${storyLoader} may, to load the stories`,
+      });
     }
   }
 }
@@ -451,6 +480,14 @@ const breaks: Record<string, [string, string]> = {
     "dependencies",
     'import { rows } from "../src/lib/owed/index.js";\nexport default rows;',
   ],
+  "guarantees/row.ts": [
+    "dependencies",
+    'import ThreadRow from "../src/lib/ui/component/ThreadRow/ThreadRow.js";\nexport default ThreadRow;',
+  ],
+  "guarantees/load.ts": [
+    "dependencies",
+    "const path = process.argv[2];\nexport default await import(path);",
+  ],
   "src/lib/config/load.ts": [
     "dependencies",
     'import clock from "#clock";\nexport default function load() { return clock; }',
@@ -513,6 +550,10 @@ const allowed: Record<string, string> = {
   "src/testing/alice.ts": 'export const alice = "alice";',
   "guarantees/entry.test.ts":
     'import makeHome from "./makeHome.js";\nmakeHome;',
+  "guarantees/screen.test.ts":
+    'import * as stories from "../src/lib/ui/component/ThreadRow/ThreadRow.stories.js";\nstories;',
+  "guarantees/screens.test.tsx":
+    "const path = process.argv[2];\nexport default await import(path);",
   "src/scripts/check.ts": 'import x from "../lib/owed/index.js";\nx;',
 };
 

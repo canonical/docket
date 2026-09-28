@@ -4,7 +4,7 @@ The few behaviours of docket whose silent change would mislead a maintainer or a
 
 ## A layer of its own
 
-The unit tests beside the code pin behaviour from inside. The corpus pins it from outside: it starts docket as its own process, `bun src/application/main.ts`, and reads only what a user reads, the output, the exit code and the requests docket sent to GitHub. Nothing here imports `src/`, and nothing in `src/` imports this folder; `bun run check:structure` refuses both. A guarantee is written as one from the start, and a unit test never moves here.
+The unit tests beside the code pin behaviour from inside. The corpus pins it from outside: it starts docket as its own process, `bun src/application/main.ts`, and reads only what a user reads, the output, the exit code and the requests docket sent to GitHub. Nothing here imports `src/` but the terminal components' stories under `src/lib/ui/`, and nothing in `src/` imports this folder; `bun run check:structure` refuses any other import either way, and an `import()` whose path it cannot read anywhere but in `screens.test.tsx`, the file that loads the stories. A guarantee is written as one from the start, and a unit test never moves here.
 
 ## What a call runs against
 
