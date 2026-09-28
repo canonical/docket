@@ -148,18 +148,21 @@ describe("run", () => {
       expect(err).toContain("Error CONFIG_INVALID_DURATION\n");
     });
 
-    it("rethrows a failure that has no named code", async () => {
+    it("exits 3 with UNEXPECTED_FAILURE, naming the cause, on a failure no code names", async () => {
       const provider = recordedProvider({
         snapshot: () => Promise.reject(new TypeError("a defect")),
       });
-      await expect(home.call(["owed"], { provider })).rejects.toThrow(
-        "a defect",
-      );
-      await expect(
-        home.call(["config"], {
-          provider: () => Promise.reject(new TypeError("gh")),
-        }),
-      ).rejects.toThrow("gh");
+      const owed = await home.call(["owed"], { provider });
+      expect(owed).toEqual({
+        code: 3,
+        out: "",
+        err: "## Error: UNEXPECTED_FAILURE\ndocket stopped on a failure it has no name for: a defect.\nRecovery: run the command again; if it keeps failing, report it\n",
+      });
+      const config = await home.call(["config"], {
+        provider: () => Promise.reject(new TypeError("gh")),
+      });
+      expect(config.code).toBe(3);
+      expect(config.err).toContain("## Error: UNEXPECTED_FAILURE\n");
     });
 
     it("exits 3 with CACHE_UNUSABLE when the cache folder cannot be made", async () => {

@@ -66,7 +66,12 @@ export type TextErrorCode =
   /** No open thread answers to the reference. */
   | "THREAD_NOT_FOUND"
   /** An argument the command does not take, beyond those it does. */
-  | "USAGE_UNEXPECTED_ARGUMENT";
+  | "USAGE_UNEXPECTED_ARGUMENT"
+  /**
+   * A failure no other code names, such as a defect: the last resort, so
+   * that every stop prints a code and a recovery step.
+   */
+  | "UNEXPECTED_FAILURE";
 
 /** Every named code a user can meet, whichever domain names it. */
 export type ErrorCode =
