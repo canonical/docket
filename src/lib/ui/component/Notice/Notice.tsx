@@ -8,12 +8,12 @@ const indent = 2;
 
 /**
  * Joins the words of each command a step names after `run`, up to a
- * comma, with no-break spaces, so wrapping never splits a command someone
+ * comma or a semicolon, with no-break spaces, so wrapping never splits a command someone
  * will type.
  */
 const keepCommandsWhole = (step: string) =>
   step.replace(
-    /\brun ([^,]+)/g,
+    /\brun ([^,;]+)/g,
     (_, command: string) => `run ${command.replaceAll(" ", " ")}`,
   );
 

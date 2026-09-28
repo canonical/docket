@@ -26,3 +26,12 @@ export const GhNotSignedIn: Story<NoticeProps> = {
     width: 40,
   },
 };
+
+/** A failure no code names stopped docket. */
+export const UnexpectedFailure: Story<NoticeProps> = {
+  args: {
+    reason: "docket stopped on a failure it has no name for: disk on fire",
+    recovery: "run the command again; if it keeps failing, report it",
+    width: 40,
+  },
+};
