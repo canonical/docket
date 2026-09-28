@@ -1,11 +1,12 @@
 import { activityGroupings } from "../activity/index.js";
 import { owedGroupings } from "../owed/index.js";
+import { defaultDetail, details, formats } from "./constants.js";
 import type { Command, Flag } from "./types.js";
 
 const format: Flag = {
   name: "format",
   value: "format",
-  choices: ["plain", "llm", "json"],
+  choices: formats,
   fallback: "plain in a terminal, llm when the output is piped or captured",
   description:
     "How the answer is written: plain text for a person, condensed Markdown for an agent (llm), or JSON for a program. In JSON, every key, and every value docket names, such as a kind or a state, is a fixed camelCase identifier rather than an on-screen word: the configuration's `next-move` is `nextMove`. A wait's `overdue` is a share of its `target`, so `overdue` times `target` is the working time past due, or left while negative.",
@@ -14,8 +15,8 @@ const format: Flag = {
 const detail: Flag = {
   name: "detail",
   value: "level",
-  choices: ["summary", "standard", "detailed"],
-  default: "standard",
+  choices: details,
+  default: defaultDetail,
   description:
     "How much each item shows: summary gives the counts alone, detailed adds when each wait started, its target, and every message, file and check.",
 };

@@ -3,9 +3,10 @@ import {
   type CommandName,
   catalogue,
   chooseFormat,
-  type Detail,
+  defaultDetail,
+  details,
   type Flag,
-  type Format,
+  formats,
 } from "../lib/text/index.js";
 import fail from "./fail.js";
 import type { Invocation } from "./types.js";
@@ -148,11 +149,10 @@ export default function parseArguments(
     invocation: {
       command: command.name,
       positionals: rest,
-      // Each value is one of the catalogue's choices, checked above, or
-      // the catalogue's default, which is one of them.
       format:
-        (choose("format") as Format | undefined) ?? chooseFormat(interactive),
-      detail: choose("detail") as Detail,
+        formats.find((entry) => entry === values.format) ??
+        chooseFormat(interactive),
+      detail: details.find((entry) => entry === values.detail) ?? defaultDetail,
       maxAge: Number(seconds) * 1000,
       by: choose("by"),
       window: choose("window"),

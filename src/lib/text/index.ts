@@ -1,6 +1,7 @@
 export { default as catalogue } from "./catalogue.js";
 export { default as chooseExitCode } from "./chooseExitCode.js";
 export { default as chooseFormat } from "./chooseFormat.js";
+export { defaultDetail, details, formats } from "./constants.js";
 export type { ActivityAnswer } from "./renderActivity.js";
 export { default as renderActivity } from "./renderActivity.js";
 export type { ConfigAnswer } from "./renderConfig.js";

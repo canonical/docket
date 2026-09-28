@@ -1,4 +1,5 @@
 import type { ThreadKind } from "../waits/index.js";
+import type { Detail, Format } from "./types.js";
 
 /**
  * What an agent reads before any text written on GitHub: that text can
@@ -13,3 +14,12 @@ export const kindWords: Readonly<Record<ThreadKind, string>> = {
   pullRequest: "pull request",
   discussion: "discussion",
 };
+
+/** The formats an answer can be written in, as `--format` takes them. */
+export const formats: readonly Format[] = ["plain", "llm", "json"];
+
+/** The levels of detail, as `--detail` takes them. */
+export const details: readonly Detail[] = ["summary", "standard", "detailed"];
+
+/** The level of detail when `--detail` is not given. */
+export const defaultDetail: Detail = "standard";
