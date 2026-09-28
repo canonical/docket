@@ -67,6 +67,12 @@ export type Checks = "passing" | "failing" | "running";
 export interface Thread extends ThreadSummary {
   readonly author: Author;
   readonly createdAt: Date;
+  /**
+   * What the opening says, as plain text, as the snapshot gives it: the
+   * message a reply goes to while nobody else has written. Absent when
+   * the provider does not record it.
+   */
+  readonly text?: string;
   /** When GitHub last recorded a change to the thread. */
   readonly updatedAt: Date;
   /** False once the thread is closed or merged, whatever the reason. */

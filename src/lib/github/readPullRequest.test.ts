@@ -37,6 +37,7 @@ describe("readPullRequest", () => {
       title: "Example pull request",
       author: alice,
       createdAt: new Date("2026-09-22T08:00:00Z"),
+      text: "Example opening",
       updatedAt: new Date("2026-09-22T08:00:00Z"),
       open: true,
       draft: false,

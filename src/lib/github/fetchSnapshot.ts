@@ -27,7 +27,7 @@ const {
   pageInfo,
   order,
 } = fragments;
-const thread = `number url title createdAt updatedAt state ${written}
+const thread = `number url title createdAt updatedAt state ${written} bodyText
   ${assignees}
   ${labels}
   comments(last: 3) { nodes { ${message} createdAt } }`;
@@ -72,7 +72,7 @@ const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
       @include(if: $withDiscussions) {
       ${pageInfo} totalCount
       nodes {
-        number url title createdAt updatedAt closed ${written}
+        number url title createdAt updatedAt closed ${written} bodyText
         ${labels}
         comments(last: 3) {
           nodes { ${message} createdAt replies(last: 1) { nodes { ${message} createdAt } } }

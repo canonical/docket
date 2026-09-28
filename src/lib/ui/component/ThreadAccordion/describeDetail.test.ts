@@ -66,6 +66,24 @@ describe("describeDetail", () => {
         "waiting since Tue 10:00 · target 24h",
       ]);
     });
+
+    it("gives the opening's text as the latest message while nobody has commented", () => {
+      const { wait } = soonReply;
+      const opened: WaitRow = {
+        ...soonReply,
+        wait: { ...wait, thread: { ...wait.thread, text: "It crashes." } },
+      };
+      const { body } = describeDetail(
+        opened,
+        { ...soonReplyDetail, messages: [] },
+        reading,
+      );
+      expect(texts(body)).toEqual([
+        "dave · 6d ago",
+        "It crashes.",
+        "waiting since Tue 10:00 · target 24h",
+      ]);
+    });
   });
 
   describe("a review", () => {

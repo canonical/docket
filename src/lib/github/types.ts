@@ -130,6 +130,8 @@ export interface IssueNode extends WrittenNode {
   readonly updatedAt: string;
   /** `OPEN`, `CLOSED`, or `MERGED` for a pull request. */
   readonly state: string;
+  /** What its opening says, as plain text. */
+  readonly bodyText: string;
   readonly assignees: { readonly nodes: readonly NonNullable<ActorNode>[] };
   readonly labels: { readonly nodes: readonly { readonly name: string }[] };
   readonly comments: { readonly nodes: readonly CommentNode[] };
@@ -192,6 +194,8 @@ export interface DiscussionNode extends WrittenNode {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly closed: boolean;
+  /** What its opening says, as plain text. */
+  readonly bodyText: string;
   readonly labels: { readonly nodes: readonly { readonly name: string }[] };
   readonly comments: {
     readonly nodes: readonly (CommentNode & {

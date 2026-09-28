@@ -34,15 +34,14 @@ afterEach(() => {
 });
 
 const repo = "example-org/example-repo";
-const snapshot = (since: string | null = null) =>
-  settle(
-    (() => {
-      const client = createClient(token, "github.com", "1.2.3");
-      return fetchSnapshot(client, repo, since ? { since } : null, (team) =>
-        listTeamMembers(client, team),
-      );
-    })(),
+const snapshot = (since: string | null = null) => {
+  const client = createClient(token, "github.com", "1.2.3");
+  return settle(
+    fetchSnapshot(client, repo, since ? { since } : null, (team) =>
+      listTeamMembers(client, team),
+    ),
   );
+};
 const lists = (
   issues: unknown[] = [],
   pullRequests: unknown[] = [],
@@ -97,6 +96,7 @@ describe("fetchSnapshot", () => {
         title: "Example issue",
         author: { login: "dave", type: "user", member: false },
         createdAt: new Date("2026-09-22T08:00:00Z"),
+        text: "Example opening",
         updatedAt: new Date("2026-09-22T08:00:00Z"),
         open: true,
         draft: false,

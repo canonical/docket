@@ -17,6 +17,7 @@ describe("readIssue", () => {
       title: "Example issue",
       author: dave,
       createdAt: new Date("2026-09-22T08:00:00Z"),
+      text: "Example opening",
       updatedAt: new Date("2026-09-24T08:00:00Z"),
       open: true,
       draft: false,
