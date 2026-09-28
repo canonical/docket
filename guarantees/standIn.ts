@@ -18,16 +18,34 @@
  * docket reports as a failure, so a recording that falls behind docket
  * fails loudly rather than answering with nothing.
  *
+ * `GUARANTEES_BREAK`, which `bun run guarantees:prove` alone sets, makes
+ * the stand-in misbehave on purpose, so an entry can be seen to fail:
+ *
+ * - `overlap`: each request docket sends finds another already open, as
+ *   if docket had sent two at once;
+ * - `shift`: every instant in a recorded answer is an hour later.
+ *
  * @note Impure: replaces two globals and appends to a file.
  */
 import { appendFileSync } from "node:fs";
 import type { Recording, SentRequest } from "./types.js";
 
-const { GUARANTEES_NOW, GUARANTEES_RECORDING, GUARANTEES_REQUESTS } =
-  process.env;
+const {
+  GUARANTEES_NOW,
+  GUARANTEES_RECORDING,
+  GUARANTEES_REQUESTS,
+  GUARANTEES_BREAK,
+} = process.env;
 if (!GUARANTEES_NOW || !GUARANTEES_RECORDING || !GUARANTEES_REQUESTS) {
   throw new Error(
     "the stand-in needs GUARANTEES_NOW, GUARANTEES_RECORDING and GUARANTEES_REQUESTS",
+  );
+}
+// A misspelt break would leave the stand-in whole, and the entry it was
+// meant to break would pass as though it could not fail.
+if (GUARANTEES_BREAK && !["overlap", "shift"].includes(GUARANTEES_BREAK)) {
+  throw new Error(
+    `the stand-in has no break \`${GUARANTEES_BREAK}\`: overlap or shift`,
   );
 }
 const fixed = new Date(GUARANTEES_NOW).getTime();
@@ -53,6 +71,26 @@ const recordedRateLimit = {
 let inFlight = 0;
 const answerDelay = 5;
 
+/**
+ * Holds one request open for as long as an answer takes, counted in
+ * `inFlight` from start to end. `onOpen` receives how many requests are
+ * open, this one included, once it is.
+ */
+const holdOpen = async (onOpen: (open: number) => void) => {
+  inFlight += 1;
+  onOpen(inFlight);
+  await new Promise((resolve) => setTimeout(resolve, answerDelay));
+  inFlight -= 1;
+};
+
+/** `text` with every instant in it an hour later. */
+const shiftInstants = (text: string) =>
+  text.replace(
+    /"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z)"/g,
+    (_, at: string) =>
+      JSON.stringify(new RealDate(Date.parse(at) + 3_600_000).toISOString()),
+  );
+
 /** The key an answer is recorded under, as `Recording` describes it. */
 const findKey = (method: string, url: URL, body: Record<string, unknown>) => {
   if (url.pathname !== "/graphql") return `${method} ${url.pathname}`;
@@ -68,18 +106,20 @@ globalThis.fetch = (async (
   input: string | URL | Request,
   init: RequestInit = {},
 ): Promise<Response> => {
-  inFlight += 1;
-  const sent: SentRequest = {
+  const request = {
     method: init.method ?? "GET",
     url: String(input),
     body: typeof init.body === "string" ? JSON.parse(init.body) : {},
-    inFlight,
     tag: new Headers(init.headers).get("if-none-match") ?? undefined,
   };
-  appendFileSync(log, `${JSON.stringify(sent)}\n`);
-  await new Promise((resolve) => setTimeout(resolve, answerDelay));
-  inFlight -= 1;
-  const key = findKey(sent.method, new URL(sent.url), sent.body);
+  // The other request is held open like any other and logged nowhere, so
+  // only the count of open requests shows it.
+  if (GUARANTEES_BREAK === "overlap") void holdOpen(() => {});
+  await holdOpen((open) => {
+    const sent: SentRequest = { ...request, inFlight: open };
+    appendFileSync(log, `${JSON.stringify(sent)}\n`);
+  });
+  const key = findKey(request.method, new URL(request.url), request.body);
   const answer = recording[key];
   if (!answer) {
     return Response.json(
@@ -90,7 +130,7 @@ globalThis.fetch = (async (
   const headers = { "content-type": "application/json", ...answer.headers };
   // GitHub answers "not modified", with no body, to a request carrying the
   // entity tag of the answer it would give.
-  if (sent.tag !== undefined && sent.tag === answer.headers?.etag) {
+  if (request.tag !== undefined && request.tag === answer.headers?.etag) {
     return new Response(null, { status: 304, headers });
   }
   // Every GraphQL document docket sends asks for the rate figures.
@@ -98,8 +138,12 @@ globalThis.fetch = (async (
     answer.data === undefined
       ? answer.body
       : { data: { rateLimit: recordedRateLimit, ...answer.data } };
-  return new Response(JSON.stringify(body), {
-    status: answer.status ?? 200,
-    headers,
-  });
+  const text = JSON.stringify(body);
+  return new Response(
+    GUARANTEES_BREAK === "shift" ? shiftInstants(text) : text,
+    {
+      status: answer.status ?? 200,
+      headers,
+    },
+  );
 }) as typeof fetch;

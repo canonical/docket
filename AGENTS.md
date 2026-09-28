@@ -17,7 +17,7 @@
 - `bun run self-test`: proves the identity, secret, advisory, licence and structure gates can each fail, by running each against a scratch fixture it must reject.
 - `bun run guarantees`: runs the guarantees corpus's `pr` tier, `guarantees/corpus.toml`'s entries one at a time; `bun guarantees/invoker.ts run <entry>` runs one.
 - `bun run guarantees:accept <entry>`: runs one entry and saves what it prints under `guarantees/goldens/`; the only way a saved output is written.
-- `bun run guarantees:prove`: moves one saved output aside and requires `text-output` to fail for it.
+- `bun run guarantees:prove`: breaks the corpus on purpose, one entry at a time, and requires each entry to fail for its break: a saved output moved aside for `text-output`, a request held open beside docket's for `request-budget`, and recorded instants an hour late for `working-clock`.
 - `bun src/application/main.ts [command]` (or `dist/docket` once built): docket's text interface. `owed` (the default), `activity`, `show <reference>`, `assign <reference> <login>…`, `review <reference> <login or org/team>…` and `config`; `--help` after any of them gives its flags, an example and its exit codes. When a terminal gives both the input and the output, `docket` alone opens the terminal interface on owed instead, and `docket activity` without `--format` opens it on activity; piped or captured, every call prints text. `?` lists its keys and `q` quits.
 
 ## Conventions

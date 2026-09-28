@@ -31,7 +31,9 @@ The recordings are written in GitHub's own response shapes, from GitHub's API, w
 
 The invoker judges each run by vitest's own report, not by its exit code alone: a run that executed no test fails, whether its selector matched nothing or its file never loaded. Each tier holds one entry built to fail, `selftest/corpus-can-fail`, and the tier is green only when that entry failed as a test and every other entry passed. The register is refused whole when a test file here belongs to no row, because a file no row names never runs.
 
-A saved output that is missing fails its entry; saving one is the explicit act `guarantees:accept`. `bun run guarantees:prove` checks that rule holds: it moves one saved output aside, runs `text-output`, and succeeds only when the entry failed for the missing copy.
+A saved output that is missing fails its entry; saving one is the explicit act `guarantees:accept`.
+
+A detector in the corpus can go blind without anything in docket changing, and an entry whose detector is blind passes. `bun run guarantees:prove` breaks each detector on purpose and succeeds only when its entry failed for that break: it moves one saved output aside and requires `text-output` to fail for the missing copy; it has the stand-in hold another request open beside each one docket sends (`GUARANTEES_BREAK=overlap`) and requires `request-budget` to see two open at once; and it has the stand-in answer every recorded instant an hour later (`GUARANTEES_BREAK=shift`) and requires `working-clock` to see the replies fall due at other times. `hostile-text` checks its own pattern against every hostile word on every run.
 
 ## The entries
 

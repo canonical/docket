@@ -41,6 +41,14 @@ const call = (args: readonly string[]) => {
 const control = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/;
 
 describe("hostile-text", () => {
+  // A pattern that missed a sequence would find nothing in any output,
+  // and every test below would pass while seeing nothing.
+  for (const [field, words] of Object.entries(hostileWords)) {
+    it(`finds a control character in the hostile ${field}`, () => {
+      expect(control.test(words)).toBe(true);
+    });
+  }
+
   for (const command of commands) {
     for (const format of formats) {
       it(`prints no control character in ${command.join(" ")} as ${format}`, async () => {

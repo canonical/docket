@@ -60,6 +60,10 @@ export default function makeHome(personalFile: string): Home {
             GUARANTEES_NOW: now,
             GUARANTEES_RECORDING: findFixture(`${recording}.ts`),
             GUARANTEES_REQUESTS: log,
+            // Set by `guarantees:prove` alone, to break the stand-in.
+            ...(process.env.GUARANTEES_BREAK
+              ? { GUARANTEES_BREAK: process.env.GUARANTEES_BREAK }
+              : {}),
           },
         },
       );
