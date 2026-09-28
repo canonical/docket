@@ -111,7 +111,7 @@ describe("openTerminal", () => {
       await setup.renderOnce();
       // The keys work once the key bar, drawn from them, shows.
       expect(setup.captureCharFrame()).toContain(
-        "←→ mode ↑↓ sel ⏎ open g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       );
     });
     setup.mockInput.pressKey("q");
