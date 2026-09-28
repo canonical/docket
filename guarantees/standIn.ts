@@ -159,6 +159,7 @@ const findKey = (method: string, url: URL, body: Record<string, unknown>) => {
     String(body.query ?? ""),
   )?.[1];
   const variables = (body.variables ?? {}) as Record<string, unknown>;
+  if (variables.owner === undefined) return `${operation}`;
   const number = variables.number === undefined ? "" : `#${variables.number}`;
   return `${operation} ${variables.owner}/${variables.name}${number}`;
 };

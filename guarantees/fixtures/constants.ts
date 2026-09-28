@@ -7,3 +7,6 @@ export const noFile: RecordedAnswer = {
 
 /** The repository activity feed, holding no push. */
 export const noPushes: RecordedAnswer = { body: [] };
+
+/** The account gh is signed in with. */
+export const viewer: RecordedAnswer = { data: { viewer: { login: "alice" } } };

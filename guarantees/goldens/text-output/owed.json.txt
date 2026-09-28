@@ -90,7 +90,7 @@ exit 0
           "kind": "close",
           "author": {
             "login": "alice",
-            "group": "team"
+            "group": "you"
           },
           "state": "onTrack",
           "overdue": -0.3638888888888889,

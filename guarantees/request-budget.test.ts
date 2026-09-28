@@ -21,8 +21,8 @@ import type { SentRequest } from "./types.js";
  * requests and would take a page to 9, which fails here too. A refresh
  * sends the check and one query a page of threads;
  * the recording's lists fit one page. The reading of each repository's
- * own file belongs to the call, not to the refresh, so it is left out of
- * the count.
+ * own file, and of the login gh is signed in with, belongs to the call,
+ * not to the refresh, so it is left out of the count.
  */
 const budget = {
   whole: { points: 8, requests: 2 },
@@ -104,12 +104,12 @@ function countPoints({ query, variables }: Record<string, unknown>): number {
   return Math.max(1, Math.round(readSelection(1) / 100));
 }
 
-const isFileRead = ({ body }: SentRequest) =>
-  /^\s*query\s+File\b/.test(String(body.query ?? ""));
+const isCallRead = ({ body }: SentRequest) =>
+  /^\s*query\s+(File|Viewer)\b/.test(String(body.query ?? ""));
 
 /** The points and requests one refresh spent. */
 const measure = (requests: readonly SentRequest[]) => {
-  const refresh = requests.filter((request) => !isFileRead(request));
+  const refresh = requests.filter((request) => !isCallRead(request));
   const graphql = refresh.filter(({ url }) => url.endsWith("/graphql"));
   return {
     points: graphql.reduce((sum, { body }) => sum + countPoints(body), 0),

@@ -70,7 +70,7 @@ describe("answerShow", () => {
     await answerShow({ ...session, watched });
     // Opened 1 September, the issue is due 40 working days later.
     expect(out()).toContain(
-      '· close · author "alice" · owners "alice", "bob" · 20d left · due 2026-10-27 10:00 Europe/Paris\n',
+      '· close · author "alice" (you) · owners "alice", "bob" · 20d left · due 2026-10-27 10:00 Europe/Paris\n',
     );
   });
 

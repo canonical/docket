@@ -5,14 +5,16 @@ import fail from "./fail.js";
 import findThreads from "./findThreads.js";
 import parseReference from "./parseReference.js";
 import readThreads from "./readThreads.js";
+import readViewer from "./readViewer.js";
 import type { Session } from "./types.js";
 
 /**
  * Answers `docket show`: the thread, or each pull request of the stack,
- * with its details, which GitHub gives on each call, and its waits.
+ * with its details, which GitHub gives on each call, and its waits, the
+ * viewer marked as `you`.
  *
- * @note Impure: reads the cache, asks GitHub for the thread's details,
- * and writes the answer.
+ * @note Impure: reads the cache, asks GitHub for the login gh is signed
+ * in with and for the thread's details, and writes the answer.
  */
 export default async function answerShow(session: Session): Promise<number> {
   const { context, invocation, watched, provider } = session;
@@ -27,6 +29,7 @@ export default async function answerShow(session: Session): Promise<number> {
     );
   }
   const { threads, syncedAt, warnings } = await readThreads(session);
+  const you = await readViewer(provider);
   const now = context.now();
   const shown: ShownThread[] = [];
   const people = gatherPeople(
@@ -45,6 +48,7 @@ export default async function answerShow(session: Session): Promise<number> {
         },
       ],
       now,
+      you.viewer,
     );
     shown.push({
       reference: `${reference.repo.name}#${thread.number}`,
@@ -58,7 +62,10 @@ export default async function answerShow(session: Session): Promise<number> {
     renderThread({
       reference: reference.text,
       threads: shown,
-      freshness: session.describeFreshness(syncedAt, warnings),
+      freshness: session.describeFreshness(syncedAt, [
+        ...warnings,
+        ...you.warnings,
+      ]),
       format: invocation.format,
       detail: invocation.detail,
     }),

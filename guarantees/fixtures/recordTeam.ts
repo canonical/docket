@@ -1,5 +1,5 @@
 import type { Recording, Words } from "../types.js";
-import { noFile, noPushes } from "./constants.js";
+import { noFile, noPushes, viewer } from "./constants.js";
 import {
   buildBot,
   buildCheckRun,
@@ -94,6 +94,7 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
     createdAt: at,
   });
   return {
+    Viewer: viewer,
     [`File ${repo}`]: noFile,
     [`File ${docs}`]: noFile,
     [`GET /repos/${repo}/issues`]: buildProbe(`${tag}-example`),
