@@ -512,19 +512,26 @@ describe("Screen", () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const teamless = { ...recordedSettings, people: new Map() };
-      const view = { ...viewOf(cache), settings: teamless };
-      const screen = await show(view, 40, () => {}, 16);
+      const readTeamless = async () => ({
+        watched: recordedWatched(teamless),
+        viewer: "alice",
+      });
+      const view = {
+        ...viewOf(cache, everyCapability, readTeamless),
+        settings: teamless,
+      };
+      const screen = await show(view, 40, () => {}, 17);
       const owed = await vi.waitFor(async () => {
         const drawn = await screen.redraw();
-        expect(drawn.lines.at(6)).toMatch(/^▌┃example#12 reply/);
+        expect(drawn.lines.at(6)).toMatch(/^▌ docs#4 reply/);
         return drawn;
       });
       expect(owed.lines.slice(1, 6)).toEqual([
         "  ✗ no team in docket.yaml, so every",
         "  comment starts a reply wait",
         "  Recovery: list the team under people:",
-        "  in the personal file, then run",
-        "  docket config",
+        "  in the personal file or in the",
+        "  repository's .github/docket.yaml",
       ]);
       await press(screen, "right");
       expect((await screen.redraw()).lines.join("\n")).not.toContain("no team");
@@ -534,15 +541,67 @@ describe("Screen", () => {
       const cache = await openCache(fakeProvider());
       await cache.refresh();
       const teamless = { ...recordedSettings, people: new Map() };
-      const view = { ...viewOf(cache), settings: teamless };
+      const view = {
+        ...viewOf(cache, everyCapability, async () => ({
+          watched: recordedWatched(teamless),
+          viewer: "alice",
+        })),
+        settings: teamless,
+        watched: recordedWatched(teamless),
+      };
       const screen = await (await show(view, 60)).redraw();
       expect(screen.lines.slice(2, 7)).toEqual([
         "  ✗ no team in docket.yaml, so every comment starts a reply",
         "  wait",
-        "  Recovery: list the team under people: in the personal",
-        "  file, then run docket config",
+        "  Recovery: list the team under people: in the personal file",
+        "  or in the repository's .github/docket.yaml",
         "  nothing owed",
       ]);
+    });
+
+    it("drops the notice once every repository's own file lists a team the personal file leaves out", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const teamless = { ...recordedSettings, people: new Map() };
+      const view = {
+        ...viewOf(cache),
+        settings: teamless,
+        watched: recordedWatched(teamless),
+      };
+      const screen = await show(view, 60, () => {}, 16);
+      await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(1)).toMatch(/^▌┃example#12 reply/);
+      });
+    });
+
+    it("names a repository whose own file lists no team while the personal file lists one", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const people = new Map([["carol", "internal" as const]]);
+      const readDeclared = async () => ({
+        watched: [
+          ...recordedWatched().slice(0, 1),
+          ...recordedWatched({ ...recordedSettings, people }).slice(1),
+        ],
+        viewer: "alice",
+      });
+      const screen = await show(
+        viewOf(cache, everyCapability, readDeclared),
+        60,
+        () => {},
+        16,
+      );
+      const owed = await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(1)).toMatch(/^ {2}✗ no team/);
+        return drawn;
+      });
+      expect(owed.lines.slice(1, 3)).toEqual([
+        "  ✗ no team in docket.yaml for docs, so every comment starts",
+        "  a reply wait",
+      ]);
+      expect(owed.lines.join("\n")).toMatch(/docs#4 reply/);
     });
 
     it("says nothing is owed when no repository is watched", async () => {

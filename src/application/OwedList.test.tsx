@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { noTeamNotice, type OwedGrouping } from "../lib/owed/index.js";
+import { describeNoTeam, type OwedGrouping } from "../lib/owed/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import {
   parserFixDetail,
@@ -18,7 +18,7 @@ function drawList(
   height: number,
   editor?: { readonly node: ReactNode; readonly lines: number },
   onShownRows: (rows: number) => void = () => {},
-  notice?: typeof noTeamNotice,
+  notice?: ReturnType<typeof describeNoTeam>,
 ) {
   return drawSuspending(
     <OwedList
@@ -37,6 +37,9 @@ function drawList(
     height,
   );
 }
+
+/** The notice while the one watched repository lists no team. */
+const noTeam = describeNoTeam([{ name: "example", people: new Map() }]);
 
 describe("OwedList", () => {
   it("heads each group, then its rows, the details open under the selected row, and only rows that fit whole, at 40 columns", async () => {
@@ -128,21 +131,13 @@ describe("OwedList", () => {
 
   it("keeps the notice above the rows, wrapped two cells in, and shows the rows that fit below it, at 40 columns", async () => {
     const shown = vi.fn();
-    const screen = await drawList(
-      "none",
-      0,
-      40,
-      12,
-      undefined,
-      shown,
-      noTeamNotice,
-    );
+    const screen = await drawList("none", 0, 40, 12, undefined, shown, noTeam);
     expect(screen.lines.slice(0, 6)).toEqual([
       "  ✗ no team in docket.yaml, so every",
       "  comment starts a reply wait",
       "  Recovery: list the team under people:",
-      "  in the personal file, then run",
-      "  docket config",
+      "  in the personal file or in the",
+      "  repository's .github/docket.yaml",
       `▌┃example#12 reply${" ".repeat(15)}4d over`,
     ]);
     expect(screen.look("✗ no team")?.fg).toBe(tokens["color.text.error"]);
@@ -157,13 +152,13 @@ describe("OwedList", () => {
       12,
       undefined,
       () => {},
-      noTeamNotice,
+      noTeam,
     );
     expect(screen.lines.slice(0, 4)).toEqual([
       "  ✗ no team in docket.yaml, so every comment starts a reply",
       "  wait",
-      "  Recovery: list the team under people: in the personal",
-      "  file, then run docket config",
+      "  Recovery: list the team under people: in the personal file",
+      "  or in the repository's .github/docket.yaml",
     ]);
     expect(screen.lines.at(4)).toMatch(/^▌┃example#12 reply/);
   });

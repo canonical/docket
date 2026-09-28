@@ -1,6 +1,6 @@
 import type { Duration } from "../clock/index.js";
 import type { Origin, Repo, Resolved } from "../config/index.js";
-import { noTeamNotice } from "../owed/index.js";
+import { describeNoTeam } from "../owed/index.js";
 import { quotedNote } from "./constants.js";
 import quote from "./quote.js";
 import renderJson from "./renderJson.js";
@@ -123,12 +123,13 @@ function describeSettings({ settings, origins, repositoryErrors }: Resolved) {
 
 /**
  * Writes `docket config`: where the personal file is, whether gh gives a
- * token, that every comment starts a reply wait while the personal file
- * lists nobody as team, as owed's notice says, the settings that hold
- * across repositories, then the settings in
- * effect for each repository. Every value names the file that set it, and
- * each listed person their group and why. A repository's file comes from
- * GitHub, so its values are made safe to print.
+ * token, that every comment starts a reply wait while a watched
+ * repository's settings list nobody as team, as owed's notice says, the
+ * settings that hold across repositories, then the settings in effect
+ * for each repository, each saying whether it lists a team to a program.
+ * Every value names the file that set it, and each listed person their
+ * group and why. A repository's file comes from GitHub, so its values
+ * are made safe to print.
  */
 export default function renderConfig(answer: ConfigAnswer): string {
   const { personal, repositories, shared, gh, warnings, format } = answer;
@@ -137,7 +138,12 @@ export default function renderConfig(answer: ConfigAnswer): string {
   const found = personal.found
     ? "found"
     : "not found, so built-in defaults apply";
-  const teamListed = [...shared.settings.people.values()].includes("team");
+  const teamless = describeNoTeam(
+    repositories.map(({ repo, resolved }) => ({
+      name: repo.name,
+      people: resolved.settings.people,
+    })),
+  );
   if (format === "json") {
     const { settings, origins } = shared;
     const data = {
@@ -149,7 +155,6 @@ export default function renderConfig(answer: ConfigAnswer): string {
           }
         : { signedIn: true, host: settings.hosts.at(0), login },
       warnings: warnings.map(describeProblem),
-      teamListed,
       repos: settings.repos,
       activity: settings.activity.map(formatDuration),
       hosts: settings.hosts,
@@ -161,6 +166,7 @@ export default function renderConfig(answer: ConfigAnswer): string {
       repositories: repositories.map(({ repo, resolved }) => ({
         name: repo.name,
         repo: repo.repo,
+        teamListed: [...resolved.settings.people.values()].includes("team"),
         ...describeSettings(resolved),
       })),
     };
@@ -179,13 +185,13 @@ export default function renderConfig(answer: ConfigAnswer): string {
       ? ["", renderProblems(warnings, format, "Warning").trimEnd()]
       : [];
   // An agent reads words where a person reads the symbol.
-  const teamLines = teamListed
-    ? []
-    : [
+  const teamLines = teamless
+    ? [
         "",
-        `${llm ? "Warning:" : "✗"} ${noTeamNotice.reason}`,
-        `Recovery: ${noTeamNotice.recovery}`,
-      ];
+        `${llm ? "Warning:" : "✗"} ${teamless.reason}`,
+        `Recovery: ${teamless.recovery}`,
+      ]
+    : [];
   const sections = [
     [
       llm ? "# config" : "config",

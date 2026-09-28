@@ -2,8 +2,8 @@
 |owed
 |  ✗ no team in docket.yaml, so every comment starts a reply
 |  wait
-|  Recovery: list the team under people: in the personal
-|  file, then run docket config
+|  Recovery: list the team under people: in the personal file
+|  or in the repository's .github/docket.yaml
 |▌ docs#4 reply                                      18d over
 |  Where do tokens live?
 |  alice, bob
@@ -40,8 +40,8 @@ runs
 1:1 "owed" fg #c6c8d1ff bg #161821ff bold
 2:3 "✗ no team in docket.yaml, so every comment starts a reply" fg #e27878ff bg #161821ff
 3:3 "wait" fg #e27878ff bg #161821ff
-4:3 "Recovery: list the team under people: in the personal" fg #c6c8d1ff bg #161821ff
-5:3 "file, then run docket config" fg #c6c8d1ff bg #161821ff
+4:3 "Recovery: list the team under people: in the personal file" fg #c6c8d1ff bg #161821ff
+5:3 "or in the repository's .github/docket.yaml" fg #c6c8d1ff bg #161821ff
 6:1 "▌" fg #e27878ff bg #2e3244ff
 6:2 " " fg #6b7089ff bg #2e3244ff
 6:3 "docs#4 reply                                      " fg #c6c8d1ff bg #2e3244ff

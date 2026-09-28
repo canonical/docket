@@ -37,7 +37,7 @@ describe("renderConfig", () => {
     ]);
   });
 
-  it("gives a person why gh gave no token, says when no personal file exists, and that without a team every comment waits", () => {
+  it("gives a person why gh gave no token, and says when no personal file exists", () => {
     const builtIn = resolvedPersonal(false);
     const text = renderConfig({
       personal: { path: "/config/docket/docket.yaml", found: false },
@@ -59,9 +59,6 @@ describe("renderConfig", () => {
       "gh is not signed in to github.com.",
       "Recovery: run gh auth login",
       "",
-      "✗ no team in docket.yaml, so every comment starts a reply wait",
-      "Recovery: list the team under people: in the personal file, then run docket config",
-      "",
       "every repository",
       "  repos (built-in default): none",
       "  activity (built-in default): 24h, 48h, 72h, 1w",
@@ -76,7 +73,6 @@ describe("renderConfig", () => {
     expect(data).toMatchObject({
       personalFile: { path: "/config/docket/docket.yaml", found: true },
       gh: { signedIn: true, host: "github.com", login: "alice" },
-      teamListed: true,
       activity: ["24h", "1w"],
       hosts: ["github.com"],
       origins: { repos: "personal", activity: "personal", hosts: "personal" },
@@ -120,19 +116,47 @@ describe("renderConfig", () => {
     });
   });
 
-  it("tells an agent in words, and a program as data, that no team is listed", () => {
+  it("says a repository lists no team from its own people, in words, with the symbol, and as data", () => {
+    const [, docs] = shared.settings.repos;
+    if (!docs) throw new Error("the fixture watches two repositories");
+    const people = new Map([["carol", "internal" as const]]);
+    const declared = {
+      ...shared,
+      settings: { ...shared.settings, people },
+      origins: { ...shared.origins, people: "repository" as const },
+    };
+    const repositories = [
+      { repo: example, resolved: shared },
+      { repo: docs, resolved: declared },
+    ];
+    const reason =
+      "no team in docket.yaml for docs, so every comment starts a reply wait";
+    const recovery =
+      "Recovery: list the team under people: in the personal file or in the repository's .github/docket.yaml";
+    expect(renderConfig({ ...answer, repositories })).toContain(
+      `\n\nWarning: ${reason}\n${recovery}\n\n## every repository`,
+    );
+    expect(
+      renderConfig({ ...answer, repositories, format: "plain" }),
+    ).toContain(`\n\n✗ ${reason}\n${recovery}\n\nevery repository`);
+    const data = JSON.parse(
+      renderConfig({ ...answer, repositories, format: "json" }),
+    );
+    expect(
+      data.repositories.map(
+        ({ teamListed }: { teamListed: boolean }) => teamListed,
+      ),
+    ).toEqual([true, false]);
+  });
+
+  it("says nothing of a team the personal file leaves out while each repository lists one", () => {
     const teamless = {
       ...shared,
       settings: { ...shared.settings, people: new Map() },
     };
-    const text = renderConfig({ ...answer, shared: teamless });
-    expect(text).toContain(
-      "\n\nWarning: no team in docket.yaml, so every comment starts a reply wait\nRecovery: list the team under people: in the personal file, then run docket config\n\n## every repository",
+    expect(renderConfig({ ...answer, shared: teamless })).not.toContain(
+      "no team",
     );
-    const data = JSON.parse(
-      renderConfig({ ...answer, shared: teamless, format: "json" }),
-    );
-    expect(data.teamListed).toBe(false);
   });
 
   it("strips control sequences from values a repository's file could carry", () => {
