@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createCache } from "../lib/cache/index.js";
 import { everyCapability, fakeProvider } from "../testing/provider.js";
 import {
+  parserFixDetail,
   recordedNow,
   recordedRepos,
   recordedSettings,
@@ -65,6 +66,7 @@ describe("openTerminal", () => {
         cache,
         capabilities: everyCapability,
         readWatched: async () => ({ watched: recordedWatched() }),
+        readDetail: async () => parserFixDetail,
       },
     });
     await vi.waitFor(() => expect(snapshot).toHaveBeenCalledTimes(2));
@@ -72,7 +74,7 @@ describe("openTerminal", () => {
       await setup.renderOnce();
       const frame = setup.captureCharFrame();
       expect(frame).toContain("nothing owed");
-      expect(frame).toContain("←→ mode g grp ?");
+      expect(frame).toContain("←→ mode ↑↓ sel g grp ?");
     });
     setup.mockInput.pressKey("q");
     expect(await closed).toBe(0);
@@ -91,6 +93,7 @@ describe("openTerminal", () => {
         cache,
         capabilities: everyCapability,
         readWatched: () => new Promise(() => {}),
+        readDetail: async () => parserFixDetail,
       },
     });
     await vi.waitFor(() => expect(snapshot).toHaveBeenCalled());
@@ -119,7 +122,7 @@ describe("openTerminal", () => {
       const frame = setup.captureCharFrame();
       expect(frame).toContain("✗ gh is not signed in to github.com");
       // The keys work once the key bar, drawn from them, shows.
-      expect(frame).toContain("←→ mode g grp ?");
+      expect(frame).toContain("←→ mode ↑↓ sel g grp ?");
     });
     setup.mockInput.pressKey("q");
     expect(await closed).toBe(0);

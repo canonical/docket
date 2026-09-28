@@ -15,7 +15,7 @@ describe("Pane", () => {
       "",
       "0 over · 0 soon · 0 on track",
       "synced 2m ago",
-      "←→ mode g grp ?",
+      "←→ mode ↑↓ sel g grp ?",
     ]);
     expect(screen.look("nothing owed")?.bg).toBe(tokens["color.background"]);
   });
@@ -30,7 +30,7 @@ describe("Pane", () => {
     expect(screen.lines.slice(7)).toEqual([
       "0 over · 0 soon · 0 on track",
       "synced 2m ago",
-      "←→ mode g grp ?",
+      "←→ mode ↑↓ sel g grp ?",
     ]);
   });
 
@@ -39,14 +39,14 @@ describe("Pane", () => {
     expect(screen.lines.slice(5)).toEqual([
       "",
       "synced 2m ago",
-      "←→ mode g grp ?",
+      "←→ mode ↑↓ sel g grp ?",
     ]);
   });
 
   it("gives the help everything under the header", async () => {
     const screen = await draw(<Pane {...Help.args} />, 40, 14);
     expect(screen.lines.slice(0, 3)).toEqual(["help", "", "Mode"]);
-    expect(screen.lines).not.toContain("←→ mode g grp ?");
+    expect(screen.lines).not.toContain("←→ mode ↑↓ sel g grp ?");
     expect(screen.lines).not.toContain("synced 2m ago");
   });
 

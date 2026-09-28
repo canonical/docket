@@ -65,6 +65,11 @@ export default async function answerTerminal(
       ...repo,
       resolved: resolveSettings(personal, undefined),
     })),
-    source: { cache, capabilities: provider.capabilities(), readWatched },
+    source: {
+      cache,
+      capabilities: provider.capabilities(),
+      readWatched,
+      readDetail: (thread) => provider.threadDetail(thread),
+    },
   });
 }

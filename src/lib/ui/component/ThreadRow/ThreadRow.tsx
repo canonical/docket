@@ -3,18 +3,10 @@ import type { WaitRow, WaitState } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import fitPieces from "../../fitPieces.js";
 import trimText from "../../trimText.js";
-import wrapText from "../../wrapText.js";
 import { Margin } from "./common/index.js";
+import { loginCells, marginCells } from "./constants.js";
+import listOwnerLines from "./listOwnerLines.js";
 import type { ThreadRowProps } from "./types.js";
-
-/** The cells the margin takes: the state marker and the stack rule. */
-const margin = 2;
-
-/**
- * The most cells a login takes on a row, so the title keeps its room. A
- * longer login is cut with `…`; the accordion shows it whole.
- */
-const loginCells = 12;
 
 /** A run of a line's text, in its own colour. */
 interface Piece {
@@ -82,7 +74,7 @@ const drawLine = (pieces: readonly Piece[], width: number) => (
  * @implements apps_docket.component.thread_row
  */
 const ThreadRow = ({ row, selected, width }: ThreadRowProps): ReactNode => {
-  const inner = width - margin;
+  const inner = width - marginCells;
   const text = tokens["color.text"];
   const distance = row.distance.text;
   const head = trimText(
@@ -99,14 +91,7 @@ const ThreadRow = ({ row, selected, width }: ThreadRowProps): ReactNode => {
   );
   // The title gives way first, so the owner and any field in trouble fit.
   const title = trimText(row.title.text, Math.max(0, inner - markCells));
-  const owners = row.owners
-    ? wrapText(
-        row.owners.fields
-          .map((owner) => trimText(owner.text, loginCells))
-          .join(", "),
-        inner,
-      )
-    : [];
+  const owners = listOwnerLines(row, width);
   return (
     <box
       flexDirection="row"

@@ -7,7 +7,7 @@ import { Activity, Owed } from "./KeyBar.stories.js";
 describe("KeyBar", () => {
   it("shows each key with a hint, its label after it, at 40 columns", async () => {
     const screen = await draw(<KeyBar {...Owed.args} />, 40);
-    expect(screen.lines.at(0)).toBe("←→ mode g grp ?");
+    expect(screen.lines.at(0)).toBe("←→ mode ↑↓ sel g grp ?");
   });
 
   it("draws keys in bold and labels dimmed", async () => {

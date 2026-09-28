@@ -1,13 +1,11 @@
 import { Component, type ReactNode, Suspense, use } from "react";
 import type { ThreadDetail } from "../../../provider/index.js";
 import { tokens } from "../../../tokens/index.js";
+import { accordionHeight as height } from "../../constants.js";
 import trimText from "../../trimText.js";
 import wrapText from "../../wrapText.js";
 import describeDetail from "./describeDetail.js";
 import type { DetailLine, ThreadAccordionProps } from "./types.js";
-
-/** The accordion's height, in lines, whatever it holds. */
-const height = 5;
 
 /** The indent of its text, so it starts under the row's reference. */
 const indent = 2;

@@ -5,7 +5,11 @@ import type {
   Resolved,
   Settings,
 } from "../lib/config/index.js";
-import type { Capability, Provider } from "../lib/provider/index.js";
+import type {
+  Capability,
+  Provider,
+  ThreadDetail,
+} from "../lib/provider/index.js";
 import type {
   CommandName,
   Detail,
@@ -13,6 +17,7 @@ import type {
   Freshness,
   Problem,
 } from "../lib/text/index.js";
+import type { ThreadSummary } from "../lib/waits/index.js";
 
 /** What the process gives docket: its arguments, its world and its output. */
 export interface Context {
@@ -130,6 +135,11 @@ export interface TerminalView {
     | {
         readonly cache: Cache;
         readonly capabilities: ReadonlySet<Capability>;
+        /**
+         * Reads a thread's details from the provider, for the accordion
+         * under the selected row.
+         */
+        readonly readDetail: (thread: ThreadSummary) => Promise<ThreadDetail>;
         /**
          * Reads each watched repository's own file, called once the
          * interface has opened, so a slow or unreachable GitHub never

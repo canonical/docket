@@ -1,10 +1,16 @@
+// Longer than 500 lines because the one screen is tested here whole, through the keys its one layer binds, on a cache of the recording.
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type Cache, createCache } from "../lib/cache/index.js";
-import type { Capability, Provider } from "../lib/provider/index.js";
+import type {
+  Capability,
+  Provider,
+  ThreadDetail,
+} from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
+import type { ThreadSummary } from "../lib/waits/index.js";
 import {
   everyCapability,
   fakeProvider,
@@ -12,13 +18,18 @@ import {
   providerError,
 } from "../testing/provider.js";
 import {
+  parserFixDetail,
   recordedNow,
   recordedProvider,
   recordedRepos,
   recordedSettings,
   recordedWatched,
 } from "../testing/recorded.js";
-import { type Screen as Drawn, draw, WithKeys } from "../testing/terminal.js";
+import {
+  type Screen as Drawn,
+  drawSuspending,
+  WithKeys,
+} from "../testing/terminal.js";
 import Screen from "./Screen.js";
 import type { TerminalView, WatchedFiles } from "./types.js";
 
@@ -46,22 +57,28 @@ const readRecorded = async (): Promise<WatchedFiles> => ({
   watched: recordedWatched(),
 });
 
+/** Reads every thread's details as the recording's pull request's. */
+const readRecordedDetail = async () => parserFixDetail;
+
 function viewOf(
   cache: Cache,
   capabilities: ReadonlySet<Capability> = everyCapability,
   readWatched = readRecorded,
+  readDetail: (
+    thread: ThreadSummary,
+  ) => Promise<ThreadDetail> = readRecordedDetail,
 ): TerminalView {
   return {
     mode: "owed",
     now: () => recordedNow,
     settings: recordedSettings,
     watched: recordedWatched(),
-    source: { cache, capabilities, readWatched },
+    source: { cache, capabilities, readWatched, readDetail },
   };
 }
 
 function show(view: TerminalView, width = 40, onQuit = () => {}) {
-  return draw(
+  return drawSuspending(
     <WithKeys>
       <Screen {...view} onQuit={onQuit} />
     </WithKeys>,
@@ -75,7 +92,7 @@ async function press(screen: Drawn, ...keys: string[]) {
   let drawn = screen;
   for (const key of keys) {
     drawn = await drawn.redraw(() => {
-      if (key === "left" || key === "right") {
+      if (key === "left" || key === "right" || key === "up" || key === "down") {
         screen.setup.mockInput.pressArrow(key);
       } else {
         screen.setup.mockInput.pressKey(key);
@@ -103,7 +120,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode g grp ?",
+        "←→ mode ↑↓ sel g grp ?",
       ]);
       expect(screen.look("refresh in progress")).toMatchObject({
         fg: tokens["color.text"],
@@ -212,7 +229,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode g grp ?",
+        "←→ mode ↑↓ sel g grp ?",
       ]);
     });
   });
@@ -300,22 +317,33 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode g grp ?",
+        "←→ mode ↑↓ sel g grp ?",
       ]);
     });
   });
 
   describe("with data", () => {
-    it("counts owed and leaves the list to its rows, the status dimmed", async () => {
+    it("lists owed's rows with the first selected and its details open, counted, the status dimmed", async () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const screen = await (await show(viewOf(cache))).redraw();
-      expect(screen.lines.slice(9)).toEqual([
+      expect(screen.lines).toEqual([
+        "owed",
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        " ┃Fix the parser · alice ✗ checks",
+        "  dave · 3d ago",
+        "  Rebased on main. Could someone look",
+        "  again?",
+        "  example stack 3 · 2 of 3 · → main",
+        "  below #11 merged, above #13 open",
+        "",
         "2 over · 1 soon · 3 on track",
         "synced 0m ago",
-        "←→ mode g grp ?",
+        "←→ mode ↑↓ sel g grp ?",
       ]);
-      expect(screen.lines.slice(1, 9).every((line) => line === "")).toBe(true);
+      expect(screen.look("example#12 reply")?.bg).toBe(
+        tokens["color.background.selected"],
+      );
       expect(screen.look("synced")?.fg).toBe(tokens["color.text.muted"]);
     });
 
@@ -344,6 +372,87 @@ describe("Screen", () => {
       clock = new Date(recordedNow.getTime() + 120_000);
       await new Promise((done) => setTimeout(done, 1_100));
       expect((await screen.redraw()).lines.at(10)).toBe("synced 2m ago");
+    });
+  });
+
+  describe("the selection", () => {
+    /** The screen on the recording, its data in, and `readDetail` for the accordion. */
+    async function showRecorded(
+      readDetail: (
+        thread: ThreadSummary,
+      ) => Promise<ThreadDetail> = readRecordedDetail,
+    ) {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const view = viewOf(cache, everyCapability, readRecorded, readDetail);
+      return (await show(view)).redraw();
+    }
+
+    it("moves down with j and ↓ and up with k and ↑, scrolling the list, never past either end", async () => {
+      const screen = await showRecorded();
+      const down = await press(screen, "j");
+      expect(down.lines.slice(1, 4)).toEqual([
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
+        " ┃Fix the parser · alice ✗ checks",
+        "  age 7d · owner alice",
+      ]);
+      expect(down.lines.join("\n")).not.toContain("example#12 reply");
+      expect(down.look("example#12 close")?.bg).toBe(
+        tokens["color.background.selected"],
+      );
+      const back = await press(screen, "up");
+      expect(back.lines.at(1)).toBe(
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      );
+      expect((await press(screen, "k")).lines.at(1)).toBe(back.lines.at(1));
+      const last = await press(screen, "down", "j", "j", "j", "j", "j");
+      expect(last.lines.at(1)).toBe(
+        `▌ example#15 close${" ".repeat(14)}29d left`,
+      );
+    });
+
+    it("stays on its wait when the grouping changes, and never lands on a heading", async () => {
+      const screen = await showRecorded();
+      const grouped = await press(screen, "j", "g");
+      expect(grouped.lines.slice(0, 2)).toEqual([
+        `owed${" ".repeat(28)}by owner`,
+        `▌┃example#12 close${" ".repeat(15)}2h over`,
+      ]);
+      const first = await press(screen, "k");
+      expect(first.lines.slice(1, 3)).toEqual([
+        "alice",
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      ]);
+      expect(first.look("alice")?.bg).not.toBe(
+        tokens["color.background.selected"],
+      );
+      expect((await press(screen, "k")).lines.slice(1, 3)).toEqual(
+        first.lines.slice(1, 3),
+      );
+    });
+
+    it("keeps owed's selection while activity is shown, where the keys move nothing", async () => {
+      const screen = await showRecorded();
+      const activity = await press(screen, "l", "j");
+      expect(activity.lines.slice(1, 9).every((line) => line === "")).toBe(
+        true,
+      );
+      expect(activity.lines.at(11)).toBe("←→ mode g grp t time ?");
+      const owed = await press(screen, "h");
+      expect(owed.lines.at(1)).toBe(
+        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+      );
+    });
+
+    it("reads a thread's details once, however often the selection returns to it", async () => {
+      const readDetail = vi.fn(
+        async (_thread: ThreadSummary) => parserFixDetail,
+      );
+      const screen = await showRecorded(readDetail);
+      await press(screen, "j", "j", "k", "k");
+      expect(readDetail.mock.calls.map(([thread]) => thread.number)).toEqual([
+        12, 15,
+      ]);
     });
   });
 
@@ -414,7 +523,7 @@ describe("Screen", () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       const owed = await press(screen, "t");
       expect(owed.lines.at(0)).toBe("owed");
-      expect(owed.lines.at(11)).toBe("←→ mode g grp ?");
+      expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel g grp ?");
       const activity = await press(screen, "right");
       expect(activity.lines.at(11)).toBe("←→ mode g grp t time ?");
       expect(activity.look("t")?.bold).toBe(true);
@@ -434,8 +543,8 @@ describe("Screen", () => {
         "           owed: most overdue first",
         "           activity: newest first",
         "",
-        "App",
-        "  ?        show or hide help",
+        "List",
+        "  ↑ ↓  k j move the selection",
       ]);
       expect((await press(screen, "?")).lines.at(0)).toBe("owed");
     });
@@ -475,7 +584,7 @@ describe("Screen", () => {
       screen.setup.resize(60, 12);
       const wide = await screen.redraw();
       expect(wide.lines.at(0)).toBe("owed");
-      expect(wide.lines.at(11)).toBe("←→ mode g grp ?");
+      expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel g grp ?");
     });
   });
 });

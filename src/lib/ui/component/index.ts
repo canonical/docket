@@ -13,4 +13,8 @@ export {
   ThreadAccordion,
   type ThreadAccordionProps,
 } from "./ThreadAccordion/index.js";
-export { ThreadRow, type ThreadRowProps } from "./ThreadRow/index.js";
+export {
+  countRowLines,
+  ThreadRow,
+  type ThreadRowProps,
+} from "./ThreadRow/index.js";

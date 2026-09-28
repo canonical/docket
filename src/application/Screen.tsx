@@ -3,6 +3,8 @@ import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
   useEffect,
+  useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -14,7 +16,9 @@ import type { CacheStatus } from "../lib/cache/index.js";
 import {
   describeAddress as describeOwedAddress,
   owedGroupings,
+  type WaitRow,
 } from "../lib/owed/index.js";
+import type { ThreadDetail } from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import {
   CountsLine,
@@ -30,6 +34,9 @@ import {
   useCommands,
 } from "../lib/ui/index.js";
 import buildOwed from "./buildOwed.js";
+import identifyRow from "./identifyRow.js";
+import OwedList from "./OwedList.js";
+import placeSelection, { type Selection } from "./placeSelection.js";
 import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
@@ -99,9 +106,10 @@ export default function Screen({
   source,
   onQuit,
 }: TerminalView & { readonly onQuit: () => void }): ReactNode {
-  const { width } = useTerminalDimensions();
+  const { width, height } = useTerminalDimensions();
   const cache = "cache" in source ? source.cache : undefined;
   const readWatched = "cache" in source ? source.readWatched : undefined;
+  const readThreadDetail = "cache" in source ? source.readDetail : undefined;
   // Read after the first frame: the files replace the opening settings,
   // or GitHub's refusal of gh's token stands in for the list.
   const [files, setFiles] = useState<WatchedFiles>();
@@ -143,6 +151,17 @@ export default function Screen({
   const [activityGrouping, setActivityGrouping] = useState(firstActivity);
   const [window, setWindow] = useState(firstWindow);
   const [help, setHelp] = useState(false);
+  const [selection, setSelection] = useState<Selection>({ place: 0, wait: "" });
+  // The keys read the rows drawn last, so a binding never holds a list
+  // that the clock or a refresh has since measured again.
+  const drawnRows = useRef<readonly WaitRow[]>([]);
+  const moveSelection = (step: number) =>
+    setSelection((current) => {
+      const rows = drawnRows.current;
+      const place = placeSelection(rows, current) + step;
+      const row = rows.at(place);
+      return row && place >= 0 ? { place, wait: identifyRow(row) } : current;
+    });
 
   useBindings(
     () => ({
@@ -161,6 +180,23 @@ export default function Screen({
           hint: "mode",
           notes: ["docket opens owed"],
           run: () => setMode("activity"),
+        },
+        {
+          name: "selection.previous",
+          desc: "move the selection",
+          group: "List",
+          hint: "sel",
+          enabled: mode === "owed",
+          run: () => moveSelection(-1),
+        },
+        {
+          name: "selection.next",
+          desc: "move the selection",
+          group: "List",
+          hint: "sel",
+          notes: ["(opens the accordion)"],
+          enabled: mode === "owed",
+          run: () => moveSelection(1),
         },
         {
           name: "grouping.next",
@@ -203,6 +239,10 @@ export default function Screen({
         { key: "h", cmd: "mode.previous" },
         { key: "right", cmd: "mode.next" },
         { key: "l", cmd: "mode.next" },
+        { key: "up", cmd: "selection.previous" },
+        { key: "k", cmd: "selection.previous" },
+        { key: "down", cmd: "selection.next" },
+        { key: "j", cmd: "selection.next" },
         { key: "g", cmd: "grouping.next" },
         { key: "t", cmd: "window.next" },
         { key: "?", cmd: "help.toggle" },
@@ -229,6 +269,17 @@ export default function Screen({
       ? buildOwed(threads, watched, owedGrouping, at)
       : undefined;
   const room = width - indent;
+  const rows = owed ? owed.groups.flatMap((group) => group.rows) : [];
+  useEffect(() => {
+    drawnRows.current = rows;
+  });
+  // A thread's details are read once for each copy of the data: moving the
+  // selection back to a thread shows what was read, and a refresh reads
+  // them again.
+  const details = useMemo(
+    () => ({ of: cached, read: new Map<string, Promise<ThreadDetail>>() }),
+    [cached],
+  );
 
   // The list region: rows once the data is in, or what stands in for them.
   let region: ReactNode = null;
@@ -257,6 +308,25 @@ export default function Screen({
     );
   } else if (owed?.groups.length === 0) {
     region = <EmptyState message="nothing owed" width={width} />;
+  } else if (owed && readThreadDetail) {
+    const readDetail = (row: WaitRow) => {
+      const key = row.reference.text;
+      const reading =
+        details.read.get(key) ?? readThreadDetail(row.wait.thread);
+      details.read.set(key, reading);
+      return reading;
+    };
+    region = (
+      <OwedList
+        list={owed}
+        selected={placeSelection(rows, selection)}
+        readDetail={readDetail}
+        now={at}
+        timezone={settings.time.timezone}
+        width={width}
+        height={height - 4}
+      />
+    );
   }
 
   return (
@@ -296,7 +366,11 @@ export default function Screen({
         ) : undefined
       }
     >
-      <box paddingTop={1}>{region}</box>
+      {owed && owed.groups.length > 0 ? (
+        region
+      ) : (
+        <box paddingTop={1}>{region}</box>
+      )}
     </Pane>
   );
 }
