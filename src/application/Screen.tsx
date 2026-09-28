@@ -10,6 +10,7 @@ import {
   activityGroupings,
   describeAddress as describeActivityAddress,
 } from "../lib/activity/index.js";
+import type { CacheStatus } from "../lib/cache/index.js";
 import {
   describeAddress as describeOwedAddress,
   owedGroupings,
@@ -17,6 +18,7 @@ import {
 import { tokens } from "../lib/tokens/index.js";
 import {
   CountsLine,
+  describeClock,
   EmptyState,
   HelpOverlay,
   KeyBar,
@@ -44,6 +46,39 @@ function cycle<T>(list: readonly T[], item: T): T {
 
 /** Reads a sentence as a line on screen, which ends without a full stop. */
 const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
+
+/**
+ * Why the first fetch cannot go on, and what to do about it, or nothing
+ * while a refresh runs or none has stopped. The reasons come in the order
+ * the status line names them: a rate limit, what stopped the last
+ * refresh, then a pause to spare the request budget. A pause stops the
+ * refresh without a failure, so without this the list would say
+ * `refresh in progress…` until it resumes.
+ */
+function describeHold(
+  status: CacheStatus,
+  timezone: string,
+): { readonly reason: string; readonly recovery: string } | undefined {
+  const { refreshing, paused, failure } = status;
+  if (refreshing) return undefined;
+  const resume = (until: Date) =>
+    `wait: docket resumes at ${describeClock(until, timezone)}`;
+  if (paused?.reason === "rateLimit") {
+    const reason = "GitHub refused requests for its rate limit";
+    return { reason, recovery: resume(paused.until) };
+  }
+  if (failure) {
+    return {
+      reason: dropFullStop(failure.message),
+      recovery: failure.recovery,
+    };
+  }
+  if (paused) {
+    const reason = "docket paused the refresh to spare the request budget";
+    return { reason, recovery: resume(paused.until) };
+  }
+  return undefined;
+}
 
 /** Stand in for the cache's store when there is no cache: nothing changes. */
 const ignoreChanges = () => () => {};
@@ -192,23 +227,19 @@ export default function Screen({
       />
     );
   } else if (!threads) {
-    region =
-      status?.failure && !status.refreshing ? (
-        <Notice
-          reason={dropFullStop(status.failure.message)}
-          recovery={status.failure.recovery}
-          width={width}
+    const held = status && describeHold(status, settings.time.timezone);
+    region = held ? (
+      <Notice reason={held.reason} recovery={held.recovery} width={width} />
+    ) : (
+      <box flexDirection="column" paddingLeft={indent}>
+        <text fg={tokens["color.text"]}>refresh in progress…</text>
+        <ProgressLine
+          fetched={status?.fullRefresh?.fetched ?? 0}
+          total={status?.fullRefresh?.total ?? 0}
+          width={room}
         />
-      ) : (
-        <box flexDirection="column" paddingLeft={indent}>
-          <text fg={tokens["color.text"]}>refresh in progress…</text>
-          <ProgressLine
-            fetched={status?.fullRefresh?.fetched ?? 0}
-            total={status?.fullRefresh?.total ?? 0}
-            width={room}
-          />
-        </box>
-      );
+      </box>
+    );
   } else if (owed?.groups.length === 0) {
     region = <EmptyState message="nothing owed" width={width} />;
   }

@@ -8,6 +8,7 @@ import { tokens } from "../lib/tokens/index.js";
 import {
   everyCapability,
   fakeProvider,
+  fullBudget,
   providerError,
 } from "../testing/provider.js";
 import {
@@ -140,6 +141,40 @@ describe("Screen", () => {
       ]);
       expect(drawn.lines.at(10)).toBe("✗ offline");
       expect(drawn.look("✗ offline")?.fg).toBe(tokens["color.text.error"]);
+    });
+
+    it("says when docket resumes when GitHub rate-limits the first fetch", async () => {
+      const provider = fakeProvider({
+        snapshot: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+      });
+      const cache = await openCache(provider);
+      const screen = await show(viewOf(cache));
+      await cache.refresh();
+      const drawn = await screen.redraw();
+      expect(drawn.lines.slice(2, 6)).toEqual([
+        "  ✗ GitHub refused requests for its rate",
+        "  limit",
+        "  Recovery: wait: docket resumes at",
+        "  13:00",
+      ]);
+      expect(drawn.lines.at(10)).toBe("✗ rate limited · resumes 13:00");
+    });
+
+    it("says when docket resumes when the first fetch waits for the request budget", async () => {
+      const provider = fakeProvider({
+        budget: async () => ({ ...fullBudget, remaining: 1 }),
+      });
+      const cache = await openCache(provider);
+      const screen = await show(viewOf(cache));
+      await cache.refresh();
+      const drawn = await screen.redraw();
+      expect(drawn.lines.slice(2, 6)).toEqual([
+        "  ✗ docket paused the refresh to spare",
+        "  the request budget",
+        "  Recovery: wait: docket resumes at",
+        "  13:00",
+      ]);
+      expect(drawn.lines.at(10)).toBe("refresh paused · resumes 13:00");
     });
 
     it("stands in a notice for the list when gh gives no token, with no status", async () => {
