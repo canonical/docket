@@ -39,6 +39,15 @@ export interface EventsCache {
   readonly events: readonly ThreadEvent[];
 }
 
+/**
+ * What the cache keeps of one file of a repository: its text, or `null`
+ * when the repository has none there. The cache file is JSON, which has
+ * no `undefined`.
+ */
+export interface FileCache {
+  readonly text: string | null;
+}
+
 /** What the cache file holds, for every docket process. */
 export interface CacheFile {
   /** TanStack Query's dehydrated cache: one query per repository. */
@@ -63,6 +72,13 @@ export interface CachedThreads {
 /** The events of one repository, and when they were fetched. */
 export interface CachedEvents {
   readonly events: readonly ThreadEvent[];
+  readonly syncedAt: Date;
+}
+
+/** One file of a repository, and when it was fetched. */
+export interface CachedFile {
+  /** The file's text, or `undefined` when the repository has none there. */
+  readonly text: string | undefined;
   readonly syncedAt: Date;
 }
 
@@ -116,9 +132,9 @@ export interface CacheOptions {
 }
 
 /**
- * The shared cache of the watched repositories' threads and events: one
- * snapshot query and one events query per repository, kept on disk for
- * every docket process.
+ * The shared cache of the watched repositories' threads, events and own
+ * files: one snapshot query, one events query and one query per file for
+ * each repository, kept on disk for every docket process.
  */
 export interface Cache {
   /**
@@ -160,6 +176,18 @@ export interface Cache {
    * when the cache folder cannot be made, read or written.
    */
   readEvents(repo: string, since: Date, maxAge: number): Promise<CachedEvents>;
+  /**
+   * The file at `path` on `repo`'s default branch, or its absence, no
+   * older than `maxAge` milliseconds. Otherwise it is read under the
+   * fetch lock, unless the process that held it before already did, and
+   * kept in the cache file for every docket process.
+   *
+   * @throws ProviderError when the provider fails.
+   * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
+   * the fetch lock for longer than the wait allows, and `CACHE_UNUSABLE`
+   * when the cache folder cannot be made, read or written.
+   */
+  readFile(repo: string, path: string, maxAge: number): Promise<CachedFile>;
   /**
    * One step of the refresh cycle: syncs data older than the refresh
    * interval, unless the budget is low or the cycle is paused. It never

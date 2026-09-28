@@ -18,10 +18,12 @@ import syncRepo from "./syncRepo.js";
 import type {
   Cache,
   CachedEvents,
+  CachedFile,
   CachedThreads,
   CacheOptions,
   CacheStatus,
   EventsCache,
+  FileCache,
   RepoCache,
 } from "./types.js";
 import withFetchLock from "./withFetchLock.js";
@@ -41,8 +43,8 @@ const isNamedError = (error: unknown): error is ProviderError | CacheError =>
  * the cache folder by every docket process.
  *
  * Each repository is one TanStack Query query holding its `RepoCache`,
- * dated by when it was synced, and one holding the events activity reads,
- * dated by when they were fetched. The file is TanStack's dehydrated cache,
+ * dated by when it was synced, one holding the events activity reads, and
+ * one holding its own file, each dated by when it was fetched. The file is TanStack's dehydrated cache,
  * and loading it hydrates, which replaces a query's data only with newer
  * data, so a process never goes back to older threads.
  */
@@ -81,6 +83,22 @@ export default function createCache({
       syncedAt: new Date(state.dataUpdatedAt),
     };
   };
+  const fileKey = (repo: string, path: string) => ["file", repo, path];
+
+  /** The file held for `repo` at `path`, when it is younger than `maxAge`. */
+  const findFreshFile = (
+    repo: string,
+    path: string,
+    maxAge: number,
+  ): CachedFile | undefined => {
+    const state = client.getQueryState<FileCache>(fileKey(repo, path));
+    if (state?.data === undefined) return undefined;
+    const syncedAt = new Date(state.dataUpdatedAt);
+    return now().getTime() - syncedAt.getTime() < maxAge
+      ? { text: state.data.text ?? undefined, syncedAt }
+      : undefined;
+  };
+
   /** The events held for `repo` from `since` on, younger than `maxAge`. */
   const findFreshEvents = (repo: string, since: Date, maxAge: number) => {
     const held = findEvents(repo, since);
@@ -306,6 +324,31 @@ export default function createCache({
           });
           await save();
           return { events, syncedAt: at };
+        });
+      } catch (error) {
+        throw classifyFolderFailure(error, directory);
+      }
+    },
+    async readFile(repo, path, maxAge) {
+      try {
+        await load();
+        const cached = findFreshFile(repo, path, maxAge);
+        if (cached) return cached;
+        return await withFetchLock(directory, async () => {
+          // The process that held the lock before may have fetched it.
+          await load();
+          const fetched = findFreshFile(repo, path, maxAge);
+          if (fetched) return fetched;
+          // Dated from before the fetch, so it is never taken as newer
+          // than it is.
+          const at = now();
+          const text = await provider.readFile(repo, path);
+          const value: FileCache = { text: text ?? null };
+          client.setQueryData(fileKey(repo, path), value, {
+            updatedAt: at.getTime(),
+          });
+          await save();
+          return { text, syncedAt: at };
         });
       } catch (error) {
         throw classifyFolderFailure(error, directory);
