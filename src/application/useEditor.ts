@@ -67,6 +67,11 @@ interface Editing {
   readonly ticked: ReadonlySet<string>;
   /** Everyone offered, in order; none while GitHub is read. */
   readonly names?: readonly string[];
+  /**
+   * True once GitHub could not give whom to offer or the set it holds:
+   * with nothing read to apply, applying would empty the set.
+   */
+  readonly unread?: true;
   /** Why GitHub refused, or could not be read. */
   readonly notice?: Refusal;
   /** True while a change is being written, so it is sent once. */
@@ -174,7 +179,7 @@ export default function useEditor({
       (error: unknown) => {
         const { message, recovery } = describeFailure(error);
         const notice = { reason: dropFullStop(message), recovery };
-        update((editor) => ({ ...editor, names: [], notice }));
+        update((editor) => ({ ...editor, names: [], unread: true, notice }));
       },
     );
   };
@@ -208,7 +213,7 @@ export default function useEditor({
   const apply = async () => {
     const { source, now, onResult } = latest.current;
     const editor = current.current;
-    if (!source || !editor?.names || editor.writing) return;
+    if (!source || !editor?.names || editor.unread || editor.writing) return;
     const { action, thread, reference, names, ticked } = editor;
     const wanted = names.filter((name) => ticked.has(name.toLowerCase()));
     const refuse = (notice: Refusal) => {

@@ -386,8 +386,8 @@ describe("useEditor", () => {
       expect(short.lines.at(-2)).toBe("✗ assign refused");
     });
 
-    it("says why GitHub could not give whom it offers", async () => {
-      const provider = recordedProvider({
+    it("says why GitHub could not give whom it offers, and applies nothing with ⏎", async () => {
+      const { provider, setAssignees } = recordAssignees({
         assignableUsers: () =>
           Promise.reject(providerError("GITHUB_TIMED_OUT")),
       });
@@ -400,8 +400,17 @@ describe("useEditor", () => {
         "  GITHUB_TIMED_OUT",
         "  Recovery: try again",
       ]);
-      const applied = await press(opened, "down", "space", "return");
-      expect(applied.lines.at(0)).toBe("assigning example#12");
+      const pressed = await press(opened, "return", "down", "space", "return");
+      // The recording answers a write at once, so one sent has landed here.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const after = await pressed.redraw();
+      expect(setAssignees).not.toHaveBeenCalled();
+      expect(after.lines.slice(0, 3)).toEqual([
+        "assigning example#12",
+        "▌┃example#12 reply               4d over",
+        " ┃Fix the parser · alice ✗ checks",
+      ]);
+      expect(after.lines.at(-2)).toBe("synced 0m ago");
     });
 
     it("cancels with esc, sending nothing, and gives the keys back to the list", async () => {
