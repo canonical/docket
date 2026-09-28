@@ -19,6 +19,10 @@
  *   must find a branch printed bare in `llm` output.
  *   It also checks its own pattern against every hostile word, on every
  *   run.
+ * - `screens`: one saved screen is moved aside, and the entry must fail
+ *   for the missing copy; then each run of text is written without its
+ *   colours, and the entry must find the screens differ from their saved
+ *   copies, which shows the copies pin the colours.
  *
  * The invoker's verdict is read from its own report line, not from how
  * it exited: a register that does not parse exits non-zero too, without
@@ -32,12 +36,17 @@ import { renameSync } from "node:fs";
 import { join } from "node:path";
 
 const corpusRoot = import.meta.dirname;
-const golden = join(corpusRoot, "goldens/text-output/owed.plain.txt");
+/** Moves the saved output at `goldens/<name>` aside, and returns what puts it back. */
+const moveAside = (name: string) => () => {
+  const path = join(corpusRoot, "goldens", name);
+  renameSync(path, `${path}.aside`);
+  return () => renameSync(`${path}.aside`, path);
+};
 
 interface Proof {
   readonly entry: string;
-  /** The stand-in's break, as `GUARANTEES_BREAK` names it. */
-  readonly standInBreak?: string;
+  /** The break `GUARANTEES_BREAK` names, in the stand-in or in the entry. */
+  readonly brokenBy?: string;
   /** Breaks the corpus before the run, and returns what mends it. */
   readonly prepare?: () => () => void;
   /** What the entry's output must say for the failure to be this one. */
@@ -47,45 +56,54 @@ interface Proof {
 const proofs: readonly Proof[] = [
   {
     entry: "text-output",
-    prepare: () => {
-      renameSync(golden, `${golden}.aside`);
-      return () => renameSync(`${golden}.aside`, golden);
-    },
+    prepare: moveAside("text-output/owed.plain.txt"),
     failure: "no saved output at goldens/text-output/owed.plain.txt",
   },
   {
     entry: "request-budget",
-    standInBreak: "overlap",
+    brokenBy: "overlap",
     failure: "× never has two requests open at once",
   },
   {
     entry: "working-clock",
-    standInBreak: "shift",
+    brokenBy: "shift",
     failure:
       "× carries a reply asked on Friday at 16:00 over the weekend to Monday at 16:00",
   },
   {
     entry: "working-clock",
-    standInBreak: "later",
+    brokenBy: "later",
     failure:
       "× leaves 15 hours at 01:00 on Monday in the configured time zone, while it is still Sunday in UTC",
   },
   {
     entry: "hostile-text",
-    standInBreak: "unsanitized",
+    brokenBy: "unsanitized",
     failure:
       "× gives a pull request's base branch without its sequences in json",
   },
   {
     entry: "hostile-text",
-    standInBreak: "unquoted",
+    brokenBy: "unquoted",
     failure: "× quotes every branch in llm output",
+  },
+  {
+    entry: "screens",
+    prepare: moveAside("screens/component/ThreadRow/OverReviewSelected.40.txt"),
+    failure:
+      "no saved output at goldens/screens/component/ThreadRow/OverReviewSelected.40.txt",
+  },
+  {
+    entry: "screens",
+    brokenBy: "uncoloured",
+    failure:
+      "the output differs from goldens/screens/component/ThreadRow/OverReviewSelected.40.txt",
   },
 ];
 
 /** How the report names `proof`: its entry, and its break when it has one. */
-const nameProof = ({ entry, standInBreak }: Proof) =>
-  standInBreak ? `${entry} (${standInBreak})` : entry;
+const nameProof = ({ entry, brokenBy }: Proof) =>
+  brokenBy ? `${entry} (${brokenBy})` : entry;
 
 /** Runs `proof`'s entry broken, and says whether it failed as it must. */
 const checkProof = async (proof: Proof): Promise<boolean> => {
@@ -96,8 +114,8 @@ const checkProof = async (proof: Proof): Promise<boolean> => {
       {
         stdout: "pipe",
         stderr: "pipe",
-        env: proof.standInBreak
-          ? { ...process.env, GUARANTEES_BREAK: proof.standInBreak }
+        env: proof.brokenBy
+          ? { ...process.env, GUARANTEES_BREAK: proof.brokenBy }
           : process.env,
       },
     );

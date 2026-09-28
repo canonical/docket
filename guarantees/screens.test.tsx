@@ -105,6 +105,16 @@ const hex = (colour: CapturedSpan["fg"]) =>
     .map((part) => part.toString(16).padStart(2, "0"))
     .join("")}`;
 
+/**
+ * A run's colours. `GUARANTEES_BREAK=uncoloured`, which
+ * `bun run guarantees:prove` alone sets, leaves them out, as a copy blind
+ * to colour would, so the entry is seen to fail when colours go unread.
+ */
+const describeColours = (span: CapturedSpan) =>
+  process.env.GUARANTEES_BREAK === "uncoloured"
+    ? ""
+    : ` fg ${hex(span.fg)} bg ${hex(span.bg)}`;
+
 const attributeNames = Object.entries(TextAttributes).filter(
   ([name]) => name !== "NONE",
 );
@@ -160,7 +170,7 @@ async function drawScreen(node: ReactNode, width: number): Promise<string> {
         return blank
           ? []
           : [
-              `${row + 1}:${at + 1} ${JSON.stringify(span.text)} fg ${hex(span.fg)} bg ${hex(span.bg)}${describeAttributes(span.attributes)}`,
+              `${row + 1}:${at + 1} ${JSON.stringify(span.text)}${describeColours(span)}${describeAttributes(span.attributes)}`,
             ];
       });
     });
