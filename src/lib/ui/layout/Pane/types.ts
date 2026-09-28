@@ -1,9 +1,15 @@
-import type { ReactNode } from "react";
+import type { BoxRenderable } from "@opentui/core";
+import type { ReactNode, Ref } from "react";
 
 /** Props for the Pane layout. */
 export interface PaneProps {
   /** The width of the terminal, in display cells. */
   width: number;
+  /**
+   * The pane's root box, which a layer of keys can be scoped to: such a
+   * layer applies only while something inside the pane has the focus.
+   */
+  ref?: Ref<BoxRenderable>;
   /**
    * The first line: where you are.
    * Maps to DSL role: pane-header (cardinality: 1)

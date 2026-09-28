@@ -4,6 +4,7 @@ import { type Format, type Problem, quote } from "../lib/text/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import isAssignable from "./isAssignable.js";
 import isNamedError from "./isNamedError.js";
+import nameReviewer from "./nameReviewer.js";
 
 /** The two sets docket writes: a thread's assignees and its review requests. */
 export type WriteAction = "assign" | "review";
@@ -49,9 +50,6 @@ export interface WriteTarget {
   readonly provider: Provider;
   readonly cache: Cache;
 }
-
-const nameReviewer = (reviewer: Reviewer) =>
-  "team" in reviewer ? reviewer.team : reviewer.login;
 
 /** `org/team` names a team; anything else a person. */
 const readReviewer = (name: string): Reviewer =>

@@ -1,3 +1,5 @@
+import type { BoxRenderable } from "@opentui/core";
+import { createRef } from "react";
 import { describe, expect, it } from "vitest";
 import { draw } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
@@ -18,6 +20,13 @@ describe("Pane", () => {
       "←→ mode ↑↓ sel g grp ?",
     ]);
     expect(screen.look("nothing owed")?.bg).toBe(tokens["color.background"]);
+  });
+
+  it("gives its root box, the whole screen, to a ref", async () => {
+    const root = createRef<BoxRenderable>();
+    await draw(<Pane {...NothingOwed.args} ref={root} />, 40, 8);
+    expect(root.current?.width).toBe(40);
+    expect(root.current?.height).toBe(8);
   });
 
   it("gives the list region every line the terminal adds, at 60 columns", async () => {

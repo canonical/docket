@@ -69,6 +69,8 @@ describe("openTerminal", () => {
         capabilities: everyCapability,
         readWatched: async () => ({ watched: recordedWatched() }),
         readDetail: async () => parserFixDetail,
+        readCandidates: () => Promise.reject(new Error("no editor opens")),
+        write: () => Promise.reject(new Error("no editor opens")),
         readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
       },
     });
@@ -77,7 +79,7 @@ describe("openTerminal", () => {
       await setup.renderOnce();
       const frame = setup.captureCharFrame();
       expect(frame).toContain("nothing owed");
-      expect(frame).toContain("←→ mode ↑↓ sel ⏎ open g grp ?");
+      expect(frame).toContain("←→ mode ↑↓ sel ⏎ open g grp a r ?");
     });
     setup.mockInput.pressKey("q");
     expect(await closed).toBe(0);
@@ -99,6 +101,8 @@ describe("openTerminal", () => {
         capabilities: everyCapability,
         readWatched: () => new Promise(() => {}),
         readDetail: async () => parserFixDetail,
+        readCandidates: () => Promise.reject(new Error("no editor opens")),
+        write: () => Promise.reject(new Error("no editor opens")),
         readEvents: () => new Promise(() => {}),
       },
     });
@@ -130,7 +134,7 @@ describe("openTerminal", () => {
       const frame = setup.captureCharFrame();
       expect(frame).toContain("✗ gh is not signed in to github.com");
       // The keys work once the key bar, drawn from them, shows.
-      expect(frame).toContain("←→ mode ↑↓ sel ⏎ open g grp ?");
+      expect(frame).toContain("←→ mode ↑↓ sel ⏎ open g grp a r ?");
     });
     setup.mockInput.pressKey("q");
     expect(await closed).toBe(0);

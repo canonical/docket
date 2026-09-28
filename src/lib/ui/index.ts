@@ -24,6 +24,8 @@ export {
   type ThreadAccordionProps,
   ThreadRow,
   type ThreadRowProps,
+  type WrappedNotice,
+  wrapNotice,
 } from "./component/index.js";
 export { accordionHeight } from "./constants.js";
 export { default as createKeymap } from "./createKeymap.js";

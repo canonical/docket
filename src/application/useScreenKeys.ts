@@ -2,6 +2,7 @@ import { useBindings } from "@opentui/keymap/react";
 import { useRef } from "react";
 import { type UseCommandsResult, useCommands } from "../lib/ui/index.js";
 import type { TerminalMode } from "./types.js";
+import type { WriteAction } from "./writeSet.js";
 
 /** What the screen's keys do. */
 export interface ScreenActions {
@@ -15,6 +16,8 @@ export interface ScreenActions {
   readonly nextGrouping: () => void;
   /** Shows activity's next time window. */
   readonly nextWindow: () => void;
+  /** Opens the editor for `action` on the selected row. */
+  readonly edit: (action: WriteAction) => void;
   /** Shows the help, or hides it. */
   readonly toggleHelp: () => void;
   /** Discards the cached data and fetches everything again. */
@@ -24,8 +27,10 @@ export interface ScreenActions {
 
 /** Props for the useScreenKeys hook. */
 export interface UseScreenKeysProps {
-  /** The mode on screen: `t` acts in activity alone. */
+  /** The mode on screen: `t` acts in activity, and `a` and `r` in owed. */
   readonly mode: TerminalMode;
+  /** Whether an editor is open, which turns every key but the help's off. */
+  readonly editorOpen: boolean;
   readonly actions: ScreenActions;
 }
 
@@ -33,9 +38,12 @@ export interface UseScreenKeysProps {
 export interface UseScreenKeysResult {
   /** The commands a key runs now, which the key bar names. */
   readonly active: UseCommandsResult;
-  /** Every command bound, which the help lists. */
+  /** Every command bound, in the help's order of groups. */
   readonly bound: UseCommandsResult;
 }
+
+/** The help's groups, in the order keys act: from the mode down to the app. */
+const helpGroups = ["Mode", "List", "Thread", "Editor", "App"];
 
 /**
  * The screen's global layer of keys, and the commands the key bar and the
@@ -44,6 +52,7 @@ export interface UseScreenKeysResult {
  */
 export default function useScreenKeys({
   mode,
+  editorOpen,
   actions,
 }: UseScreenKeysProps): UseScreenKeysResult {
   // The keys run closures made when their layer was bound, so they read
@@ -108,6 +117,22 @@ export default function useScreenKeys({
           run: () => latest.current.nextWindow(),
         },
         {
+          name: "thread.assign",
+          desc: "assign",
+          group: "Thread",
+          hint: "",
+          enabled: mode === "owed",
+          run: () => latest.current.edit("assign"),
+        },
+        {
+          name: "thread.review",
+          desc: "request review",
+          group: "Thread",
+          hint: "",
+          enabled: mode === "owed",
+          run: () => latest.current.edit("review"),
+        },
+        {
           name: "help.toggle",
           desc: "show or hide help",
           group: "App",
@@ -126,7 +151,12 @@ export default function useScreenKeys({
           group: "App",
           run: () => latest.current.quit(),
         },
-      ],
+        // An open editor takes the typing, so no other key but help runs.
+      ].map((command) =>
+        editorOpen && command.name !== "help.toggle"
+          ? { ...command, enabled: false }
+          : command,
+      ),
       bindings: [
         { key: "left", cmd: "mode.previous" },
         { key: "h", cmd: "mode.previous" },
@@ -137,6 +167,8 @@ export default function useScreenKeys({
         { key: "down", cmd: "selection.next" },
         { key: "j", cmd: "selection.next" },
         { key: "return", cmd: "thread.open" },
+        { key: "a", cmd: "thread.assign" },
+        { key: "r", cmd: "thread.review" },
         { key: "g", cmd: "grouping.next" },
         { key: "t", cmd: "window.next" },
         { key: "?", cmd: "help.toggle" },
@@ -144,9 +176,11 @@ export default function useScreenKeys({
         { key: "q", cmd: "app.quit" },
       ],
     }),
-    [mode],
+    [mode, editorOpen],
   );
   const active = useCommands({ visibility: "active" });
-  const bound = useCommands({ visibility: "registered" });
+  const bound = useCommands({ visibility: "registered" }).toSorted(
+    (a, b) => helpGroups.indexOf(a.group) - helpGroups.indexOf(b.group),
+  );
   return { active, bound };
 }

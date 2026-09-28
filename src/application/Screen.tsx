@@ -1,3 +1,4 @@
+import type { BoxRenderable } from "@opentui/core";
 import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
@@ -23,6 +24,7 @@ import { tokens } from "../lib/tokens/index.js";
 import {
   type ActionResult,
   CountsLine,
+  countPickerLines,
   describeClock,
   EmptyState,
   HelpOverlay,
@@ -30,18 +32,22 @@ import {
   Notice,
   Pane,
   PaneHeader,
+  PeoplePicker,
   ProgressLine,
   StatusLine,
+  wrapNotice,
 } from "../lib/ui/index.js";
 import type { ThreadSummary } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
 import identifyRow from "./identifyRow.js";
+import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
 import placeSelection, { type Selection } from "./placeSelection.js";
 import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
 import useActivity from "./useActivity.js";
+import useEditor from "./useEditor.js";
 import useScreenKeys from "./useScreenKeys.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
@@ -103,8 +109,9 @@ const unselected: Selection = { place: 0, row: "" };
  * The terminal interface's one screen: owed or activity, with the header
  * naming the mode and its address, the list region, the counts, the
  * status and the keys, or the help over all but the header. The keys are
- * bound in one global layer, and the help and the key bar are drawn from
- * its command catalogue.
+ * bound in one global layer, beside the layer of the editor that `a` and
+ * `r` open, and the help and the key bar are drawn from the keymap's
+ * command catalogue.
  */
 export default function Screen({
   mode: openingMode,
@@ -177,6 +184,14 @@ export default function Screen({
   // so a binding never holds a list older than the one on screen.
   const drawnRows = useRef<readonly (WaitRow | ActivityThread)[]>([]);
   const drawnSelection = useRef<WaitRow | ActivityThread>(undefined);
+  const pane = useRef<BoxRenderable>(null);
+  const editor = useEditor({
+    source: "cache" in source ? source : undefined,
+    scope: pane,
+    findTeam: (repo) => listTeam(watched, repo),
+    now,
+    onResult: setAction,
+  });
   const moveSelection = (step: number) =>
     setSelections((current) => {
       const rows = drawnRows.current;
@@ -186,8 +201,14 @@ export default function Screen({
       return { ...current, [mode]: { place, row: identifyRow(row) } };
     });
 
+  // `a` and `r` act in owed, where every row is a wait's.
+  const selectedWait = () => {
+    const row = drawnSelection.current;
+    return row && "wait" in row ? row : undefined;
+  };
   const { active, bound } = useScreenKeys({
     mode,
+    editorOpen: editor.open,
     actions: {
       switchMode: setMode,
       moveSelection,
@@ -211,6 +232,7 @@ export default function Screen({
           : setActivityGrouping((current) => cycle(activityGroupings, current)),
       nextWindow: () =>
         setWindow((current) => cycle(settings.activity, current)),
+      edit: (action) => editor.start(action, selectedWait()),
       toggleHelp: () => setHelp((open) => !open),
       refresh: () => void cache?.fullRefresh(),
       quit: onQuit,
@@ -254,6 +276,7 @@ export default function Screen({
   useEffect(() => {
     drawnRows.current = rows;
     drawnSelection.current = rows.at(placeSelection(rows, selections[mode]));
+    editor.follow(drawnSelection.current?.reference.text);
   });
   // A thread's details are read once for each copy of the data: moving the
   // selection back to a thread shows what was read, and each refresh
@@ -284,6 +307,24 @@ export default function Screen({
     return reading;
   };
 
+  // What stands in the accordion's place: the open editor, or why a key
+  // could not open one.
+  const { picker, refusal } = editor;
+  const refused = refusal && (
+    <Notice reason={refusal.reason} recovery={refusal.recovery} width={width} />
+  );
+  const slot = picker
+    ? {
+        node: <PeoplePicker {...picker} width={width} />,
+        lines: countPickerLines({ ...picker, width }),
+      }
+    : refusal && {
+        node: refused,
+        lines: Object.values(
+          wrapNotice(refusal.reason, refusal.recovery, room),
+        ).flat().length,
+      };
+
   // The list region: rows once the data is in, or what stands in for them.
   let region: ReactNode = null;
   if (problem) {
@@ -295,6 +336,8 @@ export default function Screen({
         width={width}
       />
     );
+  } else if (refused && rows.length === 0) {
+    region = refused;
   } else if (!threads) {
     const held = status && describeHold(status, settings.time.timezone);
     region = held ? (
@@ -323,6 +366,7 @@ export default function Screen({
         timezone={settings.time.timezone}
         width={width}
         height={height - 4}
+        {...(slot && { editor: slot })}
       />
     );
   } else if (activity && "problem" in activity) {
@@ -364,14 +408,15 @@ export default function Screen({
 
   return (
     <Pane
+      ref={pane}
       width={width}
       header={
         help ? (
           <PaneHeader title="help" width={width} />
         ) : (
           <PaneHeader
-            title={header.title.text}
-            address={header.address?.text}
+            title={editor.title ?? header.title.text}
+            address={editor.title ? undefined : header.address?.text}
             width={width}
           />
         )

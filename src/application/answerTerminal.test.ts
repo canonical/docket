@@ -7,6 +7,7 @@ import type { Provider } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
 import { fakeProvider, providerError } from "../testing/provider.js";
 import {
+  parserFix,
   parserFixDetail,
   recordedNow,
   recordedProvider,
@@ -118,6 +119,25 @@ describe("answerTerminal", () => {
     const [thread] = recordedThreads;
     if (!thread) throw new Error("the recording has a thread");
     expect(await cacheOf(view).readDetail(thread)).toEqual(parserFixDetail);
+  });
+
+  it("gives the editors whom GitHub offers, and writes as a confirmed text write does", async () => {
+    const setAssignees = vi.fn(recordedProvider().setAssignees);
+    const { view } = await openOn(recordedProvider({ setAssignees }));
+    const source = cacheOf(view);
+    await source.cache.read(0);
+    expect(await source.readCandidates("review", parserFix)).toMatchObject({
+      current: ["bob"],
+    });
+    const outcome = await source.write({
+      action: "assign",
+      thread: parserFix,
+      reference: "example#12",
+      wanted: ["mallory"],
+    });
+    expect(setAssignees).toHaveBeenCalledWith(parserFix, ["mallory"]);
+    expect(outcome.applied).toEqual(["mallory"]);
+    expect(outcome.shortfall).toBeUndefined();
   });
 
   it("reads activity's events through the cache, fetching them only when older than the maximum age", async () => {

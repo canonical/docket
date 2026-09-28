@@ -10,7 +10,11 @@ import type {
   ThreadDetail,
 } from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
-import { findWaits, type ThreadSummary } from "../lib/waits/index.js";
+import {
+  findWaits,
+  type Thread,
+  type ThreadSummary,
+} from "../lib/waits/index.js";
 import {
   everyCapability,
   fakeProvider,
@@ -32,8 +36,10 @@ import {
   drawSuspending,
   WithKeys,
 } from "../testing/terminal.js";
+import readCandidates from "./readCandidates.js";
 import Screen from "./Screen.js";
 import type { TerminalView, WatchedFiles } from "./types.js";
+import writeSet, { type WriteAction, type WriteRequest } from "./writeSet.js";
 
 // The measuring of waits is watched, not replaced, to see which threads a
 // redraw measures.
@@ -84,6 +90,24 @@ const readRecordedDetail = async (
 /** Opens nothing, and says it opened. */
 const openNothing = async (_url: string) => {};
 
+/**
+ * The editors' reading and writing, as the terminal wires them, on
+ * `provider` and the cache.
+ */
+function wireEdits(cache: Cache, provider: Provider = recordedProvider()) {
+  return {
+    readCandidates: (action: WriteAction, thread: Thread) =>
+      readCandidates(provider, action, thread),
+    write: (
+      request: Pick<WriteRequest, "action" | "thread" | "reference" | "wanted">,
+    ) =>
+      writeSet(
+        { provider, cache },
+        { ...request, apply: true, format: "plain", retry: "apply again" },
+      ),
+  };
+}
+
 function viewOf(
   cache: Cache,
   capabilities: ReadonlySet<Capability> = everyCapability,
@@ -92,6 +116,7 @@ function viewOf(
     thread: ThreadSummary,
   ) => Promise<ThreadDetail> = readRecordedDetail,
   openInBrowser = openNothing,
+  edits = wireEdits(cache),
 ): TerminalView {
   return {
     mode: "owed",
@@ -106,6 +131,7 @@ function viewOf(
       readWatched,
       readDetail,
       readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
+      ...edits,
     },
   };
 }
@@ -177,7 +203,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel ⏎ open g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
       expect(screen.look("refresh in progress")).toMatchObject({
         fg: tokens["color.text"],
@@ -288,7 +314,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel ⏎ open g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
     });
   });
@@ -376,7 +402,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel ⏎ open g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
     });
   });
@@ -398,7 +424,7 @@ describe("Screen", () => {
         "",
         "2 over · 1 soon · 3 on track",
         "synced 0m ago",
-        "←→ mode ↑↓ sel ⏎ open g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
       expect(screen.look("example#12 reply")?.bg).toBe(
         tokens["color.background.selected"],
@@ -864,7 +890,7 @@ describe("Screen", () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       const owed = await press(screen, "t");
       expect(owed.lines.at(0)).toBe("owed");
-      expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
+      expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
       const activity = await press(screen, "right");
       expect(activity.lines.at(11)).toBe(
         "←→ mode ↑↓ sel ⏎ open g grp t time ?",
@@ -874,7 +900,7 @@ describe("Screen", () => {
 
     it("shows every key with ?, grouped, and hides it again", async () => {
       const view = viewOf(await openCache(fakeProvider()));
-      const screen = await show(view, 40, () => {}, 24);
+      const screen = await show(view, 40, () => {}, 33);
       const help = await press(screen, "?");
       expect(help.lines).toEqual([
         "help",
@@ -893,6 +919,15 @@ describe("Screen", () => {
         "",
         "Thread",
         "  ⏎        open in the browser",
+        "  a        assign",
+        "  r        request review",
+        "",
+        "Editor",
+        "  type     filter",
+        "  ↑ ↓      move",
+        "  ␣        toggle",
+        "  ⏎        apply",
+        "  esc      cancel",
         "",
         "App",
         "  ?        show or hide help",
@@ -957,7 +992,7 @@ describe("Screen", () => {
       screen.setup.resize(60, 12);
       const wide = await screen.redraw();
       expect(wide.lines.at(0)).toBe("owed");
-      expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
+      expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
     });
   });
 });

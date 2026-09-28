@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 import type { OwedGrouping } from "../lib/owed/index.js";
 import { tokens } from "../lib/tokens/index.js";
@@ -15,6 +16,7 @@ function drawList(
   selected: number,
   width: number,
   height: number,
+  editor?: { readonly node: ReactNode; readonly lines: number },
 ) {
   return drawSuspending(
     <OwedList
@@ -25,6 +27,7 @@ function drawList(
       timezone="Europe/Paris"
       width={width}
       height={height}
+      {...(editor && { editor })}
     />,
     width,
     height,
@@ -86,5 +89,30 @@ describe("OwedList", () => {
       " ┃Fix the parser · bob ✗ checks",
     ]);
     expect(screen.lines.at(7)).toBe("unassigned");
+  });
+
+  it("draws an editor in the details' place under the selected row, which gives up its background, and keeps it in view", async () => {
+    const editor = {
+      node: (
+        <>
+          <text>{"  filter:"}</text>
+          <text>{"  ☑ alice"}</text>
+          <text>{"  ☐ bob"}</text>
+        </>
+      ),
+      lines: 3,
+    };
+    const screen = await drawList("owner", 4, 40, 6, editor);
+    expect(screen.lines).toEqual([
+      `▌┃example#12 review${" ".repeat(14)}1d left`,
+      " ┃Fix the parser · bob ✗ checks",
+      "  filter:",
+      "  ☑ alice",
+      "  ☐ bob",
+      "unassigned",
+    ]);
+    expect(screen.look("example#12 review")?.bg).not.toBe(
+      tokens["color.background.selected"],
+    );
   });
 });

@@ -19,7 +19,8 @@ import type {
   Freshness,
   Problem,
 } from "../lib/text/index.js";
-import type { ThreadSummary } from "../lib/waits/index.js";
+import type { Thread, ThreadSummary } from "../lib/waits/index.js";
+import type { WriteAction, WriteOutcome, WriteRequest } from "./writeSet.js";
 
 /** What the process gives docket: its arguments, its world and its output. */
 export interface Context {
@@ -157,6 +158,24 @@ export interface TerminalView {
          */
         readonly readDetail: (thread: ThreadSummary) => Promise<ThreadDetail>;
         /**
+         * Reads from GitHub, never the cache, whom an editor offers for
+         * `thread` and the set it holds.
+         */
+        readonly readCandidates: (
+          action: WriteAction,
+          thread: Thread,
+        ) => Promise<Candidates>;
+        /**
+         * Writes the thread's whole set as `docket assign --confirm` and
+         * `docket review --confirm` do, refreshing the thread after it.
+         */
+        readonly write: (
+          request: Pick<
+            WriteRequest,
+            "action" | "thread" | "reference" | "wanted"
+          >,
+        ) => Promise<WriteOutcome>;
+        /**
          * Reads each watched repository's own file, called once the
          * interface has opened, so a slow or unreachable GitHub never
          * holds up the first frame. It never rejects: a failure comes back
@@ -183,3 +202,14 @@ export interface TerminalView {
 export type WatchedFiles =
   | { readonly watched: readonly Watched[] }
   | { readonly problem: Problem };
+
+/** Whom an editor offers, as GitHub gives it when the editor opens. */
+export interface Candidates {
+  /** The set GitHub holds, which the editor opens ticked. */
+  readonly current: readonly string[];
+  /**
+   * Everyone else GitHub offers, in its order: everyone it can assign, or
+   * its suggested reviewers, the collaborators and the teams.
+   */
+  readonly offered: readonly string[];
+}

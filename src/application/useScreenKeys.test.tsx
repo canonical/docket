@@ -11,7 +11,8 @@ type State = Omit<UseScreenKeysProps, "actions">;
 
 /**
  * Binds the keys on `start`, noting each action a key runs in `ran`, and
- * draws the keys that act now, then the keys of every command bound.
+ * draws the keys that act now, the keys of every command bound, and the
+ * groups of those commands, each once, in the order the help lists them.
  */
 function probe(start: Partial<State> = {}) {
   const ran: string[] = [];
@@ -26,18 +27,27 @@ function probe(start: Partial<State> = {}) {
     openSelected: note("openSelected"),
     nextGrouping: note("nextGrouping"),
     nextWindow: note("nextWindow"),
+    edit: note("edit"),
     toggleHelp: note("toggleHelp"),
     refresh: note("refresh"),
     quit: note("quit"),
   };
   function Probe() {
-    const [state, setState] = useState<State>({ mode: "owed", ...start });
+    const [state, setState] = useState<State>({
+      mode: "owed",
+      editorOpen: false,
+      ...start,
+    });
     change = (next) => setState((current) => ({ ...current, ...next }));
     const { active, bound } = useScreenKeys({ ...state, actions });
+    const groups = bound
+      .map(({ group }) => group)
+      .filter((group, place, all) => all.indexOf(group) === place);
     return (
       <box flexDirection="column">
         <text>{active.flatMap(({ keys }) => keys).join(" ")}</text>
         <text>{bound.flatMap(({ keys }) => keys).join(" ")}</text>
+        <text>{groups.join(" ")}</text>
       </box>
     );
   }
@@ -68,7 +78,7 @@ async function bind(start: Partial<State> = {}) {
       <Probe />
     </WithKeys>,
     120,
-    2,
+    3,
   );
   return { ...probed, screen };
 }
@@ -79,7 +89,7 @@ describe("useScreenKeys", () => {
     await press(
       screen,
       ...["left", "h", "right", "l", "up", "k", "down", "j", "return", "g"],
-      ...["?", "R", "q"],
+      ...["a", "r", "?", "R", "q"],
     );
     expect(ran).toEqual([
       "switchMode owed",
@@ -92,21 +102,35 @@ describe("useScreenKeys", () => {
       "moveSelection 1",
       "openSelected",
       "nextGrouping",
+      "edit assign",
+      "edit review",
       "toggleHelp",
       "refresh",
       "quit",
     ]);
   });
 
-  it("moves to the next time window in activity alone, while the help lists t in both modes", async () => {
+  it("moves to the next time window in activity alone, and opens an editor in owed alone, while the help lists every key in both modes", async () => {
     const { ran, change, screen } = await bind();
     const owed = await press(screen, "t");
     await screen.redraw(() => change({ mode: "activity" }));
-    const activity = await press(screen, "t");
+    const activity = await press(screen, "t", "a", "r");
     expect(ran).toEqual(["nextWindow"]);
-    expect([owed, activity].map(({ lines }) => lines)).toEqual([
-      ["← → ↑ ↓ ⏎ g ? R q", "← → ↑ ↓ ⏎ g t ? R q"],
-      ["← → ↑ ↓ ⏎ g t ? R q", "← → ↑ ↓ ⏎ g t ? R q"],
+    expect([owed, activity].map(({ lines }) => lines.slice(0, 2))).toEqual([
+      ["← → ↑ ↓ ⏎ g a r ? R q", "← → g t ↑ ↓ ⏎ a r ? R q"],
+      ["← → ↑ ↓ ⏎ g t ? R q", "← → g t ↑ ↓ ⏎ a r ? R q"],
     ]);
+  });
+
+  it("runs only ? while an editor is open", async () => {
+    const { ran, screen } = await bind({ editorOpen: true });
+    const drawn = await press(screen, "j", "a", "q", "R", "?");
+    expect(ran).toEqual(["toggleHelp"]);
+    expect(drawn.lines.at(0)).toBe("?");
+  });
+
+  it("lists the groups in the help's order, from the mode down to the app", async () => {
+    const { screen } = await bind();
+    expect(screen.lines.at(2)).toBe("Mode List Thread App");
   });
 });

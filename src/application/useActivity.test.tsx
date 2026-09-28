@@ -78,6 +78,8 @@ async function probe(
     capabilities: everyCapability,
     readWatched: async () => ({ watched: recordedWatched() }),
     readDetail: async () => parserFixDetail,
+    readCandidates: () => Promise.reject(new Error("no editor opens")),
+    write: () => Promise.reject(new Error("no editor opens")),
     readEvents: makeReader(cache),
   };
   let setNext: (props: Partial<UseActivityProps>) => void = () => {};
