@@ -26,6 +26,7 @@ Everything about one thread, untrimmed: its waits, its latest message, the revie
 
 A reference names a thread as \`<repo>#<number>\`, such as \`example#12\`, where \`<repo>\` is the short name in the configuration's \`repos\`. \`<repo> stack <number>\` shows every open pull request of a stack.
 The thread must be open: docket keeps only open threads.
+The thread's details, such as its messages, checks and files, come from GitHub on every call; \`--max-age\` applies to the rest.
 
 Flags:
   --format plain|llm|json
@@ -41,9 +42,9 @@ Example:
   docket show example#12
 
 Exit codes:
-  0  docket answered, even when threads are over target, and also when it served cached data during a rate limit or an outage, with a warning.
+  0  docket answered, even when the thread is over target.
   2  A prerequisite is missing: gh is not installed or not signed in, the personal configuration is invalid, or the call itself is not valid.
-  3  No data could be obtained from GitHub or the cache.
+  3  No data could be obtained from GitHub or the cache. show never answers from cached data alone, so it exits 3 during a rate limit or an outage.
 `);
   });
 

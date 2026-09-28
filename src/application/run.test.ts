@@ -191,6 +191,37 @@ describe("run", () => {
   });
 
   describe("docket show", () => {
+    it("exits 3 during a rate limit, as its help says, while owed and activity answer from the cache", async () => {
+      await home.call(["show", "example#12"]);
+      await home.call(["activity"]);
+      const limited = recordedProvider({
+        snapshot: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+        events: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+        threadDetail: () =>
+          Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+        budget: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+      });
+      const call = (args: string[]) =>
+        home.call([...args, "--max-age", "0"], {
+          provider: limited,
+          now: later(10),
+        });
+      const show = await call(["show", "example#12"]);
+      expect(show.code).toBe(3);
+      expect(show.err).toContain("## Error: GITHUB_RATE_LIMITED\n");
+      expect((await home.call(["show", "--help"])).out).toContain(
+        "so it exits 3 during a rate limit or an outage.",
+      );
+      for (const args of [["owed"], ["activity"]]) {
+        const { code, out } = await call(args);
+        expect(code).toBe(0);
+        expect(out).toContain("## Warning: GITHUB_RATE_LIMITED\n");
+        expect((await home.call([args.at(0) ?? "", "--help"])).out).toContain(
+          "served cached data during a rate limit",
+        );
+      }
+    });
+
     it("exits 3 when no open thread answers to the reference", async () => {
       const { code, err } = await home.call(["show", "docs#99"]);
       expect(code).toBe(3);

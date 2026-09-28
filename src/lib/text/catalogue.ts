@@ -107,10 +107,15 @@ const catalogue: readonly Command[] = [
     notes: [
       "A reference names a thread as `<repo>#<number>`, such as `example#12`, where `<repo>` is the short name in the configuration's `repos`. `<repo> stack <number>` shows every open pull request of a stack.",
       "The thread must be open: docket keeps only open threads.",
+      "The thread's details, such as its messages, checks and files, come from GitHub on every call; `--max-age` applies to the rest.",
     ],
     flags: [format, detail, maxAge],
     example: "docket show example#12",
-    exits: readExits,
+    exits: {
+      0: "docket answered, even when the thread is over target.",
+      2: readExits[2],
+      3: "No data could be obtained from GitHub or the cache. show never answers from cached data alone, so it exits 3 during a rate limit or an outage.",
+    },
   },
   {
     name: "config",
