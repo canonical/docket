@@ -10,7 +10,8 @@ import { createOpenTuiKeymap } from "@opentui/keymap/opentui";
  * written as `shift+r` or `?`, and an `enabled` field that turns a command
  * off, such as the time window outside activity. Each command also
  * carries what the help and the key bar show of it, read back by
- * `useCommands`: `desc`, `group`, `hint` and `notes`.
+ * `useCommands`: `desc`, `group`, `hint`, `notes`, and `shown` for a
+ * command no key runs.
  *
  * @note Impure: listens to the renderer's keys until the renderer ends.
  */
