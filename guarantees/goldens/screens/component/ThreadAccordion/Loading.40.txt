@@ -1,0 +1,5 @@
+40 columns
+|  loading…
+
+runs
+1:1 "  loading…" fg #c6c8d1ff bg #00000000

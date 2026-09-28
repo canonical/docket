@@ -1,0 +1,18 @@
+60 columns
+|  filter:
+|  ☑ bob
+|  ☐ carol
+|  ☐ alice
+|  ☐ dave
+|  ☐ example-org/reviewers
+
+runs
+1:3 "filter: " fg #c6c8d1ff bg #00000000
+1:11 "                                                  " fg #ffffffff bg #161821ff
+2:3 "☑ bob" fg #c6c8d1ff bg #00000000
+3:3 "☐ carol" fg #c6c8d1ff bg #00000000
+4:3 "☐ alice" fg #c6c8d1ff bg #00000000
+5:3 "☐ dave" fg #c6c8d1ff bg #00000000
+6:1 "  " fg #ffffffff bg #2e3244ff
+6:3 "☐ example-org/reviewers" fg #c6c8d1ff bg #2e3244ff
+6:26 "                                   " fg #ffffffff bg #2e3244ff

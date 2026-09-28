@@ -1,0 +1,5 @@
+40 columns
+|    alice pushed 2 commits           25m
+
+runs
+1:1 "    alice pushed 2 commits           25m" fg #c6c8d1ff bg #00000000

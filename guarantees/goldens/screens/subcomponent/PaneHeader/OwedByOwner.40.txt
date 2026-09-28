@@ -1,0 +1,6 @@
+40 columns
+|owed                            by owner
+
+runs
+1:1 "owed" fg #c6c8d1ff bg #00000000 bold
+1:5 "                            by owner" fg #c6c8d1ff bg #00000000

@@ -1,0 +1,5 @@
+40 columns
+|✓ assigned alice
+
+runs
+1:1 "✓ assigned alice" fg #b4be82ff bg #00000000

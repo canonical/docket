@@ -1,0 +1,6 @@
+40 columns
+|activity                   24h · by kind
+
+runs
+1:1 "activity" fg #c6c8d1ff bg #00000000 bold
+1:9 "                   24h · by kind" fg #c6c8d1ff bg #00000000

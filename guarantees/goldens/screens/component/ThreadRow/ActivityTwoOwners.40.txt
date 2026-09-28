@@ -1,0 +1,9 @@
+40 columns
+|  example#15 issue                    1d
+|  Crash on start
+|  alice, bob
+
+runs
+1:3 "example#15 issue                    1d" fg #c6c8d1ff bg #00000000
+2:3 "Crash on start" fg #c6c8d1ff bg #00000000
+3:3 "alice, bob" fg #c6c8d1ff bg #00000000

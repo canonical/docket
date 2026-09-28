@@ -1,0 +1,11 @@
+60 columns
+|▌┃example#13 close                                   8d left
+| ┃Document the parser · alice draft
+
+runs
+1:1 "▌" fg #454b68ff bg #00000000
+1:2 "┃" fg #6b7089ff bg #00000000
+1:3 "example#13 close                                   8d left" fg #c6c8d1ff bg #00000000
+2:2 "┃" fg #6b7089ff bg #00000000
+2:3 "Document the parser · alice" fg #c6c8d1ff bg #00000000
+2:30 " draft" fg #6b7089ff bg #00000000

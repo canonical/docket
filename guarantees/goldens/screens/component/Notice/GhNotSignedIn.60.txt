@@ -1,0 +1,7 @@
+60 columns
+|  ✗ gh is not signed in to github.com
+|  Recovery: run gh auth login
+
+runs
+1:3 "✗ gh is not signed in to github.com" fg #e27878ff bg #00000000
+2:3 "Recovery: run gh auth login" fg #c6c8d1ff bg #00000000
