@@ -122,6 +122,8 @@ export interface TerminalView {
   readonly owedGrouping: OwedGrouping;
   /** The current time, read whenever an age is measured. */
   readonly now: () => Date;
+  /** Opens a thread's page in the browser, and rejects when it cannot. */
+  readonly openInBrowser: (url: string) => Promise<void>;
   /**
    * The settings that hold across repositories: the activity windows
    * and the time zone times are written in.

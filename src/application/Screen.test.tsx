@@ -60,6 +60,9 @@ const readRecorded = async (): Promise<WatchedFiles> => ({
 /** Reads every thread's details as the recording's pull request's. */
 const readRecordedDetail = async () => parserFixDetail;
 
+/** Opens nothing, and says it opened. */
+const openNothing = async (_url: string) => {};
+
 function viewOf(
   cache: Cache,
   capabilities: ReadonlySet<Capability> = everyCapability,
@@ -67,24 +70,26 @@ function viewOf(
   readDetail: (
     thread: ThreadSummary,
   ) => Promise<ThreadDetail> = readRecordedDetail,
+  openInBrowser = openNothing,
 ): TerminalView {
   return {
     mode: "owed",
     owedGrouping: "none",
     now: () => recordedNow,
+    openInBrowser,
     settings: recordedSettings,
     watched: recordedWatched(),
     source: { cache, capabilities, readWatched, readDetail },
   };
 }
 
-function show(view: TerminalView, width = 40, onQuit = () => {}) {
+function show(view: TerminalView, width = 40, onQuit = () => {}, height = 12) {
   return drawSuspending(
     <WithKeys>
       <Screen {...view} onQuit={onQuit} />
     </WithKeys>,
     width,
-    12,
+    height,
   );
 }
 
@@ -95,12 +100,36 @@ async function press(screen: Drawn, ...keys: string[]) {
     drawn = await drawn.redraw(() => {
       if (key === "left" || key === "right" || key === "up" || key === "down") {
         screen.setup.mockInput.pressArrow(key);
+      } else if (key === "return") {
+        screen.setup.mockInput.pressEnter();
       } else {
         screen.setup.mockInput.pressKey(key);
       }
     });
   }
   return drawn;
+}
+
+/**
+ * The screen on the recording, its data in, with `readDetail` for the
+ * accordion and `openInBrowser` for a thread's page.
+ */
+async function showRecorded(
+  readDetail: (
+    thread: ThreadSummary,
+  ) => Promise<ThreadDetail> = readRecordedDetail,
+  openInBrowser = openNothing,
+) {
+  const cache = await openCache(recordedProvider());
+  await cache.refresh();
+  const view = viewOf(
+    cache,
+    everyCapability,
+    readRecorded,
+    readDetail,
+    openInBrowser,
+  );
+  return (await show(view)).redraw();
 }
 
 describe("Screen", () => {
@@ -121,7 +150,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp ?",
       ]);
       expect(screen.look("refresh in progress")).toMatchObject({
         fg: tokens["color.text"],
@@ -207,6 +236,7 @@ describe("Screen", () => {
         mode: "owed",
         owedGrouping: "none",
         now: () => recordedNow,
+        openInBrowser: openNothing,
         settings: recordedSettings,
         watched: [],
         source: {
@@ -231,7 +261,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp ?",
       ]);
     });
   });
@@ -319,7 +349,7 @@ describe("Screen", () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp ?",
       ]);
     });
   });
@@ -341,7 +371,7 @@ describe("Screen", () => {
         "",
         "2 over · 1 soon · 3 on track",
         "synced 0m ago",
-        "←→ mode ↑↓ sel g grp ?",
+        "←→ mode ↑↓ sel ⏎ open g grp ?",
       ]);
       expect(screen.look("example#12 reply")?.bg).toBe(
         tokens["color.background.selected"],
@@ -378,18 +408,6 @@ describe("Screen", () => {
   });
 
   describe("the selection", () => {
-    /** The screen on the recording, its data in, and `readDetail` for the accordion. */
-    async function showRecorded(
-      readDetail: (
-        thread: ThreadSummary,
-      ) => Promise<ThreadDetail> = readRecordedDetail,
-    ) {
-      const cache = await openCache(recordedProvider());
-      await cache.refresh();
-      const view = viewOf(cache, everyCapability, readRecorded, readDetail);
-      return (await show(view)).redraw();
-    }
-
     it("moves down with j and ↓ and up with k and ↑, scrolling the list, never past either end", async () => {
       const screen = await showRecorded();
       const down = await press(screen, "j");
@@ -455,6 +473,47 @@ describe("Screen", () => {
       expect(readDetail.mock.calls.map(([thread]) => thread.number)).toEqual([
         12, 15,
       ]);
+    });
+  });
+
+  describe("opening a thread", () => {
+    it("opens the selected row's page, as GitHub gives it, with ⏎, and never a heading", async () => {
+      const opened: string[] = [];
+      const screen = await showRecorded(readRecordedDetail, async (url) => {
+        opened.push(url);
+      });
+      await press(screen, "j", "j", "return");
+      await press(screen, "g", "k", "k", "k", "k", "return");
+      expect(opened).toEqual([
+        "https://github.com/example-org/example-repo/issues/15",
+        "https://github.com/example-org/example-repo/pull/12",
+      ]);
+    });
+
+    it("says on the status line, in the error colour, when the browser cannot be opened", async () => {
+      const screen = await showRecorded(readRecordedDetail, () =>
+        Promise.reject(new Error("xdg-open exited with code 3")),
+      );
+      await press(screen, "return");
+      const failed = await screen.redraw();
+      expect(failed.lines.at(10)).toBe("✗ could not open the browser");
+      expect(failed.look("✗ could")?.fg).toBe(tokens["color.text.error"]);
+    });
+
+    it("opens nothing in activity, where nothing is selected", async () => {
+      const open = vi.fn(openNothing);
+      const screen = await showRecorded(readRecordedDetail, open);
+      await press(screen, "l", "return");
+      expect(open).not.toHaveBeenCalled();
+    });
+
+    it("opens nothing when nothing is owed", async () => {
+      const open = vi.fn(openNothing);
+      const cache = await openCache(fakeProvider());
+      await cache.refresh();
+      const view = { ...viewOf(cache), openInBrowser: open };
+      await press(await (await show(view)).redraw(), "return");
+      expect(open).not.toHaveBeenCalled();
     });
   });
 
@@ -541,14 +600,15 @@ describe("Screen", () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       const owed = await press(screen, "t");
       expect(owed.lines.at(0)).toBe("owed");
-      expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel g grp ?");
+      expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
       const activity = await press(screen, "right");
       expect(activity.lines.at(11)).toBe("←→ mode g grp t time ?");
       expect(activity.look("t")?.bold).toBe(true);
     });
 
     it("shows every key with ?, grouped, and hides it again", async () => {
-      const screen = await show(viewOf(await openCache(fakeProvider())));
+      const view = viewOf(await openCache(fakeProvider()));
+      const screen = await show(view, 40, () => {}, 24);
       const help = await press(screen, "?");
       expect(help.lines).toEqual([
         "help",
@@ -563,6 +623,18 @@ describe("Screen", () => {
         "",
         "List",
         "  ↑ ↓  k j move the selection",
+        "           (opens the accordion)",
+        "",
+        "Thread",
+        "  ⏎        open in the browser",
+        "",
+        "App",
+        "  ?        show or hide help",
+        "  R        full refresh",
+        "  q        quit",
+        "",
+        "  windows are counted in working time",
+        "",
       ]);
       expect((await press(screen, "?")).lines.at(0)).toBe("owed");
     });
@@ -602,7 +674,7 @@ describe("Screen", () => {
       screen.setup.resize(60, 12);
       const wide = await screen.redraw();
       expect(wide.lines.at(0)).toBe("owed");
-      expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel g grp ?");
+      expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp ?");
     });
   });
 });

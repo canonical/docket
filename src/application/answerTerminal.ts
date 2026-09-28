@@ -6,6 +6,7 @@ import {
 import type { OwedGrouping } from "../lib/owed/index.js";
 import type { Problem } from "../lib/text/index.js";
 import describeFailure from "./describeFailure.js";
+import openInBrowser from "./openInBrowser.js";
 import readRepositoryFiles from "./readRepositoryFiles.js";
 import type {
   Connection,
@@ -46,6 +47,7 @@ export default async function answerTerminal(
       mode,
       owedGrouping,
       now,
+      openInBrowser,
       settings,
       watched: [],
       source,
@@ -71,6 +73,7 @@ export default async function answerTerminal(
     mode,
     owedGrouping,
     now,
+    openInBrowser,
     settings,
     watched: settings.repos.map((repo) => ({
       ...repo,

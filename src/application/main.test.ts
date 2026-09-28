@@ -53,6 +53,7 @@ describe("main", () => {
       mode: "owed",
       owedGrouping: "none",
       now: () => recordedNow,
+      openInBrowser: async () => {},
       settings: recordedSettings,
       watched: [],
       source: {

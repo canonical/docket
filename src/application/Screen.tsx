@@ -21,6 +21,7 @@ import {
 import type { ThreadDetail } from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import {
+  type ActionResult,
   CountsLine,
   describeClock,
   EmptyState,
@@ -102,6 +103,7 @@ export default function Screen({
   mode: openingMode,
   owedGrouping: openingGrouping,
   now,
+  openInBrowser,
   settings,
   watched: opening,
   source,
@@ -156,9 +158,11 @@ export default function Screen({
   const [window, setWindow] = useState(firstWindow);
   const [help, setHelp] = useState(false);
   const [selection, setSelection] = useState<Selection>({ place: 0, wait: "" });
-  // The keys read the rows drawn last, so a binding never holds a list
-  // older than the one on screen.
+  const [action, setAction] = useState<ActionResult>();
+  // The keys read the rows drawn last, and the row selected among them,
+  // so a binding never holds a list older than the one on screen.
   const drawnRows = useRef<readonly WaitRow[]>([]);
+  const drawnSelection = useRef<WaitRow>(undefined);
   const moveSelection = (step: number) =>
     setSelection((current) => {
       const rows = drawnRows.current;
@@ -201,6 +205,25 @@ export default function Screen({
           notes: ["(opens the accordion)"],
           enabled: mode === "owed",
           run: () => moveSelection(1),
+        },
+        {
+          name: "thread.open",
+          desc: "open in the browser",
+          group: "Thread",
+          hint: "open",
+          enabled: mode === "owed",
+          // Only a row is ever selected, so a heading never opens.
+          run: () => {
+            const row = drawnSelection.current;
+            if (!row) return;
+            openInBrowser(row.wait.thread.url).catch(() =>
+              setAction({
+                failed: true,
+                text: "could not open the browser",
+                at: now(),
+              }),
+            );
+          },
         },
         {
           name: "grouping.next",
@@ -247,6 +270,7 @@ export default function Screen({
         { key: "k", cmd: "selection.previous" },
         { key: "down", cmd: "selection.next" },
         { key: "j", cmd: "selection.next" },
+        { key: "return", cmd: "thread.open" },
         { key: "g", cmd: "grouping.next" },
         { key: "t", cmd: "window.next" },
         { key: "?", cmd: "help.toggle" },
@@ -254,7 +278,7 @@ export default function Screen({
         { key: "q", cmd: "app.quit" },
       ],
     }),
-    [mode, cache, onQuit],
+    [mode, cache, onQuit, openInBrowser, now],
   );
   const active = useCommands({ visibility: "active" });
   const bound = useCommands({ visibility: "registered" });
@@ -276,6 +300,7 @@ export default function Screen({
   const rows = owed ? owed.groups.flatMap((group) => group.rows) : [];
   useEffect(() => {
     drawnRows.current = rows;
+    drawnSelection.current = rows.at(placeSelection(rows, selection));
   });
   // A thread's details are read once for each copy of the data: moving the
   // selection back to a thread shows what was read, and each refresh
@@ -351,6 +376,7 @@ export default function Screen({
       status={
         <StatusLine
           status={problem ? undefined : status}
+          action={action}
           now={at}
           timezone={settings.time.timezone}
           names={Object.fromEntries(
