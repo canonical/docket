@@ -2,20 +2,22 @@ import { activityGroupings } from "../lib/activity/index.js";
 import { renderActivity } from "../lib/text/index.js";
 import buildActivity from "./buildActivity.js";
 import fail from "./fail.js";
+import readEvents, { type ReadEvents } from "./readEvents.js";
 import readThreads from "./readThreads.js";
 import type { Session } from "./types.js";
 
 /**
  * Answers `docket activity`: the events inside one of the configured
- * windows, the first when `--window` is not given.
+ * windows, the first when `--window` is not given, read through the
+ * cache under the call's maximum age, as the threads are.
  *
- * @note Impure: reads the cache, asks GitHub for the events, and
- * writes the answer.
+ * @note Impure: reads the cache, which asks GitHub when its threads or
+ * events are too old, and writes the answer.
  */
 export default async function answerActivity(
   session: Session,
 ): Promise<number> {
-  const { context, invocation, resolved, provider } = session;
+  const { context, invocation, resolved } = session;
   const { settings } = resolved;
   const windows = settings.activity.map(
     (window) => [`${window.amount}${window.unit}`, window] as const,
@@ -38,14 +40,32 @@ export default async function answerActivity(
       "run docket activity --help",
     );
   }
-  const { threads, syncedAt, warnings } = await readThreads(session);
+  const read = await readThreads(session);
+  const reads: ReadEvents[] = [];
   const list = await buildActivity(
-    provider,
-    threads,
+    async (repo, since) => {
+      const events = await readEvents(session, repo, since);
+      reads.push(events);
+      return events.events;
+    },
+    read.threads,
     settings,
     window,
     grouping,
     context.now(),
+  );
+  // The data is as old as the oldest of the threads and the events, and
+  // a failure met on several repositories is told once.
+  const synced = [read.syncedAt, ...reads.map((each) => each.syncedAt)];
+  const syncedAt = synced.every((at) => at !== undefined)
+    ? new Date(Math.min(...synced.map(Number)))
+    : undefined;
+  const warnings = [
+    ...read.warnings,
+    ...reads.flatMap((each) => each.warnings),
+  ].filter(
+    (warning, index, all) =>
+      all.findIndex(({ code }) => code === warning.code) === index,
   );
   context.write(
     renderActivity({

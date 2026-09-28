@@ -6,8 +6,7 @@ import {
 } from "../lib/activity/index.js";
 import { type Duration, measureDuration } from "../lib/clock/index.js";
 import type { Settings } from "../lib/config/index.js";
-import { selectEvents } from "../lib/events/index.js";
-import type { Provider } from "../lib/provider/index.js";
+import { selectEvents, type ThreadEvent } from "../lib/events/index.js";
 import type { Thread } from "../lib/waits/index.js";
 
 const day = 86_400_000;
@@ -26,13 +25,14 @@ function findEarliest(window: Duration, settings: Settings, now: Date): Date {
 /**
  * Builds activity: the events GitHub records on each watched repository
  * within the window of working time before `now`, under their threads.
- * Events are not cached, so each call asks GitHub for them; the cached
- * threads give each row its owners.
+ * The threads give each row its owners.
  *
- * @note Impure: asks GitHub for the events of each watched repository.
+ * @param readEvents Gives the events of a repository at or after a time.
+ * @note Impure: reads the events of each watched repository through
+ * `readEvents`.
  */
 export default async function buildActivity(
-  provider: Provider,
+  readEvents: (repo: string, since: Date) => Promise<readonly ThreadEvent[]>,
   threads: readonly Thread[],
   settings: Settings,
   window: Duration,
@@ -42,7 +42,7 @@ export default async function buildActivity(
   const since = findEarliest(window, settings, now);
   const repos = [];
   for (const repo of settings.repos) {
-    const events = await provider.events(repo.repo, since);
+    const events = await readEvents(repo.repo, since);
     repos.push({
       repo,
       people: settings.people,

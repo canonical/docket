@@ -13,7 +13,7 @@ const window = { amount: 72, unit: "h" } as const;
 describe("buildActivity", () => {
   it("gathers the events inside the window under their threads", async () => {
     const list = await buildActivity(
-      recordedProvider(),
+      recordedProvider().events,
       recordedThreads,
       recordedSettings,
       window,
@@ -26,7 +26,7 @@ describe("buildActivity", () => {
   it("asks for events far enough back to cover the window's working time", async () => {
     const provider = recordedProvider({ events: vi.fn(async () => []) });
     await buildActivity(
-      provider,
+      provider.events,
       [],
       recordedSettings,
       window,
@@ -42,7 +42,14 @@ describe("buildActivity", () => {
       ...recordedSettings,
       time: { ...recordedSettings.time, workdays: ["mon", "tue"] as const },
     };
-    await buildActivity(provider, [], twoDays, window, "none", recordedNow);
+    await buildActivity(
+      provider.events,
+      [],
+      twoDays,
+      window,
+      "none",
+      recordedNow,
+    );
     // Two workdays a week hold 48 hours, so 72 need two weeks.
     expect(provider.events).toHaveBeenLastCalledWith(
       "example-org/example-docs",
