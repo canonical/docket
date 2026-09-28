@@ -61,7 +61,7 @@ describe("buildActivity", () => {
     expect(list).toEqual(recordedActivity("kind"));
   });
 
-  it("marks the viewer among the owners", () => {
+  it("names the viewer you among the owners", () => {
     const list = buildActivity(
       recorded,
       recordedThreads,
@@ -74,13 +74,13 @@ describe("buildActivity", () => {
     const owners = list.groups
       .flatMap(({ rows }) => rows)
       .flatMap(({ owner, owners }) => owners?.fields ?? (owner ? [owner] : []))
-      .flatMap((owner) => ("viewer" in owner ? [owner] : []));
-    expect(
-      owners.filter(({ viewer }) => viewer).map(({ text }) => text),
-    ).toContain("alice");
-    expect(
-      owners.filter(({ viewer }) => !viewer).map(({ text }) => text),
-    ).not.toContain("alice");
+      .flatMap((owner) => ("group" in owner ? [owner] : []));
+    const named = (you: boolean) =>
+      owners
+        .filter(({ group }) => (group === "you") === you)
+        .map(({ text }) => text);
+    expect(named(true)).toContain("alice");
+    expect(named(false)).not.toContain("alice");
   });
 
   it("lists nothing for a repository whose events were not given", () => {

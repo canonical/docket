@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { at, teamSettings, wait } from "../../testing/facts.js";
 import buildRow from "./buildRow.js";
 import countStates from "./countStates.js";
-import describePerson from "./describePerson.js";
 
 const now = at("2026-09-23T10:00+02:00");
 const row = (due: string) =>
@@ -11,7 +10,7 @@ const row = (due: string) =>
     "example",
     teamSettings.time,
     now,
-    (account) => describePerson(account, teamSettings.people, undefined),
+    teamSettings.people,
   );
 
 describe("countStates", () => {

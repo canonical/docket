@@ -1,5 +1,5 @@
 import type { WorkingClock } from "../clock/index.js";
-import type { Group, People, Repo } from "../config/index.js";
+import type { People, Repo } from "../config/index.js";
 import type { Wait } from "../waits/index.js";
 
 /**
@@ -25,19 +25,22 @@ export interface FieldList<F extends Field = Field> {
 }
 
 /**
- * A login a list names, with what tells people apart: the group the
- * settings put the account in, and whether it is the viewer, the account
- * gh is signed in with, whom the faces may call you.
+ * Whom a login is, as a list tells people apart: `you`, the account gh
+ * is signed in with, or a GitHub team it belongs to; otherwise the group
+ * the settings put the account in, `team`, `internal`, `outside` (the
+ * settings' `external`) or `bot`. Five groups, in that order, each a
+ * face draws one way.
  */
+export type PersonGroup = "you" | "team" | "internal" | "outside" | "bot";
+
+/** A login a list names, or a team the viewer belongs to, with its group. */
 export interface Person extends Field {
-  readonly group: Group;
-  /** False as well when the viewer is not known. */
-  readonly viewer: boolean;
+  readonly group: PersonGroup;
 }
 
 /**
  * Who owns a wait or a thread: a person, or a text that names no login,
- * such as a GitHub team or `unassigned`.
+ * such as `unassigned` or a GitHub team the viewer is not known to be in.
  */
 export type Owner = Person | Field;
 

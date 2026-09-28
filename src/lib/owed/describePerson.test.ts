@@ -9,27 +9,26 @@ import {
 import describePerson from "./describePerson.js";
 
 const { people } = teamSettings;
+const groupOf = (...args: Parameters<typeof describePerson>) =>
+  describePerson(...args).group;
 
 describe("describePerson", () => {
-  it("names a login whole, with the group the settings give it", () => {
+  it("names a login whole, with the group the settings give it, external read as outside", () => {
     expect(describePerson(alice, people, undefined)).toEqual({
       text: "alice",
       fit: "trimmed",
       group: "team",
-      viewer: false,
     });
     expect(
-      [carol, dave, exampleSync].map(
-        (author) => describePerson(author, people, undefined).group,
+      [carol, dave, exampleSync].map((author) =>
+        groupOf(author, people, undefined),
       ),
-    ).toEqual(["internal", "external", "bot"]);
+    ).toEqual(["internal", "outside", "bot"]);
   });
 
-  it("marks the viewer, whatever the case of either login", () => {
-    expect(describePerson(alice, people, "Alice").viewer).toBe(true);
-    expect(
-      describePerson({ ...dave, login: "DAVE" }, people, "dave").viewer,
-    ).toBe(true);
-    expect(describePerson(carol, people, "alice").viewer).toBe(false);
+  it("names the viewer you, whatever the case of either login and whatever their group", () => {
+    expect(groupOf(alice, people, "Alice")).toBe("you");
+    expect(groupOf({ ...dave, login: "DAVE" }, people, "dave")).toBe("you");
+    expect(groupOf(carol, people, "alice")).toBe("internal");
   });
 });

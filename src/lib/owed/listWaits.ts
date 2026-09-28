@@ -1,7 +1,6 @@
 import buildRow from "./buildRow.js";
 import { invalidFileMark } from "./constants.js";
 import countStates from "./countStates.js";
-import describePerson from "./describePerson.js";
 import type { RepoWaits, WaitList } from "./types.js";
 
 /**
@@ -26,9 +25,7 @@ export default function listWaits(
   const rows = repos
     .flatMap(({ repo, time, waits, people, invalidFile }) =>
       waits.map((wait) => {
-        const row = buildRow(wait, repo.name, time, now, (account) =>
-          describePerson(account, people, viewer),
-        );
+        const row = buildRow(wait, repo.name, time, now, people, viewer);
         return invalidFile
           ? {
               ...row,

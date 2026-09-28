@@ -6,7 +6,6 @@ const person = (text: string): Person => ({
   text,
   fit: "trimmed",
   group: "team",
-  viewer: false,
 });
 
 describe("describeOwners", () => {

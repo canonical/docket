@@ -3,9 +3,10 @@ import { type Account, type Author, classify } from "../people/index.js";
 import type { Person } from "./types.js";
 
 /**
- * Names an account as a row shows it: its login, whole, with the group the
- * settings put it in and whether it is the viewer. Logins ignore case on
- * GitHub, so the viewer is found whatever the case.
+ * Names an account as a list shows it: its login, whole, with its group.
+ * The viewer is `you` whatever the settings say of the account, and
+ * found whatever the case, since logins ignore case on GitHub; anyone
+ * else takes the group the settings give, `external` read as `outside`.
  *
  * @param viewer The login gh is signed in with, when it is known.
  */
@@ -14,10 +15,15 @@ export default function describePerson(
   people: People,
   viewer: string | undefined,
 ): Person {
+  const group = classify(account, people);
   return {
     text: account.login,
     fit: "trimmed",
-    group: classify(account, people),
-    viewer: account.login.toLowerCase() === viewer?.toLowerCase(),
+    group:
+      account.login.toLowerCase() === viewer?.toLowerCase()
+        ? "you"
+        : group === "external"
+          ? "outside"
+          : group,
   };
 }

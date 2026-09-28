@@ -18,7 +18,7 @@ describe("buildOwed", () => {
     }
   });
 
-  it("marks the viewer among the people each row names", () => {
+  it("names the viewer you among the people each row names", () => {
     const owed = buildOwed(
       recordedThreads,
       recordedWatched(),
@@ -30,9 +30,11 @@ describe("buildOwed", () => {
     const assignedToAlice = rows.find(
       ({ owner }) => owner?.text === "alice",
     )?.owner;
-    expect(assignedToAlice).toMatchObject({ group: "team", viewer: true });
+    expect(assignedToAlice).toMatchObject({ group: "you" });
     expect(
-      rows.every(({ author }) => author.viewer === (author.text === "alice")),
+      rows.every(
+        ({ author }) => (author.group === "you") === (author.text === "alice"),
+      ),
     ).toBe(true);
   });
 

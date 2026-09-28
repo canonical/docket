@@ -53,7 +53,7 @@ describe("buildThreadRow", () => {
       kind: { text: "PR", fit: "trimmed" },
       distance: { text: "25m", fit: "trimmed" },
       title: { text: "Example title", fit: "trimmed" },
-      owner: { text: "alice", fit: "trimmed", group: "team", viewer: true },
+      owner: { text: "alice", fit: "trimmed", group: "you" },
       events: [
         {
           event: pushed,

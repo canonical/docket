@@ -1,3 +1,4 @@
+import type { PersonGroup } from "../owed/index.js";
 import type { ThreadKind } from "../waits/index.js";
 import type { Detail, Format } from "./types.js";
 
@@ -13,6 +14,19 @@ export const kindWords: Readonly<Record<ThreadKind, string>> = {
   issue: "issue",
   pullRequest: "pull request",
   discussion: "discussion",
+};
+
+/**
+ * Each person's group as text mode names it: the words the personal
+ * file's `people:` uses, so a program reads the group the settings give,
+ * with `you` for the viewer.
+ */
+export const groupWords: Readonly<Record<PersonGroup, string>> = {
+  you: "you",
+  team: "team",
+  internal: "internal",
+  outside: "external",
+  bot: "bot",
 };
 
 /** The formats an answer can be written in, as `--format` takes them. */
