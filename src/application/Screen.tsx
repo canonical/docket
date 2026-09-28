@@ -28,6 +28,7 @@ import {
   EmptyState,
   HelpOverlay,
   KeyBar,
+  minColumns,
   Notice,
   Pane,
   PaneHeader,
@@ -129,6 +130,9 @@ export default function Screen({
   onQuit,
 }: TerminalView & { readonly onQuit: () => void }): ReactNode {
   const { width, height } = useTerminalDimensions();
+  // Below the narrowest pane the screen shows only that it needs more
+  // columns, so no key but `q` acts on the list or the editor it hides.
+  const narrow = width < minColumns;
   const cache = "cache" in source ? source.cache : undefined;
   const readWatched = "cache" in source ? source.readWatched : undefined;
   const readThreadDetail = "cache" in source ? source.readDetail : undefined;
@@ -193,7 +197,7 @@ export default function Screen({
     findTeam: (repo) => listTeam(watched, repo),
     now,
     onResult: setAction,
-    covered: help,
+    covered: help || narrow,
   });
   // How many rows the list showed last: how far a page moves the selection.
   const pageRows = useRef(1);
@@ -230,6 +234,7 @@ export default function Screen({
     mode,
     help,
     editorOpen: editor.open,
+    narrow,
     actions: {
       switchMode: setMode,
       moveSelection: (step) => moveTo((place) => place + step),

@@ -27,7 +27,7 @@ export {
   type WrappedNotice,
   wrapNotice,
 } from "./component/index.js";
-export { accordionHeight } from "./constants.js";
+export { accordionHeight, minColumns } from "./constants.js";
 export { default as createKeymap } from "./createKeymap.js";
 export { default as describeClock } from "./describeClock.js";
 export {

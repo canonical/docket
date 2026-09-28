@@ -10,3 +10,10 @@ export const accordionHeight = 5;
  * whole, and a team's name stays cut.
  */
 export const loginCells = 12;
+
+/**
+ * The narrowest terminal docket draws its screen in, in display cells.
+ * Every line of the screen is designed to fit it; below it, the pane
+ * shows only a line saying so, and no key but `q` acts.
+ */
+export const minColumns = 40;

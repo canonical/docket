@@ -1,14 +1,8 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
+import { minColumns } from "../../constants.js";
 import wrapText from "../../wrapText.js";
 import type { PaneProps } from "./types.js";
-
-/**
- * The narrowest terminal docket draws its screen in, in display cells.
- * Every line of the screen is designed to fit it; below it, the pane
- * shows only a line saying so.
- */
-const MIN_COLUMNS = 40;
 
 /**
  * The pane is the whole terminal screen: one tmux column, drawn on a
@@ -33,9 +27,9 @@ const Pane = ({
     height="100%"
     backgroundColor={tokens["color.background"]}
   >
-    {width < MIN_COLUMNS ? (
+    {width < minColumns ? (
       <text fg={tokens["color.text"]}>
-        {wrapText(`docket needs ${MIN_COLUMNS} columns`, width).join("\n")}
+        {wrapText(`docket needs ${minColumns} columns`, width).join("\n")}
       </text>
     ) : (
       <>
