@@ -7,7 +7,7 @@
 import type { Repo } from "../lib/config/index.js";
 import { listWaits, type WaitRow } from "../lib/owed/index.js";
 import type { Wait } from "../lib/waits/index.js";
-import { at, teamSettings, thread, wait } from "./facts.js";
+import { at, dave, teamSettings, thread, wait } from "./facts.js";
 import { recordedNow } from "./recorded.js";
 
 const example: Repo = {
@@ -41,7 +41,8 @@ export function measureRow(facts: Partial<Wait>, invalidFile = false): WaitRow {
 
 /**
  * A review bob owes on a pull request second in a stack of three, a
- * working day over its target, with its checks failing.
+ * working day over its target, with its checks failing and one push since
+ * the review was asked for.
  */
 export const overReview = measureRow({
   thread: thread({
@@ -50,6 +51,7 @@ export const overReview = measureRow({
     title: "Fix the parser",
     stack: { number: 3, position: 2, size: 3, base: "main" },
     checks: "failing",
+    pushes: [{ author: dave, at: at("2026-09-25T11:00+02:00") }],
   }),
   kind: "review",
   owners: ["bob"],
@@ -82,10 +84,14 @@ export const draftClose = measureRow({
 
 /**
  * The close of an issue three people own, one of them with a login longer
- * than a row gives a login.
+ * than a row gives a login, with a label of each shape.
  */
 export const sharedClose = measureRow({
-  thread: thread({ number: 4, title: "Where do tokens live?" }),
+  thread: thread({
+    number: 4,
+    title: "Where do tokens live?",
+    labels: ["priority: high", "kind=bug", "area/icons"],
+  }),
   owners: ["alice", "bob", "carol-at-example-org"],
   target: { amount: 30, unit: "d" },
   due: at("2026-09-21T12:00+02:00"),

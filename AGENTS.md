@@ -73,6 +73,7 @@
 - vitest compiles JSX with oxc, so JSX options belong under `oxc` in `vitest.config.ts`; it ignores esbuild's.
 - vitest resolves packages under the `bun` condition, so a test loads OpenTUI's Bun build, as the executable does: with its Node build beside, a renderer does not recognise the components React makes for it.
 - A test of the terminal interface presses keys inside `screen.redraw(() => …)`, which lets React's updates settle before the screen is read back.
+- A block that suspends, such as the accordion waiting on a thread's details, is drawn in its tests with `drawSuspending()` from `src/testing/terminal.tsx`: OpenTUI's `testRender` mounts inside a synchronous `act`, and React never retries a Suspense boundary that suspended there, so it would say `loading…` for ever.
 - OpenTUI's own declaration files fail to type-check, so `tsconfig.json` skips declaration files; every source file is still checked.
 - `src/scripts/check-identity.ts` holds the refused words, so it is the one file the identity check skips.
 - The audit and its self-test query the advisory database, and the first gitleaks run through nix downloads it, so `bun run ci` needs the network.

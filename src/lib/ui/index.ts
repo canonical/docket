@@ -15,6 +15,8 @@ export {
   type ProgressLineProps,
   StatusLine,
   type StatusLineProps,
+  ThreadAccordion,
+  type ThreadAccordionProps,
   ThreadRow,
   type ThreadRowProps,
 } from "./component/index.js";
