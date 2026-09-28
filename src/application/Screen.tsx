@@ -304,10 +304,15 @@ export default function Screen({
   });
   // A thread's details are read once for each copy of the data: moving the
   // selection back to a thread shows what was read, and each refresh
-  // brings a copy that reads its own.
+  // brings a copy that reads its own. A read that failed is read again when
+  // the selection comes back to its thread, and never on a frame that keeps
+  // the selection there, as the clock's each second does.
   // biome-ignore lint/correctness/useExhaustiveDependencies: see above.
   const details = useMemo(
-    () => new Map<string, Promise<ThreadDetail>>(),
+    () => ({
+      readings: new Map<string, Promise<ThreadDetail>>(),
+      failed: new Set<string>(),
+    }),
     [cached],
   );
 
@@ -341,8 +346,14 @@ export default function Screen({
   } else if (owed && readThreadDetail) {
     const readDetail = (row: WaitRow) => {
       const key = row.reference.text;
-      const reading = details.get(key) ?? readThreadDetail(row.wait.thread);
-      details.set(key, reading);
+      const { readings, failed } = details;
+      const arrived = drawnSelection.current?.reference.text !== key;
+      if (arrived && failed.delete(key)) readings.delete(key);
+      const known = readings.get(key);
+      if (known) return known;
+      const reading = readThreadDetail(row.wait.thread);
+      reading.catch(() => failed.add(key));
+      readings.set(key, reading);
       return reading;
     };
     region = (

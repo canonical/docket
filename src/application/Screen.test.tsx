@@ -474,6 +474,23 @@ describe("Screen", () => {
         12, 15,
       ]);
     });
+
+    it("reads a thread's details again when the selection comes back after they failed, never while it stays", async () => {
+      const readDetail = vi.fn(
+        async (_thread: ThreadSummary) => parserFixDetail,
+      );
+      readDetail.mockRejectedValueOnce(providerError("GITHUB_TIMED_OUT"));
+      const screen = await showRecorded(readDetail);
+      await new Promise((done) => setTimeout(done, 1_100));
+      const failed = await screen.redraw();
+      expect(failed.lines.at(3)).toBe("  ✗ failed: The provider failed with");
+      expect(readDetail).toHaveBeenCalledOnce();
+      const back = await press(screen, "j", "j", "k", "k");
+      expect(back.lines.at(3)).toBe("  dave · 3d ago");
+      expect(readDetail.mock.calls.map(([thread]) => thread.number)).toEqual([
+        12, 15, 12,
+      ]);
+    });
   });
 
   describe("opening a thread", () => {
