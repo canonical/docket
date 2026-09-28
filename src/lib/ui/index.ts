@@ -15,6 +15,8 @@ export {
   type ProgressLineProps,
   StatusLine,
   type StatusLineProps,
+  ThreadRow,
+  type ThreadRowProps,
 } from "./component/index.js";
 export { default as createKeymap } from "./createKeymap.js";
 export { default as describeClock } from "./describeClock.js";

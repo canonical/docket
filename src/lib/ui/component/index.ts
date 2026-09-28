@@ -9,3 +9,4 @@ export { KeyBar, type KeyBarProps } from "./KeyBar/index.js";
 export { Notice, type NoticeProps } from "./Notice/index.js";
 export { ProgressLine, type ProgressLineProps } from "./ProgressLine/index.js";
 export { StatusLine, type StatusLineProps } from "./StatusLine/index.js";
+export { ThreadRow, type ThreadRowProps } from "./ThreadRow/index.js";
