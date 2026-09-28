@@ -6,13 +6,14 @@ import type { StatusLineProps, StatusMessage } from "./types.js";
 
 /**
  * The colour of each kind of message: an error, and an action that
- * failed, take the field-health colour beside their `✗`, and freshness is
+ * failed, take the field-health colour beside their `✗`, an action that
+ * went through takes the success colour beside its `✓`, and freshness is
  * context, so it is dimmed.
  */
 const colours: Readonly<Record<StatusMessage["kind"], string>> = {
   error: tokens["color.text.error"],
   actionFailed: tokens["color.text.error"],
-  action: tokens["color.text"],
+  action: tokens["color.text.success"],
   progress: tokens["color.text"],
   refreshing: tokens["color.text"],
   notice: tokens["color.text"],
