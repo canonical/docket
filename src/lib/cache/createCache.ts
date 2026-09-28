@@ -4,6 +4,7 @@ import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { PageProgress, ProviderError } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
 import CacheError from "./CacheError.js";
+import classifyFolderFailure from "./classifyFolderFailure.js";
 import {
   budgetFloor,
   cacheFileName,
@@ -262,9 +263,13 @@ export default function createCache({
     threads: () => shown,
     load,
     async read(maxAge) {
-      await load();
-      if (!isFresh(maxAge)) await sync(maxAge);
-      return shown;
+      try {
+        await load();
+        if (!isFresh(maxAge)) await sync(maxAge);
+        return shown;
+      } catch (error) {
+        throw classifyFolderFailure(error, directory);
+      }
     },
     async refresh() {
       const at = now();

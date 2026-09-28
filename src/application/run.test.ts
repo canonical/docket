@@ -1,3 +1,5 @@
+import { writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ThreadEvent } from "../lib/events/index.js";
 import { type Home, makeHome } from "../testing/docket.js";
@@ -158,6 +160,16 @@ describe("run", () => {
           provider: () => Promise.reject(new TypeError("gh")),
         }),
       ).rejects.toThrow("gh");
+    });
+
+    it("exits 3 with CACHE_UNUSABLE when the cache folder cannot be made", async () => {
+      await writeFile(join(home.root, "cache"), "");
+      const { code, out, err } = await home.call(["owed"]);
+      expect(code).toBe(3);
+      expect(out).toBe("");
+      expect(err).toMatch(
+        /^## Error: CACHE_UNUSABLE\ndocket cannot use its cache folder .+: ENOTDIR: .+\nRecovery: make .+ a folder you can write to, or set XDG_CACHE_HOME to one\n$/,
+      );
     });
 
     it("prints the version, and the help of docket and of each command", async () => {

@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -54,6 +54,16 @@ describe("createCache", () => {
       syncedAt: clock,
     });
     expect(provider.snapshot).toHaveBeenCalledTimes(2);
+  });
+
+  it("fails with CACHE_UNUSABLE when the cache folder cannot be made", async () => {
+    const file = join(root, "file");
+    await writeFile(file, "");
+    const cache = open(counting(), [repo], join(file, "docket"));
+    await expect(cache.read(5 * minute)).rejects.toMatchObject({
+      code: "CACHE_UNUSABLE",
+      message: expect.stringContaining(": ENOTDIR: "),
+    });
   });
 
   it("answers from the cache while the data is younger than the maximum age", async () => {

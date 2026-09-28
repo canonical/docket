@@ -13,7 +13,11 @@ import type CacheError from "./CacheError.js";
  * them. Callers and scripts depend on the codes, so a code is never
  * renamed or reused.
  */
-export type CacheErrorCode = "CACHE_LOCK_TIMED_OUT" | "CACHE_REFRESH_FAILED";
+export type CacheErrorCode =
+  | "CACHE_LOCK_TIMED_OUT"
+  | "CACHE_REFRESH_FAILED"
+  /** The cache folder cannot be made, read or written. */
+  | "CACHE_UNUSABLE";
 
 /** What the cache keeps for one repository. */
 export interface RepoCache {
@@ -119,7 +123,8 @@ export interface Cache {
    *
    * @throws ProviderError when the provider fails.
    * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
-   * the fetch lock for longer than the wait allows.
+   * the fetch lock for longer than the wait allows, and `CACHE_UNUSABLE`
+   * when the cache folder cannot be made, read or written.
    */
   read(maxAge: number): Promise<CachedThreads>;
   /**
