@@ -1,5 +1,5 @@
 import type { WorkingClock } from "../clock/index.js";
-import type { Repo } from "../config/index.js";
+import type { Group, People, Repo } from "../config/index.js";
 import type { Wait } from "../waits/index.js";
 
 /**
@@ -19,10 +19,27 @@ export interface Field {
 }
 
 /** Fields that share a line and wrap between each other. */
-export interface FieldList {
+export interface FieldList<F extends Field = Field> {
   readonly fit: "wrapped";
-  readonly fields: readonly Field[];
+  readonly fields: readonly F[];
 }
+
+/**
+ * A login a list names, with what tells people apart: the group the
+ * settings put the account in, and whether it is the viewer, the account
+ * gh is signed in with, whom the faces may call you.
+ */
+export interface Person extends Field {
+  readonly group: Group;
+  /** False as well when the viewer is not known. */
+  readonly viewer: boolean;
+}
+
+/**
+ * Who owns a wait or a thread: a person, or a text that names no login,
+ * such as a GitHub team or `unassigned`.
+ */
+export type Owner = Person | Field;
 
 /**
  * A pane's header: the mode as its title, and where the reader is inside
@@ -52,6 +69,8 @@ export interface RepoWaits {
   /** The working clock of the repository's settings. */
   readonly time: WorkingClock;
   readonly waits: readonly Wait[];
+  /** The people of the repository's settings, which give each login its group. */
+  readonly people: People;
   /**
    * Whether the repository's own file is invalid, so its settings are the
    * built-in defaults.
@@ -85,12 +104,14 @@ export interface WaitRow {
   /** `1d over` or `9h left`. */
   readonly distance: Field;
   readonly title: Field;
+  /** Who waits on the move: the wait's author. */
+  readonly author: Person;
   /** The one owner, or `unassigned`; absent when the owners take a line of their own. */
-  readonly owner?: Field;
+  readonly owner?: Owner;
   /** `draft`, on a draft pull request. */
   readonly draft?: Field;
   /** Every owner, on a third line, when there are two or more. */
-  readonly owners?: FieldList;
+  readonly owners?: FieldList<Owner>;
   /** `invalid repository file`, when the repository's own file is invalid. */
   readonly invalidFile?: Field;
 }

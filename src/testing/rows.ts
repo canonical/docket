@@ -28,6 +28,7 @@ export function measureRow(facts: Partial<Wait>, invalidFile = false): WaitRow {
       {
         repo: example,
         time: teamSettings.time,
+        people: teamSettings.people,
         waits: [wait(facts)],
         invalidFile,
       },

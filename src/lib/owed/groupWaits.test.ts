@@ -5,7 +5,7 @@ import groupWaits from "./groupWaits.js";
 import listWaits from "./listWaits.js";
 
 const now = at("2026-09-23T10:00+02:00");
-const { time } = teamSettings;
+const { time, people } = teamSettings;
 const repos: Repo[] = [
   { name: "example", repo: "example-org/example-repo", tags: [] },
   { name: "docs", repo: "example-org/example-docs", tags: [] },
@@ -18,8 +18,8 @@ const sooner = wait({
 });
 const list = listWaits(
   [
-    { repo: example, time, waits: [later] },
-    { repo: docs, time, waits: [sooner] },
+    { repo: example, time, people, waits: [later] },
+    { repo: docs, time, people, waits: [sooner] },
   ],
   now,
 );

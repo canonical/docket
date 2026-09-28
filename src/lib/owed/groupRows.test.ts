@@ -4,6 +4,7 @@ import type { Repo } from "../config/index.js";
 import type { StackEntry } from "../stacks/index.js";
 import type { Wait } from "../waits/index.js";
 import buildRow from "./buildRow.js";
+import describePerson from "./describePerson.js";
 import groupRows from "./groupRows.js";
 
 const now = at("2026-09-23T10:00+02:00");
@@ -12,7 +13,9 @@ const repos: Repo[] = [
   { name: "docs", repo: "example-org/example-docs", tags: [] },
 ];
 const row = (facts: Partial<Wait>, repo = "example") =>
-  buildRow(wait(facts), repo, teamSettings.time, now);
+  buildRow(wait(facts), repo, teamSettings.time, now, (account) =>
+    describePerson(account, teamSettings.people, undefined),
+  );
 const entry = (number: number, position: number, size = 5): StackEntry => ({
   number,
   position,

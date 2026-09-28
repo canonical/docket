@@ -2,10 +2,17 @@ import { describe, expect, it } from "vitest";
 import { at, teamSettings, wait } from "../../testing/facts.js";
 import buildRow from "./buildRow.js";
 import countStates from "./countStates.js";
+import describePerson from "./describePerson.js";
 
 const now = at("2026-09-23T10:00+02:00");
 const row = (due: string) =>
-  buildRow(wait({ due: at(due) }), "example", teamSettings.time, now);
+  buildRow(
+    wait({ due: at(due) }),
+    "example",
+    teamSettings.time,
+    now,
+    (account) => describePerson(account, teamSettings.people, undefined),
+  );
 
 describe("countStates", () => {
   it("counts the waits over target, due soon and on track", () => {

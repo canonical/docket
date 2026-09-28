@@ -35,6 +35,7 @@ export default async function answerShow(session: Session): Promise<number> {
         {
           repo: reference.repo,
           time: settings.time,
+          people: settings.people,
           waits: findWaits(thread, settings),
           invalidFile: repositoryErrors.length > 0,
         },

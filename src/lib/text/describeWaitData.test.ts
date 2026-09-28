@@ -57,7 +57,7 @@ describe("describeWaitData", () => {
     const [repo] = recordedRepos;
     if (!repo) throw new Error("the recording watches a repository");
     const [row] = listWaits(
-      [{ repo, time: sixDays, waits: [weekly] }],
+      [{ repo, time: sixDays, people: new Map(), waits: [weekly] }],
       recordedNow,
     ).rows;
     if (!row) throw new Error("the list has the wait");

@@ -16,10 +16,13 @@ const count = (amount: number, noun: string) =>
  * @param repos The watched repositories, in the configuration's order,
  * each with the events already cut to the window. A repository whose own
  * file is invalid has each of its rows marked.
+ * @param viewer The login gh is signed in with, when it is known, which
+ * marks the viewer among the people each row names.
  */
 export default function listEvents(
   repos: readonly RepoEvents[],
   now: Date,
+  viewer?: string,
 ): EventList {
   const newestFirst = (a: WindowEvent, b: WindowEvent) =>
     b.at.getTime() - a.at.getTime();
@@ -41,6 +44,7 @@ export default function listEvents(
           people,
           gathered,
           now,
+          viewer,
         );
         return {
           newest: gathered[0],

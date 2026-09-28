@@ -11,12 +11,16 @@ import type { Watched } from "./types.js";
  * Builds owed from the cached threads: every running wait of each watched
  * repository, on the settings in effect for that repository, measured at
  * `now`. The rows of a repository whose own file is invalid are marked.
+ *
+ * @param viewer The login gh is signed in with, when it is known, which
+ * marks the viewer among the people the rows name.
  */
 export default function buildOwed(
   threads: readonly Thread[],
   watched: readonly Watched[],
   grouping: OwedGrouping,
   now: Date,
+  viewer?: string,
 ): OwedList {
   const list = listWaits(
     watched.map((repo) => {
@@ -24,6 +28,7 @@ export default function buildOwed(
       return {
         repo,
         time: settings.time,
+        people: settings.people,
         waits: threads
           .filter((thread) => thread.repo === repo.repo)
           .flatMap((thread) => findWaits(thread, settings)),
@@ -31,6 +36,7 @@ export default function buildOwed(
       };
     }),
     now,
+    viewer,
   );
   return groupWaits(list, { mode: "owed", grouping }, watched);
 }
