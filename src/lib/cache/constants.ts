@@ -5,7 +5,7 @@ export const cacheFileName = "snapshots.json";
  * The layout of the cache file. A file written in another layout, by
  * another version of docket, is ignored and fetched again.
  */
-export const cacheFormat = 3;
+export const cacheFormat = 4;
 
 /**
  * How a date is written in the cache file: `{ "$date": "<ISO 8601>" }`.

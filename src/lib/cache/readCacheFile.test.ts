@@ -27,6 +27,9 @@ describe("readCacheFile", () => {
     // Threads in the layout before carry no address on GitHub.
     await writeFile(file, JSON.stringify({ format: 1, state: {} }));
     expect(await readCacheFile(file)).toBeUndefined();
+    // Threads in layout 2 carry no message's text and no requester.
+    await writeFile(file, JSON.stringify({ format: 2, state: {} }));
+    expect(await readCacheFile(file)).toBeUndefined();
   });
 
   it("reads no start of a full refresh that is not a date", async () => {
