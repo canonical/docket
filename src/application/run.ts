@@ -1,6 +1,5 @@
 import { createCache, locateCacheDirectory } from "../lib/cache/index.js";
 import { readPersonalFile, resolveSettings } from "../lib/config/index.js";
-import type { Provider } from "../lib/provider/index.js";
 import {
   chooseExitCode,
   chooseFormat,
