@@ -23,6 +23,7 @@ export default function readDiscussion(
     title: node.title,
     author: readAuthor(node),
     createdAt: new Date(node.createdAt),
+    updatedAt: new Date(node.updatedAt),
     open: !node.closed,
     draft: false,
     labels: node.labels.nodes.map(({ name }) => name),

@@ -9,7 +9,7 @@ const read = (fields: Record<string, unknown> = {}) =>
 
 describe("readIssue", () => {
   it("reads an open issue's facts, with nothing a pull request adds", () => {
-    expect(read()).toEqual({
+    expect(read({ updatedAt: "2026-09-24T08:00:00Z" })).toEqual({
       repo: "example-org/example-repo",
       number: 1,
       url: "https://github.com/example-org/example-repo/issues/1",
@@ -17,6 +17,7 @@ describe("readIssue", () => {
       title: "Example issue",
       author: dave,
       createdAt: new Date("2026-09-22T08:00:00Z"),
+      updatedAt: new Date("2026-09-24T08:00:00Z"),
       open: true,
       draft: false,
       labels: [],

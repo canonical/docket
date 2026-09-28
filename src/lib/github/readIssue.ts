@@ -13,6 +13,7 @@ export default function readIssue(repo: string, node: IssueNode): Thread {
     title: node.title,
     author: readAuthor(node),
     createdAt: new Date(node.createdAt),
+    updatedAt: new Date(node.updatedAt),
     open: node.state === "OPEN",
     draft: false,
     labels: node.labels.nodes.map(({ name }) => name),

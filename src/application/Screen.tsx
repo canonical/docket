@@ -2,7 +2,6 @@ import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
   useEffect,
-  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -18,7 +17,6 @@ import {
   owedGroupings,
   type WaitRow,
 } from "../lib/owed/index.js";
-import type { ThreadDetail } from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import {
   type ActionResult,
@@ -37,7 +35,7 @@ import {
   StatusLine,
   wrapNotice,
 } from "../lib/ui/index.js";
-import type { ThreadSummary } from "../lib/waits/index.js";
+import type { Thread } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
@@ -53,6 +51,7 @@ import type {
 } from "./types.js";
 import useActivity from "./useActivity.js";
 import useEditor from "./useEditor.js";
+import useHeldDetails from "./useHeldDetails.js";
 import useScreenKeys from "./useScreenKeys.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
@@ -102,6 +101,14 @@ function describeHold(
   }
   return undefined;
 }
+
+/** A thread's last change, as GitHub records it, and its checks. */
+const describeVersion = ({ updatedAt, checks }: Thread) =>
+  `${updatedAt.getTime()}|${checks ?? ""}`;
+
+/** The thread a row names, in either mode. */
+const summarize = (row: WaitRow | ActivityThread) =>
+  "wait" in row ? row.wait.thread : row.thread;
 
 /** Stand in for the cache's store when there is no cache: nothing changes. */
 const ignoreChanges = () => () => {};
@@ -216,18 +223,22 @@ export default function Screen({
       return { ...current, [mode]: { place, row: identifyRow(row) } };
     });
 
-  // The thread `a` and `r` act on, in either mode: an owed row carries
-  // its thread, and an activity row names one the cache holds while it
-  // is open.
+  // A row's thread as the data records it: an owed row carries its
+  // thread, and an activity row names one the cache holds while it is
+  // open.
+  const findFacts = (row: WaitRow | ActivityThread): Thread | undefined => {
+    if ("wait" in row) return row.wait.thread;
+    const { repo, number } = row.thread;
+    return cached?.threads.find(
+      (each) => each.repo === repo && each.number === number,
+    );
+  };
+  // The thread `a` and `r` act on, in either mode.
   const selectThread = (): SelectedThread | undefined => {
     const row = drawnSelection.current;
     if (!row) return undefined;
     const reference = row.reference.text;
-    if ("wait" in row) return { reference, thread: row.wait.thread };
-    const { repo, number } = row.thread;
-    const thread = cached?.threads.find(
-      (each) => each.repo === repo && each.number === number,
-    );
+    const thread = findFacts(row);
     return thread ? { reference, thread } : { reference };
   };
   const { active, bound } = useScreenKeys({
@@ -309,34 +320,21 @@ export default function Screen({
     drawnSelection.current = rows.at(placeSelection(rows, selections[mode]));
     editor.follow(drawnSelection.current?.reference.text);
   });
-  // A thread's details are read once for each copy of the data: moving the
-  // selection back to a thread shows what was read, and each refresh
-  // brings a copy that reads its own. A read that failed is read again when
-  // the selection comes back to its thread, and never on a frame that keeps
-  // the selection there, as the clock's each second does.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: see above.
-  const details = useMemo(
-    () => ({
-      readings: new Map<string, Promise<ThreadDetail>>(),
-      failed: new Set<string>(),
-    }),
-    [cached],
-  );
-  const readOnce = (
-    read: (thread: ThreadSummary) => Promise<ThreadDetail>,
-    reference: string,
-    thread: ThreadSummary,
-  ) => {
-    const { readings, failed } = details;
-    const arrived = drawnSelection.current?.reference.text !== reference;
-    if (arrived && failed.delete(reference)) readings.delete(reference);
-    const known = readings.get(reference);
-    if (known) return known;
-    const reading = read(thread);
-    reading.catch(() => failed.add(reference));
-    readings.set(reference, reading);
-    return reading;
-  };
+  // A thread's details are read once for each change GitHub records on it,
+  // and once for each change the list's roll-up of its checks shows, since
+  // checks finish without GitHub recording a change to the thread. Any
+  // other copy of the data a refresh brings reads nothing. A thread the
+  // data does not hold, such as a closed one in activity, has no record of
+  // its last change, and is read once for each newest event its row shows.
+  // The details of a thread that left both the data and the list on screen
+  // are let go.
+  const readHeld = useHeldDetails({
+    kept: [...(cached?.threads ?? []), ...rows.map(summarize)],
+    selected: () => {
+      const row = drawnSelection.current;
+      return row && summarize(row);
+    },
+  });
 
   // What stands in the accordion's place: the open editor, or why a key
   // could not open one.
@@ -391,7 +389,11 @@ export default function Screen({
         list={owed}
         selected={placeSelection(rows, selections.owed)}
         readDetail={(row) =>
-          readOnce(readThreadDetail, row.reference.text, row.wait.thread)
+          readHeld(
+            readThreadDetail,
+            row.wait.thread,
+            describeVersion(row.wait.thread),
+          )
         }
         now={at}
         timezone={settings.time.timezone}
@@ -423,9 +425,13 @@ export default function Screen({
       <ActivityList
         list={listed}
         selected={placeSelection(rows, selections.activity)}
-        readDetail={(row) =>
-          readOnce(readThreadDetail, row.reference.text, row.thread)
-        }
+        readDetail={(row) => {
+          const facts = findFacts(row);
+          const version = facts
+            ? describeVersion(facts)
+            : `${row.events.at(0)?.event.at.getTime()}`;
+          return readHeld(readThreadDetail, row.thread, version);
+        }}
         measureWaits={(row) =>
           buildThreadWaits(row.thread, threads, watched, at)
         }
