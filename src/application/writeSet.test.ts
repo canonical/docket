@@ -213,6 +213,7 @@ describe("writeSet", () => {
     const refused = Object.assign(new Error("GitHub refused the request."), {
       code: "GITHUB_REQUEST_FAILED",
       recovery: "change what GitHub's reason names, then refresh",
+      step: "change what GitHub's reason names",
     });
     const provider = recordedProvider({
       setReviewers: () => Promise.reject(refused),
@@ -234,6 +235,7 @@ describe("writeSet", () => {
     const timedOut = Object.assign(new Error("GitHub gave no answer."), {
       code: "GITHUB_TIMED_OUT",
       recovery: "check the network connection, then refresh",
+      step: "check the network connection",
     });
     const provider = recordedProvider({
       readAssignees: () => Promise.reject(timedOut),
@@ -246,6 +248,43 @@ describe("writeSet", () => {
     ).rejects.toMatchObject({
       recovery: "check the network connection, then run the command again",
     });
+  });
+
+  it("ends a provider's step with the face's own way to retry, whatever its recovery's wording", async () => {
+    const timedOut = Object.assign(new Error("GitHub gave no answer."), {
+      code: "GITHUB_TIMED_OUT",
+      recovery: "check the network and refresh",
+      step: "check the network",
+    });
+    const provider = recordedProvider({
+      readAssignees: () => Promise.reject(timedOut),
+    });
+    await expect(
+      writeSet(await target(provider), {
+        ...assignBob,
+        retry: "run the command again",
+      }),
+    ).rejects.toMatchObject({
+      code: "GITHUB_TIMED_OUT",
+      recovery: "check the network, then run the command again",
+      step: "check the network",
+    });
+  });
+
+  it("lets a failure with no step through as it is, whatever its recovery's wording", async () => {
+    const signedOut = Object.assign(new Error("gh is not signed in."), {
+      code: "GH_NOT_SIGNED_IN",
+      recovery: "run gh auth login, then refresh",
+    });
+    const provider = recordedProvider({
+      readAssignees: () => Promise.reject(signedOut),
+    });
+    await expect(
+      writeSet(await target(provider), {
+        ...assignBob,
+        retry: "run the command again",
+      }),
+    ).rejects.toBe(signedOut);
   });
 
   it("lets a failure without a name through as it is", async () => {

@@ -1,5 +1,9 @@
 import type { Cache } from "../lib/cache/index.js";
-import type { Provider, Reviewer } from "../lib/provider/index.js";
+import type {
+  Provider,
+  ProviderError,
+  Reviewer,
+} from "../lib/provider/index.js";
 import { type Format, type Problem, quote } from "../lib/text/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import isAssignable from "./isAssignable.js";
@@ -52,19 +56,23 @@ export interface WriteTarget {
 }
 
 /**
- * A provider's recovery ends by refreshing, the terminal's way to try
- * again, which an open editor and text mode each do their own way: the
- * error thrown ends with `retry` instead.
+ * A provider's recovery that ends by refreshing, the terminal's way to try
+ * again, carries the part before it as `step`. An open editor and text
+ * mode each try again their own way, so the error thrown ends `step` with
+ * `retry` instead, and keeps `step` for the face that reads it. Any other
+ * failure goes through as it is, whatever its recovery's wording.
  */
 const retryWith =
   (retry: string) =>
   (error: unknown): never => {
-    const tail = ", then refresh";
-    if (!isNamedError(error) || !error.recovery.endsWith(tail)) throw error;
-    const { code, message, recovery } = error;
+    if (!isNamedError(error)) throw error;
+    const { step } = error as Partial<ProviderError>;
+    if (typeof step !== "string") throw error;
+    const { code, message } = error;
     throw Object.assign(new Error(message), {
       code,
-      recovery: `${recovery.slice(0, -tail.length)}, then ${retry}`,
+      recovery: `${step}, then ${retry}`,
+      step,
     });
   };
 
@@ -93,7 +101,7 @@ const isSameSet = (a: readonly string[], b: readonly string[]) =>
  * @note Impure: reads GitHub, writes the change to it when asked to
  * apply, and refreshes the cache after it.
  * @throws ProviderError when GitHub refuses the change or a read, its
- * recovery ending with `retry`.
+ * recovery ending with `retry` when the provider's ends by refreshing.
  */
 export default async function writeSet(
   { provider, cache }: WriteTarget,

@@ -400,6 +400,7 @@ describe("useEditor", () => {
         {
           code: "GITHUB_REQUEST_FAILED",
           recovery: "change what GitHub's reason names, then refresh",
+          step: "change what GitHub's reason names",
         },
       );
       const provider = recordedProvider({

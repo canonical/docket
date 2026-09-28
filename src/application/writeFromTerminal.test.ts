@@ -104,6 +104,7 @@ describe("writeFromTerminal", () => {
     const refused = Object.assign(new Error("GitHub refused the request."), {
       code: "GITHUB_REQUEST_FAILED",
       recovery: "change what GitHub's reason names, then refresh",
+      step: "change what GitHub's reason names",
     });
     const written = await target(
       recordedProvider({ setAssignees: () => Promise.reject(refused) }),
