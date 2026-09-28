@@ -30,7 +30,7 @@ import {
   useCommands,
 } from "../lib/ui/index.js";
 import buildOwed from "./buildOwed.js";
-import type { TerminalView } from "./types.js";
+import type { TerminalView, WatchedFiles } from "./types.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
@@ -94,12 +94,26 @@ const readNothing = () => undefined;
 export default function Screen({
   now,
   settings,
-  watched,
+  watched: opening,
   source,
   onQuit,
 }: TerminalView & { readonly onQuit: () => void }): ReactNode {
   const { width } = useTerminalDimensions();
   const cache = "cache" in source ? source.cache : undefined;
+  const readWatched = "cache" in source ? source.readWatched : undefined;
+  // Read after the first frame: the files replace the opening settings,
+  // or GitHub's refusal of gh's token stands in for the list.
+  const [files, setFiles] = useState<WatchedFiles>();
+  useEffect(() => {
+    void readWatched?.().then(setFiles);
+  }, [readWatched]);
+  const watched = files && "watched" in files ? files.watched : opening;
+  const problem =
+    "problem" in source
+      ? source.problem
+      : files && "problem" in files
+        ? files.problem
+        : undefined;
   const status = useSyncExternalStore(
     cache?.subscribe ?? ignoreChanges,
     cache?.status ?? readNothing,
@@ -206,7 +220,7 @@ export default function Screen({
       : describeActivityAddress({ mode, window, grouping: activityGrouping });
   // The threads once there is data to show, or nothing to watch.
   const threads =
-    cached && (cached.syncedAt || watched.length === 0)
+    !problem && cached && (cached.syncedAt || watched.length === 0)
       ? cached.threads
       : undefined;
   const owed =
@@ -217,8 +231,8 @@ export default function Screen({
 
   // The list region: rows once the data is in, or what stands in for them.
   let region: ReactNode = null;
-  if ("problem" in source) {
-    const { message, recovery } = source.problem;
+  if (problem) {
+    const { message, recovery } = problem;
     region = (
       <Notice
         reason={dropFullStop(message)}
@@ -261,7 +275,7 @@ export default function Screen({
       counts={owed && <CountsLine summary={owed.summary.text} width={width} />}
       status={
         <StatusLine
-          status={status}
+          status={problem ? undefined : status}
           now={at}
           timezone={settings.time.timezone}
           names={Object.fromEntries(

@@ -20,7 +20,7 @@ import {
 } from "../testing/recorded.js";
 import { type Screen as Drawn, draw, WithKeys } from "../testing/terminal.js";
 import Screen from "./Screen.js";
-import type { TerminalView } from "./types.js";
+import type { TerminalView, WatchedFiles } from "./types.js";
 
 const folders: string[] = [];
 afterEach(async () => {
@@ -41,15 +41,21 @@ async function openCache(provider: Provider, repos = recordedRepos) {
   });
 }
 
+/** Reads the repositories' files as the recording's settings. */
+const readRecorded = async (): Promise<WatchedFiles> => ({
+  watched: recordedWatched(),
+});
+
 function viewOf(
   cache: Cache,
   capabilities: ReadonlySet<Capability> = everyCapability,
+  readWatched = readRecorded,
 ): TerminalView {
   return {
     now: () => recordedNow,
     settings: recordedSettings,
     watched: recordedWatched(),
-    source: { cache, capabilities },
+    source: { cache, capabilities, readWatched },
   };
 }
 
@@ -209,6 +215,64 @@ describe("Screen", () => {
     });
   });
 
+  describe("the repositories' own files", () => {
+    it("draws the first frame while the files are still being read", async () => {
+      const readWatched = vi.fn(() => new Promise<WatchedFiles>(() => {}));
+      const cache = await openCache(fakeProvider());
+      const screen = await show(viewOf(cache, everyCapability, readWatched));
+      expect(screen.lines.slice(0, 4)).toEqual([
+        "owed",
+        "",
+        "  refresh in progress…",
+        `  ${"░".repeat(29)} 0/0`,
+      ]);
+      expect(readWatched).toHaveBeenCalledOnce();
+    });
+
+    it("counts owed by each repository's own settings once its file arrives", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const year = { amount: 52, unit: "w" } as const;
+      const generous = recordedWatched({
+        ...recordedSettings,
+        targets: {
+          nextMove: { response: year, review: year },
+          close: { issue: year, pullRequest: year, discussion: year },
+        },
+      });
+      const { promise, resolve } = Promise.withResolvers<WatchedFiles>();
+      const screen = await show(viewOf(cache, everyCapability, () => promise));
+      expect((await screen.redraw()).lines.at(9)).toBe(
+        "2 over · 1 soon · 3 on track",
+      );
+      resolve({ watched: generous });
+      await promise;
+      expect((await screen.redraw()).lines.at(9)).toBe(
+        "0 over · 0 soon · 6 on track",
+      );
+    });
+
+    it("stands in GitHub's refusal of gh's token for the list, with no status", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const readRefused = async () => ({
+        problem: {
+          code: "GH_NOT_SIGNED_IN",
+          message: "gh is not signed in to github.com.",
+          recovery: "run gh auth login",
+        } as const,
+      });
+      const screen = await (
+        await show(viewOf(cache, everyCapability, readRefused))
+      ).redraw();
+      expect(screen.lines.slice(2, 4)).toEqual([
+        "  ✗ gh is not signed in to github.com",
+        "  Recovery: run gh auth login",
+      ]);
+      expect(screen.lines.slice(9, 11)).toEqual(["", ""]);
+    });
+  });
+
   describe("with data", () => {
     it("counts owed and leaves the list to its rows, the status dimmed", async () => {
       const cache = await openCache(recordedProvider());
@@ -233,7 +297,8 @@ describe("Screen", () => {
 
     it("says nothing is owed when no repository is watched", async () => {
       const cache = await openCache(fakeProvider(), []);
-      const view = { ...viewOf(cache), watched: [] };
+      const readNone = async () => ({ watched: [] });
+      const view = { ...viewOf(cache, everyCapability, readNone), watched: [] };
       const screen = await (await show(view)).redraw();
       expect(screen.lines.at(2)).toBe("  nothing owed");
     });

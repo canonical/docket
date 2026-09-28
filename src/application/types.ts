@@ -104,16 +104,34 @@ export interface TerminalView {
    * and the time zone times are written in.
    */
   readonly settings: Settings;
-  /** Each watched repository, in the configuration's order, with its settings. */
+  /**
+   * Each watched repository, in the configuration's order, with the
+   * settings it opens on: the built-in defaults and the personal file,
+   * until its own file is read.
+   */
   readonly watched: readonly Watched[];
   /**
-   * The shared cache and the facts the provider supplies, or why gh gave
-   * no token.
+   * The shared cache, the facts the provider supplies and a reading of
+   * the repositories' own files, or why gh gave no token.
    */
   readonly source:
     | {
         readonly cache: Cache;
         readonly capabilities: ReadonlySet<Capability>;
+        /**
+         * Reads each watched repository's own file, called once the
+         * interface has opened, so a slow or unreachable GitHub never
+         * holds up the first frame.
+         */
+        readonly readWatched: () => Promise<WatchedFiles>;
       }
     | { readonly problem: Problem };
 }
+
+/**
+ * Each watched repository with the settings its own file gives it, or why
+ * GitHub refused gh's token while the files were read.
+ */
+export type WatchedFiles =
+  | { readonly watched: readonly Watched[] }
+  | { readonly problem: Problem };

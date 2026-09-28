@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createCache } from "../lib/cache/index.js";
 import type { Provider } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
@@ -10,6 +10,7 @@ import {
   recordedNow,
   recordedProvider,
   recordedSettings,
+  resolvedPersonal,
 } from "../testing/recorded.js";
 import answerTerminal from "./answerTerminal.js";
 import type { Context, TerminalView } from "./types.js";
@@ -40,7 +41,7 @@ async function openOn(given: Provider | Problem) {
   const views: TerminalView[] = [];
   const context: Context = {
     args: [],
-    environment: { XDG_CACHE_HOME: root },
+    environment: {},
     interactive: true,
     write: () => {},
     writeError: () => {},
@@ -62,17 +63,43 @@ async function openOn(given: Provider | Problem) {
   return { code, view: views.at(0) };
 }
 
+/** The cache source a view opened on, or a failure when it has none. */
+function cacheOf(view: TerminalView | undefined) {
+  const source = view?.source;
+  if (!source || !("cache" in source)) throw new Error("opened on a cache");
+  return source;
+}
+
 describe("answerTerminal", () => {
-  it("opens on the shared cache, with each repository's settings and the provider's facts", async () => {
+  it("opens on the shared cache, with the personal file's settings and the provider's facts", async () => {
     const { code, view } = await openOn(recordedProvider());
     expect(code).toBe(0);
     expect(view?.watched.map(({ name }) => name)).toEqual(["example", "docs"]);
+    expect(view?.watched.map(({ resolved }) => resolved)).toEqual([
+      resolvedPersonal(false),
+      resolvedPersonal(false),
+    ]);
     expect(view?.settings).toBe(recordedSettings);
     expect(view?.now()).toEqual(recordedNow);
-    const source = view?.source;
-    if (!source || !("cache" in source)) throw new Error("opened on a cache");
+    const source = cacheOf(view);
     expect(source.capabilities.has("stacks")).toBe(true);
     expect(source.cache.threads().syncedAt).toBeUndefined();
+  });
+
+  it("opens before any repository file is read, even when GitHub never answers", async () => {
+    const readFile = vi.fn(() => new Promise<undefined>(() => {}));
+    const { view } = await openOn(fakeProvider({ readFile }));
+    expect(view).toBeDefined();
+    expect(readFile).not.toHaveBeenCalled();
+    void cacheOf(view).readWatched();
+    await vi.waitFor(() => expect(readFile).toHaveBeenCalledOnce());
+  });
+
+  it("reads each repository's settings once the interface asks", async () => {
+    const { view } = await openOn(recordedProvider());
+    const files = await cacheOf(view).readWatched();
+    if (!("watched" in files)) throw new Error("the files were read");
+    expect(files.watched.map(({ name }) => name)).toEqual(["example", "docs"]);
   });
 
   it("opens on why gh gave no token", async () => {
@@ -85,12 +112,12 @@ describe("answerTerminal", () => {
     expect(view).toMatchObject({ watched: [], source: { problem } });
   });
 
-  it("opens on GitHub refusing gh's token while the repository files are read", async () => {
+  it("gives GitHub refusing gh's token while the repository files are read", async () => {
     const provider: Provider = fakeProvider({
       readFile: () => Promise.reject(providerError("GH_NOT_SIGNED_IN")),
     });
     const { view } = await openOn(provider);
-    expect(view?.source).toEqual({
+    expect(await cacheOf(view).readWatched()).toEqual({
       problem: {
         code: "GH_NOT_SIGNED_IN",
         message: "The provider failed with GH_NOT_SIGNED_IN.",
@@ -103,6 +130,7 @@ describe("answerTerminal", () => {
     const provider = fakeProvider({
       readFile: () => Promise.reject(new Error("disk on fire")),
     });
-    await expect(openOn(provider)).rejects.toThrow("disk on fire");
+    const { view } = await openOn(provider);
+    await expect(cacheOf(view).readWatched()).rejects.toThrow("disk on fire");
   });
 });

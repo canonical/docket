@@ -60,7 +60,11 @@ describe("openTerminal", () => {
       now: () => recordedNow,
       settings: recordedSettings,
       watched: recordedWatched(),
-      source: { cache, capabilities: everyCapability },
+      source: {
+        cache,
+        capabilities: everyCapability,
+        readWatched: async () => ({ watched: recordedWatched() }),
+      },
     });
     await vi.waitFor(() => expect(snapshot).toHaveBeenCalledTimes(2));
     await vi.waitFor(async () => {
