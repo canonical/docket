@@ -1,10 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import type { ThreadEvent } from "../lib/events/index.js";
 import { at, dave } from "../testing/facts.js";
 import {
   parserFix,
   recordedActivity,
+  recordedEvents,
   recordedNow,
-  recordedProvider,
   recordedSettings,
   recordedThreads,
   recordedWatched,
@@ -13,6 +14,14 @@ import {
 import buildActivity from "./buildActivity.js";
 
 const window = { amount: 72, unit: "h" } as const;
+
+/** The recording's events, by repository. */
+const recorded = new Map(
+  recordedWatched().map(({ repo }) => [
+    repo,
+    recordedEvents.filter(({ thread }) => thread.repo === repo),
+  ]),
+);
 
 /** example on a Monday-to-Friday clock, docs on a Monday-and-Tuesday one. */
 const twoClocks = [
@@ -24,9 +33,9 @@ const twoClocks = [
 ];
 
 describe("buildActivity", () => {
-  it("gathers the events inside the window under their threads", async () => {
-    const list = await buildActivity(
-      recordedProvider().events,
+  it("gathers the events inside the window under their threads", () => {
+    const list = buildActivity(
+      recorded,
       recordedThreads,
       recordedWatched(),
       window,
@@ -36,75 +45,33 @@ describe("buildActivity", () => {
     expect(list).toEqual(recordedActivity("kind"));
   });
 
-  it("asks for events far enough back to cover the window's working time", async () => {
-    const provider = recordedProvider({ events: vi.fn(async () => []) });
-    await buildActivity(
-      provider.events,
-      [],
+  it("lists nothing for a repository whose events were not given", () => {
+    const list = buildActivity(
+      new Map(),
+      recordedThreads,
       recordedWatched(),
       window,
       "none",
       recordedNow,
     );
-    // 72 working hours fit in one week of five workdays: a week and a day back.
-    expect(provider.events).toHaveBeenCalledWith(
-      "example-org/example-repo",
-      new Date("2026-09-20T10:00:00Z"),
-    );
-    const twoDays = {
-      ...recordedSettings,
-      time: { ...recordedSettings.time, workdays: ["mon", "tue"] as const },
-    };
-    await buildActivity(
-      provider.events,
-      [],
-      recordedWatched(twoDays),
-      window,
-      "none",
-      recordedNow,
-    );
-    // Two workdays a week hold 48 hours, so 72 need two weeks.
-    expect(provider.events).toHaveBeenLastCalledWith(
-      "example-org/example-docs",
-      new Date("2026-09-13T10:00:00Z"),
-    );
+    expect(list.groups).toEqual([]);
+    expect(list.summary.text).toBe("0 threads · 0 events");
   });
 
-  it("reaches back as far as each repository's own clock needs", async () => {
-    const provider = recordedProvider({ events: vi.fn(async () => []) });
-    await buildActivity(
-      provider.events,
-      [],
-      twoClocks,
-      window,
-      "none",
-      recordedNow,
-    );
-    // 72 working hours take a week on five workdays, two weeks on two.
-    expect(provider.events).toHaveBeenCalledWith(
-      "example-org/example-repo",
-      new Date("2026-09-20T10:00:00Z"),
-    );
-    expect(provider.events).toHaveBeenCalledWith(
-      "example-org/example-docs",
-      new Date("2026-09-13T10:00:00Z"),
-    );
-  });
-
-  it("keeps an event while it is inside the window on its repository's clock", async () => {
+  it("keeps an event while it is inside the window on its repository's clock", () => {
     const wednesday = at("2026-09-23T10:00+02:00");
-    const provider = recordedProvider({
-      events: async (repo) => [
-        {
-          kind: "commented",
-          thread: repo === parserFix.repo ? parserFix : tokensGuide,
-          actor: dave,
-          at: wednesday,
-        },
-      ],
+    const commented = (thread: typeof parserFix): ThreadEvent => ({
+      kind: "commented",
+      thread,
+      actor: dave,
+      at: wednesday,
     });
-    const list = await buildActivity(
-      provider.events,
+    const events = new Map([
+      [parserFix.repo, [commented(parserFix)]],
+      [tokensGuide.repo, [commented(tokensGuide)]],
+    ]);
+    const list = buildActivity(
+      events,
       recordedThreads,
       twoClocks,
       window,
@@ -120,7 +87,7 @@ describe("buildActivity", () => {
     ).toEqual(["docs#4"]);
   });
 
-  it("marks the rows of a repository whose own file is invalid", async () => {
+  it("marks the rows of a repository whose own file is invalid", () => {
     const invalid = recordedWatched(recordedSettings, [
       {
         code: "CONFIG_UNKNOWN_KEY",
@@ -128,8 +95,8 @@ describe("buildActivity", () => {
         recovery: "Remove it.",
       },
     ]);
-    const list = await buildActivity(
-      recordedProvider().events,
+    const list = buildActivity(
+      recorded,
       recordedThreads,
       invalid,
       window,

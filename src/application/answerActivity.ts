@@ -4,6 +4,7 @@ import buildActivity from "./buildActivity.js";
 import fail from "./fail.js";
 import readEvents, { type ReadEvents } from "./readEvents.js";
 import readThreads from "./readThreads.js";
+import readWindowEvents from "./readWindowEvents.js";
 import type { Session } from "./types.js";
 
 /**
@@ -42,17 +43,24 @@ export default async function answerActivity(
   }
   const read = await readThreads(session);
   const reads: ReadEvents[] = [];
-  const list = await buildActivity(
+  const now = context.now();
+  const events = await readWindowEvents(
     async (repo, since) => {
-      const events = await readEvents(session, repo, since);
-      reads.push(events);
-      return events.events;
+      const held = await readEvents(session, repo, since);
+      reads.push(held);
+      return held.events;
     },
+    watched,
+    window,
+    now,
+  );
+  const list = buildActivity(
+    events,
     read.threads,
     watched,
     window,
     grouping,
-    context.now(),
+    now,
   );
   // The data is as old as the oldest of the threads and the events, and
   // a failure met on several repositories is told once.
