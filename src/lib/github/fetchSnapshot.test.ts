@@ -66,9 +66,7 @@ describe("fetchSnapshot", () => {
           issueNode({
             assignees: { nodes: [user("alice"), bot("example-sync")] },
             labels: { nodes: [{ name: "kind=bug" }] },
-            comments: {
-              nodes: [comment("bob", "2026-09-22T09:00:00Z")],
-            },
+            comments: { nodes: [comment("bob", "2026-09-22T09:00:00Z")] },
           }),
         ],
         [],
@@ -91,6 +89,7 @@ describe("fetchSnapshot", () => {
       {
         repo,
         number: 1,
+        url: "https://github.com/example-org/example-repo/issues/1",
         kind: "issue",
         title: "Example issue",
         author: { login: "dave", type: "user", member: false },

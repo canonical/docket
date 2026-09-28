@@ -65,6 +65,7 @@ const opened = (fields: Record<string, unknown>) => ({
 const pull = (fields: Record<string, unknown>) =>
   opened({
     number: 2,
+    url: "https://github.com/example-org/example-repo/pull/2",
     author: user("alice"),
     headRefName: "feat/example",
     isCrossRepository: false,
@@ -187,6 +188,7 @@ describe("fetchEvents", () => {
     expect(found.at(0)?.thread).toEqual({
       repo,
       number: 2,
+      url: "https://github.com/example-org/example-repo/pull/2",
       kind: "pullRequest",
       title: "Example",
       stack: { number: 12, position: 1, size: 2, base: "main" },

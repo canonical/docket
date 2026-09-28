@@ -18,6 +18,7 @@ export default function readDiscussion(
   return {
     repo,
     number: node.number,
+    url: node.url,
     kind: "discussion",
     title: node.title,
     author: readAuthor(node),

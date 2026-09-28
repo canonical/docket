@@ -122,6 +122,7 @@ export interface CommentNode extends WrittenNode {
 /** What the snapshot gives about every issue and pull request. */
 export interface IssueNode extends WrittenNode {
   readonly number: number;
+  readonly url: string;
   readonly title: string;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -181,6 +182,7 @@ export interface PullNode extends IssueNode {
 /** What the snapshot gives about a discussion. */
 export interface DiscussionNode extends WrittenNode {
   readonly number: number;
+  readonly url: string;
   readonly title: string;
   readonly createdAt: string;
   readonly updatedAt: string;

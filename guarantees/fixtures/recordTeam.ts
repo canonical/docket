@@ -27,6 +27,7 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
   const parserFix = {
     ...buildIssueNode({
       number: 12,
+      url: `https://github.com/${repo}/pull/12`,
       title: words.title,
       createdAt: "2026-09-21T08:00:00Z",
       updatedAt: "2026-09-28T09:35:00Z",
@@ -64,12 +65,14 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
   };
   const crash = buildIssueNode({
     number: 15,
+    url: `https://github.com/${repo}/issues/15`,
     title: "Crash on start",
     createdAt: "2026-09-25T14:00:00Z",
     author: "carol",
   });
   const tokens = buildIssueNode({
     number: 4,
+    url: `https://github.com/${docs}/issues/4`,
     title: "Where do tokens live?",
     createdAt: "2026-09-01T08:00:00Z",
     updatedAt: "2026-09-27T18:00:00Z",
@@ -79,10 +82,11 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
   });
   const failed = buildCheckRun(words.check, "FAILURE", "2026-09-28T09:35:00Z");
   const buildOpened = (
-    node: { number: number; title: string },
+    node: { number: number; url: string; title: string },
     at: string,
   ) => ({
     number: node.number,
+    url: node.url,
     title: node.title,
     createdAt: at,
   });

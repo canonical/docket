@@ -10,8 +10,8 @@ import {
 import type { Account } from "../people/index.js";
 import selectEvents, { type ThreadEvent } from "./selectEvents.js";
 
-const { repo, number, kind, title } = thread();
-const summary = { repo, number, kind, title };
+const { repo, number, url, kind, title } = thread();
+const summary = { repo, number, url, kind, title };
 const event = (iso: string, actor: Account = dave): ThreadEvent => ({
   thread: summary,
   kind: "commented",

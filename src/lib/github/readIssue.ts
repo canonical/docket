@@ -8,6 +8,7 @@ export default function readIssue(repo: string, node: IssueNode): Thread {
   return {
     repo,
     number: node.number,
+    url: node.url,
     kind: "issue",
     title: node.title,
     author: readAuthor(node),

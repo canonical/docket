@@ -11,6 +11,8 @@ export interface ThreadSummary {
   /** `owner/name` on GitHub. */
   readonly repo: string;
   readonly number: number;
+  /** The thread's page on GitHub, as GitHub gives it. */
+  readonly url: string;
   readonly kind: ThreadKind;
   readonly title: string;
   /** Where the pull request sits in a stack, when it sits in one. */
