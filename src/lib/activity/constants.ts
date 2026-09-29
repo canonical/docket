@@ -8,13 +8,6 @@ export const activityGroupings: readonly ActivityGrouping[] = [
   "none",
 ];
 
-/** The word each kind of thread goes by on a row. */
-export const threadWords: Readonly<Record<ThreadKind, string>> = {
-  issue: "issue",
-  pullRequest: "PR",
-  discussion: "discussion",
-};
-
 /** The section of each kind of thread, in the order the sections come. */
 export const kindSections: readonly (readonly [ThreadKind, string])[] = [
   ["issue", "ISSUES"],

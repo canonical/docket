@@ -105,6 +105,8 @@ export interface WaitRow {
   readonly stacked: boolean;
   /** `example#12`. */
   readonly reference: Field;
+  /** `PR`, `issue` or `discussion`. */
+  readonly threadKind: Field;
   /** `reply`, `review` or `close`. */
   readonly kind: Field;
   /** `1d over` or `9h left`. */

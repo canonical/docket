@@ -30,7 +30,7 @@ const person = (text: string, group: string) => ({
 const stack = { number: 12, position: 2, size: 5, base: "main" };
 
 describe("buildRow", () => {
-  it("names the thread by short reference, with the kind of wait and its distance", () => {
+  it("names the thread by short reference, with the kind of thread, the kind of wait and its distance", () => {
     const reply = wait({
       thread: thread({ number: 88, title: "Example title" }),
       kind: "response",
@@ -46,6 +46,7 @@ describe("buildRow", () => {
       targetHours: 24,
       stacked: false,
       reference: { text: "example#88", fit: "trimmed" },
+      threadKind: { text: "issue", fit: "trimmed" },
       kind: { text: "reply", fit: "trimmed" },
       distance: { text: "14h over", fit: "trimmed" },
       title: { text: "Example title", fit: "trimmed" },

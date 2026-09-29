@@ -5,7 +5,7 @@ import {
 } from "../clock/index.js";
 import type { People } from "../config/index.js";
 import type { Wait } from "../waits/index.js";
-import { waitWords } from "./constants.js";
+import { threadWords, waitWords } from "./constants.js";
 import describeOwners from "./describeOwners.js";
 import describePerson from "./describePerson.js";
 import describeTeam from "./describeTeam.js";
@@ -54,6 +54,7 @@ export default function buildRow(
     targetHours: measureDuration(wait.target, time) / hourMilliseconds,
     stacked: thread.stack !== undefined,
     reference: { text: `${repo}#${thread.number}`, fit: "trimmed" },
+    threadKind: { text: threadWords[thread.kind], fit: "trimmed" },
     kind: { text: waitWords[wait.kind], fit: "trimmed" },
     distance: { text, fit: "trimmed" },
     title: { text: thread.title, fit: "trimmed" },
