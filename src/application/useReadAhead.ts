@@ -99,14 +99,10 @@ export default function useReadAhead({
   // biome-ignore lint/correctness/useExhaustiveDependencies: the window's key names what it holds.
   useEffect(() => {
     if (!queue || attention === "idle" || paused || !chosenKey) return;
-    const at = now();
-    const due = window.filter(({ thread, version }) =>
-      queue.isDue(thread, version, at),
-    );
     const delay = moved.current ? detailRest : 0;
     moved.current = true;
-    if (due.length > 0) queue.request(due, chosen?.thread, delay);
-  }, [queue, key, chosenKey, attention, paused, now]);
+    queue.request(window, chosen?.thread, delay);
+  }, [queue, key, chosenKey, attention, paused]);
   if (!queue) return { version: (_thread, version) => version };
   return {
     read: (thread, version) => queue.read(thread, version),

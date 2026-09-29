@@ -22,6 +22,11 @@ interface Entry {
   };
   /** When they arrived, once they have. */
   readAt?: number;
+  /**
+   * Whether a read was given them, which keeps them asked for when the
+   * selection moves on.
+   */
+  awaited: boolean;
 }
 
 /** Threads' details asked for one at a time, read together. */
@@ -37,12 +42,15 @@ export interface DetailQueue {
    */
   isDue(thread: ThreadSummary, version: string, at: Date): boolean;
   /**
-   * Asks for the details of `wanted`, `selected` first among them, in
-   * the next request, which goes `delay` milliseconds from now: a later
-   * ask before then moves it on, so moving through the list reads once.
+   * Asks for the details of the threads of `window` that are due,
+   * `selected` first among them, in the next request, which goes `delay`
+   * milliseconds from now: a later ask before then moves it on, so moving
+   * through the list reads once, the window around where it stops. The
+   * threads of an earlier window not yet sent, and not in this one, give
+   * way and are due again, unless a read was given them.
    */
   request(
-    wanted: readonly WantedDetail[],
+    window: readonly WantedDetail[],
     selected: ThreadSummary | undefined,
     delay: number,
   ): void;
@@ -90,7 +98,12 @@ export default function createDetailQueue(
     // A read that fails with nobody waiting on it is no failure of the
     // process.
     promise.catch(() => {});
-    const entry: Entry = { version, promise, settle: { resolve, reject } };
+    const entry: Entry = {
+      version,
+      promise,
+      settle: { resolve, reject },
+      awaited: false,
+    };
     entries.set(identifyThread(thread), entry);
     queued.push({ thread, version, entry });
     return entry;
@@ -148,6 +161,14 @@ export default function createDetailQueue(
       }
     }
   };
+  const isDue = (thread: ThreadSummary, version: string, at: Date) => {
+    const known = entries.get(identifyThread(thread));
+    if (known?.version !== version) return true;
+    return (
+      known.readAt !== undefined &&
+      at.getTime() - known.readAt >= detailStaleAfter
+    );
+  };
   const schedule = (delay: number) => {
     clearTimeout(timer);
     timer = undefined;
@@ -158,23 +179,34 @@ export default function createDetailQueue(
   return {
     read(thread, version) {
       const known = entries.get(identifyThread(thread));
-      if (known?.version === version) return known.promise;
+      if (known?.version === version) {
+        known.awaited = true;
+        return known.promise;
+      }
       const entry = ask({ thread, version });
+      entry.awaited = true;
       if (timer === undefined) schedule(0);
       return entry.promise;
     },
-    isDue(thread, version, at) {
-      const known = entries.get(identifyThread(thread));
-      if (known?.version !== version) return true;
-      return (
-        known.readAt !== undefined &&
-        at.getTime() - known.readAt >= detailStaleAfter
-      );
-    },
-    request(wanted, chosen, delay) {
+    isDue,
+    request(window, chosen, delay) {
       selected = chosen;
-      for (const each of wanted) ask(each);
-      schedule(delay);
+      const kept = new Set(window.map(({ thread }) => identifyThread(thread)));
+      queued = queued.filter(({ thread, entry }) => {
+        const key = identifyThread(thread);
+        if (entry.awaited || kept.has(key)) return true;
+        if (entries.get(key) === entry) entries.delete(key);
+        return false;
+      });
+      const at = now();
+      for (const each of window) {
+        if (isDue(each.thread, each.version, at)) ask(each);
+      }
+      if (queued.length > 0) schedule(delay);
+      else {
+        clearTimeout(timer);
+        timer = undefined;
+      }
     },
     countArrivals: (thread) => arrivals.get(identifyThread(thread)) ?? 0,
     subscribe(listener) {

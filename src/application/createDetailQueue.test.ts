@@ -15,6 +15,7 @@ afterEach(() => {
 const one = thread({ number: 1 });
 const two = thread({ number: 2 });
 const three = thread({ number: 3 });
+const four = thread({ number: 4 });
 
 /** A reader finding every thread but #3, which counts what it is asked. */
 const reading = () => ({
@@ -80,6 +81,56 @@ describe("createDetailQueue", () => {
     await vi.advanceTimersByTimeAsync(150);
     expect(reader.read).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(50);
+    expect(reader.read).toHaveBeenCalledOnce();
+  });
+
+  it("reads the window where the selection rests, and lets the windows it passed through fall due again", async () => {
+    const reader = reading();
+    const queue = open(reader);
+    const windowOf = (...threads: (typeof one)[]) =>
+      threads.map((each) => ({ thread: each, version: "v" }));
+    queue.request(windowOf(one, two), one, 200);
+    await vi.advanceTimersByTimeAsync(50);
+    queue.request(windowOf(two, three), two, 200);
+    await vi.advanceTimersByTimeAsync(50);
+    queue.request(windowOf(three, four), four, 200);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(reader.read).toHaveBeenCalledOnce();
+    expect(reader.read.mock.calls.at(0)?.[0]).toEqual([four, three]);
+    expect(queue.isDue(one, "v", new Date())).toBe(true);
+    expect(queue.isDue(two, "v", new Date())).toBe(true);
+    expect(queue.isDue(four, "v", new Date())).toBe(false);
+  });
+
+  it("lets a thread fall due again whatever version its dropped asks were at", async () => {
+    const reader = reading();
+    const queue = open(reader);
+    queue.request([{ thread: one, version: "v1" }], one, 200);
+    queue.request([{ thread: one, version: "v2" }], one, 200);
+    queue.request([{ thread: two, version: "v" }], two, 200);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(reader.read.mock.calls.at(0)?.[0]).toEqual([two]);
+    expect(queue.isDue(one, "v2", new Date())).toBe(true);
+  });
+
+  it("keeps a read given out when the selection moves on", async () => {
+    const reader = reading();
+    const queue = open(reader);
+    queue.request([{ thread: one, version: "v" }], one, 200);
+    const given = queue.read(one, "v");
+    queue.request([{ thread: two, version: "v" }], two, 200);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(reader.read.mock.calls.at(0)?.[0]).toEqual([two, one]);
+    expect(await given).toBe(parserFixDetail);
+  });
+
+  it("sends nothing when nothing in the window is due", async () => {
+    const reader = reading();
+    const queue = open(reader);
+    queue.request([{ thread: one, version: "v" }], one, 0);
+    await vi.advanceTimersByTimeAsync(0);
+    queue.request([{ thread: one, version: "v" }], one, 200);
+    await vi.advanceTimersByTimeAsync(200);
     expect(reader.read).toHaveBeenCalledOnce();
   });
 
