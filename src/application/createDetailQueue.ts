@@ -50,6 +50,12 @@ export interface DetailQueue {
   countArrivals(thread: ThreadSummary): number;
   /** Calls `listener` whenever details arrive. */
   subscribe(listener: () => void): () => void;
+  /**
+   * Holds back every request while `paused`, as below the budget floor or
+   * under the rate limit, when no point may be spent; what waits is sent
+   * once it is not.
+   */
+  pause(paused: boolean): void;
   /** Sends nothing more, when the pane closes. */
   stop(): void;
 }
@@ -62,6 +68,7 @@ export interface DetailQueue {
  * thread the request leaves out, once the hour's budget is spent, is
  * asked for again when it is due; one the provider no longer finds, or a
  * request that fails, fails its read, and it is read again when asked.
+ * Nothing is sent while it is paused.
  *
  * @note Impure: sets a timer for each request, and reads through
  * `reader`.
@@ -76,6 +83,7 @@ export default function createDetailQueue(
   let queued: (WantedDetail & { readonly entry: Entry })[] = [];
   let selected: ThreadSummary | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let paused = false;
 
   const ask = ({ thread, version }: WantedDetail) => {
     const { promise, resolve, reject } = Promise.withResolvers<ThreadDetail>();
@@ -142,6 +150,8 @@ export default function createDetailQueue(
   };
   const schedule = (delay: number) => {
     clearTimeout(timer);
+    timer = undefined;
+    if (paused) return;
     timer = setTimeout(() => void flush(), delay);
   };
 
@@ -172,6 +182,10 @@ export default function createDetailQueue(
       return () => {
         listeners.delete(listener);
       };
+    },
+    pause(holding) {
+      paused = holding;
+      if (paused || queued.length > 0) schedule(0);
     },
     stop() {
       clearTimeout(timer);

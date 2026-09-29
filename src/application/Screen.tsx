@@ -335,6 +335,7 @@ export default function Screen({
       const row = drawnSelection.current;
       return row && summarize(row);
     },
+    paused: status?.paused !== undefined,
   });
   /** The details the accordion under a row is given: read ahead, or alone. */
   const readRowDetail = (

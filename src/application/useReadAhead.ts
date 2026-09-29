@@ -88,6 +88,7 @@ export default function useReadAhead({
     () => queue?.subscribe(() => redraw((count) => count + 1)),
     [queue],
   );
+  useEffect(() => queue?.pause(paused), [queue, paused]);
   const moved = useRef(false);
   const chosen = rows.at(selected);
   const window = findNearest(rows, selected, detailWindow);

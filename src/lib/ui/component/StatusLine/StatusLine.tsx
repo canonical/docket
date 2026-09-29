@@ -25,7 +25,8 @@ const colours: Readonly<Record<StatusMessage["kind"], string>> = {
  * time: the cases are listed in priority order, the first that applies
  * is the one shown, and the side stays blank when none does (the
  * prerequisite frames). The right side is the details', dimmed:
- * `details paused` while reading them spends nothing, hidden while the
+ * `details paused` while reading them spends nothing, as once their
+ * hour's budget is spent or while the refresh is paused, hidden while the
  * left side shows an error or the pane is idle, since nothing is read
  * then, and dropped when the two sides would meet.
  *
@@ -53,7 +54,9 @@ const StatusLine = ({
   );
   const left = message ? trimText(message.text, width) : "";
   const right =
-    detailsPaused && message?.kind !== "error" && attention !== "idle"
+    (detailsPaused || status?.paused) &&
+    message?.kind !== "error" &&
+    attention !== "idle"
       ? "details paused"
       : "";
   // At least one cell apart, or the right side is left out.

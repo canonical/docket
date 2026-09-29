@@ -1632,6 +1632,33 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
     });
 
+    it("spends no point on details below the budget floor, neither the accordion's read nor reading ahead, and says details are paused", async () => {
+      let remaining = fullBudget.limit;
+      const provider = recordedProvider({
+        budget: async () => ({ ...fullBudget, remaining }),
+      });
+      const cache = await openCache(provider);
+      await cache.refresh();
+      remaining = 100;
+      await cache.refresh();
+      const readDetails = vi.fn(readRecordedDetails);
+      const readDetail = vi.fn(readRecordedDetail);
+      const view = viewOf(cache, everyCapability, readRecorded, readDetail);
+      const details = createDetailReader(readDetails);
+      const screen = await show(
+        { ...view, source: { ...view.source, details } },
+        60,
+      );
+      const moved = await press(screen, "down", "down", "down");
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const drawn = await moved.redraw();
+      expect(readDetails).not.toHaveBeenCalled();
+      expect(readDetail).not.toHaveBeenCalled();
+      expect(drawn.lines.at(-2)).toMatch(
+        /^refresh paused · resumes \d\d:\d\d +details paused$/,
+      );
+    });
+
     it("reads the selected thread's details and those of the rows around it in one request on opening, so moving to them reads nothing", async () => {
       const readDetails = vi.fn(readRecordedDetails);
       const readDetail = vi.fn(readRecordedDetail);

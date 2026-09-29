@@ -11,6 +11,12 @@ export interface UseHeldDetailsProps {
   readonly kept: readonly ThreadSummary[];
   /** The thread selected on the frame drawn last, if any. */
   readonly selected: () => ThreadSummary | undefined;
+  /**
+   * Whether reading is paused, below the budget floor or under the rate
+   * limit, when no read may spend a point: the details held are given
+   * whatever their version, and nothing is read.
+   */
+  readonly paused?: boolean;
 }
 
 /**
@@ -26,6 +32,13 @@ export type UseHeldDetailsResult = (
 
 /** A thread's repository and number, which no other thread shares. */
 const identifyThread = ({ repo, number }: ThreadSummary) => `${repo}#${number}`;
+
+/**
+ * Stands in for the details of a thread none are held for while reading
+ * is paused: it never settles, so the accordion shows `loading…` until
+ * reading resumes and the thread is read.
+ */
+const unread = new Promise<ThreadDetail>(() => {});
 
 /** What is held of one thread's details. */
 interface HeldDetail {
@@ -62,6 +75,8 @@ function markSettled(
  * change never draws `loading…`. A read that failed is read again when the
  * selection comes back to its thread, and never on a frame that keeps the
  * selection there, as the clock's each second does.
+ * While reading is paused nothing is read, and the details held stay on
+ * screen whatever the thread's version.
  *
  * @note Impure: reads each thread's details through `read`, and redraws
  * once a read settles in place of details already shown.
@@ -69,6 +84,7 @@ function markSettled(
 export default function useHeldDetails({
   kept,
   selected,
+  paused = false,
 }: UseHeldDetailsProps): UseHeldDetailsResult {
   const [details] = useState(() => new Map<string, HeldDetail>());
   const [, showArrived] = useReducer((count: number) => count + 1, 0);
@@ -86,6 +102,7 @@ export default function useHeldDetails({
     if (held?.version === version && !(arrived && held.failed)) {
       return held.shown;
     }
+    if (paused) return held?.shown ?? unread;
     const reading = read(thread);
     // The details held from before the thread changed stay on screen
     // until the new ones settle, so a change never draws `loading…` over

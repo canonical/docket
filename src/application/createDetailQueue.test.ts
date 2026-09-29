@@ -167,6 +167,24 @@ describe("createDetailQueue", () => {
     await expect(replaced).rejects.toThrow("offline");
   });
 
+  it("sends nothing while paused, and what waits once it is not", async () => {
+    const reader = reading();
+    const queue = open(reader);
+    queue.request([{ thread: one, version: "v" }], one, 200);
+    queue.pause(true);
+    const alone = queue.read(two, "v");
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(reader.read).not.toHaveBeenCalled();
+    queue.pause(false);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(reader.read).toHaveBeenCalledOnce();
+    expect(reader.read.mock.calls.at(0)?.[0]).toEqual([one, two]);
+    expect(await alone).toBe(parserFixDetail);
+    queue.pause(false);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(reader.read).toHaveBeenCalledOnce();
+  });
+
   it("sends nothing once stopped", async () => {
     const reader = reading();
     const queue = open(reader);

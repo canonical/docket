@@ -166,7 +166,6 @@ export const BudgetPaused: Story<StatusLineProps> = {
       ...settled,
       paused: { until: new Date("2026-09-28T13:00:00Z"), reason: "budget" },
     },
-    detailsPaused: true,
   },
 };
 

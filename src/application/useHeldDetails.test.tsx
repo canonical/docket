@@ -100,4 +100,26 @@ describe("useHeldDetails", () => {
     await give(read, parserFix, "1");
     expect(read).toHaveBeenCalledTimes(2);
   });
+
+  it("reads nothing while reading is paused, giving the details held whatever the version, and none for a thread with none held", async () => {
+    const read = vi.fn(async () => parserFixDetail);
+    const { give, change } = await probe({
+      kept: [parserFix, crash],
+      selected: () => parserFix,
+    });
+    const first = give(read, parserFix, "1");
+    await first;
+    await change({ paused: true });
+    expect(give(read, parserFix, "2")).toBe(first);
+    const none = give(read, crash, "1");
+    const settled = await Promise.race([
+      none.then(() => "settled"),
+      new Promise((resolve) => setTimeout(resolve, 50, "waiting")),
+    ]);
+    expect(settled).toBe("waiting");
+    expect(read).toHaveBeenCalledTimes(1);
+    await change({ paused: false });
+    expect(await give(read, parserFix, "2")).toBe(parserFixDetail);
+    expect(read).toHaveBeenCalledTimes(2);
+  });
 });
