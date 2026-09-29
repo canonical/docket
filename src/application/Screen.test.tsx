@@ -1632,7 +1632,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
     });
 
-    it("spends no point on details below the budget floor, neither the accordion's read nor reading ahead, and says details are paused", async () => {
+    it("spends no point on details below the budget floor, neither the accordion's read nor reading ahead, and leaves the status line's right side empty", async () => {
       let remaining = fullBudget.limit;
       const provider = recordedProvider({
         budget: async () => ({ ...fullBudget, remaining }),
@@ -1655,7 +1655,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(readDetails).not.toHaveBeenCalled();
       expect(readDetail).not.toHaveBeenCalled();
       expect(drawn.lines.at(-2)).toMatch(
-        /^refresh paused · resumes \d\d:\d\d +details paused$/,
+        /^refresh paused · resumes \d\d:\d\d$/,
       );
     });
 

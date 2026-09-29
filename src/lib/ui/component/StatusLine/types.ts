@@ -42,8 +42,7 @@ export interface StatusLineProps {
   attention?: AttentionState;
   /**
    * Whether reading details spent the hour's budget for them, which the
-   * right side of an active pane then says, as it does while the refresh
-   * is paused.
+   * right side of an active pane then says.
    */
   detailsPaused?: boolean;
   /** The instant ages and waits are measured at. */

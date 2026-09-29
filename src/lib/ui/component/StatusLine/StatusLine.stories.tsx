@@ -157,7 +157,8 @@ export const DetailsPaused: Story<StatusLineProps> = {
 
 /**
  * Below the budget floor: neither the list nor the details spend a point,
- * and at 40 columns the two sides would meet, so the right is left out.
+ * and the right side stays empty, since the details' own budget is not
+ * what stopped them.
  */
 export const BudgetPaused: Story<StatusLineProps> = {
   args: {

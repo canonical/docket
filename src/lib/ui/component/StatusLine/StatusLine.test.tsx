@@ -78,16 +78,22 @@ describe("StatusLine", () => {
     expect(screen.look("details")?.fg).toBe(tokens["color.text.muted"]);
   });
 
-  it("says details paused beside the refresh paused below the budget floor, and leaves it out where the two sides would meet", async () => {
-    const wide = await draw(
-      <StatusLine {...BudgetPaused.args} width={60} />,
-      60,
+  it("leaves details paused out where the two sides would meet", async () => {
+    const screen = await draw(
+      <StatusLine {...DetailsPaused.args} width={27} />,
+      27,
     );
-    expect(wide.lines.at(0)).toBe(
-      `refresh paused · resumes 13:00${" ".repeat(16)}details paused`,
-    );
-    const narrow = await draw(<StatusLine {...BudgetPaused.args} />, 40);
-    expect(narrow.lines.at(0)).toBe("refresh paused · resumes 13:00");
+    expect(screen.lines.at(0)).toBe("synced 2m ago");
+  });
+
+  it("leaves the right side empty below the budget floor", async () => {
+    for (const width of [40, 60]) {
+      const screen = await draw(
+        <StatusLine {...BudgetPaused.args} width={width} />,
+        width,
+      );
+      expect(screen.lines.at(0)).toBe("refresh paused · resumes 13:00");
+    }
   });
 
   it("hides details paused while the left side shows an error or the pane is idle", async () => {
