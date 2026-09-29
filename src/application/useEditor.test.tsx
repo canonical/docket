@@ -28,6 +28,7 @@ import {
   drawSuspending,
   WithKeys,
 } from "../testing/terminal.js";
+import { waitUntil } from "../testing/wait.js";
 import readCandidates from "./readCandidates.js";
 import Screen from "./Screen.js";
 import type { TerminalView } from "./types.js";
@@ -129,7 +130,7 @@ async function settle(
   done = (drawn: Drawn) => !drawn.lines.includes("  loading…"),
 ) {
   let drawn = screen;
-  await vi.waitFor(async () => {
+  await waitUntil(async () => {
     drawn = await screen.redraw();
     expect(done(drawn)).toBe(true);
   });
