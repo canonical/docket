@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { at, teamSettings, thread, wait } from "../../testing/facts.js";
+import { alice, at, teamSettings, thread, wait } from "../../testing/facts.js";
 import type { Repo } from "../config/index.js";
 import type { StackEntry } from "../stacks/index.js";
 import type { Wait } from "../waits/index.js";
@@ -59,6 +59,18 @@ describe("groupRows", () => {
       expect(groupRows([first, second], "owner", repos)).toEqual([
         { heading: { text: "alice", fit: "trimmed" }, rows: [first, second] },
         { heading: { text: "bob", fit: "trimmed" }, rows: [first] },
+      ]);
+    });
+
+    it("heads an owner's section with the owner's group, and unassigned as text", () => {
+      const assigned = row({
+        owners: ["alice"],
+        thread: thread({ assignees: [alice] }),
+      });
+      const groups = groupRows([assigned, row({ owners: [] })], "owner", repos);
+      expect(groups.map(({ heading }) => heading)).toEqual([
+        { text: "alice", fit: "trimmed", group: "team" },
+        { text: "unassigned", fit: "trimmed" },
       ]);
     });
   });

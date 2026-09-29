@@ -122,9 +122,12 @@ export interface WaitRow {
   readonly invalidFile?: Field;
 }
 
-/** A section of the list; without a heading when the list is not grouped. */
+/**
+ * A section of the list; without a heading when the list is not grouped.
+ * An owner's section is headed by the owner, a person with their group.
+ */
 export interface WaitGroup {
-  readonly heading?: Field;
+  readonly heading?: Owner;
   readonly rows: readonly WaitRow[];
 }
 
