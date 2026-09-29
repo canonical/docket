@@ -1,4 +1,10 @@
-import { Component, type ReactNode, Suspense, use, useEffect } from "react";
+import {
+  Component,
+  type ReactNode,
+  Suspense,
+  use,
+  useLayoutEffect,
+} from "react";
 import type { WaitRow } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
@@ -44,7 +50,9 @@ const Lines = ({
   readonly stroke: Stroke;
   readonly onLines?: ThreadAccordionProps["onLines"];
 }): ReactNode => {
-  useEffect(() => onLines?.(lines.length));
+  // The renderer paints before React runs passive effects, so the count is
+  // told during the commit and the list scrolls before the frame is painted.
+  useLayoutEffect(() => onLines?.(lines.length));
   return (
     <box
       flexDirection="row"

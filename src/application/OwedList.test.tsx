@@ -1,6 +1,9 @@
+import { createTestRenderer } from "@opentui/core/testing";
+import { createRoot } from "@opentui/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { describeNoTeam, type OwedGrouping } from "../lib/owed/index.js";
+import type { ThreadDetail } from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import { failDetail } from "../testing/details.js";
 import {
@@ -9,6 +12,7 @@ import {
   recordedOwed,
 } from "../testing/recorded.js";
 import { drawSuspending } from "../testing/terminal.js";
+import { waitUntil } from "../testing/wait.js";
 import OwedList from "./OwedList.js";
 
 /** Draws owed's recorded list in `grouping`, with the row at `selected` selected. */
@@ -208,5 +212,39 @@ describe("OwedList", () => {
     expect(screen.lines).toContain("╵┆✗ failed: GitHub timed out");
     expect(screen.lines.at(0)).toBe("│ docs#4 issue close ● alice    10d left");
     expect(shown.at(-1)).toBe(2);
+  });
+
+  it("paints no frame with the selected item cut while a failed read makes room for its line", async () => {
+    // React outside `act`, so the renderer paints on its own schedule, as in the terminal.
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: false });
+    const setup = await createTestRenderer({ width: 40, height: 12 });
+    const decoder = new TextDecoder();
+    const painted: string[] = [];
+    setup.renderer.addPostProcessFn((buffer) => {
+      painted.push(decoder.decode(buffer.getRealCharBytes(true)));
+    });
+    const read = Promise.withResolvers<ThreadDetail>();
+    read.promise.catch(() => {});
+    const root = createRoot(setup.renderer);
+    root.render(
+      <OwedList
+        list={recordedOwed("none")}
+        selected={4}
+        readDetail={() => read.promise}
+        now={recordedNow}
+        timezone="Europe/Paris"
+        width={40}
+        height={12}
+        onShownRows={() => {}}
+      />,
+    );
+    await waitUntil(() => expect(painted.at(-1)).toContain("example#12"));
+    read.reject(new Error("GitHub timed out"));
+    await waitUntil(() =>
+      expect(painted.at(-1)).toContain("╵┆✗ failed: GitHub timed out"),
+    );
+    root.unmount();
+    setup.renderer.destroy();
+    for (const frame of painted) expect(frame).toMatch(/^╵┆/m);
   });
 });
