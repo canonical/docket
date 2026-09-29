@@ -49,14 +49,24 @@ runs
 3:3 "Fix the parser" fg #c6c8d1ff bg #2e3244ff italic
 3:17 "                 " fg #c6c8d1ff bg #2e3244ff
 3:34 "◉ alice" fg #84a0c6ff bg #2e3244ff
-4:2 "┆" fg #6b7089ff bg #161821ff
-4:3 "dave · 3d ago" fg #c6c8d1ff bg #161821ff
-5:2 "┆" fg #6b7089ff bg #161821ff
-5:3 "Rebased on main. Could someone look" fg #c6c8d1ff bg #161821ff
-6:2 "┆" fg #6b7089ff bg #161821ff
-6:3 "again?" fg #c6c8d1ff bg #161821ff
-7:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #161821ff
-8:2 "┆below #11 merged, above #13 open" fg #6b7089ff bg #161821ff
+4:1 " " fg #ffffffff bg #2e3244ff
+4:2 "┆" fg #6b7089ff bg #2e3244ff
+4:3 "dave · 3d ago" fg #c6c8d1ff bg #2e3244ff
+4:16 "                         " fg #ffffffff bg #2e3244ff
+5:1 " " fg #ffffffff bg #2e3244ff
+5:2 "┆" fg #6b7089ff bg #2e3244ff
+5:3 "Rebased on main. Could someone look" fg #c6c8d1ff bg #2e3244ff
+5:38 "   " fg #ffffffff bg #2e3244ff
+6:1 " " fg #ffffffff bg #2e3244ff
+6:2 "┆" fg #6b7089ff bg #2e3244ff
+6:3 "again?" fg #c6c8d1ff bg #2e3244ff
+6:9 "                                " fg #ffffffff bg #2e3244ff
+7:1 " " fg #ffffffff bg #2e3244ff
+7:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #2e3244ff
+7:36 "     " fg #ffffffff bg #2e3244ff
+8:1 " " fg #ffffffff bg #2e3244ff
+8:2 "┆below #11 merged, above #13 open" fg #6b7089ff bg #2e3244ff
+8:35 "      " fg #ffffffff bg #2e3244ff
 9:2 "┆" fg #6b7089ff bg #161821ff
 9:3 "  ✗ checks failed (lint)           25m" fg #e27878ff bg #161821ff
 10:2 "┆" fg #6b7089ff bg #161821ff

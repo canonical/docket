@@ -55,19 +55,24 @@ runs
 4:25 "◉ alice" fg #84a0c6ff bg #2e3244ff
 4:32 ", " fg #c6c8d1ff bg #2e3244ff
 4:34 "◐ carol" fg #a093c7ff bg #2e3244ff
-5:1 "┃" fg #e27878ff bg #161821ff
-5:2 "┆" fg #6b7089ff bg #161821ff
-5:3 "dave · 3d ago" fg #c6c8d1ff bg #161821ff
-6:1 "┃" fg #e27878ff bg #161821ff
-6:2 "┆" fg #6b7089ff bg #161821ff
-6:3 "Rebased on main. Could someone look" fg #c6c8d1ff bg #161821ff
-7:1 "┃" fg #e27878ff bg #161821ff
-7:2 "┆" fg #6b7089ff bg #161821ff
-7:3 "again?" fg #c6c8d1ff bg #161821ff
-8:1 "┃" fg #e27878ff bg #161821ff
-8:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #161821ff
-9:1 "╹" fg #e27878ff bg #161821ff
-9:2 "┆below #11 merged, above #13 open" fg #6b7089ff bg #161821ff
+5:1 "┃" fg #e27878ff bg #2e3244ff
+5:2 "┆" fg #6b7089ff bg #2e3244ff
+5:3 "dave · 3d ago" fg #c6c8d1ff bg #2e3244ff
+5:16 "                         " fg #ffffffff bg #2e3244ff
+6:1 "┃" fg #e27878ff bg #2e3244ff
+6:2 "┆" fg #6b7089ff bg #2e3244ff
+6:3 "Rebased on main. Could someone look" fg #c6c8d1ff bg #2e3244ff
+6:38 "   " fg #ffffffff bg #2e3244ff
+7:1 "┃" fg #e27878ff bg #2e3244ff
+7:2 "┆" fg #6b7089ff bg #2e3244ff
+7:3 "again?" fg #c6c8d1ff bg #2e3244ff
+7:9 "                                " fg #ffffffff bg #2e3244ff
+8:1 "┃" fg #e27878ff bg #2e3244ff
+8:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #2e3244ff
+8:36 "     " fg #ffffffff bg #2e3244ff
+9:1 "╹" fg #e27878ff bg #2e3244ff
+9:2 "┆below #11 merged, above #13 open" fg #6b7089ff bg #2e3244ff
+9:35 "      " fg #ffffffff bg #2e3244ff
 10:1 "┃" fg #e27878ff bg #161821ff
 10:2 "┆" fg #6b7089ff bg #161821ff
 10:3 "example#12 PR close " fg #c6c8d1ff bg #161821ff bold

@@ -29,7 +29,10 @@ export interface Tokens {
   readonly "color.border": string;
   /** The pane. */
   readonly "color.background": string;
-  /** The selected row: the only background on the screen. */
+  /**
+   * The selected item, its row and its accordion, and the option under
+   * an editor's cursor: the only background on the screen.
+   */
   readonly "color.background.selected": string;
   /** The mode name, headings and keys, as OpenTUI's text attribute. */
   readonly "typography.weight.bold": number;

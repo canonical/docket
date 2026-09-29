@@ -61,19 +61,24 @@ runs
 5:44 "✗ checks" fg #e27878ff bg #2e3244ff
 5:52 "  " fg #c6c8d1ff bg #2e3244ff
 5:54 "◉ alice" fg #84a0c6ff bg #2e3244ff
-6:1 "┃" fg #e27878ff bg #161821ff
-6:2 "┆" fg #6b7089ff bg #161821ff
-6:3 "age 7d · owner alice" fg #c6c8d1ff bg #161821ff
-7:1 "┃" fg #e27878ff bg #161821ff
-7:2 "┆" fg #6b7089ff bg #161821ff
-7:3 "last activity 25m ago · dave" fg #c6c8d1ff bg #161821ff
-8:1 "┃" fg #e27878ff bg #161821ff
-8:2 "┆" fg #6b7089ff bg #161821ff
-8:3 "labels kind=bug" fg #c6c8d1ff bg #161821ff
-9:1 "┃" fg #e27878ff bg #161821ff
-9:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #161821ff
-10:1 "╹" fg #e27878ff bg #161821ff
-10:2 "┆below #11 merged, above #13 open" fg #6b7089ff bg #161821ff
+6:1 "┃" fg #e27878ff bg #2e3244ff
+6:2 "┆" fg #6b7089ff bg #2e3244ff
+6:3 "age 7d · owner alice" fg #c6c8d1ff bg #2e3244ff
+6:23 "                                      " fg #ffffffff bg #2e3244ff
+7:1 "┃" fg #e27878ff bg #2e3244ff
+7:2 "┆" fg #6b7089ff bg #2e3244ff
+7:3 "last activity 25m ago · dave" fg #c6c8d1ff bg #2e3244ff
+7:31 "                              " fg #ffffffff bg #2e3244ff
+8:1 "┃" fg #e27878ff bg #2e3244ff
+8:2 "┆" fg #6b7089ff bg #2e3244ff
+8:3 "labels kind=bug" fg #c6c8d1ff bg #2e3244ff
+8:18 "                                           " fg #ffffffff bg #2e3244ff
+9:1 "┃" fg #e27878ff bg #2e3244ff
+9:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #2e3244ff
+9:36 "                         " fg #ffffffff bg #2e3244ff
+10:1 "╹" fg #e27878ff bg #2e3244ff
+10:2 "┆below #11 merged, above #13 open" fg #6b7089ff bg #2e3244ff
+10:35 "                          " fg #ffffffff bg #2e3244ff
 11:1 "┃" fg #e2a478ff bg #161821ff
 11:3 "example#15 issue reply " fg #c6c8d1ff bg #161821ff bold
 11:26 "◐ carol" fg #a093c7ff bg #161821ff bold

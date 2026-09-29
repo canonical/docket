@@ -55,9 +55,24 @@ runs
 5:47 "◉ alice" fg #84a0c6ff bg #2e3244ff
 5:54 ", " fg #c6c8d1ff bg #2e3244ff
 5:56 "● bob" fg #84a0c6ff bg #2e3244ff
-6:3 "age 27d · owner alice, bob" fg #c6c8d1ff bg #161821ff
-7:3 "last activity 25m ago · dave" fg #c6c8d1ff bg #161821ff
-8:3 "labels none" fg #c6c8d1ff bg #161821ff
+6:1 " " fg #ffffffff bg #2e3244ff
+6:2 " " fg #6b7089ff bg #2e3244ff
+6:3 "age 27d · owner alice, bob" fg #c6c8d1ff bg #2e3244ff
+6:29 "                                " fg #ffffffff bg #2e3244ff
+7:1 " " fg #ffffffff bg #2e3244ff
+7:2 " " fg #6b7089ff bg #2e3244ff
+7:3 "last activity 25m ago · dave" fg #c6c8d1ff bg #2e3244ff
+7:31 "                              " fg #ffffffff bg #2e3244ff
+8:1 " " fg #ffffffff bg #2e3244ff
+8:2 " " fg #6b7089ff bg #2e3244ff
+8:3 "labels none" fg #c6c8d1ff bg #2e3244ff
+8:14 "                                               " fg #ffffffff bg #2e3244ff
+9:1 " " fg #ffffffff bg #2e3244ff
+9:2 " " fg #6b7089ff bg #2e3244ff
+9:3 "                                                          " fg #ffffffff bg #2e3244ff
+10:1 " " fg #ffffffff bg #2e3244ff
+10:2 " " fg #6b7089ff bg #2e3244ff
+10:3 "                                                          " fg #ffffffff bg #2e3244ff
 11:2 "   example-sync labelled kind=docs                      16h" fg #6b7089ff bg #161821ff
 12:1 "PULL REQUESTS" fg #c6c8d1ff bg #161821ff bold
 13:2 "┆" fg #6b7089ff bg #161821ff

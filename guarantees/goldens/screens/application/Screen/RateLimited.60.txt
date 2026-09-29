@@ -51,18 +51,23 @@ runs
 3:44 "✗ checks" fg #e27878ff bg #2e3244ff
 3:52 "  " fg #c6c8d1ff bg #2e3244ff
 3:54 "◉ alice" fg #84a0c6ff bg #2e3244ff
-4:1 "┃" fg #e27878ff bg #161821ff
-4:2 "┆" fg #6b7089ff bg #161821ff
-4:3 "dave · 3d ago" fg #c6c8d1ff bg #161821ff
-5:1 "┃" fg #e27878ff bg #161821ff
-5:2 "┆…" fg #6b7089ff bg #161821ff
-6:1 "┃" fg #e27878ff bg #161821ff
-6:2 "┆" fg #6b7089ff bg #161821ff
-6:3 "waiting since Mon 10:00 · target 24h" fg #c6c8d1ff bg #161821ff
-7:1 "┃" fg #e27878ff bg #161821ff
-7:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #161821ff
-8:1 "╹" fg #e27878ff bg #161821ff
-8:2 "┆…" fg #6b7089ff bg #161821ff
+4:1 "┃" fg #e27878ff bg #2e3244ff
+4:2 "┆" fg #6b7089ff bg #2e3244ff
+4:3 "dave · 3d ago" fg #c6c8d1ff bg #2e3244ff
+4:16 "                                             " fg #ffffffff bg #2e3244ff
+5:1 "┃" fg #e27878ff bg #2e3244ff
+5:2 "┆…" fg #6b7089ff bg #2e3244ff
+5:4 "                                                         " fg #ffffffff bg #2e3244ff
+6:1 "┃" fg #e27878ff bg #2e3244ff
+6:2 "┆" fg #6b7089ff bg #2e3244ff
+6:3 "waiting since Mon 10:00 · target 24h" fg #c6c8d1ff bg #2e3244ff
+6:39 "                      " fg #ffffffff bg #2e3244ff
+7:1 "┃" fg #e27878ff bg #2e3244ff
+7:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #2e3244ff
+7:36 "                         " fg #ffffffff bg #2e3244ff
+8:1 "╹" fg #e27878ff bg #2e3244ff
+8:2 "┆…" fg #6b7089ff bg #2e3244ff
+8:4 "                                                         " fg #ffffffff bg #2e3244ff
 9:1 "┃" fg #e27878ff bg #161821ff
 9:2 "┆" fg #6b7089ff bg #161821ff
 9:3 "example#12 PR close " fg #c6c8d1ff bg #161821ff bold

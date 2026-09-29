@@ -40,6 +40,13 @@ describe("ThreadAccordion", () => {
     ]);
   });
 
+  it("draws on the selection's background, since it belongs to the selected item", async () => {
+    const screen = await open(Review.args);
+    expect(screen.look("asked by")?.bg).toBe(
+      tokens["color.background.selected"],
+    );
+  });
+
   it("leaves the bar's column blank where the list runs no clock, keeping the stack mark", async () => {
     const screen = await open({ ...Review.args, clock: false });
     expect(screen.lines.at(4)?.slice(0, 2)).toBe(" ┆");

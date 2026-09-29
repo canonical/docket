@@ -90,7 +90,8 @@ const findStroke = (
 
 /**
  * Draws the lines given, then blank lines to the accordion's height, with
- * the item's margin beside them, its bar ending on the last line.
+ * the item's margin beside them, its bar ending on the last line, all on
+ * the selection's background: the accordion belongs to the selected item.
  */
 const Lines = ({
   lines,
@@ -99,7 +100,12 @@ const Lines = ({
   readonly lines: readonly Drawn[];
   readonly stroke: Stroke;
 }): ReactNode => (
-  <box flexDirection="row" height={height} flexShrink={0}>
+  <box
+    flexDirection="row"
+    height={height}
+    flexShrink={0}
+    backgroundColor={tokens["color.background.selected"]}
+  >
     <Margin {...stroke} lines={height} ends />
     <box flexDirection="column">
       {Array.from({ length: height }, (_, place) => {
