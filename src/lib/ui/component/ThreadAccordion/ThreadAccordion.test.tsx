@@ -104,27 +104,25 @@ describe("ThreadAccordion", () => {
     it("shows what the snapshot holds while reading is paused, each line that needs the read ending in a dimmed …", async () => {
       const screen = await open(Paused.args);
       expect(screen.lines.slice(0, 6)).toEqual([
-        "  asked 6d ago …",
-        "  1 push since …",
-        "  ✗ checks failed …",
+        "  asked …",
+        "  1 push since · …",
+        "  ✗ checks: …",
         "  example stack 3 · 2 of 3 · → main",
         "  …",
         "",
       ]);
-      expect(screen.look("asked 6d ago")?.fg).toBe(tokens["color.text"]);
-      expect(screen.look("✗ checks failed")?.fg).toBe(
-        tokens["color.text.error"],
-      );
+      expect(screen.look("asked")?.fg).toBe(tokens["color.text"]);
+      expect(screen.look("✗ checks:")?.fg).toBe(tokens["color.text.error"]);
       expect(screen.look(" …")?.fg).toBe(tokens["color.text.muted"]);
     });
 
     it("says when reading resumes, dimmed, for a thread the snapshot holds nothing of", async () => {
       const screen = await open(PausedUnheld.args);
       expect(screen.lines.slice(0, 2)).toEqual([
-        "  details paused · resumes 15:00",
+        "  paused · resumes 15:00",
         "",
       ]);
-      expect(screen.look("details paused")?.fg).toBe(
+      expect(screen.look("paused · resumes")?.fg).toBe(
         tokens["color.text.muted"],
       );
     });

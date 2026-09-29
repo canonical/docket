@@ -103,7 +103,7 @@ const Loaded = ({
   const room = width - indent;
   const shown = use(detail);
   if ("resumes" in shown) {
-    const paused = `details paused · resumes ${describeClock(shown.resumes, timezone)}`;
+    const paused = `paused · resumes ${describeClock(shown.resumes, timezone)}`;
     return (
       <Lines
         lines={[
@@ -180,7 +180,7 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
  * states, and a slow read never holds up moving the selection. While
  * reading is paused it shows what the snapshot holds, each line that needs
  * the read ending in a dimmed `…`, and for a thread the snapshot holds
- * nothing of, `details paused · resumes 13:00`, dimmed.
+ * nothing of, `paused · resumes 13:00`, dimmed.
  *
  * `import { ThreadAccordion } from "../lib/ui/index.js";`
  *

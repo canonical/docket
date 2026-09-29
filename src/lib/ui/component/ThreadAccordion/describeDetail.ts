@@ -107,13 +107,14 @@ function describeReview(row: WaitRow, detail: Detail, reading: Reading) {
   const removed = detail.files.reduce((sum, file) => sum + file.deletions, 0);
   const age = `${describeAge(since, reading.now)} ago`;
   const pushed = `${count(pushes, "push", "pushes")} since`;
-  // The snapshot holds neither who asked nor the files, nor which check
-  // failed: only the checks' roll-up.
+  // The snapshot holds neither who asked nor when, nor the files, nor
+  // which check failed: only the checks' roll-up. Each line it gives is
+  // the start of the line the read gives, so the line grows in place.
   if (detail.partial) {
     return [
       ...describeCutOwners(row),
-      pending(`asked ${age}`),
-      pending(pushed),
+      pending("asked"),
+      pending(`${pushed} ·`),
       describeRollUp(thread.checks),
     ];
   }
@@ -130,7 +131,7 @@ function describeReview(row: WaitRow, detail: Detail, reading: Reading) {
 /** The checks as the snapshot rolls them up, before they are read. */
 function describeRollUp(checks: Checks | undefined): DetailLine {
   if (checks === undefined) return line("no checks");
-  if (checks === "failing") return pending("✗ checks failed", "error");
+  if (checks === "failing") return pending("✗ checks:", "error");
   return pending(checks === "running" ? "checks running" : "checks passed");
 }
 

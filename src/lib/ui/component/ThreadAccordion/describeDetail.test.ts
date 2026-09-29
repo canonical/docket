@@ -277,21 +277,27 @@ describe("describeDetail, while reading is paused", () => {
     ]);
   });
 
-  it("gives a review's age, pushes and checks from the snapshot, each pending what the read adds", () => {
+  it("gives a review's pushes and checks from the snapshot, each line the start of the one the read gives, pending the rest", () => {
     const { body, stack } = describeDetail(
       overReview,
       pauseDetail(overReviewDetail),
       reading,
     );
     expect(body).toEqual([
-      { text: "asked 6d ago", tone: "text", pending: true },
-      { text: "1 push since", tone: "text", pending: true },
-      { text: "✗ checks failed", tone: "error", pending: true },
+      { text: "asked", tone: "text", pending: true },
+      { text: "1 push since ·", tone: "text", pending: true },
+      { text: "✗ checks:", tone: "error", pending: true },
     ]);
     expect(stack).toEqual([
       { text: "example stack 3 · 2 of 3 · → main", tone: "muted" },
       { text: "", tone: "muted", pending: true },
     ]);
+    const full = describeDetail(overReview, overReviewDetail, reading);
+    body.forEach((partial, place) => {
+      expect(full.body.at(place)?.text.startsWith(`${partial.text} `)).toBe(
+        true,
+      );
+    });
   });
 
   it("says a review's checks are running or passed, pending which, or that there are none", () => {

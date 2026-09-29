@@ -1,5 +1,5 @@
 40 columns
-|  details paused · resumes 15:00
+|  paused · resumes 15:00
 
 runs
-1:1 "  details paused · resumes 15:00" fg #6b7089ff bg #00000000
+1:1 "  paused · resumes 15:00" fg #6b7089ff bg #00000000
