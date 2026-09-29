@@ -17,12 +17,12 @@
  *   process runs in, as the process itself reads it, so a caller can see
  *   that the machine's time zone it asked for reached docket.
  * - A day: with `GUARANTEES_UNTIL`, each of docket's waits of a minute or
- *   more passes at once, as soon as docket is quiet, the clock moving on
- *   to its end (`fastForward.ts`), until the clock would reach that
- *   instant, when the process ends. Nothing passes before docket's first
- *   request is answered, nor, with `GUARANTEES_KEYS`, before the one
- *   pressing keys sends `SIGUSR2` after the last. Each logged request
- *   carries the clock's time.
+ *   more, once or on repeat, passes at once, as soon as docket is quiet,
+ *   the clock moving on to its end (`fastForward.ts`), until the clock
+ *   would reach that instant, when the process ends. Nothing passes before
+ *   docket's first request is answered, nor, with `GUARANTEES_KEYS`,
+ *   before the one pressing keys sends `SIGUSR2` after the last. Each
+ *   logged request carries the clock's time.
  *
  * A request the recording holds no answer for gets a 404 naming it, which
  * docket reports as a failure, so a recording that falls behind docket
