@@ -17,12 +17,10 @@ import {
   owedGroupings,
   type WaitRow,
 } from "../lib/owed/index.js";
-import { tokens } from "../lib/tokens/index.js";
 import {
   type ActionResult,
   CountsLine,
   countPickerLines,
-  EmptyState,
   HelpOverlay,
   KeyBar,
   minColumns,
@@ -30,7 +28,6 @@ import {
   Pane,
   PaneHeader,
   PeoplePicker,
-  ProgressLine,
   StatusLine,
   wrapNotice,
 } from "../lib/ui/index.js";
@@ -38,7 +35,7 @@ import type { Thread } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
-import describeHold from "./describeHold.js";
+import drawStandIn from "./drawStandIn.js";
 import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
@@ -50,9 +47,12 @@ import type {
   WatchedFiles,
 } from "./types.js";
 import useActivity from "./useActivity.js";
+import useAttention, { type UseAttentionProps } from "./useAttention.js";
 import useEditor from "./useEditor.js";
 import useHeldDetails from "./useHeldDetails.js";
+import useReadAhead from "./useReadAhead.js";
 import useScreenKeys from "./useScreenKeys.js";
+import useSelectedWatch from "./useSelectedWatch.js";
 import useViewer from "./useViewer.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
@@ -66,9 +66,6 @@ function cycle<T>(list: readonly T[], item: T): T {
   const [next] = [...list.slice(list.indexOf(item) + 1), ...list];
   return next;
 }
-
-/** Reads a sentence as a line on screen, which ends without a full stop. */
-const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
 
 /** A thread's last change, as GitHub records it, and its checks. */
 const describeVersion = ({ updatedAt, checks }: Thread) =>
@@ -91,7 +88,8 @@ const unselected: Selection = { place: 0, row: "" };
  * status and the keys, or the help over all but the header. The keys are
  * bound in one global layer, beside the layer of the editor that `a` and
  * `r` open, and the help and the key bar are drawn from the keymap's
- * command catalogue.
+ * command catalogue. Every key, whatever it does, counts as attention: it
+ * keeps the pane active, or wakes an idle one, and still acts.
  */
 export default function Screen({
   mode: openingMode,
@@ -102,12 +100,15 @@ export default function Screen({
   settings,
   watched: opening,
   source,
+  attention,
   onQuit,
-}: TerminalView & { readonly onQuit: () => void }): ReactNode {
+}: TerminalView &
+  Partial<UseAttentionProps> & { readonly onQuit: () => void }): ReactNode {
   const { width, height } = useTerminalDimensions();
   // Below the narrowest pane the screen shows only that it needs more
   // columns, so no key but `q` acts on the list or the editor it hides.
   const narrow = width < minColumns;
+  const attentionState = useAttention({ attention });
   const cache = "cache" in source ? source.cache : undefined;
   const readWatched = "cache" in source ? source.readWatched : undefined;
   const readThreadDetail = "cache" in source ? source.readDetail : undefined;
@@ -291,10 +292,34 @@ export default function Screen({
     (owed ?? listed)?.groups.flatMap(
       (group): readonly (WaitRow | ActivityThread)[] => group.rows,
     ) ?? [];
+  const selectedRow = rows.at(placeSelection(rows, selections[mode]));
   useEffect(() => {
     drawnRows.current = rows;
-    drawnSelection.current = rows.at(placeSelection(rows, selections[mode]));
-    editor.follow(drawnSelection.current?.reference.text);
+    drawnSelection.current = selectedRow;
+    editor.follow(selectedRow?.reference.text);
+  });
+  useSelectedWatch({
+    cache,
+    selected: selectedRow && summarize(selectedRow),
+    attention: attentionState,
+  });
+  // A row's version: its thread's last change, or, for a thread the data
+  // does not hold, which only an activity row names, its newest event.
+  const findVersion = (row: WaitRow | ActivityThread) => {
+    const facts = findFacts(row);
+    if (facts) return describeVersion(facts);
+    return `${(row as ActivityThread).events.at(0)?.event.at.getTime()}`;
+  };
+  const ahead = useReadAhead({
+    reader: "cache" in source ? source.details : undefined,
+    rows: rows.map((row) => ({
+      thread: summarize(row),
+      version: findVersion(row),
+    })),
+    selected: placeSelection(rows, selections[mode]),
+    attention: attentionState,
+    paused: status?.paused !== undefined,
+    now,
   });
   // A thread's details are read once for each change GitHub records on it,
   // and once for each change the list's roll-up of its checks shows, since
@@ -310,7 +335,22 @@ export default function Screen({
       const row = drawnSelection.current;
       return row && summarize(row);
     },
+    resumes: status?.paused?.until,
   });
+  /** The details the accordion under a row is given: read ahead, or alone. */
+  const readRowDetail = (
+    row: WaitRow | ActivityThread,
+    readAlone: NonNullable<typeof readThreadDetail>,
+  ) => {
+    const version = findVersion(row);
+    const thread = summarize(row);
+    return readHeld(
+      (each) => (ahead.read ?? readAlone)(each, version),
+      thread,
+      ahead.version(thread, version),
+      findFacts(row),
+    );
+  };
 
   // What stands in the accordion's place: the open editor, or why a key
   // could not open one.
@@ -335,55 +375,25 @@ export default function Screen({
   const teamless = describeNoTeam(
     watched.map(({ resolved }) => resolved.settings.people),
   );
-  let region: ReactNode = null;
-  if (problem) {
-    const { message, recovery } = problem;
-    region = (
-      <Notice
-        reason={dropFullStop(message)}
-        recovery={recovery}
-        width={width}
-      />
-    );
-  } else if (refused && rows.length === 0) {
-    region = refused;
-  } else if (!threads) {
-    const held = status && describeHold(status, settings.time.timezone);
-    region = held ? (
-      <Notice
-        reason={dropFullStop(held.reason)}
-        recovery={held.recovery}
-        width={width}
-      />
-    ) : (
-      <box flexDirection="column" paddingLeft={indent}>
-        <text fg={tokens["color.text"]}>refresh in progress…</text>
-        <ProgressLine
-          fetched={status?.fullRefresh?.fetched ?? 0}
-          total={status?.fullRefresh?.total ?? 0}
-          width={room}
-        />
-      </box>
-    );
-  } else if (owed?.groups.length === 0) {
-    region = (
-      <box flexDirection="column">
-        {teamless && <Notice {...teamless} width={width} />}
-        <EmptyState message="nothing owed" width={width} />
-      </box>
-    );
-  } else if (owed && readThreadDetail) {
+  let region = drawStandIn({
+    mode,
+    problem,
+    refused: rows.length === 0 ? refused : undefined,
+    held: threads !== undefined,
+    status,
+    timezone: settings.time.timezone,
+    nothingOwed: owed?.groups.length === 0,
+    teamless,
+    owedListed: Boolean(owed && readThreadDetail),
+    activity,
+    width,
+  });
+  if (region === undefined && owed && readThreadDetail) {
     region = (
       <OwedList
         list={owed}
         selected={placeSelection(rows, selections.owed)}
-        readDetail={(row) =>
-          readHeld(
-            readThreadDetail,
-            row.wait.thread,
-            describeVersion(row.wait.thread),
-          )
-        }
+        readDetail={(row) => readRowDetail(row, readThreadDetail)}
         now={at}
         timezone={settings.time.timezone}
         width={width}
@@ -393,35 +403,13 @@ export default function Screen({
         {...(slot && { editor: slot })}
       />
     );
-  } else if (activity && "problem" in activity) {
-    const { message, recovery } = activity.problem;
-    region = (
-      <Notice
-        reason={dropFullStop(message)}
-        recovery={recovery}
-        width={width}
-      />
-    );
-  } else if (mode === "activity" && !activity) {
-    // No list is held for the window yet: on opening, and after t.
-    region = (
-      <box paddingLeft={indent}>
-        <text fg={tokens["color.text"]}>refresh in progress…</text>
-      </box>
-    );
   }
   if (listed && threads && readThreadDetail) {
     region = (
       <ActivityList
         list={listed}
         selected={placeSelection(rows, selections.activity)}
-        readDetail={(row) => {
-          const facts = findFacts(row);
-          const version = facts
-            ? describeVersion(facts)
-            : `${row.events.at(0)?.event.at.getTime()}`;
-          return readHeld(readThreadDetail, row.thread, version);
-        }}
+        readDetail={(row) => readRowDetail(row, readThreadDetail)}
         measureWaits={(row) =>
           buildThreadWaits(row.thread, threads, watched, at)
         }
@@ -459,6 +447,8 @@ export default function Screen({
         <StatusLine
           status={problem ? undefined : shownStatus}
           action={action}
+          attention={attentionState}
+          detailsPaused={"cache" in source && source.details?.isCapped(at)}
           now={at}
           timezone={settings.time.timezone}
           names={Object.fromEntries(

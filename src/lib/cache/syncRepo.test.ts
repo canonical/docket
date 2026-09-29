@@ -26,7 +26,7 @@ describe("syncRepo", () => {
         };
       }),
     });
-    expect(await syncRepo(provider, repo, undefined, at, onPage)).toEqual({
+    expect(await syncRepo(provider, repo, undefined, at, { onPage })).toEqual({
       threads: [thread({ number: 3 })],
       cursor: { since: "2026-09-28T09:59:00Z" },
       tag: '"tag-2"',
@@ -73,6 +73,34 @@ describe("syncRepo", () => {
     const synced = await syncRepo(provider, repo, cached, later);
     expect(provider.snapshot).toHaveBeenCalledWith(repo, null, undefined);
     expect(synced).toMatchObject({ threads: [thread()], reconciledAt: later });
+  });
+
+  it("runs only the free check when it may not spend, keeping a repository it sees unchanged at its new tag", async () => {
+    const provider = fakeProvider({
+      probe: vi.fn(async () => ({ changed: false, tag: '"tag-1"' })),
+      snapshot: vi.fn(),
+    });
+    const later = new Date("2026-09-28T10:30:00Z");
+    expect(
+      await syncRepo(provider, repo, cached, later, { spend: false }),
+    ).toEqual(cached);
+    expect(provider.probe).toHaveBeenCalledWith(repo, '"tag-1"');
+    expect(provider.snapshot).not.toHaveBeenCalled();
+  });
+
+  it("gives nothing when it may not spend and the check sees a change, or nothing is cached", async () => {
+    const provider = fakeProvider({
+      probe: vi.fn(async () => ({ changed: true, tag: '"tag-2"' })),
+      snapshot: vi.fn(),
+    });
+    expect(
+      await syncRepo(provider, repo, cached, at, { spend: false }),
+    ).toBeUndefined();
+    expect(
+      await syncRepo(provider, repo, undefined, at, { spend: false }),
+    ).toBeUndefined();
+    expect(provider.probe).toHaveBeenCalledOnce();
+    expect(provider.snapshot).not.toHaveBeenCalled();
   });
 
   it("fetches since the cursor every time from a provider with no free check", async () => {

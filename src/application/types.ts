@@ -20,6 +20,7 @@ import type {
   Problem,
 } from "../lib/text/index.js";
 import type { Thread, ThreadSummary } from "../lib/waits/index.js";
+import type { DetailReader } from "./createDetailReader.js";
 import type { WriteAction, WriteOutcome, WriteRequest } from "./writeSet.js";
 
 /** What the process gives docket: its arguments, its world and its output. */
@@ -157,6 +158,13 @@ export interface TerminalView {
          * under the selected row.
          */
         readonly readDetail: (thread: ThreadSummary) => Promise<ThreadDetail>;
+        /**
+         * Reads threads' details in batches within the hour's budget, so
+         * the rows around the selection are read ahead, and says when
+         * that budget is spent. Without it, each thread is read alone,
+         * through `readDetail`, and nothing is read ahead.
+         */
+        readonly details?: DetailReader;
         /**
          * Reads from GitHub, never the cache, whom an editor offers for
          * `thread` and the set it holds.

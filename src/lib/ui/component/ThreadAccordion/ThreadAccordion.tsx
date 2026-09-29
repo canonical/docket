@@ -1,11 +1,11 @@
 import { Component, type ReactNode, Suspense, use } from "react";
-import type { ThreadDetail } from "../../../provider/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { accordionHeight as height } from "../../constants.js";
+import describeClock from "../../describeClock.js";
 import trimText from "../../trimText.js";
 import wrapText from "../../wrapText.js";
 import describeDetail from "./describeDetail.js";
-import type { DetailLine, ThreadAccordionProps } from "./types.js";
+import type { DetailLine, ShownDetail, ThreadAccordionProps } from "./types.js";
 
 /** The indent of its text, so it starts under the row's reference. */
 const indent = 2;
@@ -20,6 +20,25 @@ const tones: Readonly<Record<DetailLine["tone"], string>> = {
 interface Drawn {
   readonly text: string;
   readonly fg: string;
+  /** Ends in a dimmed `…`, for the rest the details read would give. */
+  readonly pending?: boolean;
+}
+
+/**
+ * The lines of one piece, wrapped to `room`; a pending piece keeps two
+ * cells on its last line for its `…`.
+ */
+function wrapPiece(piece: DetailLine, room: number): Drawn[] {
+  const fg = tones[piece.tone];
+  if (!piece.pending) {
+    return wrapText(piece.text, room).map((text) => ({ text, fg }));
+  }
+  const wrapped = piece.text ? wrapText(piece.text, room - 2) : [""];
+  return wrapped.map((text, place) => ({
+    text,
+    fg,
+    pending: place === wrapped.length - 1,
+  }));
 }
 
 /**
@@ -35,18 +54,16 @@ function fitBody(
 ): Drawn[] {
   const drawn: Drawn[] = [];
   for (const piece of body) {
-    const wrapped = wrapText(piece.text, room).map((text) => ({
-      text,
-      fg: tones[piece.tone],
-    }));
+    const wrapped = wrapPiece(piece, room);
     const left = lines - drawn.length;
     if (wrapped.length <= left) {
       drawn.push(...wrapped);
     } else if (!piece.optional) {
       const kept = [...drawn, ...wrapped.slice(0, left)];
-      const ended = kept
-        .slice(-1)
-        .map((last) => ({ ...last, text: trimText(`${last.text}…`, room) }));
+      const ended = kept.slice(-1).map((last) => ({
+        text: trimText(`${last.text}…`, room),
+        fg: last.fg,
+      }));
       return [...kept.slice(0, -1), ...ended];
     }
   }
@@ -63,6 +80,11 @@ const Lines = ({ lines }: { readonly lines: readonly Drawn[] }): ReactNode => (
         // biome-ignore lint/suspicious/noArrayIndexKey: see above.
         <text key={place} fg={drawn?.fg ?? tokens["color.text"]}>
           {drawn ? `${" ".repeat(indent)}${drawn.text}` : ""}
+          {drawn?.pending && (
+            <span fg={tokens["color.text.muted"]}>
+              {drawn.text ? " …" : "…"}
+            </span>
+          )}
         </text>
       );
     })}
@@ -79,27 +101,39 @@ const Loaded = ({
   width,
 }: ThreadAccordionProps): ReactNode => {
   const room = width - indent;
-  const { body, stack } = describeDetail(row, use(detail), {
+  const shown = use(detail);
+  if ("resumes" in shown) {
+    const paused = `paused · resumes ${describeClock(shown.resumes, timezone)}`;
+    return (
+      <Lines
+        lines={[
+          { text: trimText(paused, room), fg: tokens["color.text.muted"] },
+        ]}
+      />
+    );
+  }
+  const { body, stack } = describeDetail(row, shown, {
     now,
     timezone,
     waiting,
   });
-  const stackLines = stack.map(({ text, tone }) => ({
-    text: trimText(text, room),
-    fg: tones[tone],
-  }));
+  const stackLines = stack.flatMap((piece) =>
+    piece.pending
+      ? wrapPiece(piece, room)
+      : [{ text: trimText(piece.text, room), fg: tones[piece.tone] }],
+  );
   const lines = fitBody(body, height - stackLines.length, room);
   return <Lines lines={[...lines, ...stackLines]} />;
 };
 
 interface BoundaryProps {
-  readonly detail: Promise<ThreadDetail>;
+  readonly detail: Promise<ShownDetail>;
   readonly width: number;
   readonly children: ReactNode;
 }
 
 interface BoundaryState {
-  readonly detail: Promise<ThreadDetail>;
+  readonly detail: Promise<ShownDetail>;
   readonly failure?: unknown;
 }
 
@@ -143,7 +177,10 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
  * exactly five lines tall, whatever it holds, indented two cells so its
  * text starts under the row's reference, and wrapped to the pane. It
  * reads its details from GitHub, so it has its own loading and failed
- * states, and a slow read never holds up moving the selection.
+ * states, and a slow read never holds up moving the selection. While
+ * reading is paused it shows what the snapshot holds, each line that needs
+ * the read ending in a dimmed `…`, and for a thread the snapshot holds
+ * nothing of, `paused · resumes 13:00`, dimmed.
  *
  * `import { ThreadAccordion } from "../lib/ui/index.js";`
  *

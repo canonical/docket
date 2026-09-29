@@ -8,7 +8,8 @@
  *   saved output would be recording on absence, and whatever docket
  *   printed next would pass as the saved output.
  * - `request-budget`: the stand-in holds another request open beside
- *   each one docket sends, and the entry must see two open at once.
+ *   each one docket sends, and the entry must see two open at once;
+ *   only that test runs, since the open panes would only fail beside it.
  * - `working-clock`: the stand-in answers every recorded instant an hour
  *   later, and the entry must see the replies fall due at other times;
  *   then the stand-in's clock reads an hour later, and the entry must see
@@ -51,6 +52,11 @@ interface Proof {
   readonly entry: string;
   /** The break `GUARANTEES_BREAK` names, in the stand-in or in the entry. */
   readonly brokenBy?: string;
+  /**
+   * The one test of the entry the break is aimed at, when the entry's
+   * others would only take time failing beside it: none of them runs.
+   */
+  readonly test?: string;
   /** Breaks the corpus before the run, and returns what mends it. */
   readonly prepare?: () => () => void;
   /** What the entry's output must say for the failure to be this one. */
@@ -66,6 +72,7 @@ const proofs: readonly Proof[] = [
   {
     entry: "request-budget",
     brokenBy: "overlap",
+    test: "never has two requests open at once",
     failure: "× never has two requests open at once",
   },
   {
@@ -120,7 +127,13 @@ const checkProof = async (proof: Proof): Promise<boolean> => {
   const mend = proof.prepare?.();
   try {
     const child = Bun.spawn(
-      [process.execPath, join(corpusRoot, "invoker.ts"), "run", proof.entry],
+      [
+        process.execPath,
+        join(corpusRoot, "invoker.ts"),
+        "run",
+        proof.entry,
+        ...(proof.test ? [proof.test] : []),
+      ],
       {
         stdout: "pipe",
         stderr: "pipe",

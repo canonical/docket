@@ -1,0 +1,111 @@
+import { useEffect, useRef, useState } from "react";
+import type { AttentionState } from "../lib/cache/index.js";
+import type { ThreadDetail } from "../lib/provider/index.js";
+import type { ThreadSummary } from "../lib/waits/index.js";
+import { detailRest, detailWindow } from "./constants.js";
+import createDetailQueue, { type WantedDetail } from "./createDetailQueue.js";
+import type { DetailReader } from "./createDetailReader.js";
+import identifyThread from "./identifyThread.js";
+
+/** Props for the useReadAhead hook. */
+export interface UseReadAheadProps {
+  /**
+   * Reads threads' details in batches within the hour's budget; without
+   * it, nothing is read ahead, and the accordion reads alone.
+   */
+  readonly reader: DetailReader | undefined;
+  /** Each row's thread and its version, in the order drawn. */
+  readonly rows: readonly WantedDetail[];
+  /** The place of the selected row among them. */
+  readonly selected: number;
+  /** The pane's attention: an idle pane reads nothing ahead. */
+  readonly attention: AttentionState;
+  /** Whether the refresh cycle is paused, which spends no points. */
+  readonly paused: boolean;
+  /** The current time, read whenever what is due is decided. */
+  readonly now: () => Date;
+}
+
+/**
+ * Result of the useReadAhead hook: how the accordion reads a thread's
+ * details, which joins the reads ahead, when there is a reader; and the
+ * version the details held for it key on, which moves whenever details
+ * read ahead arrive for it.
+ */
+export interface UseReadAheadResult {
+  readonly read?: (
+    thread: ThreadSummary,
+    version: string,
+  ) => Promise<ThreadDetail>;
+  readonly version: (thread: ThreadSummary, version: string) => string;
+}
+
+/** The rows nearest `place` first, each thread once, at most `limit`. */
+function findNearest(
+  rows: readonly WantedDetail[],
+  place: number,
+  limit: number,
+): WantedDetail[] {
+  const byDistance = rows
+    .map((row, index) => ({ row, distance: Math.abs(index - place), index }))
+    .sort((a, b) => a.distance - b.distance || a.index - b.index);
+  const seen = new Set<string>();
+  const nearest: WantedDetail[] = [];
+  for (const { row } of byDistance) {
+    const key = identifyThread(row.thread);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    nearest.push(row);
+    if (nearest.length === limit) break;
+  }
+  return nearest;
+}
+
+/**
+ * Reads ahead the details of the selected thread and the rows around it,
+ * at most `detailWindow` threads in one request: at once when the list
+ * first shows, and `detailRest` after the selection last moved, for the
+ * threads whose details are missing, out of date or `detailStaleAfter`
+ * old. Nothing is read ahead while the pane is idle or the refresh cycle
+ * paused. Details read ahead reach the accordion through the details it
+ * holds, by the version they move: old details stay on screen until new
+ * ones arrive.
+ *
+ * @note Impure: reads through the reader, and sets its timers.
+ */
+export default function useReadAhead({
+  reader,
+  rows,
+  selected,
+  attention,
+  paused,
+  now,
+}: UseReadAheadProps): UseReadAheadResult {
+  const [queue] = useState(() => reader && createDetailQueue(reader, now));
+  useEffect(() => () => queue?.stop(), [queue]);
+  const [, redraw] = useState(0);
+  useEffect(
+    () => queue?.subscribe(() => redraw((count) => count + 1)),
+    [queue],
+  );
+  useEffect(() => queue?.pause(paused), [queue, paused]);
+  const moved = useRef(false);
+  const chosen = rows.at(selected);
+  const window = findNearest(rows, selected, detailWindow);
+  const key = window
+    .map(({ thread, version }) => `${identifyThread(thread)}@${version}`)
+    .join(" ");
+  const chosenKey = chosen && identifyThread(chosen.thread);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the window's key names what it holds.
+  useEffect(() => {
+    if (!queue || attention === "idle" || paused || !chosenKey) return;
+    const delay = moved.current ? detailRest : 0;
+    moved.current = true;
+    queue.request(window, chosen?.thread, delay);
+  }, [queue, key, chosenKey, attention, paused]);
+  if (!queue) return { version: (_thread, version) => version };
+  return {
+    read: (thread, version) => queue.read(thread, version),
+    version: (thread, version) => `${version}|${queue.countArrivals(thread)}`,
+  };
+}

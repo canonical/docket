@@ -166,6 +166,7 @@ describe("createProvider", () => {
         },
       }),
     );
+    github.graphql("Details", { body: { data: { rateLimit, t0: null } } });
     const assignable = repository({ assignableUsers: page([]) });
     github.graphql("Assignable", assignable, assignable);
     github.graphql(
@@ -197,6 +198,7 @@ describe("createProvider", () => {
         provider.refreshVolatile([pull]),
         provider.events(repo, new Date("2026-09-22T00:00:00Z")),
         provider.threadDetail(thread()),
+        provider.threadDetails([thread()]),
         provider.assignableUsers(repo),
         provider.reviewCandidates(pull),
         provider.readAssignees({ ...thread(), kind: "issue" }),
@@ -208,7 +210,7 @@ describe("createProvider", () => {
         provider.viewer(),
       ]),
     );
-    expect(github.sent).toHaveLength(16);
+    expect(github.sent).toHaveLength(17);
     for (const sent of github.sent) {
       expect(sent.headers.get("authorization")).toBe(`token ${token}`);
     }

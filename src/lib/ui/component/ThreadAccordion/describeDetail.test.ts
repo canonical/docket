@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   overReviewDetail,
+  pauseDetail,
   sharedCloseDetail,
   soonReplyDetail,
 } from "../../../../testing/details.js";
 import {
   alice,
   at,
+  bob,
   carol,
+  dave,
   exampleSync,
   thread,
 } from "../../../../testing/facts.js";
@@ -21,6 +24,7 @@ import {
 } from "../../../../testing/rows.js";
 import type { WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
+import type { Thread } from "../../../waits/index.js";
 import describeDetail from "./describeDetail.js";
 
 const reading = {
@@ -255,6 +259,138 @@ describe("describeDetail", () => {
       );
       expect(texts(stack)).toEqual(["example stack 3 · 2 of 3 · → main"]);
     });
+  });
+});
+
+describe("describeDetail, while reading is paused", () => {
+  it("ends a reply's text, which needs the read, in a pending line", () => {
+    const { body } = describeDetail(
+      soonReply,
+      pauseDetail(soonReplyDetail),
+      reading,
+    );
+    expect(body).toEqual([
+      { text: "dave · 1d ago", tone: "text" },
+      { text: "", tone: "text", pending: true },
+      {
+        text: "waiting since Tue 10:00 · target 24h",
+        tone: "text",
+        optional: true,
+      },
+    ]);
+  });
+
+  describe("a review whose wait starts after the first request", () => {
+    // bob's review wait on a pull request dave opened, started where the
+    // waits begin it: at the latest request, or, once bob has reviewed, at
+    // dave's latest push after that review.
+    const reviewOf = (started: Date, facts: Partial<Thread>) =>
+      measureRow({
+        thread: thread({
+          number: 12,
+          kind: "pullRequest",
+          checks: "failing",
+          ...facts,
+        }),
+        kind: "review",
+        owners: ["bob"],
+        started,
+      });
+    const grows = (row: WaitRow, requests: ThreadDetail["requests"]) => {
+      const full = texts(
+        describeDetail(row, { ...overReviewDetail, requests }, reading).body,
+      );
+      const partial = texts(
+        describeDetail(row, pauseDetail(overReviewDetail), reading).body,
+      );
+      partial.forEach((text, place) => {
+        expect(full.at(place)).toMatch(new RegExp(`^${text} `));
+      });
+      return full;
+    };
+
+    it("counts the same pushes paused and read once the reviewer reviewed and the author pushed since", () => {
+      const row = reviewOf(at("2026-09-24T09:00+02:00"), {
+        reviewRequests: [{ reviewer: bob, at: at("2026-09-21T09:00+02:00") }],
+        reviews: [{ author: bob, at: at("2026-09-22T09:00+02:00") }],
+        pushes: [
+          { author: dave, at: at("2026-09-23T09:00+02:00") },
+          { author: dave, at: at("2026-09-24T09:00+02:00") },
+        ],
+      });
+      const full = grows(row, [
+        { reviewer: bob, requester: alice, at: at("2026-09-21T09:00+02:00") },
+      ]);
+      expect(full.at(1)).toMatch(/^2 pushes since · /);
+    });
+
+    it("counts the same pushes paused and read, and names the latest asker, when the reviewer was asked twice", () => {
+      const row = reviewOf(at("2026-09-24T09:00+02:00"), {
+        reviewRequests: [{ reviewer: bob, at: at("2026-09-24T09:00+02:00") }],
+        pushes: [{ author: dave, at: at("2026-09-22T09:00+02:00") }],
+      });
+      const full = grows(row, [
+        { reviewer: bob, requester: alice, at: at("2026-09-21T09:00+02:00") },
+        { reviewer: bob, requester: carol, at: at("2026-09-24T09:00+02:00") },
+      ]);
+      expect(full.slice(0, 2)).toEqual([
+        "asked by carol 4d ago",
+        "0 pushes since · 2 files · +65 −12",
+      ]);
+    });
+  });
+
+  it("gives a review's pushes and checks from the snapshot, each line the start of the one the read gives, pending the rest", () => {
+    const { body, stack } = describeDetail(
+      overReview,
+      pauseDetail(overReviewDetail),
+      reading,
+    );
+    expect(body).toEqual([
+      { text: "asked", tone: "text", pending: true },
+      { text: "1 push since ·", tone: "text", pending: true },
+      { text: "✗ checks:", tone: "error", pending: true },
+    ]);
+    expect(stack).toEqual([
+      { text: "example stack 3 · 2 of 3 · → main", tone: "muted" },
+      { text: "", tone: "muted", pending: true },
+    ]);
+    const full = describeDetail(overReview, overReviewDetail, reading);
+    body.forEach((partial, place) => {
+      expect(full.body.at(place)?.text.startsWith(`${partial.text} `)).toBe(
+        true,
+      );
+    });
+  });
+
+  it("says a review's checks are running or passed, pending which, or that there are none", () => {
+    const rollUp = (checks?: "passing" | "running") =>
+      describeDetail(
+        measureRow({
+          ...overReview.wait,
+          thread: { ...overReview.wait.thread, checks },
+        }),
+        pauseDetail(overReviewDetail),
+        reading,
+      ).body.at(2);
+    expect(rollUp("running")).toEqual({
+      text: "checks running",
+      tone: "text",
+      pending: true,
+    });
+    expect(rollUp("passing")?.text).toBe("checks passed");
+    expect(rollUp()).toEqual({ text: "no checks", tone: "text" });
+  });
+
+  it("gives a close whole, since the snapshot holds all it shows", () => {
+    const { body } = describeDetail(
+      sharedClose,
+      pauseDetail(sharedCloseDetail),
+      reading,
+    );
+    expect(body).toEqual(
+      describeDetail(sharedClose, sharedCloseDetail, reading).body,
+    );
   });
 });
 

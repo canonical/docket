@@ -1,10 +1,11 @@
 import { act, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { ThreadDetail } from "../lib/provider/index.js";
-import type { ThreadSummary } from "../lib/waits/index.js";
+import type { Thread, ThreadSummary } from "../lib/waits/index.js";
 import { providerError } from "../testing/provider.js";
 import { crash, parserFix, parserFixDetail } from "../testing/recorded.js";
 import { draw } from "../testing/terminal.js";
+import createDetailQueue from "./createDetailQueue.js";
 import useHeldDetails, {
   type UseHeldDetailsProps,
   type UseHeldDetailsResult,
@@ -32,12 +33,16 @@ async function probe(start: UseHeldDetailsProps) {
       read: (thread: ThreadSummary) => Promise<ThreadDetail>,
       thread: ThreadSummary,
       version: string,
-    ) => readHeld(read, thread, version),
+      facts?: Thread,
+    ) => readHeld(read, thread, version, facts),
     change: (props: Partial<UseHeldDetailsProps>) =>
       act(async () => change(props)),
     drawn: () => drawn,
   };
 }
+
+/** When reading resumes, in the tests that pause it. */
+const resumes = new Date("2026-09-28T13:00:00Z");
 
 describe("useHeldDetails", () => {
   it("gives the details read for a thread, reading them once while its version stays", async () => {
@@ -99,5 +104,116 @@ describe("useHeldDetails", () => {
     await change({ kept: [parserFix] });
     await give(read, parserFix, "1");
     expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads nothing while reading is paused, giving the details held whatever the version", async () => {
+    const read = vi.fn(async () => parserFixDetail);
+    const { give, change } = await probe({
+      kept: [parserFix],
+      selected: () => parserFix,
+    });
+    const first = give(read, parserFix, "1");
+    await first;
+    await change({ resumes });
+    expect(give(read, parserFix, "2")).toBe(first);
+    expect(read).toHaveBeenCalledTimes(1);
+    await change({ resumes: undefined });
+    expect(await give(read, parserFix, "2")).toBe(parserFixDetail);
+    expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it("gives a thread with no details held what the snapshot holds while reading is paused, settled at once and marked partial", async () => {
+    const read = vi.fn(async () => parserFixDetail);
+    const { give } = await probe({
+      kept: [crash],
+      selected: () => crash,
+      resumes,
+    });
+    const given = give(read, crash, "1", crash);
+    expect(given).toMatchObject({ status: "fulfilled" });
+    expect(await given).toMatchObject({
+      partial: true,
+      createdAt: crash.createdAt,
+      labels: crash.labels,
+    });
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it("gives what the snapshot holds, settled at once, for a read queued but not sent when reading pauses, and sends it once reading resumes", async () => {
+    const reader = {
+      read: vi.fn(async (threads: readonly ThreadSummary[]) =>
+        threads.map((each) => ({ thread: each, detail: parserFixDetail })),
+      ),
+    };
+    const queue = createDetailQueue(reader, () => new Date());
+    const read = (thread: ThreadSummary) => queue.read(thread, "1");
+    const { give, change } = await probe({
+      kept: [crash],
+      selected: () => crash,
+    });
+    queue.request([{ thread: crash, version: "1" }], crash, 200);
+    const queued = give(read, crash, "1", crash);
+    queue.pause(true);
+    await change({ resumes });
+    const given = give(read, crash, "1", crash);
+    expect(given).toMatchObject({ status: "fulfilled" });
+    expect(await given).toMatchObject({ partial: true });
+    expect(reader.read).not.toHaveBeenCalled();
+    queue.pause(false);
+    await change({ resumes: undefined });
+    expect(await queued).toBe(parserFixDetail);
+    expect(await give(read, crash, "1", crash)).toBe(parserFixDetail);
+    expect(reader.read).toHaveBeenCalledOnce();
+  });
+
+  it("keeps what the snapshot holds once reading resumes until the read settles, then gives the read, drawing once more", async () => {
+    const later = Promise.withResolvers<ThreadDetail>();
+    const read = vi.fn(() => later.promise);
+    const { give, change, drawn } = await probe({
+      kept: [crash],
+      selected: () => crash,
+      resumes,
+    });
+    const paused = await give(read, crash, "1", crash);
+    await change({ resumes: undefined });
+    const resumed = give(read, crash, "1", crash);
+    expect(resumed).toMatchObject({ status: "fulfilled" });
+    expect(await resumed).toEqual(paused);
+    expect(read).toHaveBeenCalledOnce();
+    const frames = drawn();
+    await act(async () => later.resolve(parserFixDetail));
+    expect(drawn()).toBe(frames + 1);
+    expect(await give(read, crash, "1", crash)).toBe(parserFixDetail);
+    expect(read).toHaveBeenCalledOnce();
+  });
+
+  it("gives a thread the snapshot holds nothing of when reading resumes while it is paused, settled at once", async () => {
+    const read = vi.fn(async () => parserFixDetail);
+    const { give } = await probe({
+      kept: [crash],
+      selected: () => crash,
+      resumes,
+    });
+    const given = give(read, crash, "1");
+    expect(given).toMatchObject({ status: "fulfilled" });
+    expect(await given).toEqual({ resumes });
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it("gives a thread the snapshot holds nothing of its read once reading resumes, unsettled until the read settles", async () => {
+    const later = Promise.withResolvers<ThreadDetail>();
+    const read = vi.fn(() => later.promise);
+    const { give, change } = await probe({
+      kept: [crash],
+      selected: () => crash,
+      resumes,
+    });
+    await give(read, crash, "1");
+    await change({ resumes: undefined });
+    const resumed = give(read, crash, "1");
+    expect(resumed).not.toHaveProperty("status");
+    expect(read).toHaveBeenCalledOnce();
+    await act(async () => later.resolve(parserFixDetail));
+    expect(await resumed).toBe(parserFixDetail);
   });
 });

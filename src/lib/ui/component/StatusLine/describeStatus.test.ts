@@ -6,6 +6,7 @@ import {
   ActionFailed,
   FullRefresh,
   FullRefreshRefused,
+  Idle,
   Offline,
   RateLimited,
   RefreshFailed,
@@ -24,6 +25,25 @@ const describeAt = (status: CacheStatus, timezone = "UTC") =>
   describeStatus(status, now, timezone, names);
 
 describe("describeStatus", () => {
+  it("follows how old the data is with the idle pane's state, and the key that wakes it", () => {
+    const { status, attention } = Idle.args;
+    expect(
+      describeStatus(status, now, "UTC", names, undefined, attention),
+    ).toEqual({
+      kind: "freshness",
+      text: "synced 25m ago · idle · any key wakes",
+    });
+  });
+
+  it("says nothing of attention while the pane is active or waking", () => {
+    const { status } = Idle.args;
+    for (const attention of ["active", "waking"] as const) {
+      expect(
+        describeStatus(status, now, "UTC", names, undefined, attention)?.text,
+      ).toBe("synced 25m ago");
+    }
+  });
+
   it("names a rate limit and when requests resume, in the time zone given", () => {
     expect(describeAt(statusOf(RateLimited), "Europe/Paris")).toEqual({
       kind: "error",

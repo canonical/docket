@@ -72,3 +72,22 @@ export const budgetFloor = 0.2;
  * and time.
  */
 export const fullRefreshCooldown = 60_000;
+
+/**
+ * How long, in milliseconds, a terminal interface waits for a key before
+ * it takes the pane as idle: 20 minutes. docket is often a column glanced
+ * at without a key, so a pane that nobody touches for that long is left
+ * to the slower cycle below.
+ */
+export const idleAfter = 1_200_000;
+
+/**
+ * How long, in milliseconds, an idle pane waits after one refresh ends
+ * before the next begins: 30 minutes, only the free checks for changes
+ * and the fetch of what changed, with neither the checks refresh nor the
+ * whole hourly fetch. A pane left idle for a day sends 48 checks per
+ * repository, and spends no points when nothing changed. Stopping
+ * altogether would leave the glance hours old with no way to tell; ten
+ * minutes would send three times the requests for little more.
+ */
+export const idleInterval = 1_800_000;

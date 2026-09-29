@@ -21,9 +21,14 @@ const docs = "example-org/example-docs";
  * a review, failing checks and second in a stack of three; an issue carol
  * opened on Friday; and a documentation issue alice opened and a bot
  * labelled. `words` gives the text written on GitHub, and `tag` the
- * entity tag the check for changes answers with.
+ * entity tag the check for changes answers with, and `crowd` how many more
+ * pull requests like dave's wait on bob's review.
  */
-export default function recordTeam(words: Words, tag = "first"): Recording {
+export default function recordTeam(
+  words: Words,
+  tag = "first",
+  crowd = 0,
+): Recording {
   const parserFix = {
     ...buildIssueNode({
       number: 12,
@@ -93,8 +98,10 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
     title: node.title,
     createdAt: at,
   });
-  return {
+  const recording: Recording = {
     Viewer: viewer,
+    // The rate figures alone, which every answer carries.
+    Budget: { data: {} },
     [`File ${repo}`]: noFile,
     [`File ${docs}`]: noFile,
     [`GET /repos/${repo}/issues`]: buildProbe(`${tag}-example`),
@@ -247,5 +254,26 @@ export default function recordTeam(words: Words, tag = "first"): Recording {
         },
       },
     },
+  };
+  // Pull requests like the parser fix, numbered from 100, so a pane
+  // scrolled through them reads a full window of details in one request.
+  const crowded = Array.from({ length: crowd }, (_, index) => {
+    const number = 100 + index;
+    return {
+      ...parserFix,
+      number,
+      url: `https://github.com/${repo}/pull/${number}`,
+      title: `${words.title} ${number}`,
+    };
+  });
+  return {
+    ...recording,
+    [`Snapshot ${repo}`]: buildSnapshot([crash], [parserFix, ...crowded]),
+    ...Object.fromEntries(
+      crowded.map(({ number }) => [
+        `Detail ${repo}#${number}`,
+        recording[`Detail ${repo}#12`],
+      ]),
+    ),
   };
 }

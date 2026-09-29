@@ -202,6 +202,7 @@ export function recordedProvider(overrides: Partial<Provider> = {}): Provider {
     events: async (repo) =>
       recordedEvents.filter(({ thread }) => thread.repo === repo),
     threadDetail: async () => parserFixDetail,
+    threadDetails: async (threads) => threads.map(() => parserFixDetail),
     assignableUsers: async () => [alice, bob, carol, dave],
     reviewCandidates: async () => ({
       requested: [bob],

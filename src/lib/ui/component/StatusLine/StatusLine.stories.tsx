@@ -141,6 +141,35 @@ export const ActionDone: Story<StatusLineProps> = {
   },
 };
 
+/** No key for 20 minutes: the pane refreshes slowly until one wakes it. */
+export const Idle: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: { ...settled, syncedAt: new Date("2026-09-28T11:35:00Z") },
+    attention: "idle",
+  },
+};
+
+/** Reading details spent the hour's budget: only the selected thread's are read. */
+export const DetailsPaused: Story<StatusLineProps> = {
+  args: { ...base, status: settled, detailsPaused: true },
+};
+
+/**
+ * Below the budget floor: neither the list nor the details spend a point,
+ * and the right side stays empty, since the details' own budget is not
+ * what stopped them.
+ */
+export const BudgetPaused: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: {
+      ...settled,
+      paused: { until: new Date("2026-09-28T13:00:00Z"), reason: "budget" },
+    },
+  },
+};
+
 /** No cache: gh is missing or not signed in. */
 export const Blank: Story<StatusLineProps> = {
   args: base,

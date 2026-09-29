@@ -5,14 +5,15 @@ import {
 } from "@opentui/core";
 import { KeymapProvider } from "@opentui/keymap/react";
 import { createRoot } from "@opentui/react";
-import { startRefreshCycle } from "../lib/cache/index.js";
+import { createAttention, startRefreshCycle } from "../lib/cache/index.js";
 import { createKeymap } from "../lib/ui/index.js";
 import Screen from "./Screen.js";
 import type { TerminalView } from "./types.js";
 
 /**
  * Opens the terminal interface on `view` and keeps the cache refreshing
- * while it is open. The refresh cycle starts here and nowhere else, so
+ * while it is open, as the pane's attention sets the pace: every key the
+ * screen hears counts. The refresh cycle starts here and nowhere else, so
  * text mode never refreshes in the background. `q`, or ctrl+c, closes it,
  * and the React tree unmounts with the renderer.
  *
@@ -37,11 +38,22 @@ export default async function openTerminal(
     },
   });
   const keymap = createKeymap(renderer);
+  const attention = "cache" in view.source ? createAttention() : undefined;
   createRoot(renderer).render(
     <KeymapProvider keymap={keymap}>
-      <Screen {...view} onQuit={() => renderer.destroy()} />
+      <Screen
+        {...view}
+        {...(attention && { attention })}
+        onQuit={() => renderer.destroy()}
+      />
     </KeymapProvider>,
   );
-  if ("cache" in view.source) stop = startRefreshCycle(view.source.cache);
+  if ("cache" in view.source && attention) {
+    const stopCycle = startRefreshCycle(view.source.cache, attention);
+    stop = () => {
+      stopCycle();
+      attention.stop();
+    };
+  }
   return promise;
 }

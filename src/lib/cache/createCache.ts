@@ -7,26 +7,23 @@ import applyChecks from "./applyChecks.js";
 import classifyFolderFailure from "./classifyFolderFailure.js";
 import classifyRefreshFailure from "./classifyRefreshFailure.js";
 import {
-  budgetFloor,
   cacheFileName,
   fullRefreshCooldown,
+  idleInterval,
   refreshInterval,
 } from "./constants.js";
+import createReadQueries from "./createReadQueries.js";
+import findBudgetFloor from "./findBudgetFloor.js";
 import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeSnapshot from "./mergeSnapshot.js";
 import readCacheFile from "./readCacheFile.js";
-import syncRepo from "./syncRepo.js";
+import syncRepo, { type SyncOptions } from "./syncRepo.js";
 import type {
   Cache,
-  CachedEvents,
-  CachedFile,
   CachedThreads,
-  CachedViewer,
   CacheOptions,
   CacheStatus,
-  EventsCache,
-  FileCache,
   RepoCache,
 } from "./types.js";
 import withFetchLock from "./withFetchLock.js";
@@ -87,60 +84,7 @@ export default function createCache({
   const store = (repo: string, value: RepoCache, at: Date) =>
     client.setQueryData(key(repo), value, { updatedAt: at.getTime() });
 
-  const eventsKey = (repo: string) => ["events", repo];
-
-  /**
-   * The events held for `repo` from `since` on, when they reach back to it;
-   * without `since`, every event held.
-   */
-  const findEvents = (repo: string, since?: Date): CachedEvents | undefined => {
-    const state = client.getQueryState<EventsCache>(eventsKey(repo));
-    const held = state?.data;
-    if (!state || !held) return undefined;
-    const from = since ?? held.since;
-    if (held.since > from) return undefined;
-    return {
-      events: held.events.filter(({ at }) => at >= from),
-      syncedAt: new Date(state.dataUpdatedAt),
-    };
-  };
-  const fileKey = (repo: string, path: string) => ["file", repo, path];
-
-  /** The file held for `repo` at `path`, when it is younger than `maxAge`. */
-  const findFreshFile = (
-    repo: string,
-    path: string,
-    maxAge: number,
-  ): CachedFile | undefined => {
-    const state = client.getQueryState<FileCache>(fileKey(repo, path));
-    if (state?.data === undefined) return undefined;
-    const syncedAt = new Date(state.dataUpdatedAt);
-    return now().getTime() - syncedAt.getTime() < maxAge
-      ? { text: state.data.text ?? undefined, syncedAt }
-      : undefined;
-  };
-
-  // The login gh is signed in with, held as the files are, since a text
-  // command reads it on every call.
-  const viewerKey = ["viewer"];
-
-  /** The viewer's login held, when it is younger than `maxAge`. */
-  const findFreshViewer = (maxAge: number): CachedViewer | undefined => {
-    const state = client.getQueryState<string>(viewerKey);
-    if (state?.data === undefined) return undefined;
-    const syncedAt = new Date(state.dataUpdatedAt);
-    return now().getTime() - syncedAt.getTime() < maxAge
-      ? { login: state.data, syncedAt }
-      : undefined;
-  };
-
-  /** The events held for `repo` from `since` on, younger than `maxAge`. */
-  const findFreshEvents = (repo: string, since: Date, maxAge: number) => {
-    const held = findEvents(repo, since);
-    return held && now().getTime() - held.syncedAt.getTime() < maxAge
-      ? held
-      : undefined;
-  };
+  const queries = createReadQueries(client, now);
 
   const syncedAt = (): Date | undefined => {
     const times = repos.map(
@@ -229,8 +173,16 @@ export default function createCache({
     return running.length === 0 ? [] : provider.refreshVolatile(running);
   };
 
-  /** Fetches every repository, the lock held. */
-  const fetchAll = async () => {
+  /**
+   * Fetches every repository, the lock held, as `syncRepo` does with
+   * `options`, and reads the checks still running again when `checks`
+   * says so and points may be spent.
+   */
+  const fetchAll = async ({
+    spend = true,
+    reconcile = true,
+    checks = true,
+  }: SyncOptions & { readonly checks?: boolean } = {}) => {
     publish({ refreshing: true });
     try {
       // Every repository is dated from before its fetch, so the data is
@@ -241,23 +193,30 @@ export default function createCache({
         const previous = entry(repo);
         // A repository with nothing to show is fetched whole while the
         // list waits for it, so its progress is reported.
-        const onPage = previous
-          ? undefined
-          : (pages: PageProgress) =>
-              publish({
-                fullRefresh: {
-                  repo,
-                  position: index + 1,
-                  count: repos.length,
-                  ...pages,
-                },
-              });
+        const onPage =
+          previous || !spend
+            ? undefined
+            : (pages: PageProgress) =>
+                publish({
+                  fullRefresh: {
+                    repo,
+                    position: index + 1,
+                    count: repos.length,
+                    ...pages,
+                  },
+                });
         onPage?.({ fetched: 0, total: 0 });
-        const value = await syncRepo(provider, repo, previous, at, onPage);
+        const value = await syncRepo(provider, repo, previous, at, {
+          spend,
+          reconcile,
+          onPage,
+        });
+        if (!value) continue;
         synced.set(repo, value);
         store(repo, value, at);
       }
-      const refreshed = await refreshChecks([...synced.values()]);
+      const refreshed =
+        spend && checks ? await refreshChecks([...synced.values()]) : [];
       for (const [repo, value] of synced) {
         const threads = applyChecks(value.threads, refreshed);
         store(repo, { ...value, threads }, at);
@@ -274,12 +233,12 @@ export default function createCache({
   /**
    * Syncs every repository under the fetch lock, unless the data is
    * younger than `maxAge` once the lock is held: the process that held it
-   * before may have fetched it.
+   * before may have fetched it. `options` are `fetchAll`'s.
    */
-  const sync = (maxAge: number) =>
+  const sync = (maxAge: number, options?: Parameters<typeof fetchAll>[0]) =>
     withFetchLock(directory, async () => {
       await load();
-      if (!isFresh(maxAge)) await fetchAll();
+      if (!isFresh(maxAge)) await fetchAll(options);
     });
 
   /**
@@ -342,40 +301,61 @@ export default function createCache({
   return {
     threads: () => shown,
     load,
-    findEvents,
+    findEvents: queries.findEvents,
     readEvents: (repo, since, maxAge) =>
       readThrough(
-        () => findFreshEvents(repo, since, maxAge),
+        () => queries.findFreshEvents(repo, since, maxAge),
         async (at) => {
           const events = await provider.events(repo, since);
-          const value: EventsCache = { since, events };
-          client.setQueryData(eventsKey(repo), value, {
-            updatedAt: at.getTime(),
-          });
+          queries.keepEvents(repo, since, events, at);
           return { events, syncedAt: at };
         },
       ),
     readFile: (repo, path, maxAge) =>
       readThrough(
-        () => findFreshFile(repo, path, maxAge),
+        () => queries.findFreshFile(repo, path, maxAge),
         async (at) => {
           const text = await provider.readFile(repo, path);
-          const value: FileCache = { text: text ?? null };
-          client.setQueryData(fileKey(repo, path), value, {
-            updatedAt: at.getTime(),
-          });
+          queries.keepFile(repo, path, text, at);
           return { text, syncedAt: at };
         },
       ),
     readViewer: (maxAge) =>
       readThrough(
-        () => findFreshViewer(maxAge),
+        () => queries.findFreshViewer(maxAge),
         async (at) => {
           const login = await provider.viewer();
-          client.setQueryData(viewerKey, login, { updatedAt: at.getTime() });
+          queries.keepViewer(login, at);
           return { login, syncedAt: at };
         },
       ),
+    async refreshIfChanged(repo) {
+      const at = now();
+      const { paused } = status;
+      if (paused?.reason === "rateLimit" && at < paused.until) return false;
+      if (!provider.capabilities().has("changeProbe")) return false;
+      try {
+        return await withFetchLock(directory, async () => {
+          await load();
+          const previous = entry(repo);
+          if (!previous) return false;
+          const floor = await findBudgetFloor(provider, at);
+          const value = await syncRepo(provider, repo, previous, at, {
+            spend: !floor,
+            reconcile: false,
+          });
+          // Unchanged, the repository keeps its data, and its tag, which
+          // GitHub still answers "not modified".
+          if (!value || value.threads === previous.threads) return false;
+          store(repo, value, at);
+          await save();
+          publish();
+          return true;
+        });
+      } catch (error) {
+        throw classifyFolderFailure(error, directory);
+      }
+    },
     async refreshRepo(repo) {
       try {
         await withFetchLock(directory, async () => {
@@ -415,17 +395,23 @@ export default function createCache({
         throw classifyFolderFailure(error, directory);
       }
     },
-    async refresh() {
+    async refresh(attention = "active") {
       const at = now();
-      if (status.paused && at < status.paused.until) return;
+      const { paused } = status;
+      if (paused && at < paused.until && paused.reason === "rateLimit") return;
       try {
-        const { limit, remaining, resetAt } = await provider.budget();
-        if (at < resetAt && remaining < limit * budgetFloor) {
-          publish({ paused: { until: resetAt, reason: "budget" } });
-        } else {
-          await sync(refreshInterval);
-          publish({ paused: undefined, failure: undefined });
-        }
+        // Below the floor the free checks still run, so the data a check
+        // finds unchanged stays current and a change waits for the reset.
+        const floor =
+          paused && at < paused.until
+            ? paused
+            : await findBudgetFloor(provider, at);
+        const idle = attention === "idle";
+        // Waking catches up at once, whatever another pane fetched.
+        const maxAge =
+          attention === "waking" ? 0 : idle ? idleInterval : refreshInterval;
+        await sync(maxAge, { spend: !floor, reconcile: !idle, checks: !idle });
+        publish({ paused: floor, failure: undefined });
       } catch (error) {
         publish(await classifyRefreshFailure(error, provider));
       }

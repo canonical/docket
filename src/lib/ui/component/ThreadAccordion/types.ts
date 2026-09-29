@@ -12,7 +12,22 @@ export interface DetailLine {
   readonly tone: "text" | "error" | "muted";
   /** Shown only when it fits whole, such as when a reply began. */
   readonly optional?: boolean;
+  /**
+   * Ends in a dimmed `…`: the rest of the line needs the details read,
+   * which is paused, such as a reply's text.
+   */
+  readonly pending?: boolean;
 }
+
+/**
+ * What the accordion is given for a thread. Details read are whole. While
+ * reading is paused and none are held, it is given what the snapshot holds,
+ * marked `partial`, whose lines that need the read end in a dimmed `…`,
+ * or, for a thread the snapshot holds nothing of, when reading resumes.
+ */
+export type ShownDetail =
+  | (ThreadDetail & { readonly partial?: boolean })
+  | { readonly resumes: Date };
 
 /** What the accordion shows for a thread, before it is fitted to the pane. */
 export interface DetailText {
@@ -49,10 +64,11 @@ export interface ThreadAccordionProps {
   row: WaitRow | RestingThread;
   /**
    * The thread's details as the provider reads them: the accordion shows
-   * `loading…` until they arrive, and the reason if they fail.
+   * `loading…` until they arrive, and the reason if they fail. While
+   * reading is paused, what the snapshot holds, or when reading resumes.
    * Maps to DSL role: loading line, loaded body, failed line (cardinality: 1)
    */
-  detail: Promise<ThreadDetail>;
+  detail: Promise<ShownDetail>;
   /**
    * The kind of the running wait of each thread in the list, by
    * reference, such as `review` for `example#13`, which names the

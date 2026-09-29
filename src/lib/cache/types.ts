@@ -113,8 +113,9 @@ export interface CacheStatus {
   /** When a full refresh is available again, after one was refused. */
   readonly fullRefreshAvailableAt: Date | undefined;
   /**
-   * Until when the refresh cycle pauses, and why: the budget ran low, or
-   * the provider refused a request for its rate limit.
+   * Until when the refresh cycle pauses, and why: the budget ran low, and
+   * only the free checks for changes run, or the provider refused a
+   * request for its rate limit, and nothing runs.
    */
   readonly paused:
     | { readonly until: Date; readonly reason: "budget" | "rateLimit" }
@@ -124,6 +125,28 @@ export interface CacheStatus {
    * threads fetched before stay, and `syncedAt` gives their age.
    */
   readonly failure: ProviderError | CacheError | undefined;
+}
+
+/**
+ * Whether anyone is using a terminal pane, which sets how the refresh
+ * cycle runs: `active` while a key was pressed within `idleAfter`;
+ * `idle` after that; and `waking` from the first key after that until
+ * the cycle has caught up.
+ */
+export type AttentionState = "active" | "idle" | "waking";
+
+/** The attention of one terminal pane. */
+export interface Attention {
+  /** The pane's state: the same value on every call until it changes. */
+  state(): AttentionState;
+  /** A key was pressed: it keeps the pane active, or wakes an idle one. */
+  press(): void;
+  /** The refresh cycle has caught up after waking: the pane is active. */
+  settle(): void;
+  /** Calls `listener` whenever the state changes. */
+  subscribe(listener: () => void): () => void;
+  /** Stops the timer that turns the pane idle, when the pane closes. */
+  stop(): void;
 }
 
 /** Where the cache keeps its data, and where it fetches it from. */
@@ -180,6 +203,22 @@ export interface Cache {
    */
   refreshRepo(repo: string): Promise<void>;
   /**
+   * Runs the free check for changes on `repo`, and only when it sees a
+   * change, fetches the threads changed since the last sync, under the
+   * fetch lock, for every docket process: the selected thread's
+   * repository, checked often and at no cost while nothing changes. It
+   * spends nothing while the budget is low, and asks nothing while the
+   * provider refuses requests for its rate limit, has no free check, or
+   * while the repository holds nothing yet.
+   *
+   * @returns Whether it fetched a change.
+   * @throws ProviderError when the provider fails.
+   * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
+   * the fetch lock for longer than the wait allows, and `CACHE_UNUSABLE`
+   * when the cache folder cannot be made, read or written.
+   */
+  refreshIfChanged(repo: string): Promise<boolean>;
+  /**
    * The events held for `repo` at or after `since`, however old, as last
    * loaded or fetched; nothing when those held do not reach back to
    * `since`. Without `since`, every event held, however far back they
@@ -223,13 +262,19 @@ export interface Cache {
    */
   readViewer(maxAge: number): Promise<CachedViewer>;
   /**
-   * One step of the refresh cycle: syncs data older than the refresh
-   * interval, unless the budget is low or the cycle is paused. It never
+   * One step of the refresh cycle, as `attention` sets it, unless the
+   * provider refused a request for its rate limit. `active`, the default,
+   * syncs data older than the refresh interval, with the checks refresh
+   * and the whole hourly fetch when it is due; `idle` syncs data older
+   * than the idle interval, without the checks refresh, and leaves the
+   * whole fetch until the pane wakes; `waking` syncs at once, as
+   * `active` does. While the budget is low it spends none of it: only
+   * the free checks for changes run, until the budget resets. It never
    * throws: whatever stops it is kept in the status, a provider error or
    * a wait for the fetch lock that runs out with its own code, and any
    * other, such as a full disk, as `CACHE_REFRESH_FAILED`.
    */
-  refresh(): Promise<void>;
+  refresh(attention?: AttentionState): Promise<void>;
   /**
    * Discards the cached data, here and in the file, and fetches every
    * repository whole, reporting its progress in the status. One is

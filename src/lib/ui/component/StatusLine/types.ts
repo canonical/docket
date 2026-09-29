@@ -1,4 +1,4 @@
-import type { CacheStatus } from "../../../cache/index.js";
+import type { AttentionState, CacheStatus } from "../../../cache/index.js";
 
 /**
  * What the status line says, and what kind of message it is: the kind
@@ -35,6 +35,16 @@ export interface StatusLineProps {
   status?: CacheStatus;
   /** The result of the user's last action, if any. */
   action?: ActionResult;
+  /**
+   * Whether anyone is using the pane, which an idle pane's freshness
+   * says, with the key that wakes it. Active when not given.
+   */
+  attention?: AttentionState;
+  /**
+   * Whether reading details spent the hour's budget for them, which the
+   * right side of an active pane then says.
+   */
+  detailsPaused?: boolean;
   /** The instant ages and waits are measured at. */
   now: Date;
   /** The time zone a time of day is written in, such as `Europe/Paris`. */

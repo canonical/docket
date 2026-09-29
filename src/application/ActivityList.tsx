@@ -4,12 +4,12 @@ import type {
   ActivityList as List,
 } from "../lib/activity/index.js";
 import type { WaitRow } from "../lib/owed/index.js";
-import type { ThreadDetail } from "../lib/provider/index.js";
 import {
   accordionHeight,
   countRowLines,
   EventLine,
   GroupHeading,
+  type ShownDetail,
   ThreadAccordion,
   ThreadRow,
   useListScroll,
@@ -24,7 +24,7 @@ export interface ActivityListProps {
   /** The place of the selected thread among the threads, in the order drawn. */
   readonly selected: number;
   /** Reads the details of the selected thread for its accordion. */
-  readonly readDetail: (row: ActivityThread) => Promise<ThreadDetail>;
+  readonly readDetail: (row: ActivityThread) => Promise<ShownDetail>;
   /**
    * Measures owed's rows of a thread and the other pull requests of its
    * stack, most pressing first, whose waits tell the selected thread's

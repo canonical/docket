@@ -45,6 +45,7 @@ import {
   WithKeys,
 } from "../testing/terminal.js";
 import { waitUntil } from "../testing/wait.js";
+import createDetailReader from "./createDetailReader.js";
 import readCandidates from "./readCandidates.js";
 import Screen from "./Screen.js";
 import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
@@ -104,6 +105,10 @@ const readRecordedDetail = async (
   const { createdAt, labels, assignees } = facts;
   return { ...parserFixDetail, createdAt, labels, assignees };
 };
+
+/** Reads several threads' details at once, each as `readRecordedDetail`. */
+const readRecordedDetails = (threads: readonly ThreadSummary[]) =>
+  Promise.all(threads.map(readRecordedDetail));
 
 /** Opens nothing, and says it opened. */
 const openNothing = async (_url: string) => {};
@@ -1532,6 +1537,186 @@ describe("Screen", { timeout: 15_000 }, () => {
   });
 
   describe("keys", () => {
+    it("counts every key as attention, and the key still acts; an idle pane says so and which key wakes it", async () => {
+      const attention = {
+        press: vi.fn(),
+        state: () => "idle" as const,
+        subscribe: () => () => {},
+      };
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const screen = await drawSuspending(
+        <WithKeys>
+          <Screen {...viewOf(cache)} attention={attention} onQuit={() => {}} />
+        </WithKeys>,
+        40,
+      );
+      expect(screen.lines.at(-2)).toBe("synced 0m ago · idle · any key wakes");
+      expect((await press(screen, "left", "?")).lines.at(0)).toBe("help");
+      expect(attention.press).toHaveBeenCalledTimes(2);
+    });
+
+    it("checks the selected thread's repository every minute while the pane is active, and reads its details again when it changed", async () => {
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+      try {
+        let changed = false;
+        // Once something changed, the fetch brings each title edited, and
+        // GitHub records the change on each thread.
+        const recorded = recordedProvider();
+        const provider = recordedProvider({
+          probe: async () => ({ changed, tag: '"tag"' }),
+          snapshot: async (repo, cursor) => {
+            const snapshot = await recorded.snapshot(repo, cursor);
+            if (!changed) return snapshot;
+            const threads = snapshot.threads.map((each) => ({
+              ...each,
+              title: `${each.title}, edited`,
+              updatedAt: new Date(each.updatedAt.getTime() + 60_000),
+            }));
+            return { ...snapshot, threads };
+          },
+        });
+        const cache = await openCache(provider);
+        await cache.refresh();
+        const refreshIfChanged = vi.spyOn(cache, "refreshIfChanged");
+        const readDetail = vi.fn(readRecordedDetail);
+        const attention = {
+          press: () => {},
+          state: () => "active" as const,
+          subscribe: () => () => {},
+        };
+        const screen = await drawSuspending(
+          <WithKeys>
+            <Screen
+              {...viewOf(cache, everyCapability, readRecorded, readDetail)}
+              attention={attention}
+              onQuit={() => {}}
+            />
+          </WithKeys>,
+          40,
+        );
+        const reads = readDetail.mock.calls.length;
+        // Each check runs under the fetch lock, on the real filesystem, so
+        // the minute passing only starts it: its answer is awaited.
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(refreshIfChanged).toHaveBeenCalledWith(
+          "example-org/example-repo",
+        );
+        expect(await refreshIfChanged.mock.results.at(0)?.value).toBe(false);
+        await screen.redraw();
+        expect(readDetail).toHaveBeenCalledTimes(reads);
+        changed = true;
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(await refreshIfChanged.mock.results.at(1)?.value).toBe(true);
+        await waitUntil(async () => {
+          await screen.redraw();
+          expect(readDetail).toHaveBeenCalledTimes(reads + 1);
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("says details are paused once reading them spent the hour's budget", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const view = viewOf(cache);
+      const reader = createDetailReader(vi.fn(readRecordedDetails));
+      const details = { ...reader, isCapped: () => true };
+      const screen = await show({
+        ...view,
+        source: { ...view.source, details },
+      });
+      expect(screen.lines.at(-2)).toBe(
+        `synced 0m ago${" ".repeat(13)}details paused`,
+      );
+    });
+
+    it("spends no point on details below the budget floor, neither the accordion's read nor reading ahead, and leaves the status line's right side empty", async () => {
+      let remaining = fullBudget.limit;
+      const provider = recordedProvider({
+        budget: async () => ({ ...fullBudget, remaining }),
+      });
+      const cache = await openCache(provider);
+      await cache.refresh();
+      remaining = 100;
+      await cache.refresh();
+      const readDetails = vi.fn(readRecordedDetails);
+      const readDetail = vi.fn(readRecordedDetail);
+      const view = viewOf(cache, everyCapability, readRecorded, readDetail);
+      const details = createDetailReader(readDetails);
+      const screen = await show(
+        { ...view, source: { ...view.source, details } },
+        60,
+      );
+      const moved = await press(screen, "down", "down", "down");
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const drawn = await moved.redraw();
+      expect(readDetails).not.toHaveBeenCalled();
+      expect(readDetail).not.toHaveBeenCalled();
+      expect(drawn.lines.at(-2)).toMatch(
+        /^refresh paused · resumes \d\d:\d\d$/,
+      );
+    });
+
+    it("shows what the snapshot holds in the accordion below the budget floor, each line that needs the read ending in a dimmed …, and reads nothing", async () => {
+      let remaining = fullBudget.limit;
+      const provider = recordedProvider({
+        budget: async () => ({ ...fullBudget, remaining }),
+      });
+      const cache = await openCache(provider);
+      await cache.refresh();
+      remaining = 100;
+      await cache.refresh();
+      const readDetails = vi.fn(readRecordedDetails);
+      const readDetail = vi.fn(readRecordedDetail);
+      const view = viewOf(cache, everyCapability, readRecorded, readDetail);
+      const details = createDetailReader(readDetails);
+      const screen = await show(
+        { ...view, source: { ...view.source, details } },
+        60,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const drawn = await screen.redraw();
+      expect(drawn.lines.slice(1, 8)).toEqual([
+        "▌┃example#12 reply                                   4d over",
+        " ┃Fix the parser · alice ✗ checks",
+        "  dave · 3d ago",
+        "  …",
+        "  waiting since Mon 10:00 · target 24h",
+        "  example stack 3 · 2 of 3 · → main",
+        "  …",
+      ]);
+      expect(drawn.look("…")?.fg).toBe(tokens["color.text.muted"]);
+      expect(readDetails).not.toHaveBeenCalled();
+      expect(readDetail).not.toHaveBeenCalled();
+    });
+
+    it("reads the selected thread's details and those of the rows around it in one request on opening, so moving to them reads nothing", async () => {
+      const readDetails = vi.fn(readRecordedDetails);
+      const readDetail = vi.fn(readRecordedDetail);
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const view = viewOf(cache, everyCapability, readRecorded, readDetail);
+      const details = createDetailReader(readDetails);
+      const screen = await show({
+        ...view,
+        source: { ...view.source, details },
+      });
+      await waitUntil(async () => {
+        await screen.redraw();
+        expect(readDetails).toHaveBeenCalledOnce();
+      });
+      const [asked] = readDetails.mock.calls.at(0) ?? [];
+      expect(asked?.length).toBeGreaterThan(1);
+      const moved = await press(screen, "down", "down", "down");
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await moved.redraw();
+      expect(readDetails).toHaveBeenCalledOnce();
+      expect(readDetail).not.toHaveBeenCalled();
+      expect(moved.lines).not.toContain("  loading…");
+    });
+
     it("opens activity at the window and grouping the call names, and t steps on from there", async () => {
       const [, , threeDays] = recordedSettings.activity;
       const view = {

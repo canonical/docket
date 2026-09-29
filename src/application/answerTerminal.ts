@@ -5,9 +5,11 @@ import {
 } from "../lib/config/index.js";
 import type { OwedGrouping } from "../lib/owed/index.js";
 import type { Problem } from "../lib/text/index.js";
+import createDetailReader from "./createDetailReader.js";
 import describeFailure from "./describeFailure.js";
 import openInBrowser from "./openInBrowser.js";
 import readCandidates from "./readCandidates.js";
+import readOneDetail from "./readOneDetail.js";
 import readRepositoryFiles from "./readRepositoryFiles.js";
 import type {
   Connection,
@@ -64,6 +66,10 @@ export default async function answerTerminal(
     });
   }
   const { provider, cache } = connection;
+  // Every read of details counts against the hour's budget for them.
+  const details = createDetailReader((threads) =>
+    provider.threadDetails(threads),
+  );
   const readWatched = async (): Promise<WatchedFiles> => {
     try {
       const { watched } = await readRepositoryFiles(
@@ -95,7 +101,8 @@ export default async function answerTerminal(
       capabilities: provider.capabilities(),
       readWatched,
       readViewer: () => provider.viewer(),
-      readDetail: (thread) => provider.threadDetail(thread),
+      readDetail: (thread) => readOneDetail(details, thread, now()),
+      details,
       readCandidates: (action, thread) =>
         readCandidates(provider, action, thread),
       write: (request) => writeFromTerminal({ provider, cache }, request),

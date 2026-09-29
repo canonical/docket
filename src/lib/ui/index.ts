@@ -18,6 +18,7 @@ export {
   ProgressLine,
   type ProgressLineProps,
   type RestingThread,
+  type ShownDetail,
   StatusLine,
   type StatusLineProps,
   ThreadAccordion,

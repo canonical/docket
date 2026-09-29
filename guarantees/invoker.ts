@@ -5,10 +5,10 @@
  * cannot tell a failed assertion from a file that would not load, or a
  * selector that matched nothing and ran no test at exit 0.
  *
- *   list          every row
- *   run <id>      one entry
- *   tier <tier>   every entry of a tier; exit 0 means the tier is green
- *   accept <id>   one entry, saving what it prints as its saved outputs
+ *   list             every row
+ *   run <id> [test]  one entry, or only the test of it named
+ *   tier <tier>      every entry of a tier; exit 0 means the tier is green
+ *   accept <id>      one entry, saving what it prints as its saved outputs
  *
  * A tier is green only when its entry marked `expect = "fail"` failed as
  * a test, and every other entry passed. The register is refused whole,
@@ -93,7 +93,11 @@ interface Verdict {
 }
 
 /** Runs one entry and judges it against its row. */
-const runEntry = async (row: Row, accept = false): Promise<Verdict> => {
+const runEntry = async (
+  row: Row,
+  accept = false,
+  only?: string,
+): Promise<Verdict> => {
   const reports = mkdtempSync(join(tmpdir(), "docket-guarantees-"));
   const report = join(reports, "report.json");
   const started = performance.now();
@@ -109,7 +113,7 @@ const runEntry = async (row: Row, accept = false): Promise<Verdict> => {
         join(corpusRoot, "vitest.config.ts"),
         row.file,
         "-t",
-        row.select,
+        only ? `${row.select}.*${only}` : row.select,
         "--reporter=default",
         "--reporter=json",
         `--outputFile.json=${report}`,
@@ -147,7 +151,7 @@ const runEntry = async (row: Row, accept = false): Promise<Verdict> => {
 };
 
 const register = readRegister();
-const [command, argument] = Bun.argv.slice(2);
+const [command, argument, only] = Bun.argv.slice(2);
 const findRow = (id: string | undefined) =>
   register.find((row) => row.id === id) ??
   stop(`no entry \`${id}\` in corpus.toml`);
@@ -159,7 +163,7 @@ if (command === "list") {
     );
   }
 } else if (command === "run" || command === "accept") {
-  const verdict = await runEntry(findRow(argument), command === "accept");
+  const verdict = await runEntry(findRow(argument), command === "accept", only);
   console.error(verdict.line);
   process.exit(verdict.ok ? 0 : 1);
 } else if (command === "tier") {
@@ -179,6 +183,6 @@ if (command === "list") {
   process.exit(green ? 0 : 1);
 } else {
   stop(
-    `usage: bun ${relative(repoRoot, import.meta.filename)} (list | run <id> | tier <tier> | accept <id>)`,
+    `usage: bun ${relative(repoRoot, import.meta.filename)} (list | run <id> [test] | tier <tier> | accept <id>)`,
   );
 }
