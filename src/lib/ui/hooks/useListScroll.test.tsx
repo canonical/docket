@@ -8,6 +8,7 @@ interface Place {
   readonly from: number;
   readonly to: number;
   readonly room: number;
+  readonly first?: number;
 }
 
 let move: (place: Place) => void = () => {};
@@ -23,7 +24,7 @@ function Listed({ heights, start }: { heights: number[]; start: Place }) {
     name: `${index}:${lines}`,
     lines,
   }));
-  const shown = useListScroll({ blocks, ...place });
+  const { shown } = useListScroll({ blocks, ...place });
   return <text>{shown.map(({ name }) => name).join(" ")}</text>;
 }
 
@@ -68,5 +69,14 @@ describe("useListScroll", () => {
 
   it("draws the first block whatever its height, and nothing after it that does not fit", async () => {
     expect(await scroll([5, 1], { from: 0, to: 0, room: 3 })).toEqual(["0:5"]);
+  });
+
+  it("opens where it is told when drawn anew, keeping the selection in view from there", async () => {
+    expect(
+      await scroll([1, 2, 2, 2, 2], { from: 2, to: 2, room: 4, first: 2 }),
+    ).toEqual(["2:2 3:2"]);
+    expect(await scroll([1, 2, 2, 2, 2], { from: 2, to: 2, room: 4 })).toEqual([
+      "1:2 2:2",
+    ]);
   });
 });

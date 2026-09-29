@@ -54,13 +54,24 @@ export interface UseListScrollProps<Block extends { readonly lines: number }> {
   readonly to: number;
   /** The lines the list region has. */
   readonly room: number;
+  /**
+   * The first block shown when the list is drawn anew, such as where it
+   * was scrolled before the help or a pane too narrow took its place; the
+   * top of the list when absent.
+   */
+  readonly first?: number;
 }
 
-/**
- * The blocks to draw, in order: whole blocks only, as many as fit the
- * room, and always the first, whatever its height.
- */
-export type UseListScrollResult<Block> = readonly Block[];
+/** Result of the useListScroll hook: what the list draws, and from where. */
+export interface UseListScrollResult<Block> {
+  /**
+   * The blocks to draw, in order: whole blocks only, as many as fit the
+   * room, and always the first, whatever its height.
+   */
+  readonly shown: readonly Block[];
+  /** The place of the first block drawn, which `first` takes back. */
+  readonly first: number;
+}
 
 /**
  * Result of the useDrawnLines hook: what a list counts for the selected

@@ -148,7 +148,7 @@ describe("OwedList", () => {
       `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
     ]);
     expect(screen.look("✗ no team")?.fg).toBe(tokens["color.text.error"]);
-    expect(shown).toHaveBeenLastCalledWith(1);
+    expect(shown).toHaveBeenLastCalledWith(1, 0);
   });
 
   it("cuts the notice, never squeezing it, in a region shorter than it", async () => {

@@ -43,9 +43,16 @@ export interface OwedListProps {
   readonly editor?: { readonly node: ReactNode; readonly lines: number };
   /**
    * Told, after each draw, how many rows the list shows, headings not
-   * counted, which is how far a page moves the selection.
+   * counted, which is how far a page moves the selection, and the place
+   * of the first block it shows, heading or row, which `firstShown` takes
+   * when the list is drawn anew.
    */
-  readonly onShownRows: (rows: number) => void;
+  readonly onShownRows: (rows: number, first: number) => void;
+  /**
+   * The place of the first block shown when the list is drawn anew, such
+   * as after the help or a pane too narrow took its place.
+   */
+  readonly firstShown?: number;
 }
 
 /** One heading, or one row with the accordion when it is selected. */
@@ -76,6 +83,7 @@ export default function OwedList({
   notice,
   editor,
   onShownRows,
+  firstShown,
 }: OwedListProps): ReactNode {
   const waiting = listWaiting(list.groups.flatMap((group) => group.rows));
   const drawn = useDrawnLines();
@@ -139,10 +147,16 @@ export default function OwedList({
         wrapNotice(notice.reason, notice.recovery, width - 2),
       ).flat().length
     : 0;
-  const shown = useListScroll({ blocks, from, to, room: height - noticeLines });
+  const { shown, first } = useListScroll({
+    blocks,
+    from,
+    to,
+    room: height - noticeLines,
+    first: firstShown,
+  });
   const shownRows = shown.filter(({ row }) => row).length;
   useEffect(() => {
-    onShownRows(shownRows);
+    onShownRows(shownRows, first);
   });
   // The notice and the rows each have a box of their own lines, so a
   // selected row taller than the room left is cut at the bottom, and a

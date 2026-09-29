@@ -57,6 +57,7 @@ import useHeldDetails from "./useHeldDetails.js";
 import useReadAhead from "./useReadAhead.js";
 import useScreenKeys from "./useScreenKeys.js";
 import useSelectedWatch from "./useSelectedWatch.js";
+import useShownList from "./useShownList.js";
 import useViewer from "./useViewer.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
@@ -187,11 +188,7 @@ export default function Screen({
     onResult: setAction,
     covered: help || narrow,
   });
-  // How many rows the list showed last: how far a page moves the selection.
-  const pageRows = useRef(1);
-  const recordShownRows = (rows: number) => {
-    pageRows.current = Math.max(1, rows);
-  };
+  const shownList = useShownList(mode);
   // Every move stops at the first or the last row, never past it.
   const moveTo = (choose: (place: number, last: number) => number) =>
     setSelections((current) => {
@@ -231,7 +228,7 @@ export default function Screen({
       switchMode: setMode,
       moveSelection: (step) => moveTo((place) => place + step),
       movePage: (direction) =>
-        moveTo((place) => place + direction * pageRows.current),
+        moveTo((place) => place + direction * shownList.pageRows.current),
       moveToEnd: (direction) =>
         moveTo((_place, last) => (direction < 0 ? 0 : last)),
       // Only a row is ever selected, in either mode, so a heading or a
@@ -406,7 +403,7 @@ export default function Screen({
         timezone={settings.time.timezone}
         width={width}
         height={height - 4}
-        onShownRows={recordShownRows}
+        {...shownList.list}
         {...(teamless && { notice: teamless })}
         {...(slot && { editor: slot })}
       />
@@ -427,7 +424,7 @@ export default function Screen({
         timezone={settings.time.timezone}
         width={width}
         height={height - 4}
-        onShownRows={recordShownRows}
+        {...shownList.list}
         {...(slot && { editor: slot })}
       />
     );
