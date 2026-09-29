@@ -27,18 +27,26 @@ interface Entry {
    * selection moves on.
    */
   awaited: boolean;
+  /**
+   * True once the provider no longer found the thread, or the request
+   * failed: the thread is not due again at this version, and only a read
+   * asks for it again.
+   */
+  failed: boolean;
 }
 
 /** Threads' details asked for one at a time, read together. */
 export interface DetailQueue {
   /**
    * The details of `thread` at `version`: those that arrived for it, or
-   * those under way, or else a read that joins the next request.
+   * those under way, or else, as after a read that failed, a read that
+   * joins the next request.
    */
   read(thread: ThreadSummary, version: string): Promise<ThreadDetail>;
   /**
    * Whether `thread`'s details are due a read at `at`: none were asked
-   * for at `version`, or those that arrived are `detailStaleAfter` old.
+   * for at `version`, or those that arrived are `detailStaleAfter` old. A
+   * read that failed at `version` leaves them not due.
    */
   isDue(thread: ThreadSummary, version: string, at: Date): boolean;
   /**
@@ -74,8 +82,10 @@ export interface DetailQueue {
  * around it cost one point together. A read asked for alone goes at once,
  * unless an ask for the rows around it is pending, which it joins. A
  * thread the request leaves out, once the hour's budget is spent, is
- * asked for again when it is due; one the provider no longer finds, or a
- * request that fails, fails its read, and it is read again when asked.
+ * asked for again when it is due. One the provider no longer finds, or
+ * one a request that fails asked for, fails its read, and is not asked
+ * for again until its version moves or a read asks for it, as the
+ * accordion does when the selection comes back to it.
  * Nothing is sent while it is paused.
  *
  * @note Impure: sets a timer for each request, and reads through
@@ -103,6 +113,7 @@ export default function createDetailQueue(
       promise,
       settle: { resolve, reject },
       awaited: false,
+      failed: false,
     };
     entries.set(identifyThread(thread), entry);
     queued.push({ thread, version, entry });
@@ -144,7 +155,7 @@ export default function createDetailQueue(
         }
         const detail = found.get(key);
         if (!detail) {
-          entries.delete(key);
+          entry.failed = true;
           entry.settle.reject(new Error(`${key} was not found.`));
           continue;
         }
@@ -156,7 +167,7 @@ export default function createDetailQueue(
     } catch (reason) {
       for (const { key, entry } of asked) {
         if (entries.get(key) !== entry) continue;
-        entries.delete(key);
+        entry.failed = true;
         entry.settle.reject(reason);
       }
     }
@@ -179,7 +190,7 @@ export default function createDetailQueue(
   return {
     read(thread, version) {
       const known = entries.get(identifyThread(thread));
-      if (known?.version === version) {
+      if (known?.version === version && !known.failed) {
         known.awaited = true;
         return known.promise;
       }

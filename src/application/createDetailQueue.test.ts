@@ -166,6 +166,33 @@ describe("createDetailQueue", () => {
     expect(queue.read(one, "v")).not.toBe(failed);
   });
 
+  it("asks again for a thread no longer found, or whose request failed, only once its version moves or a read asks for it", async () => {
+    const reader = reading();
+    const queue = open(reader);
+    const window = [
+      { thread: two, version: "v" },
+      { thread: three, version: "v" },
+    ];
+    queue.request(window, two, 200);
+    await vi.advanceTimersByTimeAsync(200);
+    reader.read.mockRejectedValueOnce(new Error("offline"));
+    queue.request([...window, { thread: one, version: "v" }], one, 200);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(reader.read).toHaveBeenCalledTimes(2);
+    for (let rest = 0; rest < 3; rest += 1) {
+      queue.request([...window, { thread: one, version: "v" }], one, 200);
+      await vi.advanceTimersByTimeAsync(200);
+    }
+    expect(reader.read).toHaveBeenCalledTimes(2);
+    expect(queue.isDue(three, "w", new Date())).toBe(true);
+    expect(queue.isDue(one, "w", new Date())).toBe(true);
+    const again = queue.read(one, "v");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(await again).toBe(parserFixDetail);
+    expect(reader.read).toHaveBeenCalledTimes(3);
+    expect(reader.read.mock.calls.at(2)?.[0]).toEqual([one]);
+  });
+
   it("reads a thread asked for twice once, at the version asked last", async () => {
     const reader = reading();
     const queue = open(reader);
