@@ -1,5 +1,5 @@
 40 columns
-|refreshing…
+|refreshing · docs 2/3
 
 runs
-1:1 "refreshing…" fg #c6c8d1ff bg #00000000
+1:1 "refreshing · docs 2/3" fg #c6c8d1ff bg #00000000

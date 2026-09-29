@@ -24,6 +24,20 @@ const settled: CacheStatus = {
   failure: undefined,
 };
 
+/** A refresh in the background on the second of three repositories. */
+const background: CacheStatus = {
+  ...settled,
+  refreshing: true,
+  stages: [
+    {
+      repo: "example-org/example-repo",
+      stage: { kind: "done", threads: 12 },
+    },
+    { repo: "example-org/example-docs", stage: { kind: "checking" } },
+    { repo: "example-org/example-site", stage: { kind: "waiting" } },
+  ],
+};
+
 const timedOut: ProviderError = Object.assign(
   new Error("GitHub gave no answer within 30 seconds."),
   { code: "GITHUB_TIMED_OUT", recovery: "refresh" } as const,
@@ -37,7 +51,10 @@ const refused: ProviderError = Object.assign(
 const base = {
   now,
   timezone: "UTC",
-  names: { "example-org/example-repo": "example" },
+  names: {
+    "example-org/example-repo": "example",
+    "example-org/example-docs": "docs",
+  },
   width: 40,
 };
 
@@ -103,7 +120,7 @@ export const FullRefresh: Story<StatusLineProps> = {
 
 /** A refresh in the background, while the data shown stays. */
 export const Refreshing: Story<StatusLineProps> = {
-  args: { ...base, status: { ...settled, refreshing: true } },
+  args: { ...base, status: background },
 };
 
 /** A full refresh asked for within the cooldown of the last one. */
@@ -121,7 +138,7 @@ export const FullRefreshRefused: Story<StatusLineProps> = {
 export const ActionFailed: Story<StatusLineProps> = {
   args: {
     ...base,
-    status: { ...settled, refreshing: true },
+    status: background,
     action: {
       failed: true,
       text: "could not open the browser",

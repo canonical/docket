@@ -15,7 +15,10 @@ import {
 } from "./StatusLine.stories.js";
 
 const now = new Date("2026-09-28T12:00:00Z");
-const names = { "example-org/example-repo": "example" };
+const names = {
+  "example-org/example-repo": "example",
+  "example-org/example-docs": "docs",
+};
 const statusOf = (story: { args: { status?: CacheStatus } }) => {
   const { status } = story.args;
   if (!status) throw new Error("the story has no status");
@@ -135,10 +138,18 @@ describe("describeStatus", () => {
     expect(describeAt(status)?.kind).toBe("refreshing");
   });
 
-  it("says a background refresh is running", () => {
+  it("names the first repository a background refresh is on, and its place among them", () => {
     expect(describeAt(statusOf(Refreshing))).toEqual({
       kind: "refreshing",
-      text: "refreshing…",
+      text: "refreshing · docs 2/3",
+    });
+  });
+
+  it("says how old the data is while a background refresh is on no repository", () => {
+    const status = { ...statusOf(Refreshing), stages: [] };
+    expect(describeAt(status)).toEqual({
+      kind: "freshness",
+      text: "synced 2m ago",
     });
   });
 

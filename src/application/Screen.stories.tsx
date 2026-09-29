@@ -258,7 +258,19 @@ export const FirstRun: Story<ScreenFrameProps> = {
 
 /** A refresh in the background: the rows stay, the status line says so. */
 export const Refreshing: Story<ScreenFrameProps> = {
-  args: viewRecording({ status: { ...settled, refreshing: true } }),
+  args: viewRecording({
+    status: {
+      ...settled,
+      refreshing: true,
+      stages: [
+        {
+          repo: "example-org/example-repo",
+          stage: { kind: "done", threads: 2 },
+        },
+        { repo: "example-org/example-docs", stage: { kind: "checking" } },
+      ],
+    },
+  }),
 };
 
 /** GitHub refused requests for its rate limit: the rows stay. */

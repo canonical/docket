@@ -30,7 +30,7 @@ describe("StatusLine", () => {
 
   it("draws a refresh in progress in the text colour", async () => {
     const screen = await draw(<StatusLine {...Refreshing.args} />, 40);
-    expect(screen.lines.at(0)).toBe("refreshing…");
+    expect(screen.lines.at(0)).toBe("refreshing · docs 2/3");
     expect(screen.look("refreshing")?.fg).toBe(tokens["color.text"]);
   });
 
