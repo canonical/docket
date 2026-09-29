@@ -714,12 +714,20 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
       readDetail.mockRejectedValueOnce(providerError("GITHUB_TIMED_OUT"));
       vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
-      const screen = await showRecorded(readDetail);
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      // A new `Date` on each read, so the clock's tick draws a frame: the
+      // same object again leaves the screen as it was.
+      const view = {
+        ...viewOf(cache, everyCapability, readRecorded, readDetail),
+        now: () => new Date(recordedNow),
+      };
+      const screen = await (await show(view)).redraw();
       const failure = "  ✗ failed: The provider failed with";
       await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(3)).toBe(failure),
       );
-      // The clock's tick draws the screen again, the selection where it was.
+      // The tick draws the screen again, with the selection where it was.
       const ticked = await screen.redraw(() => vi.advanceTimersByTime(1_000));
       expect(ticked.lines.at(3)).toBe(failure);
       expect(readDetail).toHaveBeenCalledOnce();
