@@ -114,6 +114,14 @@ export interface WaitRow {
   readonly title: Field;
   /** Who waits on the move: the wait's author. */
   readonly author: Person;
+  /**
+   * Who asked for the review, on a review wait: the request to the wait's
+   * first owner, or else the latest request. Absent when GitHub does not
+   * record who asked.
+   */
+  readonly requester?: Person;
+  /** Who wrote the thread's latest message, a comment or a review, when it has one. */
+  readonly lastActor?: Person;
   /** The one owner, or `unassigned`; absent when the owners take a line of their own. */
   readonly owner?: Owner;
   /** `draft`, on a draft pull request. */

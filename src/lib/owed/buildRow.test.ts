@@ -122,4 +122,45 @@ describe("buildRow", () => {
       "bob",
     ]);
   });
+
+  it("names who asked for a review, from the request to its owner, with their group", () => {
+    const pull = thread({
+      kind: "pullRequest",
+      reviewRequests: [
+        { reviewer: bob, at: at("2026-09-22T11:00+02:00"), requester: carol },
+        { reviewer: alice, at: at("2026-09-22T12:00+02:00"), requester: bob },
+      ],
+    });
+    const row = build(wait({ thread: pull, kind: "review", owners: ["bob"] }));
+    expect(row.requester).toEqual(person("carol", "internal"));
+  });
+
+  it("names no requester on a review whose request GitHub records no one for, nor on other waits", () => {
+    const pull = thread({
+      kind: "pullRequest",
+      reviewRequests: [{ reviewer: bob, at: at("2026-09-22T11:00+02:00") }],
+    });
+    expect(
+      build(wait({ thread: pull, kind: "review", owners: ["bob"] })).requester,
+    ).toBeUndefined();
+    expect(build(wait({ thread: pull })).requester).toBeUndefined();
+  });
+
+  it("names who wrote the latest message, a comment or a review, and nobody on a thread without one", () => {
+    const discussed = thread({
+      comments: [{ author: carol, at: at("2026-09-22T12:00+02:00") }],
+      reviews: [{ author: bob, at: at("2026-09-22T14:00+02:00") }],
+    });
+    expect(build(wait({ thread: discussed })).lastActor).toEqual(
+      person("bob", "team"),
+    );
+    const answered = thread({
+      comments: [{ author: carol, at: at("2026-09-22T16:00+02:00") }],
+      reviews: [{ author: bob, at: at("2026-09-22T14:00+02:00") }],
+    });
+    expect(build(wait({ thread: answered })).lastActor).toEqual(
+      person("carol", "internal"),
+    );
+    expect(build(wait()).lastActor).toBeUndefined();
+  });
 });
