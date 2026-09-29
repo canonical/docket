@@ -1,8 +1,10 @@
 /**
  * How many threads' details one read asks for at most. GitHub charges a
- * query by the lists it could return, a hundred to the point; a pull
- * request's details need about ten, so fourteen threads cost one point
- * and fifteen two.
+ * query by the lists it could return, a hundred to the point, rounded: a
+ * pull request's details ask for nine, so sixteen pull requests still
+ * cost one point and seventeen cost two, and issues and discussions ask
+ * for fewer. Fourteen stay at one point whatever the threads, with room
+ * for a list more.
  */
 export const detailWindow = 14;
 
