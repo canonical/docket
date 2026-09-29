@@ -1,4 +1,4 @@
-import type { WaitKind } from "../waits/index.js";
+import type { ThreadKind, WaitKind } from "../waits/index.js";
 import type { OwedGrouping } from "./types.js";
 
 /** The groupings, in the order the reader steps through them; the first is the default. */
@@ -22,6 +22,13 @@ export const soonShare = 0.2;
  * repository then has the built-in settings, whatever its file says.
  */
 export const invalidFileMark = "invalid repository file";
+
+/** The word each kind of thread goes by on a row. */
+export const threadWords: Readonly<Record<ThreadKind, string>> = {
+  issue: "issue",
+  pullRequest: "PR",
+  discussion: "discussion",
+};
 
 /** The word each kind of wait goes by on screen. */
 export const waitWords: Readonly<Record<WaitKind, string>> = {

@@ -3,15 +3,17 @@ import type {
   ThreadRow as ActivityThread,
   ActivityList as List,
 } from "../lib/activity/index.js";
+import type { People } from "../lib/config/index.js";
 import type { WaitRow } from "../lib/owed/index.js";
 import {
-  accordionHeight,
+  countAccordionLines,
   countRowLines,
   EventLine,
   GroupHeading,
   type ShownDetail,
   ThreadAccordion,
   ThreadRow,
+  useDrawnLines,
   useListScroll,
 } from "../lib/ui/index.js";
 import findThreadState from "./findThreadState.js";
@@ -32,6 +34,14 @@ export interface ActivityListProps {
    * the selected thread is measured.
    */
   readonly measureWaits: (row: ActivityThread) => readonly WaitRow[];
+  /**
+   * Each login's group in a thread's repository, which marks the people a
+   * thread at rest names once its details are read. Only the selected
+   * thread's repository is read.
+   */
+  readonly readPeople: (row: ActivityThread) => People;
+  /** The login gh is signed in with, when it is known. */
+  readonly viewer?: string;
   /** The instant ages are measured at. */
   readonly now: Date;
   /** The time zone a time of day is written in. */
@@ -48,9 +58,16 @@ export interface ActivityListProps {
   readonly editor?: { readonly node: ReactNode; readonly lines: number };
   /**
    * Told, after each draw, how many rows the list shows, headings not
-   * counted, which is how far a page moves the selection.
+   * counted, which is how far a page moves the selection, and the place
+   * of the first block it shows, heading or row, which `firstShown` takes
+   * when the list is drawn anew.
    */
-  readonly onShownRows: (rows: number) => void;
+  readonly onShownRows: (rows: number, first: number) => void;
+  /**
+   * The place of the first block shown when the list is drawn anew, such
+   * as after the help or a pane too narrow took its place.
+   */
+  readonly firstShown?: number;
 }
 
 /**
@@ -80,25 +97,32 @@ export default function ActivityList({
   selected,
   readDetail,
   measureWaits,
+  readPeople,
+  viewer,
   now,
   timezone,
   width,
   height,
   editor,
   onShownRows,
+  firstShown,
 }: ActivityListProps): ReactNode {
+  const drawn = useDrawnLines();
   const blocks: Block[] = [];
   let place = 0;
   let from = 0;
   let to = 0;
   for (const { heading, rows } of list.groups) {
     if (heading) {
-      const node = <GroupHeading text={heading.text} width={width} />;
+      const node = <GroupHeading heading={heading} width={width} />;
       blocks.push({ key: heading.text, row: false, lines: 1, node });
     }
     for (const row of rows) {
       const chosen = place === selected;
       const waits = chosen ? measureWaits(row) : [];
+      const people = chosen ? readPeople(row) : new Map();
+      const state = findThreadState(row, waits, people, viewer);
+      const reading = { now, timezone, waiting: listWaiting(waits) };
       if (chosen) {
         to = blocks.length;
         from = heading && row === rows.at(0) ? to - 1 : to;
@@ -107,21 +131,34 @@ export default function ActivityList({
         key: row.reference.text,
         row: true,
         lines:
-          countRowLines(row, width) +
-          (chosen ? (editor?.lines ?? accordionHeight) : 0) +
+          countRowLines(row, width, chosen && !editor) +
+          (chosen
+            ? (editor?.lines ??
+              drawn.measure(
+                row.reference.text,
+                countAccordionLines(state, reading, width),
+              ))
+            : 0) +
           row.events.length,
         node: (
           <>
-            <ThreadRow row={row} selected={chosen && !editor} width={width} />
+            <ThreadRow
+              row={row}
+              selected={chosen && !editor}
+              continued={chosen && !editor}
+              width={width}
+            />
             {chosen && editor?.node}
             {chosen && !editor && (
               <ThreadAccordion
-                row={findThreadState(row, waits)}
+                row={state}
                 detail={readDetail(row)}
-                waiting={listWaiting(waits)}
+                waiting={reading.waiting}
+                clock={false}
                 now={now}
                 timezone={timezone}
                 width={width}
+                onLines={drawn.report(row.reference.text)}
               />
             )}
             {row.events.map((line, index) => (
@@ -130,6 +167,7 @@ export default function ActivityList({
                 // biome-ignore lint/suspicious/noArrayIndexKey: see above.
                 key={index}
                 line={line}
+                stacked={row.stacked}
                 width={width}
               />
             ))}
@@ -139,10 +177,16 @@ export default function ActivityList({
       place += 1;
     }
   }
-  const shown = useListScroll({ blocks, from, to, room: height });
+  const { shown, first } = useListScroll({
+    blocks,
+    from,
+    to,
+    room: height,
+    first: firstShown,
+  });
   const shownRows = shown.filter(({ row }) => row).length;
   useEffect(() => {
-    onShownRows(shownRows);
+    onShownRows(shownRows, first);
   });
   return (
     <box flexDirection="column" height={height} overflow="hidden">

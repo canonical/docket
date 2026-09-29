@@ -1,5 +1,7 @@
 import { findActivityRow } from "../../../../testing/activity.js";
 import {
+  botReview,
+  crowdedReply,
   draftClose,
   overReview,
   sharedClose,
@@ -34,6 +36,27 @@ export const DraftClose: Story<ThreadRowProps> = {
 /** A close three people own, each named on a third line. */
 export const SharedClose: Story<ThreadRowProps> = {
   args: { row: sharedClose, width: 40 },
+};
+
+/**
+ * A reply on an issue whose reference, kinds and distance leave too few
+ * cells for the author's login at 40 columns: the author leaves the line.
+ */
+export const AuthorLeaves: Story<ThreadRowProps> = {
+  args: { row: crowdedReply, width: 40 },
+};
+
+/** A review on a bot's pull request: its login cut, its mark whole. */
+export const BotAuthor: Story<ThreadRowProps> = {
+  args: { row: botReview, width: 40 },
+};
+
+/**
+ * The same review selected: its title wraps in full, and the owner, who
+ * does not fit beside its last line, takes a line of its own.
+ */
+export const BotAuthorSelected: Story<ThreadRowProps> = {
+  args: { row: botReview, selected: true, width: 40 },
 };
 
 /** In activity: a pull request in a stack, with one owner, its newest event 20m old. */

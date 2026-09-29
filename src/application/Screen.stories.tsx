@@ -1,116 +1,22 @@
-import { useKeymap } from "@opentui/keymap/react";
-import { type ReactNode, useEffect, useState } from "react";
-import type { CacheStatus } from "../lib/cache/index.js";
-import type {
-  Provider,
-  ProviderError,
-  ThreadDetail,
-} from "../lib/provider/index.js";
-import type { Thread, ThreadSummary } from "../lib/waits/index.js";
-import { holdCache, settleStatus } from "../testing/cache.js";
-import { alice, bob, carol } from "../testing/facts.js";
-import { everyCapability } from "../testing/provider.js";
+import type { ProviderError, ThreadDetail } from "../lib/provider/index.js";
+import type { Thread } from "../lib/waits/index.js";
+import { at, bob, exampleSync } from "../testing/facts.js";
 import {
+  crash,
+  parserFix,
   parserFixDetail,
-  recordedEvents,
-  recordedNow,
-  recordedProvider,
   recordedSettings,
   recordedThreads,
   recordedWatched,
 } from "../testing/recorded.js";
+import {
+  connectRecording,
+  ScreenFrame,
+  type ScreenFrameProps,
+  settled,
+  viewRecording,
+} from "../testing/screen.js";
 import type { Meta, Story } from "../testing/stories.js";
-import { WithKeys } from "../testing/terminal.js";
-import readCandidates from "./readCandidates.js";
-import Screen from "./Screen.js";
-import type { TerminalView } from "./types.js";
-import writeFromTerminal from "./writeFromTerminal.js";
-
-/** The source of a view that gh gives a token for. */
-type Connected = Extract<TerminalView["source"], { readonly cache: unknown }>;
-
-/** The screen as it opens on `view`, with `run` run once it has. */
-interface ScreenFrameProps extends TerminalView {
-  /** Commands of the screen's key layer, run in order once it opens. */
-  readonly run?: readonly string[];
-  /**
-   * Makes the view's source anew for each drawing, in place of `source`,
-   * so what one drawing writes never reaches the next.
-   */
-  readonly connect?: () => Connected;
-}
-
-/**
- * `source`, and a `settle` that waits until every read of whom an editor
- * offers, and every write one has begun, has its answer.
- */
-function watchSource(source: TerminalView["source"]) {
-  const pending = new Set<Promise<unknown>>();
-  const watch = <T,>(answer: Promise<T>): Promise<T> => {
-    pending.add(answer);
-    const done = () => {
-      pending.delete(answer);
-    };
-    answer.then(done, done);
-    return answer;
-  };
-  const settle = async () => {
-    while (pending.size > 0) await Promise.allSettled([...pending]);
-  };
-  if (!("cache" in source)) return { source, settle };
-  const watched: Connected = {
-    ...source,
-    readCandidates: (action, thread) =>
-      watch(source.readCandidates(action, thread)),
-    write: (request) => watch(source.write(request)),
-  };
-  return { source: watched, settle };
-}
-
-/**
- * Runs `commands` through the keymap, as their keys would, one at a time:
- * each runs once the screen has drawn the one before it and `settle` says
- * GitHub has answered what it asked, as a person waits to see a key's
- * answer before pressing the next. Every step is work React holds, so the
- * drawing is taken only once the last has run.
- */
-function RunOnOpen({
-  commands,
-  settle,
-}: {
-  readonly commands: readonly string[];
-  readonly settle: () => Promise<void>;
-}) {
-  const keymap = useKeymap();
-  const [step, setStep] = useState(0);
-  useEffect(() => {
-    const command = commands.at(step);
-    if (command === undefined) return;
-    keymap.runCommand(command);
-    void settle().then(() => setStep(step + 1));
-  }, [keymap, commands, settle, step]);
-  return null;
-}
-
-/**
- * The terminal interface's one screen, with the keymap it binds its keys
- * through: the screen `openTerminal` opens, drawn from a cache held still.
- */
-function ScreenFrame({
-  run = [],
-  connect,
-  ...view
-}: ScreenFrameProps): ReactNode {
-  const [{ source, settle }] = useState(() =>
-    watchSource(connect?.() ?? view.source),
-  );
-  return (
-    <WithKeys>
-      <Screen {...view} source={source} onQuit={() => {}} />
-      <RunOnOpen commands={run} settle={settle} />
-    </WithKeys>
-  );
-}
 
 const meta: Meta<ScreenFrameProps> = {
   title: "application/Screen",
@@ -119,127 +25,12 @@ const meta: Meta<ScreenFrameProps> = {
 
 export default meta;
 
-const settled = settleStatus(recordedNow);
-
-/**
- * Every thread's details, with the thread's own age, labels and assignees.
- * The held cache gives only recorded threads, so any other is a mistake.
- */
-const readDetail = async (thread: ThreadSummary): Promise<ThreadDetail> => {
-  const facts = recordedThreads.find(
-    ({ repo, number }) => repo === thread.repo && number === thread.number,
-  );
-  if (!facts) throw new Error(`#${thread.number} is not recorded`);
-  const { createdAt, labels, assignees } = facts;
-  return { ...parserFixDetail, createdAt, labels, assignees };
-};
-
-/** A frame given no stand-in for GitHub opens no editor, so reads and writes nothing. */
-const refuseEditor = (): never => {
-  throw new Error("this frame opens no editor");
-};
-
-/** `example-org/example-repo#12`, the key a thread is found by. */
-const nameThread = ({ repo, number }: Pick<Thread, "repo" | "number">) =>
-  `${repo}#${number}`;
-
-/**
- * A stand-in for GitHub, in memory, that holds the recording's threads as
- * the editors read and write them: alice, bob and carol can be assigned,
- * and a set given to it is recorded without anyone else in it, as GitHub
- * records it. Nothing it is given leaves the process.
- */
-function standInGitHub(): Provider {
-  const assignable = [alice, bob, carol];
-  const assignees = new Map(
-    recordedThreads.map((thread) => [nameThread(thread), thread.assignees]),
-  );
-  // Only the recording's threads reach the stand-in, so any other is a mistake.
-  const findAssignees = (thread: Pick<Thread, "repo" | "number">) => {
-    const held = assignees.get(nameThread(thread));
-    if (!held) throw new Error(`#${thread.number} is not recorded`);
-    return held;
-  };
-  return recordedProvider({
-    snapshot: async (repo) => ({
-      threads: recordedThreads
-        .filter((thread) => thread.repo === repo)
-        .map((thread) => ({
-          ...thread,
-          assignees: findAssignees(thread),
-        })),
-      cursor: null,
-    }),
-    assignableUsers: async () => assignable,
-    readAssignees: async (thread) => findAssignees(thread),
-    setAssignees: async (thread, logins) => {
-      const recorded = assignable.filter(({ login }) => logins.includes(login));
-      assignees.set(nameThread(thread), recorded);
-      return recorded;
-    },
-  });
-}
-
-/**
- * The recording's source, with the cache's `status` and `threads`, the
- * accordion's details read by `read`, and the editors reading and writing
- * `github`, when one is given.
- */
-function connectRecording({
-  status = settled,
-  threads = recordedThreads,
-  read = readDetail,
-  github,
-}: {
-  readonly status?: CacheStatus;
-  readonly threads?: readonly Thread[];
-  readonly read?: (thread: ThreadSummary) => Promise<ThreadDetail>;
-  readonly github?: Provider;
-} = {}): Connected {
-  const cache = holdCache(
-    { threads, syncedAt: status.syncedAt },
-    status,
-    recordedEvents,
-    github,
-  );
-  return {
-    cache,
-    capabilities: everyCapability,
-    readWatched: async () => ({ watched: recordedWatched() }),
-    readViewer: async () => "alice",
-    readDetail: read,
-    readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
-    readCandidates: github
-      ? (action, thread) => readCandidates(github, action, thread)
-      : refuseEditor,
-    write: github
-      ? (request) => writeFromTerminal({ provider: github, cache }, request)
-      : refuseEditor,
-  };
-}
-
-/** owed as it opens on the recording, its source as `connectRecording` gives it. */
-function viewRecording(
-  options: Parameters<typeof connectRecording>[0] = {},
-): TerminalView {
-  return {
-    mode: "owed",
-    owedGrouping: "none",
-    now: () => recordedNow,
-    openInBrowser: async () => {},
-    settings: recordedSettings,
-    watched: recordedWatched(),
-    source: connectRecording(options),
-  };
-}
-
 const recording = viewRecording();
 
-/** The recording, its editors on a stand-in for GitHub made anew for each drawing. */
-const editable: ScreenFrameProps = {
-  ...recording,
-  connect: () => connectRecording({ github: standInGitHub() }),
-};
+const timedOut: ProviderError = Object.assign(
+  new Error("GitHub gave no answer within 30 seconds."),
+  { code: "GITHUB_TIMED_OUT", recovery: "refresh" } as const,
+);
 
 /** owed, no grouping: the first row selected, with its accordion open. */
 export const Owed: Story<ScreenFrameProps> = { args: recording };
@@ -295,6 +86,119 @@ export const OwedByRepo: Story<ScreenFrameProps> = {
 /** owed by stack: the stack's section, then what is in no stack. */
 export const OwedByStack: Story<ScreenFrameProps> = {
   args: { ...recording, owedGrouping: "stack" },
+};
+
+/**
+ * owed by stack, the stacked reply selected and its details failed: the
+ * reason under what the snapshot showed, the stack mark down every line.
+ */
+export const OwedByStackFailed: Story<ScreenFrameProps> = {
+  args: {
+    ...viewRecording({ read: async () => Promise.reject(timedOut) }),
+    owedGrouping: "stack",
+  },
+};
+
+/**
+ * The reply carol is waiting on selected, the message she opened with
+ * under it: she is in the organisation but not on the team, under items
+ * alice owes, each person in their group's mark and hue, and each
+ * two-line item's bar ending on its second line.
+ */
+export const OwedOrganisationReply: Story<ScreenFrameProps> = {
+  args: {
+    ...viewRecording({
+      threads: recordedThreads.map((thread) =>
+        thread === crash
+          ? {
+              ...crash,
+              text: "The app closes as soon as it opens, since the last update to the settings file.",
+            }
+          : thread,
+      ),
+    }),
+    run: ["selection.next", "selection.next"],
+  },
+};
+
+/** A dependency update a bot opened, asking bob for a review. */
+const botUpdate: Thread = {
+  ...parserFix,
+  number: 20,
+  url: "https://github.com/example-org/example-repo/pull/20",
+  title: "Update dependency zod to 3.24",
+  stack: undefined,
+  author: exampleSync,
+  createdAt: at("2026-09-26T08:00+02:00"),
+  updatedAt: at("2026-09-26T08:00+02:00"),
+  labels: ["dependencies"],
+  assignees: [],
+  comments: [],
+  reviewRequests: [
+    {
+      reviewer: bob,
+      requester: exampleSync,
+      at: at("2026-09-26T08:00+02:00"),
+    },
+  ],
+  checks: "passing",
+};
+
+/** What GitHub gives for the update: two files changed and every check passed. */
+const botUpdateDetail: ThreadDetail = {
+  createdAt: botUpdate.createdAt,
+  updatedAt: botUpdate.updatedAt,
+  labels: botUpdate.labels,
+  assignees: [],
+  messages: [],
+  requests: [
+    { reviewer: bob, requester: exampleSync, at: botUpdate.createdAt },
+  ],
+  files: [
+    { path: "package.json", additions: 1, deletions: 1 },
+    { path: "bun.lock", additions: 3, deletions: 3 },
+  ],
+  checks: [
+    { name: "lint", state: "passing" },
+    { name: "test", state: "passing" },
+    { name: "build", state: "passing" },
+  ],
+};
+
+/** The settings, with dependency updates kept off the close clock. */
+const updatesExempt = {
+  ...recordedSettings,
+  exempt: { close: ["dependencies"] },
+};
+
+/**
+ * A thread a bot opened, selected: its author and whoever asked for the
+ * review behind the bot's mark, dimmed, the review still one bob owes.
+ */
+export const OwedBotAuthored: Story<ScreenFrameProps> = {
+  args: {
+    ...recording,
+    settings: updatesExempt,
+    watched: recordedWatched(updatesExempt),
+    source: {
+      ...connectRecording({
+        threads: [...recordedThreads, botUpdate],
+        read: async (thread) =>
+          thread.number === botUpdate.number
+            ? botUpdateDetail
+            : parserFixDetail,
+      }),
+      readWatched: async () => ({
+        watched: recordedWatched(updatesExempt),
+      }),
+    },
+    run: [
+      "selection.next",
+      "selection.next",
+      "selection.next",
+      "selection.next",
+    ],
+  },
 };
 
 /** activity over 24 working hours, by kind: the thread's state above its events. */
@@ -365,12 +269,6 @@ export const RateLimited: Story<ScreenFrameProps> = {
     },
   }),
 };
-
-const timedOut: ProviderError = Object.assign(
-  new Error("GitHub gave no answer within 30 seconds."),
-  { code: "GITHUB_TIMED_OUT", recovery: "refresh" } as const,
-);
-
 /** No answer from GitHub: the rows stay, with how old they are. */
 export const Offline: Story<ScreenFrameProps> = {
   args: viewRecording({
@@ -426,72 +324,4 @@ export const GhNotSignedIn: Story<ScreenFrameProps> = {
 /** The help, open over all but the header. */
 export const Help: Story<ScreenFrameProps> = {
   args: { ...recording, run: ["help.toggle"] },
-};
-
-/**
- * `a` on the reply row: the editor under it, alice ticked as GitHub holds
- * her, then the team, the people who wrote on the thread and everyone else
- * GitHub can assign, the cursor on carol, whom only GitHub offers.
- */
-export const AssignEditor: Story<ScreenFrameProps> = {
-  args: {
-    ...editable,
-    run: ["thread.assign", "editor.next", "editor.next", "editor.next"],
-  },
-};
-
-/**
- * `r` on the review row: bob ticked as asked, then whom GitHub suggests,
- * the collaborators and the team, the cursor on the team.
- */
-export const RequestReviewEditor: Story<ScreenFrameProps> = {
-  args: {
-    ...editable,
-    run: [
-      "selection.next",
-      "selection.next",
-      "selection.next",
-      "selection.next",
-      "thread.review",
-      "editor.next",
-      "editor.next",
-      "editor.next",
-    ],
-  },
-};
-
-/**
- * dave ticked beside alice and applied: GitHub cannot assign him and
- * records alice alone, so the editor stays open with the reason and a
- * Recovery line, and the status line says the assignment was refused.
- */
-export const AssignRefused: Story<ScreenFrameProps> = {
-  args: {
-    ...editable,
-    run: [
-      "thread.assign",
-      "editor.next",
-      "editor.next",
-      "editor.toggle",
-      "editor.apply",
-    ],
-  },
-};
-
-/**
- * carol ticked beside alice and applied: the editor closes, the row reads
- * both, and the status line says whom GitHub assigned.
- */
-export const AssignSucceeded: Story<ScreenFrameProps> = {
-  args: {
-    ...editable,
-    run: [
-      "thread.assign",
-      "editor.next",
-      "editor.next",
-      "editor.next",
-      "editor.toggle",
-      "editor.apply",
-    ],
-  },
 };

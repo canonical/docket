@@ -2,4 +2,4 @@
 |owed
 
 runs
-1:1 "owed" fg #c6c8d1ff bg #00000000 bold
+1:1 "owed                                    " fg #c6c8d1ff bg #00000000

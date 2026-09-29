@@ -20,6 +20,17 @@ describe("fitPieces", () => {
     ]);
   });
 
+  it("removes escape sequences and control characters from every run, fitting or cut", () => {
+    const hostile = [
+      { text: "lint\u001b[2J", look: "field" },
+      { text: " ok\u0007", look: "field" },
+    ];
+    expect(fitPieces(hostile, 40)).toEqual([
+      { text: "lint", look: "field" },
+      { text: " ok", look: "field" },
+    ]);
+  });
+
   it("keeps runs that end exactly at the width whole", () => {
     expect(fitPieces(pieces, 7)).toEqual(pieces.slice(0, 2));
   });

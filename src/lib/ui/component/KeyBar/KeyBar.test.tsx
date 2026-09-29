@@ -10,11 +10,11 @@ describe("KeyBar", () => {
     expect(screen.lines.at(0)).toBe("←→ mode ↑↓ sel g grp ?");
   });
 
-  it("draws keys in bold and labels dimmed", async () => {
+  it("draws keys plain and labels dimmed, neither bold", async () => {
     const screen = await draw(<KeyBar {...Owed.args} />, 40);
     expect(screen.look("←→")).toMatchObject({
       fg: tokens["color.text"],
-      bold: true,
+      bold: false,
     });
     expect(screen.look("mode")).toMatchObject({
       fg: tokens["color.text.muted"],

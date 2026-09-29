@@ -1,5 +1,7 @@
 60 columns
-|    alice pushed 2 commits                               25m
+| ┆  ● alice pushed 2 commits                             25m
 
 runs
-1:1 "    alice pushed 2 commits                               25m" fg #c6c8d1ff bg #00000000
+1:2 "┆" fg #6b7089ff bg #00000000
+1:5 "● alice" fg #84a0c6ff bg #00000000
+1:12 " pushed 2 commits                             25m" fg #c6c8d1ff bg #00000000

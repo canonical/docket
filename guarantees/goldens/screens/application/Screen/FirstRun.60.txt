@@ -37,18 +37,16 @@
 |←→ mode ↑↓ sel ⏎ open g grp a r ?
 
 runs
-1:1 "owed" fg #c6c8d1ff bg #161821ff bold
+1:1 "owed                                                        " fg #c6c8d1ff bg #161821ff
 3:3 "refresh in progress…" fg #c6c8d1ff bg #161821ff
 4:3 "████████████████░░░░░░░░░░░░░ 5/9" fg #c6c8d1ff bg #161821ff
 35:1 "full refresh · docs 2/2 · pages 5/9" fg #c6c8d1ff bg #161821ff
-36:1 "←→" fg #c6c8d1ff bg #161821ff bold
+36:1 "←→" fg #c6c8d1ff bg #161821ff
 36:3 " mode" fg #6b7089ff bg #161821ff
-36:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
+36:8 " ↑↓" fg #c6c8d1ff bg #161821ff
 36:11 " sel" fg #6b7089ff bg #161821ff
-36:16 "⏎" fg #c6c8d1ff bg #161821ff bold
+36:15 " ⏎" fg #c6c8d1ff bg #161821ff
 36:17 " open" fg #6b7089ff bg #161821ff
-36:23 "g" fg #c6c8d1ff bg #161821ff bold
+36:22 " g" fg #c6c8d1ff bg #161821ff
 36:24 " grp" fg #6b7089ff bg #161821ff
-36:29 "a" fg #c6c8d1ff bg #161821ff bold
-36:31 "r" fg #c6c8d1ff bg #161821ff bold
-36:33 "?" fg #c6c8d1ff bg #161821ff bold
+36:28 " a r ?" fg #c6c8d1ff bg #161821ff

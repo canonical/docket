@@ -6,6 +6,7 @@ import {
   sharedCloseDetail,
   soonReplyDetail,
 } from "../../../../testing/details.js";
+import { teamSettings } from "../../../../testing/facts.js";
 import { recordedNow } from "../../../../testing/recorded.js";
 import {
   overReview,
@@ -25,6 +26,7 @@ export default meta;
 
 const reading = {
   waiting: { "example#13": "close" },
+  clock: true,
   now: recordedNow,
   timezone: "Europe/Paris",
   width: 40,
@@ -39,7 +41,15 @@ export const Review: Story<ThreadAccordionProps> = {
   },
 };
 
-/** A reply: the latest message in full, then when the reply began. */
+/**
+ * The same review while its details are read: the snapshot's lines at
+ * once, and those the details complete ending in a dimmed `…`.
+ */
+export const Loading: Story<ThreadAccordionProps> = {
+  args: { ...reading, row: overReview, detail: pendingDetail },
+};
+
+/** A reply: who wrote the message and when, the message in full, then when the reply began. */
 export const Reply: Story<ThreadAccordionProps> = {
   args: {
     ...reading,
@@ -57,9 +67,22 @@ export const Close: Story<ThreadAccordionProps> = {
   },
 };
 
-/** The details are still being read. */
-export const Loading: Story<ThreadAccordionProps> = {
-  args: { ...reading, row: soonReply, detail: pendingDetail },
+/**
+ * A closed thread in activity while its details are read: the snapshot
+ * holds nothing of it, so the accordion says `loading…`.
+ */
+export const RestingLoading: Story<ThreadAccordionProps> = {
+  args: {
+    ...reading,
+    clock: false,
+    row: {
+      repo: "example",
+      thread: overReview.wait.thread,
+      people: teamSettings.people,
+      viewer: "alice",
+    },
+    detail: pendingDetail,
+  },
 };
 
 /**
@@ -83,11 +106,11 @@ export const PausedUnheld: Story<ThreadAccordionProps> = {
   },
 };
 
-/** Reading the details failed, with a short reason. */
+/** Reading the details failed: the reason under what the snapshot showed. */
 export const Failed: Story<ThreadAccordionProps> = {
   args: {
     ...reading,
     row: overReview,
-    detail: failDetail(new Error("GitHub gave no answer within 10 seconds.")),
+    detail: failDetail(new Error("GitHub timed out.")),
   },
 };

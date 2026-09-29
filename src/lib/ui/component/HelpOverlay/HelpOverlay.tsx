@@ -43,7 +43,10 @@ const HelpOverlay = ({
     <box flexDirection="column">
       {groupCommands(commands).map(([group, lines]) => (
         <box key={group} flexDirection="column" flexShrink={0} marginTop={1}>
-          <GroupHeading text={group} width={width} />
+          <GroupHeading
+            heading={{ text: group, fit: "trimmed" }}
+            width={width}
+          />
           {lines.map((line) => {
             const keys = trimText(writeKeys(line), width - indent);
             const gap = " ".repeat(
@@ -54,9 +57,7 @@ const HelpOverlay = ({
               <box key={line.label} flexDirection="column" flexShrink={0}>
                 <text fg={tokens["color.text"]}>
                   {pad}
-                  <span attributes={tokens["typography.weight.bold"]}>
-                    {keys}
-                  </span>
+                  {keys}
                   {gap}
                   {trimText(line.label, room)}
                 </text>

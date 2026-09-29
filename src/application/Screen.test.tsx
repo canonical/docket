@@ -499,19 +499,19 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await (await show(viewOf(cache))).redraw();
       expect(screen.lines).toEqual([
         "owed",
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
-        " ┃Fix the parser · alice ✗ checks",
-        "  dave · 3d ago",
-        "  Rebased on main. Could someone look",
-        "  again?",
-        "  example stack 3 · 2 of 3 · → main",
-        "  below #11 merged, above #13 open",
-        "",
+        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+        `┃┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
+        "┃┆○ dave · 3d ago",
+        "┃┆Rebased on main. Could someone look",
+        "┃┆again?",
+        "┃┆waiting since Mon 10:00 · target 24h",
+        "┃┆example stack 3 · 2 of 3 · → main",
+        "╹┆below #11 merged, above #13 open",
         "2 over · 1 soon · 3 on track",
         "synced 0m ago",
         "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
-      expect(screen.look("example#12 reply")?.bg).toBe(
+      expect(screen.look("example#12 PR reply")?.bg).toBe(
         tokens["color.background.selected"],
       );
       expect(screen.look("synced")?.fg).toBe(tokens["color.text.muted"]);
@@ -539,7 +539,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(view, 40, () => {}, 17);
       const owed = await vi.waitFor(async () => {
         const drawn = await screen.redraw();
-        expect(drawn.lines.at(7)).toMatch(/^▌ docs#4 reply/);
+        expect(drawn.lines.at(7)).toMatch(/^[┃│] docs#4 issue reply/);
         return drawn;
       });
       expect(owed.lines.slice(1, 7)).toEqual([
@@ -558,21 +558,21 @@ describe("Screen", { timeout: 15_000 }, () => {
       [
         16,
         [
-          "▌ docs#4 reply                  18d over",
-          "  Where do tokens live?",
-          "  alice, bob",
-          "  dave · 3d ago",
-          "  Rebased on main. Could someone look",
-          "  again?",
+          "┃ docs#4 issue reply ◉ alice    18d over",
+          "┃ Where do tokens live?",
+          `┃${" ".repeat(25)}◉ alice, ◐ bob`,
+          "┃ ◉ alice · 27d ago",
+          "╹ waiting since Tue 10:00 · target 24h",
+          "",
         ],
       ],
       [
         14,
         [
-          "▌ docs#4 reply                  18d over",
-          "  Where do tokens live?",
-          "  alice, bob",
-          "  dave · 3d ago",
+          "┃ docs#4 issue reply ◉ alice    18d over",
+          "┃ Where do tokens live?",
+          `┃${" ".repeat(25)}◉ alice, ◐ bob`,
+          "┃ ◉ alice · 27d ago",
         ],
       ],
     ])(
@@ -591,7 +591,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         const screen = await show(view, 40, () => {}, height);
         const owed = await vi.waitFor(async () => {
           const drawn = await screen.redraw();
-          expect(drawn.lines.at(7)).toMatch(/^▌ docs#4 reply/);
+          expect(drawn.lines.at(7)).toMatch(/^[┃│] docs#4 issue reply/);
           return drawn;
         });
         expect(owed.lines.slice(1, height - 3)).toEqual([
@@ -641,7 +641,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(view, 60, () => {}, 16);
       await vi.waitFor(async () => {
         const drawn = await screen.redraw();
-        expect(drawn.lines.at(1)).toMatch(/^▌┃example#12 reply/);
+        expect(drawn.lines.at(1)).toMatch(/^┃┆example#12 PR reply/);
       });
     });
 
@@ -670,7 +670,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  ✗ no team in docket.yaml, so every comment starts a reply",
         "  wait",
       ]);
-      expect(owed.lines.join("\n")).toMatch(/docs#4 reply/);
+      expect(owed.lines.join("\n")).toMatch(/docs#4 issue reply/);
     });
 
     it("says nothing is owed when no repository is watched", async () => {
@@ -696,7 +696,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         ),
       );
       expect((await screen.redraw()).lines.at(1)).toMatch(
-        /^▌┃example#12 reply/,
+        /^┃┆example#12 PR reply/,
       );
     });
 
@@ -719,22 +719,22 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showRecorded();
       const down = await press(screen, "j");
       expect(down.lines.slice(1, 4)).toEqual([
-        `▌┃example#12 close${" ".repeat(15)}2h over`,
-        " ┃Fix the parser · alice ✗ checks",
-        "  age 7d · owner alice",
+        `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
+        `┃┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
+        "┃┆age 7d · owner ◉ alice",
       ]);
       expect(down.lines.join("\n")).not.toContain("example#12 reply");
-      expect(down.look("example#12 close")?.bg).toBe(
+      expect(down.look("example#12 PR close")?.bg).toBe(
         tokens["color.background.selected"],
       );
       const back = await press(screen, "up");
       expect(back.lines.at(1)).toBe(
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
       );
       expect((await press(screen, "k")).lines.at(1)).toBe(back.lines.at(1));
       const last = await press(screen, "down", "j", "j", "j", "j", "j");
       expect(last.lines.at(1)).toBe(
-        `▌ example#15 close${" ".repeat(14)}29d left`,
+        `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
       );
     });
 
@@ -743,14 +743,14 @@ describe("Screen", { timeout: 15_000 }, () => {
       const grouped = await press(screen, "j", "g");
       expect(grouped.lines.slice(0, 2)).toEqual([
         `owed${" ".repeat(28)}by owner`,
-        `▌┃example#12 close${" ".repeat(15)}2h over`,
+        `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
       ]);
       const first = await press(screen, "k");
       expect(first.lines.slice(1, 3)).toEqual([
-        "alice",
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+        `┃┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
       ]);
-      expect(first.look("alice")?.bg).not.toBe(
+      expect(first.look("example#12 PR reply")?.bg).toBe(
         tokens["color.background.selected"],
       );
       expect((await press(screen, "k")).lines.slice(1, 3)).toEqual(
@@ -761,37 +761,37 @@ describe("Screen", { timeout: 15_000 }, () => {
     it("moves a page at a time, as many rows as the list shows, never past either end", async () => {
       const short = await showRecorded();
       expect((await press(short, "pagedown")).lines.at(1)).toBe(
-        `▌┃example#12 close${" ".repeat(15)}2h over`,
+        `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
       );
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const tall = await (await show(viewOf(cache), 40, () => {}, 20)).redraw();
       const screen = await press(tall, "g");
       expect(screen.lines.slice(1, 3)).toEqual([
-        "alice",
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        "◉ alice ────────────────────────────────",
+        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
       ]);
       // alice's three rows fill the screen, bob's heading below them.
       const page = await press(screen, "pagedown");
       expect(page.lines.slice(8, 10)).toEqual([
-        "bob",
-        `▌ docs#4 close${" ".repeat(18)}10d left`,
+        `╵${" ".repeat(25)}◉ alice, ● bob`,
+        "● bob ──────────────────────────────────",
       ]);
       expect(page.look("bob")?.bg).not.toBe(
         tokens["color.background.selected"],
       );
       const last = await press(screen, "pagedown", "pagedown");
       expect(last.lines.slice(10, 12)).toEqual([
-        `▌ example#15 close${" ".repeat(14)}29d left`,
-        "  Crash on start · unassigned",
+        "│ example#15 issue close ◐ car… 29d left",
+        `│ Crash on start${" ".repeat(14)}unassigned`,
       ]);
-      expect(last.lines.at(12)).toBe("  age 2d · owner unassigned");
+      expect(last.lines.at(12)).toBe("│ age 2d · owner unassigned");
       const first = await press(screen, "pageup", "pageup", "pageup");
       expect(first.lines.slice(1, 5)).toEqual([
-        "alice",
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
-        " ┃Fix the parser · alice ✗ checks",
-        "  dave · 3d ago",
+        "◉ alice ────────────────────────────────",
+        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+        `┃┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
+        "┃┆○ dave · 3d ago",
       ]);
     });
 
@@ -799,13 +799,13 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showRecorded();
       const last = await press(screen, "end");
       expect(last.lines.slice(1, 3)).toEqual([
-        `▌ example#15 close${" ".repeat(14)}29d left`,
-        "  Crash on start · unassigned",
+        `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
+        `╵┆Fix the parser${" ".repeat(9)}✗ checks  ● bob`,
       ]);
       expect((await press(screen, "end")).lines.at(1)).toBe(last.lines.at(1));
       const first = await press(screen, "home");
       expect(first.lines.at(1)).toBe(
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
       );
       expect((await press(screen, "home")).lines.at(1)).toBe(first.lines.at(1));
     });
@@ -817,7 +817,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       await press(screen, "pagedown", "end");
       const closed = await press(screen, "escape");
       expect(closed.lines.at(1)).toBe(
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
       );
     });
 
@@ -847,7 +847,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
       const moved = await press(screen, "left", "j");
       expect(moved.lines.at(1)).toBe(
-        `▌┃example#12 close${" ".repeat(15)}2h over`,
+        `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
       );
     });
 
@@ -856,7 +856,9 @@ describe("Screen", { timeout: 15_000 }, () => {
       await press(screen, "j", "l");
       const activity = await waitUntil(async () => {
         const drawn = await screen.redraw();
-        expect(drawn.lines.at(1)).toContain("docs#4");
+        expect(drawn.lines.at(2)).toContain(
+          `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
+        );
         return drawn;
       });
       expect(activity.look("docs#4")?.bg).toBe(
@@ -864,7 +866,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
       const owed = await press(screen, "h");
       expect(owed.lines.at(1)).toBe(
-        `▌┃example#12 close${" ".repeat(15)}2h over`,
+        `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
       );
     });
 
@@ -901,17 +903,22 @@ describe("Screen", { timeout: 15_000 }, () => {
         ...viewOf(cache, everyCapability, readRecorded, readDetail),
         now: () => new Date(recordedNow),
       };
-      const screen = await (await show(view)).redraw();
-      const failure = "  ✗ failed: The provider failed with";
+      // Tall enough for the failure's line under the snapshot's lines.
+      const screen = await (await show(view, 40, () => {}, 16)).redraw();
+      const failed = (lines: readonly string[]) =>
+        lines.some((line) =>
+          line.slice(2).startsWith("✗ failed: The provider"),
+        );
       await waitUntil(async () =>
-        expect((await screen.redraw()).lines.at(3)).toBe(failure),
+        expect(failed((await screen.redraw()).lines)).toBe(true),
       );
       // The tick draws the screen again, with the selection where it was.
       const ticked = await screen.redraw(() => vi.advanceTimersByTime(1_000));
-      expect(ticked.lines.at(3)).toBe(failure);
+      expect(ticked.lines.at(3)).toBe("┃┆○ dave · 3d ago");
+      expect(failed(ticked.lines)).toBe(true);
       expect(readDetail).toHaveBeenCalledOnce();
       const back = await press(screen, "j", "j", "k", "k");
-      expect(back.lines.at(3)).toBe("  dave · 3d ago");
+      expect(back.lines.at(3)).toBe("┃┆○ dave · 3d ago");
       expect(readDetail.mock.calls.map(([thread]) => thread.number)).toEqual([
         12, 15, 12,
       ]);
@@ -946,11 +953,11 @@ describe("Screen", { timeout: 15_000 }, () => {
       const readDetail = readForever();
       readDetail.mockResolvedValueOnce(parserFixDetail);
       const { screen, cache, refresh } = await showRefreshing(readDetail);
-      expect(screen.lines.at(3)).toBe("  dave · 3d ago");
+      expect(screen.lines.at(3)).toBe("┃┆○ dave · 3d ago");
       const before = cache.threads();
       const refreshed = await refresh();
       expect(cache.threads()).not.toBe(before);
-      expect(refreshed.lines.at(3)).toBe("  dave · 3d ago");
+      expect(refreshed.lines.at(3)).toBe("┃┆○ dave · 3d ago");
       expect(readNumbers(readDetail)).toEqual([12]);
     });
 
@@ -970,7 +977,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         tokensGuide,
       ];
       const changing = await refresh();
-      expect(changing.lines.at(3)).toBe("  dave · 3d ago");
+      expect(changing.lines.at(3)).toBe("┃┆○ dave · 3d ago");
       expect(readNumbers(readDetail)).toEqual([12, 12]);
       const reply = {
         author: bob,
@@ -984,8 +991,8 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(await drawFrames(screen)).not.toContain("loading…");
       const changed = await screen.redraw();
       expect(changed.lines.slice(3, 5)).toEqual([
-        "  bob · 10m ago",
-        "  Merging it.",
+        "┃┆○ dave · 3d ago",
+        "┃┆Rebased on main. Could someone look",
       ]);
       await refresh();
       expect(readNumbers(readDetail)).toEqual([12, 12]);
@@ -1012,11 +1019,11 @@ describe("Screen", { timeout: 15_000 }, () => {
         () => threads,
       );
       const running = await press(screen, "j", "j", "j", "j");
-      expect(running.lines).toContain("  checks running 1 of 2");
+      expect(running.lines).toContain("│┆checks running 1 of 2");
       readDetail.mockReturnValueOnce(promise);
       threads = [{ ...parserFix, checks: "passing" }, crash, tokensGuide];
       const finishing = await refresh();
-      expect(finishing.lines).toContain("  checks running 1 of 2");
+      expect(finishing.lines).toContain("│┆checks running 1 of 2");
       resolve({
         ...parserFixDetail,
         checks: [
@@ -1026,7 +1033,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       });
       expect(await drawFrames(screen)).not.toContain("loading…");
       const finished = await screen.redraw();
-      expect(finished.lines).toContain("  checks passed 2 of 2");
+      expect(finished.lines).toContain("│┆checks passed 2 of 2");
     });
 
     it("gives the reason in place of the earlier details when a changed thread's read fails, never drawing loading", async () => {
@@ -1048,7 +1055,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       reject(providerError("GITHUB_TIMED_OUT"));
       expect(await drawFrames(screen)).not.toContain("loading…");
       const failed = await screen.redraw();
-      expect(failed.lines.at(3)).toBe("  ✗ failed: The provider failed with");
+      expect(failed.lines.at(3)).toBe("┃┆○ dave · 3d ago");
     });
 
     it("keeps a failed read's reason through a refresh, reading again only when the selection comes back", async () => {
@@ -1057,12 +1064,10 @@ describe("Screen", { timeout: 15_000 }, () => {
       readDetail.mockResolvedValue(parserFixDetail);
       const { screen, refresh } = await showRefreshing(readDetail);
       const refreshed = await refresh();
-      expect(refreshed.lines.at(3)).toBe(
-        "  ✗ failed: The provider failed with",
-      );
+      expect(refreshed.lines.at(3)).toBe("┃┆○ dave · 3d ago");
       expect(readNumbers(readDetail)).toEqual([12]);
       const back = await press(screen, "j", "j", "k", "k");
-      expect(back.lines.at(3)).toBe("  dave · 3d ago");
+      expect(back.lines.at(3)).toBe("┃┆○ dave · 3d ago");
       expect(readNumbers(readDetail)).toEqual([12, 15, 12]);
     });
 
@@ -1081,7 +1086,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       await refresh();
       const back = await press(screen, "k", "k", "k", "k", "k", "k");
       expect(back.lines.at(1)).toBe(
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
+        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
       );
       expect(readNumbers(readDetail).filter((n) => n === 12)).toEqual([12, 12]);
     });
@@ -1105,7 +1110,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
       const drawn = await waitUntil(async () => {
         const { lines } = await shown.screen.redraw();
-        expect(lines.at(1)).toBe("  docs#4 issue                       16h");
+        expect(lines.at(2)).toMatch(/^ {2}docs#4 issue .*16h$/);
         expect(lines.join("\n")).not.toContain("loading…");
         return lines;
       });
@@ -1159,8 +1164,8 @@ describe("Screen", { timeout: 15_000 }, () => {
       await refresh();
       await waitUntil(() => expect(readNumbers(readDetail)).toEqual([4, 4]));
       expect(await drawFrames(screen)).not.toContain("loading…");
-      expect((await screen.redraw()).lines.slice(2, 6)).toEqual(
-        drawn.slice(2, 6),
+      expect((await screen.redraw()).lines.slice(3, 7)).toEqual(
+        drawn.slice(3, 7),
       );
     });
   });
@@ -1224,7 +1229,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         const { lines } = await screen.redraw();
         expect(lines.slice(1, 3).join("")).not.toBe("");
         expect(lines).not.toContain("  refresh in progress…");
-        expect(lines).not.toContain("  loading…");
+        expect(lines.map((line) => line.slice(2))).not.toContain("loading…");
       });
       return screen.redraw();
     }
@@ -1272,17 +1277,17 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showActivity(40);
       expect(screen.lines).toEqual([
         `activity${" ".repeat(19)}24h · by kind`,
-        "ISSUES",
-        "  docs#4 issue                       16h",
+        "ISSUES ─────────────────────────────────",
+        `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
-        "  alice, bob",
-        "  age 27d · owner alice, bob",
-        "  last activity 25m ago · dave",
+        `${" ".repeat(26)}◉ alice, ● bob`,
+        "  age 27d · owner ◉ alice, ● bob",
+        "  last activity 27d ago",
         "  labels none",
+        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
+        "PULL REQUESTS ──────────────────────────",
         "",
         "",
-        "    example-sync labelled kind=docs  16h",
-        "PULL REQUESTS",
         "",
         "2 threads · 3 events",
         "synced 0m ago",
@@ -1330,17 +1335,17 @@ describe("Screen", { timeout: 15_000 }, () => {
       await press(screen, "j");
       const drawn = await waitUntil(async () => {
         const lines = (await screen.redraw()).lines;
-        expect(lines).not.toContain("  loading…");
+        expect(lines.map((line) => line.slice(2))).not.toContain("loading…");
         return lines;
       });
       const row = drawn.indexOf(" ┃Fix the parser · alice");
       expect(drawn.slice(row + 1, row + 7)).toEqual([
-        "  dave · 3d ago",
-        "  Rebased on main. Could someone look again?",
-        "  waiting since Mon 10:00 · target 24h",
-        "  example stack 3 · 2 of 3 · → main",
-        "  below #11 merged, above #13 open",
-        `    ✗ checks failed (lint)${" ".repeat(31)}25m`,
+        `activity${" ".repeat(39)}24h · by kind`,
+        "PULL REQUESTS ──────────────────────────────────────────────",
+        ` ┆example#12 PR ○ dave${" ".repeat(35)}25m`,
+        ` ┆Fix the parser${" ".repeat(37)}◉ alice`,
+        " ┆○ dave · 3d ago",
+        " ┆Rebased on main. Could someone look again?",
       ]);
     });
 
@@ -1376,22 +1381,24 @@ describe("Screen", { timeout: 15_000 }, () => {
       await press(screen, "a");
       const opened = await waitUntil(async () => {
         const drawn = await screen.redraw();
-        expect(drawn.lines).not.toContain("  loading…");
+        expect(drawn.lines.map((line) => line.slice(2))).not.toContain(
+          "loading…",
+        );
         return drawn;
       });
       expect(opened.lines).toEqual([
         "assigning docs#4",
-        "ISSUES",
-        "  docs#4 issue                       16h",
+        "ISSUES ─────────────────────────────────",
+        `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
-        "  alice, bob",
+        `${" ".repeat(26)}◉ alice, ● bob`,
         "  filter:",
-        "  ☑ alice",
-        "  ☑ bob",
-        "  ☐ carol",
-        "  ☐ dave",
-        "    example-sync labelled kind=docs  16h",
-        "PULL REQUESTS",
+        "  ☑ ◉ alice",
+        "  ☑ ● bob",
+        "  ☐ ◐ carol",
+        "  ☐ ○ dave",
+        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
+        "PULL REQUESTS ──────────────────────────",
         "",
         "2 threads · 3 events",
         "synced 0m ago",
@@ -1400,8 +1407,8 @@ describe("Screen", { timeout: 15_000 }, () => {
       const closed = await press(screen, "escape");
       expect(closed.lines.slice(0, 3)).toEqual([
         `activity${" ".repeat(19)}24h · by kind`,
-        "ISSUES",
-        "  docs#4 issue                       16h",
+        "ISSUES ─────────────────────────────────",
+        `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
       ]);
     });
 
@@ -1412,13 +1419,13 @@ describe("Screen", { timeout: 15_000 }, () => {
       await cache.refresh();
       await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(2)).toBe(
-          "  docs#4 issue                       16h",
+          `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         ),
       );
       await press(screen, "a");
       const opened = await waitUntil(async () => {
         const drawn = await screen.redraw();
-        expect(drawn.lines).toContain("  ☐ carol");
+        expect(drawn.lines).toContain("  ☐ ◐ carol");
         return drawn;
       });
       expect(opened.lines.at(0)).toBe("assigning docs#4");
@@ -1429,16 +1436,16 @@ describe("Screen", { timeout: 15_000 }, () => {
       const refused = await press(screen, "r");
       expect(refused.lines).toEqual([
         `activity${" ".repeat(19)}24h · by kind`,
-        "ISSUES",
-        "  docs#4 issue                       16h",
+        "ISSUES ─────────────────────────────────",
+        `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
-        "  alice, bob",
+        `${" ".repeat(26)}◉ alice, ● bob`,
         "  ✗ docs#4 is not a pull request, so no",
         "  review can be requested on it",
         "  Recovery: select a pull request, then",
         "  press r",
-        "    example-sync labelled kind=docs  16h",
-        "PULL REQUESTS",
+        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
+        "PULL REQUESTS ──────────────────────────",
         "",
         "",
         "2 threads · 3 events",
@@ -1462,15 +1469,15 @@ describe("Screen", { timeout: 15_000 }, () => {
       const refused = await press(screen, "a");
       expect(refused.lines).toEqual([
         `activity${" ".repeat(19)}24h · by kind`,
-        "ISSUES",
-        "  docs#4 issue                       16h",
+        "ISSUES ─────────────────────────────────",
+        `  docs#4 issue${" ".repeat(23)}16h`,
         "  Where do tokens live?",
         "  ✗ docs#4 was not open at the last",
         "  refresh",
         "  Recovery: open it with ⏎ and change it",
         "  on GitHub",
-        "    example-sync labelled kind=docs  16h",
-        "PULL REQUESTS",
+        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
+        "PULL REQUESTS ──────────────────────────",
         "",
         "",
         "",
@@ -1485,7 +1492,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const byRepo = await press(screen, "g");
       expect(byRepo.lines.slice(0, 2)).toEqual([
         `activity${" ".repeat(39)}24h · by repo`,
-        "example",
+        "example ────────────────────────────────────────────────────",
       ]);
       const wider = await press(screen, "g", "t");
       await waitUntil(async () =>
@@ -1495,7 +1502,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
       expect(wider.lines.at(0)).toBe(`activity${" ".repeat(49)}48h`);
       expect((await screen.redraw()).lines).toContain(
-        `    dave commented${" ".repeat(40)}3d`,
+        ` ┆  ○ dave commented${" ".repeat(38)}3d`,
       );
     });
 
@@ -1526,8 +1533,8 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
       const screen = await showActivity(40, cache);
       expect(screen.lines.slice(1, 3)).toEqual([
-        "PULL REQUESTS",
-        " ┃example#12 PR                      25m",
+        "PULL REQUESTS ──────────────────────────",
+        ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
       ]);
       expect(screen.lines.slice(13, 15)).toEqual([
         "1 thread · 2 events",
@@ -1679,13 +1686,13 @@ describe("Screen", { timeout: 15_000 }, () => {
       await new Promise((resolve) => setTimeout(resolve, 300));
       const drawn = await screen.redraw();
       expect(drawn.lines.slice(1, 8)).toEqual([
-        "▌┃example#12 reply                                   4d over",
-        " ┃Fix the parser · alice ✗ checks",
-        "  dave · 3d ago",
-        "  …",
-        "  waiting since Mon 10:00 · target 24h",
-        "  example stack 3 · 2 of 3 · → main",
-        "  …",
+        `┃┆example#12 PR reply ○ dave${" ".repeat(25)}4d over`,
+        `┃┆Fix the parser${" ".repeat(27)}✗ checks  ◉ alice`,
+        "┃┆○ dave · 3d ago",
+        "┃┆Rebased on main. Could someone look again?",
+        "┃┆waiting since Mon 10:00 · target 24h",
+        "┃┆example stack 3 · 2 of 3 · → main",
+        "╹┆…",
       ]);
       expect(drawn.look("…")?.fg).toBe(tokens["color.text.muted"]);
       expect(readDetails).not.toHaveBeenCalled();
@@ -1818,7 +1825,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(activity.lines.at(11)).toBe(
         "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       );
-      expect(activity.look("t")?.bold).toBe(true);
+      expect(activity.look(" time")?.fg).toBe(tokens["color.text.muted"]);
     });
 
     it("shows every key with ?, grouped, and hides it again", async () => {
@@ -1828,37 +1835,37 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(help.lines).toEqual([
         "help",
         "",
-        "Mode",
+        "Mode ───────────────────────────────────",
         "  ← →  h l switch mode (owed ↔ activity)",
-        "           docket opens owed",
-        "  g        next grouping",
-        "  t        next time window (activity)",
-        "           owed: most overdue first",
-        "           activity: newest first",
+        `${" ".repeat(11)}docket opens owed`,
+        `  g${" ".repeat(8)}next grouping`,
+        `  t${" ".repeat(8)}next time window (activity)`,
+        `${" ".repeat(11)}owed: most overdue first`,
+        `${" ".repeat(11)}activity: newest first`,
         "",
-        "List",
+        "List ───────────────────────────────────",
         "  ↑ ↓  k j move the selection",
-        "           (opens the accordion)",
-        "  ⇞ ⇟      a page up or down",
+        `${" ".repeat(11)}(opens the accordion)`,
+        `  ⇞ ⇟${" ".repeat(6)}a page up or down`,
         "  home end the first or last thread",
         "",
-        "Thread",
-        "  ⏎        open in the browser",
-        "  a        assign",
-        "  r        request review",
+        "Thread ─────────────────────────────────",
+        `  ⏎${" ".repeat(8)}open in the browser`,
+        `  a${" ".repeat(8)}assign`,
+        `  r${" ".repeat(8)}request review`,
         "",
-        "Editor",
-        "  type     filter",
-        "  ↑ ↓      move",
-        "  ␣        toggle",
-        "  ⏎        apply",
-        "  esc      cancel",
+        "Editor ─────────────────────────────────",
+        `  type${" ".repeat(5)}filter`,
+        `  ↑ ↓${" ".repeat(6)}move`,
+        `  ␣${" ".repeat(8)}toggle`,
+        `  ⏎${" ".repeat(8)}apply`,
+        `  esc${" ".repeat(6)}cancel`,
         "",
-        "App",
-        "  ?        show or hide help",
-        "  esc      close help",
-        "  R        full refresh",
-        "  q        quit",
+        "App ────────────────────────────────────",
+        `  ?${" ".repeat(8)}show or hide help`,
+        `  esc${" ".repeat(6)}close help`,
+        `  R${" ".repeat(8)}full refresh`,
+        `  q${" ".repeat(8)}quit`,
         "",
         "  windows are counted in working time",
         "",
@@ -1906,14 +1913,14 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showRecorded();
       const short = await press(screen, "j");
       expect(short.lines.at(1)).toBe(
-        `▌┃example#12 close${" ".repeat(15)}2h over`,
+        `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
       );
       screen.setup.resize(40, 30);
       const tall = await screen.redraw();
       expect(tall.lines.slice(1, 4)).toEqual([
-        `▌┃example#12 reply${" ".repeat(15)}4d over`,
-        " ┃Fix the parser · alice ✗ checks",
-        `▌┃example#12 close${" ".repeat(15)}2h over`,
+        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+        `╹┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
+        `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
       ]);
     });
   });
@@ -1952,7 +1959,9 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(view, 40, onQuit);
       await press(await screen.redraw(), "j", "j");
       await waitUntil(async () =>
-        expect((await screen.redraw()).lines).not.toContain("  loading…"),
+        expect(
+          (await screen.redraw()).lines.map((line) => line.slice(2)),
+        ).not.toContain("loading…"),
       );
       const before = (await screen.redraw()).lines;
       for (const key of [

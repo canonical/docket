@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { overReview, sharedClose } from "../../../../testing/rows.js";
+import {
+  botReview,
+  overReview,
+  sharedClose,
+} from "../../../../testing/rows.js";
 import countRowLines from "./countRowLines.js";
 
 describe("countRowLines", () => {
@@ -10,5 +14,10 @@ describe("countRowLines", () => {
   it("counts the owners' lines of a shared wait, which grow as the pane narrows", () => {
     expect(countRowLines(sharedClose, 40)).toBe(3);
     expect(countRowLines(sharedClose, 20)).toBe(4);
+  });
+
+  it("counts every line of a selected row's title in full, and a line for the owner when it does not fit beside the last", () => {
+    expect(countRowLines(botReview, 40, true)).toBe(3);
+    expect(countRowLines(botReview, 60, true)).toBe(2);
   });
 });

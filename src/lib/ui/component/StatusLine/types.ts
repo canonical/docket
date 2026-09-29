@@ -1,4 +1,5 @@
 import type { AttentionState, CacheStatus } from "../../../cache/index.js";
+import type { Owner } from "../../../owed/index.js";
 
 /**
  * What the status line says, and what kind of message it is: the kind
@@ -14,6 +15,8 @@ export interface StatusMessage {
     | "notice"
     | "freshness";
   readonly text: string;
+  /** The people the message names, drawn after its words behind their marks. */
+  readonly people?: readonly Owner[];
 }
 
 /** The result of something the user did, such as opening a thread. */
@@ -22,6 +25,11 @@ export interface ActionResult {
   readonly failed: boolean;
   /** What happened, in plain words, such as `could not open the browser`. */
   readonly text: string;
+  /**
+   * The people it happened to, drawn after the words behind their marks
+   * and in their hues, as in `✓ assigned ◐ erin`.
+   */
+  readonly people?: readonly Owner[];
   /** When it happened: the line shows it for 5 seconds from then. */
   readonly at: Date;
 }

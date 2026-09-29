@@ -2,6 +2,7 @@ export {
   type ActionResult,
   CountsLine,
   type CountsLineProps,
+  countAccordionLines,
   countRowLines,
   EmptyState,
   type EmptyStateProps,
@@ -28,16 +29,18 @@ export {
   type WrappedNotice,
   wrapNotice,
 } from "./component/index.js";
-export { accordionHeight, minColumns } from "./constants.js";
+export { minColumns } from "./constants.js";
 export { default as createKeymap } from "./createKeymap.js";
 export { default as describeClock } from "./describeClock.js";
 export {
   type KeyCommand,
   type UseCommandsProps,
   type UseCommandsResult,
+  type UseDrawnLinesResult,
   type UseListScrollProps,
   type UseListScrollResult,
   useCommands,
+  useDrawnLines,
   useListScroll,
 } from "./hooks/index.js";
 export { Pane, type PaneProps } from "./layout/index.js";

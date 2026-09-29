@@ -1,6 +1,6 @@
 /**
  * Draws a component with OpenTUI's test renderer and reads the screen
- * back: the characters of each line, and the colours and weight of the
+ * back: the characters of each line, and the colours, weight and slant of the
  * text on it. Every screen drawn is destroyed after its test.
  */
 
@@ -27,11 +27,12 @@ export interface Screen {
   readonly setup: TestRendererSetup;
 }
 
-/** The colours and weight of a run of text, colours as `#rrggbb`. */
+/** The colours, weight and slant of a run of text, colours as `#rrggbb`. */
 export interface Look {
   readonly fg: string;
   readonly bg: string;
   readonly bold: boolean;
+  readonly italic: boolean;
 }
 
 const drawn: TestRendererSetup[] = [];
@@ -69,6 +70,7 @@ function read(setup: TestRendererSetup): Screen {
           fg: hex(span.fg),
           bg: hex(span.bg),
           bold: (span.attributes & TextAttributes.BOLD) !== 0,
+          italic: (span.attributes & TextAttributes.ITALIC) !== 0,
         }
       );
     },

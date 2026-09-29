@@ -2,10 +2,10 @@
 |←→ mode ↑↓ sel g grp ?
 
 runs
-1:1 "←→" fg #c6c8d1ff bg #00000000 bold
+1:1 "←→" fg #c6c8d1ff bg #00000000
 1:3 " mode" fg #6b7089ff bg #00000000
-1:9 "↑↓" fg #c6c8d1ff bg #00000000 bold
+1:8 " ↑↓" fg #c6c8d1ff bg #00000000
 1:11 " sel" fg #6b7089ff bg #00000000
-1:16 "g" fg #c6c8d1ff bg #00000000 bold
+1:15 " g" fg #c6c8d1ff bg #00000000
 1:17 " grp" fg #6b7089ff bg #00000000
-1:22 "?" fg #c6c8d1ff bg #00000000 bold
+1:21 " ?" fg #c6c8d1ff bg #00000000

@@ -58,10 +58,12 @@ describe("StatusLine", () => {
     expect(screen.look("✗ could")?.fg).toBe(tokens["color.text.error"]);
   });
 
-  it("draws an action's result with its ✓ in the success colour", async () => {
+  it("draws an action's result with its ✓ in the success colour, each person it names behind their mark", async () => {
     const screen = await draw(<StatusLine {...ActionDone.args} />, 40);
-    expect(screen.lines.at(0)).toBe("✓ assigned alice");
+    expect(screen.lines.at(0)).toBe("✓ assigned ◉ alice, ◐ erin");
     expect(screen.look("✓ assigned")?.fg).toBe(tokens["color.text.success"]);
+    expect(screen.look("◉ alice")?.fg).toBe(tokens["color.text.team"]);
+    expect(screen.look("◐ erin")?.fg).toBe(tokens["color.text.internal"]);
   });
 
   it("dims an idle pane's freshness and the key that wakes it, whole at 40 columns", async () => {

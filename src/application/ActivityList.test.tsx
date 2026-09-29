@@ -6,7 +6,7 @@ import {
   pendingDetail,
   sharedCloseDetail,
 } from "../testing/details.js";
-import { alice, exampleSync } from "../testing/facts.js";
+import { alice, exampleSync, teamSettings } from "../testing/facts.js";
 import { recordedActivity, recordedNow } from "../testing/recorded.js";
 import { overReview } from "../testing/rows.js";
 import { draw, drawSuspending } from "../testing/terminal.js";
@@ -16,6 +16,7 @@ import ActivityList, { type ActivityListProps } from "./ActivityList.js";
 const reading: Omit<ActivityListProps, "list" | "selected" | "width"> = {
   readDetail: () => pendingDetail,
   measureWaits: () => [],
+  readPeople: () => teamSettings.people,
   now: recordedNow,
   timezone: "Europe/Paris",
   height: 20,
@@ -35,24 +36,25 @@ describe("ActivityList", () => {
       20,
     );
     expect(screen.lines.slice(0, 5)).toEqual([
-      "ISSUES",
-      "  docs#4 issue                       16h",
+      "ISSUES ─────────────────────────────────",
+      `  docs#4 issue ● alice${" ".repeat(15)}16h`,
       "  Where do tokens live?",
-      "  alice, bob",
-      "    example-sync labelled kind=docs  16h",
+      `${" ".repeat(26)}● alice, ● bob`,
+      `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
     ]);
     expect(screen.lines.slice(5, 8)).toEqual([
-      "PULL REQUESTS",
-      " ┃example#12 PR                      25m",
-      " ┃Fix the parser · alice",
+      "PULL REQUESTS ──────────────────────────",
+      ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
+      ` ┆Fix the parser${" ".repeat(17)}● alice`,
     ]);
-    expect(screen.lines.slice(13, 17)).toEqual([
-      "    ✗ checks failed (lint)           25m",
-      "    alice requested review            3h",
-      "    dave commented                    3d",
+    expect(screen.lines.slice(8, 13)).toEqual([
+      " ┆loading…",
+      ` ┆  ✗ checks failed (lint)${" ".repeat(11)}25m`,
+      ` ┆  ● alice requested review${" ".repeat(10)}3h`,
+      ` ┆  ○ dave commented${" ".repeat(18)}3d`,
       "",
     ]);
-    expect(screen.look("PULL REQUESTS")?.bold).toBe(true);
+    expect(screen.look("PULL REQUESTS")?.bold).toBe(false);
   });
 
   it("lists the threads without headings when not grouped, at 60 columns", async () => {
@@ -66,9 +68,9 @@ describe("ActivityList", () => {
       60,
     );
     expect(screen.lines.slice(0, 3)).toEqual([
-      ` ┃example#12 PR${" ".repeat(42)}25m`,
-      " ┃Fix the parser · alice",
-      `    ✗ checks failed (lint)${" ".repeat(31)}25m`,
+      ` ┆example#12 PR ○ dave${" ".repeat(35)}25m`,
+      ` ┆Fix the parser${" ".repeat(37)}● alice`,
+      ` ┆  ✗ checks failed (lint)${" ".repeat(31)}25m`,
     ]);
     expect(screen.look("✗ checks failed")?.fg).toBe(tokens["color.text.error"]);
   });
@@ -90,7 +92,7 @@ describe("ActivityList", () => {
     expect(screen.look("PULL REQUESTS")?.bg).not.toBe(selected);
   });
 
-  it("opens the five-line accordion under the selected thread, above its events", async () => {
+  it("opens the accordion under the selected thread, above its events", async () => {
     const screen = await draw(
       <ActivityList
         {...reading}
@@ -102,13 +104,13 @@ describe("ActivityList", () => {
       20,
     );
     expect(screen.lines.slice(3, 10)).toEqual([
-      "  alice, bob",
+      `${" ".repeat(26)}● alice, ● bob`,
       "  loading…",
-      "",
-      "",
-      "",
-      "",
-      "    example-sync labelled kind=docs  16h",
+      `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
+      "PULL REQUESTS ──────────────────────────",
+      ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
+      ` ┆Fix the parser${" ".repeat(17)}● alice`,
+      ` ┆  ✗ checks failed (lint)${" ".repeat(11)}25m`,
     ]);
   });
 
@@ -134,12 +136,12 @@ describe("ActivityList", () => {
       20,
     );
     expect(screen.lines.slice(1, 7)).toEqual([
-      "  docs#4 issue                       16h",
+      `  docs#4 issue ● alice${" ".repeat(15)}16h`,
       "  Where do tokens live?",
-      "  alice, bob",
+      `${" ".repeat(26)}● alice, ● bob`,
       "  filter:",
       "  ☑ alice",
-      "    example-sync labelled kind=docs  16h",
+      `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
     ]);
     expect(screen.look("docs#4")?.bg).not.toBe(
       tokens["color.background.selected"],
@@ -160,13 +162,13 @@ describe("ActivityList", () => {
       20,
     );
     expect(screen.lines.slice(7, 10)).toEqual([
-      " ┃Fix the parser · alice",
-      "  asked by alice 3d ago",
-      "  1 push since · 2 files · +65 −12",
+      ` ┆Fix the parser${" ".repeat(17)}● alice`,
+      " ┆asked by ● alice 3d ago",
+      " ┆1 push since · 2 files · +65 −12",
     ]);
   });
 
-  it("shows a closed thread no wait runs on with its age, owner and labels", async () => {
+  it("shows a closed thread no wait runs on with its age, owner and labels, each person behind their mark", async () => {
     // A closed thread's facts are not held, so its row names no owner.
     const list = recordedActivity("kind");
     const closed = {
@@ -192,10 +194,10 @@ describe("ActivityList", () => {
       20,
     );
     expect(screen.lines.slice(1, 6)).toEqual([
-      "  docs#4 issue                       16h",
+      `  docs#4 issue ● alice${" ".repeat(15)}16h`,
       "  Where do tokens live?",
-      "  age 6d · owner alice",
-      "  last activity 3h ago · bob",
+      "  age 6d · owner ● alice",
+      "  last activity 3h ago · ● bob",
       "  labels kind=docs",
     ]);
   });
@@ -207,14 +209,14 @@ describe("ActivityList", () => {
         list={recordedActivity("kind")}
         selected={1}
         width={40}
-        height={12}
+        height={10}
       />,
       40,
     );
     expect(screen.lines.slice(0, 3)).toEqual([
-      "PULL REQUESTS",
-      " ┃example#12 PR                      25m",
-      " ┃Fix the parser · alice",
+      "PULL REQUESTS ──────────────────────────",
+      ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
+      ` ┆Fix the parser${" ".repeat(17)}● alice`,
     ]);
   });
 
@@ -234,7 +236,7 @@ describe("ActivityList", () => {
         40,
         height,
       );
-    await drawShown(12);
+    await drawShown(10);
     expect(shown.at(-1)).toBe(1);
     await drawShown(20);
     expect(shown.at(-1)).toBe(2);
@@ -243,7 +245,7 @@ describe("ActivityList", () => {
   it("scrolls back up to the threads above once the region grows tall enough", async () => {
     let grow = () => {};
     const Growing = () => {
-      const [height, setHeight] = useState(12);
+      const [height, setHeight] = useState(10);
       grow = () => setHeight(20);
       return (
         <ActivityList
@@ -256,11 +258,39 @@ describe("ActivityList", () => {
       );
     };
     const screen = await draw(<Growing />, 40, 20);
-    expect(screen.lines.at(0)).toBe("PULL REQUESTS");
+    expect(screen.lines.at(0)).toBe("PULL REQUESTS ──────────────────────────");
     const tall = await screen.redraw(() => grow());
     expect(tall.lines.slice(0, 2)).toEqual([
-      "ISSUES",
-      "  docs#4 issue                       16h",
+      "ISSUES ─────────────────────────────────",
+      `  docs#4 issue ● alice${" ".repeat(15)}16h`,
     ]);
+  });
+
+  it("scrolls to keep a closed thread whole once its close body takes the place of loading…", async () => {
+    const closed = Promise.resolve(sharedCloseDetail);
+    const shown: number[] = [];
+    const screen = await drawSuspending(
+      <ActivityList
+        {...reading}
+        list={recordedActivity("kind")}
+        selected={0}
+        readDetail={() => closed}
+        height={7}
+        width={40}
+        onShownRows={(rows) => shown.push(rows)}
+      />,
+      40,
+      7,
+    );
+    expect(screen.lines).toEqual([
+      `  docs#4 issue ● alice${" ".repeat(15)}16h`,
+      "  Where do tokens live?",
+      `${" ".repeat(26)}● alice, ● bob`,
+      "  age 6d · owner ● alice, ● bob",
+      "  last activity 3h ago · ● bob",
+      "  labels priority=high · kind=bug ·",
+      "  area/icons",
+    ]);
+    expect(shown.at(-1)).toBe(1);
   });
 });

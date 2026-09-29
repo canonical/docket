@@ -2,6 +2,7 @@ import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -35,7 +36,10 @@ import type { Thread } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
+import describeCandidate from "./describeCandidate.js";
 import drawStandIn from "./drawStandIn.js";
+import findPeople from "./findPeople.js";
+import gatherNamed from "./gatherNamed.js";
 import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
@@ -53,6 +57,7 @@ import useHeldDetails from "./useHeldDetails.js";
 import useReadAhead from "./useReadAhead.js";
 import useScreenKeys from "./useScreenKeys.js";
 import useSelectedWatch from "./useSelectedWatch.js";
+import useShownList from "./useShownList.js";
 import useViewer from "./useViewer.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
@@ -172,18 +177,18 @@ export default function Screen({
   // so a binding never holds a list older than the one on screen.
   const drawnRows = useRef<readonly (WaitRow | ActivityThread)[]>([]);
   const drawnSelection = useRef<WaitRow | ActivityThread>(undefined);
+  const heldThreads = cached?.threads;
+  const named = useMemo(() => gatherNamed(heldThreads ?? []), [heldThreads]);
   const editor = useEditor({
     source: "cache" in source ? source : undefined,
     findTeam: (repo) => listTeam(watched, repo),
+    describeCandidate: (name, thread) =>
+      describeCandidate(name, thread, watched, you.viewer, named),
     now,
     onResult: setAction,
     covered: help || narrow,
   });
-  // How many rows the list showed last: how far a page moves the selection.
-  const pageRows = useRef(1);
-  const recordShownRows = (rows: number) => {
-    pageRows.current = Math.max(1, rows);
-  };
+  const shownList = useShownList(mode);
   // Every move stops at the first or the last row, never past it.
   const moveTo = (choose: (place: number, last: number) => number) =>
     setSelections((current) => {
@@ -223,7 +228,7 @@ export default function Screen({
       switchMode: setMode,
       moveSelection: (step) => moveTo((place) => place + step),
       movePage: (direction) =>
-        moveTo((place) => place + direction * pageRows.current),
+        moveTo((place) => place + direction * shownList.pageRows.current),
       moveToEnd: (direction) =>
         moveTo((_place, last) => (direction < 0 ? 0 : last)),
       // Only a row is ever selected, in either mode, so a heading or a
@@ -398,7 +403,7 @@ export default function Screen({
         timezone={settings.time.timezone}
         width={width}
         height={height - 4}
-        onShownRows={recordShownRows}
+        {...shownList.list}
         {...(teamless && { notice: teamless })}
         {...(slot && { editor: slot })}
       />
@@ -411,13 +416,15 @@ export default function Screen({
         selected={placeSelection(rows, selections.activity)}
         readDetail={(row) => readRowDetail(row, readThreadDetail)}
         measureWaits={(row) =>
-          buildThreadWaits(row.thread, threads, watched, at)
+          buildThreadWaits(row.thread, threads, watched, at, you.viewer)
         }
+        readPeople={(row) => findPeople(row.thread.repo, threads, watched)}
+        viewer={you.viewer}
         now={at}
         timezone={settings.time.timezone}
         width={width}
         height={height - 4}
-        onShownRows={recordShownRows}
+        {...shownList.list}
         {...(slot && { editor: slot })}
       />
     );

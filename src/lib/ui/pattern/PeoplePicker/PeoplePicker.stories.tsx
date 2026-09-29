@@ -1,4 +1,5 @@
 import type { Meta, Story } from "../../../../testing/stories.js";
+import type { PersonGroup } from "../../../owed/index.js";
 import PeoplePicker from "./PeoplePicker.js";
 import type { PeoplePickerProps } from "./types.js";
 
@@ -11,6 +12,13 @@ export default meta;
 
 const ignoreTyping = () => {};
 
+/** A login or team the picker offers, with its group. */
+const person = (text: string, group: PersonGroup) => ({
+  text,
+  fit: "trimmed" as const,
+  group,
+});
+
 /**
  * Assigning: the current assignee ticked, then the team, people in the
  * thread, and someone beyond the team under the cursor.
@@ -20,27 +28,33 @@ export const Assigning: Story<PeoplePickerProps> = {
     filter: "",
     onFilter: ignoreTyping,
     options: [
-      { name: "alice", ticked: true },
-      { name: "bob", ticked: false },
-      { name: "dave", ticked: false },
-      { name: "designer-example", ticked: false },
+      { owner: person("alice", "you"), ticked: true },
+      { owner: person("bob", "team"), ticked: false },
+      { owner: person("dave", "outside"), ticked: false },
+      { owner: person("designer-example", "internal"), ticked: false },
     ],
     cursor: 3,
     width: 40,
   },
 };
 
-/** Requesting review: the current request, a suggestion, collaborators and a team. */
+/**
+ * Requesting review: the current request, a suggestion, a team the viewer
+ * belongs to, a collaborator and another team of the organisation.
+ */
 export const RequestingReview: Story<PeoplePickerProps> = {
   args: {
     filter: "",
     onFilter: ignoreTyping,
     options: [
-      { name: "bob", ticked: true },
-      { name: "carol", ticked: false },
-      { name: "alice", ticked: false },
-      { name: "dave", ticked: false },
-      { name: "example-org/reviewers", ticked: false },
+      { owner: person("bob", "team"), ticked: true },
+      { owner: person("carol", "internal"), ticked: false },
+      { owner: person("example-org/ui", "you"), ticked: false },
+      { owner: person("dave", "outside"), ticked: false },
+      {
+        owner: person("example-org/reviewers", "internal"),
+        ticked: false,
+      },
     ],
     cursor: 4,
     width: 40,
@@ -53,8 +67,8 @@ export const Refused: Story<PeoplePickerProps> = {
     filter: "",
     onFilter: ignoreTyping,
     options: [
-      { name: "alice", ticked: false },
-      { name: "designer-example", ticked: true },
+      { owner: person("alice", "you"), ticked: false },
+      { owner: person("designer-example", "internal"), ticked: true },
     ],
     cursor: 1,
     notice: {
@@ -83,7 +97,7 @@ export const Scrolled: Story<PeoplePickerProps> = {
     filter: "",
     onFilter: ignoreTyping,
     options: Array.from({ length: 9 }, (_, place) => ({
-      name: `person-${place + 1}`,
+      owner: person(`person-${place + 1}`, "outside"),
       ticked: place === 0,
     })),
     cursor: 6,

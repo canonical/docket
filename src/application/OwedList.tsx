@@ -1,13 +1,14 @@
 import { type ReactNode, useEffect } from "react";
 import type { OwedList as List, WaitRow } from "../lib/owed/index.js";
 import {
-  accordionHeight,
+  countAccordionLines,
   countRowLines,
   GroupHeading,
   Notice,
   type ShownDetail,
   ThreadAccordion,
   ThreadRow,
+  useDrawnLines,
   useListScroll,
   wrapNotice,
 } from "../lib/ui/index.js";
@@ -42,9 +43,16 @@ export interface OwedListProps {
   readonly editor?: { readonly node: ReactNode; readonly lines: number };
   /**
    * Told, after each draw, how many rows the list shows, headings not
-   * counted, which is how far a page moves the selection.
+   * counted, which is how far a page moves the selection, and the place
+   * of the first block it shows, heading or row, which `firstShown` takes
+   * when the list is drawn anew.
    */
-  readonly onShownRows: (rows: number) => void;
+  readonly onShownRows: (rows: number, first: number) => void;
+  /**
+   * The place of the first block shown when the list is drawn anew, such
+   * as after the help or a pane too narrow took its place.
+   */
+  readonly firstShown?: number;
 }
 
 /** One heading, or one row with the accordion when it is selected. */
@@ -75,15 +83,17 @@ export default function OwedList({
   notice,
   editor,
   onShownRows,
+  firstShown,
 }: OwedListProps): ReactNode {
   const waiting = listWaiting(list.groups.flatMap((group) => group.rows));
+  const drawn = useDrawnLines();
   const blocks: Block[] = [];
   let place = 0;
   let from = 0;
   let to = 0;
   for (const { heading, rows } of list.groups) {
     if (heading) {
-      const node = <GroupHeading text={heading.text} width={width} />;
+      const node = <GroupHeading heading={heading} width={width} />;
       blocks.push({ key: heading.text, row: false, lines: 1, node });
     }
     for (const row of rows) {
@@ -96,20 +106,33 @@ export default function OwedList({
         key: `${heading?.text ?? ""} ${identifyRow(row)}`,
         row: true,
         lines:
-          countRowLines(row, width) +
-          (open ? (editor?.lines ?? accordionHeight) : 0),
+          countRowLines(row, width, open && !editor) +
+          (open
+            ? (editor?.lines ??
+              drawn.measure(
+                identifyRow(row),
+                countAccordionLines(row, { now, timezone, waiting }, width),
+              ))
+            : 0),
         node: (
           <>
-            <ThreadRow row={row} selected={open && !editor} width={width} />
+            <ThreadRow
+              row={row}
+              selected={open && !editor}
+              continued={open && !editor}
+              width={width}
+            />
             {open && editor?.node}
             {open && !editor && (
               <ThreadAccordion
                 row={row}
                 detail={readDetail(row)}
                 waiting={waiting}
+                clock
                 now={now}
                 timezone={timezone}
                 width={width}
+                onLines={drawn.report(identifyRow(row))}
               />
             )}
           </>
@@ -124,10 +147,16 @@ export default function OwedList({
         wrapNotice(notice.reason, notice.recovery, width - 2),
       ).flat().length
     : 0;
-  const shown = useListScroll({ blocks, from, to, room: height - noticeLines });
+  const { shown, first } = useListScroll({
+    blocks,
+    from,
+    to,
+    room: height - noticeLines,
+    first: firstShown,
+  });
   const shownRows = shown.filter(({ row }) => row).length;
   useEffect(() => {
-    onShownRows(shownRows);
+    onShownRows(shownRows, first);
   });
   // The notice and the rows each have a box of their own lines, so a
   // selected row taller than the room left is cut at the bottom, and a

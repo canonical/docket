@@ -1,7 +1,7 @@
 import type { Duration } from "../clock/index.js";
 import type { People, Repo } from "../config/index.js";
 import type { WindowEvent } from "../events/index.js";
-import type { Field, FieldList, Owner } from "../owed/index.js";
+import type { Field, FieldList, Owner, Person } from "../owed/index.js";
 import type { Thread, ThreadSummary } from "../waits/index.js";
 
 /** How activity splits its list into sections. */
@@ -44,6 +44,13 @@ export interface EventLine {
   readonly event: WindowEvent;
   /** `alice pushed 2 commits`. */
   readonly text: Field;
+  /**
+   * Who did it, with their group, which a face marks: absent for failed
+   * checks, which name the checks rather than who ran them.
+   */
+  readonly actor?: Person;
+  /** What they did, `pushed 2 commits`: the text after the actor. */
+  readonly action: Field;
   /** `25m`, `3h` or `1d`. */
   readonly age: Field;
 }
@@ -65,6 +72,8 @@ export interface ThreadRow {
    */
   readonly distance: Field;
   readonly title: Field;
+  /** Who opened the thread, when its facts were given. */
+  readonly author?: Person;
   /**
    * The one owner, or `unassigned`. Absent when the owners take a line of
    * their own, or when the thread's facts were not given.

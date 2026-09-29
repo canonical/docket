@@ -1,20 +1,20 @@
 40 columns
 |activity                             72h
-| ┃example#12 PR                      25m
-| ┃Fix the parser · alice
-|  dave · 3d ago
-|  Rebased on main. Could someone look
-|  again?
-|  example stack 3 · 2 of 3 · → main
-|  below #11 merged, above #13 open
-|    ✗ checks failed (lint)           25m
-|    alice requested review            3h
-|    dave commented                    3d
-|  docs#4 issue                       16h
+| ┆example#12 PR ○ dave               25m
+| ┆Fix the parser                 ◉ alice
+| ┆○ dave · 3d ago
+| ┆Rebased on main. Could someone look
+| ┆again?
+| ┆waiting since Mon 10:00 · target 24h
+| ┆example stack 3 · 2 of 3 · → main
+| ┆below #11 merged, above #13 open
+| ┆  ✗ checks failed (lint)           25m
+| ┆  ◉ alice requested review          3h
+| ┆  ○ dave commented                  3d
+|  docs#4 issue ◉ alice               16h
 |  Where do tokens live?
-|  alice, bob
-|    example-sync labelled kind=docs  16h
-|
+|                          ◉ alice, ● bob
+|    ■ example-sync labelled kind=do… 16h
 |
 |
 |
@@ -37,39 +37,67 @@
 |←→ mode ↑↓ sel ⏎ open g grp t time a r ?
 
 runs
-1:1 "activity" fg #c6c8d1ff bg #161821ff bold
-1:9 "                             72h" fg #c6c8d1ff bg #161821ff
+1:1 "activity                             72h" fg #c6c8d1ff bg #161821ff
 2:1 " " fg #ffffffff bg #2e3244ff
-2:2 "┃" fg #6b7089ff bg #2e3244ff
-2:3 "example#12 PR                      25m" fg #c6c8d1ff bg #2e3244ff
+2:2 "┆" fg #6b7089ff bg #2e3244ff
+2:3 "example#12 PR " fg #c6c8d1ff bg #2e3244ff bold
+2:17 "○ dave" fg #89b8c2ff bg #2e3244ff bold
+2:23 "               25m" fg #c6c8d1ff bg #2e3244ff bold
 3:1 " " fg #ffffffff bg #2e3244ff
-3:2 "┃" fg #6b7089ff bg #2e3244ff
-3:3 "Fix the parser · alice" fg #c6c8d1ff bg #2e3244ff
-3:25 "                " fg #ffffffff bg #2e3244ff
-4:1 "  dave · 3d ago" fg #c6c8d1ff bg #161821ff
-5:1 "  Rebased on main. Could someone look" fg #c6c8d1ff bg #161821ff
-6:1 "  again?" fg #c6c8d1ff bg #161821ff
-7:1 "  example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #161821ff
-8:1 "  below #11 merged, above #13 open" fg #6b7089ff bg #161821ff
-9:1 "    ✗ checks failed (lint)           25m" fg #e27878ff bg #161821ff
-10:1 "    alice requested review            3h" fg #c6c8d1ff bg #161821ff
-11:1 "    dave commented                    3d" fg #c6c8d1ff bg #161821ff
-12:3 "docs#4 issue                       16h" fg #c6c8d1ff bg #161821ff
-13:3 "Where do tokens live?" fg #c6c8d1ff bg #161821ff
-14:3 "alice, bob" fg #c6c8d1ff bg #161821ff
-15:1 "    example-sync labelled kind=docs  16h" fg #6b7089ff bg #161821ff
+3:2 "┆" fg #6b7089ff bg #2e3244ff
+3:3 "Fix the parser" fg #c6c8d1ff bg #2e3244ff italic
+3:17 "                 " fg #c6c8d1ff bg #2e3244ff
+3:34 "◉ alice" fg #84a0c6ff bg #2e3244ff
+4:1 " " fg #ffffffff bg #2e3244ff
+4:2 "┆" fg #6b7089ff bg #2e3244ff
+4:3 "○ dave" fg #89b8c2ff bg #2e3244ff
+4:9 " · 3d ago" fg #6b7089ff bg #2e3244ff
+4:18 "                       " fg #ffffffff bg #2e3244ff
+5:1 " " fg #ffffffff bg #2e3244ff
+5:2 "┆" fg #6b7089ff bg #2e3244ff
+5:3 "Rebased on main. Could someone look" fg #c6c8d1ff bg #2e3244ff
+5:38 "   " fg #ffffffff bg #2e3244ff
+6:1 " " fg #ffffffff bg #2e3244ff
+6:2 "┆" fg #6b7089ff bg #2e3244ff
+6:3 "again?" fg #c6c8d1ff bg #2e3244ff
+6:9 "                                " fg #ffffffff bg #2e3244ff
+7:1 " " fg #ffffffff bg #2e3244ff
+7:2 "┆waiting since Mon 10:00 · target 24h" fg #6b7089ff bg #2e3244ff
+7:39 "  " fg #ffffffff bg #2e3244ff
+8:1 " " fg #ffffffff bg #2e3244ff
+8:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #2e3244ff
+8:36 "     " fg #ffffffff bg #2e3244ff
+9:1 " " fg #ffffffff bg #2e3244ff
+9:2 "┆below #11 merged, above #13 open" fg #6b7089ff bg #2e3244ff
+9:35 "      " fg #ffffffff bg #2e3244ff
+10:2 "┆" fg #6b7089ff bg #161821ff
+10:5 "✗ checks failed (lint)" fg #e27878ff bg #161821ff
+10:27 "           25m" fg #c6c8d1ff bg #161821ff
+11:2 "┆" fg #6b7089ff bg #161821ff
+11:5 "◉ alice" fg #84a0c6ff bg #161821ff
+11:12 " requested review          3h" fg #c6c8d1ff bg #161821ff
+12:2 "┆" fg #6b7089ff bg #161821ff
+12:5 "○ dave" fg #89b8c2ff bg #161821ff
+12:11 " commented                  3d" fg #c6c8d1ff bg #161821ff
+13:3 "docs#4 issue " fg #c6c8d1ff bg #161821ff bold
+13:16 "◉ alice" fg #84a0c6ff bg #161821ff bold
+13:23 "               16h" fg #c6c8d1ff bg #161821ff bold
+14:3 "Where do tokens live?" fg #c6c8d1ff bg #161821ff italic
+15:27 "◉ alice" fg #84a0c6ff bg #161821ff
+15:34 ", " fg #c6c8d1ff bg #161821ff
+15:36 "● bob" fg #84a0c6ff bg #161821ff
+16:5 "■ example-sync labelled kind=do…" fg #6b7089ff bg #161821ff
+16:38 "16h" fg #6b7089ff bg #161821ff
 34:1 "2 threads · 4 events" fg #c6c8d1ff bg #161821ff
 35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
-36:1 "←→" fg #c6c8d1ff bg #161821ff bold
+36:1 "←→" fg #c6c8d1ff bg #161821ff
 36:3 " mode" fg #6b7089ff bg #161821ff
-36:9 "↑↓" fg #c6c8d1ff bg #161821ff bold
+36:8 " ↑↓" fg #c6c8d1ff bg #161821ff
 36:11 " sel" fg #6b7089ff bg #161821ff
-36:16 "⏎" fg #c6c8d1ff bg #161821ff bold
+36:15 " ⏎" fg #c6c8d1ff bg #161821ff
 36:17 " open" fg #6b7089ff bg #161821ff
-36:23 "g" fg #c6c8d1ff bg #161821ff bold
+36:22 " g" fg #c6c8d1ff bg #161821ff
 36:24 " grp" fg #6b7089ff bg #161821ff
-36:29 "t" fg #c6c8d1ff bg #161821ff bold
+36:28 " t" fg #c6c8d1ff bg #161821ff
 36:30 " time" fg #6b7089ff bg #161821ff
-36:36 "a" fg #c6c8d1ff bg #161821ff bold
-36:38 "r" fg #c6c8d1ff bg #161821ff bold
-36:40 "?" fg #c6c8d1ff bg #161821ff bold
+36:35 " a r ?" fg #c6c8d1ff bg #161821ff

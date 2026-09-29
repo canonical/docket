@@ -105,6 +105,8 @@ export interface WaitRow {
   readonly stacked: boolean;
   /** `example#12`. */
   readonly reference: Field;
+  /** `PR`, `issue` or `discussion`. */
+  readonly threadKind: Field;
   /** `reply`, `review` or `close`. */
   readonly kind: Field;
   /** `1d over` or `9h left`. */
@@ -112,6 +114,14 @@ export interface WaitRow {
   readonly title: Field;
   /** Who waits on the move: the wait's author. */
   readonly author: Person;
+  /**
+   * Who asked for the review, on a review wait: the request to the wait's
+   * first owner, or else the latest request. Absent when GitHub does not
+   * record who asked.
+   */
+  readonly requester?: Person;
+  /** Who wrote the thread's latest message, a comment or a review, when it has one. */
+  readonly lastActor?: Person;
   /** The one owner, or `unassigned`; absent when the owners take a line of their own. */
   readonly owner?: Owner;
   /** `draft`, on a draft pull request. */
@@ -122,9 +132,12 @@ export interface WaitRow {
   readonly invalidFile?: Field;
 }
 
-/** A section of the list; without a heading when the list is not grouped. */
+/**
+ * A section of the list; without a heading when the list is not grouped.
+ * An owner's section is headed by the owner, a person with their group.
+ */
 export interface WaitGroup {
-  readonly heading?: Field;
+  readonly heading?: Owner;
   readonly rows: readonly WaitRow[];
 }
 

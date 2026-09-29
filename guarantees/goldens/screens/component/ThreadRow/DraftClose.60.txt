@@ -1,11 +1,15 @@
 60 columns
-|▌┃example#13 close                                   8d left
-| ┃Document the parser · alice draft
+|│┆example#13 PR close ○ dave                         8d left
+|╵┆Document the parser                         draft  ● alice
 
 runs
-1:1 "▌" fg #454b68ff bg #00000000
-1:2 "┃" fg #6b7089ff bg #00000000
-1:3 "example#13 close                                   8d left" fg #c6c8d1ff bg #00000000
-2:2 "┃" fg #6b7089ff bg #00000000
-2:3 "Document the parser · alice" fg #c6c8d1ff bg #00000000
-2:30 " draft" fg #6b7089ff bg #00000000
+1:1 "│" fg #818596ff bg #00000000
+1:2 "┆" fg #6b7089ff bg #00000000
+1:3 "example#13 PR close " fg #c6c8d1ff bg #00000000 bold
+1:23 "○ dave" fg #89b8c2ff bg #00000000 bold
+1:29 "                         8d left" fg #c6c8d1ff bg #00000000 bold
+2:1 "╵" fg #818596ff bg #00000000
+2:2 "┆" fg #6b7089ff bg #00000000
+2:3 "Document the parser" fg #c6c8d1ff bg #00000000 italic
+2:47 "draft" fg #6b7089ff bg #00000000
+2:54 "● alice" fg #84a0c6ff bg #00000000

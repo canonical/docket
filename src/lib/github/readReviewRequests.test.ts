@@ -49,16 +49,23 @@ describe("readReviewRequests", () => {
     expect(byNobody?.requester).toEqual({ login: "ghost", type: "user" });
   });
 
-  it("keeps the latest request to the same reviewer, whatever the order given", () => {
+  it("keeps the latest request to the same reviewer, and who made it, whatever the order given", () => {
     const requests = readReviewRequests(
       [
-        requested("2026-09-23T09:00:00Z", alice),
-        requested("2026-09-22T09:00:00Z", { ...alice, login: "Alice" }),
+        {
+          ...requested("2026-09-23T09:00:00Z", alice),
+          actor: { __typename: "User", login: "carol" },
+        },
+        {
+          ...requested("2026-09-22T09:00:00Z", { ...alice, login: "Alice" }),
+          actor: { __typename: "User", login: "bob" },
+        },
       ],
       none,
     );
     expect(requests).toHaveLength(1);
     expect(requests[0]?.at).toEqual(new Date("2026-09-23T09:00:00Z"));
+    expect(requests[0]?.requester).toEqual({ login: "carol", type: "user" });
   });
 
   it("drops a request a later withdrawal cancelled", () => {

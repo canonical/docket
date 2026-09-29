@@ -20,6 +20,7 @@ export {
   type StatusLineProps,
 } from "./StatusLine/index.js";
 export {
+  countAccordionLines,
   type RestingThread,
   type ShownDetail,
   ThreadAccordion,

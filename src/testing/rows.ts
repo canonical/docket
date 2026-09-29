@@ -7,7 +7,16 @@
 import type { Repo } from "../lib/config/index.js";
 import { listWaits, type WaitRow } from "../lib/owed/index.js";
 import type { Wait } from "../lib/waits/index.js";
-import { at, dave, teamSettings, thread, wait } from "./facts.js";
+import {
+  alice,
+  at,
+  bob,
+  dave,
+  exampleSync,
+  teamSettings,
+  thread,
+  wait,
+} from "./facts.js";
 import { recordedNow } from "./recorded.js";
 
 const example: Repo = {
@@ -53,15 +62,28 @@ export const overReview = measureRow({
     stack: { number: 3, position: 2, size: 3, base: "main" },
     checks: "failing",
     pushes: [{ author: dave, at: at("2026-09-25T11:00+02:00") }],
+    reviewRequests: [
+      { reviewer: bob, requester: alice, at: at("2026-09-25T09:00+02:00") },
+    ],
   }),
   kind: "review",
   owners: ["bob"],
   due: at("2026-09-25T12:00+02:00"),
 });
 
-/** A reply nobody is assigned to, due in three hours. */
+/** A reply nobody is assigned to, due in three hours, to dave's message of Sunday. */
 export const soonReply = measureRow({
-  thread: thread({ number: 15, title: "Crash on start" }),
+  thread: thread({
+    number: 15,
+    title: "Crash on start",
+    comments: [
+      {
+        author: dave,
+        at: at("2026-09-27T12:00+02:00"),
+        text: "It crashes as soon as it starts, before the first frame is drawn.",
+      },
+    ],
+  }),
   kind: "response",
   due: at("2026-09-28T15:00+02:00"),
 });
@@ -77,6 +99,7 @@ export const draftClose = measureRow({
     title: "Document the parser",
     draft: true,
     stack: { number: 3, position: 3, size: 3, base: "main" },
+    assignees: [alice],
   }),
   owners: ["alice"],
   target: { amount: 14, unit: "d" },
@@ -85,15 +108,54 @@ export const draftClose = measureRow({
 
 /**
  * The close of an issue three people own, one of them with a login longer
- * than a row gives a login, with a label of each shape.
+ * than a row gives a login, with a label of each shape; bob spoke last,
+ * three hours ago.
  */
 export const sharedClose = measureRow({
   thread: thread({
     number: 4,
     title: "Where do tokens live?",
     labels: ["priority: high", "kind=bug", "area/icons"],
+    updatedAt: at("2026-09-28T09:00+02:00"),
+    comments: [{ author: bob, at: at("2026-09-28T09:00+02:00") }],
+    assignees: [
+      alice,
+      bob,
+      { login: "carol-at-example-org", type: "user", member: true },
+    ],
   }),
   owners: ["alice", "bob", "carol-at-example-org"],
   target: { amount: 30, unit: "d" },
   due: at("2026-09-21T12:00+02:00"),
+});
+
+/**
+ * A reply dave waits for on an issue with a four-digit number, 22 working
+ * hours over: the reference, both kinds and the distance leave too few
+ * cells at 40 columns for his login, so he leaves the first line.
+ */
+export const crowdedReply = measureRow({
+  thread: thread({ number: 1240, title: "Token naming for the spacing scale" }),
+  kind: "response",
+  owners: [],
+  due: at("2026-09-25T14:00+02:00"),
+});
+
+/**
+ * A review a bot asked for on its own pull request, on track: its login
+ * is cut to the cells left, and its mark stays whole.
+ */
+export const botReview = measureRow({
+  thread: thread({
+    number: 1250,
+    kind: "pullRequest",
+    title: "Update dependency example-lib to 3.24",
+    author: exampleSync,
+    reviewRequests: [{ reviewer: bob, at: at("2026-09-28T09:00+02:00") }],
+  }),
+  kind: "review",
+  author: exampleSync,
+  owners: ["bob"],
+  target: { amount: 3, unit: "d" },
+  due: at("2026-09-30T12:00+02:00"),
 });

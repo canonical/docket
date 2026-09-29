@@ -62,4 +62,15 @@ describe("buildThreadWaits", () => {
     );
     expect(new Set(references(rows))).toEqual(new Set(["example#15"]));
   });
+
+  it("marks the viewer among the people the rows name", () => {
+    const [row] = buildThreadWaits(
+      crash,
+      threads,
+      recordedWatched(),
+      recordedNow,
+      "carol",
+    );
+    expect(row?.author.group).toBe("you");
+  });
 });

@@ -4,8 +4,8 @@ import {
   type WorkingClock,
 } from "../clock/index.js";
 import type { People } from "../config/index.js";
-import type { Wait } from "../waits/index.js";
-import { waitWords } from "./constants.js";
+import type { Message, Wait } from "../waits/index.js";
+import { threadWords, waitWords } from "./constants.js";
 import describeOwners from "./describeOwners.js";
 import describePerson from "./describePerson.js";
 import describeTeam from "./describeTeam.js";
@@ -46,6 +46,20 @@ export default function buildRow(
       ? describeTeam(found, viewer)
       : describePerson(found, people, viewer);
   });
+  const [first] = wait.owners;
+  const asked =
+    wait.kind === "review"
+      ? (thread.reviewRequests.find(
+          ({ reviewer }) =>
+            ("team" in reviewer ? reviewer.team : reviewer.login) === first,
+        ) ?? thread.reviewRequests.at(-1))
+      : undefined;
+  const latest = [...thread.comments, ...thread.reviews].reduce<
+    Message | undefined
+  >(
+    (newest, message) => (newest && newest.at >= message.at ? newest : message),
+    undefined,
+  );
   return {
     wait,
     repo,
@@ -54,10 +68,17 @@ export default function buildRow(
     targetHours: measureDuration(wait.target, time) / hourMilliseconds,
     stacked: thread.stack !== undefined,
     reference: { text: `${repo}#${thread.number}`, fit: "trimmed" },
+    threadKind: { text: threadWords[thread.kind], fit: "trimmed" },
     kind: { text: waitWords[wait.kind], fit: "trimmed" },
     distance: { text, fit: "trimmed" },
     title: { text: thread.title, fit: "trimmed" },
     author: describePerson(wait.author, people, viewer),
+    ...(asked?.requester
+      ? { requester: describePerson(asked.requester, people, viewer) }
+      : {}),
+    ...(latest
+      ? { lastActor: describePerson(latest.author, people, viewer) }
+      : {}),
     ...(thread.draft ? { draft: { text: "draft", fit: "trimmed" } } : {}),
     ...describeOwners(owners),
   };

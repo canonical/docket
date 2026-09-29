@@ -1,13 +1,16 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import trimText from "../../trimText.js";
+import fitPieces from "../../fitPieces.js";
+import markPerson from "../../markPerson.js";
+import measurePieces from "../../measurePieces.js";
+import type { Piece } from "../../types.js";
 import describeStatus from "./describeStatus.js";
 import type { StatusLineProps, StatusMessage } from "./types.js";
 
 /**
  * The colour of each kind of message: an error, and an action that
- * failed, take the field-health colour beside their `✗`, an action that
- * went through takes the success colour beside its `✓`, and freshness is
+ * failed, take the error colour beside their `✗`, an action that went
+ * through takes the success colour beside its `✓`, and freshness is
  * context, so it is dimmed.
  */
 const colours: Readonly<Record<StatusMessage["kind"], string>> = {
@@ -19,6 +22,22 @@ const colours: Readonly<Record<StatusMessage["kind"], string>> = {
   notice: tokens["color.text"],
   freshness: tokens["color.text.muted"],
 };
+
+/**
+ * The message's runs: its words in its kind's colour, then the people it
+ * names, each behind their group's mark and in its hue, as `✓ assigned
+ * ◐ erin`.
+ */
+function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
+  const plain = tokens["color.text"];
+  return [
+    { text, fg: colours[kind] },
+    ...people.flatMap((person, place) => [
+      { text: place === 0 ? " " : ", ", fg: plain },
+      markPerson(person, Number.POSITIVE_INFINITY),
+    ]),
+  ];
+}
 
 /**
  * docket's own state. The left side is the list's, one message at a
@@ -51,16 +70,22 @@ const StatusLine = ({
     action,
     attention,
   );
-  const left = message ? trimText(message.text, width) : "";
+  const runs = message ? fitPieces(describeRuns(message), width) : [];
   const right =
     detailsPaused && message?.kind !== "error" && attention !== "idle"
       ? "details paused"
       : "";
   // At least one cell apart, or the right side is left out.
-  const gap = width - Bun.stringWidth(left) - Bun.stringWidth(right);
+  const gap = width - measurePieces(runs) - Bun.stringWidth(right);
   return (
-    <text fg={message ? colours[message.kind] : tokens["color.text"]}>
-      {left}
+    <text>
+      {runs.map(({ text, fg }, run) => (
+        // A line's runs never reorder, so their place is their key.
+        // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+        <span key={run} fg={fg}>
+          {text}
+        </span>
+      ))}
       {right && gap > 0 && (
         <span fg={tokens["color.text.muted"]}>
           {`${" ".repeat(gap)}${right}`}

@@ -1,11 +1,18 @@
 40 columns
-|▌ example#4 close                5d over
-|  Where do tokens live?
-|  alice, bob, carol-at-ex…
+|┃ example#4 issue close ○ dave   5d over
+|┃ Where do tokens live?
+|╹         ● alice, ● bob, ◐ carol-at-ex…
 
 runs
-1:1 "▌" fg #e27878ff bg #00000000
-1:3 "example#4 close                " fg #c6c8d1ff bg #00000000
-1:34 "5d over" fg #e27878ff bg #00000000
-2:3 "Where do tokens live?" fg #c6c8d1ff bg #00000000
-3:3 "alice, bob, carol-at-ex…" fg #c6c8d1ff bg #00000000
+1:1 "┃" fg #e27878ff bg #00000000
+1:3 "example#4 issue close " fg #c6c8d1ff bg #00000000 bold
+1:25 "○ dave" fg #89b8c2ff bg #00000000 bold
+1:34 "5d over" fg #e27878ff bg #00000000 bold
+2:1 "┃" fg #e27878ff bg #00000000
+2:3 "Where do tokens live?" fg #c6c8d1ff bg #00000000 italic
+3:1 "╹" fg #e27878ff bg #00000000
+3:11 "● alice" fg #84a0c6ff bg #00000000
+3:18 ", " fg #c6c8d1ff bg #00000000
+3:20 "● bob" fg #84a0c6ff bg #00000000
+3:25 ", " fg #c6c8d1ff bg #00000000
+3:27 "◐ carol-at-ex…" fg #a093c7ff bg #00000000

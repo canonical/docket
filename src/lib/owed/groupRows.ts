@@ -1,8 +1,23 @@
 import type { Repo } from "../config/index.js";
 import { collectStacks } from "../stacks/index.js";
-import type { OwedGrouping, WaitGroup, WaitRow } from "./types.js";
+import type { OwedGrouping, Owner, WaitGroup, WaitRow } from "./types.js";
 
 type Section = readonly [heading: string, rows: readonly WaitRow[]];
+
+/**
+ * An owner's section heading: the owner as the section's rows name them,
+ * with their group, so the heading marks them as the rows do; `unassigned`
+ * and a team named as plain text stay text.
+ */
+function findOwner(rows: readonly WaitRow[], text: string): Owner {
+  const key = text.toLowerCase();
+  const named = rows
+    .flatMap((row) => [row.owner, ...(row.owners?.fields ?? [])])
+    .find((owner) => owner?.text.toLowerCase() === key);
+  return named && "group" in named
+    ? { ...named, text }
+    : { text, fit: "trimmed" };
+}
 
 /**
  * Owners alphabetically, then `unassigned`. A wait with two owners is owed
@@ -76,7 +91,10 @@ export default function groupRows(
   return sections
     .filter(([, members]) => members.length > 0)
     .map(([text, members]) => ({
-      heading: { text, fit: "trimmed" },
+      heading:
+        grouping === "owner"
+          ? findOwner(members, text)
+          : { text, fit: "trimmed" },
       rows: members,
     }));
 }

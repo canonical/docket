@@ -1,0 +1,7 @@
+60 columns
+| ┆loading…
+
+runs
+1:1 " " fg #ffffffff bg #2e3244ff
+1:2 "┆loading…" fg #6b7089ff bg #2e3244ff
+1:11 "                                                  " fg #ffffffff bg #2e3244ff
