@@ -1,11 +1,11 @@
 import { type ReactNode, useEffect } from "react";
 import type { OwedList as List, WaitRow } from "../lib/owed/index.js";
-import type { ThreadDetail } from "../lib/provider/index.js";
 import {
   accordionHeight,
   countRowLines,
   GroupHeading,
   Notice,
+  type ShownDetail,
   ThreadAccordion,
   ThreadRow,
   useListScroll,
@@ -20,7 +20,7 @@ export interface OwedListProps {
   /** The place of the selected row among the rows, in the order drawn. */
   readonly selected: number;
   /** Reads the details of the selected row's thread for its accordion. */
-  readonly readDetail: (row: WaitRow) => Promise<ThreadDetail>;
+  readonly readDetail: (row: WaitRow) => Promise<ShownDetail>;
   /** The instant ages are measured at. */
   readonly now: Date;
   /** The time zone a time of day is written in. */

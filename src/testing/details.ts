@@ -81,3 +81,24 @@ export function failDetail(error: unknown): Promise<ThreadDetail> {
   failed.catch(() => {});
   return failed;
 }
+
+/**
+ * `detail` as the snapshot holds it while reading is paused: marked
+ * partial, its messages without their text, and none of what only a read
+ * gives.
+ */
+export function pauseDetail(
+  detail: ThreadDetail,
+): ThreadDetail & { readonly partial: true } {
+  return {
+    createdAt: detail.createdAt,
+    updatedAt: detail.updatedAt,
+    labels: detail.labels,
+    assignees: detail.assignees,
+    messages: detail.messages.map((message) => ({ ...message, body: "" })),
+    requests: [],
+    files: [],
+    checks: [],
+    partial: true,
+  };
+}

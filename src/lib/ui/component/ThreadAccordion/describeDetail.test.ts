@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   overReviewDetail,
+  pauseDetail,
   sharedCloseDetail,
   soonReplyDetail,
 } from "../../../../testing/details.js";
@@ -255,6 +256,72 @@ describe("describeDetail", () => {
       );
       expect(texts(stack)).toEqual(["example stack 3 · 2 of 3 · → main"]);
     });
+  });
+});
+
+describe("describeDetail, while reading is paused", () => {
+  it("ends a reply's text, which needs the read, in a pending line", () => {
+    const { body } = describeDetail(
+      soonReply,
+      pauseDetail(soonReplyDetail),
+      reading,
+    );
+    expect(body).toEqual([
+      { text: "dave · 1d ago", tone: "text" },
+      { text: "", tone: "text", pending: true },
+      {
+        text: "waiting since Tue 10:00 · target 24h",
+        tone: "text",
+        optional: true,
+      },
+    ]);
+  });
+
+  it("gives a review's age, pushes and checks from the snapshot, each pending what the read adds", () => {
+    const { body, stack } = describeDetail(
+      overReview,
+      pauseDetail(overReviewDetail),
+      reading,
+    );
+    expect(body).toEqual([
+      { text: "asked 6d ago", tone: "text", pending: true },
+      { text: "1 push since", tone: "text", pending: true },
+      { text: "✗ checks failed", tone: "error", pending: true },
+    ]);
+    expect(stack).toEqual([
+      { text: "example stack 3 · 2 of 3 · → main", tone: "muted" },
+      { text: "", tone: "muted", pending: true },
+    ]);
+  });
+
+  it("says a review's checks are running or passed, pending which, or that there are none", () => {
+    const rollUp = (checks?: "passing" | "running") =>
+      describeDetail(
+        measureRow({
+          ...overReview.wait,
+          thread: { ...overReview.wait.thread, checks },
+        }),
+        pauseDetail(overReviewDetail),
+        reading,
+      ).body.at(2);
+    expect(rollUp("running")).toEqual({
+      text: "checks running",
+      tone: "text",
+      pending: true,
+    });
+    expect(rollUp("passing")?.text).toBe("checks passed");
+    expect(rollUp()).toEqual({ text: "no checks", tone: "text" });
+  });
+
+  it("gives a close whole, since the snapshot holds all it shows", () => {
+    const { body } = describeDetail(
+      sharedClose,
+      pauseDetail(sharedCloseDetail),
+      reading,
+    );
+    expect(body).toEqual(
+      describeDetail(sharedClose, sharedCloseDetail, reading).body,
+    );
   });
 });
 

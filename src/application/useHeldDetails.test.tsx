@@ -1,7 +1,7 @@
 import { act, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { ThreadDetail } from "../lib/provider/index.js";
-import type { ThreadSummary } from "../lib/waits/index.js";
+import type { Thread, ThreadSummary } from "../lib/waits/index.js";
 import { providerError } from "../testing/provider.js";
 import { crash, parserFix, parserFixDetail } from "../testing/recorded.js";
 import { draw } from "../testing/terminal.js";
@@ -32,12 +32,16 @@ async function probe(start: UseHeldDetailsProps) {
       read: (thread: ThreadSummary) => Promise<ThreadDetail>,
       thread: ThreadSummary,
       version: string,
-    ) => readHeld(read, thread, version),
+      facts?: Thread,
+    ) => readHeld(read, thread, version, facts),
     change: (props: Partial<UseHeldDetailsProps>) =>
       act(async () => change(props)),
     drawn: () => drawn,
   };
 }
+
+/** When reading resumes, in the tests that pause it. */
+const resumes = new Date("2026-09-28T13:00:00Z");
 
 describe("useHeldDetails", () => {
   it("gives the details read for a thread, reading them once while its version stays", async () => {
@@ -101,25 +105,49 @@ describe("useHeldDetails", () => {
     expect(read).toHaveBeenCalledTimes(2);
   });
 
-  it("reads nothing while reading is paused, giving the details held whatever the version, and none for a thread with none held", async () => {
+  it("reads nothing while reading is paused, giving the details held whatever the version", async () => {
     const read = vi.fn(async () => parserFixDetail);
     const { give, change } = await probe({
-      kept: [parserFix, crash],
+      kept: [parserFix],
       selected: () => parserFix,
     });
     const first = give(read, parserFix, "1");
     await first;
-    await change({ paused: true });
+    await change({ resumes });
     expect(give(read, parserFix, "2")).toBe(first);
-    const none = give(read, crash, "1");
-    const settled = await Promise.race([
-      none.then(() => "settled"),
-      new Promise((resolve) => setTimeout(resolve, 50, "waiting")),
-    ]);
-    expect(settled).toBe("waiting");
     expect(read).toHaveBeenCalledTimes(1);
-    await change({ paused: false });
+    await change({ resumes: undefined });
     expect(await give(read, parserFix, "2")).toBe(parserFixDetail);
     expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it("gives a thread with no details held what the snapshot holds while reading is paused, settled at once and marked partial", async () => {
+    const read = vi.fn(async () => parserFixDetail);
+    const { give } = await probe({
+      kept: [crash],
+      selected: () => crash,
+      resumes,
+    });
+    const given = give(read, crash, "1", crash);
+    expect(given).toMatchObject({ status: "fulfilled" });
+    expect(await given).toMatchObject({
+      partial: true,
+      createdAt: crash.createdAt,
+      labels: crash.labels,
+    });
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it("gives a thread the snapshot holds nothing of when reading resumes while it is paused, settled at once", async () => {
+    const read = vi.fn(async () => parserFixDetail);
+    const { give } = await probe({
+      kept: [crash],
+      selected: () => crash,
+      resumes,
+    });
+    const given = give(read, crash, "1");
+    expect(given).toMatchObject({ status: "fulfilled" });
+    expect(await given).toEqual({ resumes });
+    expect(read).not.toHaveBeenCalled();
   });
 });

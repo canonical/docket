@@ -21,6 +21,7 @@ export {
 } from "./StatusLine/index.js";
 export {
   type RestingThread,
+  type ShownDetail,
   ThreadAccordion,
   type ThreadAccordionProps,
 } from "./ThreadAccordion/index.js";

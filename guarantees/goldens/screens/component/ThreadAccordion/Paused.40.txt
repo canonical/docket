@@ -1,0 +1,16 @@
+40 columns
+|  asked 6d ago …
+|  1 push since …
+|  ✗ checks failed …
+|  example stack 3 · 2 of 3 · → main
+|  …
+
+runs
+1:1 "  asked 6d ago" fg #c6c8d1ff bg #00000000
+1:15 " …" fg #6b7089ff bg #00000000
+2:1 "  1 push since" fg #c6c8d1ff bg #00000000
+2:15 " …" fg #6b7089ff bg #00000000
+3:1 "  ✗ checks failed" fg #e27878ff bg #00000000
+3:18 " …" fg #6b7089ff bg #00000000
+4:1 "  example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #00000000
+5:1 "  …" fg #6b7089ff bg #00000000

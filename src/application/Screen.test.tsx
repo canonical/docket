@@ -1659,6 +1659,39 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
     });
 
+    it("shows what the snapshot holds in the accordion below the budget floor, each line that needs the read ending in a dimmed …, and reads nothing", async () => {
+      let remaining = fullBudget.limit;
+      const provider = recordedProvider({
+        budget: async () => ({ ...fullBudget, remaining }),
+      });
+      const cache = await openCache(provider);
+      await cache.refresh();
+      remaining = 100;
+      await cache.refresh();
+      const readDetails = vi.fn(readRecordedDetails);
+      const readDetail = vi.fn(readRecordedDetail);
+      const view = viewOf(cache, everyCapability, readRecorded, readDetail);
+      const details = createDetailReader(readDetails);
+      const screen = await show(
+        { ...view, source: { ...view.source, details } },
+        60,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const drawn = await screen.redraw();
+      expect(drawn.lines.slice(1, 8)).toEqual([
+        "▌┃example#12 reply                                   4d over",
+        " ┃Fix the parser · alice ✗ checks",
+        "  dave · 3d ago",
+        "  …",
+        "  waiting since Mon 10:00 · target 24h",
+        "  example stack 3 · 2 of 3 · → main",
+        "  …",
+      ]);
+      expect(drawn.look("…")?.fg).toBe(tokens["color.text.muted"]);
+      expect(readDetails).not.toHaveBeenCalled();
+      expect(readDetail).not.toHaveBeenCalled();
+    });
+
     it("reads the selected thread's details and those of the rows around it in one request on opening, so moving to them reads nothing", async () => {
       const readDetails = vi.fn(readRecordedDetails);
       const readDetail = vi.fn(readRecordedDetail);

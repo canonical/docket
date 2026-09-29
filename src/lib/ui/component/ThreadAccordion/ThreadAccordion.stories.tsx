@@ -1,6 +1,7 @@
 import {
   failDetail,
   overReviewDetail,
+  pauseDetail,
   pendingDetail,
   sharedCloseDetail,
   soonReplyDetail,
@@ -59,6 +60,27 @@ export const Close: Story<ThreadAccordionProps> = {
 /** The details are still being read. */
 export const Loading: Story<ThreadAccordionProps> = {
   args: { ...reading, row: soonReply, detail: pendingDetail },
+};
+
+/**
+ * Reading is paused, and no details are held: what the snapshot holds,
+ * each line that needs the read ending in a dimmed `…`.
+ */
+export const Paused: Story<ThreadAccordionProps> = {
+  args: {
+    ...reading,
+    row: overReview,
+    detail: Promise.resolve(pauseDetail(overReviewDetail)),
+  },
+};
+
+/** Reading is paused, for a thread the snapshot holds nothing of. */
+export const PausedUnheld: Story<ThreadAccordionProps> = {
+  args: {
+    ...reading,
+    row: overReview,
+    detail: Promise.resolve({ resumes: new Date("2026-09-28T13:00:00Z") }),
+  },
 };
 
 /** Reading the details failed, with a short reason. */

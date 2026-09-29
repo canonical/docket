@@ -1,6 +1,8 @@
 import { useEffect, useReducer, useState } from "react";
 import type { ThreadDetail } from "../lib/provider/index.js";
-import type { ThreadSummary } from "../lib/waits/index.js";
+import type { ShownDetail } from "../lib/ui/index.js";
+import type { Thread, ThreadSummary } from "../lib/waits/index.js";
+import composeDetail from "./composeDetail.js";
 
 /** Props for the useHeldDetails hook. */
 export interface UseHeldDetailsProps {
@@ -12,33 +14,29 @@ export interface UseHeldDetailsProps {
   /** The thread selected on the frame drawn last, if any. */
   readonly selected: () => ThreadSummary | undefined;
   /**
-   * Whether reading is paused, below the budget floor or under the rate
-   * limit, when no read may spend a point: the details held are given
-   * whatever their version, and nothing is read.
+   * When reading resumes, while it is paused, below the budget floor or
+   * under the rate limit, when no read may spend a point: the details held
+   * are given whatever their version, and nothing is read.
    */
-  readonly paused?: boolean;
+  readonly resumes?: Date;
 }
 
 /**
  * Result of the useHeldDetails hook: the details the accordion is given
  * for `thread`, read with `read` unless those held were read at
- * `version`, what the list shows of the thread's last change.
+ * `version`, what the list shows of the thread's last change. `facts` is
+ * the thread as the snapshot holds it, if it does, which stands in while
+ * reading is paused.
  */
 export type UseHeldDetailsResult = (
   read: (thread: ThreadSummary) => Promise<ThreadDetail>,
   thread: ThreadSummary,
   version: string,
-) => Promise<ThreadDetail>;
+  facts?: Thread,
+) => Promise<ShownDetail>;
 
 /** A thread's repository and number, which no other thread shares. */
 const identifyThread = ({ repo, number }: ThreadSummary) => `${repo}#${number}`;
-
-/**
- * Stands in for the details of a thread none are held for while reading
- * is paused: it never settles, so the accordion shows `loading…` until
- * reading resumes and the thread is read.
- */
-const unread = new Promise<ThreadDetail>(() => {});
 
 /** What is held of one thread's details. */
 interface HeldDetail {
@@ -48,7 +46,7 @@ interface HeldDetail {
    * What the accordion is given: the latest read once it has settled, and
    * until then the details held from before the thread changed, if any.
    */
-  shown: Promise<ThreadDetail>;
+  shown: Promise<ShownDetail>;
   /** True once the latest read has failed. */
   failed: boolean;
 }
@@ -59,9 +57,9 @@ interface HeldDetail {
  * settled, which would draw `loading…` in place of details already here.
  */
 function markSettled(
-  reading: Promise<ThreadDetail>,
+  reading: Promise<ShownDetail>,
   outcome:
-    | { readonly status: "fulfilled"; readonly value: ThreadDetail }
+    | { readonly status: "fulfilled"; readonly value: ShownDetail }
     | { readonly status: "rejected"; readonly reason: unknown },
 ): void {
   Object.assign(reading, outcome);
@@ -76,7 +74,10 @@ function markSettled(
  * selection comes back to its thread, and never on a frame that keeps the
  * selection there, as the clock's each second does.
  * While reading is paused nothing is read, and the details held stay on
- * screen whatever the thread's version.
+ * screen whatever the thread's version. A thread none are held for is
+ * given, settled at once, what the snapshot holds of it, or, when it holds
+ * nothing, when reading resumes, so the accordion never waits on a read
+ * that cannot start.
  *
  * @note Impure: reads each thread's details through `read`, and redraws
  * once a read settles in place of details already shown.
@@ -84,7 +85,7 @@ function markSettled(
 export default function useHeldDetails({
   kept,
   selected,
-  paused = false,
+  resumes,
 }: UseHeldDetailsProps): UseHeldDetailsResult {
   const [details] = useState(() => new Map<string, HeldDetail>());
   const [, showArrived] = useReducer((count: number) => count + 1, 0);
@@ -94,7 +95,7 @@ export default function useHeldDetails({
       if (!keys.has(key)) details.delete(key);
     }
   }, [kept, details]);
-  return (read, thread, version) => {
+  return (read, thread, version, facts) => {
     const key = identifyThread(thread);
     const held = details.get(key);
     const chosen = selected();
@@ -102,7 +103,13 @@ export default function useHeldDetails({
     if (held?.version === version && !(arrived && held.failed)) {
       return held.shown;
     }
-    if (paused) return held?.shown ?? unread;
+    if (resumes) {
+      if (held) return held.shown;
+      const value = facts ? composeDetail(facts) : { resumes };
+      const standIn = Promise.resolve(value);
+      markSettled(standIn, { status: "fulfilled", value });
+      return standIn;
+    }
     const reading = read(thread);
     // The details held from before the thread changed stay on screen
     // until the new ones settle, so a change never draws `loading…` over

@@ -335,7 +335,7 @@ export default function Screen({
       const row = drawnSelection.current;
       return row && summarize(row);
     },
-    paused: status?.paused !== undefined,
+    resumes: status?.paused?.until,
   });
   /** The details the accordion under a row is given: read ahead, or alone. */
   const readRowDetail = (
@@ -343,12 +343,12 @@ export default function Screen({
     readAlone: NonNullable<typeof readThreadDetail>,
   ) => {
     const version = findVersion(row);
-    const read = ahead.read ?? readAlone;
     const thread = summarize(row);
     return readHeld(
-      (each) => read(each, version),
+      (each) => (ahead.read ?? readAlone)(each, version),
       thread,
       ahead.version(thread, version),
+      findFacts(row),
     );
   };
 
