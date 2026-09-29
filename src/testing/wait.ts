@@ -19,7 +19,9 @@ const { setTimeout: startTimer } = globalThis;
  * keeps no time limit of its own, unlike `vi.waitFor`'s one second: a busy
  * machine only makes it wait longer. An outcome that never comes fails the
  * test at the test's own time limit, which then reports the last try's
- * failure beside its own, and the tries stop with the test.
+ * failure beside its own, and the tries stop with the test. Unlike
+ * `vi.waitFor`, it never moves faked timers between tries: a test that
+ * fakes them moves them itself.
  */
 export async function waitUntil<T>(check: () => T | Promise<T>): Promise<T> {
   let last: unknown;
