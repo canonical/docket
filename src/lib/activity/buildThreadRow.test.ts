@@ -53,16 +53,21 @@ describe("buildThreadRow", () => {
       kind: { text: "PR", fit: "trimmed" },
       distance: { text: "25m", fit: "trimmed" },
       title: { text: "Example title", fit: "trimmed" },
+      author: { text: "dave", fit: "trimmed", group: "outside" },
       owner: { text: "alice", fit: "trimmed", group: "you" },
       events: [
         {
           event: pushed,
           text: { text: "alice pushed 2 commits", fit: "trimmed" },
+          actor: { text: "alice", fit: "trimmed", group: "you" },
+          action: { text: "pushed 2 commits", fit: "trimmed" },
           age: { text: "25m", fit: "trimmed" },
         },
         {
           event: opened,
           text: { text: "example-sync opened", fit: "trimmed" },
+          actor: { text: "example-sync", fit: "trimmed", group: "bot" },
+          action: { text: "opened", fit: "trimmed" },
           age: { text: "3h", fit: "trimmed" },
         },
       ],
@@ -132,5 +137,35 @@ describe("buildThreadRow", () => {
     );
     expect(row.stacked).toBe(true);
     expect(row.draft).toEqual({ text: "draft", fit: "trimmed" });
+  });
+
+  it("names no actor for failed checks, whose line names the checks", () => {
+    const failed: WindowEvent = {
+      ...opened,
+      kind: "checksFailed",
+      checks: ["lint"],
+    };
+    const [line] = buildThreadRow(
+      pull,
+      "example",
+      undefined,
+      people,
+      [failed],
+      now,
+    ).events;
+    expect(line?.actor).toBeUndefined();
+    expect(line?.action.text).toBe("checks failed (lint)");
+  });
+
+  it("names no author when the thread's facts were not given", () => {
+    const row = buildThreadRow(
+      pull,
+      "example",
+      undefined,
+      people,
+      [pushed],
+      now,
+    );
+    expect(row.author).toBeUndefined();
   });
 });
