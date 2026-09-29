@@ -1,8 +1,9 @@
 /**
  * Loaded by Bun before docket's entry (`bun --preload`), this stands in
  * for the two things outside docket a guarantee has to fix: the clock and
- * GitHub. docket's own code is untouched; it reads the time and calls
- * `fetch` exactly as it does for a user.
+ * GitHub. docket's own code is untouched, but for where a day takes its
+ * file operations from; it reads the time and calls `fetch` exactly as it
+ * does for a user.
  *
  * - The clock: `new Date()` with no argument gives `GUARANTEES_NOW`.
  *   `Date.now()` keeps running, because the request libraries space and
@@ -21,8 +22,10 @@
  *   the clock moving on to its end (`fastForward.ts`), until the clock
  *   would reach that instant, when the process ends. Nothing passes before
  *   docket's first request is answered, nor, with `GUARANTEES_KEYS`,
- *   before the one pressing keys sends `SIGUSR2` after the last. Each
- *   logged request carries the clock's time.
+ *   before the one pressing keys sends `SIGUSR2` after the last, nor
+ *   while a file operation of docket's is under way, which docket's
+ *   modules take from a counted copy of `node:fs/promises`. Each logged
+ *   request carries the clock's time.
  *
  * A request the recording holds no answer for gets a 404 naming it, which
  * docket reports as a failure, so a recording that falls behind docket
