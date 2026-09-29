@@ -6,6 +6,7 @@ import {
   sharedCloseDetail,
   soonReplyDetail,
 } from "../../../../testing/details.js";
+import { teamSettings } from "../../../../testing/facts.js";
 import { recordedNow } from "../../../../testing/recorded.js";
 import {
   overReview,
@@ -74,7 +75,12 @@ export const RestingLoading: Story<ThreadAccordionProps> = {
   args: {
     ...reading,
     clock: false,
-    row: { repo: "example", thread: overReview.wait.thread },
+    row: {
+      repo: "example",
+      thread: overReview.wait.thread,
+      people: teamSettings.people,
+      viewer: "alice",
+    },
     detail: pendingDetail,
   },
 };

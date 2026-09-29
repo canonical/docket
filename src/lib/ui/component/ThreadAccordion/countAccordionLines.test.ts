@@ -20,7 +20,11 @@ describe("countAccordionLines", () => {
   });
 
   it("counts one line for a thread the snapshot holds nothing of", () => {
-    const resting = { repo: "example", thread: overReview.wait.thread };
+    const resting = {
+      repo: "example",
+      thread: overReview.wait.thread,
+      people: new Map(),
+    };
     expect(countAccordionLines(resting, reading, 40)).toBe(1);
   });
 });

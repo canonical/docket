@@ -188,14 +188,14 @@ describe("ThreadAccordion", () => {
       ]);
     });
 
-    it("shows a closed thread's details once they arrive", async () => {
+    it("shows a closed thread's details once they arrive, each person behind their mark", async () => {
       const screen = await open(
         { ...RestingLoading.args, detail: Promise.resolve(sharedCloseDetail) },
         60,
       );
       expect(readText(screen).slice(0, 4)).toEqual([
-        "age 6d · owner alice, bob, carol-at-example-org",
-        "last activity 3h ago · bob",
+        "age 6d · owner ◉ alice, ● bob, ○ carol-at-example-org",
+        "last activity 3h ago · ● bob",
         "labels priority=high · kind=bug · area/icons",
         "example stack 3 · 2 of 3 · → main",
       ]);

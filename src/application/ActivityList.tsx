@@ -3,6 +3,7 @@ import type {
   ThreadRow as ActivityThread,
   ActivityList as List,
 } from "../lib/activity/index.js";
+import type { People } from "../lib/config/index.js";
 import type { WaitRow } from "../lib/owed/index.js";
 import {
   countAccordionLines,
@@ -32,6 +33,14 @@ export interface ActivityListProps {
    * the selected thread is measured.
    */
   readonly measureWaits: (row: ActivityThread) => readonly WaitRow[];
+  /**
+   * Each login's group in a thread's repository, which marks the people a
+   * thread at rest names once its details are read. Only the selected
+   * thread's repository is read.
+   */
+  readonly readPeople: (row: ActivityThread) => People;
+  /** The login gh is signed in with, when it is known. */
+  readonly viewer?: string;
   /** The instant ages are measured at. */
   readonly now: Date;
   /** The time zone a time of day is written in. */
@@ -80,6 +89,8 @@ export default function ActivityList({
   selected,
   readDetail,
   measureWaits,
+  readPeople,
+  viewer,
   now,
   timezone,
   width,
@@ -99,7 +110,8 @@ export default function ActivityList({
     for (const row of rows) {
       const chosen = place === selected;
       const waits = chosen ? measureWaits(row) : [];
-      const state = findThreadState(row, waits);
+      const people = chosen ? readPeople(row) : new Map();
+      const state = findThreadState(row, waits, people, viewer);
       const reading = { now, timezone, waiting: listWaiting(waits) };
       if (chosen) {
         to = blocks.length;

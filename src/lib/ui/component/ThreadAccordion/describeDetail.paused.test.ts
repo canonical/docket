@@ -11,6 +11,7 @@ import {
   bob,
   carol,
   dave,
+  teamSettings,
   thread,
 } from "../../../../testing/facts.js";
 import { recordedNow } from "../../../../testing/recorded.js";
@@ -105,7 +106,11 @@ describe("describeDetail, while reading is paused", () => {
   });
 
   it("gives a thread no wait runs on its close body from the snapshot, and its stack's neighbours pending", () => {
-    const resting = { repo: "example", thread: overReview.wait.thread };
+    const resting = {
+      repo: "example",
+      thread: overReview.wait.thread,
+      people: teamSettings.people,
+    };
     const { body, stack } = describeDetail(
       resting,
       pauseDetail(sharedCloseDetail),

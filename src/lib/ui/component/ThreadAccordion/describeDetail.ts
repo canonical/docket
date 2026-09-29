@@ -1,5 +1,9 @@
 import { describeAge } from "../../../activity/index.js";
-import type { Owner, WaitRow } from "../../../owed/index.js";
+import {
+  describePerson,
+  type Owner,
+  type WaitRow,
+} from "../../../owed/index.js";
 import type { Reviewer, ThreadDetail } from "../../../provider/index.js";
 import { tokens } from "../../../tokens/index.js";
 import type { Message, Thread, ThreadSummary } from "../../../waits/index.js";
@@ -228,29 +232,36 @@ function describeClose(row: WaitRow, { now }: Reading) {
  * A thread no wait runs on, as its details give it: its age and owners,
  * its last activity and its labels. The owners are the row's when it
  * names them; a thread whose row names none, such as a closed one, takes
- * its assignees that are not bots.
+ * its assignees that are not bots. Each person, the one who wrote last
+ * included, carries their group's mark, from the repository's people.
  */
 function describeRest(
-  { owners }: RestingThread,
+  { owners, people, viewer }: RestingThread,
   detail: ThreadDetail,
   { now }: Reading,
 ) {
   const latest = detail.messages.at(-1);
   const assigned = detail.assignees
     .filter(({ type }) => type !== "bot")
-    .map(({ login }) => login)
-    .join(", ");
+    .map((account) => describePerson(account, people, viewer));
+  const named = owners ?? assigned;
   const labels = detail.labels.map(decodeLabel).join(" · ") || "none";
   return [
     trimmed(
-      plain(
-        `age ${describeAge(detail.createdAt, now)} · owner ${(owners ?? assigned) || "unassigned"}`,
-      ),
+      plain(`age ${describeAge(detail.createdAt, now)} · owner `),
+      ...(named.length > 0 ? listPeople(named) : [plain("unassigned")]),
     ),
     trimmed(
-      plain(
-        `last activity ${describeAge(detail.updatedAt, now)} ago${latest ? ` · ${latest.author.login}` : ""}`,
-      ),
+      plain(`last activity ${describeAge(detail.updatedAt, now)} ago`),
+      ...(latest
+        ? [
+            plain(" · "),
+            markPerson(
+              describePerson(latest.author, people, viewer),
+              Number.POSITIVE_INFINITY,
+            ),
+          ]
+        : []),
     ),
     wrapped(plain(`labels ${labels}`)),
   ];

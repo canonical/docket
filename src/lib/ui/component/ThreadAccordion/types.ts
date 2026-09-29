@@ -1,4 +1,5 @@
-import type { WaitRow } from "../../../owed/index.js";
+import type { People } from "../../../config/index.js";
+import type { Owner, WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import type { ThreadSummary } from "../../../waits/index.js";
 import type { Piece } from "../../types.js";
@@ -43,11 +44,18 @@ export interface RestingThread {
   /** The thread, whose place in a stack gives the stack lines. */
   readonly thread: ThreadSummary;
   /**
-   * Its owners as its row names them, such as `alice, bob` or
+   * Its owners as its row names them, each with its group, or
    * `unassigned`. Absent when the row names none, as for a closed thread:
    * its assignees that are not bots stand in.
    */
-  readonly owners?: string;
+  readonly owners?: readonly Owner[];
+  /**
+   * Each login's group in the thread's repository, which names its
+   * assignees and whoever wrote last once the details give them.
+   */
+  readonly people: People;
+  /** The login gh is signed in with, when it is known: `you` among them. */
+  readonly viewer?: string;
 }
 
 /** Props for the ThreadAccordion component. */

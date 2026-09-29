@@ -38,6 +38,7 @@ import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
 import describeCandidate from "./describeCandidate.js";
 import drawStandIn from "./drawStandIn.js";
+import findPeople from "./findPeople.js";
 import gatherNamed from "./gatherNamed.js";
 import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
@@ -420,6 +421,8 @@ export default function Screen({
         measureWaits={(row) =>
           buildThreadWaits(row.thread, threads, watched, at, you.viewer)
         }
+        readPeople={(row) => findPeople(row.thread.repo, threads, watched)}
+        viewer={you.viewer}
         now={at}
         timezone={settings.time.timezone}
         width={width}
