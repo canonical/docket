@@ -84,7 +84,10 @@ export async function draw(
   width: number,
   height = 12,
 ): Promise<Screen> {
-  const setup = await testRender(node, { width, height });
+  // A frame is drawn as soon as one is asked for. At the renderer's cap
+  // of 60 a second, each read of the screen waits up to 17 ms for its
+  // frame, which a busy machine stretches into seconds over a test.
+  const setup = await testRender(node, { width, height, maxFps: 1_000 });
   drawn.push(setup);
   await setup.renderOnce();
   return read(setup);
