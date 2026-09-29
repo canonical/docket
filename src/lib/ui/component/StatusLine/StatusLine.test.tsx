@@ -94,7 +94,7 @@ describe("StatusLine", () => {
         <StatusLine {...BudgetPaused.args} width={width} />,
         width,
       );
-      expect(screen.lines.at(0)).toBe("refresh paused · resumes 13:00");
+      expect(screen.lines.at(0)).toBe("paused: budget low · resumes 13:00");
     }
   });
 

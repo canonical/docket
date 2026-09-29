@@ -22,8 +22,9 @@ const separator = ` ${tokens["glyph.separator"]} `;
  * refresh in the background, naming the first repository it is on and
  * its place among them, as `refreshing · docs 2/3` (while it is on none,
  * such as when it saves what it fetched, the messages below stand); a
- * short notice, such as when a full refresh
- * is available again; and otherwise how old the data is, followed, while
+ * short notice, such as when a full refresh is available again, or
+ * `paused: budget low · resumes 14:20` while the budget is too low to
+ * spend; and otherwise how old the data is, followed, while
  * the pane is idle, by `idle · any key wakes`. With no data and nothing
  * happening there is no message, and with no cache only an action's
  * result.
@@ -83,7 +84,7 @@ export default function describeStatus(
     return { kind: "notice", text };
   }
   if (paused) {
-    const text = `refresh paused${separator}resumes ${describeClock(paused.until, timezone)}`;
+    const text = `paused: budget low${separator}resumes ${describeClock(paused.until, timezone)}`;
     return { kind: "notice", text };
   }
   if (syncedAt) {

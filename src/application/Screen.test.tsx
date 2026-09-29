@@ -372,7 +372,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  Recovery: wait: docket resumes at",
         "  13:00",
       ]);
-      expect(drawn.lines.at(10)).toBe("refresh paused · resumes 13:00");
+      expect(drawn.lines.at(10)).toBe("paused: budget low · resumes 13:00");
     });
 
     it("stands in a notice for the list when gh gives no token, with no status", async () => {
@@ -1668,7 +1668,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(readDetails).not.toHaveBeenCalled();
       expect(readDetail).not.toHaveBeenCalled();
       expect(drawn.lines.at(-2)).toMatch(
-        /^refresh paused · resumes \d\d:\d\d$/,
+        /^paused: budget low · resumes \d\d:\d\d$/,
       );
     });
 

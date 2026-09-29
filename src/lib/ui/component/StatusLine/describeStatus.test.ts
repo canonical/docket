@@ -168,14 +168,14 @@ describe("describeStatus", () => {
     expect(describeAt(status)?.kind).toBe("freshness");
   });
 
-  it("says the refresh cycle is paused to spare the budget, and until when", () => {
+  it("says the refresh is paused because the budget is low, and until when", () => {
     const status: CacheStatus = {
       ...statusOf(Synced),
       paused: { until: new Date("2026-09-28T13:00:00Z"), reason: "budget" },
     };
     expect(describeAt(status)).toEqual({
       kind: "notice",
-      text: "refresh paused · resumes 13:00",
+      text: "paused: budget low · resumes 13:00",
     });
   });
 
