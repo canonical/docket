@@ -10,8 +10,9 @@ import type { Outcome, SentRequest } from "./types.js";
  * at once, as GitHub asks of its clients. An open terminal pane stays
  * within it over a day: left without a key, it checks each repository at
  * most every 30 minutes once 20 minutes have passed, sends nothing else,
- * and so spends no points while nothing changes; scrolled through, it
- * reads details at most a point a request, within 300 points an hour.
+ * and so spends no points while nothing changes; scrolled through a list
+ * longer than one read, it reads the details of at most 14 threads a
+ * request, a point each, within 300 points an hour.
  *
  * The budget, per repository, is what docket's page sizes cost: a whole
  * fetch asks for 50 threads a page and costs 8 points, a fetch of what
@@ -120,6 +121,15 @@ const isCallRead = (request: SentRequest) =>
 const isDetailRead = (request: SentRequest) =>
   ["Detail", "Details"].includes(nameOperation(request) ?? "");
 
+/**
+ * How many threads a request reads the details of: one alias each, such
+ * as `t0: repository(…)`.
+ */
+const countThreads = ({ body }: SentRequest) =>
+  String(body.query).match(/\bt\d+: repository\(/g)?.length ?? 0;
+
+/** A read of details asks for at most 14 threads, which cost a point. */
+const detailWindow = 14;
 /** A pane left without a key for 20 minutes is idle. */
 const idleAfter = 20 * 60_000;
 /** An idle pane checks each repository at most every 30 minutes. */
@@ -225,9 +235,9 @@ describe("request-budget", () => {
       scrolled = scrollHome.open({
         now: "2026-09-30T12:00:00Z",
         until: `2026-09-30T12:${minutes}:00Z`,
-        recording: "team",
+        recording: "crowded",
         ready: "Fix the parser",
-        keys: [..."jjjkkkjjjkkkjjjkkk"],
+        keys: [..."jjjjjjjjjjjjjjjjjjjjkkkkk"],
       });
     });
     /** The requests an idle day sent once the pane was idle. */
@@ -262,12 +272,15 @@ describe("request-budget", () => {
       expect(sent.length).toBeLessThanOrEqual(cycles * repositories);
     }, 180_000);
 
-    it("reads details at most a point a request, within 300 points an hour, while a pane is scrolled", async () => {
+    it("reads details at most 14 threads and a point a request, within 300 points an hour, while a pane is scrolled", async () => {
       const { code, requests } = await scrolled;
       expect(code).toBe(0);
       const reads = requests.filter(isDetailRead);
       expect(reads.length).toBeGreaterThan(0);
       for (const { body } of reads) expect(countPoints(body)).toBe(1);
+      // The list holds more threads than a read asks for, so the read on
+      // opening, of the selected thread and those around it, is full.
+      expect(Math.max(...reads.map(countThreads))).toBe(detailWindow);
       expect(reads.length).toBeLessThanOrEqual(
         (detailBudgetPerHour * minutes) / 60,
       );

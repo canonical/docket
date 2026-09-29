@@ -110,6 +110,7 @@ const recordings: Readonly<
   Record<string, () => Promise<{ default: Recording }>>
 > = {
   clock: () => import("./fixtures/clock.js"),
+  crowded: () => import("./fixtures/crowded.js"),
   hostile: () => import("./fixtures/hostile.js"),
   team: () => import("./fixtures/team.js"),
   teamChanged: () => import("./fixtures/teamChanged.js"),
