@@ -97,7 +97,7 @@ export default function makeHome(personalFile: string): Home {
       ]);
       return conclude(log, code, out, err);
     },
-    async open({ until, keys = [], ready = "", pause = 400, ...call }) {
+    async open({ until, keys = [], ready = "", pause = 250, ...call }) {
       const { log, env } = prepare(call, {
         GUARANTEES_UNTIL: until,
         TERM: "xterm-256color",

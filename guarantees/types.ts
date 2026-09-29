@@ -66,8 +66,8 @@ export interface Opening extends Call {
   readonly until: string;
   /**
    * The keys pressed once the interface has drawn `ready`, one at a time,
-   * each `pause` milliseconds of real time after the last: the stand-in's
-   * clock stands still until the last is pressed.
+   * each `pause` milliseconds of real time after the last, 250 unless
+   * given: the stand-in's clock stands still until the last is pressed.
    */
   readonly keys?: readonly string[];
   readonly ready?: string;

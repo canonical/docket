@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import findFixture from "./findFixture.js";
 import makeHome from "./makeHome.js";
-import type { SentRequest } from "./types.js";
+import type { Outcome, SentRequest } from "./types.js";
 
 /**
  * One refresh of the watched repositories stays within the budget
@@ -210,60 +210,69 @@ describe("request-budget", () => {
     );
   });
 
-  const idleDay = idleHome.open({
-    now: "2026-09-29T10:00:00Z",
-    until: "2026-09-30T10:00:00Z",
-    recording: "team",
-  });
-  /** The requests an idle day sent once the pane was idle. */
-  const sentIdle = async () => {
-    const { requests } = await idleDay;
-    const idleFrom = Date.parse("2026-09-29T10:00:00Z") + idleAfter;
-    return requests.filter(({ at }) => Date.parse(at) >= idleFrom);
-  };
-
-  it("checks each repository at most every 30 minutes once a pane is left idle for a day", async () => {
-    const { code } = await idleDay;
-    expect(code).toBe(0);
-    const checks = (await sentIdle()).filter(
-      ({ method, url }) =>
-        method === "GET" && new URL(url).pathname.endsWith("/issues"),
-    );
-    expect(checks.length).toBeGreaterThan(0);
-    for (const repo of [
-      "example-org/example-repo",
-      "example-org/example-docs",
-    ]) {
-      const count = checks.filter(({ url }) => url.includes(repo)).length;
-      expect(count).toBeLessThanOrEqual((day - idleAfter) / idleInterval);
-    }
-  }, 180_000);
-
-  it("spends no points while an idle pane sees nothing change, and sends only the checks", async () => {
-    const sent = await sentIdle();
-    expect(sent.length).toBeGreaterThan(0);
-    expect(sent.filter(({ url }) => url.endsWith("/graphql"))).toEqual([]);
-    const cycles = (day - idleAfter) / idleInterval;
-    expect(sent.length).toBeLessThanOrEqual(cycles * repositories);
-  }, 180_000);
-
-  it("reads details at most a point a request, within 300 points an hour, while a pane is scrolled", async () => {
+  // The open panes start only when an entry of theirs runs, both at once,
+  // so a run that selects none of them opens none.
+  describe("an open pane", () => {
     const minutes = 10;
-    const { code, requests } = await scrollHome.open({
-      now: "2026-09-30T12:00:00Z",
-      until: `2026-09-30T12:${minutes}:00Z`,
-      recording: "team",
-      ready: "Fix the parser",
-      keys: [..."jjjkkkjjjkkkjjjkkk"],
+    let idleDay: Promise<Outcome>;
+    let scrolled: Promise<Outcome>;
+    beforeAll(() => {
+      idleDay = idleHome.open({
+        now: "2026-09-29T10:00:00Z",
+        until: "2026-09-30T10:00:00Z",
+        recording: "team",
+      });
+      scrolled = scrollHome.open({
+        now: "2026-09-30T12:00:00Z",
+        until: `2026-09-30T12:${minutes}:00Z`,
+        recording: "team",
+        ready: "Fix the parser",
+        keys: [..."jjjkkkjjjkkkjjjkkk"],
+      });
     });
-    expect(code).toBe(0);
-    const reads = requests.filter(isDetailRead);
-    expect(reads.length).toBeGreaterThan(0);
-    for (const { body } of reads) expect(countPoints(body)).toBe(1);
-    expect(reads.length).toBeLessThanOrEqual(
-      (detailBudgetPerHour * minutes) / 60,
-    );
-  }, 180_000);
+    /** The requests an idle day sent once the pane was idle. */
+    const sentIdle = async () => {
+      const { requests } = await idleDay;
+      const idleFrom = Date.parse("2026-09-29T10:00:00Z") + idleAfter;
+      return requests.filter(({ at }) => Date.parse(at) >= idleFrom);
+    };
+
+    it("checks each repository at most every 30 minutes once a pane is left idle for a day", async () => {
+      const { code } = await idleDay;
+      expect(code).toBe(0);
+      const checks = (await sentIdle()).filter(
+        ({ method, url }) =>
+          method === "GET" && new URL(url).pathname.endsWith("/issues"),
+      );
+      expect(checks.length).toBeGreaterThan(0);
+      for (const repo of [
+        "example-org/example-repo",
+        "example-org/example-docs",
+      ]) {
+        const count = checks.filter(({ url }) => url.includes(repo)).length;
+        expect(count).toBeLessThanOrEqual((day - idleAfter) / idleInterval);
+      }
+    }, 180_000);
+
+    it("spends no points while an idle pane sees nothing change, and sends only the checks", async () => {
+      const sent = await sentIdle();
+      expect(sent.length).toBeGreaterThan(0);
+      expect(sent.filter(({ url }) => url.endsWith("/graphql"))).toEqual([]);
+      const cycles = (day - idleAfter) / idleInterval;
+      expect(sent.length).toBeLessThanOrEqual(cycles * repositories);
+    }, 180_000);
+
+    it("reads details at most a point a request, within 300 points an hour, while a pane is scrolled", async () => {
+      const { code, requests } = await scrolled;
+      expect(code).toBe(0);
+      const reads = requests.filter(isDetailRead);
+      expect(reads.length).toBeGreaterThan(0);
+      for (const { body } of reads) expect(countPoints(body)).toBe(1);
+      expect(reads.length).toBeLessThanOrEqual(
+        (detailBudgetPerHour * minutes) / 60,
+      );
+    }, 180_000);
+  });
 
   it("never has two requests open at once", async () => {
     const sent = (await cycles).flatMap(({ requests }) => requests);
