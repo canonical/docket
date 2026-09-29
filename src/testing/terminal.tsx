@@ -48,6 +48,12 @@ const hex = (colour: CapturedSpan["fg"]) =>
     .join("")}`;
 
 function read(setup: TestRendererSetup): Screen {
+  // A test that ran out of time can still be reading its screen after
+  // the screen is destroyed, and reading a destroyed screen's buffer ends
+  // the whole test process.
+  if (setup.renderer.isDestroyed) {
+    throw new Error("The screen was destroyed when its test ended.");
+  }
   const lines = setup
     .captureCharFrame()
     .replace(/\n$/, "")
@@ -84,7 +90,10 @@ export async function draw(
   width: number,
   height = 12,
 ): Promise<Screen> {
-  const setup = await testRender(node, { width, height });
+  // A frame is drawn as soon as one is asked for. At the renderer's cap
+  // of 60 a second, each read of the screen waits up to 17 ms for its
+  // frame, which a busy machine stretches into seconds over a test.
+  const setup = await testRender(node, { width, height, maxFps: 1_000 });
   drawn.push(setup);
   await setup.renderOnce();
   return read(setup);

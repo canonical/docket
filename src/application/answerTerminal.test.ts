@@ -15,6 +15,7 @@ import {
   recordedThreads,
   resolvedPersonal,
 } from "../testing/recorded.js";
+import { waitUntil } from "../testing/wait.js";
 import answerTerminal from "./answerTerminal.js";
 import type { Context, TerminalView } from "./types.js";
 
@@ -104,7 +105,7 @@ describe("answerTerminal", () => {
     expect(view).toBeDefined();
     expect(readFile).not.toHaveBeenCalled();
     void cacheOf(view).readWatched();
-    await vi.waitFor(() => expect(readFile).toHaveBeenCalledOnce());
+    await waitUntil(() => expect(readFile).toHaveBeenCalledOnce());
   });
 
   it("reads each repository's settings once the interface asks", async () => {

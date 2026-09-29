@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { waitUntil } from "../../testing/wait.js";
 import withFetchLock from "./withFetchLock.js";
 
 let root: string;
@@ -135,9 +136,7 @@ describe("withFetchLock", () => {
         taker.stdout.on("data", (chunk: Buffer) => {
           said += chunk.toString();
         });
-        await vi.waitFor(() => expect(said).toContain("waiting"), {
-          timeout: 5_000,
-        });
+        await waitUntil(() => expect(said).toContain("waiting"));
         // This process stalls, touching its lock no more, for longer than
         // the other process lets a lock go untouched before taking it.
         Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 4_000);
@@ -177,9 +176,7 @@ describe("withFetchLock", () => {
       return { exited: once(child, "exit"), said: () => said };
     };
     const holder = start("src/testing/lockHolder.ts");
-    await vi.waitFor(() => expect(holder.said()).toContain("holding"), {
-      timeout: 5_000,
-    });
+    await waitUntil(() => expect(holder.said()).toContain("holding"));
     const taker = start("src/testing/lockTaker.ts");
     expect(await holder.exited).toEqual([3, null]);
     await taker.exited;
@@ -220,9 +217,7 @@ describe("withFetchLock", () => {
         runs += 1;
         if (runs === 1) {
           armed = true;
-          await vi.waitFor(() => expect(takenAt).toBeGreaterThan(0), {
-            timeout: 5_000,
-          });
+          await waitUntil(() => expect(takenAt).toBeGreaterThan(0));
           await afterTakeover();
         }
         return runs;

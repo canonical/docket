@@ -28,6 +28,7 @@ import {
   drawSuspending,
   WithKeys,
 } from "../testing/terminal.js";
+import { waitUntil } from "../testing/wait.js";
 import readCandidates from "./readCandidates.js";
 import Screen from "./Screen.js";
 import type { TerminalView } from "./types.js";
@@ -132,7 +133,7 @@ async function settle(
   done = (drawn: Drawn) => !drawn.lines.includes("  loading…"),
 ) {
   let drawn = screen;
-  await vi.waitFor(async () => {
+  await waitUntil(async () => {
     drawn = await screen.redraw();
     expect(done(drawn)).toBe(true);
   });
@@ -191,7 +192,11 @@ function recordAssignees(overrides: Partial<Provider> = {}) {
   return { provider, setAssignees };
 }
 
-describe("useEditor", () => {
+// Each test draws the whole screen, with an editor open, on a cache, some
+// of them tens of times: at most 0.5 s each at a load average of 50, and
+// at most 5.1 s over 30 runs at a load average of 88 to 112, past
+// vitest's default of 5 s.
+describe("useEditor", { timeout: 15_000 }, () => {
   describe("assigning", () => {
     it("opens under the selected row with a, the assignees ticked first, then the team, the thread's people and everyone assignable", async () => {
       const screen = await settle(await press(await showRecorded(), "a"));

@@ -16,6 +16,7 @@ import {
   recordedSettings,
   recordedWatched,
 } from "../testing/recorded.js";
+import { waitUntil } from "../testing/wait.js";
 import openTerminal from "./openTerminal.js";
 import type { TerminalView } from "./types.js";
 
@@ -77,8 +78,8 @@ describe("openTerminal", () => {
         readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
       },
     });
-    await vi.waitFor(() => expect(snapshot).toHaveBeenCalledTimes(2));
-    await vi.waitFor(async () => {
+    await waitUntil(() => expect(snapshot).toHaveBeenCalledTimes(2));
+    await waitUntil(async () => {
       await setup.renderOnce();
       const frame = setup.captureCharFrame();
       expect(frame).toContain("nothing owed");
@@ -110,7 +111,7 @@ describe("openTerminal", () => {
         readEvents: () => new Promise(() => {}),
       },
     });
-    await vi.waitFor(async () => {
+    await waitUntil(async () => {
       expect(snapshot).toHaveBeenCalled();
       await setup.renderOnce();
       // The keys work once the key bar, drawn from them, shows.
@@ -140,7 +141,7 @@ describe("openTerminal", () => {
         },
       },
     });
-    await vi.waitFor(async () => {
+    await waitUntil(async () => {
       await setup.renderOnce();
       const frame = setup.captureCharFrame();
       expect(frame).toContain("✗ gh is not signed in to github.com");

@@ -20,6 +20,7 @@ import {
   recordedWatched,
 } from "../testing/recorded.js";
 import { draw } from "../testing/terminal.js";
+import { waitUntil } from "../testing/wait.js";
 import type { TerminalView } from "./types.js";
 import useActivity, { type UseActivityProps } from "./useActivity.js";
 
@@ -121,7 +122,7 @@ describe("useActivity", () => {
       reads.push(repo);
       return throughCache(cache)(repo, since);
     });
-    await vi.waitFor(async () =>
+    await waitUntil(async () =>
       expect(await read()).toBe("2 threads · 3 events · 25m"),
     );
     expect(reads).toEqual([
@@ -145,7 +146,7 @@ describe("useActivity", () => {
       reads += 1;
       return throughCache(cache)(repo, since);
     });
-    await vi.waitFor(async () => expect(await read()).toMatch(/25m$/));
+    await waitUntil(async () => expect(await read()).toMatch(/25m$/));
     await change({ at: later });
     expect(await read()).toBe("2 threads · 3 events · 1h");
     expect(reads).toBe(2);
@@ -153,7 +154,7 @@ describe("useActivity", () => {
 
   it("times the events once for each read, however often the clock ticks", async () => {
     const { change, read } = await probe(throughCache);
-    await vi.waitFor(async () => expect(await read()).toMatch(/25m$/));
+    await waitUntil(async () => expect(await read()).toMatch(/25m$/));
     const counted = vi.mocked(addWorkingTime).mock.calls.length;
     await change({ at: later });
     await change({ at: new Date(later.getTime() + 1_000) });
@@ -168,15 +169,15 @@ describe("useActivity", () => {
       reads += 1;
       return wait ?? throughCache(cache)(repo, since);
     });
-    await vi.waitFor(async () => expect(await read()).toMatch(/^2 threads/));
+    await waitUntil(async () => expect(await read()).toMatch(/^2 threads/));
     await change({ syncedAt: later });
-    await vi.waitFor(() => expect(reads).toBe(4));
+    await waitUntil(() => expect(reads).toBe(4));
     const { promise, resolve } = Promise.withResolvers<CachedEvents>();
     wait = promise;
     await change({ window: twoDays });
     expect(await read()).toBe("reading");
     resolve({ events: [], syncedAt: recordedNow });
-    await vi.waitFor(async () =>
+    await waitUntil(async () =>
       expect(await read()).toBe("0 threads · 0 events · -"),
     );
   });
@@ -197,7 +198,7 @@ describe("useActivity", () => {
     expect(await read()).toBe("reading");
     await change({ window: day });
     second.reject(new Error("GitHub gave no answer"));
-    await vi.waitFor(async () =>
+    await waitUntil(async () =>
       expect(await read()).toBe("0 threads · 0 events · -"),
     );
     expect(reader).toHaveBeenCalledTimes(3);
@@ -209,10 +210,10 @@ describe("useActivity", () => {
       if (failing) return Promise.reject(providerError("GITHUB_TIMED_OUT"));
       return throughCache(cache)(repo, since);
     });
-    await vi.waitFor(async () => expect(await read()).toMatch(/^2 threads/));
+    await waitUntil(async () => expect(await read()).toMatch(/^2 threads/));
     failing = true;
     await change({ syncedAt: later, at: later });
-    await vi.waitFor(async () =>
+    await waitUntil(async () =>
       expect(await read()).toBe("2 threads · 3 events · 1h · GITHUB_TIMED_OUT"),
     );
   });
@@ -224,7 +225,7 @@ describe("useActivity", () => {
       }
       return throughCache(cache)(repo, since);
     });
-    await vi.waitFor(async () =>
+    await waitUntil(async () =>
       expect(await read()).toBe("1 thread · 2 events · 25m · GITHUB_TIMED_OUT"),
     );
   });
@@ -235,11 +236,11 @@ describe("useActivity", () => {
       if (failing) return Promise.reject(providerError("GITHUB_TIMED_OUT"));
       return throughCache(cache)(repo, since);
     });
-    await vi.waitFor(async () => expect(await read()).toMatch(/^2 threads/));
+    await waitUntil(async () => expect(await read()).toMatch(/^2 threads/));
     failing = true;
     // Two weeks reach further back than the one day's read.
     await change({ window: { amount: 2, unit: "w" } });
-    await vi.waitFor(async () =>
+    await waitUntil(async () =>
       expect(await read()).toBe(
         "2 threads · 4 events · 25m · GITHUB_TIMED_OUT",
       ),
@@ -250,7 +251,7 @@ describe("useActivity", () => {
     const { read } = await probe(
       () => () => Promise.reject(new Error("a defect")),
     );
-    await vi.waitFor(async () =>
+    await waitUntil(async () =>
       expect(await read()).toBe("UNEXPECTED_FAILURE"),
     );
   });
@@ -259,6 +260,6 @@ describe("useActivity", () => {
     const { read } = await probe(
       () => () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
     );
-    await vi.waitFor(async () => expect(await read()).toBe("GITHUB_TIMED_OUT"));
+    await waitUntil(async () => expect(await read()).toBe("GITHUB_TIMED_OUT"));
   });
 });

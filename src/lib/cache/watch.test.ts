@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { thread } from "../../testing/facts.js";
 import { fakeProvider, providerError } from "../../testing/provider.js";
+import { waitUntil } from "../../testing/wait.js";
 import type { Provider } from "../provider/index.js";
 import createCache from "./createCache.js";
 import identifyFile from "./identifyFile.js";
@@ -110,7 +111,7 @@ describe("the writes and the watch of createCache", () => {
     pane.subscribe(heard);
     const stop = pane.watch();
     await open(counting()).read(5 * minute);
-    await vi.waitFor(() => {
+    await waitUntil(() => {
       expect(pane.threads().threads).toHaveLength(3);
     });
     await pause(100);

@@ -44,6 +44,7 @@ import {
   drawSuspending,
   WithKeys,
 } from "../testing/terminal.js";
+import { waitUntil } from "../testing/wait.js";
 import readCandidates from "./readCandidates.js";
 import Screen from "./Screen.js";
 import type { TerminalMode, TerminalView, WatchedFiles } from "./types.js";
@@ -59,6 +60,7 @@ vi.mock("../lib/waits/index.js", async (importOriginal) => {
 
 const folders: string[] = [];
 afterEach(async () => {
+  vi.useRealTimers();
   for (const folder of folders.splice(0)) {
     await rm(folder, { recursive: true, force: true });
   }
@@ -259,7 +261,11 @@ async function showRefreshing(
   return { screen, cache, refresh };
 }
 
-describe("Screen", () => {
+// Each test draws the whole screen, with the keymap, on a cache, some of
+// them tens of times: at most 0.5 s each at a load average of 50, and at
+// most 5.1 s over 30 runs at a load average of 88 to 112, past vitest's
+// default of 5 s.
+describe("Screen", { timeout: 15_000 }, () => {
   describe("before the first data", () => {
     it("opens on owed with the first run's progress and no counts, at 40 columns", async () => {
       const screen = await (
@@ -297,7 +303,7 @@ describe("Screen", () => {
       const cache = await openCache(provider);
       const screen = await show(viewOf(cache), 60);
       const refreshing = cache.refresh();
-      await vi.waitFor(() => expect(cache.status().fullRefresh).toBeDefined());
+      await waitUntil(() => expect(cache.status().fullRefresh).toBeDefined());
       const drawn = await screen.redraw();
       expect(drawn.lines.slice(2, 4)).toEqual([
         "  refresh in progress…",
@@ -690,14 +696,16 @@ describe("Screen", () => {
     });
 
     it("reads the clock again as time passes", async () => {
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
       const cache = await openCache(fakeProvider());
       await cache.refresh();
       let clock = recordedNow;
       const view = { ...viewOf(cache), now: () => clock };
       const screen = await show(view);
       clock = new Date(recordedNow.getTime() + 120_000);
-      await new Promise((done) => setTimeout(done, 1_100));
-      expect((await screen.redraw()).lines.at(10)).toBe("synced 2m ago");
+      expect((await screen.redraw()).lines.at(10)).toBe("synced 0m ago");
+      const ticked = await screen.redraw(() => vi.advanceTimersByTime(1_000));
+      expect(ticked.lines.at(10)).toBe("synced 2m ago");
     });
   });
 
@@ -841,7 +849,7 @@ describe("Screen", () => {
     it("keeps a selection for each mode, so switching back finds it where it was", async () => {
       const screen = await showRecorded();
       await press(screen, "j", "l");
-      const activity = await vi.waitFor(async () => {
+      const activity = await waitUntil(async () => {
         const drawn = await screen.redraw();
         expect(drawn.lines.at(1)).toContain("docs#4");
         return drawn;
@@ -879,10 +887,23 @@ describe("Screen", () => {
         async (_thread: ThreadSummary) => parserFixDetail,
       );
       readDetail.mockRejectedValueOnce(providerError("GITHUB_TIMED_OUT"));
-      const screen = await showRecorded(readDetail);
-      await new Promise((done) => setTimeout(done, 1_100));
-      const failed = await screen.redraw();
-      expect(failed.lines.at(3)).toBe("  ✗ failed: The provider failed with");
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      // A new `Date` on each read, so the clock's tick draws a frame: the
+      // same object again leaves the screen as it was.
+      const view = {
+        ...viewOf(cache, everyCapability, readRecorded, readDetail),
+        now: () => new Date(recordedNow),
+      };
+      const screen = await (await show(view)).redraw();
+      const failure = "  ✗ failed: The provider failed with";
+      await waitUntil(async () =>
+        expect((await screen.redraw()).lines.at(3)).toBe(failure),
+      );
+      // The tick draws the screen again, with the selection where it was.
+      const ticked = await screen.redraw(() => vi.advanceTimersByTime(1_000));
+      expect(ticked.lines.at(3)).toBe(failure);
       expect(readDetail).toHaveBeenCalledOnce();
       const back = await press(screen, "j", "j", "k", "k");
       expect(back.lines.at(3)).toBe("  dave · 3d ago");
@@ -1077,7 +1098,7 @@ describe("Screen", () => {
         "activity",
         events,
       );
-      const drawn = await vi.waitFor(async () => {
+      const drawn = await waitUntil(async () => {
         const { lines } = await shown.screen.redraw();
         expect(lines.at(1)).toBe("  docs#4 issue                       16h");
         expect(lines.join("\n")).not.toContain("loading…");
@@ -1131,7 +1152,7 @@ describe("Screen", () => {
       ];
       await refresh();
       await refresh();
-      await vi.waitFor(() => expect(readNumbers(readDetail)).toEqual([4, 4]));
+      await waitUntil(() => expect(readNumbers(readDetail)).toEqual([4, 4]));
       expect(await drawFrames(screen)).not.toContain("loading…");
       expect((await screen.redraw()).lines.slice(2, 6)).toEqual(
         drawn.slice(2, 6),
@@ -1194,7 +1215,7 @@ describe("Screen", () => {
         width,
         16,
       );
-      await vi.waitFor(async () => {
+      await waitUntil(async () => {
         const { lines } = await screen.redraw();
         expect(lines.slice(1, 3).join("")).not.toBe("");
         expect(lines).not.toContain("  refresh in progress…");
@@ -1221,7 +1242,7 @@ describe("Screen", () => {
         "  refresh in progress…",
       ]);
       gate.resolve();
-      await vi.waitFor(async () =>
+      await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(9)).toBe(
           "2 threads · 3 events",
         ),
@@ -1235,7 +1256,7 @@ describe("Screen", () => {
       ]);
       expect(wider.lines.at(9)).toBe("");
       gate.resolve();
-      await vi.waitFor(async () =>
+      await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(9)).toBe(
           "2 threads · 4 events",
         ),
@@ -1302,7 +1323,7 @@ describe("Screen", () => {
     it("opens the accordion under the selected thread, above its events", async () => {
       const screen = await showActivity(60);
       await press(screen, "j");
-      const drawn = await vi.waitFor(async () => {
+      const drawn = await waitUntil(async () => {
         const lines = (await screen.redraw()).lines;
         expect(lines).not.toContain("  loading…");
         return lines;
@@ -1348,7 +1369,7 @@ describe("Screen", () => {
     it("opens the editor under activity's selected thread with a, as in owed, and closes it with esc", async () => {
       const screen = await showActivity(40);
       await press(screen, "a");
-      const opened = await vi.waitFor(async () => {
+      const opened = await waitUntil(async () => {
         const drawn = await screen.redraw();
         expect(drawn.lines).not.toContain("  loading…");
         return drawn;
@@ -1384,13 +1405,13 @@ describe("Screen", () => {
       const view = { ...viewOf(cache), mode: "activity" } as const;
       const screen = await show(view, 40, () => {}, 16);
       await cache.refresh();
-      await vi.waitFor(async () =>
+      await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(2)).toBe(
           "  docs#4 issue                       16h",
         ),
       );
       await press(screen, "a");
-      const opened = await vi.waitFor(async () => {
+      const opened = await waitUntil(async () => {
         const drawn = await screen.redraw();
         expect(drawn.lines).toContain("  ☐ carol");
         return drawn;
@@ -1462,7 +1483,7 @@ describe("Screen", () => {
         "example",
       ]);
       const wider = await press(screen, "g", "t");
-      await vi.waitFor(async () =>
+      await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(13)).toBe(
           "2 threads · 4 events",
         ),
@@ -1676,7 +1697,7 @@ describe("Screen", () => {
       const screen = await show(viewOf(cache));
       snapshot.mockClear();
       await press(screen, "R");
-      await vi.waitFor(() => expect(snapshot).toHaveBeenCalledTimes(2));
+      await waitUntil(() => expect(snapshot).toHaveBeenCalledTimes(2));
       expect(snapshot.mock.calls.map(([, cursor]) => cursor)).toEqual([
         null,
         null,
@@ -1724,7 +1745,12 @@ describe("Screen", () => {
       expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
     });
 
-    it("acts on no key but q at 32 columns, and on every key again once widened, the selection where it was", async () => {
+    // It draws the screen some 90 times, narrowed and widened for each of
+    // 21 keys: about 0.7 s alone, and at most 14.7 s over 30 runs at a
+    // load average of 88 to 112.
+    it("acts on no key but q at 32 columns, and on every key again once widened, the selection where it was", {
+      timeout: 45_000,
+    }, async () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const opened: string[] = [];
@@ -1740,7 +1766,7 @@ describe("Screen", () => {
       );
       const screen = await show(view, 40, onQuit);
       await press(await screen.redraw(), "j", "j");
-      await vi.waitFor(async () =>
+      await waitUntil(async () =>
         expect((await screen.redraw()).lines).not.toContain("  loading…"),
       );
       const before = (await screen.redraw()).lines;
