@@ -115,17 +115,20 @@ export function ScreenFrame({
 export const settled = settleStatus(recordedNow);
 
 /**
- * Every thread's details, with the thread's own age, labels and assignees.
- * The held cache gives only recorded threads, so any other is a mistake.
+ * Reads each of `threads`' details, with the thread's own age, labels and
+ * assignees. The held cache gives only those threads, so any other is a
+ * mistake.
  */
-const readDetail = async (thread: ThreadSummary): Promise<ThreadDetail> => {
-  const facts = recordedThreads.find(
-    ({ repo, number }) => repo === thread.repo && number === thread.number,
-  );
-  if (!facts) throw new Error(`#${thread.number} is not recorded`);
-  const { createdAt, labels, assignees } = facts;
-  return { ...parserFixDetail, createdAt, labels, assignees };
-};
+const readDetail =
+  (threads: readonly Thread[]) =>
+  async (thread: ThreadSummary): Promise<ThreadDetail> => {
+    const facts = threads.find(
+      ({ repo, number }) => repo === thread.repo && number === thread.number,
+    );
+    if (!facts) throw new Error(`#${thread.number} is not recorded`);
+    const { createdAt, labels, assignees } = facts;
+    return { ...parserFixDetail, createdAt, labels, assignees };
+  };
 
 /** A frame given no stand-in for GitHub opens no editor, so reads and writes nothing. */
 const refuseEditor = (): never => {
@@ -181,7 +184,7 @@ export function standInGitHub(): Provider {
 export function connectRecording({
   status = settled,
   threads = recordedThreads,
-  read = readDetail,
+  read = readDetail(threads),
   github,
 }: {
   readonly status?: CacheStatus;

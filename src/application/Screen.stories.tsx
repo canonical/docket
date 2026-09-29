@@ -1,5 +1,12 @@
 import type { ProviderError, ThreadDetail } from "../lib/provider/index.js";
-import { recordedSettings, recordedWatched } from "../testing/recorded.js";
+import type { Thread } from "../lib/waits/index.js";
+import { at, bob, exampleSync } from "../testing/facts.js";
+import {
+  parserFix,
+  recordedSettings,
+  recordedThreads,
+  recordedWatched,
+} from "../testing/recorded.js";
 import {
   connectRecording,
   ScreenFrame,
@@ -77,6 +84,64 @@ export const OwedByRepo: Story<ScreenFrameProps> = {
 /** owed by stack: the stack's section, then what is in no stack. */
 export const OwedByStack: Story<ScreenFrameProps> = {
   args: { ...recording, owedGrouping: "stack" },
+};
+
+/**
+ * owed by stack, the stacked reply selected and its details failed: the
+ * reason under what the snapshot showed, the stack mark down every line.
+ */
+export const OwedByStackFailed: Story<ScreenFrameProps> = {
+  args: {
+    ...viewRecording({ read: async () => Promise.reject(timedOut) }),
+    owedGrouping: "stack",
+  },
+};
+
+/**
+ * The reply carol is waiting on selected: she is in the organisation but
+ * not on the team, under items alice owes, each person in their group's
+ * mark and hue, and each two-line item's bar ending on its second line.
+ */
+export const OwedOrganisationReply: Story<ScreenFrameProps> = {
+  args: { ...recording, run: ["selection.next", "selection.next"] },
+};
+
+/** A dependency update a bot opened, asking bob for a review. */
+const botUpdate: Thread = {
+  ...parserFix,
+  number: 20,
+  url: "https://github.com/example-org/example-repo/pull/20",
+  title: "Update dependency zod to 3.24",
+  stack: undefined,
+  author: exampleSync,
+  createdAt: at("2026-09-26T08:00+02:00"),
+  updatedAt: at("2026-09-26T08:00+02:00"),
+  labels: ["dependencies"],
+  assignees: [bob],
+  comments: [],
+  reviewRequests: [
+    {
+      reviewer: bob,
+      requester: exampleSync,
+      at: at("2026-09-26T08:00+02:00"),
+    },
+  ],
+};
+
+/**
+ * A thread a bot opened, selected: its author and whoever asked for the
+ * review behind the bot's mark, dimmed, the review still one bob owes.
+ */
+export const OwedBotAuthored: Story<ScreenFrameProps> = {
+  args: {
+    ...viewRecording({ threads: [...recordedThreads, botUpdate] }),
+    run: [
+      "selection.next",
+      "selection.next",
+      "selection.next",
+      "selection.next",
+    ],
+  },
 };
 
 /** activity over 24 working hours, by kind: the thread's state above its events. */
