@@ -1,0 +1,68 @@
+import { describe, expect, it } from "vitest";
+import { settleStatus } from "../testing/cache.js";
+import { providerError } from "../testing/provider.js";
+import { recordedNow, recordedRepos } from "../testing/recorded.js";
+import { draw } from "../testing/terminal.js";
+import drawStatusLine, { type StatusLineState } from "./drawStatusLine.js";
+
+/** An active pane, synced two minutes ago, with nothing else to say. */
+const synced: StatusLineState = {
+  problem: undefined,
+  status: settleStatus(recordedNow),
+  failure: undefined,
+  action: undefined,
+  attention: "active",
+  detailsPaused: false,
+  now: recordedNow,
+  timezone: "Europe/Paris",
+  watched: recordedRepos,
+  width: 40,
+};
+
+/** The first line drawn for `state`. */
+async function drawFor(state: Partial<StatusLineState>) {
+  const screen = await draw(drawStatusLine({ ...synced, ...state }), 40);
+  return screen.lines.at(0);
+}
+
+describe("drawStatusLine", () => {
+  it("says how old the data is", async () => {
+    expect(await drawFor({})).toBe("synced 2m ago");
+  });
+
+  it("names a failure that leaves the rows held as a failed refresh, with the data's age", async () => {
+    const failure = providerError("GITHUB_TIMED_OUT");
+    expect(await drawFor({ failure })).toBe("✗ offline · data from 11:58");
+  });
+
+  it("says nothing of the cache while a problem stands in for the list", async () => {
+    const problem = {
+      code: "GH_NOT_INSTALLED",
+      message: "gh is not installed.",
+      recovery: "install gh",
+    } as const;
+    expect(await drawFor({ problem })).toBe("");
+  });
+
+  it("names the repository by its short name", async () => {
+    const status = {
+      ...settleStatus(recordedNow),
+      refreshing: true,
+      fullRefresh: {
+        repo: "example-org/example-docs",
+        position: 2,
+        count: 2,
+        fetched: 1,
+        total: 3,
+      },
+    };
+    expect(await drawFor({ status })).toBe(
+      "full refresh · docs 2/2 · pages 1/3",
+    );
+  });
+
+  it("says the details are paused once their budget is spent", async () => {
+    const line = await drawFor({ detailsPaused: true });
+    expect(line).toBe(`synced 2m ago${" ".repeat(13)}details paused`);
+  });
+});
