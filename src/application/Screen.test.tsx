@@ -532,7 +532,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         settings: teamless,
       };
       const screen = await show(view, 40, () => {}, 17);
-      const owed = await vi.waitFor(async () => {
+      const owed = await waitUntil(async () => {
         const drawn = await screen.redraw();
         expect(drawn.lines.at(7)).toMatch(/^▌ docs#4 reply/);
         return drawn;
@@ -584,7 +584,7 @@ describe("Screen", { timeout: 15_000 }, () => {
           settings: teamless,
         };
         const screen = await show(view, 40, () => {}, height);
-        const owed = await vi.waitFor(async () => {
+        const owed = await waitUntil(async () => {
           const drawn = await screen.redraw();
           expect(drawn.lines.at(7)).toMatch(/^▌ docs#4 reply/);
           return drawn;
@@ -634,7 +634,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         watched: recordedWatched(teamless),
       };
       const screen = await show(view, 60, () => {}, 16);
-      await vi.waitFor(async () => {
+      await waitUntil(async () => {
         const drawn = await screen.redraw();
         expect(drawn.lines.at(1)).toMatch(/^▌┃example#12 reply/);
       });
@@ -656,7 +656,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         () => {},
         16,
       );
-      const owed = await vi.waitFor(async () => {
+      const owed = await waitUntil(async () => {
         const drawn = await screen.redraw();
         expect(drawn.lines.at(1)).toMatch(/^ {2}✗ no team/);
         return drawn;
@@ -685,7 +685,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         readViewer: () => Promise.reject(providerError("GITHUB_UNREACHABLE")),
       };
       const screen = await show({ ...view, source });
-      await vi.waitFor(async () =>
+      await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(10)).toBe(
           "✗ offline · data from 12:00",
         ),

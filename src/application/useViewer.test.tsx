@@ -2,6 +2,7 @@ import { act, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { providerError } from "../testing/provider.js";
 import { draw } from "../testing/terminal.js";
+import { waitUntil } from "../testing/wait.js";
 import useViewer, {
   type UseViewerProps,
   type UseViewerResult,
@@ -31,7 +32,7 @@ describe("useViewer", () => {
   it("gives the login once read, and reads it once whatever syncs follow", async () => {
     const readViewer = vi.fn(async () => "alice");
     const { result, change } = await probe({ readViewer, syncedAt: synced });
-    await vi.waitFor(() => expect(result()).toEqual({ viewer: "alice" }));
+    await waitUntil(() => expect(result()).toEqual({ viewer: "alice" }));
     await change({ syncedAt: later });
     expect(readViewer).toHaveBeenCalledOnce();
   });
@@ -46,18 +47,18 @@ describe("useViewer", () => {
     const readViewer = vi.fn(async () => "alice");
     readViewer.mockRejectedValueOnce(offline);
     const { result, change } = await probe({ readViewer, syncedAt: synced });
-    await vi.waitFor(() => expect(result()).toEqual({ failure: offline }));
+    await waitUntil(() => expect(result()).toEqual({ failure: offline }));
     await change({ syncedAt: synced });
     expect(readViewer).toHaveBeenCalledOnce();
     await change({ syncedAt: later });
-    await vi.waitFor(() => expect(result()).toEqual({ viewer: "alice" }));
+    await waitUntil(() => expect(result()).toEqual({ viewer: "alice" }));
     expect(readViewer).toHaveBeenCalledTimes(2);
   });
 
   it("gives a defect as the problem that stands in for the list", async () => {
     const readViewer = () => Promise.reject(new TypeError("broken"));
     const { result } = await probe({ readViewer });
-    await vi.waitFor(() =>
+    await waitUntil(() =>
       expect(result().problem).toMatchObject({ code: "UNEXPECTED_FAILURE" }),
     );
   });
@@ -70,7 +71,7 @@ describe("useViewer", () => {
     });
     await change({ readViewer: () => failed.promise });
     await change({ readViewer: async () => "bob" });
-    await vi.waitFor(() => expect(result()).toEqual({ viewer: "bob" }));
+    await waitUntil(() => expect(result()).toEqual({ viewer: "bob" }));
     await act(async () => {
       answered.resolve("alice");
       failed.reject(providerError("GITHUB_UNREACHABLE"));
