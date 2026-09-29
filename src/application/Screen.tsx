@@ -411,7 +411,7 @@ export default function Screen({
         selected={placeSelection(rows, selections.activity)}
         readDetail={(row) => readRowDetail(row, readThreadDetail)}
         measureWaits={(row) =>
-          buildThreadWaits(row.thread, threads, watched, at)
+          buildThreadWaits(row.thread, threads, watched, at, you.viewer)
         }
         now={at}
         timezone={settings.time.timezone}

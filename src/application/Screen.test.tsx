@@ -1281,7 +1281,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
         `${" ".repeat(26)}◉ alice, ● bob`,
-        "  age 27d · owner ● alice, ● bob",
+        "  age 27d · owner ◉ alice, ● bob",
         "  last activity 27d ago",
         "  labels none",
         `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
