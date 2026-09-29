@@ -57,9 +57,7 @@ const HelpOverlay = ({
               <box key={line.label} flexDirection="column" flexShrink={0}>
                 <text fg={tokens["color.text"]}>
                   {pad}
-                  <span attributes={tokens["typography.weight.bold"]}>
-                    {keys}
-                  </span>
+                  {keys}
                   {gap}
                   {trimText(line.label, room)}
                 </text>

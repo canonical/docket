@@ -37,13 +37,13 @@ describe("HelpOverlay", () => {
     expect(screen.lines.slice(0, lines.length)).toEqual(lines);
   });
 
-  it("draws the keys in bold, and the group headings and the labels not", async () => {
+  it("draws the group headings, the keys and the labels, none of them bold", async () => {
     const screen = await draw(<HelpOverlay {...Keys.args} />, 40, 20);
     expect(screen.look("Mode")).toMatchObject({
       fg: tokens["color.text"],
       bold: false,
     });
-    expect(screen.look("← →  h l")?.bold).toBe(true);
+    expect(screen.look("← →  h l")?.bold).toBe(false);
     expect(screen.look("switch mode")?.bold).toBe(false);
   });
 

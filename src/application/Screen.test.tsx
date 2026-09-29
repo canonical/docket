@@ -1825,7 +1825,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(activity.lines.at(11)).toBe(
         "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       );
-      expect(activity.look("t")?.bold).toBe(true);
+      expect(activity.look(" time")?.fg).toBe(tokens["color.text.muted"]);
     });
 
     it("shows every key with ?, grouped, and hides it again", async () => {

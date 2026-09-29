@@ -37,7 +37,7 @@
 |type filter ↑↓ ␣ tick ⏎ apply esc ?
 
 runs
-1:1 "assigning example#12" fg #c6c8d1ff bg #161821ff bold
+1:1 "assigning example#12                    " fg #c6c8d1ff bg #161821ff
 2:1 "┃" fg #e27878ff bg #161821ff
 2:2 "┆" fg #6b7089ff bg #161821ff
 2:3 "example#12 PR reply " fg #c6c8d1ff bg #161821ff bold
@@ -110,12 +110,10 @@ runs
 24:17 "              unassigned" fg #c6c8d1ff bg #161821ff
 34:1 "2 over · 1 soon · 3 on track" fg #c6c8d1ff bg #161821ff
 35:1 "✗ assign refused" fg #e27878ff bg #161821ff
-36:1 "type" fg #c6c8d1ff bg #161821ff bold
+36:1 "type" fg #c6c8d1ff bg #161821ff
 36:5 " filter" fg #6b7089ff bg #161821ff
-36:13 "↑↓" fg #c6c8d1ff bg #161821ff bold
-36:16 "␣" fg #c6c8d1ff bg #161821ff bold
+36:12 " ↑↓ ␣" fg #c6c8d1ff bg #161821ff
 36:17 " tick" fg #6b7089ff bg #161821ff
-36:23 "⏎" fg #c6c8d1ff bg #161821ff bold
+36:22 " ⏎" fg #c6c8d1ff bg #161821ff
 36:24 " apply" fg #6b7089ff bg #161821ff
-36:31 "esc" fg #c6c8d1ff bg #161821ff bold
-36:35 "?" fg #c6c8d1ff bg #161821ff bold
+36:30 " esc ?" fg #c6c8d1ff bg #161821ff

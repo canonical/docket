@@ -25,7 +25,7 @@ const PaneHeader = ({
   );
   return (
     <text fg={tokens["color.text"]}>
-      <span attributes={tokens["typography.weight.bold"]}>{left}</span>
+      {left}
       {" ".repeat(gap)}
       {right}
     </text>

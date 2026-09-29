@@ -34,7 +34,7 @@ export interface Tokens {
    * an editor's cursor: the only background on the screen.
    */
   readonly "color.background.selected": string;
-  /** The mode name, headings and keys, as OpenTUI's text attribute. */
+  /** A row's first line, as OpenTUI's text attribute, and nothing else. */
   readonly "typography.weight.bold": number;
   /**
    * The title, as OpenTUI's text attribute. Where the font or terminal

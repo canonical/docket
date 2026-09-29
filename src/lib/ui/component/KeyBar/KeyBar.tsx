@@ -39,9 +39,6 @@ const KeyBar = ({ commands, width }: KeyBarProps): ReactNode => {
           fg={
             look === "label" ? tokens["color.text.muted"] : tokens["color.text"]
           }
-          attributes={
-            look === "key" ? tokens["typography.weight.bold"] : undefined
-          }
         >
           {text}
         </span>
