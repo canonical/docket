@@ -11,8 +11,9 @@ import type { Named, Watched } from "./types.js";
  * of the held threads carries that, and anyone else unlisted is outside.
  * A team, `org/team`, is `you` when a review requested of it on those
  * threads lists the viewer among its members, as owed's rows name it, and
- * text otherwise: GitHub gives an editor no other team's members. A
- * repository not watched lists nobody.
+ * otherwise of the organisation, `internal`, as GitHub offers only the
+ * teams of the repository's organisation; it gives an editor no other
+ * team's members. A repository not watched lists nobody.
  *
  * @param viewer The login gh is signed in with, when it is known.
  * @param held What the threads the view holds tell, gathered once for
@@ -28,10 +29,9 @@ export default function describeCandidate(
   const key = name.toLowerCase();
   const own = gatherNamed([thread]);
   if (name.includes("/")) {
-    const team = own.teams.get(key) ?? held.teams.get(key);
-    return team
-      ? describeTeam({ team: name, members: team.members }, viewer)
-      : { text: name, fit: "trimmed" };
+    const members = (own.teams.get(key) ?? held.teams.get(key))?.members;
+    const team = describeTeam({ team: name, members: members ?? [] }, viewer);
+    return "group" in team ? team : { ...team, group: "internal" };
   }
   const people =
     watched.find(({ repo }) => repo === thread.repo)?.resolved.settings

@@ -40,7 +40,7 @@ export const Assigning: Story<PeoplePickerProps> = {
 
 /**
  * Requesting review: the current request, a suggestion, a team the viewer
- * belongs to, a collaborator and another team.
+ * belongs to, a collaborator and another team of the organisation.
  */
 export const RequestingReview: Story<PeoplePickerProps> = {
   args: {
@@ -52,7 +52,7 @@ export const RequestingReview: Story<PeoplePickerProps> = {
       { owner: person("example-org/ui", "you"), ticked: false },
       { owner: person("dave", "outside"), ticked: false },
       {
-        owner: { text: "example-org/reviewers", fit: "trimmed" },
+        owner: person("example-org/reviewers", "internal"),
         ticked: false,
       },
     ],

@@ -725,7 +725,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         "  ☑ ● bob",
         "  ☐ ◐ carol",
         "  ☐ ◉ alice",
-        "  ☐ example-org/reviewers",
+        "  ☐ ◐ example-org/reviewers",
       ]);
     });
 
@@ -744,7 +744,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         { team: "example-org/reviewers" },
       ]);
       expect(applied.lines.at(-2)).toBe(
-        "✓ requested review from ● bob, example-…",
+        "✓ requested review from ● bob, ◐ exampl…",
       );
     });
 

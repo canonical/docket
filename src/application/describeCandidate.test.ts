@@ -54,7 +54,7 @@ describe("describeCandidate", () => {
     ).toBe("internal");
   });
 
-  it("gives a team the viewer belongs to you, from a review requested of it on a held thread", () => {
+  it("gives a team the viewer belongs to you, from a review requested of it on a held thread, and one they are not in the organisation", () => {
     const requested = thread({
       number: 3,
       reviewRequests: [
@@ -83,13 +83,17 @@ describe("describeCandidate", () => {
           gatherNamed([requested]),
         ),
       ),
-    ).toBeUndefined();
+    ).toBe("internal");
   });
 
-  it("leaves a team as text", () => {
+  it("puts any other team in the organisation, whose members it does not know", () => {
     expect(
       describeCandidate("example-org/reviewers", discussed, watched, "alice"),
-    ).toEqual({ text: "example-org/reviewers", fit: "trimmed" });
+    ).toEqual({
+      text: "example-org/reviewers",
+      fit: "trimmed",
+      group: "internal",
+    });
   });
 
   it("lists nobody for a repository not watched", () => {

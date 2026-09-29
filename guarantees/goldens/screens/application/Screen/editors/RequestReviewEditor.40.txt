@@ -15,7 +15,7 @@
 |  ☑ ● bob
 |  ☐ ◐ carol
 |  ☐ ◉ alice
-|  ☐ example-org/reviewers
+|  ☐ ◐ example-org/reviewers
 |│ example#15 issue close ◐ car… 29d left
 |╵ Crash on start              unassigned
 |
@@ -93,8 +93,9 @@ runs
 16:3 "☐ " fg #c6c8d1ff bg #161821ff
 16:5 "◉ alice" fg #84a0c6ff bg #161821ff
 17:1 "  " fg #ffffffff bg #2e3244ff
-17:3 "☐ example-org/reviewers" fg #c6c8d1ff bg #2e3244ff
-17:26 "               " fg #ffffffff bg #2e3244ff
+17:3 "☐ " fg #c6c8d1ff bg #2e3244ff
+17:5 "◐ example-org/reviewers" fg #a093c7ff bg #2e3244ff
+17:28 "             " fg #ffffffff bg #2e3244ff
 18:1 "│" fg #818596ff bg #161821ff
 18:3 "example#15 issue close " fg #c6c8d1ff bg #161821ff bold
 18:26 "◐ car…" fg #a093c7ff bg #161821ff bold
