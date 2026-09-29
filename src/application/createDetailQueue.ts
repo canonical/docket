@@ -35,6 +35,15 @@ interface Entry {
   failed: boolean;
 }
 
+/**
+ * How far the details asked for since the queue last had nothing
+ * pending have come: `read` of the `asked` threads have an answer.
+ */
+export interface DetailProgress {
+  readonly read: number;
+  readonly asked: number;
+}
+
 /** Threads' details asked for one at a time, read together. */
 export interface DetailQueue {
   /**
@@ -62,9 +71,18 @@ export interface DetailQueue {
     selected: ThreadSummary | undefined,
     delay: number,
   ): void;
+  /**
+   * How many of the threads asked for have an answer, counted from the
+   * first ask while nothing was pending until nothing is again, as when
+   * the list first shows, or the selected thread alone is read again:
+   * nothing while nothing is pending, or while the queue is paused. A
+   * thread that gives way to a later window, or that a request leaves
+   * out, is no longer counted as asked for.
+   */
+  progress(): DetailProgress | undefined;
   /** How many times details arrived for `thread`: part of its version. */
   countArrivals(thread: ThreadSummary): number;
-  /** Calls `listener` whenever details arrive. */
+  /** Calls `listener` whenever details arrive, or the progress changes. */
   subscribe(listener: () => void): () => void;
   /**
    * Holds back every request while `paused`, as below the budget floor or
@@ -102,7 +120,33 @@ export default function createDetailQueue(
   let selected: ThreadSummary | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let paused = false;
+  // The threads asked for since nothing was pending, and those answered.
+  let round:
+    | { readonly asked: Set<string>; readonly answered: Set<string> }
+    | undefined;
+  let sending = 0;
 
+  const tell = () => {
+    for (const listener of listeners) listener();
+  };
+  const progress = (): DetailProgress | undefined =>
+    round && !paused
+      ? { read: round.answered.size, asked: round.asked.size }
+      : undefined;
+  /** Makes `change`, telling the listeners when it moves the progress. */
+  const telling = <Result>(change: () => Result): Result => {
+    const before = progress();
+    const result = change();
+    const after = progress();
+    if (before?.read !== after?.read || before?.asked !== after?.asked) {
+      tell();
+    }
+    return result;
+  };
+  /** Ends the round once nothing waits to be sent or is under way. */
+  const settleRound = () => {
+    if (queued.length === 0 && sending === 0) round = undefined;
+  };
   const ask = ({ thread, version }: WantedDetail) => {
     const { promise, resolve, reject } = Promise.withResolvers<ThreadDetail>();
     // A read that fails with nobody waiting on it is no failure of the
@@ -115,8 +159,12 @@ export default function createDetailQueue(
       awaited: false,
       failed: false,
     };
-    entries.set(identifyThread(thread), entry);
+    const key = identifyThread(thread);
+    entries.set(key, entry);
     queued.push({ thread, version, entry });
+    round ??= { asked: new Set(), answered: new Set() };
+    round.asked.add(key);
+    round.answered.delete(key);
     return entry;
   };
   const flush = async () => {
@@ -138,6 +186,7 @@ export default function createDetailQueue(
       entry,
     }));
     const at = now();
+    sending += 1;
     try {
       const read = await reader.read(
         ordered.map(({ thread }) => thread),
@@ -151,8 +200,10 @@ export default function createDetailQueue(
         if (entries.get(key) !== entry) continue;
         if (!found.has(key)) {
           entries.delete(key);
+          round?.asked.delete(key);
           continue;
         }
+        round?.answered.add(key);
         const detail = found.get(key);
         if (!detail) {
           entry.failed = true;
@@ -163,14 +214,17 @@ export default function createDetailQueue(
         entry.settle.resolve(detail);
         arrivals.set(key, (arrivals.get(key) ?? 0) + 1);
       }
-      for (const listener of listeners) listener();
     } catch (reason) {
       for (const { key, entry } of asked) {
         if (entries.get(key) !== entry) continue;
+        round?.answered.add(key);
         entry.failed = true;
         entry.settle.reject(reason);
       }
     }
+    sending -= 1;
+    settleRound();
+    tell();
   };
   const isDue = (thread: ThreadSummary, version: string, at: Date) => {
     const known = entries.get(identifyThread(thread));
@@ -194,31 +248,37 @@ export default function createDetailQueue(
         known.awaited = true;
         return known.promise;
       }
-      const entry = ask({ thread, version });
+      const entry = telling(() => ask({ thread, version }));
       entry.awaited = true;
       if (timer === undefined) schedule(0);
       return entry.promise;
     },
     isDue,
-    request(window, chosen, delay) {
-      selected = chosen;
-      const kept = new Set(window.map(({ thread }) => identifyThread(thread)));
-      queued = queued.filter(({ thread, entry }) => {
-        const key = identifyThread(thread);
-        if (entry.awaited || kept.has(key)) return true;
-        if (entries.get(key) === entry) entries.delete(key);
-        return false;
-      });
-      const at = now();
-      for (const each of window) {
-        if (isDue(each.thread, each.version, at)) ask(each);
-      }
-      if (queued.length > 0) schedule(delay);
-      else {
-        clearTimeout(timer);
-        timer = undefined;
-      }
-    },
+    request: (window, chosen, delay) =>
+      telling(() => {
+        selected = chosen;
+        const kept = new Set(
+          window.map(({ thread }) => identifyThread(thread)),
+        );
+        queued = queued.filter(({ thread, entry }) => {
+          const key = identifyThread(thread);
+          if (entry.awaited || kept.has(key)) return true;
+          if (entries.get(key) === entry) entries.delete(key);
+          round?.asked.delete(key);
+          return false;
+        });
+        const at = now();
+        for (const each of window) {
+          if (isDue(each.thread, each.version, at)) ask(each);
+        }
+        if (queued.length > 0) schedule(delay);
+        else {
+          clearTimeout(timer);
+          timer = undefined;
+        }
+        settleRound();
+      }),
+    progress,
     countArrivals: (thread) => arrivals.get(identifyThread(thread)) ?? 0,
     subscribe(listener) {
       listeners.add(listener);
@@ -227,12 +287,15 @@ export default function createDetailQueue(
       };
     },
     pause(holding) {
-      paused = holding;
+      telling(() => {
+        paused = holding;
+      });
       if (paused || queued.length > 0) schedule(0);
     },
     stop() {
       clearTimeout(timer);
       queued = [];
+      round = undefined;
     },
   };
 }

@@ -3,7 +3,10 @@ import type { AttentionState } from "../lib/cache/index.js";
 import type { ThreadDetail } from "../lib/provider/index.js";
 import type { ThreadSummary } from "../lib/waits/index.js";
 import { detailRest, detailWindow } from "./constants.js";
-import createDetailQueue, { type WantedDetail } from "./createDetailQueue.js";
+import createDetailQueue, {
+  type DetailProgress,
+  type WantedDetail,
+} from "./createDetailQueue.js";
 import type { DetailReader } from "./createDetailReader.js";
 import identifyThread from "./identifyThread.js";
 
@@ -28,9 +31,10 @@ export interface UseReadAheadProps {
 
 /**
  * Result of the useReadAhead hook: how the accordion reads a thread's
- * details, which joins the reads ahead, when there is a reader; and the
+ * details, which joins the reads ahead, when there is a reader; the
  * version the details held for it key on, which moves whenever details
- * read ahead arrive for it.
+ * read ahead arrive for it; and how many of the details asked for have
+ * been read, while any are pending.
  */
 export interface UseReadAheadResult {
   readonly read?: (
@@ -38,6 +42,7 @@ export interface UseReadAheadResult {
     version: string,
   ) => Promise<ThreadDetail>;
   readonly version: (thread: ThreadSummary, version: string) => string;
+  readonly progress?: DetailProgress;
 }
 
 /** The rows nearest `place` first, each thread once, at most `limit`. */
@@ -69,7 +74,8 @@ function findNearest(
  * old. Nothing is read ahead while the pane is idle or the refresh cycle
  * paused. Details read ahead reach the accordion through the details it
  * holds, by the version they move: old details stay on screen until new
- * ones arrive.
+ * ones arrive. It draws again whenever details arrive or the count of
+ * those read moves.
  *
  * @note Impure: reads through the reader, and sets its timers.
  */
@@ -104,8 +110,10 @@ export default function useReadAhead({
     queue.request(window, chosen?.thread, delay);
   }, [queue, key, chosenKey, attention, paused]);
   if (!queue) return { version: (_thread, version) => version };
+  const progress = queue.progress();
   return {
     read: (thread, version) => queue.read(thread, version),
     version: (thread, version) => `${version}|${queue.countArrivals(thread)}`,
+    ...(progress && { progress }),
   };
 }
