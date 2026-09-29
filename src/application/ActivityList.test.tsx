@@ -46,7 +46,8 @@ describe("ActivityList", () => {
       ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
       ` ┆Fix the parser${" ".repeat(17)}● alice`,
     ]);
-    expect(screen.lines.slice(13, 17)).toEqual([
+    expect(screen.lines.slice(8, 13)).toEqual([
+      " ┆loading…",
       ` ┆  ✗ checks failed (lint)${" ".repeat(11)}25m`,
       ` ┆  alice requested review${" ".repeat(12)}3h`,
       ` ┆  dave commented${" ".repeat(20)}3d`,
@@ -90,7 +91,7 @@ describe("ActivityList", () => {
     expect(screen.look("PULL REQUESTS")?.bg).not.toBe(selected);
   });
 
-  it("opens the five-line accordion under the selected thread, above its events", async () => {
+  it("opens the accordion under the selected thread, above its events", async () => {
     const screen = await draw(
       <ActivityList
         {...reading}
@@ -104,11 +105,11 @@ describe("ActivityList", () => {
     expect(screen.lines.slice(3, 10)).toEqual([
       `${" ".repeat(26)}● alice, ● bob`,
       "  loading…",
-      "",
-      "",
-      "",
-      "",
-      "    example-sync labelled kind=docs  16h",
+      `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
+      "PULL REQUESTS",
+      ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
+      ` ┆Fix the parser${" ".repeat(17)}● alice`,
+      ` ┆  ✗ checks failed (lint)${" ".repeat(11)}25m`,
     ]);
   });
 
@@ -161,7 +162,7 @@ describe("ActivityList", () => {
     );
     expect(screen.lines.slice(7, 10)).toEqual([
       ` ┆Fix the parser${" ".repeat(17)}● alice`,
-      " ┆asked by alice 3d ago",
+      " ┆asked by ● alice 3d ago",
       " ┆1 push since · 2 files · +65 −12",
     ]);
   });
@@ -207,7 +208,7 @@ describe("ActivityList", () => {
         list={recordedActivity("kind")}
         selected={1}
         width={40}
-        height={12}
+        height={10}
       />,
       40,
     );
@@ -234,7 +235,7 @@ describe("ActivityList", () => {
         40,
         height,
       );
-    await drawShown(12);
+    await drawShown(10);
     expect(shown.at(-1)).toBe(1);
     await drawShown(20);
     expect(shown.at(-1)).toBe(2);
@@ -243,7 +244,7 @@ describe("ActivityList", () => {
   it("scrolls back up to the threads above once the region grows tall enough", async () => {
     let grow = () => {};
     const Growing = () => {
-      const [height, setHeight] = useState(12);
+      const [height, setHeight] = useState(10);
       grow = () => setHeight(20);
       return (
         <ActivityList

@@ -1,41 +1,37 @@
 import type { WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import type { ThreadSummary } from "../../../waits/index.js";
+import type { Piece } from "../../types.js";
 
 /**
- * One piece of the accordion's text, wrapped to the pane, and the
- * colour it takes: plain text, the error colour for a field in trouble,
- * or dimmed for context such as the stack.
+ * One line of what the accordion shows, before it is fitted to the pane:
+ * its runs, each in its own colour, and whether it wraps over as many
+ * lines as it needs, as a message does, or is trimmed to one.
  */
 export interface DetailLine {
-  readonly text: string;
-  readonly tone: "text" | "error" | "muted";
+  readonly pieces: readonly Piece[];
+  readonly fit: "trimmed" | "wrapped";
   /** Shown only when it fits whole, such as when a reply began. */
   readonly optional?: boolean;
-  /**
-   * Ends in a dimmed `…`: the rest of the line needs the details read,
-   * which is paused, such as a reply's text.
-   */
-  readonly pending?: boolean;
 }
-
-/**
- * What the accordion is given for a thread. Details read are whole. While
- * reading is paused and none are held, it is given what the snapshot holds,
- * marked `partial`, whose lines that need the read end in a dimmed `…`,
- * or, for a thread the snapshot holds nothing of, when reading resumes.
- */
-export type ShownDetail =
-  | (ThreadDetail & { readonly partial?: boolean })
-  | { readonly resumes: Date };
 
 /** What the accordion shows for a thread, before it is fitted to the pane. */
 export interface DetailText {
   /** The body for the row's kind of wait, in order. */
   readonly body: readonly DetailLine[];
-  /** The two stack lines of a stacked pull request, which end the accordion. */
+  /** The stack lines of a stacked pull request, which end the accordion. */
   readonly stack: readonly DetailLine[];
 }
+
+/**
+ * What the accordion is given for a thread. Details read are whole. While
+ * reading is paused and none are held, it is given what the snapshot holds,
+ * marked `partial`, which completes none of the lines the details complete,
+ * or, for a thread the snapshot holds nothing of, when reading resumes.
+ */
+export type ShownDetail =
+  | (ThreadDetail & { readonly partial?: boolean })
+  | { readonly resumes: Date };
 
 /**
  * A thread no wait runs on, such as a closed one in activity, which the
@@ -63,9 +59,10 @@ export interface ThreadAccordionProps {
    */
   row: WaitRow | RestingThread;
   /**
-   * The thread's details as the provider reads them: the accordion shows
-   * `loading…` until they arrive, and the reason if they fail. While
-   * reading is paused, what the snapshot holds, or when reading resumes.
+   * The thread's details as the provider reads them: until they arrive the
+   * accordion shows what the snapshot holds, and the reason if they fail.
+   * While reading is paused, what the snapshot holds, or when reading
+   * resumes.
    * Maps to DSL role: loading line, loaded body, failed line (cardinality: 1)
    */
   detail: Promise<ShownDetail>;

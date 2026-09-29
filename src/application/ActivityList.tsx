@@ -5,7 +5,7 @@ import type {
 } from "../lib/activity/index.js";
 import type { WaitRow } from "../lib/owed/index.js";
 import {
-  accordionHeight,
+  countAccordionLines,
   countRowLines,
   EventLine,
   GroupHeading,
@@ -99,6 +99,8 @@ export default function ActivityList({
     for (const row of rows) {
       const chosen = place === selected;
       const waits = chosen ? measureWaits(row) : [];
+      const state = findThreadState(row, waits);
+      const reading = { now, timezone, waiting: listWaiting(waits) };
       if (chosen) {
         to = blocks.length;
         from = heading && row === rows.at(0) ? to - 1 : to;
@@ -108,7 +110,9 @@ export default function ActivityList({
         row: true,
         lines:
           countRowLines(row, width, chosen && !editor) +
-          (chosen ? (editor?.lines ?? accordionHeight) : 0) +
+          (chosen
+            ? (editor?.lines ?? countAccordionLines(state, reading, width))
+            : 0) +
           row.events.length,
         node: (
           <>
@@ -121,9 +125,9 @@ export default function ActivityList({
             {chosen && editor?.node}
             {chosen && !editor && (
               <ThreadAccordion
-                row={findThreadState(row, waits)}
+                row={state}
                 detail={readDetail(row)}
-                waiting={listWaiting(waits)}
+                waiting={reading.waiting}
                 clock={false}
                 now={now}
                 timezone={timezone}

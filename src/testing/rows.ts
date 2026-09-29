@@ -62,16 +62,28 @@ export const overReview = measureRow({
     stack: { number: 3, position: 2, size: 3, base: "main" },
     checks: "failing",
     pushes: [{ author: dave, at: at("2026-09-25T11:00+02:00") }],
-    reviewRequests: [{ reviewer: bob, at: at("2026-09-23T12:00+02:00") }],
+    reviewRequests: [
+      { reviewer: bob, requester: alice, at: at("2026-09-25T09:00+02:00") },
+    ],
   }),
   kind: "review",
   owners: ["bob"],
   due: at("2026-09-25T12:00+02:00"),
 });
 
-/** A reply nobody is assigned to, due in three hours. */
+/** A reply nobody is assigned to, due in three hours, to dave's message of Sunday. */
 export const soonReply = measureRow({
-  thread: thread({ number: 15, title: "Crash on start" }),
+  thread: thread({
+    number: 15,
+    title: "Crash on start",
+    comments: [
+      {
+        author: dave,
+        at: at("2026-09-27T12:00+02:00"),
+        text: "It crashes as soon as it starts, before the first frame is drawn.",
+      },
+    ],
+  }),
   kind: "response",
   due: at("2026-09-28T15:00+02:00"),
 });
@@ -96,13 +108,16 @@ export const draftClose = measureRow({
 
 /**
  * The close of an issue three people own, one of them with a login longer
- * than a row gives a login, with a label of each shape.
+ * than a row gives a login, with a label of each shape; bob spoke last,
+ * three hours ago.
  */
 export const sharedClose = measureRow({
   thread: thread({
     number: 4,
     title: "Where do tokens live?",
     labels: ["priority: high", "kind=bug", "area/icons"],
+    updatedAt: at("2026-09-28T09:00+02:00"),
+    comments: [{ author: bob, at: at("2026-09-28T09:00+02:00") }],
     assignees: [
       alice,
       bob,

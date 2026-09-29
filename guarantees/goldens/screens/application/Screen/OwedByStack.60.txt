@@ -3,7 +3,7 @@
 |example stack 3 · 3 PRs → main
 |┃┆example#12 PR reply ○ dave                         4d over
 |┃┆Fix the parser                           ✗ checks  ◉ alice
-|┃┆dave · 3d ago
+|┃┆○ dave · 3d ago
 |┃┆Rebased on main. Could someone look again?
 |┃┆waiting since Mon 10:00 · target 24h
 |┃┆example stack 3 · 2 of 3 · → main
@@ -55,15 +55,15 @@ runs
 4:54 "◉ alice" fg #84a0c6ff bg #2e3244ff
 5:1 "┃" fg #e27878ff bg #2e3244ff
 5:2 "┆" fg #6b7089ff bg #2e3244ff
-5:3 "dave · 3d ago" fg #c6c8d1ff bg #2e3244ff
-5:16 "                                             " fg #ffffffff bg #2e3244ff
+5:3 "○ dave" fg #89b8c2ff bg #2e3244ff
+5:9 " · 3d ago" fg #6b7089ff bg #2e3244ff
+5:18 "                                           " fg #ffffffff bg #2e3244ff
 6:1 "┃" fg #e27878ff bg #2e3244ff
 6:2 "┆" fg #6b7089ff bg #2e3244ff
 6:3 "Rebased on main. Could someone look again?" fg #c6c8d1ff bg #2e3244ff
 6:45 "                " fg #ffffffff bg #2e3244ff
 7:1 "┃" fg #e27878ff bg #2e3244ff
-7:2 "┆" fg #6b7089ff bg #2e3244ff
-7:3 "waiting since Mon 10:00 · target 24h" fg #c6c8d1ff bg #2e3244ff
+7:2 "┆waiting since Mon 10:00 · target 24h" fg #6b7089ff bg #2e3244ff
 7:39 "                      " fg #ffffffff bg #2e3244ff
 8:1 "┃" fg #e27878ff bg #2e3244ff
 8:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #2e3244ff

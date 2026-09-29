@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect } from "react";
 import type { OwedList as List, WaitRow } from "../lib/owed/index.js";
 import {
-  accordionHeight,
+  countAccordionLines,
   countRowLines,
   GroupHeading,
   Notice,
@@ -97,7 +97,10 @@ export default function OwedList({
         row: true,
         lines:
           countRowLines(row, width, open && !editor) +
-          (open ? (editor?.lines ?? accordionHeight) : 0),
+          (open
+            ? (editor?.lines ??
+              countAccordionLines(row, { now, timezone, waiting }, width))
+            : 0),
         node: (
           <>
             <ThreadRow

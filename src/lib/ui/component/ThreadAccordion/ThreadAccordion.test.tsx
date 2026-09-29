@@ -3,9 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   failDetail,
   overReviewDetail,
-  soonReplyDetail,
+  sharedCloseDetail,
 } from "../../../../testing/details.js";
-import { measureRow, overReview } from "../../../../testing/rows.js";
+import { thread } from "../../../../testing/facts.js";
+import { measureRow, overReview, soonReply } from "../../../../testing/rows.js";
 import { drawSuspending, type Screen } from "../../../../testing/terminal.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import { tokens } from "../../../tokens/index.js";
@@ -17,6 +18,7 @@ import {
   Paused,
   PausedUnheld,
   Reply,
+  RestingLoading,
   Review,
 } from "./ThreadAccordion.stories.js";
 import type { ThreadAccordionProps } from "./types.js";
@@ -26,17 +28,18 @@ const readText = (screen: Screen) => screen.lines.map((line) => line.slice(2));
 
 /** Draws the accordion, and lets details already read arrive. */
 const open = (props: ThreadAccordionProps, width = props.width) =>
-  drawSuspending(<ThreadAccordion {...props} width={width} />, width, 7);
+  drawSuspending(<ThreadAccordion {...props} width={width} />, width, 10);
 
 describe("ThreadAccordion", () => {
   it("runs the item's bar and stack mark down its lines, the bar ending on the last", async () => {
     const screen = await open(Review.args);
-    expect(screen.lines.slice(0, 5).map((line) => line.slice(0, 2))).toEqual([
+    expect(screen.lines.slice(0, 6).map((line) => line.slice(0, 2))).toEqual([
       "┃┆",
       "┃┆",
       "┃┆",
       "┃┆",
       "╹┆",
+      "",
     ]);
   });
 
@@ -53,10 +56,10 @@ describe("ThreadAccordion", () => {
   });
 
   describe("at 40 columns", () => {
-    it("shows a review's request, changes and checks, then the stack lines, dimmed", async () => {
+    it("shows a review's request, changes and checks, then the stack lines, as tall as they are", async () => {
       const screen = await open(Review.args);
       expect(readText(screen).slice(0, 6)).toEqual([
-        "asked by alice 3d ago",
+        "asked by ● alice 3d ago",
         "1 push since · 2 files · +65 −12",
         "✗ checks: 1 of 2 failed (lint)",
         "example stack 3 · 2 of 3 · → main",
@@ -64,11 +67,25 @@ describe("ThreadAccordion", () => {
         "",
       ]);
       expect(screen.look("✗ checks")?.fg).toBe(tokens["color.text.error"]);
-      expect(screen.look("asked by")?.fg).toBe(tokens["color.text"]);
+      expect(screen.look("asked by")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("● alice")?.fg).toBe(tokens["color.text.team"]);
       expect(screen.look("example stack 3")?.fg).toBe(
         tokens["color.text.muted"],
       );
       expect(screen.look("below #11")?.fg).toBe(tokens["color.text.muted"]);
+    });
+
+    it("shows the snapshot's lines at once while the details are read, the same height, the rest ending in a dimmed …", async () => {
+      const screen = await open(Loading.args);
+      expect(readText(screen).slice(0, 6)).toEqual([
+        "asked by ● alice 3d ago",
+        "1 push since · …",
+        "✗ checks: …",
+        "example stack 3 · 2 of 3 · → main",
+        "…",
+        "",
+      ]);
+      expect(screen.look(" …")?.fg).toBe(tokens["color.text.muted"]);
     });
 
     it("names an owner the row cuts whole, first, before the review's body and the stack lines", async () => {
@@ -77,24 +94,9 @@ describe("ThreadAccordion", () => {
         owners: ["carol-at-example-org"],
       });
       const screen = await open({ ...Review.args, row });
-      expect(readText(screen).slice(0, 6)).toEqual([
+      expect(readText(screen).slice(0, 7)).toEqual([
         "owner carol-at-example-org",
-        "asked by alice 3d ago",
-        "1 push since · 2 files · +65 −12…",
-        "example stack 3 · 2 of 3 · → main",
-        "below #11 merged, above #13 close",
-        "",
-      ]);
-    });
-
-    it("keeps a stacked review's checks in its five lines when the row cuts only a team", async () => {
-      const row = measureRow({
-        ...overReview.wait,
-        owners: ["example-org/reviewers"],
-      });
-      const screen = await open({ ...Review.args, row });
-      expect(readText(screen).slice(0, 6)).toEqual([
-        "asked by alice 3d ago",
+        "asked by ● alice 3d ago",
         "1 push since · 2 files · +65 −12",
         "✗ checks: 1 of 2 failed (lint)",
         "example stack 3 · 2 of 3 · → main",
@@ -103,42 +105,36 @@ describe("ThreadAccordion", () => {
       ]);
     });
 
-    it("shows a reply's message in full, wrapped, then when it began, in five lines", async () => {
+    it("shows a reply's message in full, wrapped and plain, then when it began", async () => {
       const screen = await open(Reply.args);
-      expect(readText(screen).slice(0, 6)).toEqual([
-        "dave · 1d ago",
+      expect(readText(screen).slice(0, 5)).toEqual([
+        "○ dave · 1d ago",
         "It crashes as soon as it starts,",
         "before the first frame is drawn.",
         "waiting since Tue 10:00 · target 24h",
         "",
-        "",
       ]);
+      expect(screen.look("It crashes")?.fg).toBe(tokens["color.text"]);
+      expect(screen.look("waiting since")?.fg).toBe(tokens["color.text.muted"]);
     });
 
-    it("says loading until the details arrive", async () => {
-      const screen = await open(Loading.args);
-      expect(readText(screen).slice(0, 6)).toEqual([
-        "loading…",
-        "",
-        "",
-        "",
-        "",
-        "",
-      ]);
+    it("says loading, dimmed, for a thread the snapshot holds nothing of", async () => {
+      const screen = await open(RestingLoading.args);
+      expect(readText(screen).slice(0, 2)).toEqual(["loading…", ""]);
+      expect(screen.look("loading…")?.fg).toBe(tokens["color.text.muted"]);
     });
 
-    it("shows what the snapshot holds while reading is paused, each line that needs the read ending in a dimmed …", async () => {
+    it("shows what the snapshot holds while reading is paused, as it does while the details are read", async () => {
       const screen = await open(Paused.args);
       expect(readText(screen).slice(0, 6)).toEqual([
-        "asked …",
+        "asked by ● alice 3d ago",
         "1 push since · …",
         "✗ checks: …",
         "example stack 3 · 2 of 3 · → main",
         "…",
         "",
       ]);
-      expect(screen.look("asked")?.fg).toBe(tokens["color.text"]);
-      expect(screen.look("✗ checks:")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.lines).toEqual((await open(Loading.args)).lines);
       expect(screen.look(" …")?.fg).toBe(tokens["color.text.muted"]);
     });
 
@@ -153,61 +149,83 @@ describe("ThreadAccordion", () => {
       );
     });
 
-    it("gives the reason, wrapped in the error colour, when reading fails", async () => {
+    it("gives the reason in the error colour on one line under what the snapshot showed, when reading fails", async () => {
       const screen = await open(Failed.args);
-      expect(readText(screen).slice(0, 3)).toEqual([
-        "✗ failed: GitHub gave no answer within",
-        "10 seconds",
+      expect(readText(screen).slice(0, 7)).toEqual([
+        "asked by ● alice 3d ago",
+        "1 push since · …",
+        "✗ checks: …",
+        "example stack 3 · 2 of 3 · → main",
+        "…",
+        "✗ failed: GitHub timed out",
         "",
       ]);
       expect(screen.look("✗ failed")?.fg).toBe(tokens["color.text.error"]);
+    });
+
+    it("gives the reason alone for a thread the snapshot holds nothing of, cut to one line", async () => {
+      const screen = await open({
+        ...RestingLoading.args,
+        detail: failDetail(
+          new Error("GitHub gave no answer within 10 seconds."),
+        ),
+      });
+      expect(readText(screen).slice(0, 2)).toEqual([
+        "✗ failed: GitHub gave no answer withi…",
+        "",
+      ]);
     });
   });
 
   describe("wider than 40 columns", () => {
     it("shows a close's age, owners, last activity and labels as group=value", async () => {
       const screen = await open(Close.args, 60);
-      expect(readText(screen).slice(0, 5)).toEqual([
+      expect(readText(screen).slice(0, 4)).toEqual([
+        "age 6d · owner ● alice, ● bob, ◐ carol-at-example-org",
+        "last activity 3h ago · ● bob",
+        "labels priority=high · kind=bug · area/icons",
+        "",
+      ]);
+    });
+
+    it("shows a closed thread's details once they arrive", async () => {
+      const screen = await open(
+        { ...RestingLoading.args, detail: Promise.resolve(sharedCloseDetail) },
+        60,
+      );
+      expect(readText(screen).slice(0, 4)).toEqual([
         "age 6d · owner alice, bob, carol-at-example-org",
         "last activity 3h ago · bob",
         "labels priority=high · kind=bug · area/icons",
-        "",
-        "",
+        "example stack 3 · 2 of 3 · → main",
       ]);
     });
   });
 
-  describe("fitting five lines", () => {
-    it("leaves out when a reply began when the message leaves no line for it", async () => {
-      const screen = await open(Reply.args, 20);
-      expect(readText(screen).slice(0, 6)).toEqual([
-        "dave · 1d ago",
-        "It crashes as soon",
-        "as it starts,",
-        "before the first",
-        "frame is drawn.",
+  describe("fitting eight lines", () => {
+    it("cuts a message past the eighth line, only the last line ending in …, and leaves out when the reply began", async () => {
+      const long = measureRow({
+        ...soonReply.wait,
+        thread: thread({
+          comments: [
+            {
+              author: soonReply.wait.author,
+              at: soonReply.wait.started,
+              text: "a b c d e f g h i j k l m n o p q r s t u v w x y z a b c d e f g h i j k l m n o p q r s t u v w x y z a b c d e f",
+            },
+          ],
+        }),
+      });
+      const screen = await open({ ...Reply.args, row: long }, 18);
+      expect(readText(screen).slice(0, 9)).toEqual([
+        "○ dave · 6d ago",
+        "waiting since",
+        "Tue 10:00 ·",
+        "target 24h",
         "",
-      ]);
-    });
-
-    it("cuts a message past the fifth line, only the last line ending in …", async () => {
-      const detail: ThreadDetail = {
-        ...soonReplyDetail,
-        messages: soonReplyDetail.messages.map((each) => ({
-          ...each,
-          body: "a b c d e f g h i j k l m n o p q r s t u v w x y z a b c d e f g h i",
-        })),
-      };
-      const screen = await open(
-        { ...Reply.args, detail: Promise.resolve(detail) },
-        16,
-      );
-      expect(readText(screen).slice(0, 6)).toEqual([
-        "dave · 1d ago",
-        "a b c d e f g",
-        "h i j k l m n",
-        "o p q r s t u",
-        "v w x y z a b…",
+        "",
+        "",
+        "",
         "",
       ]);
     });
@@ -220,19 +238,18 @@ describe("ThreadAccordion", () => {
       show = setDetail;
       return <ThreadAccordion {...Failed.args} detail={detail} />;
     };
-    const screen = await drawSuspending(<Harness />, 40, 7);
-    expect(readText(screen).at(0)).toBe(
-      "✗ failed: GitHub gave no answer within",
-    );
+    const screen = await drawSuspending(<Harness />, 40, 10);
+    expect(readText(screen).at(5)).toBe("✗ failed: GitHub timed out");
     const again = await screen.redraw(() =>
       show(Promise.resolve(overReviewDetail)),
     );
-    expect(readText(again).at(0)).toBe("asked by alice 3d ago");
+    expect(readText(again).at(1)).toBe("1 push since · 2 files · +65 −12");
+    expect(readText(again).at(5)).toBe("");
   });
 
   it("gives what was thrown as the reason when it is not an error", async () => {
     const screen = await open({
-      ...Failed.args,
+      ...RestingLoading.args,
       detail: failDetail("offline"),
     });
     expect(readText(screen).at(0)).toBe("✗ failed: offline");

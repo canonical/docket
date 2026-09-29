@@ -67,9 +67,17 @@ export const parserFix: Thread = {
   draft: false,
   labels: ["kind=bug"],
   assignees: [alice],
-  comments: [{ author: dave, at: at("2026-09-25T09:00+02:00") }],
+  comments: [
+    {
+      author: dave,
+      at: at("2026-09-25T09:00+02:00"),
+      text: "Rebased on main.\n\nCould someone look again?",
+    },
+  ],
   reviews: [],
-  reviewRequests: [{ reviewer: bob, at: at("2026-09-28T09:00+02:00") }],
+  reviewRequests: [
+    { reviewer: bob, requester: alice, at: at("2026-09-28T09:00+02:00") },
+  ],
   pushes: [],
   checks: "failing",
 };

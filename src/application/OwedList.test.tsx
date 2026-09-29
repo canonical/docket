@@ -48,9 +48,10 @@ describe("OwedList", () => {
       "alice",
       `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
       `┃┆Fix the parser${" ".repeat(7)}✗ checks  ● alice`,
-      "┃┆dave · 3d ago",
+      "┃┆○ dave · 3d ago",
       "┃┆Rebased on main. Could someone look",
       "┃┆again?",
+      "┃┆waiting since Mon 10:00 · target 24h",
       "┃┆example stack 3 · 2 of 3 · → main",
       "╹┆below #11 merged, above #13 open",
       `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
@@ -59,7 +60,6 @@ describe("OwedList", () => {
       "│ Where do tokens live?",
       `╵${" ".repeat(25)}● alice, ● bob`,
       "bob",
-      "",
       "",
     ]);
     expect(screen.look("alice")).toMatchObject({ bold: true });
@@ -89,7 +89,7 @@ describe("OwedList", () => {
     expect(screen.lines.slice(5, 9)).toEqual([
       `│┆example#12 PR review ○ dave${" ".repeat(24)}1d left`,
       `│┆Fix the parser${" ".repeat(29)}✗ checks  ● bob`,
-      "│┆asked by alice 3h ago",
+      "│┆asked by ● alice 3h ago",
       "│┆0 pushes since · 2 files · +65 −12",
     ]);
     expect(screen.lines.at(12)).toBe("NOT IN A STACK");

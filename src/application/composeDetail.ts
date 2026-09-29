@@ -13,7 +13,7 @@ export default function composeDetail(
 ): ThreadDetail & { readonly partial: true } {
   const messages = [...thread.comments, ...thread.reviews]
     .toSorted((a, b) => a.at.getTime() - b.at.getTime())
-    .map((message) => ({ ...message, body: "" }));
+    .map(({ author, at }) => ({ author, at, body: "" }));
   return {
     createdAt: thread.createdAt,
     updatedAt: thread.updatedAt,

@@ -1,8 +1,9 @@
 /**
- * The accordion's height, in lines, whatever it holds, so the list can
- * make room for it under the selected row before it has loaded.
+ * The most lines the accordion takes, content past it cut with `…`: a
+ * long comment never takes the pane, and at 40 columns a row and its
+ * accordion take at most 11 of the list's 32 lines.
  */
-export const accordionHeight = 5;
+export const accordionMaxLines = 8;
 
 /**
  * The most cells an owner takes on a row, so the title keeps its room. A

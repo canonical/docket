@@ -3,11 +3,11 @@
 |example
 |┃┆example#12 PR reply ○ dave                         4d over
 |┃┆Fix the parser                           ✗ checks  ◉ alice
-|┃┆loading…
-|┃┆
-|┃┆
-|┃┆
-|╹┆
+|┃┆○ dave · 3d ago
+|┃┆Rebased on main. Could someone look again?
+|┃┆waiting since Mon 10:00 · target 24h
+|┃┆example stack 3 · 2 of 3 · → main
+|╹┆…
 |┃┆example#12 PR close ○ dave                         2h over
 |╹┆Fix the parser                           ✗ checks  ◉ alice
 |┃ example#15 issue reply ◐ carol                     4h left
@@ -55,20 +55,22 @@ runs
 4:54 "◉ alice" fg #84a0c6ff bg #2e3244ff
 5:1 "┃" fg #e27878ff bg #2e3244ff
 5:2 "┆" fg #6b7089ff bg #2e3244ff
-5:3 "loading…" fg #c6c8d1ff bg #2e3244ff
-5:11 "                                                  " fg #ffffffff bg #2e3244ff
+5:3 "○ dave" fg #89b8c2ff bg #2e3244ff
+5:9 " · 3d ago" fg #6b7089ff bg #2e3244ff
+5:18 "                                           " fg #ffffffff bg #2e3244ff
 6:1 "┃" fg #e27878ff bg #2e3244ff
 6:2 "┆" fg #6b7089ff bg #2e3244ff
-6:3 "                                                          " fg #ffffffff bg #2e3244ff
+6:3 "Rebased on main. Could someone look again?" fg #c6c8d1ff bg #2e3244ff
+6:45 "                " fg #ffffffff bg #2e3244ff
 7:1 "┃" fg #e27878ff bg #2e3244ff
-7:2 "┆" fg #6b7089ff bg #2e3244ff
-7:3 "                                                          " fg #ffffffff bg #2e3244ff
+7:2 "┆waiting since Mon 10:00 · target 24h" fg #6b7089ff bg #2e3244ff
+7:39 "                      " fg #ffffffff bg #2e3244ff
 8:1 "┃" fg #e27878ff bg #2e3244ff
-8:2 "┆" fg #6b7089ff bg #2e3244ff
-8:3 "                                                          " fg #ffffffff bg #2e3244ff
+8:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #2e3244ff
+8:36 "                         " fg #ffffffff bg #2e3244ff
 9:1 "╹" fg #e27878ff bg #2e3244ff
-9:2 "┆" fg #6b7089ff bg #2e3244ff
-9:3 "                                                          " fg #ffffffff bg #2e3244ff
+9:2 "┆…" fg #6b7089ff bg #2e3244ff
+9:4 "                                                         " fg #ffffffff bg #2e3244ff
 10:1 "┃" fg #e27878ff bg #161821ff
 10:2 "┆" fg #6b7089ff bg #161821ff
 10:3 "example#12 PR close " fg #c6c8d1ff bg #161821ff bold

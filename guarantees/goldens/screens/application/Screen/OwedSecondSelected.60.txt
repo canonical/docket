@@ -4,8 +4,8 @@
 |╹┆Fix the parser                           ✗ checks  ◉ alice
 |┃┆example#12 PR close ○ dave                         2h over
 |┃┆Fix the parser                           ✗ checks  ◉ alice
-|┃┆age 7d · owner alice
-|┃┆last activity 25m ago · dave
+|┃┆age 7d · owner ◉ alice
+|┃┆last activity 25m ago · ○ dave
 |┃┆labels kind=bug
 |┃┆example stack 3 · 2 of 3 · → main
 |╹┆below #11 merged, above #13 open
@@ -63,12 +63,14 @@ runs
 5:54 "◉ alice" fg #84a0c6ff bg #2e3244ff
 6:1 "┃" fg #e27878ff bg #2e3244ff
 6:2 "┆" fg #6b7089ff bg #2e3244ff
-6:3 "age 7d · owner alice" fg #c6c8d1ff bg #2e3244ff
-6:23 "                                      " fg #ffffffff bg #2e3244ff
+6:3 "age 7d · owner " fg #c6c8d1ff bg #2e3244ff
+6:18 "◉ alice" fg #84a0c6ff bg #2e3244ff
+6:25 "                                    " fg #ffffffff bg #2e3244ff
 7:1 "┃" fg #e27878ff bg #2e3244ff
 7:2 "┆" fg #6b7089ff bg #2e3244ff
-7:3 "last activity 25m ago · dave" fg #c6c8d1ff bg #2e3244ff
-7:31 "                              " fg #ffffffff bg #2e3244ff
+7:3 "last activity 25m ago · " fg #c6c8d1ff bg #2e3244ff
+7:27 "○ dave" fg #89b8c2ff bg #2e3244ff
+7:33 "                            " fg #ffffffff bg #2e3244ff
 8:1 "┃" fg #e27878ff bg #2e3244ff
 8:2 "┆" fg #6b7089ff bg #2e3244ff
 8:3 "labels kind=bug" fg #c6c8d1ff bg #2e3244ff
