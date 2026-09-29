@@ -12,8 +12,8 @@ interface Drawn {
  * counts what is on screen rather than what the snapshot gave: a thread's
  * details can make the accordion taller than the snapshot's lines, as a
  * closed thread's close body does in place of `loading…`, or a failed
- * read's line under them. The list scrolls on the draw after the
- * accordion grows, so the item stays whole in view.
+ * read's line under them. The list scrolls before the grown accordion
+ * is painted, so the item stays whole in view.
  */
 export default function useDrawnLines(): UseDrawnLinesResult {
   const [drawn, setDrawn] = useState<Drawn>();
