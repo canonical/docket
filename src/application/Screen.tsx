@@ -17,12 +17,10 @@ import {
   owedGroupings,
   type WaitRow,
 } from "../lib/owed/index.js";
-import { tokens } from "../lib/tokens/index.js";
 import {
   type ActionResult,
   CountsLine,
   countPickerLines,
-  EmptyState,
   HelpOverlay,
   KeyBar,
   minColumns,
@@ -30,7 +28,6 @@ import {
   Pane,
   PaneHeader,
   PeoplePicker,
-  ProgressLine,
   StatusLine,
   wrapNotice,
 } from "../lib/ui/index.js";
@@ -38,7 +35,7 @@ import type { Thread } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
-import describeHold from "./describeHold.js";
+import drawStandIn from "./drawStandIn.js";
 import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
@@ -67,9 +64,6 @@ function cycle<T>(list: readonly T[], item: T): T {
   const [next] = [...list.slice(list.indexOf(item) + 1), ...list];
   return next;
 }
-
-/** Reads a sentence as a line on screen, which ends without a full stop. */
-const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
 
 /** A thread's last change, as GitHub records it, and its checks. */
 const describeVersion = ({ updatedAt, checks }: Thread) =>
@@ -340,44 +334,20 @@ export default function Screen({
   const teamless = describeNoTeam(
     watched.map(({ resolved }) => resolved.settings.people),
   );
-  let region: ReactNode = null;
-  if (problem) {
-    const { message, recovery } = problem;
-    region = (
-      <Notice
-        reason={dropFullStop(message)}
-        recovery={recovery}
-        width={width}
-      />
-    );
-  } else if (refused && rows.length === 0) {
-    region = refused;
-  } else if (!threads) {
-    const held = status && describeHold(status, settings.time.timezone);
-    region = held ? (
-      <Notice
-        reason={dropFullStop(held.reason)}
-        recovery={held.recovery}
-        width={width}
-      />
-    ) : (
-      <box flexDirection="column" paddingLeft={indent}>
-        <text fg={tokens["color.text"]}>refresh in progress…</text>
-        <ProgressLine
-          fetched={status?.fullRefresh?.fetched ?? 0}
-          total={status?.fullRefresh?.total ?? 0}
-          width={room}
-        />
-      </box>
-    );
-  } else if (owed?.groups.length === 0) {
-    region = (
-      <box flexDirection="column">
-        {teamless && <Notice {...teamless} width={width} />}
-        <EmptyState message="nothing owed" width={width} />
-      </box>
-    );
-  } else if (owed && readThreadDetail) {
+  let region = drawStandIn({
+    mode,
+    problem,
+    refused: rows.length === 0 ? refused : undefined,
+    held: threads !== undefined,
+    status,
+    timezone: settings.time.timezone,
+    nothingOwed: owed?.groups.length === 0,
+    teamless,
+    owedListed: Boolean(owed && readThreadDetail),
+    activity,
+    width,
+  });
+  if (region === undefined && owed && readThreadDetail) {
     region = (
       <OwedList
         list={owed}
@@ -397,22 +367,6 @@ export default function Screen({
         {...(teamless && { notice: teamless })}
         {...(slot && { editor: slot })}
       />
-    );
-  } else if (activity && "problem" in activity) {
-    const { message, recovery } = activity.problem;
-    region = (
-      <Notice
-        reason={dropFullStop(message)}
-        recovery={recovery}
-        width={width}
-      />
-    );
-  } else if (mode === "activity" && !activity) {
-    // No list is held for the window yet: on opening, and after t.
-    region = (
-      <box paddingLeft={indent}>
-        <text fg={tokens["color.text"]}>refresh in progress…</text>
-      </box>
     );
   }
   if (listed && threads && readThreadDetail) {
