@@ -9,6 +9,12 @@ import { onTestFailed, onTestFinished } from "vitest";
 const pause = 10;
 
 /**
+ * The timer as the module loads, before any test fakes it, so a test
+ * under fake timers still waits between tries.
+ */
+const { setTimeout: startTimer } = globalThis;
+
+/**
  * Runs `check` until it stops throwing, and gives what it returned. It
  * keeps no time limit of its own, unlike `vi.waitFor`'s one second: a busy
  * machine only makes it wait longer. An outcome that never comes fails the
@@ -35,7 +41,7 @@ export async function waitUntil<T>(check: () => T | Promise<T>): Promise<T> {
       return outcome;
     } catch (failure) {
       last = failure;
-      await new Promise((resolve) => setTimeout(resolve, pause));
+      await new Promise((resolve) => startTimer(resolve, pause));
     }
   }
   throw last;

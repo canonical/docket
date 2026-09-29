@@ -8,6 +8,7 @@ import {
   fullBudget,
   providerError,
 } from "../../testing/provider.js";
+import { waitUntil } from "../../testing/wait.js";
 import type { Provider } from "../provider/index.js";
 import createCache from "./createCache.js";
 
@@ -208,7 +209,7 @@ describe("the watch of createCache", () => {
     const cache = open(counting());
     const stop = cache.watch();
     await open(counting()).read(5 * minute);
-    await vi.waitFor(() => {
+    await waitUntil(() => {
       expect(cache.threads().threads).toEqual([thread()]);
     });
     stop();

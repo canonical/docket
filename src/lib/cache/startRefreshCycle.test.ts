@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeProvider } from "../../testing/provider.js";
+import { waitUntil } from "../../testing/wait.js";
 import createCache from "./createCache.js";
 import startRefreshCycle from "./startRefreshCycle.js";
 
@@ -81,14 +82,14 @@ describe("startRefreshCycle", () => {
       now: () => new Date("2026-09-28T10:00:00Z"),
     });
     const stop = startRefreshCycle(cache);
-    await vi.waitFor(() => {
+    await waitUntil(() => {
       expect(cache.status().failure).toMatchObject({
         code: "CACHE_REFRESH_FAILED",
       });
     });
     expect(snapshot).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(120 * second);
-    await vi.waitFor(() => {
+    await waitUntil(() => {
       expect(snapshot).toHaveBeenCalledTimes(2);
     });
     stop();
