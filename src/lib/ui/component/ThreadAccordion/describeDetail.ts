@@ -98,18 +98,24 @@ function describeReply(row: WaitRow, detail: Detail, reading: Reading) {
 function describeReview(row: WaitRow, detail: Detail, reading: Reading) {
   const { thread, owners, started } = row.wait;
   const [reviewer] = owners;
+  const asks = (each: { readonly reviewer: Reviewer }) =>
+    nameReviewer(each.reviewer) === reviewer;
+  // The read gives the requests oldest first; the wait follows the latest.
   const asked: RequestDetail | undefined =
-    detail.requests.find((each) => nameReviewer(each.reviewer) === reviewer) ??
-    detail.requests.at(-1);
-  const since = asked?.at ?? started;
+    detail.requests.findLast(asks) ?? detail.requests.at(-1);
+  // Pushes count from the snapshot's request for the reviewer, which the
+  // paused frame and the read share, so the count holds when the read
+  // lands.
+  const since = thread.reviewRequests.find(asks)?.at ?? started;
   const pushes = thread.pushes.filter((push) => push.at > since).length;
   const added = detail.files.reduce((sum, file) => sum + file.additions, 0);
   const removed = detail.files.reduce((sum, file) => sum + file.deletions, 0);
-  const age = `${describeAge(since, reading.now)} ago`;
+  const age = `${describeAge(asked?.at ?? started, reading.now)} ago`;
   const pushed = `${count(pushes, "push", "pushes")} since`;
-  // The snapshot holds neither who asked nor when, nor the files, nor
-  // which check failed: only the checks' roll-up. Each line it gives is
-  // the start of the line the read gives, so the line grows in place.
+  // The snapshot holds when the reviewer was last asked, but not who
+  // asked, nor the files, nor which check failed: only the checks'
+  // roll-up. Each line it gives is the start of the line the read gives,
+  // so the line grows in place.
   if (detail.partial) {
     return [
       ...describeCutOwners(row),

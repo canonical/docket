@@ -8,7 +8,9 @@ import {
 import {
   alice,
   at,
+  bob,
   carol,
+  dave,
   exampleSync,
   thread,
 } from "../../../../testing/facts.js";
@@ -22,6 +24,7 @@ import {
 } from "../../../../testing/rows.js";
 import type { WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
+import type { Thread } from "../../../waits/index.js";
 import describeDetail from "./describeDetail.js";
 
 const reading = {
@@ -275,6 +278,66 @@ describe("describeDetail, while reading is paused", () => {
         optional: true,
       },
     ]);
+  });
+
+  describe("a review whose wait starts after the first request", () => {
+    // bob's review wait on a pull request dave opened, started where the
+    // waits begin it: at the latest request, or, once bob has reviewed, at
+    // dave's latest push after that review.
+    const reviewOf = (started: Date, facts: Partial<Thread>) =>
+      measureRow({
+        thread: thread({
+          number: 12,
+          kind: "pullRequest",
+          checks: "failing",
+          ...facts,
+        }),
+        kind: "review",
+        owners: ["bob"],
+        started,
+      });
+    const grows = (row: WaitRow, requests: ThreadDetail["requests"]) => {
+      const full = texts(
+        describeDetail(row, { ...overReviewDetail, requests }, reading).body,
+      );
+      const partial = texts(
+        describeDetail(row, pauseDetail(overReviewDetail), reading).body,
+      );
+      partial.forEach((text, place) => {
+        expect(full.at(place)).toMatch(new RegExp(`^${text} `));
+      });
+      return full;
+    };
+
+    it("counts the same pushes paused and read once the reviewer reviewed and the author pushed since", () => {
+      const row = reviewOf(at("2026-09-24T09:00+02:00"), {
+        reviewRequests: [{ reviewer: bob, at: at("2026-09-21T09:00+02:00") }],
+        reviews: [{ author: bob, at: at("2026-09-22T09:00+02:00") }],
+        pushes: [
+          { author: dave, at: at("2026-09-23T09:00+02:00") },
+          { author: dave, at: at("2026-09-24T09:00+02:00") },
+        ],
+      });
+      const full = grows(row, [
+        { reviewer: bob, requester: alice, at: at("2026-09-21T09:00+02:00") },
+      ]);
+      expect(full.at(1)).toMatch(/^2 pushes since · /);
+    });
+
+    it("counts the same pushes paused and read, and names the latest asker, when the reviewer was asked twice", () => {
+      const row = reviewOf(at("2026-09-24T09:00+02:00"), {
+        reviewRequests: [{ reviewer: bob, at: at("2026-09-24T09:00+02:00") }],
+        pushes: [{ author: dave, at: at("2026-09-22T09:00+02:00") }],
+      });
+      const full = grows(row, [
+        { reviewer: bob, requester: alice, at: at("2026-09-21T09:00+02:00") },
+        { reviewer: bob, requester: carol, at: at("2026-09-24T09:00+02:00") },
+      ]);
+      expect(full.slice(0, 2)).toEqual([
+        "asked by carol 4d ago",
+        "0 pushes since · 2 files · +65 −12",
+      ]);
+    });
   });
 
   it("gives a review's pushes and checks from the snapshot, each line the start of the one the read gives, pending the rest", () => {
