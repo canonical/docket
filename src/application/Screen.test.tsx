@@ -60,6 +60,7 @@ vi.mock("../lib/waits/index.js", async (importOriginal) => {
 
 const folders: string[] = [];
 afterEach(async () => {
+  vi.useRealTimers();
   for (const folder of folders.splice(0)) {
     await rm(folder, { recursive: true, force: true });
   }
@@ -517,14 +518,16 @@ describe("Screen", () => {
     });
 
     it("reads the clock again as time passes", async () => {
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
       const cache = await openCache(fakeProvider());
       await cache.refresh();
       let clock = recordedNow;
       const view = { ...viewOf(cache), now: () => clock };
       const screen = await show(view);
       clock = new Date(recordedNow.getTime() + 120_000);
-      await new Promise((done) => setTimeout(done, 1_100));
-      expect((await screen.redraw()).lines.at(10)).toBe("synced 2m ago");
+      expect((await screen.redraw()).lines.at(10)).toBe("synced 0m ago");
+      const ticked = await screen.redraw(() => vi.advanceTimersByTime(1_000));
+      expect(ticked.lines.at(10)).toBe("synced 2m ago");
     });
   });
 
@@ -706,10 +709,15 @@ describe("Screen", () => {
         async (_thread: ThreadSummary) => parserFixDetail,
       );
       readDetail.mockRejectedValueOnce(providerError("GITHUB_TIMED_OUT"));
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
       const screen = await showRecorded(readDetail);
-      await new Promise((done) => setTimeout(done, 1_100));
-      const failed = await screen.redraw();
-      expect(failed.lines.at(3)).toBe("  ✗ failed: The provider failed with");
+      const failure = "  ✗ failed: The provider failed with";
+      await waitUntil(async () =>
+        expect((await screen.redraw()).lines.at(3)).toBe(failure),
+      );
+      // The clock's tick draws the screen again, the selection where it was.
+      const ticked = await screen.redraw(() => vi.advanceTimersByTime(1_000));
+      expect(ticked.lines.at(3)).toBe(failure);
       expect(readDetail).toHaveBeenCalledOnce();
       const back = await press(screen, "j", "j", "k", "k");
       expect(back.lines.at(3)).toBe("  dave · 3d ago");
