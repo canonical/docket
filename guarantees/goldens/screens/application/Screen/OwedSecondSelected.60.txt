@@ -63,17 +63,17 @@ runs
 11:3 "example#15 reply                                   " fg #c6c8d1ff bg #161821ff
 11:54 "4h left" fg #e2a478ff bg #161821ff
 12:3 "Crash on start · unassigned" fg #c6c8d1ff bg #161821ff
-13:1 "▌" fg #454b68ff bg #161821ff
+13:1 "▌" fg #818596ff bg #161821ff
 13:3 "docs#4 close                                      10d left" fg #c6c8d1ff bg #161821ff
 14:3 "Where do tokens live?" fg #c6c8d1ff bg #161821ff
 15:3 "alice, bob" fg #c6c8d1ff bg #161821ff
-16:1 "▌" fg #454b68ff bg #161821ff
+16:1 "▌" fg #818596ff bg #161821ff
 16:2 "┃" fg #6b7089ff bg #161821ff
 16:3 "example#12 review                                  1d left" fg #c6c8d1ff bg #161821ff
 17:2 "┃" fg #6b7089ff bg #161821ff
 17:3 "Fix the parser · bob" fg #c6c8d1ff bg #161821ff
 17:23 " ✗ checks" fg #e27878ff bg #161821ff
-18:1 "▌" fg #454b68ff bg #161821ff
+18:1 "▌" fg #818596ff bg #161821ff
 18:3 "example#15 close                                  29d left" fg #c6c8d1ff bg #161821ff
 19:3 "Crash on start · unassigned" fg #c6c8d1ff bg #161821ff
 34:1 "2 over · 1 soon · 3 on track" fg #c6c8d1ff bg #161821ff
