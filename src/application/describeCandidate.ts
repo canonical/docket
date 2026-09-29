@@ -1,4 +1,4 @@
-import { describePerson, type Owner } from "../lib/owed/index.js";
+import { describePerson, describeTeam, type Owner } from "../lib/owed/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import type { Watched } from "./types.js";
 
@@ -8,12 +8,14 @@ import type { Watched } from "./types.js";
  * Whether an unlisted person belongs to the organisation is recorded only
  * on what they wrote, so a login found among the authors and writers of
  * `threads` carries that, and anyone else unlisted is outside. A team,
- * `org/team`, stays text: GitHub gives an editor no team's members. A
- * repository not watched lists nobody.
+ * `org/team`, is `you` when a review requested of it on those threads
+ * lists the viewer among its members, as owed's rows name it, and text
+ * otherwise: GitHub gives an editor no other team's members. A repository
+ * not watched lists nobody.
  *
  * @param viewer The login gh is signed in with, when it is known.
- * @param threads The threads the view holds, whose writers tell who
- * belongs to the organisation, besides `thread`'s own.
+ * @param threads The threads the view holds, whose writers and requested
+ * teams tell who belongs where, besides `thread`'s own.
  */
 export default function describeCandidate(
   name: string,
@@ -22,12 +24,21 @@ export default function describeCandidate(
   viewer: string | undefined,
   threads: readonly Thread[] = [],
 ): Owner {
-  if (name.includes("/")) return { text: name, fit: "trimmed" };
+  const key = name.toLowerCase();
+  const held = [thread, ...threads];
+  if (name.includes("/")) {
+    const team = held
+      .flatMap(({ reviewRequests }) => reviewRequests)
+      .flatMap(({ reviewer }) => ("team" in reviewer ? [reviewer] : []))
+      .find((each) => each.team.toLowerCase() === key);
+    return team
+      ? describeTeam({ team: name, members: team.members }, viewer)
+      : { text: name, fit: "trimmed" };
+  }
   const people =
     watched.find(({ repo }) => repo === thread.repo)?.resolved.settings
       .people ?? new Map();
-  const key = name.toLowerCase();
-  const writer = [thread, ...threads]
+  const writer = held
     .flatMap(({ author, comments, reviews }) => [
       author,
       ...comments.map((message) => message.author),

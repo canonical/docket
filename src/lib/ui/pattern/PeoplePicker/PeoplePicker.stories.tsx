@@ -12,7 +12,7 @@ export default meta;
 
 const ignoreTyping = () => {};
 
-/** A login the picker offers, with its group. */
+/** A login or team the picker offers, with its group. */
 const person = (text: string, group: PersonGroup) => ({
   text,
   fit: "trimmed" as const,
@@ -38,7 +38,10 @@ export const Assigning: Story<PeoplePickerProps> = {
   },
 };
 
-/** Requesting review: the current request, a suggestion, collaborators and a team. */
+/**
+ * Requesting review: the current request, a suggestion, a team the viewer
+ * belongs to, a collaborator and another team.
+ */
 export const RequestingReview: Story<PeoplePickerProps> = {
   args: {
     filter: "",
@@ -46,7 +49,7 @@ export const RequestingReview: Story<PeoplePickerProps> = {
     options: [
       { owner: person("bob", "team"), ticked: true },
       { owner: person("carol", "internal"), ticked: false },
-      { owner: person("alice", "you"), ticked: false },
+      { owner: person("example-org/ui", "you"), ticked: false },
       { owner: person("dave", "outside"), ticked: false },
       {
         owner: { text: "example-org/reviewers", fit: "trimmed" },

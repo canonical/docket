@@ -2,7 +2,7 @@
 |  filter:
 |  ☑ ● bob
 |  ☐ ◐ carol
-|  ☐ ◉ alice
+|  ☐ ◉ example-org/ui
 |  ☐ ○ dave
 |  ☐ example-org/reviewers
 
@@ -14,7 +14,7 @@ runs
 3:3 "☐ " fg #c6c8d1ff bg #00000000
 3:5 "◐ carol" fg #a093c7ff bg #00000000
 4:3 "☐ " fg #c6c8d1ff bg #00000000
-4:5 "◉ alice" fg #84a0c6ff bg #00000000
+4:5 "◉ example-org/ui" fg #84a0c6ff bg #00000000
 5:3 "☐ " fg #c6c8d1ff bg #00000000
 5:5 "○ dave" fg #89b8c2ff bg #00000000
 6:1 "  " fg #ffffffff bg #2e3244ff

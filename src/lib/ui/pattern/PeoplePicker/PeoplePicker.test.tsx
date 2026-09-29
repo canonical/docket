@@ -61,12 +61,12 @@ describe("PeoplePicker", () => {
     expect(typed.lines.at(0)).toBe("  filter: c");
   });
 
-  it("offers teams beside people", async () => {
+  it("offers teams beside people, marking a team the viewer belongs to as theirs", async () => {
     const screen = await draw(<PeoplePicker {...RequestingReview.args} />, 40);
     expect(screen.lines.slice(1, 6)).toEqual([
       "  ☑ ● bob",
       "  ☐ ◐ carol",
-      "  ☐ ◉ alice",
+      "  ☐ ◉ example-org/ui",
       "  ☐ ○ dave",
       "  ☐ example-org/reviewers",
     ]);

@@ -45,6 +45,30 @@ describe("describeCandidate", () => {
     ).toBe("internal");
   });
 
+  it("gives a team the viewer belongs to you, from a review requested of it on a held thread", () => {
+    const requested = thread({
+      number: 3,
+      reviewRequests: [
+        {
+          reviewer: { team: "example-org/ui", members: ["Alice"] },
+          at: new Date("2026-09-22T12:00+02:00"),
+        },
+      ],
+    });
+    expect(
+      describeCandidate("example-org/UI", discussed, watched, "alice", [
+        requested,
+      ]),
+    ).toEqual({ text: "example-org/UI", fit: "trimmed", group: "you" });
+    expect(
+      groupOf(
+        describeCandidate("example-org/ui", discussed, watched, "bob", [
+          requested,
+        ]),
+      ),
+    ).toBeUndefined();
+  });
+
   it("leaves a team as text", () => {
     expect(
       describeCandidate("example-org/reviewers", discussed, watched, "alice"),
