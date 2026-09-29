@@ -2,7 +2,9 @@ import type { ProviderError, ThreadDetail } from "../lib/provider/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import { at, bob, exampleSync } from "../testing/facts.js";
 import {
+  crash,
   parserFix,
+  parserFixDetail,
   recordedSettings,
   recordedThreads,
   recordedWatched,
@@ -98,12 +100,25 @@ export const OwedByStackFailed: Story<ScreenFrameProps> = {
 };
 
 /**
- * The reply carol is waiting on selected: she is in the organisation but
- * not on the team, under items alice owes, each person in their group's
- * mark and hue, and each two-line item's bar ending on its second line.
+ * The reply carol is waiting on selected, the message she opened with
+ * under it: she is in the organisation but not on the team, under items
+ * alice owes, each person in their group's mark and hue, and each
+ * two-line item's bar ending on its second line.
  */
 export const OwedOrganisationReply: Story<ScreenFrameProps> = {
-  args: { ...recording, run: ["selection.next", "selection.next"] },
+  args: {
+    ...viewRecording({
+      threads: recordedThreads.map((thread) =>
+        thread === crash
+          ? {
+              ...crash,
+              text: "The app closes as soon as it opens, since the last update to the settings file.",
+            }
+          : thread,
+      ),
+    }),
+    run: ["selection.next", "selection.next"],
+  },
 };
 
 /** A dependency update a bot opened, asking bob for a review. */
@@ -117,7 +132,7 @@ const botUpdate: Thread = {
   createdAt: at("2026-09-26T08:00+02:00"),
   updatedAt: at("2026-09-26T08:00+02:00"),
   labels: ["dependencies"],
-  assignees: [bob],
+  assignees: [],
   comments: [],
   reviewRequests: [
     {
@@ -126,6 +141,34 @@ const botUpdate: Thread = {
       at: at("2026-09-26T08:00+02:00"),
     },
   ],
+  checks: "passing",
+};
+
+/** What GitHub gives for the update: two files changed and every check passed. */
+const botUpdateDetail: ThreadDetail = {
+  createdAt: botUpdate.createdAt,
+  updatedAt: botUpdate.updatedAt,
+  labels: botUpdate.labels,
+  assignees: [],
+  messages: [],
+  requests: [
+    { reviewer: bob, requester: exampleSync, at: botUpdate.createdAt },
+  ],
+  files: [
+    { path: "package.json", additions: 1, deletions: 1 },
+    { path: "bun.lock", additions: 3, deletions: 3 },
+  ],
+  checks: [
+    { name: "lint", state: "passing" },
+    { name: "test", state: "passing" },
+    { name: "build", state: "passing" },
+  ],
+};
+
+/** The settings, with dependency updates kept off the close clock. */
+const updatesExempt = {
+  ...recordedSettings,
+  exempt: { close: ["dependencies"] },
 };
 
 /**
@@ -134,7 +177,21 @@ const botUpdate: Thread = {
  */
 export const OwedBotAuthored: Story<ScreenFrameProps> = {
   args: {
-    ...viewRecording({ threads: [...recordedThreads, botUpdate] }),
+    ...recording,
+    settings: updatesExempt,
+    watched: recordedWatched(updatesExempt),
+    source: {
+      ...connectRecording({
+        threads: [...recordedThreads, botUpdate],
+        read: async (thread) =>
+          thread.number === botUpdate.number
+            ? botUpdateDetail
+            : parserFixDetail,
+      }),
+      readWatched: async () => ({
+        watched: recordedWatched(updatesExempt),
+      }),
+    },
     run: [
       "selection.next",
       "selection.next",
