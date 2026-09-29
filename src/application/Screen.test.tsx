@@ -1608,7 +1608,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         changed = true;
         await vi.advanceTimersByTimeAsync(60_000);
         expect(await refreshIfChanged.mock.results.at(1)?.value).toBe(true);
-        await vi.waitFor(async () => {
+        await waitUntil(async () => {
           await screen.redraw();
           expect(readDetail).toHaveBeenCalledTimes(reads + 1);
         });
@@ -1703,7 +1703,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         ...view,
         source: { ...view.source, details },
       });
-      await vi.waitFor(async () => {
+      await waitUntil(async () => {
         await screen.redraw();
         expect(readDetails).toHaveBeenCalledOnce();
       });
