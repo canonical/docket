@@ -308,7 +308,13 @@ describe("Screen", { timeout: 15_000 }, () => {
       const cache = await openCache(provider);
       const screen = await show(viewOf(cache), 60);
       const refreshing = cache.refresh();
-      await waitUntil(() => expect(cache.status().fullRefresh).toBeDefined());
+      await waitUntil(() =>
+        expect(cache.status().stages.at(0)?.stage).toEqual({
+          kind: "reading",
+          fetched: 5,
+          total: 9,
+        }),
+      );
       const drawn = await screen.redraw();
       expect(drawn.lines.slice(2, 4)).toEqual([
         "  refresh in progress…",

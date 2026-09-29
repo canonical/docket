@@ -3,7 +3,7 @@ import { thread } from "../../testing/facts.js";
 import { fakeProvider, providerError } from "../../testing/provider.js";
 import type { PageProgress } from "../provider/index.js";
 import fetchRepos, { type FetchReposOptions } from "./fetchRepos.js";
-import type { FullRefreshProgress, RepoCache } from "./types.js";
+import type { RepoCache, RepoProgress, RepoStage } from "./types.js";
 
 const repo = "example-org/example-repo";
 const docs = "example-org/example-docs";
@@ -35,18 +35,31 @@ function fetchFrom(
   found: Readonly<Record<string, RepoCache>> = {},
 ) {
   const kept: [string, RepoCache][] = [];
-  const reported: FullRefreshProgress[] = [];
+  const reported: (readonly RepoProgress[])[] = [];
   const fetching = fetchRepos({
     provider: fakeProvider({ snapshot: paged }),
     repos: [repo, docs],
     at,
     find: (name) => found[name],
     keep: (name, value) => kept.push([name, value]),
-    report: (progress) => reported.push(progress),
+    report: (stages) => reported.push(stages),
     ...options,
   });
   return { fetching, kept, reported };
 }
+
+/** Each report's stage of `name`, once for each change. */
+const stagesOf = (
+  reported: readonly (readonly RepoProgress[])[],
+  name: string,
+): RepoStage[] =>
+  reported
+    .map((stages) => stages.find((each) => each.repo === name)?.stage)
+    .filter((stage): stage is RepoStage => stage !== undefined)
+    .filter(
+      (stage, place, all) =>
+        place === 0 || JSON.stringify(stage) !== JSON.stringify(all[place - 1]),
+    );
 
 describe("fetchRepos", () => {
   it("fetches each repository in turn, keeping each as it arrives, dated when the fetch started", async () => {
@@ -61,45 +74,51 @@ describe("fetchRepos", () => {
     });
   });
 
-  it("reports each page of a repository fetched whole, from 0 of 0", async () => {
+  it("reports every repository waiting, in order, then each stage of a whole fetch, page by page, to its threads", async () => {
     const { fetching, reported } = fetchFrom({});
     await fetching;
-    expect(reported).toEqual([
-      { repo, position: 1, count: 2, fetched: 0, total: 0 },
-      { repo, position: 1, count: 2, fetched: 1, total: 2 },
-      { repo, position: 1, count: 2, fetched: 2, total: 2 },
-      { repo: docs, position: 2, count: 2, fetched: 0, total: 0 },
-      { repo: docs, position: 2, count: 2, fetched: 1, total: 2 },
-      { repo: docs, position: 2, count: 2, fetched: 2, total: 2 },
+    expect(reported.at(0)).toEqual([
+      { repo, stage: { kind: "waiting" } },
+      { repo: docs, stage: { kind: "waiting" } },
+    ]);
+    expect(stagesOf(reported, docs)).toEqual([
+      { kind: "waiting" },
+      { kind: "checking" },
+      { kind: "reading", fetched: 0, total: 0 },
+      { kind: "reading", fetched: 1, total: 2 },
+      { kind: "reading", fetched: 2, total: 2 },
+      { kind: "done", threads: 1 },
+    ]);
+    expect(reported.at(-1)).toEqual([
+      { repo, stage: { kind: "done", threads: 1 } },
+      { repo: docs, stage: { kind: "done", threads: 1 } },
     ]);
   });
 
-  it("reports nothing of a repository that holds data", async () => {
-    const { fetching, reported } = fetchFrom({}, { [repo]: held });
-    await fetching;
-    expect(reported.map((progress) => progress.repo)).toEqual([
-      docs,
-      docs,
-      docs,
-    ]);
-  });
-
-  it("reads the checks still running once every repository is fetched, and keeps them", async () => {
+  it("reads the checks still running once every repository is fetched, marking the repositories they cover, and keeps them", async () => {
     const provider = fakeProvider({
       probe: async () => ({ changed: false, tag: '"tag-1"' }),
       refreshVolatile: vi.fn(async () => [
         { repo, number: 3, checks: "passing" as const },
       ]),
     });
-    const { fetching, kept } = fetchFrom(
-      { provider, repos: [repo] },
-      { [repo]: held },
+    const { fetching, kept, reported } = fetchFrom(
+      { provider },
+      { [repo]: held, [docs]: { ...held, threads: [] } },
     );
     await fetching;
-    expect(kept.at(-1)).toEqual([
+    expect(kept.at(-2)).toEqual([
       repo,
       { ...held, threads: [{ ...running, checks: "passing" }] },
     ]);
+    expect(stagesOf(reported, repo)).toEqual([
+      { kind: "waiting" },
+      { kind: "checking" },
+      { kind: "done", threads: 1 },
+      { kind: "checks" },
+      { kind: "done", threads: 1 },
+    ]);
+    expect(stagesOf(reported, docs)).not.toContainEqual({ kind: "checks" });
   });
 
   it("reads no checks when told not to, or when nothing may be spent", async () => {
@@ -117,23 +136,48 @@ describe("fetchRepos", () => {
     }
   });
 
-  it("keeps nothing of a repository that needs points it may not spend, and reports no progress", async () => {
+  it("keeps nothing of a repository that needs points it may not spend, and reports it paused", async () => {
     const { fetching, kept, reported } = fetchFrom({ spend: false });
     await fetching;
     expect(kept).toEqual([]);
-    expect(reported).toEqual([]);
+    expect(reported.at(-1)).toEqual([
+      { repo, stage: { kind: "paused" } },
+      { repo: docs, stage: { kind: "paused" } },
+    ]);
   });
 
-  it("keeps the repositories fetched before one that fails, and throws its error", async () => {
+  it("keeps the repositories fetched before one that fails, reports it failed and those after it waiting, and throws its error", async () => {
     const error = providerError("GITHUB_TIMED_OUT");
     const snapshot = vi.fn(async (name: string) => {
       if (name === docs) throw error;
       return { threads: [], cursor: null };
     });
-    const { fetching, kept } = fetchFrom({
+    const { fetching, kept, reported } = fetchFrom({
       provider: fakeProvider({ snapshot }),
+      repos: [repo, docs, "example-org/example-site"],
     });
     await expect(fetching).rejects.toBe(error);
     expect(kept.map(([name]) => name)).toEqual([repo]);
+    expect(reported.at(-1)).toEqual([
+      { repo, stage: { kind: "done", threads: 0 } },
+      { repo: docs, stage: { kind: "failed" } },
+      { repo: "example-org/example-site", stage: { kind: "waiting" } },
+    ]);
+  });
+
+  it("reports the repositories whose checks it was reading failed when that read fails", async () => {
+    const error = providerError("GITHUB_TIMED_OUT");
+    const provider = fakeProvider({
+      probe: async () => ({ changed: false, tag: '"tag-1"' }),
+      refreshVolatile: async () => {
+        throw error;
+      },
+    });
+    const { fetching, reported } = fetchFrom(
+      { provider, repos: [repo] },
+      { [repo]: held },
+    );
+    await expect(fetching).rejects.toBe(error);
+    expect(reported.at(-1)).toEqual([{ repo, stage: { kind: "failed" } }]);
   });
 });

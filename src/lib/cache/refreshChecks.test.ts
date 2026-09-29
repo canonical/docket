@@ -14,7 +14,7 @@ const held = (threads: RepoCache["threads"]): RepoCache => ({
 });
 
 describe("refreshChecks", () => {
-  it("reads again, in one request, the checks still running on every repository", async () => {
+  it("reads again, in one request, the checks still running on every repository, naming the repositories first", async () => {
     const docs = thread({
       repo: "example-org/example-docs",
       kind: "pullRequest",
@@ -26,11 +26,16 @@ describe("refreshChecks", () => {
     const provider = fakeProvider({
       refreshVolatile: vi.fn(async () => refreshed),
     });
-    expect(
-      await refreshChecks(provider, [held([running, passing]), held([docs])]),
-    ).toEqual(refreshed);
+    const onRead = vi.fn();
+    const synced = [held([running, passing]), held([running]), held([docs])];
+    expect(await refreshChecks(provider, synced, onRead)).toEqual(refreshed);
+    expect(onRead).toHaveBeenCalledWith([running.repo, docs.repo]);
     expect(provider.refreshVolatile).toHaveBeenCalledTimes(1);
-    expect(provider.refreshVolatile).toHaveBeenCalledWith([running, docs]);
+    expect(provider.refreshVolatile).toHaveBeenCalledWith([
+      running,
+      running,
+      docs,
+    ]);
   });
 
   it("reads nothing when no check is running", async () => {

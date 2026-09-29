@@ -90,16 +90,27 @@ export interface CachedViewer {
 }
 
 /**
- * How far fetching every repository whole has come, while nothing is
- * shown for it: on the first run, or after a full refresh. The pages are
- * those of the repository being fetched, 0 of 0 until its first page.
+ * Where one repository is in a refresh: `waiting` for its turn;
+ * `checking` for changes with the free check; `reading` its threads,
+ * with the pages of a whole fetch, 0 of 0 until the first and for a
+ * fetch since its cursor; `checks`, while the checks still running are
+ * read again; `done`, with the open threads it holds; `paused`, when
+ * the budget is low and it needs points to go on; or `failed`, when the
+ * refresh stopped on it, for the reason the status's failure gives.
  */
-export interface FullRefreshProgress extends PageProgress {
+export type RepoStage =
+  | { readonly kind: "waiting" }
+  | { readonly kind: "checking" }
+  | ({ readonly kind: "reading" } & PageProgress)
+  | { readonly kind: "checks" }
+  | { readonly kind: "done"; readonly threads: number }
+  | { readonly kind: "paused" }
+  | { readonly kind: "failed" };
+
+/** One watched repository, as `owner/name`, and its stage. */
+export interface RepoProgress {
   readonly repo: string;
-  /** Its place in the list of repositories, from 1. */
-  readonly position: number;
-  /** How many repositories the list holds. */
-  readonly count: number;
+  readonly stage: RepoStage;
 }
 
 /** What the faces show of the cache's own state, whatever the provider. */
@@ -108,8 +119,17 @@ export interface CacheStatus {
   readonly syncedAt: Date | undefined;
   /** True while a refresh fetches. */
   readonly refreshing: boolean;
-  /** The progress of fetching everything, while nothing is shown. */
-  readonly fullRefresh: FullRefreshProgress | undefined;
+  /**
+   * Whether the refresh under way fetches every repository whole while
+   * nothing is shown: on the first run, or after a full refresh.
+   */
+  readonly whole: boolean;
+  /**
+   * Each watched repository's stage in the last refresh this process ran,
+   * in the watched order: kept once it ends, so a refresh that stopped
+   * shows where. Empty before the first.
+   */
+  readonly stages: readonly RepoProgress[];
   /** When a full refresh is available again, after one was refused. */
   readonly fullRefreshAvailableAt: Date | undefined;
   /**

@@ -65,13 +65,13 @@ describe("drawStandIn", () => {
       status: {
         ...settleStatus(recordedNow),
         refreshing: true,
-        fullRefresh: {
-          repo: "example-org/example-repo",
-          position: 1,
-          count: 2,
-          fetched: 5,
-          total: 9,
-        },
+        whole: true,
+        stages: [
+          {
+            repo: "example-org/example-repo",
+            stage: { kind: "reading", fetched: 5, total: 9 },
+          },
+        ],
       },
     });
     expect(screen.lines.slice(0, 2)).toEqual([

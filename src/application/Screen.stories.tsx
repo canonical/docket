@@ -240,13 +240,17 @@ export const FirstRun: Story<ScreenFrameProps> = {
       ...settled,
       syncedAt: undefined,
       refreshing: true,
-      fullRefresh: {
-        repo: "example-org/example-docs",
-        position: 2,
-        count: 2,
-        fetched: 5,
-        total: 9,
-      },
+      whole: true,
+      stages: [
+        {
+          repo: "example-org/example-repo",
+          stage: { kind: "done", threads: 2 },
+        },
+        {
+          repo: "example-org/example-docs",
+          stage: { kind: "reading", fetched: 5, total: 9 },
+        },
+      ],
     },
     threads: [],
   }),

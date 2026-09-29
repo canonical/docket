@@ -77,38 +77,37 @@ describe("the full refresh of createCache", () => {
     });
   });
 
-  it("reports each repository and each page while it fetches, then clears the progress", async () => {
+  it("reports each repository's stage, page by page, fetching everything whole while nothing is shown, and keeps the stages after", async () => {
     const cache = open(fakeProvider({ snapshot: paged(2) }), [repo, docs]);
-    const progress: unknown[] = [];
+    await cache.read(300 * second);
+    later(10 * second);
+    const seen: unknown[] = [];
     cache.subscribe(() => {
-      const { fullRefresh } = cache.status();
-      if (fullRefresh && progress.at(-1) !== fullRefresh)
-        progress.push(fullRefresh);
+      const { whole, stages } = cache.status();
+      seen.push({ whole, docs: stages.at(1)?.stage });
     });
     await cache.fullRefresh();
-    expect(progress).toEqual([
-      { repo, position: 1, count: 2, fetched: 0, total: 0 },
-      { repo, position: 1, count: 2, fetched: 1, total: 2 },
-      { repo, position: 1, count: 2, fetched: 2, total: 2 },
-      { repo: docs, position: 2, count: 2, fetched: 0, total: 0 },
-      { repo: docs, position: 2, count: 2, fetched: 1, total: 2 },
-      { repo: docs, position: 2, count: 2, fetched: 2, total: 2 },
-    ]);
-    expect(cache.status().fullRefresh).toBeUndefined();
+    expect(seen).toContainEqual({ whole: true, docs: { kind: "waiting" } });
+    expect(seen).toContainEqual({
+      whole: true,
+      docs: { kind: "reading", fetched: 1, total: 2 },
+    });
+    expect(cache.status()).toMatchObject({
+      refreshing: false,
+      whole: false,
+      stages: [
+        { repo, stage: { kind: "done", threads: 1 } },
+        { repo: docs, stage: { kind: "done", threads: 1 } },
+      ],
+    });
   });
 
-  it("reports progress on the first fetch too, with nothing cached", async () => {
+  it("fetches whole on the first read too, with nothing cached", async () => {
     const cache = open(fakeProvider({ snapshot: paged(1) }));
-    const progress: unknown[] = [];
-    cache.subscribe(() => progress.push(cache.status().fullRefresh));
+    const whole: boolean[] = [];
+    cache.subscribe(() => whole.push(cache.status().whole));
     await cache.read(300 * second);
-    expect(progress).toContainEqual({
-      repo,
-      position: 1,
-      count: 1,
-      fetched: 1,
-      total: 1,
-    });
+    expect(whole).toContain(true);
   });
 
   it("refuses another within 60 seconds, saying in the status when one is available", async () => {
@@ -169,7 +168,7 @@ describe("the full refresh of createCache", () => {
     expect(cache.status()).toMatchObject({
       failure: error,
       refreshing: false,
-      fullRefresh: undefined,
+      whole: false,
     });
   });
 });

@@ -2,7 +2,12 @@ import type { ReactNode } from "react";
 import type { CacheStatus } from "../lib/cache/index.js";
 import type { Problem } from "../lib/text/index.js";
 import { tokens } from "../lib/tokens/index.js";
-import { EmptyState, Notice, ProgressLine } from "../lib/ui/index.js";
+import {
+  EmptyState,
+  findStageUnderWay,
+  Notice,
+  ProgressLine,
+} from "../lib/ui/index.js";
 import describeHold from "./describeHold.js";
 import type { TerminalMode } from "./types.js";
 import type { UseActivityResult } from "./useActivity.js";
@@ -73,6 +78,7 @@ export default function drawStandIn({
   if (refused) return refused;
   if (!held) {
     const hold = status && describeHold(status, timezone);
+    const underWay = status && findStageUnderWay(status.stages);
     return hold ? (
       <Notice
         reason={dropFullStop(hold.reason)}
@@ -83,8 +89,8 @@ export default function drawStandIn({
       <box flexDirection="column" paddingLeft={indent}>
         <text fg={tokens["color.text"]}>refresh in progress…</text>
         <ProgressLine
-          fetched={status?.fullRefresh?.fetched ?? 0}
-          total={status?.fullRefresh?.total ?? 0}
+          fetched={underWay?.fetched ?? 0}
+          total={underWay?.total ?? 0}
           width={width - indent}
         />
       </box>

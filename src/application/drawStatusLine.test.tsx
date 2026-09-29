@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { CacheStatus } from "../lib/cache/index.js";
 import { settleStatus } from "../testing/cache.js";
 import { providerError } from "../testing/provider.js";
 import { recordedNow, recordedRepos } from "../testing/recorded.js";
@@ -45,16 +46,20 @@ describe("drawStatusLine", () => {
   });
 
   it("names the repository by its short name", async () => {
-    const status = {
+    const status: CacheStatus = {
       ...settleStatus(recordedNow),
       refreshing: true,
-      fullRefresh: {
-        repo: "example-org/example-docs",
-        position: 2,
-        count: 2,
-        fetched: 1,
-        total: 3,
-      },
+      whole: true,
+      stages: [
+        {
+          repo: "example-org/example-repo",
+          stage: { kind: "done", threads: 2 },
+        },
+        {
+          repo: "example-org/example-docs",
+          stage: { kind: "reading", fetched: 1, total: 3 },
+        },
+      ],
     };
     expect(await drawFor({ status })).toBe(
       "full refresh · docs 2/2 · pages 1/3",

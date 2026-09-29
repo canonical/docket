@@ -109,7 +109,8 @@ export default function createCache({
   let status: CacheStatus = {
     syncedAt: undefined,
     refreshing: false,
-    fullRefresh: undefined,
+    whole: false,
+    stages: [],
     fullRefreshAvailableAt: undefined,
     paused: undefined,
     failure: undefined,
@@ -165,23 +166,27 @@ export default function createCache({
 
   /**
    * Fetches every repository, the lock held, as `fetchRepos` does with
-   * `options`, reporting the progress of each one fetched whole.
+   * `options`, reporting each repository's stage.
    */
   const fetchAll = async (
     options: Pick<FetchReposOptions, "spend" | "reconcile" | "checks"> = {},
   ) => {
-    publish({ refreshing: true });
+    // Nothing is shown until every repository holds data, so a run that
+    // may spend and starts with one lacking fetches while the list waits.
+    const whole = options.spend !== false && !syncedAt();
     // Every repository is dated from before its fetch, so the data is
     // never taken as newer than it is.
     const at = now();
     try {
+      // The first report comes before any request, every repository
+      // waiting, so the run and its stages are published together.
       await fetchRepos({
         provider,
         repos,
         at,
         find: entry,
         keep: (repo, value) => store(repo, value, at),
-        report: (fullRefresh) => publish({ fullRefresh }),
+        report: (stages) => publish({ refreshing: true, whole, stages }),
         ...options,
       });
     } finally {
@@ -189,7 +194,7 @@ export default function createCache({
       // writes it once, even when a repository fails, which keeps those
       // synced before it.
       await save();
-      publish({ refreshing: false, fullRefresh: undefined });
+      publish({ refreshing: false, whole: false });
     }
   };
 

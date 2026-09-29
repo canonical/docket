@@ -17,7 +17,8 @@ const now = new Date("2026-09-28T12:00:00Z");
 const settled: CacheStatus = {
   syncedAt: new Date("2026-09-28T11:58:00Z"),
   refreshing: false,
-  fullRefresh: undefined,
+  whole: false,
+  stages: [],
   fullRefreshAvailableAt: undefined,
   paused: undefined,
   failure: undefined,
@@ -88,13 +89,14 @@ export const FullRefresh: Story<StatusLineProps> = {
       ...settled,
       syncedAt: undefined,
       refreshing: true,
-      fullRefresh: {
-        repo: "example-org/example-repo",
-        position: 1,
-        count: 2,
-        fetched: 5,
-        total: 9,
-      },
+      whole: true,
+      stages: [
+        {
+          repo: "example-org/example-repo",
+          stage: { kind: "reading", fetched: 5, total: 9 },
+        },
+        { repo: "example-org/example-docs", stage: { kind: "waiting" } },
+      ],
     },
   },
 };

@@ -1,7 +1,7 @@
-import type { PageProgress, Provider } from "../provider/index.js";
+import type { Provider } from "../provider/index.js";
 import { reconcileInterval } from "./constants.js";
 import mergeSnapshot from "./mergeSnapshot.js";
-import type { RepoCache } from "./types.js";
+import type { RepoCache, RepoStage } from "./types.js";
 
 /** How one repository is synced. */
 export interface SyncOptions {
@@ -18,8 +18,12 @@ export interface SyncOptions {
    * cached, and otherwise since its cursor.
    */
   readonly reconcile?: boolean;
-  /** Hears of each page of a whole fetch. */
-  readonly onPage?: (progress: PageProgress) => void;
+  /**
+   * Hears each stage the sync reaches: `checking` before the free check,
+   * `reading` before the snapshot and at each page of a whole fetch, and
+   * `paused` when it leaves the repository for a sync that may spend.
+   */
+  readonly onStage?: (stage: RepoStage) => void;
 }
 
 /**
@@ -42,16 +46,21 @@ export default async function syncRepo(
   repo: string,
   previous: RepoCache | undefined,
   at: Date,
-  { spend = true, reconcile = true, onPage }: SyncOptions = {},
+  { spend = true, reconcile = true, onStage }: SyncOptions = {},
 ): Promise<RepoCache | undefined> {
-  const check = async (held: string | undefined) =>
-    provider.capabilities().has("changeProbe")
-      ? provider.probe(repo, held)
-      : { changed: true, tag: undefined };
+  const check = async (held: string | undefined) => {
+    if (!provider.capabilities().has("changeProbe")) {
+      return { changed: true, tag: undefined };
+    }
+    onStage?.({ kind: "checking" });
+    return provider.probe(repo, held);
+  };
+  const read = () => onStage?.({ kind: "reading", fetched: 0, total: 0 });
   if (!spend) {
-    if (!previous) return undefined;
-    const { changed, tag } = await check(previous.tag);
-    return changed ? undefined : { ...previous, tag };
+    const found = previous && (await check(previous.tag));
+    if (found && !found.changed) return { ...previous, tag: found.tag };
+    onStage?.({ kind: "paused" });
+    return undefined;
   }
   const { changed, tag } = await check(previous?.tag);
   if (
@@ -59,7 +68,10 @@ export default async function syncRepo(
     (reconcile &&
       at.getTime() - previous.reconciledAt.getTime() >= reconcileInterval)
   ) {
-    const { threads, cursor } = await provider.snapshot(repo, null, onPage);
+    read();
+    const { threads, cursor } = await provider.snapshot(repo, null, (pages) =>
+      onStage?.({ kind: "reading", ...pages }),
+    );
     return {
       threads: threads.filter(({ open }) => open),
       cursor,
@@ -68,6 +80,7 @@ export default async function syncRepo(
     };
   }
   if (!changed) return { ...previous, tag };
+  read();
   const { threads, cursor } = await provider.snapshot(repo, previous.cursor);
   return {
     threads: mergeSnapshot(previous.threads, threads),

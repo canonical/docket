@@ -2,6 +2,7 @@ import { describeAge } from "../../../activity/index.js";
 import type { AttentionState, CacheStatus } from "../../../cache/index.js";
 import { tokens } from "../../../tokens/index.js";
 import describeClock from "../../describeClock.js";
+import findStageUnderWay from "../../findStageUnderWay.js";
 import type { ActionResult, StatusMessage } from "./types.js";
 
 /** How long, in milliseconds, the result of the user's own action stays. */
@@ -62,8 +63,9 @@ export default function describeStatus(
         };
   }
   if (!status) return undefined;
-  if (status.fullRefresh) {
-    const { repo, position, count, fetched, total } = status.fullRefresh;
+  const underWay = findStageUnderWay(status.stages);
+  if (status.whole && underWay) {
+    const { repo, position, count, fetched, total } = underWay;
     const text = `full refresh${separator}${names[repo] ?? repo} ${position}/${count}${separator}pages ${fetched}/${total}`;
     return { kind: "progress", text };
   }

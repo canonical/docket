@@ -19,7 +19,8 @@ export function settleStatus(now: Date): CacheStatus {
   return {
     syncedAt: new Date(now.getTime() - 120_000),
     refreshing: false,
-    fullRefresh: undefined,
+    whole: false,
+    stages: [],
     fullRefreshAvailableAt: undefined,
     paused: undefined,
     failure: undefined,

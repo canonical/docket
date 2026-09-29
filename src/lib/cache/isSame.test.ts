@@ -29,6 +29,14 @@ describe("isSame", () => {
     expect(isSame({ fetched: 1 }, { fetched: 1, total: 2 })).toBe(false);
   });
 
+  it("holds arrays the same entry by entry, in order", () => {
+    const waiting = { repo: "example-org/example-repo", stage: "waiting" };
+    expect(isSame([{ ...waiting }], [{ ...waiting }])).toBe(true);
+    expect(isSame([waiting], [{ ...waiting, stage: "done" }])).toBe(false);
+    expect(isSame([waiting], [waiting, waiting])).toBe(false);
+    expect(isSame([waiting], { 0: waiting })).toBe(false);
+  });
+
   it("holds an error the same only as itself", () => {
     const error = new Error("no answer");
     expect(isSame(error, error)).toBe(true);

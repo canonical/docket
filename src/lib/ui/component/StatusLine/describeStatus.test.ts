@@ -110,13 +110,29 @@ describe("describeStatus", () => {
 
   it("names a repository with no short name in full", () => {
     const status = statusOf(FullRefresh);
-    const progress = status.fullRefresh && {
-      ...status.fullRefresh,
-      repo: "example-org/other",
-    };
-    expect(describeAt({ ...status, fullRefresh: progress })?.text).toBe(
-      "full refresh · example-org/other 1/2 · pages 5/9",
+    const stages = status.stages.map((each) => ({
+      ...each,
+      repo: `${each.repo}-other`,
+    }));
+    expect(describeAt({ ...status, stages })?.text).toBe(
+      "full refresh · example-org/example-repo-other 1/2 · pages 5/9",
     );
+  });
+
+  it("names the first repository the full refresh is on, with no pages until it reads one", () => {
+    const status = statusOf(FullRefresh);
+    const stages = [
+      { repo: "example-org/example-docs", stage: { kind: "done", threads: 1 } },
+      { repo: "example-org/example-repo", stage: { kind: "checking" } },
+    ] as const;
+    expect(describeAt({ ...status, stages })?.text).toBe(
+      "full refresh · example 2/2 · pages 0/0",
+    );
+  });
+
+  it("says a refresh with something shown is running in the background, not a full refresh", () => {
+    const status = { ...statusOf(FullRefresh), whole: false };
+    expect(describeAt(status)?.kind).toBe("refreshing");
   });
 
   it("says a background refresh is running", () => {
