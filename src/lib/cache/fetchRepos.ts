@@ -1,5 +1,6 @@
 import type { PageProgress, Provider } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
+import nameRefreshFailure from "./nameRefreshFailure.js";
 import refreshChecks from "./refreshChecks.js";
 import syncRepo, { type SyncOptions } from "./syncRepo.js";
 import type { RepoCache, RepoProgress, RepoStage } from "./types.js";
@@ -38,8 +39,9 @@ export interface FetchReposOptions extends Omit<SyncOptions, "onStage"> {
  * Fetches every watched repository in turn, as `syncRepo` does, keeping
  * each as it arrives, so a failure keeps those fetched before it, then
  * reads again the checks still running on all of them at once. It
- * reports each repository's stage as it goes: the one a failure stops
- * on is `failed`, and those after it stay `waiting`.
+ * reports each repository's stage as it goes: those a failure stops
+ * on are `failed`, with that failure, and those after them stay
+ * `waiting`.
  *
  * @note Impure: reads from the provider.
  */
@@ -111,7 +113,7 @@ export default async function fetchRepos({
       stages
         .filter(({ stage }) => underWay.has(stage.kind))
         .map(({ repo }) => repo),
-      () => ({ kind: "failed" }),
+      () => ({ kind: "failed", error: nameRefreshFailure(error) }),
     );
     throw error;
   }

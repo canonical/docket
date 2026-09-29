@@ -79,10 +79,45 @@ describe("the stages of createCache", () => {
       failure: error,
       refreshing: false,
       stages: [
-        { repo, stage: { kind: "failed" } },
+        { repo, stage: { kind: "failed", error } },
         { repo: docs, stage: { kind: "waiting" } },
       ],
     });
+  });
+
+  it("gives a failed repository the error that stopped it, a rate limit included, never an earlier failure", async () => {
+    const offline = providerError("GITHUB_UNREACHABLE");
+    const limited = providerError("GITHUB_RATE_LIMITED");
+    const snapshot = vi.fn(async () => {
+      throw offline;
+    });
+    const cache = open(fakeProvider({ snapshot }));
+    await cache.refresh();
+    snapshot.mockRejectedValueOnce(limited);
+    later(2 * minute);
+    await cache.refresh();
+    const { paused, failure, stages } = cache.status();
+    expect(paused).toEqual({ until: fullBudget.resetAt, reason: "rateLimit" });
+    // The rate limit pauses the cycle and leaves the earlier failure held.
+    expect(failure).toBe(offline);
+    expect(stages.at(0)).toEqual({
+      repo,
+      stage: { kind: "failed", error: limited },
+    });
+  });
+
+  it("names a failure that is not the provider's as the status names it", async () => {
+    const cache = open(
+      fakeProvider({
+        snapshot: async () => {
+          throw new Error("The disk is full.");
+        },
+      }),
+    );
+    await cache.refresh();
+    const { failure, stages } = cache.status();
+    expect(stages.at(0)?.stage).toEqual({ kind: "failed", error: failure });
+    expect(failure?.code).toBe("CACHE_REFRESH_FAILED");
   });
 
   it("keeps each repository paused while the budget is low and it needs points to go on", async () => {

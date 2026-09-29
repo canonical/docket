@@ -162,7 +162,7 @@ describe("fetchRepos", () => {
     expect(kept.map(([name]) => name)).toEqual([repo]);
     expect(reported.at(-1)).toEqual([
       { repo, stage: { kind: "done", threads: 0, fetched: 0, total: 0 } },
-      { repo: docs, stage: { kind: "failed" } },
+      { repo: docs, stage: { kind: "failed", error } },
       { repo: "example-org/example-site", stage: { kind: "waiting" } },
     ]);
   });
@@ -180,6 +180,8 @@ describe("fetchRepos", () => {
       { [repo]: held },
     );
     await expect(fetching).rejects.toBe(error);
-    expect(reported.at(-1)).toEqual([{ repo, stage: { kind: "failed" } }]);
+    expect(reported.at(-1)).toEqual([
+      { repo, stage: { kind: "failed", error } },
+    ]);
   });
 });

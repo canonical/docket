@@ -96,7 +96,10 @@ export interface CachedViewer {
  * fetch since its cursor; `checks`, while the checks still running are
  * read again; `done`, with the open threads it holds; `paused`, when
  * the budget is low and it needs points to go on; or `failed`, when the
- * refresh stopped on it, for the reason the status's failure gives.
+ * refresh stopped on it, with the error that stopped it, named as the
+ * status names a failure. A rate limit is such an error too, though the
+ * status then holds a pause rather than a failure, and may still hold an
+ * earlier refresh's failure: the stage's own error is the reason.
  * `checks` and `done` keep the pages its read reached, 0 of 0 when it
  * read none, so the figure a refresh reached holds while it goes on.
  */
@@ -107,7 +110,7 @@ export type RepoStage =
   | ({ readonly kind: "checks" } & PageProgress)
   | ({ readonly kind: "done"; readonly threads: number } & PageProgress)
   | { readonly kind: "paused" }
-  | { readonly kind: "failed" };
+  | { readonly kind: "failed"; readonly error: ProviderError | CacheError };
 
 /** One watched repository, as `owner/name`, and its stage. */
 export interface RepoProgress {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { providerError } from "../../testing/provider.js";
 import type { RepoProgress } from "../cache/index.js";
 import findStageUnderWay from "./findStageUnderWay.js";
 
@@ -54,7 +55,10 @@ describe("findStageUnderWay", () => {
     const stages: RepoProgress[] = [
       { repo, stage: { kind: "done", threads: 0, fetched: 0, total: 0 } },
       { repo, stage: { kind: "paused" } },
-      { repo, stage: { kind: "failed" } },
+      {
+        repo,
+        stage: { kind: "failed", error: providerError("GITHUB_TIMED_OUT") },
+      },
       { repo, stage: { kind: "waiting" } },
     ];
     expect(findStageUnderWay(stages)).toBeUndefined();
