@@ -1956,6 +1956,12 @@ describe("Screen", { timeout: 15_000 }, () => {
           (await screen.redraw()).lines.map((line) => line.slice(2)),
         ).not.toContain("loading…"),
       );
+      // The list is drawn anew once the pane is wide enough again, and
+      // scrolls afresh, so the screen to compare with is the one drawn after
+      // a first narrowing.
+      screen.setup.resize(32, 12);
+      await screen.redraw();
+      screen.setup.resize(40, 12);
       const before = (await screen.redraw()).lines;
       for (const key of [
         ...["left", "h", "right", "l", "up", "k", "down", "j"],
