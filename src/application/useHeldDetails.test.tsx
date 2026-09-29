@@ -166,6 +166,27 @@ describe("useHeldDetails", () => {
     expect(reader.read).toHaveBeenCalledOnce();
   });
 
+  it("keeps what the snapshot holds once reading resumes until the read settles, then gives the read, drawing once more", async () => {
+    const later = Promise.withResolvers<ThreadDetail>();
+    const read = vi.fn(() => later.promise);
+    const { give, change, drawn } = await probe({
+      kept: [crash],
+      selected: () => crash,
+      resumes,
+    });
+    const paused = await give(read, crash, "1", crash);
+    await change({ resumes: undefined });
+    const resumed = give(read, crash, "1", crash);
+    expect(resumed).toMatchObject({ status: "fulfilled" });
+    expect(await resumed).toEqual(paused);
+    expect(read).toHaveBeenCalledOnce();
+    const frames = drawn();
+    await act(async () => later.resolve(parserFixDetail));
+    expect(drawn()).toBe(frames + 1);
+    expect(await give(read, crash, "1", crash)).toBe(parserFixDetail);
+    expect(read).toHaveBeenCalledOnce();
+  });
+
   it("gives a thread the snapshot holds nothing of when reading resumes while it is paused, settled at once", async () => {
     const read = vi.fn(async () => parserFixDetail);
     const { give } = await probe({

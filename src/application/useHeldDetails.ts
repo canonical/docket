@@ -40,15 +40,24 @@ const identifyThread = ({ repo, number }: ThreadSummary) => `${repo}#${number}`;
 
 /** What is held of one thread's details. */
 interface HeldDetail {
-  /** The thread's version, as the list had it when the read began. */
-  readonly version: string;
+  /**
+   * The thread's version, as the list had it when the read began, or none
+   * when nothing has been read, only what the snapshot holds given.
+   */
+  readonly version: string | undefined;
   /**
    * What the accordion is given: the latest read once it has settled, and
-   * until then the details held from before the thread changed, if any.
+   * until then the details held from before the thread changed, or what
+   * the snapshot holds, if any.
    */
   shown: Promise<ShownDetail>;
   /** True once the latest read has failed. */
   failed: boolean;
+  /**
+   * True while `shown` is what the snapshot holds, given while reading was
+   * paused, which stays on screen until the latest read settles.
+   */
+  standingIn: boolean;
 }
 
 /**
@@ -77,7 +86,8 @@ function markSettled(
  * screen whatever the thread's version, once they have settled. A thread
  * with none settled is given, settled at once, what the snapshot holds of
  * it, or, when it holds nothing, when reading resumes, so the accordion
- * never waits on a read that cannot start.
+ * never waits on a read that cannot start. What it is given stays on
+ * screen once reading resumes, until the read settles.
  *
  * @note Impure: reads each thread's details through `read`, and redraws
  * once a read settles in place of details already shown.
@@ -104,30 +114,47 @@ export default function useHeldDetails({
       // A read queued but not yet sent when the pause began stays unsent
       // until reading resumes, so only details already settled are given.
       // The read stays held, and is sent once reading resumes.
-      if (held && "status" in held.shown) return held.shown;
+      if (held && !held.standingIn && "status" in held.shown) {
+        return held.shown;
+      }
       const value = facts ? composeDetail(facts) : { resumes };
       const standIn = Promise.resolve(value);
       markSettled(standIn, { status: "fulfilled", value });
+      // Held, so it stays on screen once reading resumes until the read
+      // settles: nothing that was shown gives way to `loading…`.
+      if (held) {
+        held.shown = standIn;
+        held.standingIn = true;
+      } else {
+        details.set(key, {
+          version: undefined,
+          shown: standIn,
+          failed: false,
+          standingIn: true,
+        });
+      }
       return standIn;
     }
     if (held?.version === version && !(arrived && held.failed)) {
       return held.shown;
     }
     const reading = read(thread);
-    // The details held from before the thread changed stay on screen
-    // until the new ones settle, so a change never draws `loading…` over
-    // details already shown. After a failed read nothing is held, and the
-    // read draws `loading…` until it settles.
+    // The details held from before the thread changed, or what the
+    // snapshot holds, stay on screen until the new ones settle, so a change
+    // never draws `loading…` over details already shown. After a failed
+    // read nothing is held, and the read draws `loading…` until it settles.
     const next: HeldDetail = {
       version,
       shown: held && !held.failed ? held.shown : reading,
       failed: false,
+      standingIn: held?.standingIn ?? false,
     };
     details.set(key, next);
     const settle = (failed: boolean) => {
       next.failed = failed;
       if (details.get(key) !== next || next.shown === reading) return;
       next.shown = reading;
+      next.standingIn = false;
       showArrived();
     };
     reading.then(
