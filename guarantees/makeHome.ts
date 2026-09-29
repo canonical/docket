@@ -101,6 +101,7 @@ export default function makeHome(personalFile: string): Home {
       const { log, env } = prepare(call, {
         GUARANTEES_UNTIL: until,
         TERM: "xterm-256color",
+        ...(keys.length > 0 ? { GUARANTEES_KEYS: "1" } : {}),
       });
       let out = "";
       const { promise: drawn, resolve: showDrawn } =
@@ -123,10 +124,17 @@ export default function makeHome(personalFile: string): Home {
       });
       if (keys.length > 0) {
         await drawn;
-        for (const key of keys) {
+        for (const [place, key] of keys.entries()) {
           await Bun.sleep(pause);
+          if (child.exitCode !== null) {
+            throw new Error(
+              `docket ended before key ${place + 1} of ${keys.length} was pressed`,
+            );
+          }
           child.terminal?.write(key);
         }
+        // The stand-in's clock moves on only once the last key is pressed.
+        child.kill("SIGUSR2");
       }
       const code = await child.exited;
       child.terminal?.close();

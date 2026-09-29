@@ -15,7 +15,7 @@ The unit tests beside the code pin behaviour from inside. The corpus pins it fro
 - the clock: `new Date()` gives the instant the guarantee names;
 - GitHub: `fetch` answers from a recording under `fixtures/`, logs every request, and answers a request that sends back an entity tag with "not modified", as GitHub does;
 - the machine: the time zone its process runs in is written first in the request log, so an entry can check that the zone it asked for reached docket;
-- a day: with `GUARANTEES_UNTIL`, each of docket's waits of a minute or more passes as soon as docket is quiet, the clock moving on to its end, so a day of an open pane runs in about a minute, and the process ends once the clock would reach that instant. Each logged request carries the clock's time.
+- a day: with `GUARANTEES_UNTIL`, each of docket's waits of a minute or more passes as soon as docket is quiet, the clock moving on to its end, so a day of an open pane runs in seconds, and the process ends once the clock would reach that instant. Quiet is counted in turns of docket's event loop, not in time: no request open, no shorter wait pending, and nothing happening for several turns, each waiting on the same file pool as docket's cache, so a slow machine slows both alike. The clock stands still until docket's first request is answered, and while keys are being pressed. Each logged request carries the clock's time.
 
 `makeHome.ts` also opens the terminal interface in a pseudo-terminal (`open`), as a person does with `docket` alone, and can press keys once it has drawn a given text.
 

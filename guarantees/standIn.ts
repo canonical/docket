@@ -19,8 +19,10 @@
  * - A day: with `GUARANTEES_UNTIL`, each of docket's waits of a minute or
  *   more passes at once, as soon as docket is quiet, the clock moving on
  *   to its end (`fastForward.ts`), until the clock would reach that
- *   instant, when the process ends. Each logged request carries the
- *   clock's time.
+ *   instant, when the process ends. Nothing passes before docket's first
+ *   request is answered, nor, with `GUARANTEES_KEYS`, before the one
+ *   pressing keys sends `SIGUSR2` after the last. Each logged request
+ *   carries the clock's time.
  *
  * A request the recording holds no answer for gets a 404 naming it, which
  * docket reports as a failure, so a recording that falls behind docket
@@ -53,6 +55,7 @@ const {
   GUARANTEES_REQUESTS,
   GUARANTEES_BREAK,
   GUARANTEES_UNTIL,
+  GUARANTEES_KEYS,
 } = process.env;
 if (!GUARANTEES_NOW || !GUARANTEES_RECORDING || !GUARANTEES_REQUESTS) {
   throw new Error(
@@ -140,6 +143,13 @@ const recordedRateLimit = {
 
 let inFlight = 0;
 const answerDelay = 5;
+// The clock skips nothing before docket's first request has been answered,
+// which it sends as it opens, nor, when a person presses keys, before the
+// one pressing them says with `SIGUSR2` that the last is pressed.
+const answered = Promise.withResolvers<void>();
+const pressed = Promise.withResolvers<void>();
+if (GUARANTEES_KEYS) process.on("SIGUSR2", () => pressed.resolve());
+else pressed.resolve();
 const touch = GUARANTEES_UNTIL
   ? fastForward({
       span: new RealDate(GUARANTEES_UNTIL).getTime() - fixed,
@@ -148,6 +158,7 @@ const touch = GUARANTEES_UNTIL
         moved = by;
       },
       onEnd: () => process.exit(0),
+      start: Promise.all([answered.promise, pressed.promise]).then(() => {}),
     })
   : () => {};
 
@@ -161,6 +172,7 @@ const holdOpen = async (onOpen: (open: number) => void) => {
   onOpen(inFlight);
   await new Promise((resolve) => setTimeout(resolve, answerDelay));
   inFlight -= 1;
+  answered.resolve();
   touch();
 };
 
