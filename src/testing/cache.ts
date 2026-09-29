@@ -81,6 +81,7 @@ export function holdCache(
     findEvents: findHeldEvents,
     readEvents: async (repo, since) => findHeldEvents(repo, since),
     readFile: async () => ({ text: undefined, syncedAt }),
+    readViewer: async () => ({ login: "alice", syncedAt }),
     refresh: async () => {},
     fullRefresh: async () => {},
     watch: () => () => {},

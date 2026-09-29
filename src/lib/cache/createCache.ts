@@ -22,6 +22,7 @@ import type {
   CachedEvents,
   CachedFile,
   CachedThreads,
+  CachedViewer,
   CacheOptions,
   CacheStatus,
   EventsCache,
@@ -37,9 +38,11 @@ import writeCacheFile from "./writeCacheFile.js";
  *
  * Each repository is one TanStack Query query holding its `RepoCache`,
  * dated by when it was synced, one holding the events activity reads, and
- * one holding its own file, each dated by when it was fetched. The file is TanStack's dehydrated cache,
- * and loading it hydrates, which replaces a query's data only with newer
- * data, so a process never goes back to older threads.
+ * one holding its own file, each dated by when it was fetched, and one
+ * query holds the viewer's login, dated the same way. The file is
+ * TanStack's dehydrated cache, and loading it hydrates, which replaces a
+ * query's data only with newer data, so a process never goes back to
+ * older threads.
  */
 export default function createCache({
   provider,
@@ -114,6 +117,20 @@ export default function createCache({
     const syncedAt = new Date(state.dataUpdatedAt);
     return now().getTime() - syncedAt.getTime() < maxAge
       ? { text: state.data.text ?? undefined, syncedAt }
+      : undefined;
+  };
+
+  // The login gh is signed in with, held as the files are, since a text
+  // command reads it on every call.
+  const viewerKey = ["viewer"];
+
+  /** The viewer's login held, when it is younger than `maxAge`. */
+  const findFreshViewer = (maxAge: number): CachedViewer | undefined => {
+    const state = client.getQueryState<string>(viewerKey);
+    if (state?.data === undefined) return undefined;
+    const syncedAt = new Date(state.dataUpdatedAt);
+    return now().getTime() - syncedAt.getTime() < maxAge
+      ? { login: state.data, syncedAt }
       : undefined;
   };
 
@@ -348,6 +365,15 @@ export default function createCache({
             updatedAt: at.getTime(),
           });
           return { text, syncedAt: at };
+        },
+      ),
+    readViewer: (maxAge) =>
+      readThrough(
+        () => findFreshViewer(maxAge),
+        async (at) => {
+          const login = await provider.viewer();
+          client.setQueryData(viewerKey, login, { updatedAt: at.getTime() });
+          return { login, syncedAt: at };
         },
       ),
     async refreshRepo(repo) {

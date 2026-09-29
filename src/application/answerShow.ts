@@ -13,8 +13,9 @@ import type { Session } from "./types.js";
  * with its details, which GitHub gives on each call, and its waits, the
  * viewer marked as `you`.
  *
- * @note Impure: reads the cache, asks GitHub for the login gh is signed
- * in with and for the thread's details, and writes the answer.
+ * @note Impure: reads the cache, which asks GitHub when its data or the
+ * login gh is signed in with is too old, asks GitHub for the thread's
+ * details, and writes the answer.
  */
 export default async function answerShow(session: Session): Promise<number> {
   const { context, invocation, watched, provider } = session;
@@ -29,7 +30,7 @@ export default async function answerShow(session: Session): Promise<number> {
     );
   }
   const { threads, syncedAt, warnings } = await readThreads(session);
-  const you = await readViewer(provider);
+  const you = await readViewer(session);
   const now = context.now();
   const shown: ShownThread[] = [];
   const people = gatherPeople(

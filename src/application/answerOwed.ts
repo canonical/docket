@@ -10,11 +10,11 @@ import type { Session } from "./types.js";
  * Answers `docket owed`, and `docket` alone, from the cached threads,
  * marking the viewer as `you`.
  *
- * @note Impure: reads the cache, which asks GitHub when its data is
- * too old, reads the login gh is signed in with, and writes the answer.
+ * @note Impure: reads the cache, which asks GitHub when its data or the
+ * login gh is signed in with is too old, and writes the answer.
  */
 export default async function answerOwed(session: Session): Promise<number> {
-  const { context, invocation, watched, provider } = session;
+  const { context, invocation, watched } = session;
   const grouping = owedGroupings.find((entry) => entry === invocation.by);
   if (!grouping) {
     fail(
@@ -24,7 +24,7 @@ export default async function answerOwed(session: Session): Promise<number> {
     );
   }
   const { threads, syncedAt, warnings } = await readThreads(session);
-  const you = await readViewer(provider);
+  const you = await readViewer(session);
   const list = buildOwed(threads, watched, grouping, context.now(), you.viewer);
   context.write(
     renderOwed({

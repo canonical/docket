@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type Home, makeHome, openSession } from "../testing/docket.js";
 import { providerError } from "../testing/provider.js";
 import { recordedProvider } from "../testing/recorded.js";
@@ -90,6 +90,30 @@ describe("answerOwed", () => {
       "carol internal",
       "dave external",
     ]);
+  });
+
+  it("asks GitHub whom gh is signed in as once across calls within --max-age", async () => {
+    const viewer = vi.fn(async () => "alice");
+    const provider = recordedProvider({ viewer });
+    for (let call = 0; call < 5; call += 1) {
+      await answerOwed(openSession(home, ["owed"], provider).session);
+    }
+    expect(viewer).toHaveBeenCalledOnce();
+  });
+
+  it("answers offline from a fresh cache with the viewer as you and no warning", async () => {
+    await answerOwed(openSession(home, ["owed"]).session);
+    const unreachable = () =>
+      Promise.reject(providerError("GITHUB_UNREACHABLE"));
+    const offline = recordedProvider({
+      viewer: unreachable,
+      snapshot: unreachable,
+      budget: unreachable,
+    });
+    const { session, out } = openSession(home, ["owed"], offline);
+    expect(await answerOwed(session)).toBe(0);
+    expect(out()).toContain('author "alice" (you)');
+    expect(out()).not.toContain("Warning");
   });
 
   it("marks nobody as you when GitHub cannot say whom gh is signed in as, with the warning", async () => {
