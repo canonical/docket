@@ -48,6 +48,12 @@ const hex = (colour: CapturedSpan["fg"]) =>
     .join("")}`;
 
 function read(setup: TestRendererSetup): Screen {
+  // A test that ran out of time can still be reading its screen after
+  // the screen is destroyed, and reading a destroyed screen's buffer ends
+  // the whole test process.
+  if (setup.renderer.isDestroyed) {
+    throw new Error("The screen was destroyed when its test ended.");
+  }
   const lines = setup
     .captureCharFrame()
     .replace(/\n$/, "")
