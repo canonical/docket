@@ -5,6 +5,7 @@ import type { Thread, ThreadSummary } from "../lib/waits/index.js";
 import { providerError } from "../testing/provider.js";
 import { crash, parserFix, parserFixDetail } from "../testing/recorded.js";
 import { draw } from "../testing/terminal.js";
+import createDetailQueue from "./createDetailQueue.js";
 import useHeldDetails, {
   type UseHeldDetailsProps,
   type UseHeldDetailsResult,
@@ -136,6 +137,33 @@ describe("useHeldDetails", () => {
       labels: crash.labels,
     });
     expect(read).not.toHaveBeenCalled();
+  });
+
+  it("gives what the snapshot holds, settled at once, for a read queued but not sent when reading pauses, and sends it once reading resumes", async () => {
+    const reader = {
+      read: vi.fn(async (threads: readonly ThreadSummary[]) =>
+        threads.map((each) => ({ thread: each, detail: parserFixDetail })),
+      ),
+    };
+    const queue = createDetailQueue(reader, () => new Date());
+    const read = (thread: ThreadSummary) => queue.read(thread, "1");
+    const { give, change } = await probe({
+      kept: [crash],
+      selected: () => crash,
+    });
+    queue.request([{ thread: crash, version: "1" }], crash, 200);
+    const queued = give(read, crash, "1", crash);
+    queue.pause(true);
+    await change({ resumes });
+    const given = give(read, crash, "1", crash);
+    expect(given).toMatchObject({ status: "fulfilled" });
+    expect(await given).toMatchObject({ partial: true });
+    expect(reader.read).not.toHaveBeenCalled();
+    queue.pause(false);
+    await change({ resumes: undefined });
+    expect(await queued).toBe(parserFixDetail);
+    expect(await give(read, crash, "1", crash)).toBe(parserFixDetail);
+    expect(reader.read).toHaveBeenCalledOnce();
   });
 
   it("gives a thread the snapshot holds nothing of when reading resumes while it is paused, settled at once", async () => {

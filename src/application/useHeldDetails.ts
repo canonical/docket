@@ -74,10 +74,10 @@ function markSettled(
  * selection comes back to its thread, and never on a frame that keeps the
  * selection there, as the clock's each second does.
  * While reading is paused nothing is read, and the details held stay on
- * screen whatever the thread's version. A thread none are held for is
- * given, settled at once, what the snapshot holds of it, or, when it holds
- * nothing, when reading resumes, so the accordion never waits on a read
- * that cannot start.
+ * screen whatever the thread's version, once they have settled. A thread
+ * with none settled is given, settled at once, what the snapshot holds of
+ * it, or, when it holds nothing, when reading resumes, so the accordion
+ * never waits on a read that cannot start.
  *
  * @note Impure: reads each thread's details through `read`, and redraws
  * once a read settles in place of details already shown.
@@ -100,15 +100,18 @@ export default function useHeldDetails({
     const held = details.get(key);
     const chosen = selected();
     const arrived = !chosen || identifyThread(chosen) !== key;
-    if (held?.version === version && !(arrived && held.failed)) {
-      return held.shown;
-    }
     if (resumes) {
-      if (held) return held.shown;
+      // A read queued but not yet sent when the pause began stays unsent
+      // until reading resumes, so only details already settled are given.
+      // The read stays held, and is sent once reading resumes.
+      if (held && "status" in held.shown) return held.shown;
       const value = facts ? composeDetail(facts) : { resumes };
       const standIn = Promise.resolve(value);
       markSettled(standIn, { status: "fulfilled", value });
       return standIn;
+    }
+    if (held?.version === version && !(arrived && held.failed)) {
+      return held.shown;
     }
     const reading = read(thread);
     // The details held from before the thread changed stay on screen
