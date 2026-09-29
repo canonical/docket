@@ -254,7 +254,11 @@ async function showRefreshing(
   return { screen, cache, refresh };
 }
 
-describe("Screen", () => {
+// Each test draws the whole screen, with the keymap, on a cache, some of
+// them tens of times: at most 0.5 s each at a load average of 50, and at
+// most 5.1 s over 30 runs at a load average of 88 to 112, past vitest's
+// default of 5 s.
+describe("Screen", { timeout: 15_000 }, () => {
   describe("before the first data", () => {
     it("opens on owed with the first run's progress and no counts, at 40 columns", async () => {
       const screen = await (
@@ -1559,7 +1563,12 @@ describe("Screen", () => {
       expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
     });
 
-    it("acts on no key but q at 32 columns, and on every key again once widened, the selection where it was", async () => {
+    // It draws the screen some 90 times, narrowed and widened for each of
+    // 21 keys: about 0.7 s alone, and at most 14.7 s over 30 runs at a
+    // load average of 88 to 112.
+    it("acts on no key but q at 32 columns, and on every key again once widened, the selection where it was", {
+      timeout: 45_000,
+    }, async () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const opened: string[] = [];
