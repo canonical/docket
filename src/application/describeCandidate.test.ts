@@ -3,6 +3,7 @@ import type { Owner } from "../lib/owed/index.js";
 import { alice, carol, dave, thread } from "../testing/facts.js";
 import { recordedWatched } from "../testing/recorded.js";
 import describeCandidate from "./describeCandidate.js";
+import gatherNamed from "./gatherNamed.js";
 
 const watched = recordedWatched();
 /** The group an owner carries, or none for a team. */
@@ -41,7 +42,15 @@ describe("describeCandidate", () => {
       reviews: [{ author: carol, at: new Date("2026-09-22T12:00+02:00") }],
     });
     expect(
-      groupOf(describeCandidate("carol", thread(), watched, "alice", [other])),
+      groupOf(
+        describeCandidate(
+          "carol",
+          thread(),
+          watched,
+          "alice",
+          gatherNamed([other]),
+        ),
+      ),
     ).toBe("internal");
   });
 
@@ -56,15 +65,23 @@ describe("describeCandidate", () => {
       ],
     });
     expect(
-      describeCandidate("example-org/UI", discussed, watched, "alice", [
-        requested,
-      ]),
+      describeCandidate(
+        "example-org/UI",
+        discussed,
+        watched,
+        "alice",
+        gatherNamed([requested]),
+      ),
     ).toEqual({ text: "example-org/UI", fit: "trimmed", group: "you" });
     expect(
       groupOf(
-        describeCandidate("example-org/ui", discussed, watched, "bob", [
-          requested,
-        ]),
+        describeCandidate(
+          "example-org/ui",
+          discussed,
+          watched,
+          "bob",
+          gatherNamed([requested]),
+        ),
       ),
     ).toBeUndefined();
   });

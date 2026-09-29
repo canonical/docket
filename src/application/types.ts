@@ -7,6 +7,7 @@ import type {
   Settings,
 } from "../lib/config/index.js";
 import type { OwedGrouping } from "../lib/owed/index.js";
+import type { Author } from "../lib/people/index.js";
 import type {
   Capability,
   Provider,
@@ -19,7 +20,7 @@ import type {
   Freshness,
   Problem,
 } from "../lib/text/index.js";
-import type { Thread, ThreadSummary } from "../lib/waits/index.js";
+import type { Team, Thread, ThreadSummary } from "../lib/waits/index.js";
 import type { DetailReader } from "./createDetailReader.js";
 import type { WriteAction, WriteOutcome, WriteRequest } from "./writeSet.js";
 
@@ -238,4 +239,15 @@ export interface SelectedThread {
   /** `example#12`. */
   readonly reference: string;
   readonly thread?: Thread;
+}
+
+/**
+ * What the threads a view holds tell about the people and teams an editor
+ * offers, each by its lowercase name.
+ */
+export interface Named {
+  /** The accounts that wrote on the threads, which say who is a member. */
+  readonly writers: ReadonlyMap<string, Author>;
+  /** The teams a review was requested of, with their members. */
+  readonly teams: ReadonlyMap<string, Team>;
 }

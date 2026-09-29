@@ -2,6 +2,7 @@ import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -37,6 +38,7 @@ import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
 import describeCandidate from "./describeCandidate.js";
 import drawStandIn from "./drawStandIn.js";
+import gatherNamed from "./gatherNamed.js";
 import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
@@ -173,11 +175,13 @@ export default function Screen({
   // so a binding never holds a list older than the one on screen.
   const drawnRows = useRef<readonly (WaitRow | ActivityThread)[]>([]);
   const drawnSelection = useRef<WaitRow | ActivityThread>(undefined);
+  const heldThreads = cached?.threads;
+  const named = useMemo(() => gatherNamed(heldThreads ?? []), [heldThreads]);
   const editor = useEditor({
     source: "cache" in source ? source : undefined,
     findTeam: (repo) => listTeam(watched, repo),
     describeCandidate: (name, thread) =>
-      describeCandidate(name, thread, watched, you.viewer, cached?.threads),
+      describeCandidate(name, thread, watched, you.viewer, named),
     now,
     onResult: setAction,
     covered: help || narrow,
