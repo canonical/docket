@@ -12,6 +12,7 @@ import {
   idleInterval,
   refreshInterval,
 } from "./constants.js";
+import createReadQueries from "./createReadQueries.js";
 import findBudgetFloor from "./findBudgetFloor.js";
 import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
@@ -20,14 +21,9 @@ import readCacheFile from "./readCacheFile.js";
 import syncRepo, { type SyncOptions } from "./syncRepo.js";
 import type {
   Cache,
-  CachedEvents,
-  CachedFile,
   CachedThreads,
-  CachedViewer,
   CacheOptions,
   CacheStatus,
-  EventsCache,
-  FileCache,
   RepoCache,
 } from "./types.js";
 import withFetchLock from "./withFetchLock.js";
@@ -88,60 +84,7 @@ export default function createCache({
   const store = (repo: string, value: RepoCache, at: Date) =>
     client.setQueryData(key(repo), value, { updatedAt: at.getTime() });
 
-  const eventsKey = (repo: string) => ["events", repo];
-
-  /**
-   * The events held for `repo` from `since` on, when they reach back to it;
-   * without `since`, every event held.
-   */
-  const findEvents = (repo: string, since?: Date): CachedEvents | undefined => {
-    const state = client.getQueryState<EventsCache>(eventsKey(repo));
-    const held = state?.data;
-    if (!state || !held) return undefined;
-    const from = since ?? held.since;
-    if (held.since > from) return undefined;
-    return {
-      events: held.events.filter(({ at }) => at >= from),
-      syncedAt: new Date(state.dataUpdatedAt),
-    };
-  };
-  const fileKey = (repo: string, path: string) => ["file", repo, path];
-
-  /** The file held for `repo` at `path`, when it is younger than `maxAge`. */
-  const findFreshFile = (
-    repo: string,
-    path: string,
-    maxAge: number,
-  ): CachedFile | undefined => {
-    const state = client.getQueryState<FileCache>(fileKey(repo, path));
-    if (state?.data === undefined) return undefined;
-    const syncedAt = new Date(state.dataUpdatedAt);
-    return now().getTime() - syncedAt.getTime() < maxAge
-      ? { text: state.data.text ?? undefined, syncedAt }
-      : undefined;
-  };
-
-  // The login gh is signed in with, held as the files are, since a text
-  // command reads it on every call.
-  const viewerKey = ["viewer"];
-
-  /** The viewer's login held, when it is younger than `maxAge`. */
-  const findFreshViewer = (maxAge: number): CachedViewer | undefined => {
-    const state = client.getQueryState<string>(viewerKey);
-    if (state?.data === undefined) return undefined;
-    const syncedAt = new Date(state.dataUpdatedAt);
-    return now().getTime() - syncedAt.getTime() < maxAge
-      ? { login: state.data, syncedAt }
-      : undefined;
-  };
-
-  /** The events held for `repo` from `since` on, younger than `maxAge`. */
-  const findFreshEvents = (repo: string, since: Date, maxAge: number) => {
-    const held = findEvents(repo, since);
-    return held && now().getTime() - held.syncedAt.getTime() < maxAge
-      ? held
-      : undefined;
-  };
+  const queries = createReadQueries(client, now);
 
   const syncedAt = (): Date | undefined => {
     const times = repos.map(
@@ -358,37 +301,31 @@ export default function createCache({
   return {
     threads: () => shown,
     load,
-    findEvents,
+    findEvents: queries.findEvents,
     readEvents: (repo, since, maxAge) =>
       readThrough(
-        () => findFreshEvents(repo, since, maxAge),
+        () => queries.findFreshEvents(repo, since, maxAge),
         async (at) => {
           const events = await provider.events(repo, since);
-          const value: EventsCache = { since, events };
-          client.setQueryData(eventsKey(repo), value, {
-            updatedAt: at.getTime(),
-          });
+          queries.keepEvents(repo, since, events, at);
           return { events, syncedAt: at };
         },
       ),
     readFile: (repo, path, maxAge) =>
       readThrough(
-        () => findFreshFile(repo, path, maxAge),
+        () => queries.findFreshFile(repo, path, maxAge),
         async (at) => {
           const text = await provider.readFile(repo, path);
-          const value: FileCache = { text: text ?? null };
-          client.setQueryData(fileKey(repo, path), value, {
-            updatedAt: at.getTime(),
-          });
+          queries.keepFile(repo, path, text, at);
           return { text, syncedAt: at };
         },
       ),
     readViewer: (maxAge) =>
       readThrough(
-        () => findFreshViewer(maxAge),
+        () => queries.findFreshViewer(maxAge),
         async (at) => {
           const login = await provider.viewer();
-          client.setQueryData(viewerKey, login, { updatedAt: at.getTime() });
+          queries.keepViewer(login, at);
           return { login, syncedAt: at };
         },
       ),
