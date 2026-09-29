@@ -39,7 +39,7 @@ describe("ActivityList", () => {
       `  docs#4 issue ● alice${" ".repeat(15)}16h`,
       "  Where do tokens live?",
       `${" ".repeat(26)}● alice, ● bob`,
-      `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
+      `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
     ]);
     expect(screen.lines.slice(5, 8)).toEqual([
       "PULL REQUESTS ──────────────────────────",
@@ -49,8 +49,8 @@ describe("ActivityList", () => {
     expect(screen.lines.slice(8, 13)).toEqual([
       " ┆loading…",
       ` ┆  ✗ checks failed (lint)${" ".repeat(11)}25m`,
-      ` ┆  alice requested review${" ".repeat(12)}3h`,
-      ` ┆  dave commented${" ".repeat(20)}3d`,
+      ` ┆  ● alice requested review${" ".repeat(10)}3h`,
+      ` ┆  ○ dave commented${" ".repeat(18)}3d`,
       "",
     ]);
     expect(screen.look("PULL REQUESTS")?.bold).toBe(false);
@@ -105,7 +105,7 @@ describe("ActivityList", () => {
     expect(screen.lines.slice(3, 10)).toEqual([
       `${" ".repeat(26)}● alice, ● bob`,
       "  loading…",
-      `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
+      `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
       "PULL REQUESTS ──────────────────────────",
       ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
       ` ┆Fix the parser${" ".repeat(17)}● alice`,
@@ -140,7 +140,7 @@ describe("ActivityList", () => {
       `${" ".repeat(26)}● alice, ● bob`,
       "  filter:",
       "  ☑ alice",
-      "    example-sync labelled kind=docs  16h",
+      `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
     ]);
     expect(screen.look("docs#4")?.bg).not.toBe(
       tokens["color.background.selected"],

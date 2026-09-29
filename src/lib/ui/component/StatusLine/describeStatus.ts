@@ -49,7 +49,11 @@ export default function describeStatus(
   if (action && now.getTime() - action.at.getTime() < resultShown) {
     return action.failed
       ? { kind: "actionFailed", text: `✗ ${action.text}` }
-      : { kind: "action", text: `✓ ${action.text}` };
+      : {
+          kind: "action",
+          text: `✓ ${action.text}`,
+          ...(action.people && { people: action.people }),
+        };
   }
   if (!status) return undefined;
   if (status.fullRefresh) {

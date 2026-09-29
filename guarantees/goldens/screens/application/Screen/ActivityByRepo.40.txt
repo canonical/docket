@@ -10,13 +10,13 @@
 | ┆example stack 3 · 2 of 3 · → main
 | ┆below #11 merged, above #13 open
 | ┆  ✗ checks failed (lint)           25m
-| ┆  alice requested review            3h
-| ┆  dave commented                    3d
+| ┆  ◉ alice requested review          3h
+| ┆  ○ dave commented                  3d
 |docs ───────────────────────────────────
 |  docs#4 issue ◉ alice               16h
 |  Where do tokens live?
 |                          ◉ alice, ● bob
-|    example-sync labelled kind=docs  16h
+|    ■ example-sync labelled kind=do… 16h
 |
 |
 |
@@ -73,11 +73,14 @@ runs
 10:2 "┆below #11 merged, above #13 open" fg #6b7089ff bg #2e3244ff
 10:35 "      " fg #ffffffff bg #2e3244ff
 11:2 "┆" fg #6b7089ff bg #161821ff
-11:3 "  ✗ checks failed (lint)           25m" fg #e27878ff bg #161821ff
+11:5 "✗ checks failed (lint)" fg #e27878ff bg #161821ff
+11:27 "           25m" fg #c6c8d1ff bg #161821ff
 12:2 "┆" fg #6b7089ff bg #161821ff
-12:3 "  alice requested review            3h" fg #c6c8d1ff bg #161821ff
+12:5 "◉ alice" fg #84a0c6ff bg #161821ff
+12:12 " requested review          3h" fg #c6c8d1ff bg #161821ff
 13:2 "┆" fg #6b7089ff bg #161821ff
-13:3 "  dave commented                    3d" fg #c6c8d1ff bg #161821ff
+13:5 "○ dave" fg #89b8c2ff bg #161821ff
+13:11 " commented                  3d" fg #c6c8d1ff bg #161821ff
 14:1 "docs ───────────────────────────────────" fg #c6c8d1ff bg #161821ff
 15:3 "docs#4 issue " fg #c6c8d1ff bg #161821ff bold
 15:16 "◉ alice" fg #84a0c6ff bg #161821ff bold
@@ -86,7 +89,8 @@ runs
 17:27 "◉ alice" fg #84a0c6ff bg #161821ff
 17:34 ", " fg #c6c8d1ff bg #161821ff
 17:36 "● bob" fg #84a0c6ff bg #161821ff
-18:2 "   example-sync labelled kind=docs  16h" fg #6b7089ff bg #161821ff
+18:5 "■ example-sync labelled kind=do…" fg #6b7089ff bg #161821ff
+18:38 "16h" fg #6b7089ff bg #161821ff
 34:1 "2 threads · 4 events" fg #c6c8d1ff bg #161821ff
 35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
 36:1 "←→" fg #c6c8d1ff bg #161821ff bold

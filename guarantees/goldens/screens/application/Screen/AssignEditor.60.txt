@@ -3,10 +3,10 @@
 |┃┆example#12 PR reply ○ dave                         4d over
 |╹┆Fix the parser                           ✗ checks  ◉ alice
 |  filter:
-|  ☑ alice
-|  ☐ bob
-|  ☐ dave
-|  ☐ carol
+|  ☑ ◉ alice
+|  ☐ ● bob
+|  ☐ ○ dave
+|  ☐ ◐ carol
 |┃┆example#12 PR close ○ dave                         2h over
 |╹┆Fix the parser                           ✗ checks  ◉ alice
 |┃ example#15 issue reply ◐ carol                     4h left
@@ -49,12 +49,16 @@ runs
 3:44 "✗ checks" fg #e27878ff bg #161821ff
 3:54 "◉ alice" fg #84a0c6ff bg #161821ff
 4:3 "filter: " fg #c6c8d1ff bg #161821ff
-5:3 "☑ alice" fg #c6c8d1ff bg #161821ff
-6:3 "☐ bob" fg #c6c8d1ff bg #161821ff
-7:3 "☐ dave" fg #c6c8d1ff bg #161821ff
+5:3 "☑ " fg #c6c8d1ff bg #161821ff
+5:5 "◉ alice" fg #84a0c6ff bg #161821ff
+6:3 "☐ " fg #c6c8d1ff bg #161821ff
+6:5 "● bob" fg #84a0c6ff bg #161821ff
+7:3 "☐ " fg #c6c8d1ff bg #161821ff
+7:5 "○ dave" fg #89b8c2ff bg #161821ff
 8:1 "  " fg #ffffffff bg #2e3244ff
-8:3 "☐ carol" fg #c6c8d1ff bg #2e3244ff
-8:10 "                                                   " fg #ffffffff bg #2e3244ff
+8:3 "☐ " fg #c6c8d1ff bg #2e3244ff
+8:5 "◐ carol" fg #a093c7ff bg #2e3244ff
+8:12 "                                                 " fg #ffffffff bg #2e3244ff
 9:1 "┃" fg #e27878ff bg #161821ff
 9:2 "┆" fg #6b7089ff bg #161821ff
 9:3 "example#12 PR close " fg #c6c8d1ff bg #161821ff bold

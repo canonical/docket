@@ -35,6 +35,7 @@ import type { Thread } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
+import describeCandidate from "./describeCandidate.js";
 import drawStandIn from "./drawStandIn.js";
 import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
@@ -175,6 +176,8 @@ export default function Screen({
   const editor = useEditor({
     source: "cache" in source ? source : undefined,
     findTeam: (repo) => listTeam(watched, repo),
+    describeCandidate: (name, thread) =>
+      describeCandidate(name, thread, watched, you.viewer, cached?.threads),
     now,
     onResult: setAction,
     covered: help || narrow,

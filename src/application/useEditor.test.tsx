@@ -205,10 +205,10 @@ describe("useEditor", { timeout: 15_000 }, () => {
         `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
         `╹┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
         "  filter:",
-        "  ☑ alice",
-        "  ☐ bob",
-        "  ☐ dave",
-        "  ☐ carol",
+        "  ☑ ◉ alice",
+        "  ☐ ● bob",
+        "  ☐ ○ dave",
+        "  ☐ ◐ carol",
         `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
         `╹┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
         "┃ example#15 issue reply ◐ carol 4h left",
@@ -218,9 +218,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         "synced 0m ago",
         "type filter ↑↓ ␣ tick ⏎ apply esc ?",
       ]);
-      expect(screen.look("☑ alice")?.bg).toBe(
-        tokens["color.background.selected"],
-      );
+      expect(screen.look("☑ ")?.bg).toBe(tokens["color.background.selected"]);
       expect(screen.look("example#12 PR reply")?.bg).toBe(
         tokens["color.background"],
       );
@@ -241,7 +239,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       ]);
       resolve();
       expect(readRegion(await settle(screen)).slice(3, 4)).toEqual([
-        "  ☑ alice",
+        "  ☑ ◉ alice",
       ]);
     });
 
@@ -258,26 +256,27 @@ describe("useEditor", { timeout: 15_000 }, () => {
       );
       expect(readRegion(narrowed).slice(2, 4)).toEqual([
         "  filter: ca",
-        "  ☐ carol",
+        "  ☐ ◐ carol",
       ]);
     });
 
     it("moves the cursor with the arrows within the options, never past either end", async () => {
       const opened = await settle(await press(await showRecorded(), "a"));
       const moved = await press(opened, "down", "down", "down", "down", "down");
-      expect(moved.look("☐ carol")?.bg).toBe(
+      expect(moved.look("◐ carol")?.bg).toBe(
         tokens["color.background.selected"],
       );
       const back = await press(moved, "up", "up", "up", "up", "up", "up");
-      expect(back.look("☑ alice")?.bg).toBe(
-        tokens["color.background.selected"],
-      );
+      expect(back.look("☑ ")?.bg).toBe(tokens["color.background.selected"]);
     });
 
     it("ticks and unticks the option under the cursor with ␣", async () => {
       const opened = await settle(await press(await showRecorded(), "a"));
       const ticked = await press(opened, "down", "space", "up", "space");
-      expect(readRegion(ticked).slice(3, 5)).toEqual(["  ☐ alice", "  ☑ bob"]);
+      expect(readRegion(ticked).slice(3, 5)).toEqual([
+        "  ☐ ◉ alice",
+        "  ☑ ● bob",
+      ]);
       const none = await press(
         await settle(await press(await showRecorded(), "a")),
         "z",
@@ -305,7 +304,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       expect(applied.lines.at(2)).toBe(
         `┃┆Fix the parser${" ".repeat(16)}✗ checks`,
       );
-      expect(applied.lines.at(-2)).toBe("✓ assigned alice, carol");
+      expect(applied.lines.at(-2)).toBe("✓ assigned ◉ alice, ◐ carol");
       expect(applied.look("✓ assigned")?.fg).toBe(tokens["color.text.success"]);
       expect(applied.lines.at(3)).toBe(`┃┆${" ".repeat(22)}◉ alice, ◐ carol`);
     });
@@ -390,10 +389,10 @@ describe("useEditor", { timeout: 15_000 }, () => {
       expect(refused.lines.at(0)).toBe("assigning example#12");
       expect(readRegion(refused).slice(2, 10)).toEqual([
         "  filter:",
-        "  ☑ alice",
-        "  ☑ bob",
-        "  ☐ dave",
-        "  ☐ carol",
+        "  ☑ ◉ alice",
+        "  ☑ ● bob",
+        "  ☐ ○ dave",
+        "  ☐ ◐ carol",
         "  ✗ The provider failed with",
         "  GITHUB_REQUEST_FAILED",
         "  Recovery: try again",
@@ -514,15 +513,15 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const back = await press(help, "?");
       expect(readRegion(back).slice(2, 5)).toEqual([
         "  filter: c",
-        "  ☑ alice",
-        "  ☐ carol",
+        "  ☑ ◉ alice",
+        "  ☐ ◐ carol",
       ]);
       expect(back.lines.at(-1)).toBe("type filter ↑↓ ␣ tick ⏎ apply esc ?");
       const ticked = await press(back, "down", "space");
       expect(readRegion(ticked).slice(2, 5)).toEqual([
         "  filter: c",
-        "  ☑ alice",
-        "  ☑ carol",
+        "  ☑ ◉ alice",
+        "  ☑ ◐ carol",
       ]);
       const cancelled = await press(ticked, "escape");
       expect(cancelled.lines.at(0)).toBe("owed");
@@ -543,13 +542,16 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const back = await press(covered, "?");
       expect(back.lines.at(0)).toBe("assigning example#12");
       expect(back.lines.at(-2)).toBe("synced 0m ago");
-      expect(readRegion(back).slice(3, 5)).toEqual(["  ☑ alice", "  ☑ bob"]);
+      expect(readRegion(back).slice(3, 5)).toEqual([
+        "  ☑ ◉ alice",
+        "  ☑ ● bob",
+      ]);
       const applied = await settle(await press(back, "return"), isAnswered);
       expect(setAssignees).toHaveBeenCalledWith(expect.anything(), [
         "alice",
         "bob",
       ]);
-      expect(applied.lines.at(-2)).toBe("✓ assigned alice, bob");
+      expect(applied.lines.at(-2)).toBe("✓ assigned ◉ alice, ● bob");
     });
 
     it("closes only the help on esc, keeping the editor and its ticks", async () => {
@@ -561,7 +563,10 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const back = await press(ticked, "?", "escape");
       expect(back.lines.at(0)).toBe("assigning example#12");
       expect(back.lines.at(-1)).toBe("type filter ↑↓ ␣ tick ⏎ apply esc ?");
-      expect(readRegion(back).slice(3, 5)).toEqual(["  ☑ alice", "  ☑ bob"]);
+      expect(readRegion(back).slice(3, 5)).toEqual([
+        "  ☑ ◉ alice",
+        "  ☑ ● bob",
+      ]);
       expect(setAssignees).not.toHaveBeenCalled();
       const cancelled = await press(back, "escape");
       expect(cancelled.lines.at(0)).toBe("owed");
@@ -580,13 +585,16 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const wide = await opened.redraw();
       expect(wide.lines.at(-1)).toBe("type filter ↑↓ ␣ tick ⏎ apply esc ?");
       const ticked = await press(wide, "down", "space");
-      expect(readRegion(ticked).slice(3, 5)).toEqual(["  ☑ alice", "  ☑ bob"]);
+      expect(readRegion(ticked).slice(3, 5)).toEqual([
+        "  ☑ ◉ alice",
+        "  ☑ ● bob",
+      ]);
       const applied = await settle(await press(ticked, "return"), isAnswered);
       expect(setAssignees).toHaveBeenCalledWith(expect.anything(), [
         "alice",
         "bob",
       ]);
-      expect(applied.lines.at(-2)).toBe("✓ assigned alice, bob");
+      expect(applied.lines.at(-2)).toBe("✓ assigned ◉ alice, ● bob");
     });
 
     it("ticks, applies and cancels nothing at 32 columns, keeping the editor as it was", async () => {
@@ -703,7 +711,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         await press(await showRecorded(recordedProvider(), 60), "a"),
       );
       expect(screen.lines.at(0)).toBe("assigning example#12");
-      expect(screen.lines.slice(3, 5)).toEqual(["  filter:", "  ☑ alice"]);
+      expect(screen.lines.slice(3, 5)).toEqual(["  filter:", "  ☑ ◉ alice"]);
       expect(screen.lines.at(-1)).toBe("type filter ↑↓ ␣ tick ⏎ apply esc ?");
     });
   });
@@ -714,9 +722,9 @@ describe("useEditor", { timeout: 15_000 }, () => {
       expect(screen.lines.at(0)).toBe("requesting review example#12");
       expect(readRegion(screen).slice(2, 7)).toEqual([
         "  filter:",
-        "  ☑ bob",
-        "  ☐ carol",
-        "  ☐ alice",
+        "  ☑ ● bob",
+        "  ☐ ◐ carol",
+        "  ☐ ◉ alice",
         "  ☐ example-org/reviewers",
       ]);
     });
@@ -736,7 +744,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         { team: "example-org/reviewers" },
       ]);
       expect(applied.lines.at(-2)).toBe(
-        "✓ requested review from bob, example-or…",
+        "✓ requested review from ● bob, example-…",
       );
     });
 
@@ -830,6 +838,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const editor = useEditor({
         source,
         findTeam: () => [],
+        describeCandidate: (name) => ({ text: name, fit: "trimmed" }),
         now: () => recordedNow,
         onResult: () => {},
         covered: false,

@@ -1284,7 +1284,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  age 27d · owner ◉ alice, ● bob",
         "  last activity 27d ago",
         "  labels none",
-        `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
+        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
         "PULL REQUESTS ──────────────────────────",
         "",
         "",
@@ -1393,11 +1393,11 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  Where do tokens live?",
         `${" ".repeat(26)}◉ alice, ● bob`,
         "  filter:",
-        "  ☑ alice",
-        "  ☑ bob",
-        "  ☐ carol",
-        "  ☐ dave",
-        `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
+        "  ☑ ◉ alice",
+        "  ☑ ● bob",
+        "  ☐ ◐ carol",
+        "  ☐ ○ dave",
+        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
         "PULL REQUESTS ──────────────────────────",
         "",
         "2 threads · 3 events",
@@ -1425,7 +1425,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       await press(screen, "a");
       const opened = await waitUntil(async () => {
         const drawn = await screen.redraw();
-        expect(drawn.lines).toContain("  ☐ carol");
+        expect(drawn.lines).toContain("  ☐ ◐ carol");
         return drawn;
       });
       expect(opened.lines.at(0)).toBe("assigning docs#4");
@@ -1444,7 +1444,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  review can be requested on it",
         "  Recovery: select a pull request, then",
         "  press r",
-        `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
+        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
         "PULL REQUESTS ──────────────────────────",
         "",
         "",
@@ -1476,7 +1476,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  refresh",
         "  Recovery: open it with ⏎ and change it",
         "  on GitHub",
-        `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
+        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
         "PULL REQUESTS ──────────────────────────",
         "",
         "",
@@ -1502,7 +1502,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
       expect(wider.lines.at(0)).toBe(`activity${" ".repeat(49)}48h`);
       expect((await screen.redraw()).lines).toContain(
-        ` ┆  dave commented${" ".repeat(40)}3d`,
+        ` ┆  ○ dave commented${" ".repeat(38)}3d`,
       );
     });
 

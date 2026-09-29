@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { Notice } from "../../component/index.js";
-import trimText from "../../trimText.js";
+import fitPieces from "../../fitPieces.js";
+import markPerson from "../../markPerson.js";
 import { pickerIndent as indent, shownOptions } from "./constants.js";
 import type { PeoplePickerProps } from "./types.js";
 
@@ -58,9 +59,9 @@ const PeoplePicker = ({
         />
       </box>
       {shown ? (
-        shown.map(({ name, ticked }, place) => (
+        shown.map(({ owner, ticked }, place) => (
           <box
-            key={name}
+            key={owner.text}
             paddingLeft={indent}
             backgroundColor={
               first + place === cursor
@@ -68,8 +69,23 @@ const PeoplePicker = ({
                 : undefined
             }
           >
-            <text fg={tokens["color.text"]}>
-              {trimText(`${ticked ? "☑" : "☐"} ${name}`, room)}
+            <text>
+              {fitPieces(
+                [
+                  {
+                    text: `${tokens[ticked ? "glyph.ticked" : "glyph.unticked"]} `,
+                    fg: tokens["color.text"],
+                  },
+                  markPerson(owner, Number.POSITIVE_INFINITY),
+                ],
+                room,
+              ).map(({ text, fg }, run) => (
+                // A line's runs never reorder, so their place is their key.
+                // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+                <span key={run} fg={fg}>
+                  {text}
+                </span>
+              ))}
             </text>
           </box>
         ))

@@ -12,9 +12,9 @@
 |│┆example#12 PR review ○ dave                        1d left
 |╵┆Fix the parser                             ✗ checks  ● bob
 |  filter:
-|  ☑ bob
-|  ☐ carol
-|  ☐ alice
+|  ☑ ● bob
+|  ☐ ◐ carol
+|  ☐ ◉ alice
 |  ☐ example-org/reviewers
 |│ example#15 issue close ◐ carol                    29d left
 |╵ Crash on start                                  unassigned
@@ -86,9 +86,12 @@ runs
 12:46 "✗ checks" fg #e27878ff bg #161821ff
 12:56 "● bob" fg #84a0c6ff bg #161821ff
 13:3 "filter: " fg #c6c8d1ff bg #161821ff
-14:3 "☑ bob" fg #c6c8d1ff bg #161821ff
-15:3 "☐ carol" fg #c6c8d1ff bg #161821ff
-16:3 "☐ alice" fg #c6c8d1ff bg #161821ff
+14:3 "☑ " fg #c6c8d1ff bg #161821ff
+14:5 "● bob" fg #84a0c6ff bg #161821ff
+15:3 "☐ " fg #c6c8d1ff bg #161821ff
+15:5 "◐ carol" fg #a093c7ff bg #161821ff
+16:3 "☐ " fg #c6c8d1ff bg #161821ff
+16:5 "◉ alice" fg #84a0c6ff bg #161821ff
 17:1 "  " fg #ffffffff bg #2e3244ff
 17:3 "☐ example-org/reviewers" fg #c6c8d1ff bg #2e3244ff
 17:26 "                                   " fg #ffffffff bg #2e3244ff

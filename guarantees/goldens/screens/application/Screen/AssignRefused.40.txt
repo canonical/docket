@@ -3,10 +3,10 @@
 |┃┆example#12 PR reply ○ dave     4d over
 |╹┆Fix the parser       ✗ checks  ◉ alice
 |  filter:
-|  ☑ alice
-|  ☐ bob
-|  ☑ dave
-|  ☐ carol
+|  ☑ ◉ alice
+|  ☐ ● bob
+|  ☑ ○ dave
+|  ☐ ◐ carol
 |  ✗ GitHub did not record dave on
 |  example#12
 |  Recovery: check that dave can be
@@ -49,12 +49,16 @@ runs
 3:24 "✗ checks" fg #e27878ff bg #161821ff
 3:34 "◉ alice" fg #84a0c6ff bg #161821ff
 4:3 "filter: " fg #c6c8d1ff bg #161821ff
-5:3 "☑ alice" fg #c6c8d1ff bg #161821ff
-6:3 "☐ bob" fg #c6c8d1ff bg #161821ff
+5:3 "☑ " fg #c6c8d1ff bg #161821ff
+5:5 "◉ alice" fg #84a0c6ff bg #161821ff
+6:3 "☐ " fg #c6c8d1ff bg #161821ff
+6:5 "● bob" fg #84a0c6ff bg #161821ff
 7:1 "  " fg #ffffffff bg #2e3244ff
-7:3 "☑ dave" fg #c6c8d1ff bg #2e3244ff
-7:9 "                                " fg #ffffffff bg #2e3244ff
-8:3 "☐ carol" fg #c6c8d1ff bg #161821ff
+7:3 "☑ " fg #c6c8d1ff bg #2e3244ff
+7:5 "○ dave" fg #89b8c2ff bg #2e3244ff
+7:11 "                              " fg #ffffffff bg #2e3244ff
+8:3 "☐ " fg #c6c8d1ff bg #161821ff
+8:5 "◐ carol" fg #a093c7ff bg #161821ff
 9:3 "✗ GitHub did not record dave on" fg #e27878ff bg #161821ff
 10:3 "example#12" fg #e27878ff bg #161821ff
 11:3 "Recovery: check that dave can be" fg #c6c8d1ff bg #161821ff

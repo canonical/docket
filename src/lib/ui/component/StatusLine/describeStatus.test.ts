@@ -167,11 +167,17 @@ describe("describeStatus", () => {
     });
   });
 
-  it("marks an action that went through ✓, before how old the data is", () => {
+  it("marks an action that went through ✓, with the people it names, before how old the data is", () => {
     const { status, action } = ActionDone.args;
     expect(describeStatus(status, now, "UTC", names, action)).toEqual({
       kind: "action",
-      text: "✓ assigned alice",
+      text: "✓ assigned",
+      people: action?.people,
+    });
+    const quiet = { failed: false, text: "unassigned", at: now };
+    expect(describeStatus(status, now, "UTC", names, quiet)).toEqual({
+      kind: "action",
+      text: "✓ unassigned",
     });
   });
 

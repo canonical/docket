@@ -1,5 +1,6 @@
 import { useBindings } from "@opentui/keymap/react";
 import { useRef, useState } from "react";
+import type { Owner } from "../lib/owed/index.js";
 import type { ActionResult, PeoplePickerProps } from "../lib/ui/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import chooseEditor, { type Refusal } from "./chooseEditor.js";
@@ -20,6 +21,11 @@ export interface UseEditorProps {
   readonly source: EditorSource | undefined;
   /** The logins `repo` groups as its team, which assigning offers first. */
   readonly findTeam: (repo: string) => readonly string[];
+  /**
+   * Names someone offered for `thread` as the lists name people, with
+   * their group, so the picker and the result mark them.
+   */
+  readonly describeCandidate: (name: string, thread: Thread) => Owner;
   /** The current time, which dates an action's result. */
   readonly now: () => Date;
   /** Shows the result of applying, or of a refused key, on the status line. */
@@ -92,17 +98,26 @@ const keys = { assign: "a", review: "r" } as const;
 /** A notice's reason is a line on screen, which ends without a full stop. */
 const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
 
-/** The options the filter leaves, ignoring case, each with its tick. */
-const listOptions = ({ names, filter, ticked }: Editing) =>
-  names
-    ?.filter((name) => name.toLowerCase().includes(filter.toLowerCase()))
-    .map((name) => ({ name, ticked: ticked.has(name.toLowerCase()) }));
+/** The names the filter leaves, ignoring case. */
+const filterNames = ({ names, filter }: Editing) =>
+  names?.filter((name) => name.toLowerCase().includes(filter.toLowerCase()));
+
+/** The options the filter leaves, each named as the lists name people, with its tick. */
+const listOptions = (
+  editing: Editing,
+  describe: UseEditorProps["describeCandidate"],
+) =>
+  filterNames(editing)?.map((name) => ({
+    owner: describe(name, editing.thread),
+    ticked: editing.ticked.has(name.toLowerCase()),
+  }));
 
 /** What the status line says once a set is written. */
+/** What a write set, in words, before the people it names. */
 function describeApplied(action: WriteAction, applied: readonly string[]) {
-  const names = applied.join(", ");
-  if (action === "assign") return names ? `assigned ${names}` : "unassigned";
-  return names ? `requested review from ${names}` : "no review requested";
+  const named = applied.length > 0;
+  if (action === "assign") return named ? "assigned" : "unassigned";
+  return named ? "requested review from" : "no review requested";
 }
 
 /** The help's and the key bar's line for typing, which no key runs. */
@@ -122,6 +137,7 @@ const typeToFilter = () => {};
 export default function useEditor({
   source,
   findTeam,
+  describeCandidate,
   now,
   onResult,
   covered,
@@ -135,8 +151,8 @@ export default function useEditor({
   current.current = editing;
   // The keys run closures made when their layer was bound, so they read
   // the props of the latest frame, never those of the frame that bound them.
-  const latest = useRef({ source, findTeam, now, onResult });
-  latest.current = { source, findTeam, now, onResult };
+  const latest = useRef({ source, findTeam, describeCandidate, now, onResult });
+  latest.current = { source, findTeam, describeCandidate, now, onResult };
 
   const follow = (selected: string | undefined) => {
     setEditing((editor) =>
@@ -208,7 +224,7 @@ export default function useEditor({
             0,
             Math.min(
               editor.cursor + step,
-              (listOptions(editor)?.length ?? 0) - 1,
+              (filterNames(editor)?.length ?? 0) - 1,
             ),
           ),
         },
@@ -216,16 +232,16 @@ export default function useEditor({
 
   const toggle = () =>
     setEditing((editor) => {
-      const option = editor && listOptions(editor)?.at(editor.cursor);
-      if (!editor || !option) return editor;
+      const name = editor && filterNames(editor)?.at(editor.cursor);
+      if (!editor || !name) return editor;
       const ticked = new Set(editor.ticked);
-      const key = option.name.toLowerCase();
+      const key = name.toLowerCase();
       if (!ticked.delete(key)) ticked.add(key);
       return { ...editor, ticked };
     });
 
   const apply = async () => {
-    const { source, now, onResult } = latest.current;
+    const { source, describeCandidate, now, onResult } = latest.current;
     const editor = current.current;
     if (!source || !editor?.names || editor.unread || editor.writing) return;
     const { action, thread, reference, names, ticked } = editor;
@@ -257,9 +273,11 @@ export default function useEditor({
     }
     update(() => undefined);
     if (applied) {
+      const people = applied.map((name) => describeCandidate(name, thread));
       onResult({
         failed: false,
         text: describeApplied(action, applied),
+        ...(people.length > 0 && { people }),
         at: now(),
       });
     }
@@ -337,7 +355,7 @@ export default function useEditor({
       ...(refused && { refusal: refused }),
     };
   }
-  const options = listOptions(editing);
+  const options = listOptions(editing, describeCandidate);
   return {
     open: true,
     title: `${titles[editing.action]} ${editing.reference}`,

@@ -128,14 +128,18 @@ export const ActionFailed: Story<StatusLineProps> = {
   },
 };
 
-/** The user's own action went through a second ago. */
+/** The user's own action went through a second ago, naming the people it set. */
 export const ActionDone: Story<StatusLineProps> = {
   args: {
     ...base,
     status: settled,
     action: {
       failed: false,
-      text: "assigned alice",
+      text: "assigned",
+      people: [
+        { text: "alice", fit: "trimmed", group: "you" },
+        { text: "erin", fit: "trimmed", group: "internal" },
+      ],
       at: new Date("2026-09-28T11:59:59Z"),
     },
   },

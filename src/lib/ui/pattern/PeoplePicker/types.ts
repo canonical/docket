@@ -1,9 +1,13 @@
+import type { Owner } from "../../../owed/index.js";
 import type { NoticeProps } from "../../component/index.js";
 
 /** One person or team the picker offers, and whether it is in the set. */
 export interface PickerOption {
-  /** A login, or a team as `org/team`. */
-  readonly name: string;
+  /**
+   * A person with their group, drawn behind their mark and in their hue,
+   * or a team as `org/team`, drawn as text.
+   */
+  readonly owner: Owner;
   /** Whether applying sets it: `☑` when it is, `☐` when it is not. */
   readonly ticked: boolean;
 }

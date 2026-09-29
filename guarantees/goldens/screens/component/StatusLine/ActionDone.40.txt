@@ -1,5 +1,8 @@
 40 columns
-|✓ assigned alice
+|✓ assigned ◉ alice, ◐ erin
 
 runs
-1:1 "✓ assigned alice" fg #b4be82ff bg #00000000
+1:1 "✓ assigned" fg #b4be82ff bg #00000000
+1:12 "◉ alice" fg #84a0c6ff bg #00000000
+1:19 ", " fg #c6c8d1ff bg #00000000
+1:21 "◐ erin" fg #a093c7ff bg #00000000
