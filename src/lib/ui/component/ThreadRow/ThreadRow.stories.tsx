@@ -51,6 +51,14 @@ export const BotAuthor: Story<ThreadRowProps> = {
   args: { row: botReview, width: 40 },
 };
 
+/**
+ * The same review selected: its title wraps in full, and the owner, who
+ * does not fit beside its last line, takes a line of its own.
+ */
+export const BotAuthorSelected: Story<ThreadRowProps> = {
+  args: { row: botReview, selected: true, width: 40 },
+};
+
 /** In activity: a pull request in a stack, with one owner, its newest event 20m old. */
 export const ActivityStacked: Story<ThreadRowProps> = {
   args: { row: findActivityRow(12), width: 40 },

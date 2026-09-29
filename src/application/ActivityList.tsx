@@ -107,7 +107,7 @@ export default function ActivityList({
         key: row.reference.text,
         row: true,
         lines:
-          countRowLines(row, width) +
+          countRowLines(row, width, chosen && !editor) +
           (chosen ? (editor?.lines ?? accordionHeight) : 0) +
           row.events.length,
         node: (

@@ -11,6 +11,7 @@ import {
   ActivityTwoOwners,
   AuthorLeaves,
   BotAuthor,
+  BotAuthorSelected,
   DraftClose,
   OverReviewSelected,
   SharedClose,
@@ -129,6 +130,28 @@ describe("ThreadRow", () => {
       expect(screen.look("■ exam…")?.fg).toBe(tokens["color.text.muted"]);
     });
 
+    it("wraps the selected row's title in full, in italic, the owner on a line of its own when it does not fit beside the last", async () => {
+      const screen = await draw(<ThreadRow {...BotAuthorSelected.args} />, 40);
+      expect(screen.lines.slice(1, 4)).toEqual([
+        "│ Update dependency example-lib to 3.24",
+        `╵${" ".repeat(34)}● bob`,
+        "",
+      ]);
+      expect(screen.look("Update dependency")?.italic).toBe(true);
+    });
+
+    it("puts the group beside the last line of the selected row's title when it fits there", async () => {
+      const screen = await draw(
+        <ThreadRow {...BotAuthorSelected.args} width={30} />,
+        30,
+      );
+      expect(screen.lines.slice(1, 4)).toEqual([
+        "│ Update dependency",
+        "╵ example-lib to 3.24    ● bob",
+        "",
+      ]);
+    });
+
     it("draws GitHub's title without its escape sequences", async () => {
       const row = measureRow({
         thread: thread({ title: "Fix\u001b[2J the\u0007 parser" }),
@@ -181,7 +204,7 @@ describe("ThreadRow", () => {
       );
       expect(screen.lines.slice(0, 2)).toEqual([
         "┃┆example#12 PR… 1d over",
-        "╹┆Fix …  ✗ checks  ● bob",
+        "┃┆Fix the parser",
       ]);
     });
 

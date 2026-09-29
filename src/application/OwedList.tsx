@@ -96,7 +96,7 @@ export default function OwedList({
         key: `${heading?.text ?? ""} ${identifyRow(row)}`,
         row: true,
         lines:
-          countRowLines(row, width) +
+          countRowLines(row, width, open && !editor) +
           (open ? (editor?.lines ?? accordionHeight) : 0),
         node: (
           <>

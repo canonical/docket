@@ -4,10 +4,12 @@ import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
 import fitPieces from "../../fitPieces.js";
 import markPerson from "../../markPerson.js";
+import measurePieces from "../../measurePieces.js";
 import trimText from "../../trimText.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import { Margin } from "../Margin/index.js";
+import describeTitleLines from "./describeTitleLines.js";
 import listOwnerLines from "./listOwnerLines.js";
 import type { ThreadRowProps } from "./types.js";
 
@@ -26,12 +28,6 @@ const distanceColours: Readonly<Record<WaitState, string>> = {
  * names nobody, and the accordion names the author whole.
  */
 const authorMinCells = 4;
-
-/** The cells between the title and the group at its right, and inside the group. */
-const gutter = "  ";
-
-const cells = (pieces: readonly Piece[]) =>
-  pieces.reduce((sum, { text }) => sum + Bun.stringWidth(text), 0);
 
 const space = (count: number): Piece => ({
   text: " ".repeat(Math.max(0, count)),
@@ -64,57 +60,12 @@ function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
   const state = "state" in row ? row.state : undefined;
   return [
     ...left,
-    space(inner - cells(left) - Bun.stringWidth(figure)),
+    space(inner - measurePieces(left) - Bun.stringWidth(figure)),
     { text: figure, fg: state ? distanceColours[state] : text },
   ].map((piece) => ({
     ...piece,
     attributes: tokens["typography.weight.bold"],
   }));
-}
-
-/**
- * The group at the right of the second line: `draft` dimmed, then each
- * field in trouble in the error colour after `✗`, so the colour is never
- * the only sign, then the owner with their mark. Failing checks are a
- * field in trouble of a running wait; activity tells of them as an event.
- * With two or more owners the owner is left out: they take a line of
- * their own.
- */
-function listRight(row: ThreadRowProps["row"]): Piece[] {
-  const error = tokens["color.text.error"];
-  const failed = tokens["glyph.failed"];
-  const parts: Piece[] = [
-    ...(row.draft
-      ? [{ text: row.draft.text, fg: tokens["color.text.muted"] }]
-      : []),
-    ...("wait" in row && row.wait.thread.checks === "failing"
-      ? [{ text: `${failed} checks`, fg: error }]
-      : []),
-    ...(row.invalidFile
-      ? [{ text: `${failed} ${row.invalidFile.text}`, fg: error }]
-      : []),
-    ...(row.owner ? [markPerson(row.owner, loginCells)] : []),
-  ];
-  return parts.flatMap((part, place) =>
-    place === 0 ? [part] : [space(gutter.length), part],
-  );
-}
-
-/**
- * The second line: the title in italic at the left, trimmed so the group
- * at the right always fits, since the title gives way first.
- */
-function describeTitleLine(row: ThreadRowProps["row"], inner: number): Piece[] {
-  const right = listRight(row);
-  const room = right.length > 0 ? inner - cells(right) - gutter.length : inner;
-  const title: Piece = {
-    text: trimText(row.title.text, Math.max(0, room)),
-    fg: tokens["color.text"],
-    attributes: tokens["typography.style.italic"],
-  };
-  if (right.length === 0) return [title];
-  const gap = Math.max(gutter.length, inner - cells([title, ...right]));
-  return [title, space(gap), ...right];
 }
 
 /** Draws the runs of one line, fitted to `width`. */
@@ -143,8 +94,10 @@ const drawLine = (pieces: readonly Piece[], width: number) => (
  * the age of the newest event, in the plain text colour, and the bar's
  * column is blank. When two or more people own the thread, a third line
  * lists every one of them, right-aligned, so the row's height says how
- * many own it. Selection is the only background, and it covers every
- * line of the selected row.
+ * many own it. The selected row's title wraps in full rather than being
+ * trimmed, with the group at its right on the title's last line when it
+ * fits there. Selection is the only background, and it covers every line
+ * of the selected row.
  *
  * `import { ThreadRow } from "../lib/ui/index.js";`
  *
@@ -152,11 +105,12 @@ const drawLine = (pieces: readonly Piece[], width: number) => (
  */
 const ThreadRow = ({
   row,
-  selected,
+  selected = false,
   continued = false,
   width,
 }: ThreadRowProps): ReactNode => {
   const inner = width - marginCells;
+  const titles = describeTitleLines(row, inner, selected);
   const owners = listOwnerLines(row, width);
   return (
     <box
@@ -169,17 +123,21 @@ const ThreadRow = ({
       <Margin
         state={"state" in row ? row.state : undefined}
         stacked={row.stacked}
-        lines={2 + owners.length}
+        lines={1 + titles.length + owners.length}
         ends={!continued}
       />
       <box flexDirection="column" width={inner}>
         {drawLine(describeHead(row, inner), inner)}
-        {drawLine(describeTitleLine(row, inner), inner)}
+        {titles.map((line, place) => (
+          // The title's lines never reorder, so their place is their key.
+          // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+          <box key={place}>{drawLine(line, inner)}</box>
+        ))}
         {owners.map((line, place) => (
           // The owners' lines never reorder, so their place is their key.
           // biome-ignore lint/suspicious/noArrayIndexKey: see above.
           <box key={place}>
-            {drawLine([space(inner - cells(line)), ...line], inner)}
+            {drawLine([space(inner - measurePieces(line)), ...line], inner)}
           </box>
         ))}
       </box>
