@@ -202,17 +202,17 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const screen = await settle(await press(await showRecorded(), "a"));
       expect(screen.lines).toEqual([
         "assigning example#12",
-        "▌┃example#12 reply               4d over",
-        " ┃Fix the parser · alice ✗ checks",
+        `┃┆example#12 reply${" ".repeat(15)}4d over`,
+        "╹┆Fix the parser · alice ✗ checks",
         "  filter:",
         "  ☑ alice",
         "  ☐ bob",
         "  ☐ dave",
         "  ☐ carol",
-        "▌┃example#12 close               2h over",
-        " ┃Fix the parser · alice ✗ checks",
-        "▌ example#15 reply               4h left",
-        "  Crash on start · unassigned",
+        `┃┆example#12 close${" ".repeat(15)}2h over`,
+        "╹┆Fix the parser · alice ✗ checks",
+        `┃ example#15 reply${" ".repeat(15)}4h left`,
+        "╹ Crash on start · unassigned",
         "",
         "2 over · 1 soon · 3 on track",
         "synced 0m ago",
@@ -285,7 +285,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       );
       expect(readRegion(none).slice(2, 4)).toEqual([
         "  filter: z",
-        "▌┃example#12 close               2h over",
+        `┃┆example#12 close${" ".repeat(15)}2h over`,
       ]);
     });
 
@@ -302,10 +302,10 @@ describe("useEditor", { timeout: 15_000 }, () => {
         ["alice", "carol"],
       );
       expect(applied.lines.at(0)).toBe("owed");
-      expect(applied.lines.at(2)).toBe(" ┃Fix the parser ✗ checks");
+      expect(applied.lines.at(2)).toBe("┃┆Fix the parser ✗ checks");
       expect(applied.lines.at(-2)).toBe("✓ assigned alice, carol");
       expect(applied.look("✓ assigned")?.fg).toBe(tokens["color.text.success"]);
-      expect(applied.lines.at(3)).toBe(" ┃alice, carol");
+      expect(applied.lines.at(3)).toBe("┃┆alice, carol");
     });
 
     it("shows the new set on the row at once, and takes it back when GitHub refuses", async () => {
@@ -316,16 +316,16 @@ describe("useEditor", { timeout: 15_000 }, () => {
       );
       const writing = await press(opened, "down", "space", "return");
       expect(writing.lines.slice(1, 4)).toEqual([
-        "▌┃example#12 reply               4d over",
-        " ┃Fix the parser ✗ checks",
-        " ┃alice, bob",
+        `┃┆example#12 reply${" ".repeat(15)}4d over`,
+        "┃┆Fix the parser ✗ checks",
+        "╹┆alice, bob",
       ]);
       answer.reject(providerError("GITHUB_REQUEST_FAILED"));
       const refused = await settle(writing, isAnswered);
       expect(refused.lines.at(-2)).toBe("✗ assign refused");
       expect(refused.lines.slice(1, 3)).toEqual([
-        "▌┃example#12 reply               4d over",
-        " ┃Fix the parser · alice ✗ checks",
+        `┃┆example#12 reply${" ".repeat(15)}4d over`,
+        "╹┆Fix the parser · alice ✗ checks",
       ]);
     });
 
@@ -469,8 +469,8 @@ describe("useEditor", { timeout: 15_000 }, () => {
       expect(setAssignees).not.toHaveBeenCalled();
       expect(after.lines.slice(0, 3)).toEqual([
         "assigning example#12",
-        "▌┃example#12 reply               4d over",
-        " ┃Fix the parser · alice ✗ checks",
+        `┃┆example#12 reply${" ".repeat(15)}4d over`,
+        "╹┆Fix the parser · alice ✗ checks",
       ]);
       expect(after.lines.at(-2)).toBe("synced 0m ago");
     });
@@ -692,7 +692,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const after = await settle(opened, isEditorClosed);
       expect(after.lines.at(0)).toBe("owed");
       expect(after.lines.at(1)).toBe(
-        "▌ example#15 reply               4h left",
+        `┃ example#15 reply${" ".repeat(15)}4h left`,
       );
     });
 
@@ -770,8 +770,8 @@ describe("useEditor", { timeout: 15_000 }, () => {
         "r",
       );
       expect(readRegion(screen).slice(4, 9)).toEqual([
-        "▌ example#15 reply               4h left",
-        "  Crash on start · unassigned",
+        `┃ example#15 reply${" ".repeat(15)}4h left`,
+        "╹ Crash on start · unassigned",
         "  ✗ example#15 is not a pull request, so",
         "  no review can be requested on it",
         "  Recovery: select a pull request, then",
@@ -793,7 +793,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       });
       const screen = await press(await showRecorded(provider), "a");
       expect(readRegion(screen).slice(2, 7)).toEqual([
-        "  alice, bob",
+        "╹ alice, bob",
         "  ✗ docs#4 is a discussion, and",
         "  discussions have no assignees",
         "  Recovery: select an issue or pull",

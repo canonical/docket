@@ -1,13 +1,21 @@
 40 columns
-|  asked by alice 3d ago
-|  1 push since · 2 files · +65 −12
-|  ✗ checks: 1 of 2 failed (lint)
-|  example stack 3 · 2 of 3 · → main
-|  below #11 merged, above #13 close
+|┃┆asked by alice 3d ago
+|┃┆1 push since · 2 files · +65 −12
+|┃┆✗ checks: 1 of 2 failed (lint)
+|┃┆example stack 3 · 2 of 3 · → main
+|╹┆below #11 merged, above #13 close
 
 runs
-1:1 "  asked by alice 3d ago" fg #c6c8d1ff bg #00000000
-2:1 "  1 push since · 2 files · +65 −12" fg #c6c8d1ff bg #00000000
-3:1 "  ✗ checks: 1 of 2 failed (lint)" fg #e27878ff bg #00000000
-4:1 "  example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #00000000
-5:1 "  below #11 merged, above #13 close" fg #6b7089ff bg #00000000
+1:1 "┃" fg #e27878ff bg #00000000
+1:2 "┆" fg #6b7089ff bg #00000000
+1:3 "asked by alice 3d ago" fg #c6c8d1ff bg #00000000
+2:1 "┃" fg #e27878ff bg #00000000
+2:2 "┆" fg #6b7089ff bg #00000000
+2:3 "1 push since · 2 files · +65 −12" fg #c6c8d1ff bg #00000000
+3:1 "┃" fg #e27878ff bg #00000000
+3:2 "┆" fg #6b7089ff bg #00000000
+3:3 "✗ checks: 1 of 2 failed (lint)" fg #e27878ff bg #00000000
+4:1 "┃" fg #e27878ff bg #00000000
+4:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #00000000
+5:1 "╹" fg #e27878ff bg #00000000
+5:2 "┆below #11 merged, above #13 close" fg #6b7089ff bg #00000000

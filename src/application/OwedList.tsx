@@ -100,13 +100,19 @@ export default function OwedList({
           (open ? (editor?.lines ?? accordionHeight) : 0),
         node: (
           <>
-            <ThreadRow row={row} selected={open && !editor} width={width} />
+            <ThreadRow
+              row={row}
+              selected={open && !editor}
+              continued={open && !editor}
+              width={width}
+            />
             {open && editor?.node}
             {open && !editor && (
               <ThreadAccordion
                 row={row}
                 detail={readDetail(row)}
                 waiting={waiting}
+                clock
                 now={now}
                 timezone={timezone}
                 width={width}

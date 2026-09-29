@@ -1,7 +1,7 @@
 import { loginCells } from "../../constants.js";
 import trimText from "../../trimText.js";
 import wrapText from "../../wrapText.js";
-import { marginCells } from "./constants.js";
+import { marginCells } from "../Margin/constants.js";
 import type { ThreadRowProps } from "./types.js";
 
 /**

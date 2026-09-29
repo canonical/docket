@@ -43,13 +43,13 @@ describe("ActivityList", () => {
     ]);
     expect(screen.lines.slice(5, 8)).toEqual([
       "PULL REQUESTS",
-      " ┃example#12 PR                      25m",
-      " ┃Fix the parser · alice",
+      ` ┆example#12 PR${" ".repeat(22)}25m`,
+      " ┆Fix the parser · alice",
     ]);
     expect(screen.lines.slice(13, 17)).toEqual([
-      "    ✗ checks failed (lint)           25m",
-      "    alice requested review            3h",
-      "    dave commented                    3d",
+      ` ┆  ✗ checks failed (lint)${" ".repeat(11)}25m`,
+      ` ┆  alice requested review${" ".repeat(12)}3h`,
+      ` ┆  dave commented${" ".repeat(20)}3d`,
       "",
     ]);
     expect(screen.look("PULL REQUESTS")?.bold).toBe(true);
@@ -66,9 +66,9 @@ describe("ActivityList", () => {
       60,
     );
     expect(screen.lines.slice(0, 3)).toEqual([
-      ` ┃example#12 PR${" ".repeat(42)}25m`,
-      " ┃Fix the parser · alice",
-      `    ✗ checks failed (lint)${" ".repeat(31)}25m`,
+      ` ┆example#12 PR${" ".repeat(42)}25m`,
+      " ┆Fix the parser · alice",
+      ` ┆  ✗ checks failed (lint)${" ".repeat(31)}25m`,
     ]);
     expect(screen.look("✗ checks failed")?.fg).toBe(tokens["color.text.error"]);
   });
@@ -160,9 +160,9 @@ describe("ActivityList", () => {
       20,
     );
     expect(screen.lines.slice(7, 10)).toEqual([
-      " ┃Fix the parser · alice",
-      "  asked by alice 3d ago",
-      "  1 push since · 2 files · +65 −12",
+      " ┆Fix the parser · alice",
+      " ┆asked by alice 3d ago",
+      " ┆1 push since · 2 files · +65 −12",
     ]);
   });
 
@@ -213,8 +213,8 @@ describe("ActivityList", () => {
     );
     expect(screen.lines.slice(0, 3)).toEqual([
       "PULL REQUESTS",
-      " ┃example#12 PR                      25m",
-      " ┃Fix the parser · alice",
+      ` ┆example#12 PR${" ".repeat(22)}25m`,
+      " ┆Fix the parser · alice",
     ]);
   });
 

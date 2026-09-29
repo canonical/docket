@@ -6,7 +6,7 @@ import {
   soonReplyDetail,
 } from "../../../../testing/details.js";
 import { measureRow, overReview } from "../../../../testing/rows.js";
-import { drawSuspending } from "../../../../testing/terminal.js";
+import { drawSuspending, type Screen } from "../../../../testing/terminal.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import { tokens } from "../../../tokens/index.js";
 import ThreadAccordion from "./ThreadAccordion.js";
@@ -21,20 +21,39 @@ import {
 } from "./ThreadAccordion.stories.js";
 import type { ThreadAccordionProps } from "./types.js";
 
+/** The accordion's text on each line, beside the item's two-cell margin. */
+const readText = (screen: Screen) => screen.lines.map((line) => line.slice(2));
+
 /** Draws the accordion, and lets details already read arrive. */
 const open = (props: ThreadAccordionProps, width = props.width) =>
   drawSuspending(<ThreadAccordion {...props} width={width} />, width, 7);
 
 describe("ThreadAccordion", () => {
+  it("runs the item's bar and stack mark down its lines, the bar ending on the last", async () => {
+    const screen = await open(Review.args);
+    expect(screen.lines.slice(0, 5).map((line) => line.slice(0, 2))).toEqual([
+      "┃┆",
+      "┃┆",
+      "┃┆",
+      "┃┆",
+      "╹┆",
+    ]);
+  });
+
+  it("leaves the bar's column blank where the list runs no clock, keeping the stack mark", async () => {
+    const screen = await open({ ...Review.args, clock: false });
+    expect(screen.lines.at(4)?.slice(0, 2)).toBe(" ┆");
+  });
+
   describe("at 40 columns", () => {
     it("shows a review's request, changes and checks, then the stack lines, dimmed", async () => {
       const screen = await open(Review.args);
-      expect(screen.lines.slice(0, 6)).toEqual([
-        "  asked by alice 3d ago",
-        "  1 push since · 2 files · +65 −12",
-        "  ✗ checks: 1 of 2 failed (lint)",
-        "  example stack 3 · 2 of 3 · → main",
-        "  below #11 merged, above #13 close",
+      expect(readText(screen).slice(0, 6)).toEqual([
+        "asked by alice 3d ago",
+        "1 push since · 2 files · +65 −12",
+        "✗ checks: 1 of 2 failed (lint)",
+        "example stack 3 · 2 of 3 · → main",
+        "below #11 merged, above #13 close",
         "",
       ]);
       expect(screen.look("✗ checks")?.fg).toBe(tokens["color.text.error"]);
@@ -51,12 +70,12 @@ describe("ThreadAccordion", () => {
         owners: ["carol-at-example-org"],
       });
       const screen = await open({ ...Review.args, row });
-      expect(screen.lines.slice(0, 6)).toEqual([
-        "  owner carol-at-example-org",
-        "  asked by alice 3d ago",
-        "  1 push since · 2 files · +65 −12…",
-        "  example stack 3 · 2 of 3 · → main",
-        "  below #11 merged, above #13 close",
+      expect(readText(screen).slice(0, 6)).toEqual([
+        "owner carol-at-example-org",
+        "asked by alice 3d ago",
+        "1 push since · 2 files · +65 −12…",
+        "example stack 3 · 2 of 3 · → main",
+        "below #11 merged, above #13 close",
         "",
       ]);
     });
@@ -67,23 +86,23 @@ describe("ThreadAccordion", () => {
         owners: ["example-org/reviewers"],
       });
       const screen = await open({ ...Review.args, row });
-      expect(screen.lines.slice(0, 6)).toEqual([
-        "  asked by alice 3d ago",
-        "  1 push since · 2 files · +65 −12",
-        "  ✗ checks: 1 of 2 failed (lint)",
-        "  example stack 3 · 2 of 3 · → main",
-        "  below #11 merged, above #13 close",
+      expect(readText(screen).slice(0, 6)).toEqual([
+        "asked by alice 3d ago",
+        "1 push since · 2 files · +65 −12",
+        "✗ checks: 1 of 2 failed (lint)",
+        "example stack 3 · 2 of 3 · → main",
+        "below #11 merged, above #13 close",
         "",
       ]);
     });
 
     it("shows a reply's message in full, wrapped, then when it began, in five lines", async () => {
       const screen = await open(Reply.args);
-      expect(screen.lines.slice(0, 6)).toEqual([
-        "  dave · 1d ago",
-        "  It crashes as soon as it starts,",
-        "  before the first frame is drawn.",
-        "  waiting since Tue 10:00 · target 24h",
+      expect(readText(screen).slice(0, 6)).toEqual([
+        "dave · 1d ago",
+        "It crashes as soon as it starts,",
+        "before the first frame is drawn.",
+        "waiting since Tue 10:00 · target 24h",
         "",
         "",
       ]);
@@ -91,8 +110,8 @@ describe("ThreadAccordion", () => {
 
     it("says loading until the details arrive", async () => {
       const screen = await open(Loading.args);
-      expect(screen.lines.slice(0, 6)).toEqual([
-        "  loading…",
+      expect(readText(screen).slice(0, 6)).toEqual([
+        "loading…",
         "",
         "",
         "",
@@ -103,12 +122,12 @@ describe("ThreadAccordion", () => {
 
     it("shows what the snapshot holds while reading is paused, each line that needs the read ending in a dimmed …", async () => {
       const screen = await open(Paused.args);
-      expect(screen.lines.slice(0, 6)).toEqual([
-        "  asked …",
-        "  1 push since · …",
-        "  ✗ checks: …",
-        "  example stack 3 · 2 of 3 · → main",
-        "  …",
+      expect(readText(screen).slice(0, 6)).toEqual([
+        "asked …",
+        "1 push since · …",
+        "✗ checks: …",
+        "example stack 3 · 2 of 3 · → main",
+        "…",
         "",
       ]);
       expect(screen.look("asked")?.fg).toBe(tokens["color.text"]);
@@ -118,8 +137,8 @@ describe("ThreadAccordion", () => {
 
     it("says when reading resumes, dimmed, for a thread the snapshot holds nothing of", async () => {
       const screen = await open(PausedUnheld.args);
-      expect(screen.lines.slice(0, 2)).toEqual([
-        "  paused · resumes 15:00",
+      expect(readText(screen).slice(0, 2)).toEqual([
+        "paused · resumes 15:00",
         "",
       ]);
       expect(screen.look("paused · resumes")?.fg).toBe(
@@ -129,9 +148,9 @@ describe("ThreadAccordion", () => {
 
     it("gives the reason, wrapped in the error colour, when reading fails", async () => {
       const screen = await open(Failed.args);
-      expect(screen.lines.slice(0, 3)).toEqual([
-        "  ✗ failed: GitHub gave no answer within",
-        "  10 seconds",
+      expect(readText(screen).slice(0, 3)).toEqual([
+        "✗ failed: GitHub gave no answer within",
+        "10 seconds",
         "",
       ]);
       expect(screen.look("✗ failed")?.fg).toBe(tokens["color.text.error"]);
@@ -141,10 +160,10 @@ describe("ThreadAccordion", () => {
   describe("wider than 40 columns", () => {
     it("shows a close's age, owners, last activity and labels as group=value", async () => {
       const screen = await open(Close.args, 60);
-      expect(screen.lines.slice(0, 5)).toEqual([
-        "  age 6d · owner alice, bob, carol-at-example-org",
-        "  last activity 3h ago · bob",
-        "  labels priority=high · kind=bug · area/icons",
+      expect(readText(screen).slice(0, 5)).toEqual([
+        "age 6d · owner alice, bob, carol-at-example-org",
+        "last activity 3h ago · bob",
+        "labels priority=high · kind=bug · area/icons",
         "",
         "",
       ]);
@@ -154,12 +173,12 @@ describe("ThreadAccordion", () => {
   describe("fitting five lines", () => {
     it("leaves out when a reply began when the message leaves no line for it", async () => {
       const screen = await open(Reply.args, 20);
-      expect(screen.lines.slice(0, 6)).toEqual([
-        "  dave · 1d ago",
-        "  It crashes as soon",
-        "  as it starts,",
-        "  before the first",
-        "  frame is drawn.",
+      expect(readText(screen).slice(0, 6)).toEqual([
+        "dave · 1d ago",
+        "It crashes as soon",
+        "as it starts,",
+        "before the first",
+        "frame is drawn.",
         "",
       ]);
     });
@@ -176,12 +195,12 @@ describe("ThreadAccordion", () => {
         { ...Reply.args, detail: Promise.resolve(detail) },
         16,
       );
-      expect(screen.lines.slice(0, 6)).toEqual([
-        "  dave · 1d ago",
-        "  a b c d e f g",
-        "  h i j k l m n",
-        "  o p q r s t u",
-        "  v w x y z a b…",
+      expect(readText(screen).slice(0, 6)).toEqual([
+        "dave · 1d ago",
+        "a b c d e f g",
+        "h i j k l m n",
+        "o p q r s t u",
+        "v w x y z a b…",
         "",
       ]);
     });
@@ -195,11 +214,13 @@ describe("ThreadAccordion", () => {
       return <ThreadAccordion {...Failed.args} detail={detail} />;
     };
     const screen = await drawSuspending(<Harness />, 40, 7);
-    expect(screen.lines.at(0)).toBe("  ✗ failed: GitHub gave no answer within");
+    expect(readText(screen).at(0)).toBe(
+      "✗ failed: GitHub gave no answer within",
+    );
     const again = await screen.redraw(() =>
       show(Promise.resolve(overReviewDetail)),
     );
-    expect(again.lines.at(0)).toBe("  asked by alice 3d ago");
+    expect(readText(again).at(0)).toBe("asked by alice 3d ago");
   });
 
   it("gives what was thrown as the reason when it is not an error", async () => {
@@ -207,6 +228,6 @@ describe("ThreadAccordion", () => {
       ...Failed.args,
       detail: failDetail("offline"),
     });
-    expect(screen.lines.at(0)).toBe("  ✗ failed: offline");
+    expect(readText(screen).at(0)).toBe("✗ failed: offline");
   });
 });

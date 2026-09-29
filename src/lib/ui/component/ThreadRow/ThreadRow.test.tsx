@@ -20,8 +20,8 @@ describe("ThreadRow", () => {
     it("draws a review over its target on two lines, the distance right-aligned", async () => {
       const screen = await draw(<ThreadRow {...OverReviewSelected.args} />, 40);
       expect(screen.lines.slice(0, 3)).toEqual([
-        `▌┃example#12 review${" ".repeat(14)}1d over`,
-        " ┃Fix the parser · bob ✗ checks",
+        `┃┆example#12 review${" ".repeat(14)}1d over`,
+        "╹┆Fix the parser · bob ✗ checks",
         "",
       ]);
     });
@@ -56,8 +56,8 @@ describe("ThreadRow", () => {
     it("draws a draft's close on track, the word draft dimmed after the owner", async () => {
       const screen = await draw(<ThreadRow {...DraftClose.args} />, 40);
       expect(screen.lines.slice(0, 2)).toEqual([
-        `▌┃example#13 close${" ".repeat(15)}8d left`,
-        " ┃Document the parser · alice draft",
+        `│┆example#13 close${" ".repeat(15)}8d left`,
+        "╵┆Document the parser · alice draft",
       ]);
       expect(screen.look("8d left")?.fg).toBe(tokens["color.text"]);
       expect(screen.look("draft")?.fg).toBe(tokens["color.text.muted"]);
@@ -66,9 +66,9 @@ describe("ThreadRow", () => {
     it("names every owner on a third line, each login cut at 12 cells", async () => {
       const screen = await draw(<ThreadRow {...SharedClose.args} />, 40);
       expect(screen.lines.slice(0, 4)).toEqual([
-        `▌ example#4 close${" ".repeat(16)}5d over`,
-        "  Where do tokens live?",
-        "  alice, bob, carol-at-ex…",
+        `┃ example#4 close${" ".repeat(16)}5d over`,
+        "┃ Where do tokens live?",
+        "╹ alice, bob, carol-at-ex…",
         "",
       ]);
     });
@@ -78,7 +78,7 @@ describe("ThreadRow", () => {
         thread: thread({ title: "Fix\u001b[2J the\u0007 parser" }),
       });
       const screen = await draw(<ThreadRow row={row} width={40} />, 40);
-      expect(screen.lines.at(1)).toBe("  Fix the parser · unassigned");
+      expect(screen.lines.at(1)).toBe("╹ Fix the parser · unassigned");
     });
   });
 
@@ -89,8 +89,8 @@ describe("ThreadRow", () => {
         60,
       );
       expect(screen.lines.slice(0, 2)).toEqual([
-        `▌ example#15 reply${" ".repeat(35)}3h left`,
-        "  Crash on start · unassigned",
+        `┃ example#15 reply${" ".repeat(35)}3h left`,
+        "╹ Crash on start · unassigned",
       ]);
       expect(screen.look("3h left")?.fg).toBe(tokens["color.text.warning"]);
     });
@@ -99,7 +99,7 @@ describe("ThreadRow", () => {
       const row = measureRow({}, true);
       const screen = await draw(<ThreadRow row={row} width={60} />, 60);
       expect(screen.lines.at(1)).toBe(
-        "  Example thread · unassigned ✗ invalid repository file",
+        "╹ Example thread · unassigned ✗ invalid repository file",
       );
       expect(screen.look("✗ invalid")?.fg).toBe(tokens["color.text.error"]);
     });
@@ -112,15 +112,15 @@ describe("ThreadRow", () => {
         24,
       );
       expect(screen.lines.slice(0, 2)).toEqual([
-        "▌┃example#12 re… 1d over",
-        " ┃Fix th… · bob ✗ checks",
+        "┃┆example#12 re… 1d over",
+        "╹┆Fix th… · bob ✗ checks",
       ]);
     });
 
     it("cuts the marks too when even they do not fit", async () => {
       const row = measureRow({ owners: ["alice"] }, true);
       const screen = await draw(<ThreadRow row={row} width={24} />, 24);
-      expect(screen.lines.at(1)).toBe("   · alice ✗ invalid re…");
+      expect(screen.lines.at(1)).toBe("╹  · alice ✗ invalid re…");
     });
   });
 
@@ -128,12 +128,12 @@ describe("ThreadRow", () => {
     it("names the thread and its newest event's age in the plain text colour, with no state marker", async () => {
       const screen = await draw(<ThreadRow {...ActivityStacked.args} />, 40);
       expect(screen.lines.slice(0, 3)).toEqual([
-        " ┃example#12 PR                      20m",
-        " ┃Fix the parser · alice",
+        " ┆example#12 PR                      20m",
+        " ┆Fix the parser · alice",
         "",
       ]);
       expect(screen.look("20m")?.fg).toBe(tokens["color.text"]);
-      expect(screen.look("┃")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("┆")?.fg).toBe(tokens["color.text.muted"]);
     });
 
     it("keeps the age at the right edge of a wider pane, the word draft dimmed", async () => {
@@ -182,7 +182,7 @@ describe("ThreadRow", () => {
         owner: { text: "example-maintainer", fit: "trimmed" as const },
       };
       const screen = await draw(<ThreadRow row={row} width={40} />, 40);
-      expect(screen.lines.at(1)).toBe(" ┃Fix the parser · example-mai…");
+      expect(screen.lines.at(1)).toBe(" ┆Fix the parser · example-mai…");
     });
   });
 });

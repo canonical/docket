@@ -1,11 +1,17 @@
 40 columns
-|  dave · 1d ago
-|  It crashes as soon as it starts,
-|  before the first frame is drawn.
-|  waiting since Tue 10:00 · target 24h
+|┃ dave · 1d ago
+|┃ It crashes as soon as it starts,
+|┃ before the first frame is drawn.
+|┃ waiting since Tue 10:00 · target 24h
+|╹
 
 runs
-1:1 "  dave · 1d ago" fg #c6c8d1ff bg #00000000
-2:1 "  It crashes as soon as it starts," fg #c6c8d1ff bg #00000000
-3:1 "  before the first frame is drawn." fg #c6c8d1ff bg #00000000
-4:1 "  waiting since Tue 10:00 · target 24h" fg #c6c8d1ff bg #00000000
+1:1 "┃" fg #e2a478ff bg #00000000
+1:3 "dave · 1d ago" fg #c6c8d1ff bg #00000000
+2:1 "┃" fg #e2a478ff bg #00000000
+2:3 "It crashes as soon as it starts," fg #c6c8d1ff bg #00000000
+3:1 "┃" fg #e2a478ff bg #00000000
+3:3 "before the first frame is drawn." fg #c6c8d1ff bg #00000000
+4:1 "┃" fg #e2a478ff bg #00000000
+4:3 "waiting since Tue 10:00 · target 24h" fg #c6c8d1ff bg #00000000
+5:1 "╹" fg #e2a478ff bg #00000000

@@ -1,13 +1,18 @@
 40 columns
-|  age 6d · owner alice, bob,
-|  carol-at-example-org
-|  last activity 3h ago · bob
-|  labels priority=high · kind=bug ·
-|  area/icons
+|┃ age 6d · owner alice, bob,
+|┃ carol-at-example-org
+|┃ last activity 3h ago · bob
+|┃ labels priority=high · kind=bug ·
+|╹ area/icons
 
 runs
-1:1 "  age 6d · owner alice, bob," fg #c6c8d1ff bg #00000000
-2:1 "  carol-at-example-org" fg #c6c8d1ff bg #00000000
-3:1 "  last activity 3h ago · bob" fg #c6c8d1ff bg #00000000
-4:1 "  labels priority=high · kind=bug ·" fg #c6c8d1ff bg #00000000
-5:1 "  area/icons" fg #c6c8d1ff bg #00000000
+1:1 "┃" fg #e27878ff bg #00000000
+1:3 "age 6d · owner alice, bob," fg #c6c8d1ff bg #00000000
+2:1 "┃" fg #e27878ff bg #00000000
+2:3 "carol-at-example-org" fg #c6c8d1ff bg #00000000
+3:1 "┃" fg #e27878ff bg #00000000
+3:3 "last activity 3h ago · bob" fg #c6c8d1ff bg #00000000
+4:1 "┃" fg #e27878ff bg #00000000
+4:3 "labels priority=high · kind=bug ·" fg #c6c8d1ff bg #00000000
+5:1 "╹" fg #e27878ff bg #00000000
+5:3 "area/icons" fg #c6c8d1ff bg #00000000

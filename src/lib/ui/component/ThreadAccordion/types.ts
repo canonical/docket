@@ -75,6 +75,11 @@ export interface ThreadAccordionProps {
    * neighbours of a pull request in its stack.
    */
   waiting: Readonly<Record<string, string>>;
+  /**
+   * Whether the list runs a clock, as owed does, so the item's state bar
+   * runs down beside the accordion; in activity its column is blank.
+   */
+  clock: boolean;
   /** The instant ages are measured at. */
   now: Date;
   /** The time zone a time of day is written in, such as `Europe/Paris`. */

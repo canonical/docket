@@ -4,8 +4,8 @@ import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
 import fitPieces from "../../fitPieces.js";
 import trimText from "../../trimText.js";
-import { Margin } from "./common/index.js";
-import { marginCells } from "./constants.js";
+import { marginCells } from "../Margin/constants.js";
+import { Margin } from "../Margin/index.js";
 import listOwnerLines from "./listOwnerLines.js";
 import type { ThreadRowProps } from "./types.js";
 
@@ -70,7 +70,7 @@ const drawLine = (pieces: readonly Piece[], width: number) => (
  * owed the kind is the kind of wait and the figure is the distance to
  * target, coloured with the state the margin marks; in activity the kind
  * is the kind of thread and the figure is the age of the newest event, in
- * the plain text colour, and the state marker is blank. When two or more
+ * the plain text colour, and the state bar is blank. When two or more
  * people own the thread, a third line lists every one of them, so the
  * row's height says how many own it. Selection is the only background,
  * and it covers every line of the selected row.
@@ -79,7 +79,12 @@ const drawLine = (pieces: readonly Piece[], width: number) => (
  *
  * @implements apps_docket.component.thread_row
  */
-const ThreadRow = ({ row, selected, width }: ThreadRowProps): ReactNode => {
+const ThreadRow = ({
+  row,
+  selected,
+  continued = false,
+  width,
+}: ThreadRowProps): ReactNode => {
   const inner = width - marginCells;
   const text = tokens["color.text"];
   const distance = row.distance.text;
@@ -107,7 +112,12 @@ const ThreadRow = ({ row, selected, width }: ThreadRowProps): ReactNode => {
         selected ? tokens["color.background.selected"] : undefined
       }
     >
-      <Margin state={state} stacked={row.stacked} lines={2 + owners.length} />
+      <Margin
+        state={state}
+        stacked={row.stacked}
+        lines={2 + owners.length}
+        ends={!continued}
+      />
       <box flexDirection="column" width={inner}>
         {drawLine(
           [

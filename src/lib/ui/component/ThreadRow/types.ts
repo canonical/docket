@@ -14,6 +14,11 @@ export interface ThreadRowProps {
   row: WaitRow | ActivityThread;
   /** Whether the row is selected, which gives each of its lines the selection background. */
   selected?: boolean;
+  /**
+   * Whether more of the item follows the row, such as its accordion, so
+   * the state bar runs on rather than ending on the row's last line.
+   */
+  continued?: boolean;
   /** The width of the pane, in display cells. */
   width: number;
 }

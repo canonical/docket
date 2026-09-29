@@ -112,13 +112,19 @@ export default function ActivityList({
           row.events.length,
         node: (
           <>
-            <ThreadRow row={row} selected={chosen && !editor} width={width} />
+            <ThreadRow
+              row={row}
+              selected={chosen && !editor}
+              continued={chosen && !editor}
+              width={width}
+            />
             {chosen && editor?.node}
             {chosen && !editor && (
               <ThreadAccordion
                 row={findThreadState(row, waits)}
                 detail={readDetail(row)}
                 waiting={listWaiting(waits)}
+                clock={false}
                 now={now}
                 timezone={timezone}
                 width={width}
@@ -130,6 +136,7 @@ export default function ActivityList({
                 // biome-ignore lint/suspicious/noArrayIndexKey: see above.
                 key={index}
                 line={line}
+                stacked={row.stacked}
                 width={width}
               />
             ))}

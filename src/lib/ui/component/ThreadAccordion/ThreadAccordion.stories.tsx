@@ -25,6 +25,7 @@ export default meta;
 
 const reading = {
   waiting: { "example#13": "close" },
+  clock: true,
   now: recordedNow,
   timezone: "Europe/Paris",
   width: 40,
