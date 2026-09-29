@@ -1,10 +1,16 @@
 import { describeAge } from "../../../activity/index.js";
 import type { AttentionState, CacheStatus } from "../../../cache/index.js";
+import { tokens } from "../../../tokens/index.js";
 import describeClock from "../../describeClock.js";
 import type { ActionResult, StatusMessage } from "./types.js";
 
 /** How long, in milliseconds, the result of the user's own action stays. */
 const resultShown = 5_000;
+
+const failed = tokens["glyph.failed"];
+const succeeded = tokens["glyph.succeeded"];
+/** Between the fields of a message, a space either side. */
+const separator = ` ${tokens["glyph.separator"]} `;
 
 /**
  * Chooses the one message the status line shows for the cache's state
@@ -30,7 +36,7 @@ export default function describeStatus(
   const failure = status?.failure;
   const syncedAt = status?.syncedAt;
   if (paused?.reason === "rateLimit") {
-    const text = `✗ rate limited · resumes ${describeClock(paused.until, timezone)}`;
+    const text = `${failed} rate limited${separator}resumes ${describeClock(paused.until, timezone)}`;
     return { kind: "error", text };
   }
   if (failure) {
@@ -42,23 +48,23 @@ export default function describeStatus(
           ? "offline"
           : "refresh failed";
     const from = syncedAt
-      ? ` · data from ${describeClock(syncedAt, timezone)}`
+      ? `${separator}data from ${describeClock(syncedAt, timezone)}`
       : "";
-    return { kind: "error", text: `✗ ${what}${from}` };
+    return { kind: "error", text: `${failed} ${what}${from}` };
   }
   if (action && now.getTime() - action.at.getTime() < resultShown) {
     return action.failed
-      ? { kind: "actionFailed", text: `✗ ${action.text}` }
+      ? { kind: "actionFailed", text: `${failed} ${action.text}` }
       : {
           kind: "action",
-          text: `✓ ${action.text}`,
+          text: `${succeeded} ${action.text}`,
           ...(action.people && { people: action.people }),
         };
   }
   if (!status) return undefined;
   if (status.fullRefresh) {
     const { repo, position, count, fetched, total } = status.fullRefresh;
-    const text = `full refresh · ${names[repo] ?? repo} ${position}/${count} · pages ${fetched}/${total}`;
+    const text = `full refresh${separator}${names[repo] ?? repo} ${position}/${count}${separator}pages ${fetched}/${total}`;
     return { kind: "progress", text };
   }
   if (status.refreshing) return { kind: "refreshing", text: "refreshing…" };
@@ -68,11 +74,12 @@ export default function describeStatus(
     return { kind: "notice", text };
   }
   if (paused) {
-    const text = `refresh paused · resumes ${describeClock(paused.until, timezone)}`;
+    const text = `refresh paused${separator}resumes ${describeClock(paused.until, timezone)}`;
     return { kind: "notice", text };
   }
   if (syncedAt) {
-    const suffix = attention === "idle" ? " · idle · any key wakes" : "";
+    const suffix =
+      attention === "idle" ? `${separator}idle${separator}any key wakes` : "";
     const text = `synced ${describeAge(syncedAt, now)} ago${suffix}`;
     return { kind: "freshness", text };
   }
