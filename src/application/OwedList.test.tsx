@@ -46,27 +46,27 @@ describe("OwedList", () => {
     const screen = await drawList("owner", 0, 40, 16);
     expect(screen.lines).toEqual([
       "alice",
-      `┃┆example#12 reply${" ".repeat(15)}4d over`,
-      "┃┆Fix the parser · alice ✗ checks",
+      `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+      `┃┆Fix the parser${" ".repeat(7)}✗ checks  ● alice`,
       "┃┆dave · 3d ago",
       "┃┆Rebased on main. Could someone look",
       "┃┆again?",
       "┃┆example stack 3 · 2 of 3 · → main",
       "╹┆below #11 merged, above #13 open",
-      `┃┆example#12 close${" ".repeat(15)}2h over`,
-      "╹┆Fix the parser · alice ✗ checks",
-      `│ docs#4 close${" ".repeat(18)}10d left`,
+      `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
+      `╹┆Fix the parser${" ".repeat(7)}✗ checks  ● alice`,
+      `│ docs#4 issue close ● alice${" ".repeat(4)}10d left`,
       "│ Where do tokens live?",
-      "╵ alice, bob",
+      `╵${" ".repeat(25)}● alice, ● bob`,
       "bob",
       "",
       "",
     ]);
     expect(screen.look("alice")).toMatchObject({ bold: true });
-    expect(screen.look("example#12 reply")?.bg).toBe(
+    expect(screen.look("example#12 PR reply")?.bg).toBe(
       tokens["color.background.selected"],
     );
-    expect(screen.look("example#12 close")?.bg).not.toBe(
+    expect(screen.look("example#12 PR close")?.bg).not.toBe(
       tokens["color.background.selected"],
     );
   });
@@ -81,14 +81,14 @@ describe("OwedList", () => {
     const screen = await drawList("stack", 2, 60, 14);
     expect(screen.lines.slice(0, 5)).toEqual([
       "example stack 3 · 3 PRs → main",
-      `┃┆example#12 reply${" ".repeat(35)}4d over`,
-      "╹┆Fix the parser · alice ✗ checks",
-      `┃┆example#12 close${" ".repeat(35)}2h over`,
-      "╹┆Fix the parser · alice ✗ checks",
+      `┃┆example#12 PR reply ○ dave${" ".repeat(25)}4d over`,
+      `╹┆Fix the parser${" ".repeat(27)}✗ checks  ● alice`,
+      `┃┆example#12 PR close ○ dave${" ".repeat(25)}2h over`,
+      `╹┆Fix the parser${" ".repeat(27)}✗ checks  ● alice`,
     ]);
     expect(screen.lines.slice(5, 9)).toEqual([
-      `│┆example#12 review${" ".repeat(34)}1d left`,
-      "│┆Fix the parser · bob ✗ checks",
+      `│┆example#12 PR review ○ dave${" ".repeat(24)}1d left`,
+      `│┆Fix the parser${" ".repeat(29)}✗ checks  ● bob`,
       "│┆asked by alice 3h ago",
       "│┆0 pushes since · 2 files · +65 −12",
     ]);
@@ -98,8 +98,8 @@ describe("OwedList", () => {
   it("scrolls so the selected row and its details are whole in view", async () => {
     const screen = await drawList("owner", 4, 40, 8);
     expect(screen.lines.slice(0, 2)).toEqual([
-      `│┆example#12 review${" ".repeat(14)}1d left`,
-      "│┆Fix the parser · bob ✗ checks",
+      `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
+      `│┆Fix the parser${" ".repeat(9)}✗ checks  ● bob`,
     ]);
     expect(screen.lines.at(7)).toBe("unassigned");
   });
@@ -117,14 +117,14 @@ describe("OwedList", () => {
     };
     const screen = await drawList("owner", 4, 40, 6, editor);
     expect(screen.lines).toEqual([
-      `│┆example#12 review${" ".repeat(14)}1d left`,
-      "╵┆Fix the parser · bob ✗ checks",
+      `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
+      `╵┆Fix the parser${" ".repeat(9)}✗ checks  ● bob`,
       "  filter:",
       "  ☑ alice",
       "  ☐ bob",
       "unassigned",
     ]);
-    expect(screen.look("example#12 review")?.bg).not.toBe(
+    expect(screen.look("example#12 PR review")?.bg).not.toBe(
       tokens["color.background.selected"],
     );
   });
@@ -139,7 +139,7 @@ describe("OwedList", () => {
       "  in the personal file or the",
       "  repository's .github/docket.yaml, then",
       "  run docket config",
-      `┃┆example#12 reply${" ".repeat(15)}4d over`,
+      `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
     ]);
     expect(screen.look("✗ no team")?.fg).toBe(tokens["color.text.error"]);
     expect(shown).toHaveBeenLastCalledWith(1);
@@ -179,6 +179,6 @@ describe("OwedList", () => {
       "  or the repository's .github/docket.yaml, then run",
       "  docket config",
     ]);
-    expect(screen.lines.at(5)).toMatch(/^┃┆example#12 reply/);
+    expect(screen.lines.at(5)).toMatch(/^┃┆example#12 PR reply/);
   });
 });

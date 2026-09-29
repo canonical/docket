@@ -1,9 +1,9 @@
 60 columns
 |activity                                       24h · by kind
 |ISSUES
-|  docs#4 issue                                           16h
+|  docs#4 issue ◉ alice                                   16h
 |  Where do tokens live?
-|  alice, bob
+|                                              ◉ alice, ● bob
 |  age 27d · owner alice, bob
 |  last activity 25m ago · dave
 |  labels none
@@ -11,8 +11,8 @@
 |
 |    example-sync labelled kind=docs                      16h
 |PULL REQUESTS
-| ┆example#12 PR                                          25m
-| ┆Fix the parser · alice
+| ┆example#12 PR ○ dave                                   25m
+| ┆Fix the parser                                     ◉ alice
 | ┆  ✗ checks failed (lint)                               25m
 | ┆  alice requested review                                3h
 |
@@ -42,24 +42,31 @@ runs
 2:1 "ISSUES" fg #c6c8d1ff bg #161821ff bold
 3:1 " " fg #ffffffff bg #2e3244ff
 3:2 " " fg #6b7089ff bg #2e3244ff
-3:3 "docs#4 issue                                           16h" fg #c6c8d1ff bg #2e3244ff
+3:3 "docs#4 issue " fg #c6c8d1ff bg #2e3244ff bold
+3:16 "◉ alice" fg #84a0c6ff bg #2e3244ff bold
+3:23 "                                   16h" fg #c6c8d1ff bg #2e3244ff bold
 4:1 " " fg #ffffffff bg #2e3244ff
 4:2 " " fg #6b7089ff bg #2e3244ff
-4:3 "Where do tokens live?" fg #c6c8d1ff bg #2e3244ff
+4:3 "Where do tokens live?" fg #c6c8d1ff bg #2e3244ff italic
 4:24 "                                     " fg #ffffffff bg #2e3244ff
 5:1 " " fg #ffffffff bg #2e3244ff
 5:2 " " fg #6b7089ff bg #2e3244ff
-5:3 "alice, bob" fg #c6c8d1ff bg #2e3244ff
-5:13 "                                                " fg #ffffffff bg #2e3244ff
+5:3 "                                            " fg #c6c8d1ff bg #2e3244ff
+5:47 "◉ alice" fg #84a0c6ff bg #2e3244ff
+5:54 ", " fg #c6c8d1ff bg #2e3244ff
+5:56 "● bob" fg #84a0c6ff bg #2e3244ff
 6:3 "age 27d · owner alice, bob" fg #c6c8d1ff bg #161821ff
 7:3 "last activity 25m ago · dave" fg #c6c8d1ff bg #161821ff
 8:3 "labels none" fg #c6c8d1ff bg #161821ff
 11:2 "   example-sync labelled kind=docs                      16h" fg #6b7089ff bg #161821ff
 12:1 "PULL REQUESTS" fg #c6c8d1ff bg #161821ff bold
 13:2 "┆" fg #6b7089ff bg #161821ff
-13:3 "example#12 PR                                          25m" fg #c6c8d1ff bg #161821ff
+13:3 "example#12 PR " fg #c6c8d1ff bg #161821ff bold
+13:17 "○ dave" fg #89b8c2ff bg #161821ff bold
+13:23 "                                   25m" fg #c6c8d1ff bg #161821ff bold
 14:2 "┆" fg #6b7089ff bg #161821ff
-14:3 "Fix the parser · alice" fg #c6c8d1ff bg #161821ff
+14:3 "Fix the parser" fg #c6c8d1ff bg #161821ff italic
+14:54 "◉ alice" fg #84a0c6ff bg #161821ff
 15:2 "┆" fg #6b7089ff bg #161821ff
 15:3 "  ✗ checks failed (lint)                               25m" fg #e27878ff bg #161821ff
 16:2 "┆" fg #6b7089ff bg #161821ff

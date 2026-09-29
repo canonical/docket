@@ -1,8 +1,11 @@
 60 columns
-|  docs#4 issue                                            2d
-|  Where do tokens live? · bob ✗ invalid repository file
+|  docs#4 issue ○ dave                                     2d
+|  Where do tokens live?     ✗ invalid repository file  ● bob
 
 runs
-1:3 "docs#4 issue                                            2d" fg #c6c8d1ff bg #00000000
-2:3 "Where do tokens live? · bob" fg #c6c8d1ff bg #00000000
-2:30 " ✗ invalid repository file" fg #e27878ff bg #00000000
+1:3 "docs#4 issue " fg #c6c8d1ff bg #00000000 bold
+1:16 "○ dave" fg #89b8c2ff bg #00000000 bold
+1:22 "                                     2d" fg #c6c8d1ff bg #00000000 bold
+2:3 "Where do tokens live?" fg #c6c8d1ff bg #00000000 italic
+2:29 "✗ invalid repository file" fg #e27878ff bg #00000000
+2:56 "● bob" fg #84a0c6ff bg #00000000
