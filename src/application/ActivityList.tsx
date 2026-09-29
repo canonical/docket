@@ -93,7 +93,7 @@ export default function ActivityList({
   let to = 0;
   for (const { heading, rows } of list.groups) {
     if (heading) {
-      const node = <GroupHeading text={heading.text} width={width} />;
+      const node = <GroupHeading heading={heading} width={width} />;
       blocks.push({ key: heading.text, row: false, lines: 1, node });
     }
     for (const row of rows) {

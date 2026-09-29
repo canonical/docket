@@ -768,14 +768,14 @@ describe("Screen", { timeout: 15_000 }, () => {
       const tall = await (await show(viewOf(cache), 40, () => {}, 20)).redraw();
       const screen = await press(tall, "g");
       expect(screen.lines.slice(1, 3)).toEqual([
-        "alice",
+        "◉ alice ────────────────────────────────",
         `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
       ]);
       // alice's three rows fill the screen, bob's heading below them.
       const page = await press(screen, "pagedown");
       expect(page.lines.slice(8, 10)).toEqual([
         `╵${" ".repeat(25)}◉ alice, ● bob`,
-        "bob",
+        "● bob ──────────────────────────────────",
       ]);
       expect(page.look("bob")?.bg).not.toBe(
         tokens["color.background.selected"],
@@ -788,7 +788,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(last.lines.at(12)).toBe("│ age 2d · owner unassigned");
       const first = await press(screen, "pageup", "pageup", "pageup");
       expect(first.lines.slice(1, 5)).toEqual([
-        "alice",
+        "◉ alice ────────────────────────────────",
         `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
         `┃┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
         "┃┆○ dave · 3d ago",
@@ -1277,7 +1277,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showActivity(40);
       expect(screen.lines).toEqual([
         `activity${" ".repeat(19)}24h · by kind`,
-        "ISSUES",
+        "ISSUES ─────────────────────────────────",
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
         `${" ".repeat(26)}◉ alice, ● bob`,
@@ -1285,7 +1285,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  last activity 27d ago",
         "  labels none",
         `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
-        "PULL REQUESTS",
+        "PULL REQUESTS ──────────────────────────",
         "",
         "",
         "",
@@ -1341,7 +1341,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const row = drawn.indexOf(" ┃Fix the parser · alice");
       expect(drawn.slice(row + 1, row + 7)).toEqual([
         `activity${" ".repeat(39)}24h · by kind`,
-        "PULL REQUESTS",
+        "PULL REQUESTS ──────────────────────────────────────────────",
         ` ┆example#12 PR ○ dave${" ".repeat(35)}25m`,
         ` ┆Fix the parser${" ".repeat(37)}◉ alice`,
         " ┆○ dave · 3d ago",
@@ -1388,7 +1388,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       });
       expect(opened.lines).toEqual([
         "assigning docs#4",
-        "ISSUES",
+        "ISSUES ─────────────────────────────────",
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
         `${" ".repeat(26)}◉ alice, ● bob`,
@@ -1398,7 +1398,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  ☐ carol",
         "  ☐ dave",
         `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
-        "PULL REQUESTS",
+        "PULL REQUESTS ──────────────────────────",
         "",
         "2 threads · 3 events",
         "synced 0m ago",
@@ -1407,7 +1407,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const closed = await press(screen, "escape");
       expect(closed.lines.slice(0, 3)).toEqual([
         `activity${" ".repeat(19)}24h · by kind`,
-        "ISSUES",
+        "ISSUES ─────────────────────────────────",
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
       ]);
     });
@@ -1436,7 +1436,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const refused = await press(screen, "r");
       expect(refused.lines).toEqual([
         `activity${" ".repeat(19)}24h · by kind`,
-        "ISSUES",
+        "ISSUES ─────────────────────────────────",
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
         `${" ".repeat(26)}◉ alice, ● bob`,
@@ -1445,7 +1445,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  Recovery: select a pull request, then",
         "  press r",
         `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
-        "PULL REQUESTS",
+        "PULL REQUESTS ──────────────────────────",
         "",
         "",
         "2 threads · 3 events",
@@ -1469,7 +1469,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const refused = await press(screen, "a");
       expect(refused.lines).toEqual([
         `activity${" ".repeat(19)}24h · by kind`,
-        "ISSUES",
+        "ISSUES ─────────────────────────────────",
         `  docs#4 issue${" ".repeat(23)}16h`,
         "  Where do tokens live?",
         "  ✗ docs#4 was not open at the last",
@@ -1477,7 +1477,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  Recovery: open it with ⏎ and change it",
         "  on GitHub",
         `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
-        "PULL REQUESTS",
+        "PULL REQUESTS ──────────────────────────",
         "",
         "",
         "",
@@ -1492,7 +1492,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const byRepo = await press(screen, "g");
       expect(byRepo.lines.slice(0, 2)).toEqual([
         `activity${" ".repeat(39)}24h · by repo`,
-        "example",
+        "example ────────────────────────────────────────────────────",
       ]);
       const wider = await press(screen, "g", "t");
       await waitUntil(async () =>
@@ -1533,7 +1533,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
       const screen = await showActivity(40, cache);
       expect(screen.lines.slice(1, 3)).toEqual([
-        "PULL REQUESTS",
+        "PULL REQUESTS ──────────────────────────",
         ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
       ]);
       expect(screen.lines.slice(13, 15)).toEqual([
@@ -1835,37 +1835,37 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(help.lines).toEqual([
         "help",
         "",
-        "Mode",
+        "Mode ───────────────────────────────────",
         "  ← →  h l switch mode (owed ↔ activity)",
-        "           docket opens owed",
-        "  g        next grouping",
-        "  t        next time window (activity)",
-        "           owed: most overdue first",
-        "           activity: newest first",
+        `${" ".repeat(11)}docket opens owed`,
+        `  g${" ".repeat(8)}next grouping`,
+        `  t${" ".repeat(8)}next time window (activity)`,
+        `${" ".repeat(11)}owed: most overdue first`,
+        `${" ".repeat(11)}activity: newest first`,
         "",
-        "List",
+        "List ───────────────────────────────────",
         "  ↑ ↓  k j move the selection",
-        "           (opens the accordion)",
-        "  ⇞ ⇟      a page up or down",
+        `${" ".repeat(11)}(opens the accordion)`,
+        `  ⇞ ⇟${" ".repeat(6)}a page up or down`,
         "  home end the first or last thread",
         "",
-        "Thread",
-        "  ⏎        open in the browser",
-        "  a        assign",
-        "  r        request review",
+        "Thread ─────────────────────────────────",
+        `  ⏎${" ".repeat(8)}open in the browser`,
+        `  a${" ".repeat(8)}assign`,
+        `  r${" ".repeat(8)}request review`,
         "",
-        "Editor",
-        "  type     filter",
-        "  ↑ ↓      move",
-        "  ␣        toggle",
-        "  ⏎        apply",
-        "  esc      cancel",
+        "Editor ─────────────────────────────────",
+        `  type${" ".repeat(5)}filter`,
+        `  ↑ ↓${" ".repeat(6)}move`,
+        `  ␣${" ".repeat(8)}toggle`,
+        `  ⏎${" ".repeat(8)}apply`,
+        `  esc${" ".repeat(6)}cancel`,
         "",
-        "App",
-        "  ?        show or hide help",
-        "  esc      close help",
-        "  R        full refresh",
-        "  q        quit",
+        "App ────────────────────────────────────",
+        `  ?${" ".repeat(8)}show or hide help`,
+        `  esc${" ".repeat(6)}close help`,
+        `  R${" ".repeat(8)}full refresh`,
+        `  q${" ".repeat(8)}quit`,
         "",
         "  windows are counted in working time",
         "",

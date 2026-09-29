@@ -1,6 +1,6 @@
 60 columns
 |owed                                                by stack
-|example stack 3 · 3 PRs → main
+|example stack 3 · 3 PRs → main ─────────────────────────────
 |┃┆example#12 PR reply ○ dave                         4d over
 |┃┆Fix the parser                           ✗ checks  ◉ alice
 |┃┆○ dave · 3d ago
@@ -12,7 +12,7 @@
 |╹┆Fix the parser                           ✗ checks  ◉ alice
 |│┆example#12 PR review ○ dave                        1d left
 |╵┆Fix the parser                             ✗ checks  ● bob
-|NOT IN A STACK
+|NOT IN A STACK ─────────────────────────────────────────────
 |┃ example#15 issue reply ◐ carol                     4h left
 |╹ Crash on start                                  unassigned
 |│ docs#4 issue close ◉ alice                        10d left
@@ -39,7 +39,7 @@
 runs
 1:1 "owed" fg #c6c8d1ff bg #161821ff bold
 1:5 "                                                by stack" fg #c6c8d1ff bg #161821ff
-2:1 "example stack 3 · 3 PRs → main" fg #c6c8d1ff bg #161821ff bold
+2:1 "example stack 3 · 3 PRs → main ─────────────────────────────" fg #c6c8d1ff bg #161821ff
 3:1 "┃" fg #e27878ff bg #2e3244ff
 3:2 "┆" fg #6b7089ff bg #2e3244ff
 3:3 "example#12 PR reply " fg #c6c8d1ff bg #2e3244ff bold
@@ -91,7 +91,7 @@ runs
 13:3 "Fix the parser" fg #c6c8d1ff bg #161821ff italic
 13:46 "✗ checks" fg #e27878ff bg #161821ff
 13:56 "● bob" fg #84a0c6ff bg #161821ff
-14:1 "NOT IN A STACK" fg #c6c8d1ff bg #161821ff bold
+14:1 "NOT IN A STACK ─────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
 15:1 "┃" fg #e2a478ff bg #161821ff
 15:3 "example#15 issue reply " fg #c6c8d1ff bg #161821ff bold
 15:26 "◐ carol" fg #a093c7ff bg #161821ff bold

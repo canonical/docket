@@ -9,17 +9,20 @@ const meta: Meta<GroupHeadingProps> = {
 
 export default meta;
 
-/** An owner's section in owed `by owner`. */
+/** Your own section in owed `by owner`: the heading keeps your mark. */
 export const Owner: Story<GroupHeadingProps> = {
-  args: { text: "alice", width: 40 },
+  args: { heading: { text: "alice", fit: "trimmed", group: "you" }, width: 40 },
 };
 
 /** A stack's section in owed `by stack`, with the stack's full size. */
 export const Stack: Story<GroupHeadingProps> = {
-  args: { text: "example stack 3 · 3 PRs → main", width: 40 },
+  args: {
+    heading: { text: "example stack 3 · 3 PRs → main", fit: "trimmed" },
+    width: 40,
+  },
 };
 
-/** The last section of `by stack`. */
+/** The last section of `by stack`, one of docket's own names in capitals. */
 export const NotInAStack: Story<GroupHeadingProps> = {
-  args: { text: "NOT IN A STACK", width: 40 },
+  args: { heading: { text: "NOT IN A STACK", fit: "trimmed" }, width: 40 },
 };

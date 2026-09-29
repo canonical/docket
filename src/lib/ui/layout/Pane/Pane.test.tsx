@@ -45,7 +45,11 @@ describe("Pane", () => {
 
   it("gives the help everything under the header", async () => {
     const screen = await draw(<Pane {...Help.args} />, 40, 14);
-    expect(screen.lines.slice(0, 3)).toEqual(["help", "", "Mode"]);
+    expect(screen.lines.slice(0, 3)).toEqual([
+      "help",
+      "",
+      `Mode ${"─".repeat(35)}`,
+    ]);
     expect(screen.lines).not.toContain("←→ mode ↑↓ sel g grp ?");
     expect(screen.lines).not.toContain("synced 2m ago");
   });

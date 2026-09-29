@@ -1,6 +1,6 @@
 40 columns
 |activity                   24h · by kind
-|ISSUES
+|ISSUES ─────────────────────────────────
 |  docs#4 issue ◉ alice               16h
 |  Where do tokens live?
 |                          ◉ alice, ● bob
@@ -8,7 +8,7 @@
 |  last activity 27d ago
 |  labels none
 |    example-sync labelled kind=docs  16h
-|PULL REQUESTS
+|PULL REQUESTS ──────────────────────────
 | ┆example#12 PR ○ dave               25m
 | ┆Fix the parser                 ◉ alice
 | ┆  ✗ checks failed (lint)           25m
@@ -39,7 +39,7 @@
 runs
 1:1 "activity" fg #c6c8d1ff bg #161821ff bold
 1:9 "                   24h · by kind" fg #c6c8d1ff bg #161821ff
-2:1 "ISSUES" fg #c6c8d1ff bg #161821ff bold
+2:1 "ISSUES ─────────────────────────────────" fg #c6c8d1ff bg #161821ff
 3:1 " " fg #ffffffff bg #2e3244ff
 3:2 " " fg #6b7089ff bg #2e3244ff
 3:3 "docs#4 issue " fg #c6c8d1ff bg #2e3244ff bold
@@ -71,7 +71,7 @@ runs
 8:3 "labels none" fg #c6c8d1ff bg #2e3244ff
 8:14 "                           " fg #ffffffff bg #2e3244ff
 9:2 "   example-sync labelled kind=docs  16h" fg #6b7089ff bg #161821ff
-10:1 "PULL REQUESTS" fg #c6c8d1ff bg #161821ff bold
+10:1 "PULL REQUESTS ──────────────────────────" fg #c6c8d1ff bg #161821ff
 11:2 "┆" fg #6b7089ff bg #161821ff
 11:3 "example#12 PR " fg #c6c8d1ff bg #161821ff bold
 11:17 "○ dave" fg #89b8c2ff bg #161821ff bold

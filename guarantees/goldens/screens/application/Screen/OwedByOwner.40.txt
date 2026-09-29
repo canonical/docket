@@ -1,6 +1,6 @@
 40 columns
 |owed                            by owner
-|alice
+|◉ alice ────────────────────────────────
 |┃┆example#12 PR reply ○ dave     4d over
 |┃┆Fix the parser       ✗ checks  ◉ alice
 |┃┆○ dave · 3d ago
@@ -14,13 +14,13 @@
 |│ docs#4 issue close ◉ alice    10d left
 |│ Where do tokens live?
 |╵                         ◉ alice, ● bob
-|bob
+|● bob ──────────────────────────────────
 |│ docs#4 issue close ◉ alice    10d left
 |│ Where do tokens live?
 |╵                         ◉ alice, ● bob
 |│┆example#12 PR review ○ dave    1d left
 |╵┆Fix the parser         ✗ checks  ● bob
-|unassigned
+|unassigned ─────────────────────────────
 |┃ example#15 issue reply ◐ carol 4h left
 |╹ Crash on start              unassigned
 |│ example#15 issue close ◐ car… 29d left
@@ -39,7 +39,8 @@
 runs
 1:1 "owed" fg #c6c8d1ff bg #161821ff bold
 1:5 "                            by owner" fg #c6c8d1ff bg #161821ff
-2:1 "alice" fg #c6c8d1ff bg #161821ff bold
+2:1 "◉ alice" fg #84a0c6ff bg #161821ff
+2:8 " ────────────────────────────────" fg #c6c8d1ff bg #161821ff
 3:1 "┃" fg #e27878ff bg #2e3244ff
 3:2 "┆" fg #6b7089ff bg #2e3244ff
 3:3 "example#12 PR reply " fg #c6c8d1ff bg #2e3244ff bold
@@ -95,7 +96,8 @@ runs
 15:27 "◉ alice" fg #84a0c6ff bg #161821ff
 15:34 ", " fg #c6c8d1ff bg #161821ff
 15:36 "● bob" fg #84a0c6ff bg #161821ff
-16:1 "bob" fg #c6c8d1ff bg #161821ff bold
+16:1 "● bob" fg #84a0c6ff bg #161821ff
+16:6 " ──────────────────────────────────" fg #c6c8d1ff bg #161821ff
 17:1 "│" fg #818596ff bg #161821ff
 17:3 "docs#4 issue close " fg #c6c8d1ff bg #161821ff bold
 17:22 "◉ alice" fg #84a0c6ff bg #161821ff bold
@@ -116,7 +118,7 @@ runs
 21:3 "Fix the parser" fg #c6c8d1ff bg #161821ff italic
 21:26 "✗ checks" fg #e27878ff bg #161821ff
 21:36 "● bob" fg #84a0c6ff bg #161821ff
-22:1 "unassigned" fg #c6c8d1ff bg #161821ff bold
+22:1 "unassigned ─────────────────────────────" fg #c6c8d1ff bg #161821ff
 23:1 "┃" fg #e2a478ff bg #161821ff
 23:3 "example#15 issue reply " fg #c6c8d1ff bg #161821ff bold
 23:26 "◐ carol" fg #a093c7ff bg #161821ff bold

@@ -1,6 +1,6 @@
 40 columns
 |owed                             by repo
-|example
+|example ────────────────────────────────
 |┃┆example#12 PR reply ○ dave     4d over
 |┃┆Fix the parser       ✗ checks  ◉ alice
 |┃┆○ dave · 3d ago
@@ -17,7 +17,7 @@
 |╵┆Fix the parser         ✗ checks  ● bob
 |│ example#15 issue close ◐ car… 29d left
 |╵ Crash on start              unassigned
-|docs
+|docs ───────────────────────────────────
 |│ docs#4 issue close ◉ alice    10d left
 |│ Where do tokens live?
 |╵                         ◉ alice, ● bob
@@ -39,7 +39,7 @@
 runs
 1:1 "owed" fg #c6c8d1ff bg #161821ff bold
 1:5 "                             by repo" fg #c6c8d1ff bg #161821ff
-2:1 "example" fg #c6c8d1ff bg #161821ff bold
+2:1 "example ────────────────────────────────" fg #c6c8d1ff bg #161821ff
 3:1 "┃" fg #e27878ff bg #2e3244ff
 3:2 "┆" fg #6b7089ff bg #2e3244ff
 3:3 "example#12 PR reply " fg #c6c8d1ff bg #2e3244ff bold
@@ -109,7 +109,7 @@ runs
 18:1 "╵" fg #818596ff bg #161821ff
 18:3 "Crash on start" fg #c6c8d1ff bg #161821ff italic
 18:17 "              unassigned" fg #c6c8d1ff bg #161821ff
-19:1 "docs" fg #c6c8d1ff bg #161821ff bold
+19:1 "docs ───────────────────────────────────" fg #c6c8d1ff bg #161821ff
 20:1 "│" fg #818596ff bg #161821ff
 20:3 "docs#4 issue close " fg #c6c8d1ff bg #161821ff bold
 20:22 "◉ alice" fg #84a0c6ff bg #161821ff bold

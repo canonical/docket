@@ -35,14 +35,14 @@ describe("ActivityList", () => {
       20,
     );
     expect(screen.lines.slice(0, 5)).toEqual([
-      "ISSUES",
+      "ISSUES ─────────────────────────────────",
       `  docs#4 issue ● alice${" ".repeat(15)}16h`,
       "  Where do tokens live?",
       `${" ".repeat(26)}● alice, ● bob`,
-      "    example-sync labelled kind=docs  16h",
+      `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
     ]);
     expect(screen.lines.slice(5, 8)).toEqual([
-      "PULL REQUESTS",
+      "PULL REQUESTS ──────────────────────────",
       ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
       ` ┆Fix the parser${" ".repeat(17)}● alice`,
     ]);
@@ -53,7 +53,7 @@ describe("ActivityList", () => {
       ` ┆  dave commented${" ".repeat(20)}3d`,
       "",
     ]);
-    expect(screen.look("PULL REQUESTS")?.bold).toBe(true);
+    expect(screen.look("PULL REQUESTS")?.bold).toBe(false);
   });
 
   it("lists the threads without headings when not grouped, at 60 columns", async () => {
@@ -106,7 +106,7 @@ describe("ActivityList", () => {
       `${" ".repeat(26)}● alice, ● bob`,
       "  loading…",
       `${" ".repeat(4)}example-sync labelled kind=docs  16h`,
-      "PULL REQUESTS",
+      "PULL REQUESTS ──────────────────────────",
       ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
       ` ┆Fix the parser${" ".repeat(17)}● alice`,
       ` ┆  ✗ checks failed (lint)${" ".repeat(11)}25m`,
@@ -213,7 +213,7 @@ describe("ActivityList", () => {
       40,
     );
     expect(screen.lines.slice(0, 3)).toEqual([
-      "PULL REQUESTS",
+      "PULL REQUESTS ──────────────────────────",
       ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
       ` ┆Fix the parser${" ".repeat(17)}● alice`,
     ]);
@@ -257,10 +257,10 @@ describe("ActivityList", () => {
       );
     };
     const screen = await draw(<Growing />, 40, 20);
-    expect(screen.lines.at(0)).toBe("PULL REQUESTS");
+    expect(screen.lines.at(0)).toBe("PULL REQUESTS ──────────────────────────");
     const tall = await screen.redraw(() => grow());
     expect(tall.lines.slice(0, 2)).toEqual([
-      "ISSUES",
+      "ISSUES ─────────────────────────────────",
       `  docs#4 issue ● alice${" ".repeat(15)}16h`,
     ]);
   });

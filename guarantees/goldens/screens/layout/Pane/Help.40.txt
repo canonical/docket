@@ -1,16 +1,16 @@
 40 columns
 |help
 |
-|Mode
+|Mode ───────────────────────────────────
 |  ← →  h l switch mode (owed ↔ activity)
 |           docket opens owed
 |  g        next grouping
 |
-|List
+|List ───────────────────────────────────
 |  ↑ ↓  k j move the selection
 |           (opens the accordion)
 |
-|App
+|App ────────────────────────────────────
 |  ?        show or hide help
 |  R        full refresh
 |  q        quit
@@ -19,17 +19,17 @@
 
 runs
 1:1 "help" fg #c6c8d1ff bg #161821ff bold
-3:1 "Mode" fg #c6c8d1ff bg #161821ff bold
+3:1 "Mode ───────────────────────────────────" fg #c6c8d1ff bg #161821ff
 4:3 "← →  h l" fg #c6c8d1ff bg #161821ff bold
 4:11 " switch mode (owed ↔ activity)" fg #c6c8d1ff bg #161821ff
 5:1 "           docket opens owed" fg #c6c8d1ff bg #161821ff
 6:3 "g" fg #c6c8d1ff bg #161821ff bold
 6:4 "        next grouping" fg #c6c8d1ff bg #161821ff
-8:1 "List" fg #c6c8d1ff bg #161821ff bold
+8:1 "List ───────────────────────────────────" fg #c6c8d1ff bg #161821ff
 9:3 "↑ ↓  k j" fg #c6c8d1ff bg #161821ff bold
 9:11 " move the selection" fg #c6c8d1ff bg #161821ff
 10:1 "           (opens the accordion)" fg #c6c8d1ff bg #161821ff
-12:1 "App" fg #c6c8d1ff bg #161821ff bold
+12:1 "App ────────────────────────────────────" fg #c6c8d1ff bg #161821ff
 13:3 "?" fg #c6c8d1ff bg #161821ff bold
 13:4 "        show or hide help" fg #c6c8d1ff bg #161821ff
 14:3 "R" fg #c6c8d1ff bg #161821ff bold
