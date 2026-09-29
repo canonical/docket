@@ -4,8 +4,9 @@ import type { NoticeProps } from "../../component/index.js";
 /** One person or team the picker offers, and whether it is in the set. */
 export interface PickerOption {
   /**
-   * A person with their group, drawn behind their mark and in their hue,
-   * or a team as `org/team`, drawn as text.
+   * A person or a team, `org/team`, with their group, drawn behind their
+   * mark and in their hue: a team the viewer is in `◉`, another of the
+   * organisation's teams `◐`; a name without a group is drawn as text.
    */
   readonly owner: Owner;
   /** Whether applying sets it: `☑` when it is, `☐` when it is not. */
