@@ -1,5 +1,6 @@
 import type { Duration } from "../clock/index.js";
 import type { Origin, Repo, Resolved } from "../config/index.js";
+import { describeNoTeam } from "../owed/index.js";
 import { quotedNote } from "./constants.js";
 import quote from "./quote.js";
 import renderJson from "./renderJson.js";
@@ -49,6 +50,10 @@ const listPeople = ({ settings }: Pick<Resolved, "settings">) =>
     login: sanitize(login),
     group,
   }));
+
+/** Whether the people in effect list anyone as team. */
+const isTeamListed = ({ settings }: Pick<Resolved, "settings">) =>
+  [...settings.people.values()].includes("team");
 
 /** A problem as data, made safe to print. */
 const describeProblem = ({ code, message, recovery }: Problem) => ({
@@ -122,10 +127,14 @@ function describeSettings({ settings, origins, repositoryErrors }: Resolved) {
 
 /**
  * Writes `docket config`: where the personal file is, whether gh gives a
- * token, the settings that hold across repositories, then the settings in
- * effect for each repository. Every value names the file that set it, and
- * each listed person their group and why. A repository's file comes from
- * GitHub, so its values are made safe to print.
+ * token, that every comment starts a reply wait while a watched
+ * repository's settings list nobody as team, as owed's notice says, the
+ * settings that hold across repositories, then the settings in effect
+ * for each repository, each without a team saying so, and whether it
+ * lists one to a program.
+ * Every value names the file that set it, and each listed person their
+ * group and why. A repository's file comes from GitHub, so its values
+ * are made safe to print.
  */
 export default function renderConfig(answer: ConfigAnswer): string {
   const { personal, repositories, shared, gh, warnings, format } = answer;
@@ -134,6 +143,9 @@ export default function renderConfig(answer: ConfigAnswer): string {
   const found = personal.found
     ? "found"
     : "not found, so built-in defaults apply";
+  const teamless = describeNoTeam(
+    repositories.map(({ resolved }) => resolved.settings.people),
+  );
   if (format === "json") {
     const { settings, origins } = shared;
     const data = {
@@ -156,6 +168,7 @@ export default function renderConfig(answer: ConfigAnswer): string {
       repositories: repositories.map(({ repo, resolved }) => ({
         name: repo.name,
         repo: repo.repo,
+        teamListed: isTeamListed(resolved),
         ...describeSettings(resolved),
       })),
     };
@@ -173,6 +186,11 @@ export default function renderConfig(answer: ConfigAnswer): string {
     warnings.length > 0
       ? ["", renderProblems(warnings, format, "Warning").trimEnd()]
       : [];
+  // An agent reads words where a person reads the symbol.
+  const mark = llm ? "Warning:" : "✗";
+  const teamLines = teamless
+    ? ["", `${mark} ${teamless.reason}`, `Recovery: ${teamless.recovery}`]
+    : [];
   const sections = [
     [
       llm ? "# config" : "config",
@@ -180,14 +198,20 @@ export default function renderConfig(answer: ConfigAnswer): string {
       ...(llm ? [quotedNote] : []),
       ...ghLines,
       ...warningLines,
+      ...teamLines,
     ],
     [
       llm ? "## every repository" : "every repository",
       ...writeSharedLines(shared).map(formatItem),
       formatItem(fallback),
     ],
+    // The notice names no repository, so each one without a team says so
+    // under its own name.
     ...repositories.map(({ repo, resolved }) => [
       llm ? `## ${repo.name} (${repo.repo})` : `${repo.name} (${repo.repo})`,
+      ...(teamless && !isTeamListed(resolved)
+        ? [formatItem(`${mark} ${teamless.reason}`)]
+        : []),
       ...writeRepositoryLines(resolved, llm ? quote : sanitize).map(formatItem),
     ]),
   ];

@@ -17,24 +17,26 @@ import splitRepo from "./splitRepo.js";
 import type { Client, DiscussionNode, IssueNode, PullNode } from "./types.js";
 
 const {
+  account,
   assignees,
   labels,
   written,
+  message,
   requestedReviewer,
   stackEntry,
   pageInfo,
   order,
 } = fragments;
-const thread = `number url title createdAt updatedAt state ${written}
+const thread = `number url title createdAt updatedAt state ${written} bodyText
   ${assignees}
   ${labels}
-  comments(last: 3) { nodes { ${written} createdAt } }`;
+  comments(last: 3) { nodes { ${message} createdAt } }`;
 
 // The latest requests and the latest withdrawals, twenty of each, read as
 // two lists: read as one, a run of withdrawals would push a request that
-// still stands out of the twenty.
+// still stands out of the twenty. A request names who asked for it.
 const requests = `requested: timelineItems(last: 20, itemTypes: [REVIEW_REQUESTED_EVENT]) {
-    nodes { __typename ... on ReviewRequestedEvent { createdAt ${requestedReviewer} } }
+    nodes { __typename ... on ReviewRequestedEvent { createdAt actor { ${account} } ${requestedReviewer} } }
   }
   withdrawn: timelineItems(last: 20, itemTypes: [REVIEW_REQUEST_REMOVED_EVENT]) {
     nodes { __typename ... on ReviewRequestRemovedEvent { createdAt ${requestedReviewer} } }
@@ -58,7 +60,7 @@ const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
       nodes {
         ${thread}
         isDraft headRefName isCrossRepository
-        latestReviews(first: 10) { nodes { ${written} submittedAt } }
+        latestReviews(first: 10) { nodes { ${message} submittedAt } }
         ${requests}
         commits(last: 1) {
           nodes { commit { committedDate author { user { login } } statusCheckRollup { state } } }
@@ -70,10 +72,10 @@ const document = `query Snapshot($owner: String!, $name: String!, $size: Int!,
       @include(if: $withDiscussions) {
       ${pageInfo} totalCount
       nodes {
-        number url title createdAt updatedAt closed ${written}
+        number url title createdAt updatedAt closed ${written} bodyText
         ${labels}
         comments(last: 3) {
-          nodes { ${written} createdAt replies(last: 1) { nodes { ${written} createdAt } } }
+          nodes { ${message} createdAt replies(last: 1) { nodes { ${message} createdAt } } }
         }
       }
     }

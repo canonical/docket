@@ -13,6 +13,7 @@ export default function readIssue(repo: string, node: IssueNode): Thread {
     title: node.title,
     author: readAuthor(node),
     createdAt: new Date(node.createdAt),
+    text: node.bodyText,
     updatedAt: new Date(node.updatedAt),
     open: node.state === "OPEN",
     draft: false,
@@ -21,6 +22,7 @@ export default function readIssue(repo: string, node: IssueNode): Thread {
     comments: node.comments.nodes.map((comment) => ({
       author: readAuthor(comment),
       at: new Date(comment.createdAt),
+      text: comment.bodyText,
     })),
     reviews: [],
     reviewRequests: [],

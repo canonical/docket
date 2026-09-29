@@ -5,7 +5,13 @@ import countStates from "./countStates.js";
 
 const now = at("2026-09-23T10:00+02:00");
 const row = (due: string) =>
-  buildRow(wait({ due: at(due) }), "example", teamSettings.time, now);
+  buildRow(
+    wait({ due: at(due) }),
+    "example",
+    teamSettings.time,
+    now,
+    teamSettings.people,
+  );
 
 describe("countStates", () => {
   it("counts the waits over target, due soon and on track", () => {

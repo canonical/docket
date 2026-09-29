@@ -4,6 +4,7 @@ import {
   at,
   bob,
   carol,
+  dave,
   exampleSync,
   teamSettings,
   thread,
@@ -15,12 +16,13 @@ const closeWaits = (...args: Parameters<typeof findWaits>) =>
 
 describe("findWaits", () => {
   describe("the close clock", () => {
-    it("runs on an open thread from its creation, against its kind's target", () => {
+    it("runs on an open thread from its creation, against its kind's target, for the thread's author", () => {
       const issue = thread();
       expect(closeWaits(issue, teamSettings)).toEqual([
         {
           thread: issue,
           kind: "close",
+          author: dave,
           owners: [],
           started: issue.createdAt,
           target: { amount: 30, unit: "d" },
@@ -107,10 +109,22 @@ describe("findWaits", () => {
       expect(findWaits(issue, teamSettings)[0]).toEqual({
         thread: issue,
         kind: "response",
+        author: dave,
         owners: ["alice", "bob"],
         started: issue.createdAt,
         target: { amount: 24, unit: "h" },
         due: at("2026-09-23T10:00+02:00"),
+      });
+    });
+
+    it("awaits the reply to the latest message from outside the team", () => {
+      const asked = thread({
+        comments: [{ author: carol, at: at("2026-09-22T11:00+02:00") }],
+      });
+      expect(findWaits(asked, teamSettings)[0]).toMatchObject({
+        kind: "response",
+        author: carol,
+        started: asked.createdAt,
       });
     });
 
@@ -123,7 +137,7 @@ describe("findWaits", () => {
     });
   });
 
-  it("gives each requested review its own wait, owned by the reviewer, against the review target", () => {
+  it("gives each requested review its own wait, owned by the reviewer, for the pull request's author, against the review target", () => {
     const pull = thread({
       kind: "pullRequest",
       author: alice,
@@ -137,6 +151,7 @@ describe("findWaits", () => {
       ({ kind }) => kind === "review",
     );
     expect(reviews.map(({ owners }) => owners)).toEqual([["bob"], ["carol"]]);
+    expect(reviews.map(({ author }) => author)).toEqual([alice, alice]);
     expect(reviews[0]).toMatchObject({
       started: at("2026-09-22T11:00+02:00"),
       target: { amount: 2, unit: "d" },

@@ -183,6 +183,12 @@ export interface TerminalView {
          */
         readonly readWatched: () => Promise<WatchedFiles>;
         /**
+         * Reads from GitHub the login gh is signed in with, which marks
+         * the viewer as `you` in the lists. The interface calls it once it
+         * has opened, and again after each sync while it fails.
+         */
+        readonly readViewer: () => Promise<string>;
+        /**
          * Reads the events of a repository at or after `since` through
          * the cache, no older than the call's maximum age.
          */

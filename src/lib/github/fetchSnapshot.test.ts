@@ -1,4 +1,6 @@
+// Longer than 500 lines because the snapshot is one query over three lists, each checked here against what the query asks for and what the answer gives.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { bob } from "../../testing/facts.js";
 import {
   bot,
   comment,
@@ -11,6 +13,7 @@ import {
   repository,
   restUser,
   type Sent,
+  selectNodeFields,
   settle,
   token,
   user,
@@ -33,15 +36,14 @@ afterEach(() => {
 });
 
 const repo = "example-org/example-repo";
-const snapshot = (since: string | null = null) =>
-  settle(
-    (() => {
-      const client = createClient(token, "github.com", "1.2.3");
-      return fetchSnapshot(client, repo, since ? { since } : null, (team) =>
-        listTeamMembers(client, team),
-      );
-    })(),
+const snapshot = (since: string | null = null) => {
+  const client = createClient(token, "github.com", "1.2.3");
+  return settle(
+    fetchSnapshot(client, repo, since ? { since } : null, (team) =>
+      listTeamMembers(client, team),
+    ),
   );
+};
 const lists = (
   issues: unknown[] = [],
   pullRequests: unknown[] = [],
@@ -66,7 +68,9 @@ describe("fetchSnapshot", () => {
           issueNode({
             assignees: { nodes: [user("alice"), bot("example-sync")] },
             labels: { nodes: [{ name: "kind=bug" }] },
-            comments: { nodes: [comment("bob", "2026-09-22T09:00:00Z")] },
+            comments: {
+              nodes: [comment("bob", "2026-09-22T09:00:00Z", "MEMBER", "Hi")],
+            },
           }),
         ],
         [],
@@ -94,6 +98,7 @@ describe("fetchSnapshot", () => {
         title: "Example issue",
         author: { login: "dave", type: "user", member: false },
         createdAt: new Date("2026-09-22T08:00:00Z"),
+        text: "Example opening",
         updatedAt: new Date("2026-09-22T08:00:00Z"),
         open: true,
         draft: false,
@@ -103,10 +108,7 @@ describe("fetchSnapshot", () => {
           { login: "example-sync", type: "bot" },
         ],
         comments: [
-          {
-            author: { login: "bob", type: "user", member: true },
-            at: new Date("2026-09-22T09:00:00Z"),
-          },
+          { author: bob, at: new Date("2026-09-22T09:00:00Z"), text: "Hi" },
         ],
         reviews: [],
         reviewRequests: [],
@@ -115,6 +117,15 @@ describe("fetchSnapshot", () => {
       expect.objectContaining({ number: 3, kind: "discussion", open: true }),
     ]);
     expect(cursor).toEqual({ since: "2026-09-23T07:59:00.000Z" });
+  });
+
+  it("asks for what each issue, pull request and discussion opens with", async () => {
+    github.graphql("Snapshot", lists([], [], []));
+    await snapshot();
+    const query = String(github.sent.at(0)?.body?.query);
+    for (const list of ["issues", "pullRequests", "discussions"]) {
+      expect(selectNodeFields(query, list)).toContain("bodyText");
+    }
   });
 
   it("reads each list's next page, and only the lists with pages left", async () => {

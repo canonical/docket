@@ -1,10 +1,13 @@
 import type { WaitRow } from "../owed/index.js";
+import { groupWords } from "./constants.js";
 import sanitize from "./sanitize.js";
 import type { Detail } from "./types.js";
 
 /**
  * One row as data, for a program: its kind as an identifier (`response`,
- * `review` or `close`), how overdue it is as a share of its target
+ * `review` or `close`), the author of what waits with their group in the
+ * words of the settings (`team`, `internal`, `external` or `bot`, and
+ * `you` for the viewer), how overdue it is as a share of its target
  * (positive once over, negative while time is left), and times in ISO
  * 8601. The target comes at every level, in working hours: `overdue` times
  * `target` is the working time past due, or left, which the gap between
@@ -18,6 +21,10 @@ export default function describeWaitData(row: WaitRow, detail: Detail) {
     reference: row.reference.text,
     title: sanitize(row.title.text),
     kind: row.wait.kind,
+    author: {
+      login: sanitize(row.author.text),
+      group: groupWords[row.author.group],
+    },
     state: row.state,
     overdue: row.overdue,
     owners: owners.map((login) => sanitize(login)),

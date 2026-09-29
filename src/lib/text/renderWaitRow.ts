@@ -1,4 +1,5 @@
 import type { WaitRow } from "../owed/index.js";
+import { groupWords } from "./constants.js";
 import describeOwners from "./describeOwners.js";
 import describeStack from "./describeStack.js";
 import describeTime from "./describeTime.js";
@@ -45,6 +46,7 @@ function renderLlmRow(row: WaitRow, timezone: string, detail: Detail): string {
     described.reference,
     quote(row.title.text),
     described.kind,
+    `author ${quote(row.author.text)} (${groupWords[row.author.group]})`,
     describeOwners(described.owners.map((login) => quote(login))),
     describeDistance(described),
     `due ${described.due}`,
@@ -79,9 +81,10 @@ function renderPlainRow(
 
 /**
  * Writes one running wait: for an agent, one complete line with the title
- * quoted, the owners, the distance and the absolute due time; for a
- * person, the reference line, the title, then the owners and marks.
- * `detailed` adds when the wait started and its target.
+ * quoted, the author of what waits with their group in words, such as
+ * `"dave" (external)`, the owners, the distance and the absolute due
+ * time; for a person, the reference line, the title, then the owners and
+ * marks. `detailed` adds when the wait started and its target.
  */
 export default function renderWaitRow(
   row: WaitRow,

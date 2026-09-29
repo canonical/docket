@@ -21,10 +21,12 @@ const message = (author: Message["author"], iso: string): Message => ({
 
 describe("findResponseStart", () => {
   it("starts at the opening of a thread someone outside the team opened", () => {
-    expect(findResponseStart(thread({ author: dave }), people)).toEqual(opened);
-    expect(findResponseStart(thread({ author: carol }), people)).toEqual(
-      opened,
-    );
+    expect(
+      findResponseStart(thread({ author: dave }), people)?.started,
+    ).toEqual(opened);
+    expect(
+      findResponseStart(thread({ author: carol }), people)?.started,
+    ).toEqual(opened);
   });
 
   it("finds no wait on a thread a team member opened and nobody else wrote in", () => {
@@ -49,7 +51,7 @@ describe("findResponseStart", () => {
         message(carol, "2026-09-22T13:00+02:00"),
       ],
     });
-    expect(findResponseStart(reopened, people)).toEqual(
+    expect(findResponseStart(reopened, people)?.started).toEqual(
       at("2026-09-22T12:00+02:00"),
     );
   });
@@ -58,7 +60,7 @@ describe("findResponseStart", () => {
     const waiting = thread({
       comments: [message(dave, "2026-09-23T09:00+02:00")],
     });
-    expect(findResponseStart(waiting, people)).toEqual(opened);
+    expect(findResponseStart(waiting, people)?.started).toEqual(opened);
   });
 
   it("reads the messages in time order, whatever order they are given in", () => {
@@ -81,7 +83,7 @@ describe("findResponseStart", () => {
     const botAfter = thread({
       comments: [message(exampleSync, "2026-09-22T10:01+02:00")],
     });
-    expect(findResponseStart(botAfter, people)).toEqual(opened);
+    expect(findResponseStart(botAfter, people)?.started).toEqual(opened);
   });
 
   it("counts a team member's review as a reply, and a review from outside as a message to answer", () => {
@@ -95,16 +97,38 @@ describe("findResponseStart", () => {
       author: alice,
       reviews: [message(carol, "2026-09-22T11:00+02:00")],
     });
-    expect(findResponseStart(outside, people)).toEqual(
+    expect(findResponseStart(outside, people)?.started).toEqual(
       at("2026-09-22T11:00+02:00"),
     );
+  });
+
+  it("awaits the reply to the thread's author while nobody outside the team wrote since", () => {
+    const botAfter = thread({
+      comments: [message(exampleSync, "2026-09-22T10:01+02:00")],
+    });
+    expect(findResponseStart(botAfter, people)?.author).toEqual(dave);
+  });
+
+  it("awaits the reply to the latest message from outside the team, dated from the earliest", () => {
+    const waiting = thread({
+      comments: [
+        message(alice, "2026-09-22T11:00+02:00"),
+        message(dave, "2026-09-22T12:00+02:00"),
+        message(carol, "2026-09-22T13:00+02:00"),
+        message(exampleSync, "2026-09-22T14:00+02:00"),
+      ],
+    });
+    expect(findResponseStart(waiting, people)).toEqual({
+      started: at("2026-09-22T12:00+02:00"),
+      author: carol,
+    });
   });
 
   it("takes the team from the configuration only", () => {
     const answered = thread({
       comments: [message(carol, "2026-09-22T11:00+02:00")],
     });
-    expect(findResponseStart(answered, people)).toEqual(opened);
+    expect(findResponseStart(answered, people)?.started).toEqual(opened);
     const withCarol = new Map([...people, ["carol", "team" as const]]);
     expect(findResponseStart(answered, withCarol)).toBeUndefined();
   });

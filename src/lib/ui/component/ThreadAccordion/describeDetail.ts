@@ -52,11 +52,16 @@ function describeCutOwners({ owner, owners }: WaitRow): DetailLine[] {
   return cut ? [line(`owner ${names.join(", ")}`)] : [];
 }
 
-/** The latest message in full, who wrote it, and when the reply began. */
+/**
+ * The latest message in full, who wrote it, and when the reply began.
+ * While nobody has commented, the latest message is the opening, whose
+ * text the snapshot holds.
+ */
 function describeReply(row: WaitRow, detail: ThreadDetail, reading: Reading) {
   const { now, timezone } = reading;
   const { thread, started, target } = row.wait;
   const latest = detail.messages.at(-1);
+  const text = latest ? latest.body : thread.text;
   const author = latest?.author.login ?? thread.author.login;
   const at = latest?.at ?? thread.createdAt;
   const day = new Intl.DateTimeFormat("en-GB", {
@@ -67,7 +72,7 @@ function describeReply(row: WaitRow, detail: ThreadDetail, reading: Reading) {
   return [
     ...describeCutOwners(row),
     line(`${author} · ${describeAge(at, now)} ago`),
-    ...(latest ? [line(latest.body)] : []),
+    ...(text ? [line(text)] : []),
     { ...line(since), optional: true },
   ];
 }

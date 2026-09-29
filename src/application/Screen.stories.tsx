@@ -206,6 +206,7 @@ function connectRecording({
     cache,
     capabilities: everyCapability,
     readWatched: async () => ({ watched: recordedWatched() }),
+    readViewer: async () => "alice",
     readDetail: read,
     readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
     readCandidates: github
@@ -242,6 +243,23 @@ const editable: ScreenFrameProps = {
 
 /** owed, no grouping: the first row selected, with its accordion open. */
 export const Owed: Story<ScreenFrameProps> = { args: recording };
+
+const teamless = { ...recordedSettings, people: new Map() };
+
+/** owed while no team is listed: every comment waits, and a notice says so. */
+export const OwedNoTeam: Story<ScreenFrameProps> = {
+  args: {
+    ...recording,
+    settings: teamless,
+    watched: recordedWatched(teamless),
+    source: {
+      ...connectRecording(),
+      readWatched: async () => ({
+        watched: recordedWatched(teamless),
+      }),
+    },
+  },
+};
 
 /** The selection one row down, its accordion open under it. */
 export const OwedSecondSelected: Story<ScreenFrameProps> = {

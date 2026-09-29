@@ -18,7 +18,11 @@ export const buildPage = (nodes: readonly unknown[]) => ({
   nodes,
 });
 
-/** A comment, or a review, by `login` with its tie to the repository. */
+/**
+ * A comment, or a review, by `login` with its tie to the repository, and
+ * its text: as Markdown for a thread's details, as plain text for the
+ * snapshot.
+ */
 export const buildComment = (
   login: string,
   createdAt: string,
@@ -29,6 +33,7 @@ export const buildComment = (
   authorAssociation: association,
   createdAt,
   body,
+  bodyText: body,
 });
 
 /** An open issue, as the snapshot query gives it. */

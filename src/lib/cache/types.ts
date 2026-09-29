@@ -83,6 +83,12 @@ export interface CachedFile {
   readonly syncedAt: Date;
 }
 
+/** The login gh is signed in with, and when it was fetched. */
+export interface CachedViewer {
+  readonly login: string;
+  readonly syncedAt: Date;
+}
+
 /**
  * How far fetching every repository whole has come, while nothing is
  * shown for it: on the first run, or after a full refresh. The pages are
@@ -135,7 +141,8 @@ export interface CacheOptions {
 /**
  * The shared cache of the watched repositories' threads, events and own
  * files: one snapshot query, one events query and one query per file for
- * each repository, kept on disk for every docket process.
+ * each repository, and one query for the viewer's login, kept on disk
+ * for every docket process.
  */
 export interface Cache {
   /**
@@ -203,6 +210,18 @@ export interface Cache {
    * when the cache folder cannot be made, read or written.
    */
   readFile(repo: string, path: string, maxAge: number): Promise<CachedFile>;
+  /**
+   * The login gh is signed in with, no older than `maxAge` milliseconds.
+   * Otherwise it is read under the fetch lock, unless the process that
+   * held it before already did, and kept in the cache file for every
+   * docket process.
+   *
+   * @throws ProviderError when the provider fails.
+   * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
+   * the fetch lock for longer than the wait allows, and `CACHE_UNUSABLE`
+   * when the cache folder cannot be made, read or written.
+   */
+  readViewer(maxAge: number): Promise<CachedViewer>;
   /**
    * One step of the refresh cycle: syncs data older than the refresh
    * interval, unless the budget is low or the cycle is paused. It never

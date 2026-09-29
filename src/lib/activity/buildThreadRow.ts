@@ -1,6 +1,6 @@
 import type { People } from "../config/index.js";
 import type { WindowEvent } from "../events/index.js";
-import { describeOwners } from "../owed/index.js";
+import { describeOwners, describePerson } from "../owed/index.js";
 import { classify } from "../people/index.js";
 import type { Thread, ThreadSummary } from "../waits/index.js";
 import { threadWords } from "./constants.js";
@@ -16,6 +16,8 @@ import type { ThreadRow } from "./types.js";
  * @param facts The thread's recorded facts, when given; they name its
  * owners, the assignees that are not bots, and whether it is a draft.
  * @param events The thread's events, newest first.
+ * @param viewer The login gh is signed in with, when it is known, which
+ * marks the viewer among the owners.
  */
 export default function buildThreadRow(
   thread: ThreadSummary,
@@ -24,6 +26,7 @@ export default function buildThreadRow(
   people: People,
   events: readonly [WindowEvent, ...WindowEvent[]],
   now: Date,
+  viewer?: string,
 ): ThreadRow {
   const lines = events.map((event) => ({
     event,
@@ -32,7 +35,7 @@ export default function buildThreadRow(
   }));
   const owners = facts?.assignees
     .filter((account) => classify(account, people) !== "bot")
-    .map(({ login }) => login);
+    .map((account) => describePerson(account, people, viewer));
   return {
     thread,
     repo,

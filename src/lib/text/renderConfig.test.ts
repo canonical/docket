@@ -116,6 +116,58 @@ describe("renderConfig", () => {
     });
   });
 
+  it("says a repository lists no team from its own people, in words, with the symbol, and as data, naming it", () => {
+    const [, docs] = shared.settings.repos;
+    if (!docs) throw new Error("the fixture watches two repositories");
+    const people = new Map([["carol", "internal" as const]]);
+    const declared = {
+      ...shared,
+      settings: { ...shared.settings, people },
+      origins: { ...shared.origins, people: "repository" as const },
+    };
+    const repositories = [
+      { repo: example, resolved: shared },
+      { repo: docs, resolved: declared },
+    ];
+    const reason =
+      "no team in docket.yaml, so every comment starts a reply wait";
+    const recovery =
+      "Recovery: list the team under people: in the personal file or the repository's .github/docket.yaml, then run docket config";
+    const llm = renderConfig({ ...answer, repositories });
+    expect(llm).toContain(
+      `\n\nWarning: ${reason}\n${recovery}\n\n## every repository`,
+    );
+    expect(llm).toContain(
+      `\n## docs (example-org/example-docs)\n- Warning: ${reason}\n- people`,
+    );
+    expect(llm).not.toContain(
+      `\n## example (example-org/example-repo)\n- Warning`,
+    );
+    const plain = renderConfig({ ...answer, repositories, format: "plain" });
+    expect(plain).toContain(`\n\n✗ ${reason}\n${recovery}\n\nevery repository`);
+    expect(plain).toContain(
+      `\ndocs (example-org/example-docs)\n  ✗ ${reason}\n  people`,
+    );
+    const data = JSON.parse(
+      renderConfig({ ...answer, repositories, format: "json" }),
+    );
+    expect(
+      data.repositories.map(
+        ({ teamListed }: { teamListed: boolean }) => teamListed,
+      ),
+    ).toEqual([true, false]);
+  });
+
+  it("says nothing of a team the personal file leaves out while each repository lists one", () => {
+    const teamless = {
+      ...shared,
+      settings: { ...shared.settings, people: new Map() },
+    };
+    expect(renderConfig({ ...answer, shared: teamless })).not.toContain(
+      "no team",
+    );
+  });
+
   it("strips control sequences from values a repository's file could carry", () => {
     const people = new Map([
       ["mallory\u001b]52;c;eA==\u0007", "team" as const],

@@ -1,4 +1,4 @@
-import { noFile } from "./constants.js";
+import { noFile, viewer } from "./constants.js";
 import { buildIssueNode, buildProbe, buildSnapshot } from "./shapes.js";
 
 const repo = "example-org/example-repo";
@@ -20,6 +20,7 @@ const buildOpened = (number: number, createdAt: string) =>
  * that is Saturday in Paris but still Friday in New York.
  */
 export default {
+  Viewer: viewer,
   [`File ${repo}`]: noFile,
   [`GET /repos/${repo}/issues`]: buildProbe("clock"),
   [`Snapshot ${repo}`]: buildSnapshot([

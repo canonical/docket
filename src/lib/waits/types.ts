@@ -23,6 +23,11 @@ export interface ThreadSummary {
 export interface Message {
   readonly author: Author;
   readonly at: Date;
+  /**
+   * What it says, as plain text, as the snapshot gives it. A thread's
+   * details give the Markdown body instead, so theirs carry none.
+   */
+  readonly text?: string;
 }
 
 /** A GitHub team, and the logins of its members. */
@@ -42,6 +47,8 @@ export interface ReviewRequest {
   readonly reviewer: Account | Team;
   /** When the review was requested. */
   readonly at: Date;
+  /** Who asked for it, absent when the provider does not record it. */
+  readonly requester?: Account;
 }
 
 /** A push of commits to a pull request, and the account that made it. */
@@ -60,6 +67,12 @@ export type Checks = "passing" | "failing" | "running";
 export interface Thread extends ThreadSummary {
   readonly author: Author;
   readonly createdAt: Date;
+  /**
+   * What the opening says, as plain text, as the snapshot gives it: the
+   * message a reply goes to while nobody else has written. Absent when
+   * the provider does not record it.
+   */
+  readonly text?: string;
   /** When GitHub last recorded a change to the thread. */
   readonly updatedAt: Date;
   /** False once the thread is closed or merged, whatever the reason. */
@@ -91,6 +104,13 @@ export type WaitKind = "response" | "review" | "close";
 export interface Wait {
   readonly thread: Thread;
   readonly kind: WaitKind;
+  /**
+   * The author of what is waiting: for a reply, of the latest message
+   * from outside the team; for a review, of the pull request; for a close,
+   * of the thread. The owners say who owes the next move, the author who
+   * waits on it.
+   */
+  readonly author: Author;
   /**
    * The logins, or the team, the wait belongs to. It is empty when nobody
    * is assigned, which the views show as `unassigned`.

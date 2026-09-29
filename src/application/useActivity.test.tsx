@@ -77,6 +77,7 @@ async function probe(
     cache,
     capabilities: everyCapability,
     readWatched: async () => ({ watched: recordedWatched() }),
+    readViewer: async () => "alice",
     readDetail: async () => parserFixDetail,
     readCandidates: () => Promise.reject(new Error("no editor opens")),
     write: () => Promise.reject(new Error("no editor opens")),

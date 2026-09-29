@@ -2,10 +2,10 @@ import { mkdirSync, watch as watchFolder } from "node:fs";
 import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { Account } from "../people/index.js";
-import type { PageProgress, ProviderError } from "../provider/index.js";
+import type { PageProgress } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
-import CacheError from "./CacheError.js";
 import classifyFolderFailure from "./classifyFolderFailure.js";
+import classifyRefreshFailure from "./classifyRefreshFailure.js";
 import {
   budgetFloor,
   cacheFileName,
@@ -22,6 +22,7 @@ import type {
   CachedEvents,
   CachedFile,
   CachedThreads,
+  CachedViewer,
   CacheOptions,
   CacheStatus,
   EventsCache,
@@ -32,23 +33,16 @@ import withFetchLock from "./withFetchLock.js";
 import writeCacheFile from "./writeCacheFile.js";
 
 /**
- * Whether `error` is one a user can meet, from the provider or the cache
- * itself, with its code and recovery.
- */
-const isNamedError = (error: unknown): error is ProviderError | CacheError =>
-  error instanceof Error &&
-  typeof (error as Partial<ProviderError>).code === "string" &&
-  typeof (error as Partial<ProviderError>).recovery === "string";
-
-/**
  * Opens the cache of the watched repositories' threads, shared through
  * the cache folder by every docket process.
  *
  * Each repository is one TanStack Query query holding its `RepoCache`,
  * dated by when it was synced, one holding the events activity reads, and
- * one holding its own file, each dated by when it was fetched. The file is TanStack's dehydrated cache,
- * and loading it hydrates, which replaces a query's data only with newer
- * data, so a process never goes back to older threads.
+ * one holding its own file, each dated by when it was fetched, and one
+ * query holds the viewer's login, dated the same way. The file is
+ * TanStack's dehydrated cache, and loading it hydrates, which replaces a
+ * query's data only with newer data, so a process never goes back to
+ * older threads.
  */
 export default function createCache({
   provider,
@@ -123,6 +117,20 @@ export default function createCache({
     const syncedAt = new Date(state.dataUpdatedAt);
     return now().getTime() - syncedAt.getTime() < maxAge
       ? { text: state.data.text ?? undefined, syncedAt }
+      : undefined;
+  };
+
+  // The login gh is signed in with, held as the files are, since a text
+  // command reads it on every call.
+  const viewerKey = ["viewer"];
+
+  /** The viewer's login held, when it is younger than `maxAge`. */
+  const findFreshViewer = (maxAge: number): CachedViewer | undefined => {
+    const state = client.getQueryState<string>(viewerKey);
+    if (state?.data === undefined) return undefined;
+    const syncedAt = new Date(state.dataUpdatedAt);
+    return now().getTime() - syncedAt.getTime() < maxAge
+      ? { login: state.data, syncedAt }
       : undefined;
   };
 
@@ -302,91 +310,72 @@ export default function createCache({
     });
 
   /**
-   * Keeps what stopped a refresh in the status: a provider error or the
-   * cache's own as it is, and any other, such as a full disk or an answer
-   * cut short, as `CACHE_REFRESH_FAILED`. That code covers causes that
-   * need different steps, so it names the cause and gives a step that
-   * holds for each. The message ends as a sentence, as every message
-   * does: a full stop follows a cause that ends in none of `.`, `?` or
-   * `!`, and a cause with no text leaves the message's own sentence
-   * alone. A refusal for the rate limit pauses the cycle until the budget
-   * resets, when the provider can say when that is.
+   * What `find` gives from the data held, loaded from the file first.
+   * Otherwise `fetch` fetches it under the fetch lock, unless the process
+   * that held the lock before already did, keeps it in the queries, and
+   * the file then gives it to every process.
    */
-  const record = async (thrown: unknown): Promise<Partial<CacheStatus>> => {
-    const cause = thrown instanceof Error ? thrown.message : String(thrown);
-    const error = isNamedError(thrown)
-      ? thrown
-      : new CacheError(
-          "CACHE_REFRESH_FAILED",
-          cause === ""
-            ? "docket could not refresh its cache."
-            : `docket could not refresh its cache: ${/[.?!]$/.test(cause) ? cause : `${cause}.`}`,
-          "refresh again",
-        );
-    if (error.code === "GITHUB_RATE_LIMITED") {
-      const until = await provider.budget().then(
-        ({ resetAt }) => resetAt,
-        () => undefined,
-      );
-      if (until) return { paused: { until, reason: "rateLimit" } } as const;
+  const readThrough = async <Held>(
+    find: () => Held | undefined,
+    fetch: (at: Date) => Promise<Held>,
+  ): Promise<Held> => {
+    try {
+      await load();
+      const cached = find();
+      if (cached) return cached;
+      return await withFetchLock(directory, async () => {
+        // The process that held the lock before may have fetched it.
+        await load();
+        const fetched = find();
+        if (fetched) return fetched;
+        // Dated from before the fetch, so it is never taken as newer than
+        // it is.
+        const held = await fetch(now());
+        await save();
+        return held;
+      });
+    } catch (error) {
+      throw classifyFolderFailure(error, directory);
     }
-    return { failure: error };
   };
 
   return {
     threads: () => shown,
     load,
     findEvents,
-    async readEvents(repo, since, maxAge) {
-      try {
-        await load();
-        const cached = findFreshEvents(repo, since, maxAge);
-        if (cached) return cached;
-        return await withFetchLock(directory, async () => {
-          // The process that held the lock before may have fetched them.
-          await load();
-          const fetched = findFreshEvents(repo, since, maxAge);
-          if (fetched) return fetched;
-          // Dated from before the fetch, so they are never taken as newer
-          // than they are.
-          const at = now();
+    readEvents: (repo, since, maxAge) =>
+      readThrough(
+        () => findFreshEvents(repo, since, maxAge),
+        async (at) => {
           const events = await provider.events(repo, since);
           const value: EventsCache = { since, events };
           client.setQueryData(eventsKey(repo), value, {
             updatedAt: at.getTime(),
           });
-          await save();
           return { events, syncedAt: at };
-        });
-      } catch (error) {
-        throw classifyFolderFailure(error, directory);
-      }
-    },
-    async readFile(repo, path, maxAge) {
-      try {
-        await load();
-        const cached = findFreshFile(repo, path, maxAge);
-        if (cached) return cached;
-        return await withFetchLock(directory, async () => {
-          // The process that held the lock before may have fetched it.
-          await load();
-          const fetched = findFreshFile(repo, path, maxAge);
-          if (fetched) return fetched;
-          // Dated from before the fetch, so it is never taken as newer
-          // than it is.
-          const at = now();
+        },
+      ),
+    readFile: (repo, path, maxAge) =>
+      readThrough(
+        () => findFreshFile(repo, path, maxAge),
+        async (at) => {
           const text = await provider.readFile(repo, path);
           const value: FileCache = { text: text ?? null };
           client.setQueryData(fileKey(repo, path), value, {
             updatedAt: at.getTime(),
           });
-          await save();
           return { text, syncedAt: at };
-        });
-      } catch (error) {
-        throw classifyFolderFailure(error, directory);
-      }
-    },
+        },
+      ),
+    readViewer: (maxAge) =>
+      readThrough(
+        () => findFreshViewer(maxAge),
+        async (at) => {
+          const login = await provider.viewer();
+          client.setQueryData(viewerKey, login, { updatedAt: at.getTime() });
+          return { login, syncedAt: at };
+        },
+      ),
     async refreshRepo(repo) {
       try {
         await withFetchLock(directory, async () => {
@@ -438,7 +427,7 @@ export default function createCache({
           publish({ paused: undefined, failure: undefined });
         }
       } catch (error) {
-        publish(await record(error));
+        publish(await classifyRefreshFailure(error, provider));
       }
     },
     async fullRefresh() {
@@ -447,7 +436,7 @@ export default function createCache({
           publish({ paused: undefined, failure: undefined });
         }
       } catch (error) {
-        publish(await record(error));
+        publish(await classifyRefreshFailure(error, provider));
       }
     },
     watch() {

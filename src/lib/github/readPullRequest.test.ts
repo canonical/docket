@@ -37,6 +37,7 @@ describe("readPullRequest", () => {
       title: "Example pull request",
       author: alice,
       createdAt: new Date("2026-09-22T08:00:00Z"),
+      text: "Example opening",
       updatedAt: new Date("2026-09-22T08:00:00Z"),
       open: true,
       draft: false,
@@ -68,7 +69,7 @@ describe("readPullRequest", () => {
     expect(pull.pushes).toEqual([push]);
   });
 
-  it("reads each submitted review and leaves a review still in draft out", () => {
+  it("reads each submitted review with its text and leaves a review still in draft out", () => {
     const pull = read({
       latestReviews: {
         nodes: [
@@ -76,6 +77,7 @@ describe("readPullRequest", () => {
             author: user("bob"),
             authorAssociation: "MEMBER",
             submittedAt: "2026-09-22T10:00:00Z",
+            bodyText: "Two nits.",
           },
           {
             author: user("carol"),
@@ -86,11 +88,11 @@ describe("readPullRequest", () => {
       },
     });
     expect(pull.reviews).toEqual([
-      { author: bob, at: new Date("2026-09-22T10:00:00Z") },
+      { author: bob, at: new Date("2026-09-22T10:00:00Z"), text: "Two nits." },
     ]);
   });
 
-  it("reads the requests standing once the withdrawals are applied", () => {
+  it("reads the requests standing once the withdrawals are applied, with who asked", () => {
     const team = { __typename: "Team", combinedSlug: "example-org/reviewers" };
     const pull = read(
       {
@@ -105,6 +107,7 @@ describe("readPullRequest", () => {
               __typename: "ReviewRequestedEvent",
               createdAt: "2026-09-22T09:00:00Z",
               requestedReviewer: team,
+              actor: user("alice"),
             },
           ],
         },
@@ -124,6 +127,7 @@ describe("readPullRequest", () => {
       {
         reviewer: { team: "example-org/reviewers", members: ["carol"] },
         at: new Date("2026-09-22T09:00:00Z"),
+        requester: { login: "alice", type: "user" },
       },
     ]);
   });

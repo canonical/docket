@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { describe, expect, it } from "vitest";
-import type { OwedGrouping } from "../lib/owed/index.js";
+import { describe, expect, it, vi } from "vitest";
+import { describeNoTeam, type OwedGrouping } from "../lib/owed/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import {
   parserFixDetail,
@@ -18,6 +18,7 @@ function drawList(
   height: number,
   editor?: { readonly node: ReactNode; readonly lines: number },
   onShownRows: (rows: number) => void = () => {},
+  notice?: ReturnType<typeof describeNoTeam>,
 ) {
   return drawSuspending(
     <OwedList
@@ -30,11 +31,15 @@ function drawList(
       height={height}
       onShownRows={onShownRows}
       {...(editor && { editor })}
+      {...(notice && { notice })}
     />,
     width,
     height,
   );
 }
+
+/** The notice while the one watched repository lists no team. */
+const noTeam = describeNoTeam([new Map()]);
 
 describe("OwedList", () => {
   it("heads each group, then its rows, the details open under the selected row, and only rows that fit whole, at 40 columns", async () => {
@@ -122,5 +127,58 @@ describe("OwedList", () => {
     expect(screen.look("example#12 review")?.bg).not.toBe(
       tokens["color.background.selected"],
     );
+  });
+
+  it("keeps the notice above the rows, wrapped two cells in, and shows the rows that fit below it, at 40 columns", async () => {
+    const shown = vi.fn();
+    const screen = await drawList("none", 0, 40, 12, undefined, shown, noTeam);
+    expect(screen.lines.slice(0, 7)).toEqual([
+      "  ✗ no team in docket.yaml, so every",
+      "  comment starts a reply wait",
+      "  Recovery: list the team under people:",
+      "  in the personal file or the",
+      "  repository's .github/docket.yaml, then",
+      "  run docket config",
+      `▌┃example#12 reply${" ".repeat(15)}4d over`,
+    ]);
+    expect(screen.look("✗ no team")?.fg).toBe(tokens["color.text.error"]);
+    expect(shown).toHaveBeenLastCalledWith(1);
+  });
+
+  it("cuts the notice, never squeezing it, in a region shorter than it", async () => {
+    const screen = await drawList(
+      "none",
+      0,
+      40,
+      3,
+      undefined,
+      () => {},
+      noTeam,
+    );
+    expect(screen.lines).toEqual([
+      "  ✗ no team in docket.yaml, so every",
+      "  comment starts a reply wait",
+      "  Recovery: list the team under people:",
+    ]);
+  });
+
+  it("takes fewer lines for the notice at 60 columns", async () => {
+    const screen = await drawList(
+      "none",
+      0,
+      60,
+      12,
+      undefined,
+      () => {},
+      noTeam,
+    );
+    expect(screen.lines.slice(0, 5)).toEqual([
+      "  ✗ no team in docket.yaml, so every comment starts a reply",
+      "  wait",
+      "  Recovery: list the team under people: in the personal file",
+      "  or the repository's .github/docket.yaml, then run",
+      "  docket config",
+    ]);
+    expect(screen.lines.at(5)).toMatch(/^▌┃example#12 reply/);
   });
 });

@@ -1,7 +1,7 @@
 import type { Duration } from "../clock/index.js";
 import type { People, Repo } from "../config/index.js";
 import type { WindowEvent } from "../events/index.js";
-import type { Field, FieldList } from "../owed/index.js";
+import type { Field, FieldList, Owner } from "../owed/index.js";
 import type { Thread, ThreadSummary } from "../waits/index.js";
 
 /** How activity splits its list into sections. */
@@ -19,7 +19,10 @@ export interface ActivityAddress {
 export interface RepoEvents {
   /** The repository, with the short name its references use. */
   readonly repo: Repo;
-  /** The people of the repository's settings, which tell bots apart. */
+  /**
+   * Each login's group in the repository, as `gatherPeople` gives it
+   * from the settings and the threads, which tells bots apart.
+   */
   readonly people: People;
   /**
    * The threads' recorded facts, which give a row its owners and its
@@ -66,11 +69,11 @@ export interface ThreadRow {
    * The one owner, or `unassigned`. Absent when the owners take a line of
    * their own, or when the thread's facts were not given.
    */
-  readonly owner?: Field;
+  readonly owner?: Owner;
   /** `draft`, on a draft pull request. */
   readonly draft?: Field;
   /** Every owner, on a third line, when there are two or more. */
-  readonly owners?: FieldList;
+  readonly owners?: FieldList<Owner>;
   /** The thread's events, newest first. */
   readonly events: readonly EventLine[];
   /** `invalid repository file`, when the repository's own file is invalid. */

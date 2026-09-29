@@ -5,6 +5,7 @@ import type { CommentNode, DiscussionNode } from "./types.js";
 const readMessage = (comment: CommentNode) => ({
   author: readAuthor(comment),
   at: new Date(comment.createdAt),
+  text: comment.bodyText,
 });
 
 /**
@@ -23,6 +24,7 @@ export default function readDiscussion(
     title: node.title,
     author: readAuthor(node),
     createdAt: new Date(node.createdAt),
+    text: node.bodyText,
     updatedAt: new Date(node.updatedAt),
     open: !node.closed,
     draft: false,

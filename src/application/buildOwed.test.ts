@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { thread } from "../testing/facts.js";
+import { carol, thread } from "../testing/facts.js";
 import {
   recordedNow,
   recordedOwed,
@@ -15,6 +15,42 @@ describe("buildOwed", () => {
       expect(
         buildOwed(recordedThreads, recordedWatched(), grouping, recordedNow),
       ).toEqual(recordedOwed(grouping));
+    }
+  });
+
+  it("names the viewer you among the people each row names", () => {
+    const owed = buildOwed(
+      recordedThreads,
+      recordedWatched(),
+      "none",
+      recordedNow,
+      "alice",
+    );
+    const rows = owed.groups.flatMap(({ rows }) => rows);
+    const assignedToAlice = rows.find(
+      ({ owner }) => owner?.text === "alice",
+    )?.owner;
+    expect(assignedToAlice).toMatchObject({ group: "you" });
+    expect(
+      rows.every(
+        ({ author }) => (author.group === "you") === (author.text === "alice"),
+      ),
+    ).toBe(true);
+  });
+
+  it("gives a login one group as author and as owner on the same row", () => {
+    const opened = thread({
+      author: carol,
+      assignees: [{ login: "carol", type: "user" }],
+    });
+    const owed = buildOwed([opened], recordedWatched(), "none", recordedNow);
+    const rows = owed.groups.flatMap(({ rows }) => rows);
+    expect(rows.map(({ kind }) => kind.text)).toEqual(["reply", "close"]);
+    for (const { author, owner } of rows) {
+      expect([author, owner]).toEqual([
+        { text: "carol", fit: "trimmed", group: "internal" },
+        { text: "carol", fit: "trimmed", group: "internal" },
+      ]);
     }
   });
 

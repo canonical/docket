@@ -1,5 +1,5 @@
 import type { WorkingClock } from "../clock/index.js";
-import type { Repo } from "../config/index.js";
+import type { People, Repo } from "../config/index.js";
 import type { Wait } from "../waits/index.js";
 
 /**
@@ -19,10 +19,30 @@ export interface Field {
 }
 
 /** Fields that share a line and wrap between each other. */
-export interface FieldList {
+export interface FieldList<F extends Field = Field> {
   readonly fit: "wrapped";
-  readonly fields: readonly Field[];
+  readonly fields: readonly F[];
 }
+
+/**
+ * Whom a login is, as a list tells people apart: `you`, the account gh
+ * is signed in with, or a GitHub team it belongs to; otherwise the group
+ * the settings put the account in, `team`, `internal`, `outside` (the
+ * settings' `external`) or `bot`. Five groups, in that order, each a
+ * face draws one way.
+ */
+export type PersonGroup = "you" | "team" | "internal" | "outside" | "bot";
+
+/** A login a list names, or a team the viewer belongs to, with its group. */
+export interface Person extends Field {
+  readonly group: PersonGroup;
+}
+
+/**
+ * Who owns a wait or a thread: a person, or a text that names no login,
+ * such as `unassigned` or a GitHub team the viewer is not known to be in.
+ */
+export type Owner = Person | Field;
 
 /**
  * A pane's header: the mode as its title, and where the reader is inside
@@ -52,6 +72,11 @@ export interface RepoWaits {
   /** The working clock of the repository's settings. */
   readonly time: WorkingClock;
   readonly waits: readonly Wait[];
+  /**
+   * Each login's group in the repository, as `gatherPeople` gives it
+   * from the settings and the threads.
+   */
+  readonly people: People;
   /**
    * Whether the repository's own file is invalid, so its settings are the
    * built-in defaults.
@@ -85,12 +110,14 @@ export interface WaitRow {
   /** `1d over` or `9h left`. */
   readonly distance: Field;
   readonly title: Field;
+  /** Who waits on the move: the wait's author. */
+  readonly author: Person;
   /** The one owner, or `unassigned`; absent when the owners take a line of their own. */
-  readonly owner?: Field;
+  readonly owner?: Owner;
   /** `draft`, on a draft pull request. */
   readonly draft?: Field;
   /** Every owner, on a third line, when there are two or more. */
-  readonly owners?: FieldList;
+  readonly owners?: FieldList<Owner>;
   /** `invalid repository file`, when the repository's own file is invalid. */
   readonly invalidFile?: Field;
 }

@@ -11,8 +11,8 @@ import {
   activityGroupings,
   describeAddress as describeActivityAddress,
 } from "../lib/activity/index.js";
-import type { CacheStatus } from "../lib/cache/index.js";
 import {
+  describeNoTeam,
   describeAddress as describeOwedAddress,
   owedGroupings,
   type WaitRow,
@@ -22,7 +22,6 @@ import {
   type ActionResult,
   CountsLine,
   countPickerLines,
-  describeClock,
   EmptyState,
   HelpOverlay,
   KeyBar,
@@ -39,6 +38,7 @@ import type { Thread } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
+import describeHold from "./describeHold.js";
 import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
@@ -53,6 +53,7 @@ import useActivity from "./useActivity.js";
 import useEditor from "./useEditor.js";
 import useHeldDetails from "./useHeldDetails.js";
 import useScreenKeys from "./useScreenKeys.js";
+import useViewer from "./useViewer.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
@@ -68,39 +69,6 @@ function cycle<T>(list: readonly T[], item: T): T {
 
 /** Reads a sentence as a line on screen, which ends without a full stop. */
 const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
-
-/**
- * Why the first fetch cannot go on, and what to do about it, or nothing
- * while a refresh runs or none has stopped. The reasons come in the order
- * the status line names them: a rate limit, what stopped the last
- * refresh, then a pause to spare the request budget. A pause stops the
- * refresh without a failure, so without this the list would say
- * `refresh in progress…` until it resumes.
- */
-function describeHold(
-  status: CacheStatus,
-  timezone: string,
-): { readonly reason: string; readonly recovery: string } | undefined {
-  const { refreshing, paused, failure } = status;
-  if (refreshing) return undefined;
-  const resume = (until: Date) =>
-    `wait: docket resumes at ${describeClock(until, timezone)}`;
-  if (paused?.reason === "rateLimit") {
-    const reason = "GitHub refused requests for its rate limit";
-    return { reason, recovery: resume(paused.until) };
-  }
-  if (failure) {
-    return {
-      reason: dropFullStop(failure.message),
-      recovery: failure.recovery,
-    };
-  }
-  if (paused) {
-    const reason = "docket paused the refresh to spare the request budget";
-    return { reason, recovery: resume(paused.until) };
-  }
-  return undefined;
-}
 
 /** A thread's last change, as GitHub records it, and its checks. */
 const describeVersion = ({ updatedAt, checks }: Thread) =>
@@ -150,16 +118,20 @@ export default function Screen({
     void readWatched?.().then(setFiles);
   }, [readWatched]);
   const watched = files && "watched" in files ? files.watched : opening;
+  const status = useSyncExternalStore(
+    cache?.subscribe ?? ignoreChanges,
+    cache?.status ?? readNothing,
+  );
+  const you = useViewer({
+    readViewer: "cache" in source ? source.readViewer : undefined,
+    syncedAt: status?.syncedAt,
+  });
   const problem =
     "problem" in source
       ? source.problem
       : files && "problem" in files
         ? files.problem
-        : undefined;
-  const status = useSyncExternalStore(
-    cache?.subscribe ?? ignoreChanges,
-    cache?.status ?? readNothing,
-  );
+        : you.problem;
   const cached = useSyncExternalStore(
     cache?.subscribe ?? ignoreChanges,
     cache?.threads ?? readNothing,
@@ -292,7 +264,7 @@ export default function Screen({
       : undefined;
   const owed =
     threads && mode === "owed"
-      ? buildOwed(threads, watched, owedGrouping, at)
+      ? buildOwed(threads, watched, owedGrouping, at, you.viewer)
       : undefined;
   const activity = useActivity({
     source,
@@ -304,12 +276,16 @@ export default function Screen({
     grouping: activityGrouping,
     now,
     at,
+    viewer: you.viewer,
   });
   const room = width - indent;
   const listed = activity && "list" in activity ? activity.list : undefined;
-  // A failure reading activity's events leaves the rows held, and the
-  // status line names it as it names a failed refresh.
-  const failure = activity && "list" in activity ? activity.failure : undefined;
+  // A failure reading activity's events, or whom gh is signed in as,
+  // leaves the rows held, and the status line names it as it names a
+  // failed refresh.
+  const failure =
+    (activity && "list" in activity ? activity.failure : undefined) ??
+    you.failure;
   const shownStatus = status && failure ? { ...status, failure } : status;
   const rows: readonly (WaitRow | ActivityThread)[] =
     (owed ?? listed)?.groups.flatMap(
@@ -355,6 +331,10 @@ export default function Screen({
       };
 
   // The list region: rows once the data is in, or what stands in for them.
+  // owed opens with a notice while a watched repository lists no team.
+  const teamless = describeNoTeam(
+    watched.map(({ resolved }) => resolved.settings.people),
+  );
   let region: ReactNode = null;
   if (problem) {
     const { message, recovery } = problem;
@@ -370,7 +350,11 @@ export default function Screen({
   } else if (!threads) {
     const held = status && describeHold(status, settings.time.timezone);
     region = held ? (
-      <Notice reason={held.reason} recovery={held.recovery} width={width} />
+      <Notice
+        reason={dropFullStop(held.reason)}
+        recovery={held.recovery}
+        width={width}
+      />
     ) : (
       <box flexDirection="column" paddingLeft={indent}>
         <text fg={tokens["color.text"]}>refresh in progress…</text>
@@ -382,7 +366,12 @@ export default function Screen({
       </box>
     );
   } else if (owed?.groups.length === 0) {
-    region = <EmptyState message="nothing owed" width={width} />;
+    region = (
+      <box flexDirection="column">
+        {teamless && <Notice {...teamless} width={width} />}
+        <EmptyState message="nothing owed" width={width} />
+      </box>
+    );
   } else if (owed && readThreadDetail) {
     region = (
       <OwedList
@@ -400,6 +389,7 @@ export default function Screen({
         width={width}
         height={height - 4}
         onShownRows={recordShownRows}
+        {...(teamless && { notice: teamless })}
         {...(slot && { editor: slot })}
       />
     );

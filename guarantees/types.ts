@@ -15,7 +15,8 @@ export interface RecordedAnswer {
 /**
  * The answers GitHub gives, keyed by request: `GET /repos/org/repo/issues`
  * for REST, and for GraphQL the operation and repository, such as
- * `Snapshot org/repo`, followed by `#12` when the request names a thread.
+ * `Snapshot org/repo`, followed by `#12` when the request names a thread,
+ * or the operation alone, such as `Viewer`, when it names no repository.
  */
 export type Recording = Readonly<Record<string, RecordedAnswer>>;
 

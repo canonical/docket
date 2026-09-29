@@ -12,11 +12,12 @@ const [first, , soon] = recordedOwed().groups.at(0)?.rows ?? [];
 if (!first || !soon) throw new Error("the recording has waits");
 
 describe("describeWaitData", () => {
-  it("gives a wait as data, its kind as an identifier and its due time in ISO 8601", () => {
+  it("gives a wait as data, its kind and its author's group as identifiers and its due time in ISO 8601", () => {
     expect(describeWaitData(soon, "standard")).toEqual({
       reference: "example#15",
       title: "Crash on start",
       kind: "response",
+      author: { login: "carol", group: "internal" },
       state: "soon",
       overdue: -1 / 6,
       owners: [],
@@ -57,7 +58,7 @@ describe("describeWaitData", () => {
     const [repo] = recordedRepos;
     if (!repo) throw new Error("the recording watches a repository");
     const [row] = listWaits(
-      [{ repo, time: sixDays, waits: [weekly] }],
+      [{ repo, time: sixDays, people: new Map(), waits: [weekly] }],
       recordedNow,
     ).rows;
     if (!row) throw new Error("the list has the wait");

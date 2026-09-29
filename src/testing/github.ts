@@ -112,6 +112,29 @@ export async function settle<T>(promise: Promise<T>): Promise<T> {
   return promise;
 }
 
+/**
+ * The fields `query` asks for on each node of `list`, the selections
+ * nested under them left out.
+ */
+export function selectNodeFields(query: string, list: string): string[] {
+  const open = query.indexOf(
+    "{",
+    query.indexOf("nodes {", query.indexOf(`${list}(`)),
+  );
+  let depth = 0;
+  let close = open;
+  do {
+    if (query.at(close) === "{") depth += 1;
+    if (query.at(close) === "}") depth -= 1;
+    close += 1;
+  } while (depth > 0);
+  let fields = query.slice(open + 1, close - 1);
+  while (/\{[^{}]*\}/.test(fields)) {
+    fields = fields.replace(/\{[^{}]*\}/g, "");
+  }
+  return fields.split(/\s+/);
+}
+
 /** The rate figures every GraphQL answer carries. */
 export const rateLimit = {
   limit: 5000,
@@ -139,12 +162,21 @@ export const bot = (login: string) => ({ login, __typename: "Bot" });
 /** An account as REST gives it. */
 export const restUser = (login: string, type = "User") => ({ login, type });
 
-/** A comment by `login`, a member of the organisation, as GraphQL gives it. */
+/**
+ * A comment by `login`, a member of the organisation, as the snapshot
+ * gives it, saying `text`.
+ */
 export const comment = (
   login: string,
   createdAt: string,
   association = "MEMBER",
-) => ({ author: user(login), authorAssociation: association, createdAt });
+  text = "Example comment",
+) => ({
+  author: user(login),
+  authorAssociation: association,
+  createdAt,
+  bodyText: text,
+});
 
 /**
  * An open issue in example-org/example-repo, as the snapshot query gives
@@ -159,6 +191,7 @@ export const issueNode = (fields: Record<string, unknown> = {}) => ({
   state: "OPEN",
   author: user("dave"),
   authorAssociation: "NONE",
+  bodyText: "Example opening",
   assignees: { nodes: [] },
   labels: { nodes: [] },
   comments: { nodes: [] },
@@ -208,6 +241,7 @@ export const discussionNode = (fields: Record<string, unknown> = {}) => ({
   closed: false,
   author: user("dave"),
   authorAssociation: "NONE",
+  bodyText: "Example opening",
   labels: { nodes: [] },
   comments: { nodes: [] },
   ...fields,

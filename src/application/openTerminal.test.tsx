@@ -67,7 +67,10 @@ describe("openTerminal", () => {
       source: {
         cache,
         capabilities: everyCapability,
-        readWatched: async () => ({ watched: recordedWatched() }),
+        readWatched: async () => ({
+          watched: recordedWatched(),
+        }),
+        readViewer: async () => "alice",
         readDetail: async () => parserFixDetail,
         readCandidates: () => Promise.reject(new Error("no editor opens")),
         write: () => Promise.reject(new Error("no editor opens")),
@@ -100,6 +103,7 @@ describe("openTerminal", () => {
         cache,
         capabilities: everyCapability,
         readWatched: () => new Promise(() => {}),
+        readViewer: () => new Promise(() => {}),
         readDetail: async () => parserFixDetail,
         readCandidates: () => Promise.reject(new Error("no editor opens")),
         write: () => Promise.reject(new Error("no editor opens")),

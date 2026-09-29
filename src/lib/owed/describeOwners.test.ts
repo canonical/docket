@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
 import describeOwners from "./describeOwners.js";
+import type { Person } from "./types.js";
+
+const person = (text: string): Person => ({
+  text,
+  fit: "trimmed",
+  group: "team",
+});
 
 describe("describeOwners", () => {
   it("names nobody assigned as unassigned", () => {
@@ -8,25 +15,17 @@ describe("describeOwners", () => {
     });
   });
 
-  it("names one owner on the row, whole however long the login", () => {
-    expect(describeOwners(["alice"])).toEqual({
-      owner: { text: "alice", fit: "trimmed" },
+  it("names one owner on the row, as given", () => {
+    expect(describeOwners([person("alice")])).toEqual({
+      owner: person("alice"),
     });
-    const long = "a-very-long-login-name-indeed";
-    expect(describeOwners([long])).toEqual({
-      owner: { text: long, fit: "trimmed" },
-    });
+    const team = { text: "example-org/reviewers", fit: "trimmed" } as const;
+    expect(describeOwners([team])).toEqual({ owner: team });
   });
 
   it("lists two or more owners on a wrapped line of their own", () => {
-    expect(describeOwners(["alice", "bob"])).toEqual({
-      owners: {
-        fit: "wrapped",
-        fields: [
-          { text: "alice", fit: "trimmed" },
-          { text: "bob", fit: "trimmed" },
-        ],
-      },
+    expect(describeOwners([person("alice"), person("bob")])).toEqual({
+      owners: { fit: "wrapped", fields: [person("alice"), person("bob")] },
     });
   });
 });

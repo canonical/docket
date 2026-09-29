@@ -8,6 +8,7 @@ export type {
   CachedEvents,
   CachedFile,
   CachedThreads,
+  CachedViewer,
   CacheErrorCode,
   CacheOptions,
   CacheStatus,

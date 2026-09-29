@@ -141,11 +141,18 @@ function viewOf(
       cache,
       capabilities,
       readWatched,
+      readViewer: async () => "alice",
       readDetail,
       readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
       ...edits,
     },
   };
+}
+
+/** The cache and readings a view reads from. */
+function cacheSourceOf({ source }: TerminalView) {
+  if (!("cache" in source)) throw new Error("the view reads a cache");
+  return source;
 }
 
 function show(view: TerminalView, width = 40, onQuit = () => {}, height = 12) {
@@ -507,12 +514,179 @@ describe("Screen", () => {
       expect(screen.lines.at(9)).toBe("0 over · 0 soon · 0 on track");
     });
 
+    it("opens owed with the notice while no team is listed, the rows below it, and activity without it", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const teamless = { ...recordedSettings, people: new Map() };
+      const readTeamless = async () => ({
+        watched: recordedWatched(teamless),
+      });
+      const view = {
+        ...viewOf(cache, everyCapability, readTeamless),
+        settings: teamless,
+      };
+      const screen = await show(view, 40, () => {}, 17);
+      const owed = await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(7)).toMatch(/^▌ docs#4 reply/);
+        return drawn;
+      });
+      expect(owed.lines.slice(1, 7)).toEqual([
+        "  ✗ no team in docket.yaml, so every",
+        "  comment starts a reply wait",
+        "  Recovery: list the team under people:",
+        "  in the personal file or the",
+        "  repository's .github/docket.yaml, then",
+        "  run docket config",
+      ]);
+      await press(screen, "right");
+      expect((await screen.redraw()).lines.join("\n")).not.toContain("no team");
+    });
+
+    it.each([
+      [
+        16,
+        [
+          "▌ docs#4 reply                  18d over",
+          "  Where do tokens live?",
+          "  alice, bob",
+          "  dave · 3d ago",
+          "  Rebased on main. Could someone look",
+          "  again?",
+        ],
+      ],
+      [
+        14,
+        [
+          "▌ docs#4 reply                  18d over",
+          "  Where do tokens live?",
+          "  alice, bob",
+          "  dave · 3d ago",
+        ],
+      ],
+    ])(
+      "keeps the notice whole above the selected row, cut below it, at 40 by %i",
+      async (height, rows) => {
+        const cache = await openCache(recordedProvider());
+        await cache.refresh();
+        const teamless = { ...recordedSettings, people: new Map() };
+        const readTeamless = async () => ({
+          watched: recordedWatched(teamless),
+        });
+        const view = {
+          ...viewOf(cache, everyCapability, readTeamless),
+          settings: teamless,
+        };
+        const screen = await show(view, 40, () => {}, height);
+        const owed = await vi.waitFor(async () => {
+          const drawn = await screen.redraw();
+          expect(drawn.lines.at(7)).toMatch(/^▌ docs#4 reply/);
+          return drawn;
+        });
+        expect(owed.lines.slice(1, height - 3)).toEqual([
+          "  ✗ no team in docket.yaml, so every",
+          "  comment starts a reply wait",
+          "  Recovery: list the team under people:",
+          "  in the personal file or the",
+          "  repository's .github/docket.yaml, then",
+          "  run docket config",
+          ...rows,
+        ]);
+        expect(owed.lines.at(height - 3)).toMatch(/^\d+ over/);
+      },
+    );
+
+    it("keeps the notice above nothing owed while no team is listed", async () => {
+      const cache = await openCache(fakeProvider());
+      await cache.refresh();
+      const teamless = { ...recordedSettings, people: new Map() };
+      const view = {
+        ...viewOf(cache, everyCapability, async () => ({
+          watched: recordedWatched(teamless),
+        })),
+        settings: teamless,
+        watched: recordedWatched(teamless),
+      };
+      const screen = await (await show(view, 60)).redraw();
+      expect(screen.lines.slice(2, 8)).toEqual([
+        "  ✗ no team in docket.yaml, so every comment starts a reply",
+        "  wait",
+        "  Recovery: list the team under people: in the personal file",
+        "  or the repository's .github/docket.yaml, then run",
+        "  docket config",
+        "  nothing owed",
+      ]);
+    });
+
+    it("drops the notice once every repository's own file lists a team the personal file leaves out", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const teamless = { ...recordedSettings, people: new Map() };
+      const view = {
+        ...viewOf(cache),
+        settings: teamless,
+        watched: recordedWatched(teamless),
+      };
+      const screen = await show(view, 60, () => {}, 16);
+      await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(1)).toMatch(/^▌┃example#12 reply/);
+      });
+    });
+
+    it("shows the notice while a repository's own file lists no team, though the personal file lists one", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const people = new Map([["carol", "internal" as const]]);
+      const readDeclared = async () => ({
+        watched: [
+          ...recordedWatched().slice(0, 1),
+          ...recordedWatched({ ...recordedSettings, people }).slice(1),
+        ],
+      });
+      const screen = await show(
+        viewOf(cache, everyCapability, readDeclared),
+        60,
+        () => {},
+        16,
+      );
+      const owed = await vi.waitFor(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(1)).toMatch(/^ {2}✗ no team/);
+        return drawn;
+      });
+      expect(owed.lines.slice(1, 3)).toEqual([
+        "  ✗ no team in docket.yaml, so every comment starts a reply",
+        "  wait",
+      ]);
+      expect(owed.lines.join("\n")).toMatch(/docs#4 reply/);
+    });
+
     it("says nothing is owed when no repository is watched", async () => {
       const cache = await openCache(fakeProvider(), []);
       const readNone = async () => ({ watched: [] });
       const view = { ...viewOf(cache, everyCapability, readNone), watched: [] };
       const screen = await (await show(view)).redraw();
       expect(screen.lines.at(2)).toBe("  nothing owed");
+    });
+
+    it("shows the cached rows, the status naming the failure, when GitHub cannot say whom gh is signed in as", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const view = viewOf(cache);
+      const source = {
+        ...cacheSourceOf(view),
+        readViewer: () => Promise.reject(providerError("GITHUB_UNREACHABLE")),
+      };
+      const screen = await show({ ...view, source });
+      await vi.waitFor(async () =>
+        expect((await screen.redraw()).lines.at(10)).toBe(
+          "✗ offline · data from 12:00",
+        ),
+      );
+      expect((await screen.redraw()).lines.at(1)).toMatch(
+        /^▌┃example#12 reply/,
+      );
     });
 
     it("reads the clock again as time passes", async () => {

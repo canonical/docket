@@ -22,14 +22,15 @@ import writeFromTerminal from "./writeFromTerminal.js";
  * Opens the terminal interface on `mode` at once, with owed grouped by
  * `owedGrouping`: on the shared cache of every watched repository, each
  * on the built-in defaults and the personal file, with a reading of each
- * repository's own file that the interface starts once it has opened,
- * and a reading of activity's events. When gh gives no token, it opens
- * on the reason and its recovery
+ * repository's own file and of the login gh is signed in with, which the
+ * interface starts once it has opened, and a reading of activity's
+ * events. When gh gives no token, it opens on the reason and its recovery
  * instead.
  *
  * @note Impure: takes over the terminal until it is closed, and the
  * readings it hands the interface read through the cache, which asks
- * GitHub when a file or the events it holds are older than `maxAge`.
+ * GitHub when a file or the events it holds are older than `maxAge`, and
+ * the login is read from GitHub.
  * @param maxAge How old a cached repository file or cached events may be,
  * in milliseconds.
  * @param connection The provider gh's token opens with the cache on it, or
@@ -93,6 +94,7 @@ export default async function answerTerminal(
       cache,
       capabilities: provider.capabilities(),
       readWatched,
+      readViewer: () => provider.viewer(),
       readDetail: (thread) => provider.threadDetail(thread),
       readCandidates: (action, thread) =>
         readCandidates(provider, action, thread),

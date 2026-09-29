@@ -43,6 +43,7 @@ describe("buildThreadRow", () => {
       people,
       [pushed, opened],
       now,
+      "alice",
     );
     expect(row).toEqual({
       thread: pull,
@@ -52,7 +53,7 @@ describe("buildThreadRow", () => {
       kind: { text: "PR", fit: "trimmed" },
       distance: { text: "25m", fit: "trimmed" },
       title: { text: "Example title", fit: "trimmed" },
-      owner: { text: "alice", fit: "trimmed" },
+      owner: { text: "alice", fit: "trimmed", group: "you" },
       events: [
         {
           event: pushed,

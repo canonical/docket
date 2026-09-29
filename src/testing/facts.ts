@@ -75,6 +75,7 @@ export function wait(facts: Partial<Wait> = {}): Wait {
   return {
     thread: thread(),
     kind: "close",
+    author: dave,
     owners: [],
     started: at("2026-09-22T10:00+02:00"),
     target: { amount: 24, unit: "h" },

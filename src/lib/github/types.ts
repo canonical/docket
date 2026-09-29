@@ -114,9 +114,11 @@ export interface FeedPush {
   readonly actor: RestAccount | null;
 }
 
-/** A comment as GraphQL gives it. */
+/** A comment as the snapshot gives it, with its text. */
 export interface CommentNode extends WrittenNode {
   readonly createdAt: string;
+  /** What it says, as plain text. */
+  readonly bodyText: string;
 }
 
 /** What the snapshot gives about every issue and pull request. */
@@ -128,6 +130,8 @@ export interface IssueNode extends WrittenNode {
   readonly updatedAt: string;
   /** `OPEN`, `CLOSED`, or `MERGED` for a pull request. */
   readonly state: string;
+  /** What its opening says, as plain text. */
+  readonly bodyText: string;
   readonly assignees: { readonly nodes: readonly NonNullable<ActorNode>[] };
   readonly labels: { readonly nodes: readonly { readonly name: string }[] };
   readonly comments: { readonly nodes: readonly CommentNode[] };
@@ -138,6 +142,8 @@ export interface RequestNode {
   readonly __typename: string;
   readonly createdAt: string;
   readonly requestedReviewer: ReviewerNode;
+  /** Who asked for the review, on a request; absent on a withdrawal. */
+  readonly actor?: ActorNode;
 }
 
 /** Where a pull request sits in its stack; `null` outside one. */
@@ -167,6 +173,7 @@ export interface PullNode extends IssueNode {
   readonly latestReviews: {
     readonly nodes: readonly (WrittenNode & {
       readonly submittedAt: string | null;
+      readonly bodyText: string;
     })[];
   };
   /** The latest reviews requested. */
@@ -187,6 +194,8 @@ export interface DiscussionNode extends WrittenNode {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly closed: boolean;
+  /** What its opening says, as plain text. */
+  readonly bodyText: string;
   readonly labels: { readonly nodes: readonly { readonly name: string }[] };
   readonly comments: {
     readonly nodes: readonly (CommentNode & {

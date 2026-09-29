@@ -16,6 +16,13 @@ const fragments = {
   labels: "labels(first: 10) { nodes { name } }",
   /** Something written: its author, and the author's tie to the repository. */
   written: `author { ${account} } authorAssociation`,
+  /**
+   * A comment or review as the snapshot reads it: who wrote it, and what
+   * it says as plain text, which a terminal draws as it is and which is
+   * shorter than the Markdown. A field costs no points, where a list of
+   * its own would.
+   */
+  message: `author { ${account} } authorAssociation bodyText`,
   /** A requested reviewer: a person, a bot, or a team by its full name. */
   requestedReviewer: `requestedReviewer { __typename ... on User { login } ... on Bot { login } ... on Team { combinedSlug } }`,
   /** A check on a commit: a check run, or a commit status. */

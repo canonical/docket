@@ -14,15 +14,18 @@ import type { RepoWaits, WaitList } from "./types.js";
  *
  * @param repos The watched repositories, in the configuration's order. A
  * repository whose own file is invalid has each of its rows marked.
+ * @param viewer The login gh is signed in with, when it is known, which
+ * marks the viewer among the people each row names.
  */
 export default function listWaits(
   repos: readonly RepoWaits[],
   now: Date,
+  viewer?: string,
 ): WaitList {
   const rows = repos
-    .flatMap(({ repo, time, waits, invalidFile }) =>
+    .flatMap(({ repo, time, waits, people, invalidFile }) =>
       waits.map((wait) => {
-        const row = buildRow(wait, repo.name, time, now);
+        const row = buildRow(wait, repo.name, time, now, people, viewer);
         return invalidFile
           ? {
               ...row,
