@@ -91,4 +91,9 @@ export interface ThreadAccordionProps {
   timezone: string;
   /** The width of the pane, in display cells. */
   width: number;
+  /**
+   * Told, after the details arrive or fail, how many lines the accordion
+   * drew, which can pass what the snapshot gave.
+   */
+  onLines?: (lines: number) => void;
 }

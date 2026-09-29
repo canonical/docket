@@ -1,4 +1,4 @@
-import { Component, type ReactNode, Suspense, use } from "react";
+import { Component, type ReactNode, Suspense, use, useEffect } from "react";
 import type { WaitRow } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
@@ -32,38 +32,44 @@ const findStroke = (
 /**
  * Draws the lines given with the item's margin beside them, the bar
  * ending on the last line, all on the selection's background: the
- * accordion belongs to the selected item.
+ * accordion belongs to the selected item. Tells `onLines`, when given,
+ * how many lines it drew.
  */
 const Lines = ({
   lines,
   stroke,
+  onLines,
 }: {
   readonly lines: readonly (readonly Piece[])[];
   readonly stroke: Stroke;
-}): ReactNode => (
-  <box
-    flexDirection="row"
-    flexShrink={0}
-    backgroundColor={tokens["color.background.selected"]}
-  >
-    <Margin {...stroke} lines={lines.length} ends />
-    <box flexDirection="column">
-      {lines.map((line, place) => (
-        // The accordion's lines never reorder, so their place is their key.
-        // biome-ignore lint/suspicious/noArrayIndexKey: see above.
-        <text key={place}>
-          {line.map(({ text, fg }, run) => (
-            // A line's runs never reorder, so their place is their key.
-            // biome-ignore lint/suspicious/noArrayIndexKey: see above.
-            <span key={run} fg={fg}>
-              {text}
-            </span>
-          ))}
-        </text>
-      ))}
+  readonly onLines?: ThreadAccordionProps["onLines"];
+}): ReactNode => {
+  useEffect(() => onLines?.(lines.length));
+  return (
+    <box
+      flexDirection="row"
+      flexShrink={0}
+      backgroundColor={tokens["color.background.selected"]}
+    >
+      <Margin {...stroke} lines={lines.length} ends />
+      <box flexDirection="column">
+        {lines.map((line, place) => (
+          // The accordion's lines never reorder, so their place is their key.
+          // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+          <text key={place}>
+            {line.map(({ text, fg }, run) => (
+              // A line's runs never reorder, so their place is their key.
+              // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+              <span key={run} fg={fg}>
+                {text}
+              </span>
+            ))}
+          </text>
+        ))}
+      </box>
     </box>
-  </box>
-);
+  );
+};
 
 /**
  * The details, once they have arrived, filling the snapshot's lines in
@@ -76,12 +82,14 @@ const Loaded = ({
   reading,
   room,
   stroke,
+  onLines,
 }: {
   readonly detail: Promise<ShownDetail>;
   readonly row: ThreadAccordionProps["row"];
   readonly reading: Reading;
   readonly room: number;
   readonly stroke: Stroke;
+  readonly onLines: ThreadAccordionProps["onLines"];
 }): ReactNode => {
   const shown = use(detail);
   if ("resumes" in shown) {
@@ -92,6 +100,7 @@ const Loaded = ({
           [{ text: trimText(paused, room), fg: tokens["color.text.muted"] }],
         ]}
         stroke={stroke}
+        onLines={onLines}
       />
     );
   }
@@ -99,6 +108,7 @@ const Loaded = ({
     <Lines
       lines={fitAccordion(describeDetail(row, shown, reading), room)}
       stroke={stroke}
+      onLines={onLines}
     />
   );
 };
@@ -110,6 +120,7 @@ interface BoundaryProps {
   readonly reading: Reading;
   readonly room: number;
   readonly stroke: Stroke;
+  readonly onLines: ThreadAccordionProps["onLines"];
   readonly children: ReactNode;
 }
 
@@ -143,7 +154,7 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
   override render(): ReactNode {
     const { failure } = this.state;
     if (failure === undefined) return this.props.children;
-    const { snapshot, reading, room, stroke } = this.props;
+    const { snapshot, reading, room, stroke, onLines } = this.props;
     const reason =
       failure instanceof Error
         ? failure.message.replace(/\.$/, "")
@@ -160,7 +171,9 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
             accordionMaxLines - 1,
           )
         : [];
-    return <Lines lines={[...shown, [failed]]} stroke={stroke} />;
+    return (
+      <Lines lines={[...shown, [failed]]} stroke={stroke} onLines={onLines} />
+    );
   }
 }
 
@@ -177,8 +190,11 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
  * as one line under what the snapshot showed. While reading is paused
  * it shows what the snapshot holds, as it does while a read is under way,
  * and for a thread the snapshot holds nothing of, `paused · resumes 13:00`,
- * dimmed. The thread's content wears no state mark: docket's own words
- * about it are dimmed, and each login carries its group's mark and hue.
+ * dimmed. Details that make it taller than the snapshot's lines, such as
+ * a closed thread's close body or a failed read's line, are told through
+ * `onLines`, so the list can make room. The thread's content wears no
+ * state mark: docket's own words about it are dimmed, and each login
+ * carries its group's mark and hue.
  *
  * `import { ThreadAccordion } from "../lib/ui/index.js";`
  *
@@ -192,6 +208,7 @@ const ThreadAccordion = ({
   now,
   timezone,
   width,
+  onLines,
 }: ThreadAccordionProps): ReactNode => {
   const reading = { now, timezone, waiting };
   const room = width - marginCells;
@@ -203,6 +220,7 @@ const ThreadAccordion = ({
       reading={reading}
       room={room}
       stroke={stroke}
+      onLines={onLines}
     >
       <Suspense
         fallback={
@@ -218,6 +236,7 @@ const ThreadAccordion = ({
           reading={reading}
           room={room}
           stroke={stroke}
+          onLines={onLines}
         />
       </Suspense>
     </Boundary>

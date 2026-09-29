@@ -8,6 +8,7 @@ import {
   type ShownDetail,
   ThreadAccordion,
   ThreadRow,
+  useDrawnLines,
   useListScroll,
   wrapNotice,
 } from "../lib/ui/index.js";
@@ -77,6 +78,7 @@ export default function OwedList({
   onShownRows,
 }: OwedListProps): ReactNode {
   const waiting = listWaiting(list.groups.flatMap((group) => group.rows));
+  const drawn = useDrawnLines();
   const blocks: Block[] = [];
   let place = 0;
   let from = 0;
@@ -99,7 +101,10 @@ export default function OwedList({
           countRowLines(row, width, open && !editor) +
           (open
             ? (editor?.lines ??
-              countAccordionLines(row, { now, timezone, waiting }, width))
+              drawn.measure(
+                identifyRow(row),
+                countAccordionLines(row, { now, timezone, waiting }, width),
+              ))
             : 0),
         node: (
           <>
@@ -119,6 +124,7 @@ export default function OwedList({
                 now={now}
                 timezone={timezone}
                 width={width}
+                onLines={drawn.report(identifyRow(row))}
               />
             )}
           </>

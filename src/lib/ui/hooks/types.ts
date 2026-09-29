@@ -61,3 +61,17 @@ export interface UseListScrollProps<Block extends { readonly lines: number }> {
  * room, and always the first, whatever its height.
  */
 export type UseListScrollResult<Block> = readonly Block[];
+
+/**
+ * Result of the useDrawnLines hook: what a list counts for the selected
+ * item's accordion, and how the accordion tells it what it drew.
+ */
+export interface UseDrawnLinesResult {
+  /**
+   * The lines the accordion of the item `key` drew last, or `counted`,
+   * what the snapshot gives, until it has drawn.
+   */
+  readonly measure: (key: string, counted: number) => number;
+  /** Records the lines the accordion of the item `key` drew. */
+  readonly report: (key: string) => (lines: number) => void;
+}

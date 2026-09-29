@@ -36,9 +36,11 @@ export {
   type KeyCommand,
   type UseCommandsProps,
   type UseCommandsResult,
+  type UseDrawnLinesResult,
   type UseListScrollProps,
   type UseListScrollResult,
   useCommands,
+  useDrawnLines,
   useListScroll,
 } from "./hooks/index.js";
 export { Pane, type PaneProps } from "./layout/index.js";

@@ -13,6 +13,7 @@ import {
   type ShownDetail,
   ThreadAccordion,
   ThreadRow,
+  useDrawnLines,
   useListScroll,
 } from "../lib/ui/index.js";
 import findThreadState from "./findThreadState.js";
@@ -98,6 +99,7 @@ export default function ActivityList({
   editor,
   onShownRows,
 }: ActivityListProps): ReactNode {
+  const drawn = useDrawnLines();
   const blocks: Block[] = [];
   let place = 0;
   let from = 0;
@@ -123,7 +125,11 @@ export default function ActivityList({
         lines:
           countRowLines(row, width, chosen && !editor) +
           (chosen
-            ? (editor?.lines ?? countAccordionLines(state, reading, width))
+            ? (editor?.lines ??
+              drawn.measure(
+                row.reference.text,
+                countAccordionLines(state, reading, width),
+              ))
             : 0) +
           row.events.length,
         node: (
@@ -144,6 +150,7 @@ export default function ActivityList({
                 now={now}
                 timezone={timezone}
                 width={width}
+                onLines={drawn.report(row.reference.text)}
               />
             )}
             {row.events.map((line, index) => (

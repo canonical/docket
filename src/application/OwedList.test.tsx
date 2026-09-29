@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { describeNoTeam, type OwedGrouping } from "../lib/owed/index.js";
 import { tokens } from "../lib/tokens/index.js";
+import { failDetail } from "../testing/details.js";
 import {
   parserFixDetail,
   recordedNow,
@@ -185,5 +186,27 @@ describe("OwedList", () => {
       "  docket config",
     ]);
     expect(screen.lines.at(5)).toMatch(/^┃┆example#12 PR reply/);
+  });
+
+  it("scrolls to keep the selected item whole once a failed read adds its line under the snapshot's", async () => {
+    const failed = failDetail(new Error("GitHub timed out"));
+    const shown: number[] = [];
+    const screen = await drawSuspending(
+      <OwedList
+        list={recordedOwed("none")}
+        selected={4}
+        readDetail={() => failed}
+        now={recordedNow}
+        timezone="Europe/Paris"
+        width={40}
+        height={12}
+        onShownRows={(rows) => shown.push(rows)}
+      />,
+      40,
+      12,
+    );
+    expect(screen.lines).toContain("╵┆✗ failed: GitHub timed out");
+    expect(screen.lines.at(0)).toBe("│ docs#4 issue close ● alice    10d left");
+    expect(shown.at(-1)).toBe(2);
   });
 });

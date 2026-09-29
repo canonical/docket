@@ -5,11 +5,13 @@ import fitAccordion from "./fitAccordion.js";
 import type { RestingThread } from "./types.js";
 
 /**
- * How many lines the accordion takes under `row` at `width`: as many as
- * its content, at most eight, known from the snapshot before any read, so
- * the list makes room for it at once. The details fill lines in place and
- * never change the count; a thread the snapshot holds nothing of takes
- * its one `loading…` line until they arrive.
+ * How many lines the accordion takes under `row` at `width` before any
+ * read: as many as its content, at most eight, known from the snapshot, so
+ * the list makes room for it at once. The details fill the snapshot's
+ * lines in place; a thread the snapshot holds nothing of takes its one
+ * `loading…` line until they arrive. What the details add beyond these,
+ * a closed thread's close body or a failed read's line, the list learns
+ * from what the accordion draws.
  */
 export default function countAccordionLines(
   row: WaitRow | RestingThread,
