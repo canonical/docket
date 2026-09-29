@@ -86,8 +86,9 @@ function markSettled(
  * screen whatever the thread's version, once they have settled. A thread
  * with none settled is given, settled at once, what the snapshot holds of
  * it, or, when it holds nothing, when reading resumes, so the accordion
- * never waits on a read that cannot start. What it is given stays on
- * screen once reading resumes, until the read settles.
+ * never waits on a read that cannot start. What the snapshot holds stays
+ * on screen once reading resumes, until the read settles; a thread it
+ * holds nothing of draws `loading…` until then.
  *
  * @note Impure: reads each thread's details through `read`, and redraws
  * once a read settles in place of details already shown.
@@ -120,6 +121,10 @@ export default function useHeldDetails({
       const value = facts ? composeDetail(facts) : { resumes };
       const standIn = Promise.resolve(value);
       markSettled(standIn, { status: "fulfilled", value });
+      // A thread the snapshot holds nothing of shows when reading resumes,
+      // which is false once it has, so it is not held: the thread draws
+      // `loading…` until its read settles.
+      if (!facts) return standIn;
       // Held, so it stays on screen once reading resumes until the read
       // settles: nothing that was shown gives way to `loading…`.
       if (held) {

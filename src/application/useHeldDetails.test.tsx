@@ -199,4 +199,21 @@ describe("useHeldDetails", () => {
     expect(await given).toEqual({ resumes });
     expect(read).not.toHaveBeenCalled();
   });
+
+  it("gives a thread the snapshot holds nothing of its read once reading resumes, unsettled until the read settles", async () => {
+    const later = Promise.withResolvers<ThreadDetail>();
+    const read = vi.fn(() => later.promise);
+    const { give, change } = await probe({
+      kept: [crash],
+      selected: () => crash,
+      resumes,
+    });
+    await give(read, crash, "1");
+    await change({ resumes: undefined });
+    const resumed = give(read, crash, "1");
+    expect(resumed).not.toHaveProperty("status");
+    expect(read).toHaveBeenCalledOnce();
+    await act(async () => later.resolve(parserFixDetail));
+    expect(await resumed).toBe(parserFixDetail);
+  });
 });
