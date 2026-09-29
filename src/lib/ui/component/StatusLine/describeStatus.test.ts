@@ -122,10 +122,13 @@ describe("describeStatus", () => {
     );
   });
 
-  it("names the first repository the full refresh is on, with no pages until it reads one", () => {
+  it("names the furthest repository the full refresh has reached, with no pages until it reads one", () => {
     const status = statusOf(FullRefresh);
     const stages = [
-      { repo: "example-org/example-docs", stage: { kind: "done", threads: 1 } },
+      {
+        repo: "example-org/example-docs",
+        stage: { kind: "done", threads: 1, fetched: 1, total: 1 },
+      },
       { repo: "example-org/example-repo", stage: { kind: "checking" } },
     ] as const;
     expect(describeAt({ ...status, stages })?.text).toBe(
@@ -138,7 +141,7 @@ describe("describeStatus", () => {
     expect(describeAt(status)?.kind).toBe("refreshing");
   });
 
-  it("names the first repository a background refresh is on, and its place among them", () => {
+  it("names the furthest repository a background refresh has reached, and its place among them", () => {
     expect(describeAt(statusOf(Refreshing))).toEqual({
       kind: "refreshing",
       text: "refreshing · docs 2/3",

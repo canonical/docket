@@ -53,7 +53,7 @@ describe("drawStatusLine", () => {
       stages: [
         {
           repo: "example-org/example-repo",
-          stage: { kind: "done", threads: 2 },
+          stage: { kind: "done", threads: 2, fetched: 1, total: 1 },
         },
         {
           repo: "example-org/example-docs",

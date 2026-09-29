@@ -97,13 +97,15 @@ export interface CachedViewer {
  * read again; `done`, with the open threads it holds; `paused`, when
  * the budget is low and it needs points to go on; or `failed`, when the
  * refresh stopped on it, for the reason the status's failure gives.
+ * `checks` and `done` keep the pages its read reached, 0 of 0 when it
+ * read none, so the figure a refresh reached holds while it goes on.
  */
 export type RepoStage =
   | { readonly kind: "waiting" }
   | { readonly kind: "checking" }
   | ({ readonly kind: "reading" } & PageProgress)
-  | { readonly kind: "checks" }
-  | { readonly kind: "done"; readonly threads: number }
+  | ({ readonly kind: "checks" } & PageProgress)
+  | ({ readonly kind: "done"; readonly threads: number } & PageProgress)
   | { readonly kind: "paused" }
   | { readonly kind: "failed" };
 

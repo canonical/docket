@@ -19,8 +19,9 @@ const separator = ` ${tokens["glyph.separator"]} `;
  * which says `rate limited`, `offline` when a request got no answer, at
  * all or in time, or else `refresh failed`; the result of the user's own
  * action, for 5 seconds after it; the progress of a full refresh; a
- * refresh in the background, naming the first repository it is on and
- * its place among them, as `refreshing · docs 2/3` (while it is on none,
+ * refresh in the background, naming the furthest repository it has
+ * reached and its place among them, as `refreshing · docs 2/3` (while
+ * it is on none,
  * such as when it saves what it fetched, the messages below stand); a
  * short notice, such as when a full refresh is available again, or
  * `paused: budget low · resumes 14:20` while the budget is too low to

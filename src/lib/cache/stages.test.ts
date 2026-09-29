@@ -59,8 +59,8 @@ describe("the stages of createCache", () => {
     await cache.refresh();
     expect(seen).toContainEqual({ whole: false, repo: { kind: "checking" } });
     expect(cache.status().stages).toEqual([
-      { repo, stage: { kind: "done", threads: 1 } },
-      { repo: docs, stage: { kind: "done", threads: 1 } },
+      { repo, stage: { kind: "done", threads: 1, fetched: 0, total: 0 } },
+      { repo: docs, stage: { kind: "done", threads: 1, fetched: 0, total: 0 } },
     ]);
   });
 

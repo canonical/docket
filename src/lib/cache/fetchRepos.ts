@@ -1,4 +1,4 @@
-import type { Provider } from "../provider/index.js";
+import type { PageProgress, Provider } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
 import refreshChecks from "./refreshChecks.js";
 import syncRepo, { type SyncOptions } from "./syncRepo.js";
@@ -58,22 +58,37 @@ export default async function fetchRepos({
     repo,
     stage: { kind: "waiting" },
   }));
-  const reach = (names: readonly string[], stage: RepoStage) => {
+  const reach = (
+    names: readonly string[],
+    stage: (repo: string) => RepoStage,
+  ) => {
     stages = stages.map((each) =>
-      names.includes(each.repo) ? { ...each, stage } : each,
+      names.includes(each.repo) ? { ...each, stage: stage(each.repo) } : each,
     );
     report(stages);
   };
   report(stages);
   const synced = new Map<string, RepoCache>();
+  // The pages each repository's read reached, which its later stages keep.
+  const pages = new Map<string, PageProgress>();
+  const reached = (repo: string) => pages.get(repo) ?? { fetched: 0, total: 0 };
   const finish = (repo: string, value: RepoCache) =>
-    reach([repo], { kind: "done", threads: value.threads.length });
+    reach([repo], () => ({
+      kind: "done",
+      threads: value.threads.length,
+      ...reached(repo),
+    }));
   try {
     for (const repo of repos) {
       const value = await syncRepo(provider, repo, find(repo), at, {
         spend,
         reconcile,
-        onStage: (stage) => reach([repo], stage),
+        onStage: (stage) => {
+          if (stage.kind === "reading") {
+            pages.set(repo, { fetched: stage.fetched, total: stage.total });
+          }
+          reach([repo], () => stage);
+        },
       });
       if (!value) continue;
       synced.set(repo, value);
@@ -83,7 +98,7 @@ export default async function fetchRepos({
     const refreshed =
       spend && checks
         ? await refreshChecks(provider, [...synced.values()], (covered) =>
-            reach(covered, { kind: "checks" }),
+            reach(covered, (repo) => ({ kind: "checks", ...reached(repo) })),
           )
         : [];
     for (const [repo, value] of synced) {
@@ -96,7 +111,7 @@ export default async function fetchRepos({
       stages
         .filter(({ stage }) => underWay.has(stage.kind))
         .map(({ repo }) => repo),
-      { kind: "failed" },
+      () => ({ kind: "failed" }),
     );
     throw error;
   }

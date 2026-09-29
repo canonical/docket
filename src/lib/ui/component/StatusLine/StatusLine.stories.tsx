@@ -31,7 +31,7 @@ const background: CacheStatus = {
   stages: [
     {
       repo: "example-org/example-repo",
-      stage: { kind: "done", threads: 12 },
+      stage: { kind: "done", threads: 12, fetched: 1, total: 1 },
     },
     { repo: "example-org/example-docs", stage: { kind: "checking" } },
     { repo: "example-org/example-site", stage: { kind: "waiting" } },

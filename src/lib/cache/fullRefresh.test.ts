@@ -96,8 +96,11 @@ describe("the full refresh of createCache", () => {
       refreshing: false,
       whole: false,
       stages: [
-        { repo, stage: { kind: "done", threads: 1 } },
-        { repo: docs, stage: { kind: "done", threads: 1 } },
+        { repo, stage: { kind: "done", threads: 1, fetched: 2, total: 2 } },
+        {
+          repo: docs,
+          stage: { kind: "done", threads: 1, fetched: 2, total: 2 },
+        },
       ],
     });
   });

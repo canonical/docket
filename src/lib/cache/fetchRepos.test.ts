@@ -87,11 +87,11 @@ describe("fetchRepos", () => {
       { kind: "reading", fetched: 0, total: 0 },
       { kind: "reading", fetched: 1, total: 2 },
       { kind: "reading", fetched: 2, total: 2 },
-      { kind: "done", threads: 1 },
+      { kind: "done", threads: 1, fetched: 2, total: 2 },
     ]);
     expect(reported.at(-1)).toEqual([
-      { repo, stage: { kind: "done", threads: 1 } },
-      { repo: docs, stage: { kind: "done", threads: 1 } },
+      { repo, stage: { kind: "done", threads: 1, fetched: 2, total: 2 } },
+      { repo: docs, stage: { kind: "done", threads: 1, fetched: 2, total: 2 } },
     ]);
   });
 
@@ -114,11 +114,13 @@ describe("fetchRepos", () => {
     expect(stagesOf(reported, repo)).toEqual([
       { kind: "waiting" },
       { kind: "checking" },
-      { kind: "done", threads: 1 },
-      { kind: "checks" },
-      { kind: "done", threads: 1 },
+      { kind: "done", threads: 1, fetched: 0, total: 0 },
+      { kind: "checks", fetched: 0, total: 0 },
+      { kind: "done", threads: 1, fetched: 0, total: 0 },
     ]);
-    expect(stagesOf(reported, docs)).not.toContainEqual({ kind: "checks" });
+    expect(stagesOf(reported, docs).map(({ kind }) => kind)).not.toContain(
+      "checks",
+    );
   });
 
   it("reads no checks when told not to, or when nothing may be spent", async () => {
@@ -159,7 +161,7 @@ describe("fetchRepos", () => {
     await expect(fetching).rejects.toBe(error);
     expect(kept.map(([name]) => name)).toEqual([repo]);
     expect(reported.at(-1)).toEqual([
-      { repo, stage: { kind: "done", threads: 0 } },
+      { repo, stage: { kind: "done", threads: 0, fetched: 0, total: 0 } },
       { repo: docs, stage: { kind: "failed" } },
       { repo: "example-org/example-site", stage: { kind: "waiting" } },
     ]);

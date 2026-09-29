@@ -18,7 +18,7 @@ import {
   type ThreadSummary,
 } from "../lib/waits/index.js";
 import { pendingDetail } from "../testing/details.js";
-import { bob } from "../testing/facts.js";
+import { bob, thread } from "../testing/facts.js";
 import {
   everyCapability,
   fakeProvider,
@@ -321,6 +321,36 @@ describe("Screen", { timeout: 15_000 }, () => {
         `  ${"█".repeat(16)}${"░".repeat(13)} 5/9`,
       ]);
       expect(drawn.lines.at(10)).toBe("full refresh · example 1/2 · pages 5/9");
+      resolve();
+      await refreshing;
+    });
+
+    it("holds the position and the pages the first run reached while it reads the running checks again", async () => {
+      const { promise, resolve } = Promise.withResolvers<void>();
+      const reading = vi.fn();
+      const provider = fakeProvider({
+        snapshot: async (repo, _cursor, onPage) => {
+          onPage?.({ fetched: 3, total: 3 });
+          // Only the first repository has a check running.
+          const checks =
+            repo === "example-org/example-repo" ? "running" : "passing";
+          return {
+            threads: [thread({ repo, kind: "pullRequest", checks })],
+            cursor: null,
+          };
+        },
+        refreshVolatile: async () => {
+          reading();
+          await promise;
+          return [];
+        },
+      });
+      const cache = await openCache(provider);
+      const screen = await show(viewOf(cache), 60);
+      const refreshing = cache.refresh();
+      await waitUntil(() => expect(reading).toHaveBeenCalled());
+      const drawn = await screen.redraw();
+      expect(drawn.lines.at(10)).toBe("full refresh · docs 2/2 · pages 3/3");
       resolve();
       await refreshing;
     });
