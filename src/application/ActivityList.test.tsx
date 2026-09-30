@@ -40,7 +40,7 @@ describe("ActivityList", () => {
       `  docs#4 issue ● alice${" ".repeat(15)}16h`,
       "  Where do tokens live?",
       `${" ".repeat(26)}● alice, ● bob`,
-      `${" ".repeat(4)}■ example-sy… labelled kind=docs 16h`,
+      `${" ".repeat(4)}■ example-sync labell… kind=docs 16h`,
     ]);
     expect(screen.lines.slice(5, 8)).toEqual([
       "PULL REQUESTS ──────────────────────────",
@@ -106,7 +106,7 @@ describe("ActivityList", () => {
     expect(screen.lines.slice(3, 10)).toEqual([
       `${" ".repeat(26)}● alice, ● bob`,
       "  loading…",
-      `${" ".repeat(4)}■ example-sy… labelled kind=docs 16h`,
+      `${" ".repeat(4)}■ example-sync labell… kind=docs 16h`,
       "PULL REQUESTS ──────────────────────────",
       ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
       ` ┆Fix the parser${" ".repeat(17)}● alice`,
@@ -141,7 +141,7 @@ describe("ActivityList", () => {
       `${" ".repeat(26)}● alice, ● bob`,
       "  filter:",
       "  ☑ alice",
-      `${" ".repeat(4)}■ example-sy… labelled kind=docs 16h`,
+      `${" ".repeat(4)}■ example-sync labell… kind=docs 16h`,
     ]);
     expect(screen.look("docs#4")?.bg).not.toBe(
       tokens["color.background.selected"],

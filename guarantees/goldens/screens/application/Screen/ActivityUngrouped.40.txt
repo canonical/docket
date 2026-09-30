@@ -14,7 +14,7 @@
 |  docs#4 issue ◉ alice               16h
 |  Where do tokens live?
 |                          ◉ alice, ● bob
-|    ■ example-sy… labelled kind=docs 16h
+|    ■ example-sync labell… kind=docs 16h
 |
 |
 |
@@ -86,7 +86,7 @@ runs
 15:27 "◉ alice" fg #84a0c6ff bg #161821ff
 15:34 ", " fg #c6c8d1ff bg #161821ff
 15:36 "● bob" fg #84a0c6ff bg #161821ff
-16:5 "■ example-sy… labelled kind=docs" fg #6b7089ff bg #161821ff
+16:5 "■ example-sync labell… kind=docs" fg #6b7089ff bg #161821ff
 16:38 "16h" fg #6b7089ff bg #161821ff
 34:1 "2 threads · 4 events" fg #c6c8d1ff bg #161821ff
 35:1 "synced 2m ago" fg #6b7089ff bg #161821ff

@@ -41,9 +41,9 @@ describe("EventLine", () => {
     expect(screen.look("3h")?.fg).toBe(tokens["color.text.muted"]);
   });
 
-  it("keeps docket's words whole and the target as whole as it can, leaving out the actor first", async () => {
+  it("keeps the actor, its login cut at 12 cells, and cuts what was done, the words before the target once the target is down to 12 cells", async () => {
     const screen = await draw(<EventLine {...Long.args} />, 40);
-    expect(screen.lines.at(0)).toBe(" ┆  labelled priority: n…-maintainers 3h");
+    expect(screen.lines.at(0)).toBe(" ┆  ○ example-con… lab… priori…ainers 3h");
     const wide = await draw(<EventLine {...Long.args} width={80} />, 80);
     expect(wide.lines.at(0)).toBe(
       ` ┆  ○ example-con… labelled priority: needs-a-decision-from-the-maintainers${" ".repeat(3)}3h`,
@@ -75,8 +75,8 @@ describe("EventLine", () => {
     expect(screen.lines.at(0)).toBe(` ┆  pushed 2 commits${" ".repeat(17)}25m`);
   });
 
-  it("leaves out the actor before what was done, and cuts that in its middle last, before the age gives way", async () => {
+  it("keeps the actor and cuts what was done in its middle, before the age gives way", async () => {
     const screen = await draw(<EventLine {...Pushed.args} width={20} />, 20);
-    expect(screen.lines.at(0)).toBe(" ┆  pushe…ommits 25m");
+    expect(screen.lines.at(0)).toBe(" ┆  ● alice p…ts 25m");
   });
 });

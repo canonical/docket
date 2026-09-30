@@ -19,14 +19,19 @@ const indent = 4;
 /** The spaces between the margin and the event. */
 const gutter = " ".repeat(indent - marginCells);
 
-/** The fewest cells an actor is drawn in: the mark, a space, a cell of login and `…`. */
-const actorCells = 4;
+/** The fewest cells the words before a target keep once they are cut. */
+const wordsCells = 4;
+
+/** The cells a target keeps, cut, before the words before it give way. */
+const targetCells = 12;
 
 /**
- * What was done, in `room` cells, split about what it acted on: docket's
- * words before it, never cut; the target, whole where it fits, else cut
- * by its kind's rule for an event; and any words after it, the bracket
- * closing failed checks' names.
+ * What was done, in `room` cells, split about what it acted on: the
+ * words before it, the target, and any words after it, the bracket
+ * closing failed checks' names. The target stays whole where it can, and
+ * is cut, by its kind's rule for an event, down to 12 cells while the
+ * words stay whole; past that the words are cut, at their end, down to
+ * four cells, and the target takes the rest.
  */
 function describeAction(
   { action, target }: EventLineProps["line"],
@@ -34,8 +39,20 @@ function describeAction(
 ): string {
   if (!target) return fitField(action, "event", room);
   const at = action.text.lastIndexOf(target.text);
-  const before = action.text.slice(0, at);
+  const words = action.text.slice(0, at).trimEnd();
+  const space = action.text.slice(words.length, at);
   const after = action.text.slice(at + target.text.length);
+  const tail = measureText(target.text) + measureText(after);
+  const targetRoom =
+    room - measureText(words) - measureText(space) - measureText(after);
+  if (targetRoom >= Math.min(measureText(target.text), targetCells)) {
+    return `${words}${space}${fitField(target, "event", targetRoom)}${after}`;
+  }
+  const wordsRoom = Math.max(
+    Math.min(measureText(words), wordsCells),
+    room - measureText(space) - tail,
+  );
+  const before = `${fitField({ text: words, kind: "words" }, "line", wordsRoom)}${space}`;
   const cells = room - measureText(before) - measureText(after);
   return `${before}${fitField(target, "event", cells)}${after}`;
 }
@@ -43,13 +60,12 @@ function describeAction(
 /**
  * Who did what, in `room` cells: failed checks after `✗` in the error
  * colour, whoever ran them; otherwise the actor behind their group's
- * mark, then what they did, dimmed when a bot did it, since a bot's
- * event is context. What they did keeps its target whole where it can:
- * the actor gives way first, its login cut at 12 cells or less, and
- * leaves the line before the target is cut.
+ * mark, its login cut at 12 cells, then what they did, dimmed when a bot
+ * did it, since a bot's event is context. The actor always stays, a bot's
+ * mark with it; what they did gives way as `describeAction` cuts it.
  */
 function describeWhat(line: EventLineProps["line"], room: number): Piece[] {
-  const { event, actor, action } = line;
+  const { event, actor } = line;
   if (event.kind === "checksFailed") {
     const failed = `${tokens["glyph.failed"]} `;
     return [
@@ -60,12 +76,8 @@ function describeWhat(line: EventLineProps["line"], room: number): Piece[] {
     ];
   }
   const tone = event.bot ? tokens["color.text.muted"] : tokens["color.text"];
+  const who = actor ? [markPerson(actor, loginCells)] : [];
   // A space between the actor and what they did.
-  const left = room - measureText(action.text) - 1;
-  const who =
-    actor && left >= actorCells
-      ? [markPerson(actor, Math.min(loginCells, left - 2))]
-      : [];
   const what = describeAction(line, room - measurePieces(who) - who.length);
   return [...who, { text: who.length > 0 ? ` ${what}` : what, fg: tone }];
 }
@@ -75,8 +87,8 @@ function describeWhat(line: EventLineProps["line"], room: number): Piece[] {
  * long ago at the right edge. The thread's margin runs beside it: no
  * clock runs in activity, so the bar's column is blank, and the stack
  * mark goes on under a stacked pull request. The line stays one line,
- * and the event gives way before the age does: the actor first, then
- * what the action acted on, never docket's words for it. A bot's age is
+ * and the event gives way before the age does: the actor's login at 12
+ * cells, then the words of what was done, then what it acted on. A bot's age is
  * dimmed with its event, failed checks aside; every other age is plain.
  *
  * `import { EventLine } from "../lib/ui/index.js";`
