@@ -17,12 +17,13 @@ const controls = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g;
  * Unicode's format characters, which draw nothing yet change how text
  * around them reads: the bidirectional overrides and isolates (U+202A to
  * U+202E, U+2066 to U+2069) and marks (U+200E, U+200F, U+061C), which can
- * show a text in another order than it is written, the zero-width joiner
- * and spaces, the soft hyphen and the tag characters. A terminal gives
- * each a cell or none as it likes, so a line measured without them
- * could run past its width.
+ * show a text in another order than it is written, the zero-width spaces,
+ * the soft hyphen and the tag characters. A terminal gives each a cell or
+ * none as it likes, so a line measured without them could run past its
+ * width. The zero-width non-joiner and joiner stay: Persian, Indic
+ * scripts and emoji need them to be written as they are.
  */
-const formats = /\p{Cf}/gu;
+const formats = /[^\P{Cf}\u200c\u200d]/gu;
 
 /** Breaks between lines, including Unicode's own separators. */
 const breaks = /[\t\n\u2028\u2029]+/g;

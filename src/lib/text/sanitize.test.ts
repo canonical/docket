@@ -37,12 +37,18 @@ describe("sanitize", () => {
     );
   });
 
-  it("removes bidirectional overrides, isolates and marks, joiners, soft hyphens and tag characters", () => {
+  it("removes bidirectional overrides, isolates and marks, zero-width spaces, soft hyphens and tag characters", () => {
     expect(
       sanitize(
-        "a\u202eb\u2066c\u2069d\u200ee\u061cf\u200dg\u200bh\u00adi\u{e0041}j\ufeffk",
+        "a\u202eb\u2066c\u2069d\u200ee\u061cf\u2060g\u200bh\u00adi\u{e0041}j\ufeffk",
       ),
     ).toBe("abcdefghijk");
+    expect(sanitize("a\u202eb\nc", true)).toBe("ab\nc");
+  });
+
+  it("keeps the zero-width non-joiner and joiner that scripts and emoji are written with", () => {
+    expect(sanitize("می\u200cخواهم")).toBe("می\u200cخواهم");
+    expect(sanitize("👨\u200d👩\u200d👧")).toBe("👨\u200d👩\u200d👧");
   });
 
   it("puts a field on one line, each run of breaks becoming one space", () => {

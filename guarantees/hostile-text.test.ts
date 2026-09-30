@@ -39,10 +39,12 @@ const call = (args: readonly string[]) => {
 /**
  * Every control character but the line feed: the escape that starts a
  * sequence, its one-byte forms, and the bell that ends one; and every
- * format character, such as a bidirectional override.
+ * format character, such as a bidirectional override, but the zero-width
+ * non-joiner and joiner that scripts and emoji are written with.
  */
-// biome-ignore lint/suspicious/noControlCharactersInRegex: these are the characters looked for.
-const control = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]|\p{Cf}/u;
+const control =
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: these are the characters looked for.
+  /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]|[^\P{Cf}\u200c\u200d]/u;
 
 /** What the hostile label, check name and branch read as once printed. */
 const printedWords = { label: "kind=bug", check: "lint", branch: "main" };
