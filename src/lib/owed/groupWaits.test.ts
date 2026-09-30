@@ -18,8 +18,8 @@ const sooner = wait({
 });
 const list = listWaits(
   [
-    { repo: example, time, people, waits: [later] },
-    { repo: docs, time, people, waits: [sooner] },
+    { repo: example, time, people, yours: [], waits: [later] },
+    { repo: docs, time, people, yours: [], waits: [sooner] },
   ],
   now,
 );

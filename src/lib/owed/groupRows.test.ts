@@ -12,7 +12,7 @@ const repos: Repo[] = [
   { name: "docs", repo: "example-org/example-docs", tags: [] },
 ];
 const row = (facts: Partial<Wait>, repo = "example") =>
-  buildRow(wait(facts), repo, teamSettings.time, now, teamSettings.people);
+  buildRow(wait(facts), repo, teamSettings.time, now, teamSettings.people, []);
 const entry = (number: number, position: number, size = 5): StackEntry => ({
   number,
   position,

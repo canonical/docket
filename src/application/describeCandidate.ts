@@ -9,11 +9,12 @@ import type { Named, Watched } from "./types.js";
  * Whether an unlisted person belongs to the organisation is recorded only
  * on what they wrote, so a login found among the writers of `thread` or
  * of the held threads carries that, and anyone else unlisted is outside.
- * A team, `org/team`, is `you` when a review requested of it on those
- * threads lists the viewer among its members, as owed's rows name it, and
- * otherwise of the organisation, `internal`, as GitHub offers only the
- * teams of the repository's organisation; it gives an editor no other
- * team's members. A repository not watched lists nobody.
+ * A team, `org/team`, is `you` when the settings' `you.teams` names it or
+ * a review requested of it on those threads lists the viewer among its
+ * members, as owed's rows name it, and otherwise of the organisation,
+ * `internal`, as GitHub offers only the teams of the repository's
+ * organisation; it gives an editor no other team's members. A repository
+ * not watched lists nobody.
  *
  * @param viewer The login gh is signed in with, when it is known.
  * @param held What the threads the view holds tell, gathered once for
@@ -28,18 +29,21 @@ export default function describeCandidate(
 ): Owner {
   const key = name.toLowerCase();
   const own = gatherNamed([thread]);
+  const settings = watched.find(({ repo }) => repo === thread.repo)?.resolved
+    .settings;
   if (name.includes("/")) {
     const members = (own.teams.get(key) ?? held.teams.get(key))?.members;
-    const team = describeTeam({ team: name, members: members ?? [] }, viewer);
+    const team = describeTeam(
+      { team: name, members: members ?? [] },
+      viewer,
+      settings?.you.teams ?? [],
+    );
     return "group" in team ? team : { ...team, group: "internal" };
   }
-  const people =
-    watched.find(({ repo }) => repo === thread.repo)?.resolved.settings
-      .people ?? new Map();
   return describePerson(
     own.writers.get(key) ??
       held.writers.get(key) ?? { login: name, type: "user" },
-    people,
+    settings?.people ?? new Map(),
     viewer,
   );
 }

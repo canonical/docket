@@ -237,6 +237,7 @@ export function recordedOwed(grouping: OwedGrouping = "none") {
       repo,
       time: recordedSettings.time,
       people: recordedSettings.people,
+      yours: recordedSettings.you.teams,
       waits: recordedThreads
         .filter((thread) => thread.repo === repo.repo)
         .flatMap((thread) => findWaits(thread, recordedSettings)),
@@ -253,6 +254,7 @@ export function recordedActivity(grouping: ActivityGrouping = "kind") {
     recordedRepos.map((repo) => ({
       repo,
       people: recordedSettings.people,
+      yours: recordedSettings.you.teams,
       threads: recordedThreads.filter((thread) => thread.repo === repo.repo),
       events: timeEvents(
         recordedEvents.filter(({ thread }) => thread.repo === repo.repo),

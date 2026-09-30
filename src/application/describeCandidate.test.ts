@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Owner } from "../lib/owed/index.js";
 import { alice, carol, dave, thread } from "../testing/facts.js";
-import { recordedWatched } from "../testing/recorded.js";
+import { recordedSettings, recordedWatched } from "../testing/recorded.js";
 import describeCandidate from "./describeCandidate.js";
 import gatherNamed from "./gatherNamed.js";
 
@@ -94,6 +94,23 @@ describe("describeCandidate", () => {
       fit: "trimmed",
       group: "internal",
     });
+  });
+
+  it("gives a team the personal file lists as yours you, without reading its members", () => {
+    const yours = recordedWatched({
+      ...recordedSettings,
+      you: { teams: ["example-org/reviewers"] },
+    });
+    expect(
+      describeCandidate("Example-Org/Reviewers", discussed, yours, "alice"),
+    ).toEqual({
+      text: "Example-Org/Reviewers",
+      fit: "trimmed",
+      group: "you",
+    });
+    expect(
+      groupOf(describeCandidate("example-org/docs", discussed, yours, "alice")),
+    ).toBe("internal");
   });
 
   it("lists nobody for a repository not watched", () => {
