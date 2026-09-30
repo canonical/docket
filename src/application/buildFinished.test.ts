@@ -83,4 +83,18 @@ describe("buildFinished", () => {
       ),
     ).toEqual([["docs#3", "invalid repository file"]]);
   });
+
+  it("keeps a thread whose ending leaves the window at the very instant given", () => {
+    const [thread] = recordedFinished;
+    if (!thread) throw new Error("the recording holds a finished thread");
+    const list = buildFinished(
+      new Map([[thread.repo, [{ thread, until: recordedNow }]]]),
+      recordedThreads,
+      recordedWatched(),
+      window,
+      "none",
+      recordedNow,
+    );
+    expect(references(list)).toEqual(["example#14"]);
+  });
 });

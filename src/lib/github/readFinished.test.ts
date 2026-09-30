@@ -77,8 +77,10 @@ describe("readFinished", () => {
     );
   });
 
-  it("leaves out a thread open now, and one that ended before the window", () => {
+  it("leaves out a thread open now, and one that ended before the window, keeping one that ended as it starts", () => {
     expect(readFinished(issue, node({ state: "OPEN" }), since)).toBeUndefined();
+    const atStart = node({ closedAt: since.toISOString() });
+    expect(readFinished(issue, atStart, since)?.ending.at).toEqual(since);
     const earlier = node({ closedAt: "2026-09-21T23:59:59Z" });
     expect(readFinished(issue, earlier, since)).toBeUndefined();
   });
