@@ -95,8 +95,13 @@ export default function placeList(
     }
   }
   const end = blocks.length;
-  const measure = (start: number, last: number) =>
-    blocks.slice(start, last).reduce((lines, block) => lines + block.lines, 0);
+  // The lines of the blocks before each place, so the lines between two
+  // places cost one subtraction however long the list.
+  const sums = [0];
+  for (const block of blocks) sums.push(block.lines + (sums.at(-1) as number));
+  // `sums` holds a total for every place from 0 to `end`.
+  const sumTo = (place: number) => sums.at(Math.min(place, end)) as number;
+  const measure = (start: number, last: number) => sumTo(last) - sumTo(start);
   // What a list starting at `top` spends on its pinned heading and on the
   // sign of the rows cut off below. Both keep their line while the room
   // leaves the first block a line of its own, and the first block is cut
@@ -119,9 +124,11 @@ export default function placeList(
   let top = Math.max(0, Math.min(first, from, end - 1));
   while (top < to && !fits(top, to + 1)) top += 1;
   while (top > 0 && measureFrame(top - 1).whole) top -= 1;
-  const { pinned, signed, whole } = measureFrame(top);
+  const { pinned, signed, whole, lines } = measureFrame(top);
   let shown = whole ? end - top : 1;
-  while (top + shown < end && fits(top, top + shown + 1)) shown += 1;
+  while (top + shown < end && lines + measure(top, top + shown + 1) <= room) {
+    shown += 1;
+  }
   shown = Math.min(shown, end - top);
   return {
     first: top,
