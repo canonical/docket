@@ -142,7 +142,7 @@ describe("renderFinished", () => {
       "pullRequest merged",
       "pullRequest closed",
     ]);
-    expect(answer.groups[1].threads[0]).toMatchObject({
+    expect(answer.groups.at(1)?.threads.at(0)).toMatchObject({
       reference: "example#7",
       ending: { outcome: "notPlanned", label: "closed as not planned" },
     });

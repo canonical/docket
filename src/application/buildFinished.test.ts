@@ -48,7 +48,7 @@ describe("buildFinished", () => {
       "closed as completed",
       "merged",
     ]);
-    expect(list.groups[1]?.rows[0]?.ending.actor?.group).toBe("you");
+    expect(list.groups.at(1)?.rows.at(0)?.ending.actor?.group).toBe("you");
     // Tuesday morning, Sunday's merge has left the 24-hour window.
     const later = buildFinished(
       timed,
@@ -69,7 +69,7 @@ describe("buildFinished", () => {
     const list = buildFinished(
       new Map([...timed].filter(([repo]) => repo === docs?.repo)),
       recordedThreads,
-      [example, invalid[1]].filter((repo) => repo !== undefined),
+      [example, invalid.at(1)].filter((repo) => repo !== undefined),
       window,
       "none",
       recordedNow,

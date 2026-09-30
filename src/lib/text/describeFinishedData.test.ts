@@ -14,7 +14,7 @@ const control = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/;
 
 /** The one row finished gives for `thread`, as data. */
 const dataOf = (thread: FinishedThread) => {
-  const [row] = finishedList("none", [thread]).groups[0]?.rows ?? [];
+  const [row] = finishedList("none", [thread]).groups.at(0)?.rows ?? [];
   if (!row) throw new Error("the list holds the thread");
   return describeFinishedData(row);
 };

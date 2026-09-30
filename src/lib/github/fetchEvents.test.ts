@@ -485,8 +485,10 @@ describe("fetchEvents", () => {
     asked("pullRequests", ["mergedAt", "mergedBy", "isDraft"]);
     // A close's own fields, what each selects left out.
     let close = query
-      .split("... on ClosedEvent {")[1]
-      ?.split("... on Reopened")[0];
+      .split("... on ClosedEvent {")
+      .at(1)
+      ?.split("... on Reopened")
+      .at(0);
     while (close && /\{[^{}]*\}/.test(close))
       close = close.replace(/\{[^{}]*\}/g, "");
     expect(close?.split(/[\s}]+/)).toEqual(
