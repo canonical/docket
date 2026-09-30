@@ -18,6 +18,7 @@ const node = (fields: Partial<FinishedNode> = {}): FinishedNode => ({
   closedAt: "2026-09-23T10:00:00Z",
   createdAt: "2026-09-21T08:00:00Z",
   author: user("dave"),
+  authorAssociation: "NONE",
   labels: { nodes: [{ name: "kind=bug" }] },
   assignees: { nodes: [user("alice")] },
   timelineItems: { nodes: [] },
@@ -33,7 +34,7 @@ describe("readFinished", () => {
   it("reads a thread closed in the window with its facts and its ending", () => {
     expect(readFinished(issue, node(), since)).toEqual({
       ...issue,
-      author: { login: "dave", type: "user" },
+      author: { login: "dave", type: "user", member: false },
       createdAt: new Date("2026-09-21T08:00:00Z"),
       draft: false,
       labels: ["kind=bug"],
@@ -43,6 +44,15 @@ describe("readFinished", () => {
         label: "closed as completed",
         at: new Date("2026-09-23T10:00:00Z"),
       },
+    });
+  });
+
+  it("marks an author the organisation counts as a member, whether or not they wrote an open thread", () => {
+    const member = node({ author: user("erin"), authorAssociation: "MEMBER" });
+    expect(readFinished(issue, member, since)?.author).toEqual({
+      login: "erin",
+      type: "user",
+      member: true,
     });
   });
 

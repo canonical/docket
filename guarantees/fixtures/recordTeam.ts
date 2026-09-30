@@ -137,6 +137,7 @@ export default function recordTeam(
               mergedBy: buildUser("alice"),
               isDraft: false,
               author: buildUser("bob"),
+              authorAssociation: "MEMBER",
               headRefName: "docs/changelog",
               isCrossRepository: false,
               stackEntry: null,
@@ -213,6 +214,7 @@ export default function recordTeam(
               createdAt: "2026-08-10T08:00:00Z",
               updatedAt: "2026-09-28T08:30:00Z",
               author: buildUser("carol"),
+              authorAssociation: "NONE",
               ...buildStanding(
                 "CLOSED",
                 "2026-09-28T08:30:00Z",
@@ -260,6 +262,7 @@ export default function recordTeam(
               createdAt: "2026-09-24T09:00:00Z",
               updatedAt: "2026-09-25T10:00:00Z",
               author: buildUser("dave"),
+              authorAssociation: "NONE",
               ...buildStanding("CLOSED", "2026-09-25T10:00:00Z"),
               stateReason: "NOT_PLANNED",
               timelineItems: {

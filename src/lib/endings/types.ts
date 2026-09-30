@@ -1,5 +1,5 @@
 import type { Duration } from "../clock/index.js";
-import type { Account } from "../people/index.js";
+import type { Account, Author } from "../people/index.js";
 import type { ThreadSummary } from "../waits/index.js";
 
 /**
@@ -47,7 +47,8 @@ export interface Ending {
 
 /** A thread that was merged or closed, and is still so. */
 export interface FinishedThread extends ThreadSummary {
-  readonly author: Account;
+  /** Who opened it, and whether the provider marks them a member. */
+  readonly author: Author;
   /** When it was opened. */
   readonly createdAt: Date;
   readonly draft: boolean;

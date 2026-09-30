@@ -44,8 +44,11 @@ const pullItems = `${issueItems}
 const issueTypes =
   "ISSUE_COMMENT, CLOSED_EVENT, REOPENED_EVENT, ASSIGNED_EVENT, LABELED_EVENT";
 const opened = `number url title createdAt updatedAt author { ${account} }`;
-/** How a thread stands, and who is on it, for the threads that ended. */
-const standing = `state closedAt ${labels} ${assignees}`;
+/**
+ * How a thread stands, who is on it, and its author's tie to the
+ * repository, for the threads that ended.
+ */
+const standing = `authorAssociation state closedAt ${labels} ${assignees}`;
 
 const document = `query Events($owner: String!, $name: String!, $since: DateTime!,
   $issuesAfter: String, $pullsAfter: String, $discussionsAfter: String,
