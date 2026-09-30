@@ -109,17 +109,17 @@ describe("HelpOverlay", () => {
     ]);
   });
 
-  it("ends on its last key line when given no closing note", async () => {
+  it("ends on its last key line when given no closing note, counting no line for it", async () => {
+    // Without the note the help takes 17 lines, so it fits 17 whole.
     const screen = await draw(
-      <HelpOverlay {...Keys.args} note={undefined} height={20} />,
+      <HelpOverlay {...Keys.args} note={undefined} height={17} />,
       40,
-      20,
+      17,
     );
-    expect(screen.lines.slice(15, 19)).toEqual([
+    expect(screen.lines.slice(14)).toEqual([
+      "  ?        show or hide help",
       "  R        full refresh",
       "  q        quit",
-      "",
-      "",
     ]);
   });
 
