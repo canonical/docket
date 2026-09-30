@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { FieldKind } from "../../owed/index.js";
 import { fitRules } from "./constants.js";
 import fitField from "./fitField.js";
+import measureText from "./measureText.js";
 
 /** A text of each kind, longer than 40 cells, as a list would give it. */
 const samples: Readonly<Record<FieldKind, string>> = {
@@ -161,7 +162,7 @@ describe("fitField", () => {
     for (const kind of Object.keys(samples) as FieldKind[]) {
       const line = fitField({ text: samples[kind], kind }, "line", 40);
       if (fitRules[kind].line !== "whole") {
-        expect(Bun.stringWidth(line)).toBeLessThanOrEqual(40);
+        expect(measureText(line)).toBeLessThanOrEqual(40);
       }
     }
   });

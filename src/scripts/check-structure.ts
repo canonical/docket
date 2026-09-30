@@ -84,6 +84,14 @@ const fitting = "src/lib/ui/fit/";
 const fittingPrimitives =
   /(^|\/)(trimText|wrapText|fitPieces|cutMiddle)(\.js)?$/;
 
+/**
+ * Bun's measure of display cells disagrees with what OpenTUI draws, so
+ * the terminal measures only through the fitting module's measure, and
+ * only that measure and its tests name Bun's.
+ */
+const bunMeasure = /\bBun\.stringWidth\b/;
+const measureModule = /^src\/lib\/ui\/fit\/measure(Cluster|Text)\./;
+
 const maxLines = 500;
 const lengthHeader = /^\/\/ Longer than 500 lines because \S/;
 
@@ -343,6 +351,16 @@ function check(root: string): Finding[] {
       ts.ScriptTarget.Latest,
       true,
     );
+    if (
+      path.startsWith("src/lib/ui/") &&
+      !measureModule.test(path) &&
+      bunMeasure.test(text)
+    ) {
+      report(
+        "fitting",
+        "measures with Bun.stringWidth: count cells with measureText from src/lib/ui/fit/",
+      );
+    }
     if (!path.startsWith(fitting)) {
       for (const { specifier } of importsOf(source)) {
         if (fittingPrimitives.test(specifier)) {
@@ -542,6 +560,14 @@ const breaks: Record<string, [string, string]> = {
     "fitting",
     'import fitPieces from "../../fit/fitPieces.js";\nexport default function Runs() { return fitPieces; }',
   ],
+  "src/lib/ui/component/Gap/Gap.tsx": [
+    "fitting",
+    "export default function Gap(text: string) { return Bun.stringWidth(text); }",
+  ],
+  "src/lib/ui/fit/cutMiddle.ts": [
+    "fitting",
+    "export default function cutMiddle(text: string) { return Bun.stringWidth(text); }",
+  ],
   "src/lib/ui/component/Name/Name.tsx": [
     "fitting",
     'import cutMiddle from "../../fit/cutMiddle.js";\nexport default function Name() { return cutMiddle; }',
@@ -595,6 +621,8 @@ const allowed: Record<string, string> = {
     'import clock from "../clock/index.js";',
     "export default function snapshot(): Port { return [provider, clock]; }",
   ].join("\n"),
+  "src/lib/ui/fit/measureCluster.ts":
+    "export default function measureCluster(text: string) { return Bun.stringWidth(text); }",
   "src/lib/ui/fit/fitField.ts": [
     'import trimText from "./trimText.js";',
     'import fitPieces from "./fitPieces.js";',

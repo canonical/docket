@@ -20,6 +20,7 @@ import describeStage from "../../lib/ui/component/RefreshStages/describeStage.js
 import describeDetails from "../../lib/ui/component/StatusLine/describeDetails.js";
 import describeStatus from "../../lib/ui/component/StatusLine/describeStatus.js";
 import { minColumns } from "../../lib/ui/constants.js";
+import { measureText } from "../../lib/ui/fit/index.js";
 import { PaneHeader } from "../../lib/ui/subcomponent/index.js";
 import type { Wait } from "../../lib/waits/index.js";
 import { activityNow } from "../activity.js";
@@ -93,7 +94,7 @@ describe("docket's own words at the narrowest pane", () => {
         // A message with a part that gives way keeps the words without it.
         const words = message?.shorter ?? message?.text ?? "";
         for (const text of [words, right]) {
-          expect(Bun.stringWidth(text), text).toBeLessThanOrEqual(minColumns);
+          expect(measureText(text), text).toBeLessThanOrEqual(minColumns);
         }
       }
     }
@@ -205,7 +206,7 @@ describe("docket's own words at the narrowest pane", () => {
       const text = describeStage(each)
         .map((piece) => piece.text)
         .join("");
-      expect(Bun.stringWidth(text), text).toBeLessThanOrEqual(20);
+      expect(measureText(text), text).toBeLessThanOrEqual(20);
     }
   });
 
