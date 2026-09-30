@@ -53,7 +53,7 @@ describe("describeDetail", () => {
         "waiting since Tue 10:00 · target 24h",
       ]);
       expect(body.map(({ fit, optional }) => [fit, optional])).toEqual([
-        ["trimmed", undefined],
+        ["wrapped", undefined],
         ["wrapped", undefined],
         ["wrapped", true],
       ]);
@@ -144,7 +144,7 @@ describe("describeDetail", () => {
         "✗ checks: 1 of 2 failed (lint)",
       ]);
       expect(body.map(({ fit }) => fit)).toEqual([
-        "trimmed",
+        "wrapped",
         "trimmed",
         "trimmed",
       ]);

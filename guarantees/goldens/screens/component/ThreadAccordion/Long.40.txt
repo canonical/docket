@@ -1,5 +1,7 @@
 40 columns
-|┃┆owner ○ example-contributor-with-a-lo…
+|┃┆owner
+|┃┆○ example-contributor-with-a-long-logi
+|┃┆n, example-org/parser-team
 |┃┆asked by ● alice 6d ago
 |┃┆0 pushes since · 1 file · +40 −12
 |┃┆✗ checks: 3 of 4 failed (lint the who…
@@ -9,21 +11,29 @@
 runs
 1:1 "┃" fg #e27878ff bg #2e3244ff
 1:2 "┆" fg #6b7089ff bg #2e3244ff
-1:3 "owner " fg #c6c8d1ff bg #2e3244ff
-1:9 "○ example-contributor-with-a-lo…" fg #89b8c2ff bg #2e3244ff
+1:3 "owner" fg #c6c8d1ff bg #2e3244ff
+1:8 "                                 " fg #ffffffff bg #2e3244ff
 2:1 "┃" fg #e27878ff bg #2e3244ff
-2:2 "┆asked by " fg #6b7089ff bg #2e3244ff
-2:12 "● alice" fg #84a0c6ff bg #2e3244ff
-2:19 " 6d ago" fg #6b7089ff bg #2e3244ff
-2:26 "               " fg #ffffffff bg #2e3244ff
+2:2 "┆" fg #6b7089ff bg #2e3244ff
+2:3 "○ example-contributor-with-a-long-logi" fg #89b8c2ff bg #2e3244ff
 3:1 "┃" fg #e27878ff bg #2e3244ff
 3:2 "┆" fg #6b7089ff bg #2e3244ff
-3:3 "0 pushes since · 1 file · +40 −12" fg #c6c8d1ff bg #2e3244ff
-3:36 "     " fg #ffffffff bg #2e3244ff
+3:3 "n" fg #89b8c2ff bg #2e3244ff
+3:4 ", example-org/parser-team" fg #c6c8d1ff bg #2e3244ff
+3:29 "            " fg #ffffffff bg #2e3244ff
 4:1 "┃" fg #e27878ff bg #2e3244ff
-4:2 "┆" fg #6b7089ff bg #2e3244ff
-4:3 "✗ checks: 3 of 4 failed (lint the who…" fg #e27878ff bg #2e3244ff
+4:2 "┆asked by " fg #6b7089ff bg #2e3244ff
+4:12 "● alice" fg #84a0c6ff bg #2e3244ff
+4:19 " 6d ago" fg #6b7089ff bg #2e3244ff
+4:26 "               " fg #ffffffff bg #2e3244ff
 5:1 "┃" fg #e27878ff bg #2e3244ff
-5:2 "┆example-repository-with-a-long-name s…" fg #6b7089ff bg #2e3244ff
-6:1 "╹" fg #e27878ff bg #2e3244ff
-6:2 "┆below #12344 merged, above #12346 open" fg #6b7089ff bg #2e3244ff
+5:2 "┆" fg #6b7089ff bg #2e3244ff
+5:3 "0 pushes since · 1 file · +40 −12" fg #c6c8d1ff bg #2e3244ff
+5:36 "     " fg #ffffffff bg #2e3244ff
+6:1 "┃" fg #e27878ff bg #2e3244ff
+6:2 "┆" fg #6b7089ff bg #2e3244ff
+6:3 "✗ checks: 3 of 4 failed (lint the who…" fg #e27878ff bg #2e3244ff
+7:1 "┃" fg #e27878ff bg #2e3244ff
+7:2 "┆example-repository-with-a-long-name s…" fg #6b7089ff bg #2e3244ff
+8:1 "╹" fg #e27878ff bg #2e3244ff
+8:2 "┆below #12344 merged, above #12346 open" fg #6b7089ff bg #2e3244ff

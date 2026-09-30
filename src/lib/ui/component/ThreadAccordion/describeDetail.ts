@@ -46,8 +46,9 @@ const trimmed = (...pieces: Piece[]): DetailLine => ({
   fit: "trimmed",
 });
 
-const wrapped = (piece: Piece): DetailLine => ({
-  pieces: [piece],
+/** A line that wraps, between people and at spaces, naming each person whole. */
+const wrapped = (...pieces: Piece[]): DetailLine => ({
+  pieces,
   fit: "wrapped",
 });
 
@@ -75,18 +76,18 @@ const listOwners = ({ owner, owners }: WaitRow): Owner[] =>
   owners ? [...owners.fields] : owner ? [owner] : [];
 
 /**
- * The owners, whole, when the row cuts a person's login: only the close
- * body names them otherwise. It comes first, so no message pushes it out
- * of the accordion. A team's name, `organisation/team`, never earns the
- * line, cut or not: on a stacked review the line would push the checks
- * out, and nearly every team's name is longer than a login's room.
+ * The owners, each whole, wrapped between them, when the row cuts a
+ * person's login: only the close body names them otherwise. It comes
+ * first, so no message pushes it out of the accordion. A team's name,
+ * `organisation/team`, never earns the line, cut or not: on a stacked
+ * review the line would push the checks out.
  */
 function describeCutOwners(row: WaitRow): DetailLine[] {
   const owners = listOwners(row);
   const cut = owners.some(
     ({ text }) => !text.includes("/") && Bun.stringWidth(text) > loginCells,
   );
-  return cut ? [trimmed(plain("owner "), ...listPeople(owners))] : [];
+  return cut ? [wrapped(plain("owner "), ...listPeople(owners))] : [];
 }
 
 /**
@@ -124,7 +125,7 @@ function describeReply(row: WaitRow, { now, timezone }: Reading) {
   const since = `waiting since ${day} ${describeClock(started, timezone)} · target ${target.amount}${target.unit}`;
   return [
     ...describeCutOwners(row),
-    trimmed(
+    wrapped(
       markPerson(row.author),
       muted(` · ${describeAge(awaited.at, now)} ago`),
     ),
@@ -194,7 +195,7 @@ function describeReview(
   return [
     ...describeCutOwners(row),
     row.requester
-      ? trimmed(muted("asked by "), markPerson(row.requester), muted(age))
+      ? wrapped(muted("asked by "), markPerson(row.requester), muted(age))
       : trimmed(muted(`asked${age}`)),
     trimmed(plain(count(pushes, "push since", "pushes since")), ...changes),
     detail ? describeChecks(detail) : describeSnapshotChecks(thread),
@@ -209,12 +210,12 @@ function describeClose(row: WaitRow, { now }: Reading) {
   const { thread } = row.wait;
   const labels = thread.labels.map(decodeLabel).join(" · ") || "none";
   return [
-    trimmed(
+    wrapped(
       plain(`age ${describeAge(thread.createdAt, now)} · owner `),
       // A row always names an owner, `unassigned` when nobody owns it.
       ...listPeople(listOwners(row)),
     ),
-    trimmed(
+    wrapped(
       plain(`last activity ${describeAge(thread.updatedAt, now)} ago`),
       ...(row.lastActor ? [plain(" · "), markPerson(row.lastActor)] : []),
     ),
@@ -241,11 +242,11 @@ function describeRest(
   const named = owners ?? assigned;
   const labels = detail.labels.map(decodeLabel).join(" · ") || "none";
   return [
-    trimmed(
+    wrapped(
       plain(`age ${describeAge(detail.createdAt, now)} · owner `),
       ...(named.length > 0 ? listPeople(named) : [plain("unassigned")]),
     ),
-    trimmed(
+    wrapped(
       plain(`last activity ${describeAge(detail.updatedAt, now)} ago`),
       ...(latest
         ? [
