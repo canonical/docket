@@ -41,11 +41,8 @@ export {
   type UseCommandsProps,
   type UseCommandsResult,
   type UseDrawnLinesResult,
-  type UseListScrollProps,
-  type UseListScrollResult,
   useCommands,
   useDrawnLines,
-  useListScroll,
 } from "./hooks/index.js";
 export {
   Pane,
@@ -63,4 +60,4 @@ export {
   PaneHeader,
   type PaneHeaderProps,
 } from "./subcomponent/index.js";
-export type { ListBlock } from "./types.js";
+export type { ListBlock, ListBlockKind } from "./types.js";
