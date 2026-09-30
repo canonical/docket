@@ -72,7 +72,7 @@ describe("PeoplePicker", () => {
     ]);
   });
 
-  it("trims a name longer than the line", async () => {
+  it("names a name longer than the line whole, wrapped under itself, the mark kept before it", async () => {
     const screen = await draw(
       <PeoplePicker
         {...Assigning.args}
@@ -90,7 +90,11 @@ describe("PeoplePicker", () => {
       />,
       30,
     );
-    expect(screen.lines.at(1)).toBe("  ☐ ○ a-very-long-login-for-a…");
+    expect(screen.lines.slice(1, 3)).toEqual([
+      "  ☐ ○ a-very-long-login-for-a-",
+      "      narrow-pane",
+    ]);
+    expect(screen.look("narrow-pane")?.fg).toBe(tokens["color.text.outside"]);
   });
 
   it("draws GitHub's refusal under the options, wrapped, in the error colour", async () => {

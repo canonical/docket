@@ -3,6 +3,7 @@ import countPickerLines from "./countPickerLines.js";
 import {
   Assigning,
   Loading,
+  Long,
   Refused,
   Scrolled,
 } from "./PeoplePicker.stories.js";
@@ -14,6 +15,11 @@ describe("countPickerLines", () => {
 
   it("counts five options at most", () => {
     expect(countPickerLines(Scrolled.args)).toBe(6);
+  });
+
+  it("counts every line of an option whose name wraps", () => {
+    expect(countPickerLines(Long.args)).toBe(5);
+    expect(countPickerLines({ ...Long.args, width: 80 })).toBe(3);
   });
 
   it("counts the loading line while the options are read", () => {
