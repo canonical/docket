@@ -31,15 +31,18 @@ describe("PaneHeader", () => {
     expect(screen.look("help")?.bold).toBe(false);
   });
 
-  it("cuts an address that leaves no room with an ellipsis", async () => {
-    const screen = await draw(
-      <PaneHeader
-        title={{ text: "activity", kind: "words" }}
-        address={{ text: "1w · by repo", kind: "words" }}
-        width={16}
-      />,
-      16,
-    );
-    expect(screen.lines.at(0)).toBe("activity 1w · b…");
+  it("leaves out the address's parts whole, the window first, when they do not fit, and never the mode", async () => {
+    const header = (width: number) =>
+      draw(
+        <PaneHeader
+          title={{ text: "activity", kind: "words" }}
+          address={{ text: "1w · by repo", kind: "words" }}
+          width={width}
+        />,
+        width,
+      );
+    expect((await header(16)).lines.at(0)).toBe("activity by repo");
+    expect((await header(12)).lines.at(0)).toBe("activity");
+    expect((await header(6)).lines.at(0)).toBe("activ…");
   });
 });
