@@ -6,6 +6,7 @@ import { type Home, makeHome, openSession } from "../testing/docket.js";
 import { carol, thread } from "../testing/facts.js";
 import { fullBudget } from "../testing/provider.js";
 import { parserFix, recordedProvider } from "../testing/recorded.js";
+import { waitUntil } from "../testing/wait.js";
 import answerShow from "./answerShow.js";
 
 let home: Home;
@@ -98,6 +99,18 @@ describe("answerShow", () => {
       { login: "carol", group: "internal" },
       { login: "carol", group: "internal" },
     ]);
+  });
+
+  it("writes its answer before it keeps the budget", async () => {
+    const { session, out } = openSession(home, ["show", "example#12"]);
+    const kept = Promise.withResolvers<void>();
+    const answering = answerShow({
+      ...session,
+      cache: { ...session.cache, keepBudget: () => kept.promise },
+    });
+    await waitUntil(() => expect(out()).toMatch(/^# show example#12\n/));
+    kept.resolve();
+    expect(await answering).toBe(0);
   });
 
   it("writes the budget the details' answer reported to the cache file, for later calls", async () => {
