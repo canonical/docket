@@ -90,6 +90,8 @@ export type Measure =
       readonly started: Date;
       /** When it ended. */
       readonly ended: Date;
+      /** The working time from its start to its end, in milliseconds. */
+      readonly workingTime: number;
       /** The target in effect. */
       readonly target: Duration;
       /**

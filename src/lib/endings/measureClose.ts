@@ -23,12 +23,14 @@ export default function measureClose(
   const ended = thread.ending.at;
   const target = targets.close[thread.kind];
   const length = measureDuration(target, time);
-  const overdue = (measureWorkingTime(started, ended, time) - length) / length;
+  const workingTime = measureWorkingTime(started, ended, time);
+  const overdue = (workingTime - length) / length;
   return {
     kind: "close",
     state: "measured",
     started,
     ended,
+    workingTime,
     target,
     overdue,
     verdict: overdue > 0 ? "over" : "within",

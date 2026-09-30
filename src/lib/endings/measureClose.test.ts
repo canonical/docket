@@ -16,6 +16,7 @@ describe("measureClose", () => {
       state: "measured",
       started: thread.createdAt,
       ended: thread.ending.at,
+      workingTime: 54 * 3_600_000,
       target: { amount: 5, unit: "d" },
       overdue: (54 - 120) / 120,
       verdict: "within",

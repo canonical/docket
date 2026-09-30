@@ -41,10 +41,14 @@ export default function buildRow(
   const measures = measureFinished(thread, settings);
   const { close } = measures;
   const { time } = settings;
-  const worked = measureWorkingTime(thread.createdAt, ending.at, time);
+  const measured = close.state === "measured" ? close : undefined;
+  // A measured close has counted the time open already; only a thread it
+  // does not apply to is counted here.
+  const worked =
+    measured?.workingTime ??
+    measureWorkingTime(thread.createdAt, ending.at, time);
   const open = `open ${describeWorkingTime(worked)}`;
   const age = describeAge(ending.at, now);
-  const measured = close.state === "measured" ? close : undefined;
   const over =
     measured?.verdict === "over"
       ? `${describeWorkingTime(worked - measureDuration(measured.target, time))} over`
