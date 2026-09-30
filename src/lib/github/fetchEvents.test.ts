@@ -215,7 +215,7 @@ describe("fetchEvents", () => {
   };
 
   /** The events read, openings aside. */
-  const endings = async () =>
+  const listEventsButOpenings = async () =>
     lines((await events()).filter(({ kind }) => kind !== "opened"));
 
   it("counts a merge once, leaving out the close GitHub records with it", async () => {
@@ -226,7 +226,7 @@ describe("fetchEvents", () => {
       ],
       [item("ClosedEvent", "2026-09-22T11:00:00Z")],
     );
-    expect(await endings()).toEqual([
+    expect(await listEventsButOpenings()).toEqual([
       [2, "merged", "alice", "11:00"],
       [3, "closed", "alice", "11:00", "closed"],
     ]);
