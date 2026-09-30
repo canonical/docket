@@ -83,6 +83,12 @@ describe("createBudgetKeeper", () => {
     }
   });
 
+  it("takes over a lock a dead process left, and keeps the figures", async () => {
+    await mkdir(`${file}.lock`);
+    await createProcess(makeBudget(900)).keeper();
+    expect(await readBudgetFile(file)).toEqual(makeBudget(900));
+  }, 15_000);
+
   it("leaves the lowest figure of the window when processes keep falling figures together", async () => {
     const figures = [950, 900, 850, 800, 750, 700];
     await Promise.all(

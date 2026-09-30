@@ -43,16 +43,18 @@ export const lockTiming = {
 export const budgetFileName = "budget.json";
 
 /**
- * How the budget file's own lock is held and waited for, in
- * milliseconds. It is held only to read, merge and write that small file,
- * so a process waits for it, retrying between `minTimeout` and
- * `maxTimeout` apart, at most `retries` times; a lock untouched for
- * `stale` is left by a process that died, and is taken over.
+ * How the budget file's own lock, `budget.json.lock`, is held and waited
+ * for, in milliseconds. It is held only to read, merge and write that
+ * small file. The holder touches it every `update`; a lock untouched for
+ * `stale` is left by a process that died, and is taken over. A process
+ * waits for it, retrying between `minTimeout` and `maxTimeout` apart, at
+ * most `retries` times: about 7 seconds, past `stale`, so a lock a dead
+ * process left never makes a keeping give up.
  */
 export const budgetLockTiming = {
-  stale: 10_000,
-  update: 1_000,
-  retries: { retries: 50, minTimeout: 10, maxTimeout: 200 },
+  stale: 2_000,
+  update: 500,
+  retries: { retries: 40, minTimeout: 20, maxTimeout: 200 },
 } as const;
 
 /**
