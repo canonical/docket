@@ -351,15 +351,14 @@ export interface Cache {
    * Whether docket may spend points of its own at the time asked, judged
    * on the mirror: false below the budget floor, the share of the hourly
    * budget kept for the user's own requests, until the queries' budget
-   * resets, and the status then says so, with the reset, unless the
-   * provider refused a request for its rate limit. docket's own
-   * background spending asks it before each request: the refresh cycle,
-   * reading details ahead of the selection, the watch of the selected
-   * thread's repository, and reading activity's events again at a sync.
+   * resets. It writes nothing. docket's own background spending asks it
+   * before each request: the refresh cycle, reading details ahead of the
+   * selection, the watch of the selected thread's repository, and reading
+   * activity's events again at a sync.
    * What the user or an agent asks for directly never asks, and still
    * spends from the reserve: the selected thread's details, a full
    * refresh, `show`, the read after a write, the read of the viewer on
-   * opening, the first read of activity's events, and every text command.
+   * opening, the first read of an activity window, and every text command.
    */
   maySpend(): boolean;
   /**

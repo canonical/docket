@@ -34,7 +34,7 @@ describe("answerOwed", () => {
     ]);
   });
 
-  it("says what is left of GitHub's budget once it runs live, and gives both budgets in JSON", async () => {
+  it("says what is left of GitHub's budget once less than 40% of it is left, and gives both budgets in JSON", async () => {
     const resetAt = new Date("2026-09-28T10:20:00Z");
     const live = { graphql: { limit: 5000, remaining: 1750, resetAt } };
     const provider = recordedProvider({ readBudgets: () => live });
