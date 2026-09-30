@@ -81,7 +81,8 @@ const propertyFolders = new Set([
  * regard to what it is, so nothing outside it imports them.
  */
 const fitting = "src/lib/ui/fit/";
-const fittingPrimitives = /(^|\/)(trimText|wrapText|fitPieces)(\.js)?$/;
+const fittingPrimitives =
+  /(^|\/)(trimText|wrapText|fitPieces|cutMiddle)(\.js)?$/;
 
 const maxLines = 500;
 const lengthHeader = /^\/\/ Longer than 500 lines because \S/;
@@ -347,7 +348,7 @@ function check(root: string): Finding[] {
         if (fittingPrimitives.test(specifier)) {
           report(
             "fitting",
-            `imports ${specifier}: fit text with fitField, fitRuns, wrapRuns or endRuns from ${fitting}`,
+            `imports ${specifier}: fit text with fitField, fitRuns, wrapRuns, endRuns or markPerson from ${fitting}`,
           );
         }
       }
@@ -536,6 +537,14 @@ const breaks: Record<string, [string, string]> = {
   "src/application/wrap.ts": [
     "fitting",
     'export { default as wrapText } from "../lib/ui/fit/wrapText.js";',
+  ],
+  "src/lib/ui/component/Runs/Runs.tsx": [
+    "fitting",
+    'import fitPieces from "../../fit/fitPieces.js";\nexport default function Runs() { return fitPieces; }',
+  ],
+  "src/lib/ui/component/Name/Name.tsx": [
+    "fitting",
+    'import cutMiddle from "../../fit/cutMiddle.js";\nexport default function Name() { return cutMiddle; }',
   ],
 };
 
