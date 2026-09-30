@@ -1972,6 +1972,24 @@ describe("Screen", { timeout: 15_000 }, () => {
   });
 
   describe("height", () => {
+    it("shows only that it needs 8 lines when shortened, acting on no key but q, and the screen again once tall enough", async () => {
+      const onQuit = vi.fn();
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const screen = await show(viewOf(cache), 40, onQuit);
+      const before = (await screen.redraw()).lines;
+      for (const lines of [7, 3]) {
+        screen.setup.resize(40, lines);
+        const short = await press(await screen.redraw(), "j", "?", "g");
+        expect(short.lines.filter(Boolean)).toEqual(["docket needs 8 lines"]);
+      }
+      screen.setup.resize(40, 12);
+      expect((await screen.redraw()).lines).toEqual(before);
+      screen.setup.resize(40, 7);
+      await press(await screen.redraw(), "q");
+      expect(onQuit).toHaveBeenCalledOnce();
+    });
+
     it("shows the rows scrolled out above once the pane grows tall enough", async () => {
       const screen = await showRecorded();
       const short = await press(screen, "j");

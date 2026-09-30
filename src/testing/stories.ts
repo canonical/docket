@@ -14,7 +14,11 @@ export interface Meta<Props> {
   readonly component: (props: Props) => ReactNode;
 }
 
-/** One story: the props the component is drawn with. */
+/**
+ * One story: the props the component is drawn with, and how it is drawn,
+ * such as on a terminal of fewer lines than the approved frames' 36.
+ */
 export interface Story<Props> {
   readonly args: Props;
+  readonly parameters?: { readonly height?: number };
 }

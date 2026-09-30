@@ -16,6 +16,7 @@ import {
   HelpOverlay,
   KeyBar,
   minColumns,
+  minLines,
   Notice,
   Pane,
   PaneHeader,
@@ -94,9 +95,9 @@ export default function Screen({
 }: TerminalView &
   Partial<UseAttentionProps> & { readonly onQuit: () => void }): ReactNode {
   const { width, height } = useTerminalDimensions();
-  // Below the narrowest pane the screen shows only that it needs more
-  // columns, so no key but `q` acts on the list or the editor it hides.
-  const narrow = width < minColumns;
+  // Below the narrowest or the shortest pane the screen shows only what
+  // it needs, so no key but `q` acts on the list or the editor it hides.
+  const tooSmall = width < minColumns || height < minLines;
   const attentionState = useAttention({ attention });
   const cache = "cache" in source ? source.cache : undefined;
   const readWatched = "cache" in source ? source.readWatched : undefined;
@@ -160,7 +161,7 @@ export default function Screen({
       describeCandidate(name, thread, watched, you.viewer, named),
     now,
     onResult: setAction,
-    covered: help || narrow,
+    covered: help || tooSmall,
   });
   const shownList = useShownList(mode);
   // Every move stops at the first or the last row, never past it.
@@ -197,7 +198,7 @@ export default function Screen({
     mode,
     help,
     editorOpen: editor.open,
-    narrow,
+    tooSmall,
     actions: {
       switchMode: address.setMode,
       moveSelection: (step) => moveTo((place) => place + step),
@@ -251,6 +252,9 @@ export default function Screen({
     viewer: you.viewer,
   });
   const room = width - standInIndent;
+  // The header, the counts, the status and the keys take a line each, and
+  // a pane shorter than they are leaves the list no line, never fewer.
+  const listHeight = Math.max(0, height - 4);
   const listed = activity && "list" in activity ? activity.list : undefined;
   const rows: readonly (WaitRow | ActivityThread)[] =
     (owed ?? listed)?.groups.flatMap(
@@ -362,7 +366,7 @@ export default function Screen({
         now={at}
         timezone={settings.time.timezone}
         width={width}
-        height={height - 4}
+        height={listHeight}
         {...shownList.list}
         {...(teamless && { notice: teamless })}
         {...(slot && { editor: slot })}
@@ -383,7 +387,7 @@ export default function Screen({
         now={at}
         timezone={settings.time.timezone}
         width={width}
-        height={height - 4}
+        height={listHeight}
         {...shownList.list}
         {...(slot && { editor: slot })}
       />
@@ -394,6 +398,7 @@ export default function Screen({
   return (
     <Pane
       width={width}
+      height={height}
       header={
         help ? (
           <PaneHeader title="help" width={width} />

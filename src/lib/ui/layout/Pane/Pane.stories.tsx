@@ -19,11 +19,14 @@ const meta: Meta<PaneProps> = {
 export default meta;
 
 const width = 40;
+/** The approved frames' height. */
+const height = 36;
 
 /** owed with nothing owed: every line of the screen. */
 export const NothingOwed: Story<PaneProps> = {
   args: {
     width,
+    height,
     header: <PaneHeader title="owed" width={width} />,
     children: (
       <box paddingTop={1}>

@@ -6,7 +6,7 @@ import { Help, NoCounts, NothingOwed } from "./Pane.stories.js";
 
 describe("Pane", () => {
   it("draws the header, the list region, the counts, the status and the keys at 40 columns", async () => {
-    const screen = await draw(<Pane {...NothingOwed.args} />, 40, 8);
+    const screen = await draw(<Pane {...NothingOwed.args} height={8} />, 40, 8);
     expect(screen.lines).toEqual([
       "owed",
       "",
@@ -22,7 +22,7 @@ describe("Pane", () => {
 
   it("gives the list region every line the terminal adds, at 60 columns", async () => {
     const screen = await draw(
-      <Pane {...NothingOwed.args} width={60} />,
+      <Pane {...NothingOwed.args} width={60} height={10} />,
       60,
       10,
     );
@@ -35,7 +35,7 @@ describe("Pane", () => {
   });
 
   it("keeps the counts line's place blank when there is none", async () => {
-    const screen = await draw(<Pane {...NoCounts.args} />, 40, 8);
+    const screen = await draw(<Pane {...NoCounts.args} height={8} />, 40, 8);
     expect(screen.lines.slice(5)).toEqual([
       "",
       "synced 2m ago",
@@ -44,7 +44,7 @@ describe("Pane", () => {
   });
 
   it("gives the help everything under the header", async () => {
-    const screen = await draw(<Pane {...Help.args} />, 40, 14);
+    const screen = await draw(<Pane {...Help.args} height={14} />, 40, 14);
     expect(screen.lines.slice(0, 3)).toEqual([
       "help",
       "",
@@ -55,14 +55,42 @@ describe("Pane", () => {
   });
 
   it("shows only the one line below 40 columns, and the screen again once wide enough", async () => {
-    const screen = await draw(<Pane {...NothingOwed.args} width={39} />, 39, 8);
+    const screen = await draw(
+      <Pane {...NothingOwed.args} width={39} height={8} />,
+      39,
+      8,
+    );
     expect(screen.lines.filter(Boolean)).toEqual(["docket needs 40 columns"]);
-    const narrow = await draw(<Pane {...NothingOwed.args} width={12} />, 12, 8);
+    const narrow = await draw(
+      <Pane {...NothingOwed.args} width={12} height={8} />,
+      12,
+      8,
+    );
     expect(narrow.lines.filter(Boolean)).toEqual([
       "docket needs",
       "40 columns",
     ]);
-    const wide = await draw(<Pane {...NothingOwed.args} width={40} />, 40, 8);
+    const wide = await draw(
+      <Pane {...NothingOwed.args} width={40} height={8} />,
+      40,
+      8,
+    );
     expect(wide.lines.at(0)).toBe("owed");
+  });
+
+  it("shows only the one line below 8 lines, the width first, and the screen again once tall enough", async () => {
+    const short = await draw(<Pane {...NothingOwed.args} height={7} />, 40, 7);
+    expect(short.lines.filter(Boolean)).toEqual(["docket needs 8 lines"]);
+    const narrow = await draw(
+      <Pane {...NothingOwed.args} width={12} height={3} />,
+      12,
+      3,
+    );
+    expect(narrow.lines.filter(Boolean)).toEqual([
+      "docket needs",
+      "40 columns",
+    ]);
+    const tall = await draw(<Pane {...NothingOwed.args} height={8} />, 40, 8);
+    expect(tall.lines.at(0)).toBe("owed");
   });
 });

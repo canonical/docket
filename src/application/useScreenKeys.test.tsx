@@ -44,7 +44,7 @@ function probe(start: Partial<State> = {}) {
       mode: "owed",
       help: false,
       editorOpen: false,
-      narrow: false,
+      tooSmall: false,
       actions: noting(ran),
       ...start,
     });
@@ -208,11 +208,11 @@ describe("useScreenKeys", () => {
     { shown: "an editor open", help: false, editorOpen: true },
     { shown: "the help open over an editor", help: true, editorOpen: true },
   ])(
-    "runs only q while the pane is too narrow, and every key again once it widens, with $shown",
+    "runs only q while the pane is too small, and every key again once it is not, with $shown",
     async ({ help, editorOpen }) => {
       const { ran, change, screen } = await bind({
         mode: "activity",
-        narrow: true,
+        tooSmall: true,
         help,
         editorOpen,
       });
@@ -225,7 +225,7 @@ describe("useScreenKeys", () => {
       expect(ran).toEqual(["quit"]);
       expect(drawn.lines.at(0)).toBe("q");
       await screen.redraw(() =>
-        change({ narrow: false, help: false, editorOpen: false }),
+        change({ tooSmall: false, help: false, editorOpen: false }),
       );
       await press(screen, "j", "t");
       expect(ran.slice(1)).toEqual(["moveSelection 1", "nextWindow"]);

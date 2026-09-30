@@ -379,3 +379,9 @@ export const OwedByOwnerYourTeam: Story<ScreenFrameProps> = {
     },
   },
 };
+
+/** A pane shorter than 8 lines: it says only that it needs them. */
+export const TooShort: Story<ScreenFrameProps> = {
+  args: recording,
+  parameters: { height: 7 },
+};
