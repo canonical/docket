@@ -14,6 +14,48 @@ const corpusRoot = import.meta.dirname;
 const entry = resolve(corpusRoot, "../src/application/main.ts");
 const standIn = resolve(corpusRoot, "standIn.ts");
 
+/** How long, in milliseconds, a key waits for the read it causes. */
+const readWait = 30_000;
+
+/** The lines of the request log `log` so far, the time zone's first. */
+const readLog = (log: string) =>
+  readFileSync(log, "utf8")
+    .split("\n")
+    .filter((line) => line !== "");
+
+/**
+ * Waits until the request log `log` holds, past its first `sent` lines, a
+ * read of details that names `thread` (`owner/name#number`), in a query
+ * aliased per thread: `t0: repository(owner: "o", name: "n") {
+ * pullRequest(number: 4) … }`.
+ *
+ * @throws Error naming the key when no such read is sent in `readWait`.
+ */
+async function waitForRead(
+  log: string,
+  sent: number,
+  thread: string,
+  place: number,
+): Promise<void> {
+  const started = Date.now();
+  while (Date.now() - started < readWait) {
+    const read = readLog(log)
+      .slice(sent)
+      .some((line) => {
+        const { body } = JSON.parse(line) as SentRequest;
+        const named = String(body.query ?? "").matchAll(
+          /repository\(owner: "([^"]+)", name: "([^"]+)"\) \{ \w+\(number: (\d+)\)/g,
+        );
+        return [...named].some(
+          ([, owner, name, number]) => `${owner}/${name}#${number}` === thread,
+        );
+      });
+    if (read) return;
+    await Bun.sleep(20);
+  }
+  throw new Error(`key ${place} sent no read of ${thread}`);
+}
+
 /**
  * Makes a home whose personal file is `personalFile`, and runs docket in
  * it the way a user does, as its own process: `bun` on
@@ -143,7 +185,12 @@ export default function makeHome(personalFile: string): Home {
             );
           }
           if (typeof key === "string") child.terminal?.write(key);
-          else child.kill("SIGUSR1");
+          else if ("pause" in key) child.kill("SIGUSR1");
+          else {
+            const sent = readLog(log).length;
+            child.terminal?.write(key.key);
+            await waitForRead(log, sent, key.reads, place + 1);
+          }
         }
         // The stand-in's clock moves on only once the last key is pressed.
         child.kill("SIGUSR2");

@@ -67,6 +67,16 @@ export interface Pause {
   readonly pause: "minute";
 }
 
+/**
+ * A key whose effect is a read of details that names `reads`, a thread as
+ * `owner/name#number`: the next key, or the end of the keys, waits until
+ * docket has sent it, so each move is a stop however slow the machine.
+ */
+export interface ReadingKey {
+  readonly key: string;
+  readonly reads: string;
+}
+
 /** How the terminal interface is opened, and what a person does in it. */
 export interface Opening extends Call {
   /**
@@ -78,9 +88,10 @@ export interface Opening extends Call {
    * The keys pressed once the interface has drawn `ready`, one at a time,
    * each `pause` milliseconds of real time after the last, 250 unless
    * given: the stand-in's clock stands still until the last is pressed,
-   * but for each `Pause` among them, which moves it on by a minute.
+   * but for each `Pause` among them, which moves it on by a minute. A
+   * `ReadingKey` holds the next key until the read it causes is sent.
    */
-  readonly keys?: readonly (string | Pause)[];
+  readonly keys?: readonly (string | Pause | ReadingKey)[];
   readonly ready?: string;
   readonly pause?: number;
   /**

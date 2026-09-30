@@ -28,14 +28,16 @@ const lastChange = "2026-09-28T09:35:00Z";
  * and a documentation issue alice opened and a bot labelled. `words`
  * gives the text written on GitHub, and `tag` the entity tag the check
  * for changes answers with, `crowd` how many more pull requests like
- * dave's wait on bob's review, and `changedAt` when GitHub last recorded
- * a change to dave's.
+ * dave's wait on bob's review, `changedAt` when GitHub last recorded
+ * a change to dave's, and `changedCrowd` the numbers of those like it
+ * that changed then too.
  */
 export default function recordTeam(
   words: Words,
   tag = "first",
   crowd = 0,
   changedAt = lastChange,
+  changedCrowd: readonly number[] = [],
 ): Recording {
   const parserFix = {
     ...buildIssueNode({
@@ -297,7 +299,7 @@ export default function recordTeam(
     return {
       ...parserFix,
       number,
-      updatedAt: lastChange,
+      updatedAt: changedCrowd.includes(number) ? changedAt : lastChange,
       url: `https://github.com/${repo}/pull/${number}`,
       title: `${words.title} ${number}`,
     };

@@ -14,7 +14,8 @@ import type { Outcome, SentRequest } from "./types.js";
  * longer than one read, it reads the details of at most 14 threads a
  * request, a point each, and a thread's details once for each change
  * GitHub records to it: never again when the selection comes back to it
- * unchanged, however long after, and alone when it changes. Below a
+ * unchanged, however long after, and only the threads that changed when
+ * they change, the selected one or one read ahead. Below a
  * fifth of the hourly budget it spends nothing of its own, though GitHub
  * changed, but reads the selected thread's details, one thread each, the
  * user's own request, while the refresh cycle's free checks go on.
@@ -276,7 +277,11 @@ describe("request-budget", () => {
             recording: "crowded",
             remaining: 900,
             ready: "Fix the parser",
-            keys: [..."jjjjj"],
+            // Each move is a stop: the next key waits for the read it causes.
+            keys: [100, 101, 102, 103, 104].map((number) => ({
+              key: "j",
+              reads: `example-org/example-repo#${number}`,
+            })),
             changed: "crowdedChanged",
           }),
         );
@@ -333,29 +338,37 @@ describe("request-budget", () => {
       expect(new Set(read).size).toBe(read.length);
     }, 180_000);
 
-    it("reads again, alone, the details of the thread GitHub changed", async () => {
+    it("reads again only the details of the threads GitHub changed, the selected one and one read ahead, each once", async () => {
       const { code, requests } = await changed;
       expect(code).toBe(0);
       const [first, ...after] = requests.filter(isDetailRead);
-      expect(first && listThreads(first)).toContain(
-        "example-org/example-repo#12",
+      if (!first) throw new Error("the pane read no details on opening");
+      expect(listThreads(first)).toEqual(
+        expect.arrayContaining([
+          "example-org/example-repo#12",
+          "example-org/example-repo#101",
+        ]),
       );
-      expect(after.map(listThreads)).toEqual([["example-org/example-repo#12"]]);
+      expect(after.flatMap(listThreads).sort()).toEqual([
+        "example-org/example-repo#101",
+        "example-org/example-repo#12",
+      ]);
     }, 180_000);
 
-    it("spends nothing of its own below the budget floor, though GitHub changed, reading only the selected thread's details, one thread each, while the free checks go on", async () => {
+    it("spends nothing of its own below the budget floor, though GitHub changed, reading the selected thread's details alone at each stop, in order, while the free checks go on", async () => {
       const { code, requests } = await floored;
       expect(code).toBe(0);
       const spent = requests.filter(
         (request) => request.url.endsWith("/graphql") && !isCallRead(request),
       );
-      // At least the selected thread's read on opening; how many of the
-      // moves after it come to rest depends on the machine's speed.
-      expect(spent.length).toBeGreaterThan(0);
-      for (const request of spent) {
-        expect(isDetailRead(request)).toBe(true);
-        expect(listThreads(request)).toHaveLength(1);
-      }
+      expect(spent.filter((request) => !isDetailRead(request))).toEqual([]);
+      // The selected thread on opening, then each thread the selection
+      // stopped on, each read alone.
+      expect(spent.map(listThreads)).toEqual(
+        [12, 100, 101, 102, 103, 104].map((number) => [
+          `example-org/example-repo#${number}`,
+        ]),
+      );
       // The watch of the selected thread checks only its own repository, so
       // the other's checks are the refresh cycle's.
       const checks = requests.filter(
