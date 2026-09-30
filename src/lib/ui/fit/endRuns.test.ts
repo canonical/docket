@@ -23,6 +23,18 @@ describe("endRuns", () => {
     ]);
   });
 
+  it("ends with … a run that fills the width when runs after it are left out", () => {
+    expect(
+      endRuns(
+        [
+          { text: "abcdefghij", look: "muted" },
+          { text: "klm", look: "team" },
+        ],
+        10,
+      ),
+    ).toEqual([{ text: "abcdefghi…", look: "muted" }]);
+  });
+
   it("gives nothing for no runs", () => {
     expect(endRuns([], 40)).toEqual([]);
   });

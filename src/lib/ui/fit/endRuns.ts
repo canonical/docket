@@ -19,7 +19,9 @@ export default function endRuns<Run extends { readonly text: string }>(
     const text = sanitize(run.text);
     const cells = measureText(text);
     if (cells > room) {
-      return [...ended, { ...run, text: trimText(text, room + 1) }];
+      // The run is cut even when it would end at the width, so the `…`
+      // says the runs after it are left out.
+      return [...ended, { ...run, text: trimText(`${text}…`, room + 1) }];
     }
     ended.push({ ...run, text });
     room -= cells;
