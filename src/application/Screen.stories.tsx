@@ -130,7 +130,7 @@ export const OwedOrganisationReply: Story<ScreenFrameProps> = {
   },
 };
 
-/** A dependency update a bot opened, asking bob for a review. */
+/** A dependency update a bot opened, assigned to bob, asking him for a review. */
 const botUpdate: Thread = {
   ...parserFix,
   number: 20,
@@ -141,7 +141,7 @@ const botUpdate: Thread = {
   createdAt: at("2026-09-26T08:00+02:00"),
   updatedAt: at("2026-09-26T08:00+02:00"),
   labels: ["dependencies"],
-  assignees: [],
+  assignees: [bob],
   comments: [],
   reviewRequests: [
     {
@@ -158,7 +158,7 @@ const botUpdateDetail: ThreadDetail = {
   createdAt: botUpdate.createdAt,
   updatedAt: botUpdate.updatedAt,
   labels: botUpdate.labels,
-  assignees: [],
+  assignees: [bob],
   messages: [],
   requests: [
     { reviewer: bob, requester: exampleSync, at: botUpdate.createdAt },
@@ -174,34 +174,21 @@ const botUpdateDetail: ThreadDetail = {
   ],
 };
 
-/** The settings, with dependency updates kept off the close clock. */
-const updatesExempt = {
-  ...recordedSettings,
-  exempt: { close: ["dependencies"] },
-};
-
 /**
- * A thread a bot opened, selected: its author and whoever asked for the
- * review behind the bot's mark, dimmed, the review still one bob owes.
+ * A thread a bot opened, its close selected: its author behind the bot's
+ * mark, dimmed, and the close and the review both waits bob owes, since a
+ * label keeps no thread off the close clock unless the settings say so.
  */
 export const OwedBotAuthored: Story<ScreenFrameProps> = {
   args: {
     ...recording,
-    settings: updatesExempt,
-    watched: recordedWatched(updatesExempt),
-    source: {
-      ...connectRecording({
-        threads: [...recordedThreads, botUpdate],
-        read: async (thread) =>
-          thread.number === botUpdate.number
-            ? botUpdateDetail
-            : parserFixDetail,
-      }),
-      readWatched: async () => ({
-        watched: recordedWatched(updatesExempt),
-      }),
-    },
+    source: connectRecording({
+      threads: [...recordedThreads, botUpdate],
+      read: async (thread) =>
+        thread.number === botUpdate.number ? botUpdateDetail : parserFixDetail,
+    }),
     run: [
+      "selection.next",
       "selection.next",
       "selection.next",
       "selection.next",
