@@ -39,11 +39,11 @@ const listMarks = (row: FinishedRow) => [
 
 /**
  * How long the thread was open against its close target, in words: `open
- * 9d, target 5d, 4d over`, `open 2d, target 30d`, or, when a label exempts
- * it, `open 2d, exempt from the close target`.
+ * 9d, target 5d, 4d over` or `open 2d, target 30d`; a thread a label
+ * exempts has no target, so only `open 2d`.
  */
 function describeClose(row: FinishedRow): string {
-  if (!row.target) return `${row.open.text}, exempt from the close target`;
+  if (!row.target) return row.open.text;
   return [row.open, row.target, ...(row.over ? [row.over] : [])]
     .map(({ text }) => text)
     .join(", ");

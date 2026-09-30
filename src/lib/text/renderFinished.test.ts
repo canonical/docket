@@ -39,7 +39,7 @@ describe("renderFinished", () => {
       "",
       "## PULL REQUESTS",
       '- example#2 · "Example change" · pull request · merged by "bob" (team) · 20h ago, 2026-09-24 16:00 Europe/Paris · open 2d, target 5d · author "alice" (you) · owner "alice" · example stack 3, 1 of 2',
-      '- example#9 · "Update dependency example-lib to 2.0" · pull request · closed by "alice" (you) · 2d ago, 2026-09-22 15:00 Europe/Paris · open 5h, exempt from the close target · author "example-sync" (bot) · unassigned · draft',
+      '- example#9 · "Update dependency example-lib to 2.0" · pull request · closed by "alice" (you) · 2d ago, 2026-09-22 15:00 Europe/Paris · open 5h · author "example-sync" (bot) · unassigned · draft',
       "",
     ]);
   });
