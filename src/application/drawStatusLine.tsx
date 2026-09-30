@@ -3,6 +3,7 @@ import type { AttentionState, CacheStatus } from "../lib/cache/index.js";
 import type { Repo } from "../lib/config/index.js";
 import type { Budget } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
+import { describeBudget } from "../lib/text/index.js";
 import {
   type ActionResult,
   type DetailsCount,
@@ -59,7 +60,7 @@ export default function drawStatusLine({
       action={action}
       attention={attention}
       details={details}
-      budget={budget}
+      liveBudget={describeBudget(budget, now, timezone)}
       now={now}
       timezone={timezone}
       names={Object.fromEntries(watched.map(({ repo, name }) => [repo, name]))}

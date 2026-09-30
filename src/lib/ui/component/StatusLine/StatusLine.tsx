@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { describeBudget } from "../../../text/index.js";
 import { tokens } from "../../../tokens/index.js";
 import fitPieces from "../../fitPieces.js";
 import markPerson from "../../markPerson.js";
@@ -48,9 +47,9 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
  * prerequisite frames). A message too wide for the pane drops its part
  * that gives way first, a full refresh its pages, and only then is cut
  * with `…`. The right side is dimmed, as `describeRight` chooses it:
- * `details 3/12` while any asked for are unread, else
- * `budget 35% · resets 14:20` while less than 40% of the queries' budget
- * is left, and dropped when the two sides would meet.
+ * `details 3/12` while any asked for are unread, else the live budget
+ * figures it is given, such as `budget 35% · resets 14:20`, and dropped
+ * when the two sides would meet.
  *
  * `import { StatusLine } from "../lib/ui/index.js";`
  *
@@ -61,7 +60,7 @@ const StatusLine = ({
   action,
   attention,
   details,
-  budget,
+  liveBudget = "",
   now,
   timezone,
   names,
@@ -82,13 +81,7 @@ const StatusLine = ({
       ? { ...message, text: message.shorter }
       : message;
   const runs = fitted ? fitPieces(describeRuns(fitted), width) : [];
-  const right = describeRight(
-    status,
-    message,
-    attention,
-    details,
-    describeBudget(budget, now, timezone),
-  );
+  const right = describeRight(status, message, attention, details, liveBudget);
   // At least one cell apart, or the right side is left out.
   const gap = width - measurePieces(runs) - Bun.stringWidth(right);
   return (

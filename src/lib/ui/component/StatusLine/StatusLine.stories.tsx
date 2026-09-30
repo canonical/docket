@@ -48,12 +48,8 @@ const refused: ProviderError = Object.assign(
   { code: "GITHUB_REQUEST_FAILED", recovery: "refresh" } as const,
 );
 
-/** A queries' budget with 35% left, which resets at 14:20. */
-const low = {
-  limit: 5000,
-  remaining: 1750,
-  resetAt: new Date("2026-09-28T14:20:00Z"),
-};
+/** The live budget figures for 35% left of the budget, which resets at 14:20. */
+const low = "budget 35% · resets 14:20";
 
 const base = {
   now,
@@ -187,11 +183,7 @@ export const Idle: Story<StatusLineProps> = {
 export const BudgetPaused: Story<StatusLineProps> = {
   args: {
     ...base,
-    budget: {
-      ...low,
-      remaining: 900,
-      resetAt: new Date("2026-09-28T13:00:00Z"),
-    },
+    liveBudget: "budget 18% · resets 13:00",
     status: {
       ...settled,
       paused: { until: new Date("2026-09-28T13:00:00Z"), reason: "budget" },
@@ -201,7 +193,7 @@ export const BudgetPaused: Story<StatusLineProps> = {
 
 /** Less than 40% of the queries' budget left: how much, and when it resets, dimmed. */
 export const BudgetLow: Story<StatusLineProps> = {
-  args: { ...base, status: settled, budget: low },
+  args: { ...base, status: settled, liveBudget: low },
 };
 
 /** The budget low while details are read: the count takes the right side. */
@@ -209,7 +201,7 @@ export const BudgetLowWithDetails: Story<StatusLineProps> = {
   args: {
     ...base,
     status: settled,
-    budget: low,
+    liveBudget: low,
     details: { read: 0, asked: 12 },
   },
 };
