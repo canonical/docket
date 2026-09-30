@@ -14,10 +14,9 @@ const succeeded = tokens["glyph.succeeded"];
 const separator = ` ${tokens["glyph.separator"]} `;
 /**
  * Chooses the one message the status line shows for the cache's state
- * and the user's last action. The first that applies wins: the rate
- * limit, `✗ rate limited · resumes 14:20` with rows held, and
- * `paused: rate limit · resumes 14:20` while nothing is held, as on the
- * first run; an error, which says `rate limited`, `offline` when a
+ * and the user's last action. The first that applies wins: a pause for
+ * the rate limit, `paused: rate limit · resumes 14:20`, rows held or
+ * not; an error, which says `rate limited`, `offline` when a
  * request got no answer, at all or in time, or else `refresh failed`;
  * the result of the user's own
  * action, for 5 seconds after it; the progress of a full refresh; a
@@ -43,12 +42,8 @@ export default function describeStatus(
   const failure = status?.failure;
   const syncedAt = status?.syncedAt;
   if (paused?.reason === "rateLimit") {
-    const resumes = `resumes ${describeClock(paused.until, timezone)}`;
-    // Only a first run, with nothing held, reads it as a pause: with rows
-    // held it is the error it always was.
-    return syncedAt
-      ? { kind: "error", text: `${failed} rate limited${separator}${resumes}` }
-      : { kind: "notice", text: `paused: rate limit${separator}${resumes}` };
+    const text = `paused: rate limit${separator}resumes ${describeClock(paused.until, timezone)}`;
+    return { kind: "notice", text };
   }
   if (failure) {
     const what =

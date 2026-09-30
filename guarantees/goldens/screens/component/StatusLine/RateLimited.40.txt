@@ -1,5 +1,5 @@
 40 columns
-|✗ rate limited · resumes 14:20
+|paused: rate limit · resumes 14:20
 
 runs
-1:1 "✗ rate limited · resumes 14:20" fg #e27878ff bg #00000000
+1:1 "paused: rate limit · resumes 14:20" fg #c6c8d1ff bg #00000000

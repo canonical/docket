@@ -32,10 +32,10 @@ describe("StatusLine", () => {
     expect(screen.look("✗ refresh")?.fg).toBe(tokens["color.text.error"]);
   });
 
-  it("draws a rate limit in the error colour with rows held, and as a pause in the text colour while nothing is held", async () => {
+  it("draws a pause for the rate limit in the text colour, rows held or not", async () => {
     const held = await draw(<StatusLine {...RateLimited.args} />, 40);
-    expect(held.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
-    expect(held.look("✗ rate")?.fg).toBe(tokens["color.text.error"]);
+    expect(held.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
+    expect(held.look("paused")?.fg).toBe(tokens["color.text"]);
     const { status } = RateLimited.args;
     const first = await draw(
       <StatusLine
@@ -69,7 +69,7 @@ describe("StatusLine", () => {
       <StatusLine {...RateLimited.args} width={60} />,
       60,
     );
-    expect(screen.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
+    expect(screen.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
   });
 
   it("draws a failed action's result with its ✗ in the error colour", async () => {
@@ -128,7 +128,7 @@ describe("StatusLine", () => {
       <StatusLine {...RateLimited.args} detailsPaused />,
       40,
     );
-    expect(limited.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
+    expect(limited.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
     const idle = await draw(<StatusLine {...Idle.args} detailsPaused />, 40);
     expect(idle.lines.at(0)).toBe("synced 25m ago · idle · any key wakes");
   });
