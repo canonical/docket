@@ -4,7 +4,7 @@ import type { ListBlock } from "../../types.js";
 export interface ScrolledListProps {
   /**
    * The list's blocks, in order.
-   * Maps to DSL role: group_heading, thread entry (cardinality: 0..*)
+   * Maps to DSL role: thread entry, group heading (cardinality: 0..*)
    */
   blocks: readonly ListBlock[];
   /**
