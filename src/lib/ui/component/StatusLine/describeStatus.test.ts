@@ -47,10 +47,18 @@ describe("describeStatus", () => {
     }
   });
 
-  it("says the refresh is paused for the rate limit, and when requests resume, in the time zone given", () => {
+  it("names a rate limit as an error with rows held, and when requests resume, in the time zone given", () => {
     expect(describeAt(statusOf(RateLimited), "Europe/Paris")).toEqual({
+      kind: "error",
+      text: "✗ rate limited · resumes 16:20",
+    });
+  });
+
+  it("says the refresh is paused for the rate limit while nothing is held, as on the first run", () => {
+    const status = { ...statusOf(RateLimited), syncedAt: undefined };
+    expect(describeAt(status)).toEqual({
       kind: "notice",
-      text: "paused: rate limit · resumes 16:20",
+      text: "paused: rate limit · resumes 14:20",
     });
   });
 
