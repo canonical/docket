@@ -197,13 +197,13 @@ describe("ThreadRow", () => {
   });
 
   describe("narrower than its text", () => {
-    it("cuts the title first, then the reference and kinds before the distance", async () => {
+    it("cuts the title first, then the reference in its middle, keeping its number, the kinds and the distance", async () => {
       const screen = await draw(
         <ThreadRow {...OverReviewSelected.args} width={24} />,
         24,
       );
       expect(screen.lines.slice(0, 2)).toEqual([
-        "┃┆example#12 PR… 1d over",
+        "┃┆e…12 PR review 1d over",
         "┃┆Fix the parser",
       ]);
     });

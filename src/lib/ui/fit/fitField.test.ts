@@ -5,8 +5,8 @@ import fitField from "./fitField.js";
 
 /** A text of each kind, longer than 40 cells, as a list would give it. */
 const samples: Readonly<Record<FieldKind, string>> = {
-  identifier: "example-repository-with-a-long-name#1234",
-  person: "example-org/a-team-with-a-very-long-name",
+  identifier: "example-repository-with-a-very-long-name#12345",
+  person: "example-org/a-team-with-a-very-long-name-indeed",
   title: "Fix the parser so it keeps comments at the ends of lines",
   quote: "Could you look at the parser again once the tests are green?",
   words: "requested review from every owner of the repository",
@@ -24,22 +24,22 @@ const table: Readonly<
 > = {
   identifier: {
     40: {
-      line: "example-repository-with-a-long-name#1234",
-      block: ["example-repository-with-a-long-name#1234"],
+      line: "example-repository-…very-long-name#12345",
+      block: ["example-repository-with-a-very-long-name", "#12345"],
     },
     60: {
-      line: "example-repository-with-a-long-name#1234",
-      block: ["example-repository-with-a-long-name#1234"],
+      line: "example-repository-with-a-very-long-name#12345",
+      block: ["example-repository-with-a-very-long-name#12345"],
     },
   },
   person: {
     40: {
-      line: "example-org/a-team-with-a-very-long-name",
-      block: ["example-org/a-team-with-a-very-long-name"],
+      line: "example-org/a-team-with-a-very-long-nam…",
+      block: ["example-org/a-team-with-a-very-long-name-indeed"],
     },
     60: {
-      line: "example-org/a-team-with-a-very-long-name",
-      block: ["example-org/a-team-with-a-very-long-name"],
+      line: "example-org/a-team-with-a-very-long-name-indeed",
+      block: ["example-org/a-team-with-a-very-long-name-indeed"],
     },
   },
   title: {

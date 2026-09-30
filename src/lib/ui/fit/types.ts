@@ -8,9 +8,9 @@ export type Slot = "line" | "block";
 
 /**
  * How a field is fitted to one line too narrow for it: kept `whole`, or
- * cut at its end with `…` (`cutEnd`).
+ * cut with `…` at its end (`cutEnd`) or in its middle (`cutMiddle`).
  */
-export type LineRule = "whole" | "cutEnd";
+export type LineRule = "whole" | "cutEnd" | "cutMiddle";
 
 /** How a field is fitted to a block: kept `whole` on one line, or wrapped (`wrap`). */
 export type BlockRule = "whole" | "wrap";

@@ -21,9 +21,16 @@ function fitStage(stage: RepoStage, room: number): Piece[][] {
 }
 
 /**
+ * The cells the stage's column keeps whatever the names beside it:
+ * `checking for changes`, the widest stage on one line.
+ */
+const stageCells = 20;
+
+/**
  * One line for each watched repository while nothing is shown, as on the
  * first run: its short name, padded to the longest name and one cell
- * more, then its stage (`checking for changes`, `reading page 2/3`,
+ * more, a name that would leave the stage fewer than 20 cells cut in its
+ * middle, then its stage (`checking for changes`, `reading page 2/3`,
  * `reading checks`, `✓ 89 threads`, `waiting`, `paused: budget low`,
  * `paused: rate limit`, `✗ failed: …`).
  *
@@ -39,7 +46,7 @@ const RefreshStages = ({
     name: fitField(
       { text: names[repo] ?? repo, kind: "identifier" },
       "line",
-      width,
+      width - stageCells - 1,
     ),
     stage,
   }));

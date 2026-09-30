@@ -1,5 +1,5 @@
 40 columns
-|example-repository-with-a-long-name s… ─
+|example-repository…ch-with-a-long-name ─
 
 runs
-1:1 "example-repository-with-a-long-name s… ─" fg #c6c8d1ff bg #00000000
+1:1 "example-repository…ch-with-a-long-name ─" fg #c6c8d1ff bg #00000000

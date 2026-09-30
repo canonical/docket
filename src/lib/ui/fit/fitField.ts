@@ -1,6 +1,7 @@
 import type { Field } from "../../owed/index.js";
 import { sanitize } from "../../text/index.js";
 import { fitRules } from "./constants.js";
+import cutMiddle from "./cutMiddle.js";
 import trimText from "./trimText.js";
 import type { Slot } from "./types.js";
 import wrapText from "./wrapText.js";
@@ -29,6 +30,7 @@ export default function fitField(
 ): string | string[] {
   const rule = fitRules[field.kind];
   if (slot === "line") {
+    if (rule.line === "cutMiddle") return cutMiddle(field.text, cells);
     return rule.line === "whole"
       ? sanitize(field.text)
       : trimText(field.text, cells);

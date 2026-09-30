@@ -34,21 +34,25 @@ const space = (count: number): Piece => ({
 
 /**
  * The row's head, all of it bold: the reference and the kinds, then the
- * author, then the distance at the right edge. The reference, the kinds
- * and the distance always show whole at the pane's width; the author is
- * the one field that gives way, its login cut first and its mark never,
- * and once fewer than four cells of login would remain it leaves the line.
+ * author, then the distance at the right edge. The kinds and the distance
+ * always show whole; the reference too, unless its repository's short
+ * name leaves them no room, when it is cut in its middle and keeps its
+ * number. The author gives way first, its login cut before its mark, and
+ * once fewer than four cells of login would remain it leaves the line.
  */
 function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
   const text = tokens["color.text"];
-  const figure = row.distance.text;
-  const kinds =
-    "wait" in row ? [row.threadKind.text, row.kind.text] : [row.kind.text];
-  const words = fitField(
-    { text: [row.reference.text, ...kinds].join(" "), kind: "identifier" },
+  const figure = fitField(row.distance, "line", inner);
+  const kinds = ("wait" in row ? [row.threadKind, row.kind] : [row.kind])
+    .map((field) => fitField(field, "line", inner))
+    .join(" ");
+  // A space after the reference, and one before the distance.
+  const reference = fitField(
+    row.reference,
     "line",
-    inner - Bun.stringWidth(figure) - 1,
+    inner - Bun.stringWidth(kinds) - Bun.stringWidth(figure) - 2,
   );
+  const words = `${reference} ${kinds}`;
   // The mark and the space after it take two cells beside the login.
   const room = inner - Bun.stringWidth(words) - Bun.stringWidth(figure) - 4;
   const author =

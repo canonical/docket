@@ -433,7 +433,7 @@ export default function Screen({
           <PaneHeader
             title={
               editor.title
-                ? { text: editor.title, kind: "words" }
+                ? { text: editor.title, kind: "identifier" }
                 : header.title
             }
             address={editor.title ? undefined : header.address}
