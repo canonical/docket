@@ -108,7 +108,7 @@ export default function useReadAhead({
     queue.request(window, chosen?.thread, delay);
   }, [queue, key, chosenKey, attention, paused]);
   if (!queue) return { version: (_thread, version) => version };
-  const progress = queue.progress();
+  const progress = queue.countDetails();
   return {
     read: (thread, version) => queue.read(thread, version),
     version: (thread, version) => `${version}|${queue.countArrivals(thread)}`,

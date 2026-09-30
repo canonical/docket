@@ -296,22 +296,22 @@ const waiting = () => {
 const wanted = (...threads: (typeof one)[]) =>
   threads.map((each) => ({ thread: each, version: "v" }));
 
-describe("createDetailQueue's progress", () => {
+describe("createDetailQueue's count of details", () => {
   it("counts the threads asked for with nothing pending, and those answered, found or not, until nothing is pending", async () => {
     const { reader, answer } = waiting();
     const queue = open(reader);
-    expect(queue.progress()).toBeUndefined();
+    expect(queue.countDetails()).toBeUndefined();
     queue.request(wanted(one, two, three), one, 0);
-    expect(queue.progress()).toEqual({ read: 0, asked: 3 });
+    expect(queue.countDetails()).toEqual({ read: 0, asked: 3 });
     await vi.advanceTimersByTimeAsync(0);
     queue.read(four, "v");
-    expect(queue.progress()).toEqual({ read: 0, asked: 4 });
+    expect(queue.countDetails()).toEqual({ read: 0, asked: 4 });
     answer();
     await vi.advanceTimersByTimeAsync(0);
-    expect(queue.progress()).toEqual({ read: 3, asked: 4 });
+    expect(queue.countDetails()).toEqual({ read: 3, asked: 4 });
     answer();
     await vi.advanceTimersByTimeAsync(0);
-    expect(queue.progress()).toBeUndefined();
+    expect(queue.countDetails()).toBeUndefined();
   });
 
   it("counts the selected thread alone when only its details are read again", async () => {
@@ -322,7 +322,7 @@ describe("createDetailQueue's progress", () => {
     answer();
     await vi.advanceTimersByTimeAsync(0);
     queue.read(one, "w");
-    expect(queue.progress()).toEqual({ read: 0, asked: 1 });
+    expect(queue.countDetails()).toEqual({ read: 0, asked: 1 });
   });
 
   it("no longer counts a thread that gives way to a later window, or that a request leaves out", async () => {
@@ -330,28 +330,28 @@ describe("createDetailQueue's progress", () => {
     const queue = open(reader);
     queue.request(wanted(one, two), one, 200);
     queue.request(wanted(two), two, 200);
-    expect(queue.progress()).toEqual({ read: 0, asked: 1 });
+    expect(queue.countDetails()).toEqual({ read: 0, asked: 1 });
     queue.read(three, "v");
     await vi.advanceTimersByTimeAsync(200);
-    expect(queue.progress()).toBeUndefined();
+    expect(queue.countDetails()).toBeUndefined();
   });
 
   it("ends the count when the window asks for nothing more, with nothing sent", () => {
     const queue = open();
     queue.request(wanted(one), one, 200);
     queue.request([], undefined, 200);
-    expect(queue.progress()).toBeUndefined();
+    expect(queue.countDetails()).toBeUndefined();
   });
 
   it("counts nothing while paused, and takes the count up again once it is not", async () => {
     const queue = open();
     queue.request(wanted(one, two), one, 200);
     queue.pause(true);
-    expect(queue.progress()).toBeUndefined();
+    expect(queue.countDetails()).toBeUndefined();
     queue.pause(false);
-    expect(queue.progress()).toEqual({ read: 0, asked: 2 });
+    expect(queue.countDetails()).toEqual({ read: 0, asked: 2 });
     await vi.advanceTimersByTimeAsync(0);
-    expect(queue.progress()).toBeUndefined();
+    expect(queue.countDetails()).toBeUndefined();
   });
 
   it("tells its listeners when the count opens, moves and ends, and not when it stays", async () => {
@@ -375,6 +375,6 @@ describe("createDetailQueue's progress", () => {
     const queue = open();
     queue.request(wanted(one), one, 200);
     queue.stop();
-    expect(queue.progress()).toBeUndefined();
+    expect(queue.countDetails()).toBeUndefined();
   });
 });

@@ -71,10 +71,10 @@ export interface DetailQueue {
    * thread that gives way to a later window, or that a request leaves
    * out, is no longer counted as asked for.
    */
-  progress(): DetailsCount | undefined;
+  countDetails(): DetailsCount | undefined;
   /** How many times details arrived for `thread`: part of its version. */
   countArrivals(thread: ThreadSummary): number;
-  /** Calls `listener` whenever details arrive, or the progress changes. */
+  /** Calls `listener` whenever details arrive, or their count moves. */
   subscribe(listener: () => void): () => void;
   /**
    * Holds back every request while `paused`, as below the budget floor or
@@ -121,15 +121,15 @@ export default function createDetailQueue(
   const tell = () => {
     for (const listener of listeners) listener();
   };
-  const progress = (): DetailsCount | undefined =>
+  const countDetails = (): DetailsCount | undefined =>
     round && !paused
       ? { read: round.answered.size, asked: round.asked.size }
       : undefined;
-  /** Makes `change`, telling the listeners when it moves the progress. */
-  const telling = <Result>(change: () => Result): Result => {
-    const before = progress();
+  /** Makes `change`, telling the listeners when it moves the count. */
+  const changeAndTell = <Result>(change: () => Result): Result => {
+    const before = countDetails();
     const result = change();
-    const after = progress();
+    const after = countDetails();
     if (before?.read !== after?.read || before?.asked !== after?.asked) {
       tell();
     }
@@ -240,14 +240,14 @@ export default function createDetailQueue(
         known.awaited = true;
         return known.promise;
       }
-      const entry = telling(() => ask({ thread, version }));
+      const entry = changeAndTell(() => ask({ thread, version }));
       entry.awaited = true;
       if (timer === undefined) schedule(0);
       return entry.promise;
     },
     isDue,
     request: (window, chosen, delay) =>
-      telling(() => {
+      changeAndTell(() => {
         selected = chosen;
         const kept = new Set(
           window.map(({ thread }) => identifyThread(thread)),
@@ -270,7 +270,7 @@ export default function createDetailQueue(
         }
         settleRound();
       }),
-    progress,
+    countDetails,
     countArrivals: (thread) => arrivals.get(identifyThread(thread)) ?? 0,
     subscribe(listener) {
       listeners.add(listener);
@@ -279,7 +279,7 @@ export default function createDetailQueue(
       };
     },
     pause(holding) {
-      telling(() => {
+      changeAndTell(() => {
         paused = holding;
       });
       if (paused || queued.length > 0) schedule(0);
