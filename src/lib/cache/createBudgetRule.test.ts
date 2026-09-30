@@ -13,10 +13,10 @@ const settled: CacheStatus = {
   paused: undefined,
   failure: undefined,
 };
-const low = { graphql: { ...fullBudget, remaining: 900 } };
+const floored = { graphql: { ...fullBudget, remaining: 900 } };
 
 /** The rule over `figures`, with the status changes it gives out. */
-const judge = (figures = low, status = settled) => {
+const judge = (figures = floored, status = settled) => {
   const told: Partial<CacheStatus>[] = [];
   const rule = createBudgetRule({
     readFigures: () => figures,
@@ -36,11 +36,22 @@ describe("createBudgetRule", () => {
     expect(judge({ graphql: fullBudget }).rule.judgeFloor()).toBeUndefined();
   });
 
-  it("stops background spending below the floor, and the status says until when", () => {
+  it("stops background spending below the floor, however often it is asked, and writes nothing", () => {
     const { rule, told } = judge();
     expect(rule.maySpend()).toBe(false);
-    expect(told).toEqual([
+    expect(rule.maySpend()).toBe(false);
+    expect(judge({ graphql: fullBudget }).rule.maySpend()).toBe(true);
+    expect(told).toEqual([]);
+  });
+
+  it("gives the status the floor with its reset, and lifts it above the floor", () => {
+    const { rule, told } = judge();
+    rule.publishFloor();
+    const above = judge({ graphql: fullBudget });
+    above.rule.publishFloor();
+    expect([...told, ...above.told]).toEqual([
       { paused: { until: fullBudget.resetAt, reason: "budget" } },
+      { paused: undefined },
     ]);
   });
 
@@ -50,8 +61,15 @@ describe("createBudgetRule", () => {
       ...settled,
       paused: { until: later, reason: "rateLimit" as const },
     };
-    const { rule, told } = judge(low, limited);
-    expect(rule.maySpend()).toBe(false);
+    const { rule, told } = judge(floored, limited);
+    rule.publishFloor();
     expect(told).toEqual([]);
+    const past = {
+      ...settled,
+      paused: { until: clock, reason: "rateLimit" as const },
+    };
+    const lapsed = judge(floored, past);
+    lapsed.rule.publishFloor();
+    expect(lapsed.told).toHaveLength(1);
   });
 });

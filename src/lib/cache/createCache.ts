@@ -180,7 +180,7 @@ export default function createCache({
     });
   };
 
-  const { judgeFloor, maySpend } = createBudgetRule({
+  const { judgeFloor, maySpend, publishFloor } = createBudgetRule({
     readFigures,
     now,
     status: () => status,
@@ -349,6 +349,7 @@ export default function createCache({
           });
           // Unchanged, the repository keeps its data, and its tag, which
           // GitHub still answers "not modified".
+          publishFloor();
           if (!value || value.threads === previous.threads) return false;
           store(repo, value, at);
           await save();
@@ -404,6 +405,9 @@ export default function createCache({
       const at = now();
       const { paused } = status;
       if (paused && at < paused.until && paused.reason === "rateLimit") return;
+      // A pause whose time is past no longer holds, and the floor as the
+      // mirror stands is in force from the start of the run.
+      publishFloor();
       try {
         const idle = attention === "idle";
         // Waking catches up at once, whatever another pane fetched.

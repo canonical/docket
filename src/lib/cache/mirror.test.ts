@@ -91,12 +91,12 @@ describe("the budget mirror of createCache", () => {
     const other = open(own.provider);
     await other.load();
     expect(other.maySpend()).toBe(false);
+    await other.refresh();
+    expect(own.provider.snapshot).not.toHaveBeenCalled();
     expect(other.status().paused).toEqual({
       until: fullBudget.resetAt,
       reason: "budget",
     });
-    await other.refresh();
-    expect(own.provider.snapshot).not.toHaveBeenCalled();
   });
 
   it("stops docket's own spending below the floor, and still spends on what the user asks for", async () => {

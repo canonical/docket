@@ -16,29 +16,40 @@ export interface BudgetRuleOptions {
 
 /**
  * The budget floor's rule for one cache, judged on its mirror of the
- * budgets at the cache's current time. `judgeFloor` says until when the
- * budget is below its floor, or `undefined` while points may be spent.
- * `maySpend` says whether docket may spend points of its own: the one
- * rule of the floor, which keeps what is left below it for the user's own
- * requests. docket's own background spending stops below the floor, and
- * the status then says so, with the reset, unless the rate limit pauses
- * the cycle; what the user or an agent asks for directly never asks.
+ * budgets at the cache's current time: the floor keeps what is left below
+ * it for the user's own requests, so docket's own background spending
+ * stops there, and what the user or an agent asks for directly never
+ * asks.
  */
+export interface BudgetRule {
+  /** Until when the budget is below its floor, or `undefined` above it. */
+  judgeFloor(): { readonly until: Date; readonly reason: "budget" } | undefined;
+  /** Whether docket may spend points of its own: above the floor. */
+  maySpend(): boolean;
+  /**
+   * Gives the floor, as `judgeFloor` finds it, to the status, with its
+   * reset, unless the rate limit pauses the cycle until a later time.
+   *
+   * @note Impure: writes the status through `publish`.
+   */
+  publishFloor(): void;
+}
+
+/** The budget floor's rule for the cache `options` read. */
 export default function createBudgetRule({
   readFigures,
   now,
   status,
   publish,
-}: BudgetRuleOptions) {
+}: BudgetRuleOptions): BudgetRule {
   const judgeFloor = () => findBudgetFloor(readFigures().graphql, now());
-  const findFloor = () => {
-    const floor = judgeFloor();
-    const { paused } = status();
-    if (paused?.reason !== "rateLimit" || now() >= paused.until) {
-      publish({ paused: floor });
-    }
-    return floor;
+  return {
+    judgeFloor,
+    maySpend: () => judgeFloor() === undefined,
+    publishFloor() {
+      const { paused } = status();
+      if (paused?.reason === "rateLimit" && now() < paused.until) return;
+      publish({ paused: judgeFloor() });
+    },
   };
-  const maySpend = () => findFloor() === undefined;
-  return { judgeFloor, maySpend };
 }
