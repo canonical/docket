@@ -1,7 +1,11 @@
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import { fitField, markPerson, measureText } from "../../fit/index.js";
-import measurePieces from "../../measurePieces.js";
+import {
+  fitField,
+  markPerson,
+  measurePieces,
+  measureText,
+} from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type { ThreadRowProps } from "./types.js";
 

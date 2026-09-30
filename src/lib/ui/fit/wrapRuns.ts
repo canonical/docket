@@ -1,6 +1,8 @@
 import { sanitize } from "../../text/index.js";
 import { graphemes, noBreakSpace } from "./constants.js";
+import measurePieces from "./measurePieces.js";
 import measureText from "./measureText.js";
+import type { Run } from "./types.js";
 
 /** Part of a word: its text, and which run it came from. */
 interface Fragment {
@@ -14,17 +16,12 @@ interface Word {
   readonly fragments: readonly Fragment[];
 }
 
-const measure = (fragments: readonly Fragment[]) =>
-  fragments.reduce((cells, { text }) => cells + measureText(text), 0);
-
 /**
  * The words of `runs`, split at each space, none after a space that ends
  * them. A marked person is one word
  * with its mark, and a no-break space joins two words into one.
  */
-function splitWords(
-  runs: readonly { readonly text: string; readonly marked?: boolean }[],
-): Word[] {
+function splitWords(runs: readonly Run[]): Word[] {
   const words: Word[] = [];
   let word: Word = { space: 0, fragments: [] };
   runs.forEach(({ text, marked }, run) => {
@@ -46,7 +43,7 @@ function splitWords(
 
 /** Splits a word wider than a line into pieces that fit, losing no character. */
 function splitWide(word: Word, width: number): Word[] {
-  if (measure(word.fragments) <= width) return [word];
+  if (measurePieces(word.fragments) <= width) return [word];
   const pieces: Fragment[][] = [[]];
   let used = 0;
   for (const { run, text } of word.fragments) {
@@ -80,18 +77,19 @@ function splitWide(word: Word, width: number): Word[] {
  * are shown with an ordinary space. A word wider than a line is split, so
  * nothing is lost. Each run passes through `sanitize` first.
  */
-export default function wrapRuns<
-  Run extends { readonly text: string; readonly marked?: boolean },
->(runs: readonly Run[], width: number): Run[][] {
+export default function wrapRuns<Look extends Run>(
+  runs: readonly Look[],
+  width: number,
+): Look[][] {
   // splitWords gives one word at least, and splitWide one piece of each.
   const [first, ...rest] = splitWords(runs).flatMap((each) =>
     splitWide(each, width),
   );
   const lines: Fragment[][] = [];
   let line = [...first.fragments];
-  let used = measure(line);
+  let used = measurePieces(line);
   for (const word of rest) {
-    const cells = measure(word.fragments);
+    const cells = measurePieces(word.fragments);
     if (used + 1 + cells <= width) {
       line.push({ run: word.space, text: " " }, ...word.fragments);
       used += 1;

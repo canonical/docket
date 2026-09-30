@@ -1,6 +1,7 @@
 import { sanitize } from "../../text/index.js";
 import measureText from "./measureText.js";
 import trimText from "./trimText.js";
+import type { Run } from "./types.js";
 
 /**
  * Ends the runs of one line with `…` within `width` display cells, to say
@@ -9,11 +10,11 @@ import trimText from "./trimText.js";
  * dropped. Each run keeps its own look, so the `…` takes the look of the
  * run it ends. Each run passes through `sanitize`.
  */
-export default function endRuns<Run extends { readonly text: string }>(
-  runs: readonly Run[],
+export default function endRuns<Look extends Run>(
+  runs: readonly Look[],
   width: number,
-): Run[] {
-  const ended: Run[] = [];
+): Look[] {
+  const ended: Look[] = [];
   let room = width - 1;
   for (const run of runs) {
     const text = sanitize(run.text);

@@ -24,3 +24,12 @@ export interface FitRule {
   readonly event: LineRule;
   readonly block: BlockRule;
 }
+
+/**
+ * A run of a line's text as the fitting functions take it: its text, and
+ * whether it opens with a person's mark, which never gives way.
+ */
+export interface Run {
+  readonly text: string;
+  readonly marked?: boolean;
+}

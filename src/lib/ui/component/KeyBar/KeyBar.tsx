@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import { fitRuns, measureText } from "../../fit/index.js";
+import { fitRuns, measurePieces } from "../../fit/index.js";
 import type { KeyCommand } from "../../hooks/index.js";
 import type { KeyBarProps } from "./types.js";
 
@@ -21,9 +21,6 @@ const describeHints = (commands: readonly KeyCommand[]): Piece[] =>
     ...(hint ? [{ id: label, text: ` ${hint}`, look: "label" as const }] : []),
   ]);
 
-const measure = (pieces: readonly Piece[]) =>
-  pieces.reduce((cells, { text }) => cells + measureText(text), 0);
-
 /**
  * The last line of the pane: a reminder of the main keys, fitted to 40
  * columns. Which hints it shows depends on what is open. A hint is never
@@ -38,7 +35,7 @@ const KeyBar = ({ commands, width }: KeyBarProps): ReactNode => {
   const hinted = commands.filter(({ hint }) => hint !== undefined);
   const shown = [...hinted];
   let pieces = describeHints(shown);
-  while (measure(pieces) > width && shown.length > 0) {
+  while (measurePieces(pieces) > width && shown.length > 0) {
     const leaving = shown.findLastIndex(({ keys }) => !keys.includes("?"));
     shown.splice(leaving, 1);
     pieces = describeHints(shown);

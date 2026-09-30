@@ -4,10 +4,9 @@ import {
   endRuns,
   fitField,
   fitRuns,
-  measureText,
+  measurePieces,
   wrapRuns,
 } from "../../fit/index.js";
-import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import type { DetailLine, DetailText } from "./types.js";
 

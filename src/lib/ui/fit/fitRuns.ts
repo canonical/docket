@@ -1,6 +1,7 @@
 import { sanitize } from "../../text/index.js";
 import fitPieces from "./fitPieces.js";
 import measureText from "./measureText.js";
+import type { Run } from "./types.js";
 
 /**
  * The fewest cells a marked person is drawn in: the mark, a space, and
@@ -21,9 +22,10 @@ const joining = /^[\s,·]*$/;
  * the separators left at the line's end go too, so a line never ends on
  * `, ` or ` · `. Each run passes through `sanitize`.
  */
-export default function fitRuns<
-  Run extends { readonly text: string; readonly marked?: boolean },
->(runs: readonly Run[], width: number): Run[] {
+export default function fitRuns<Look extends Run>(
+  runs: readonly Look[],
+  width: number,
+): Look[] {
   const kept = fitPieces(runs, width);
   const end = kept.length - 1;
   const shortened = end >= 0 && kept[end].text !== sanitize(runs[end].text);

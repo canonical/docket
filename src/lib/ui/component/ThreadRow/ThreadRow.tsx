@@ -2,8 +2,13 @@ import type { ReactNode } from "react";
 import type { WaitState } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import { fitField, fitRuns, markPerson, measureText } from "../../fit/index.js";
-import measurePieces from "../../measurePieces.js";
+import {
+  fitField,
+  fitRuns,
+  markPerson,
+  measurePieces,
+  measureText,
+} from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import { Margin } from "../Margin/index.js";

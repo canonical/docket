@@ -1,8 +1,13 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import { fitField, fitRuns, markPerson, measureText } from "../../fit/index.js";
-import measurePieces from "../../measurePieces.js";
+import {
+  fitField,
+  fitRuns,
+  markPerson,
+  measurePieces,
+  measureText,
+} from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import describeDetails from "./describeDetails.js";
 import describeStatus from "./describeStatus.js";
