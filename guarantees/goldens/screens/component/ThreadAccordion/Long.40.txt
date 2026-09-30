@@ -18,7 +18,8 @@ runs
 2:3 "○ example-contributor-with-a-long-logi" fg #89b8c2ff bg #2e3244ff
 3:1 "┃" fg #e27878ff bg #2e3244ff
 3:2 "┆" fg #6b7089ff bg #2e3244ff
-3:3 "n, example-org/parser-team…" fg #89b8c2ff bg #2e3244ff
+3:3 "n" fg #89b8c2ff bg #2e3244ff
+3:4 ", example-org/parser-team…" fg #c6c8d1ff bg #2e3244ff
 3:30 "           " fg #ffffffff bg #2e3244ff
 4:1 "┃" fg #e27878ff bg #2e3244ff
 4:2 "┆example-repository-with-a-long-name st" fg #6b7089ff bg #2e3244ff

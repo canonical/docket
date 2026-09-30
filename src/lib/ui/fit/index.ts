@@ -1,4 +1,5 @@
 export { fitRules } from "./constants.js";
+export { default as endRuns } from "./endRuns.js";
 export { default as fitField } from "./fitField.js";
 export { default as fitPieces } from "./fitPieces.js";
 export { default as fitRuns } from "./fitRuns.js";

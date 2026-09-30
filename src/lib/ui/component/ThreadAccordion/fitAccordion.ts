@@ -1,6 +1,5 @@
-import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
-import { fitRuns, trimText, wrapRuns } from "../../fit/index.js";
+import { endRuns, fitRuns, wrapRuns } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type { DetailLine, DetailText } from "./types.js";
 
@@ -30,16 +29,8 @@ export default function fitAccordion(
       drawn.push(...fitted);
     } else if (!line.optional) {
       const kept = [...drawn, ...fitted].slice(0, left);
-      // The last line kept, cut with …, in the colour of its first run.
-      const ended = kept.slice(-1).map((line) =>
-        line.slice(0, 1).map(({ fg }) => ({
-          text: trimText(
-            `${line.map((piece) => piece.text).join("")}${tokens["glyph.cut"]}`,
-            room,
-          ),
-          fg,
-        })),
-      );
+      // The last line kept ends in …, each of its runs in its own colour.
+      const ended = kept.slice(-1).map((line) => endRuns(line, room));
       return [...kept.slice(0, -1), ...ended, ...bottom];
     }
   }

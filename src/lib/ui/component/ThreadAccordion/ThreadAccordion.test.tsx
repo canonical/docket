@@ -16,6 +16,7 @@ import {
   Close,
   Failed,
   Loading,
+  Long,
   Paused,
   PausedUnheld,
   Reply,
@@ -204,6 +205,14 @@ describe("ThreadAccordion", () => {
   });
 
   describe("fitting eight lines", () => {
+    it("ends the last line it keeps with …, each of its runs in its own colour", async () => {
+      const screen = await open(Long.args);
+      expect(readText(screen).at(2)).toBe("n, example-org/parser-team…");
+      expect(screen.look(", example-org/parser-team…")?.fg).toBe(
+        tokens["color.text"],
+      );
+    });
+
     it("wraps the failing checks between their names, keeping each whole", async () => {
       const detail = { ...overReviewDetail, checks: longReviewDetail.checks };
       const screen = await open({
