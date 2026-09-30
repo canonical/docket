@@ -22,6 +22,8 @@ exempt:
   close: ["Topic: roadmap", announcement]
 activity: [24h, 1w]
 hosts: [github.com]
+you:
+  teams: [example-org/ui]
 `;
 
 /** A repository file that declares its team and one target. */

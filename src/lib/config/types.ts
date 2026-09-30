@@ -32,6 +32,15 @@ export interface Exempt {
   readonly close: readonly string[];
 }
 
+/**
+ * What docket cannot read about the person running it without more
+ * access than gh's token gives.
+ */
+export interface You {
+  /** The GitHub teams they belong to, each written `org/team`. */
+  readonly teams: readonly string[];
+}
+
 /** Every setting docket reads, with each value decided. */
 export interface Settings {
   readonly repos: readonly Repo[];
@@ -42,6 +51,7 @@ export interface Settings {
   /** Activity's time windows, the first being the default. */
   readonly activity: readonly Duration[];
   readonly hosts: readonly string[];
+  readonly you: You;
 }
 
 export type Section = keyof Settings;
@@ -61,6 +71,7 @@ export interface Layer {
   readonly exempt?: Partial<Exempt>;
   readonly activity?: readonly Duration[];
   readonly hosts?: readonly string[];
+  readonly you?: Partial<You>;
 }
 
 /** Which file a layer comes from. */
@@ -82,6 +93,7 @@ export type ConfigErrorCode =
   | "CONFIG_INVALID_DURATION"
   | "CONFIG_INVALID_REPO"
   | "CONFIG_INVALID_SYNTAX"
+  | "CONFIG_INVALID_TEAM"
   | "CONFIG_SECTION_NOT_ALLOWED"
   | "CONFIG_UNKNOWN_GROUP"
   | "CONFIG_UNKNOWN_KEY"

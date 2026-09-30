@@ -20,7 +20,7 @@ describe("resolveSettings", () => {
   it("uses the built-in defaults when no file exists", () => {
     const resolved = resolveSettings(undefined, undefined);
     expect(resolved.settings).toEqual(builtInSettings);
-    expect(Object.values(resolved.origins)).toEqual(Array(7).fill("built-in"));
+    expect(Object.values(resolved.origins)).toEqual(Array(8).fill("built-in"));
     expect(resolved.repositoryErrors).toEqual([]);
   });
 
@@ -35,7 +35,7 @@ describe("resolveSettings", () => {
       "example",
       "docs",
     ]);
-    expect(Object.values(origins)).toEqual(Array(7).fill("personal"));
+    expect(Object.values(origins)).toEqual(Array(8).fill("personal"));
   });
 
   it("gives the repository file the whole of each section it declares", () => {
@@ -94,6 +94,15 @@ describe("resolveSettings", () => {
     const { settings, origins } = resolveSettings(personal, invalidRepository);
     expect(settings.repos).toEqual(personal.repos);
     expect(settings.activity).toEqual(personal.activity);
+    expect(settings.you).toEqual({ teams: ["example-org/ui"] });
     expect(origins.hosts).toBe("personal");
+    expect(origins.you).toBe("personal");
+  });
+
+  it("names none of your teams unless the personal file lists them", () => {
+    const partial = layerOf(parseFile("version: 1\nyou: {}\n", "personal"));
+    expect(resolveSettings(partial, undefined).settings.you).toEqual({
+      teams: [],
+    });
   });
 });

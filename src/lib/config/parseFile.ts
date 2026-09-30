@@ -9,6 +9,7 @@ import parsePeople from "./parsePeople.js";
 import parseRepos from "./parseRepos.js";
 import parseTargets from "./parseTargets.js";
 import parseTime from "./parseTime.js";
+import parseYou from "./parseYou.js";
 import type {
   Checked,
   ConfigError,
@@ -28,6 +29,7 @@ const parsers: {
   exempt: parseExempt,
   activity: parseActivity,
   hosts: parseHosts,
+  you: parseYou,
 };
 
 const personalFile = "the personal file";

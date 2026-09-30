@@ -53,6 +53,7 @@ describe("parseFile", () => {
             { amount: 1, unit: "w" },
           ],
           hosts: ["github.com"],
+          you: { teams: ["example-org/ui"] },
         },
       });
     });
@@ -162,7 +163,7 @@ describe("parseFile", () => {
       refuses("owners: {}\n", "CONFIG_UNKNOWN_KEY");
     });
 
-    it.each(["repos", "activity", "hosts"])(
+    it.each(["repos", "activity", "hosts", "you"])(
       "refuses %s in a repository file",
       (section) => {
         const outcome = parseFile(`version: 1\n${section}: []\n`, "repository");
@@ -371,6 +372,31 @@ describe("parseFile", () => {
 
     it("refuses hosts that are not a list", () => {
       refuses("hosts: github.com\n", "CONFIG_WRONG_TYPE");
+    });
+  });
+
+  describe("you", () => {
+    it("refuses a team not written as org/team", () => {
+      refuses("you: { teams: [ui] }\n", "CONFIG_INVALID_TEAM");
+    });
+
+    it("refuses a key other than teams", () => {
+      refuses("you: { login: alice }\n", "CONFIG_UNKNOWN_KEY");
+    });
+
+    it("tells a repository file to move the section to the personal file", () => {
+      const outcome = parseFile(
+        "version: 1\nyou: { teams: [example-org/ui] }\n",
+        "repository",
+      );
+      expect(outcome.ok ? [] : outcome.errors).toEqual([
+        {
+          code: "CONFIG_SECTION_NOT_ALLOWED",
+          message:
+            "A repository file declares `you`, which only the personal file may declare.",
+          recovery: "Move `you` to the personal file, or remove it.",
+        },
+      ]);
     });
   });
 });
