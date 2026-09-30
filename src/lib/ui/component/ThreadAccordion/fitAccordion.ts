@@ -1,12 +1,25 @@
 import { accordionMaxLines } from "../../constants.js";
-import { endRuns, fitRuns, wrapRuns } from "../../fit/index.js";
+import { fitRules } from "../../fit/constants.js";
+import { endRuns, fitField, fitRuns, wrapRuns } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type { DetailLine, DetailText } from "./types.js";
 
-/** One line's runs as they fill the room: wrapped over lines, or trimmed to one. */
-function fitLine({ pieces, fit }: DetailLine, room: number): Piece[][] {
-  if (fit === "trimmed") return [fitRuns(pieces, room)];
-  return wrapRuns(pieces, room);
+/**
+ * One line's runs as they fill the room, by the rule the fitting table
+ * gives its kind: wrapped in a block, or kept whole on one. A line held
+ * to one is fitted by its kind's rule for a line: a single run as the
+ * table fits that kind, several runs cut at the end.
+ */
+function fitLine({ pieces, kind, most }: DetailLine, room: number): Piece[][] {
+  if (most === 1) {
+    const [only] = pieces;
+    return pieces.length === 1 && only
+      ? [[{ ...only, text: fitField({ text: only.text, kind }, "line", room) }]]
+      : [fitRuns(pieces, room)];
+  }
+  return fitRules[kind].block === "wrap"
+    ? wrapRuns(pieces, room)
+    : [fitRuns(pieces, room)];
 }
 
 /** `lines` with the last of them ending in `…`, to say more follows. */

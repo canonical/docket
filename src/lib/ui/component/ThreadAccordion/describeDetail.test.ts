@@ -57,10 +57,12 @@ describe("describeDetail", () => {
         "It crashes as soon as it starts, before the first frame is drawn.",
         "waiting since Tue 10:00 · target 24h",
       ]);
-      expect(body.map(({ fit, optional }) => [fit, optional])).toEqual([
-        ["wrapped", undefined],
-        ["wrapped", undefined],
-        ["wrapped", true],
+      expect(
+        body.map(({ kind, most, optional }) => [kind, most, optional]),
+      ).toEqual([
+        ["words", undefined, undefined],
+        ["quote", undefined, undefined],
+        ["words", undefined, true],
       ]);
       expect(stack).toEqual([]);
     });
@@ -148,10 +150,10 @@ describe("describeDetail", () => {
         "1 push since · 2 files · +65 −12",
         "✗ checks: 1 of 2 failed (lint)",
       ]);
-      expect(body.map(({ fit }) => fit)).toEqual([
-        "wrapped",
-        "trimmed",
-        "wrapped",
+      expect(body.map(({ kind, most }) => [kind, most])).toEqual([
+        ["words", undefined],
+        ["words", 1],
+        ["words", undefined],
       ]);
     });
 
@@ -387,7 +389,8 @@ describe("describeDetail", () => {
 
     it("wraps its place only between the parts, each kept whole with the · after it", () => {
       const [place] = describeDetail(overReview, undefined, reading).stack;
-      expect(place?.fit).toBe("wrapped");
+      expect(place).toMatchObject({ kind: "identifier" });
+      expect(place?.most).toBeUndefined();
       expect(place?.pieces.map(({ text }) => text.split(" "))).toEqual([
         [
           "example\u00a0stack\u00a03\u00a0·",

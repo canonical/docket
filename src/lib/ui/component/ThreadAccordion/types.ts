@@ -1,17 +1,24 @@
 import type { People } from "../../../config/index.js";
-import type { Owner, WaitRow } from "../../../owed/index.js";
+import type { FieldKind, Owner, WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import type { ThreadSummary } from "../../../waits/index.js";
 import type { Piece } from "../../types.js";
 
 /**
  * One line of what the accordion shows, before it is fitted to the pane:
- * its runs, each in its own colour, and whether it wraps over as many
- * lines as it needs, as a message does, or is trimmed to one.
+ * its runs, each in its own colour, and the kind of text it is, which the
+ * fitting table fits it by in a block, as it does every field.
  */
 export interface DetailLine {
   readonly pieces: readonly Piece[];
-  readonly fit: "trimmed" | "wrapped";
+  readonly kind: FieldKind;
+  /**
+   * The most lines it takes, where its kind would wrap it over more: one
+   * for a line the details complete in place, which must not change
+   * height while they load. Held to one line, it is fitted by its kind's
+   * rule for a line.
+   */
+  readonly most?: 1;
   /** Shown only when it fits whole, such as when a reply began. */
   readonly optional?: boolean;
 }

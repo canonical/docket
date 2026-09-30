@@ -41,15 +41,20 @@ const failed = (text: string): Piece => ({
 /** The dimmed `…` that ends a line still waiting for the details. */
 const pending = muted(` ${tokens["glyph.cut"]}`);
 
+/** docket's words on a line held to one, which the details complete in place. */
 const trimmed = (...pieces: Piece[]): DetailLine => ({
   pieces,
-  fit: "trimmed",
+  kind: "words",
+  most: 1,
 });
 
-/** A line that wraps, between people and at spaces, naming each person whole. */
+/**
+ * docket's words on a line that wraps, between people and at spaces,
+ * naming each person whole.
+ */
 const wrapped = (...pieces: Piece[]): DetailLine => ({
   pieces,
-  fit: "wrapped",
+  kind: "words",
 });
 
 const count = (amount: number, one: string, many: string) =>
@@ -129,7 +134,9 @@ function describeReply(row: WaitRow, { now, timezone }: Reading) {
       markPerson(row.author),
       muted(` · ${describeAge(awaited.at, now)} ago`),
     ),
-    ...(awaited.text ? [wrapped(plain(awaited.text))] : []),
+    ...(awaited.text
+      ? [{ pieces: [plain(awaited.text)], kind: "quote" as const }]
+      : []),
     { ...wrapped(muted(since)), optional: true },
   ];
 }
@@ -289,13 +296,16 @@ function describeStack(
     `${position} of ${size}`,
     `→ ${base}`,
   ];
-  const place = wrapped(
-    muted(
-      parts
-        .map((part) => part.replaceAll(" ", joiner))
-        .join(`${joiner}${tokens["glyph.separator"]} `),
-    ),
-  );
+  const place: DetailLine = {
+    pieces: [
+      muted(
+        parts
+          .map((part) => part.replaceAll(" ", joiner))
+          .join(`${joiner}${tokens["glyph.separator"]} `),
+      ),
+    ],
+    kind: "identifier",
+  };
   if (size < 2) return [place];
   if (!detail) return [place, trimmed(muted(tokens["glyph.cut"]))];
   const describeNeighbour = (side: string, at: number) => {

@@ -6,11 +6,12 @@ import type { DetailLine } from "./types.js";
 const fg = tokens["color.text"];
 const trimmed = (text: string): DetailLine => ({
   pieces: [{ text, fg }],
-  fit: "trimmed",
+  kind: "words",
+  most: 1,
 });
 const wrapped = (text: string, optional?: true): DetailLine => ({
   pieces: [{ text, fg }],
-  fit: "wrapped",
+  kind: "words",
   ...(optional ? { optional } : {}),
 });
 
@@ -19,6 +20,27 @@ const read = (lines: ReturnType<typeof fitAccordion>) =>
   lines.map((line) => line.map(({ text }) => text).join(""));
 
 describe("fitAccordion", () => {
+  it("fits each line by its kind's rule: words wrap, a figure stays on one line, and a line held to one is cut by its kind's rule for a line", () => {
+    const text = {
+      body: [
+        wrapped("one two three"),
+        { pieces: [{ text: "12345 67890", fg }], kind: "figure" as const },
+        {
+          pieces: [{ text: "example stack 3 → main", fg }],
+          kind: "identifier" as const,
+          most: 1 as const,
+        },
+      ],
+      stack: [],
+    };
+    expect(read(fitAccordion(text, 8))).toEqual([
+      "one two",
+      "three",
+      "12345 6…",
+      "exa…main",
+    ]);
+  });
+
   it("never draws more lines than it is given, the stack's lines cut with … when they alone pass them", () => {
     const text = {
       body: [wrapped("body")],

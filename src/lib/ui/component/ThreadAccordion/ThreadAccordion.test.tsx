@@ -245,9 +245,7 @@ describe("ThreadAccordion", () => {
         { ...Long.args, detail: failDetail(failure) },
         40,
       );
-      expect(
-        readText(screen).findIndex((line) => line === ""),
-      ).toBeLessThanOrEqual(8);
+      expect(readText(screen).indexOf("")).toBeLessThanOrEqual(8);
       expect(screen.lines.at(7)?.startsWith("╹")).toBe(true);
     });
 
