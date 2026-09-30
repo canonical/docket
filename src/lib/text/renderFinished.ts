@@ -134,7 +134,7 @@ export default function renderFinished({
       window: `${amount}${unit}`,
       grouping: list.address.grouping,
       data: describeDataAge(freshness),
-      counts: { merged, closed, over: over.value, byKind },
+      counts: { merged, closed, over, byKind },
       // Each measure's availability; its figure over the list, with how
       // many threads that figure covers, comes with the figure.
       measures: {
@@ -166,7 +166,7 @@ export default function renderFinished({
   });
   const { counts } = list;
   const summary = llm
-    ? `${counts.merged} merged · ${counts.closed} closed · ${counts.over.value} over target`
+    ? `${counts.merged} merged · ${counts.closed} closed · ${counts.over} over target`
     : list.summary.text;
   const lines = [
     llm ? `# ${title}` : title,

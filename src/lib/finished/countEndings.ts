@@ -16,18 +16,10 @@ export default function countEndings(
   const merged = rows.filter(
     ({ thread }) => thread.ending.outcome === "merged",
   ).length;
-  const measured = rows.filter(
-    ({ measures }) => measures.close.state === "measured",
-  );
   return {
     merged,
     closed: rows.length - merged,
-    over: {
-      value: measured.filter(({ verdict }) => verdict === "over").length,
-      of: measured.length,
-      pending: rows.filter(({ measures }) => measures.close.state === "pending")
-        .length,
-    },
+    over: rows.filter(({ verdict }) => verdict === "over").length,
     byKind: {
       issue: {
         completed: count("issue", "completed"),

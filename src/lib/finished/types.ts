@@ -1,7 +1,6 @@
 import type { Duration } from "../clock/index.js";
 import type { People, Repo, Settings } from "../config/index.js";
 import type {
-  Aggregate,
   Coverage,
   FinishedThread,
   MeasureKind,
@@ -104,8 +103,8 @@ export interface FinishedRow {
 export interface FinishedCounts {
   readonly merged: number;
   readonly closed: number;
-  /** Over the threads time to close is measured on. */
-  readonly over: Aggregate<number>;
+  /** How many threads closed past their target. */
+  readonly over: number;
   readonly byKind: {
     readonly issue: {
       readonly completed: number;

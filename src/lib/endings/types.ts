@@ -105,17 +105,6 @@ export type Measure =
 /** The three measures of a finished thread, by kind. */
 export type Measures = { readonly [Kind in MeasureKind]: Measure };
 
-/**
- * A figure over many threads, true only over complete input: its value,
- * how many threads it covers, and how many are still pending and so not
- * in its value.
- */
-export interface Aggregate<T> {
-  readonly value: T;
-  readonly of: number;
-  readonly pending: number;
-}
-
 /** What a list holds of one measure: how it reads across the list, and its coverage. */
 export interface Coverage {
   readonly state: MeasureState;
