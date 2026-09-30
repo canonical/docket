@@ -2,9 +2,9 @@
 |owed
 |
 |  refresh in progress…
-|  ████████████████░░░░░░░░░░░░░ 5/9
-|
-|
+|  example ✓ 2 threads
+|  docs    reading page 5/9
+|  █████████████████░░░░░░░░░░░░ 6/10 pages
 |
 |
 |
@@ -39,7 +39,11 @@
 runs
 1:1 "owed                                                        " fg #c6c8d1ff bg #161821ff
 3:3 "refresh in progress…" fg #c6c8d1ff bg #161821ff
-4:3 "████████████████░░░░░░░░░░░░░ 5/9" fg #c6c8d1ff bg #161821ff
+4:3 "example " fg #c6c8d1ff bg #161821ff
+4:11 "✓" fg #b4be82ff bg #161821ff
+4:12 " 2 threads" fg #c6c8d1ff bg #161821ff
+5:3 "docs    reading page 5/9" fg #c6c8d1ff bg #161821ff
+6:3 "█████████████████░░░░░░░░░░░░ 6/10 pages" fg #c6c8d1ff bg #161821ff
 35:1 "full refresh · docs 2/2 · pages 5/9" fg #c6c8d1ff bg #161821ff
 36:1 "←→" fg #c6c8d1ff bg #161821ff
 36:3 " mode" fg #6b7089ff bg #161821ff

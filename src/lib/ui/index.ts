@@ -18,6 +18,8 @@ export {
   type NoticeProps,
   ProgressLine,
   type ProgressLineProps,
+  RefreshStages,
+  type RefreshStagesProps,
   type RestingThread,
   type ShownDetail,
   StatusLine,

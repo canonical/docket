@@ -14,7 +14,9 @@ export interface Hold {
  * the status line names them: a rate limit, what stopped the last
  * refresh, then a pause to spare the request budget. A pause stops the
  * refresh without a failure, so without this the list would say
- * `refresh in progress…` until it resumes.
+ * `refresh in progress…` until it resumes. The screen asks only while no
+ * repository has a stage, as when the refresh stopped before it fetched
+ * any: once each has one, its line says where the refresh stands.
  *
  * @param timezone The time zone the time the refresh resumes is written in.
  */

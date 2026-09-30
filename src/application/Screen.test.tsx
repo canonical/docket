@@ -280,7 +280,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "owed",
         "",
         "  refresh in progress…",
-        `  ${"░".repeat(29)} 0/0`,
+        `  ${"░".repeat(28)} 0/0 pages`,
         "",
         "",
         "",
@@ -316,9 +316,11 @@ describe("Screen", { timeout: 15_000 }, () => {
         }),
       );
       const drawn = await screen.redraw();
-      expect(drawn.lines.slice(2, 4)).toEqual([
+      expect(drawn.lines.slice(2, 6)).toEqual([
         "  refresh in progress…",
-        `  ${"█".repeat(16)}${"░".repeat(13)} 5/9`,
+        "  example reading page 5/9",
+        "  docs    waiting",
+        `  ${"█".repeat(16)}${"░".repeat(13)} 5/9 pages`,
       ]);
       expect(drawn.lines.at(10)).toBe("full refresh · example 1/2 · pages 5/9");
       resolve();
@@ -355,7 +357,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       await refreshing;
     });
 
-    it("gives the reason and the recovery when the first fetch fails", async () => {
+    it("gives each repository's stage, the reason and the recovery when the first fetch fails", async () => {
       const provider = fakeProvider({
         snapshot: () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
       });
@@ -363,15 +365,19 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(viewOf(cache));
       await cache.refresh();
       const drawn = await screen.redraw();
-      expect(drawn.lines.slice(2, 4)).toEqual([
-        "  ✗ The provider failed with",
-        "  GITHUB_TIMED_OUT",
+      expect(drawn.lines.slice(2, 8)).toEqual([
+        "  refresh in progress…",
+        "  example ✗ failed: The provider failed",
+        "          with GITHUB_TIMED_OUT",
+        "  docs    waiting",
+        "  Recovery: try again",
+        `  ${"░".repeat(28)} 0/0 pages`,
       ]);
       expect(drawn.lines.at(10)).toBe("✗ offline");
       expect(drawn.look("✗ offline")?.fg).toBe(tokens["color.text.error"]);
     });
 
-    it("says when docket resumes when GitHub rate-limits the first fetch", async () => {
+    it("pauses every repository, and says when docket resumes, when GitHub rate-limits the first fetch", async () => {
       const provider = fakeProvider({
         snapshot: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
       });
@@ -379,16 +385,15 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(viewOf(cache));
       await cache.refresh();
       const drawn = await screen.redraw();
-      expect(drawn.lines.slice(2, 6)).toEqual([
-        "  ✗ GitHub refused requests for its rate",
-        "  limit",
-        "  Recovery: wait: docket resumes at",
-        "  13:00",
+      expect(drawn.lines.slice(2, 5)).toEqual([
+        "  refresh in progress…",
+        "  example paused: rate limit",
+        "  docs    paused: rate limit",
       ]);
       expect(drawn.lines.at(10)).toBe("paused: rate limit · resumes 13:00");
     });
 
-    it("says when docket resumes when the first fetch waits for the request budget", async () => {
+    it("pauses every repository, and says when docket resumes, when the first fetch waits for the request budget", async () => {
       const provider = fakeProvider({
         budget: async () => ({ ...fullBudget, remaining: 1 }),
       });
@@ -396,11 +401,10 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(viewOf(cache));
       await cache.refresh();
       const drawn = await screen.redraw();
-      expect(drawn.lines.slice(2, 6)).toEqual([
-        "  ✗ docket paused the refresh to spare",
-        "  the request budget",
-        "  Recovery: wait: docket resumes at",
-        "  13:00",
+      expect(drawn.lines.slice(2, 5)).toEqual([
+        "  refresh in progress…",
+        "  example paused",
+        "  docs    paused",
       ]);
       expect(drawn.lines.at(10)).toBe("paused: budget low · resumes 13:00");
     });
@@ -449,7 +453,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "owed",
         "",
         "  refresh in progress…",
-        `  ${"░".repeat(29)} 0/0`,
+        `  ${"░".repeat(28)} 0/0 pages`,
       ]);
       expect(readWatched).toHaveBeenCalledOnce();
     });

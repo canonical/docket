@@ -2,13 +2,9 @@ import type { ReactNode } from "react";
 import type { CacheStatus } from "../lib/cache/index.js";
 import type { Problem } from "../lib/text/index.js";
 import { tokens } from "../lib/tokens/index.js";
-import {
-  EmptyState,
-  findStageUnderWay,
-  Notice,
-  ProgressLine,
-} from "../lib/ui/index.js";
+import { EmptyState, Notice } from "../lib/ui/index.js";
 import describeHold from "./describeHold.js";
+import drawFirstRun, { type FirstRunProps } from "./drawFirstRun.js";
 import type { TerminalMode } from "./types.js";
 import type { UseActivityResult } from "./useActivity.js";
 
@@ -33,6 +29,8 @@ export interface StandInProps {
   /** Whether owed's list is drawn once nothing before it stands in. */
   readonly owedListed: boolean;
   readonly activity: UseActivityResult;
+  /** The watched repositories, whose short names the first run's lines give. */
+  readonly watched: FirstRunProps["watched"];
   /** The width of the pane, in display cells. */
   readonly width: number;
 }
@@ -46,11 +44,12 @@ const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
 /**
  * What stands in for the list, in this order: the problem that keeps the
  * screen from listing anything; why a key could not open an editor, while
- * no row is listed; before the first data, why the fetch waits, or its
- * progress; nothing owed, under the notice while no team is listed; then,
- * unless owed's list is drawn, why activity's events could not be read,
- * or that they are being read for the window on screen. Nothing stands in
- * otherwise.
+ * no row is listed; before the first data, why the fetch waits while no
+ * repository has a stage yet, or else each repository's stage and the
+ * progress (`drawFirstRun`); nothing owed, under the notice while no team
+ * is listed; then, unless owed's list is drawn, why activity's events
+ * could not be read, or that they are being read for the window on
+ * screen. Nothing stands in otherwise.
  */
 export default function drawStandIn({
   mode,
@@ -63,6 +62,7 @@ export default function drawStandIn({
   teamless,
   owedListed,
   activity,
+  watched,
   width,
 }: StandInProps): ReactNode {
   if (problem) {
@@ -77,8 +77,10 @@ export default function drawStandIn({
   }
   if (refused) return refused;
   if (!held) {
-    const hold = status && describeHold(status, timezone);
-    const underWay = status && findStageUnderWay(status.stages);
+    // Once a refresh here has given each repository a stage, the lines
+    // say where it stands, and the status line why it waits.
+    const known = status !== undefined && status.stages.length > 0;
+    const hold = !known && status && describeHold(status, timezone);
     return hold ? (
       <Notice
         reason={dropFullStop(hold.reason)}
@@ -86,14 +88,7 @@ export default function drawStandIn({
         width={width}
       />
     ) : (
-      <box flexDirection="column" paddingLeft={indent}>
-        <text fg={tokens["color.text"]}>refresh in progress…</text>
-        <ProgressLine
-          fetched={underWay?.fetched ?? 0}
-          total={underWay?.total ?? 0}
-          width={width - indent}
-        />
-      </box>
+      drawFirstRun({ status, watched, width })
     );
   }
   if (nothingOwed) {

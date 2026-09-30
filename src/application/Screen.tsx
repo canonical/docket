@@ -384,6 +384,7 @@ export default function Screen({
     teamless,
     owedListed: Boolean(owed && readThreadDetail),
     activity,
+    watched,
     width,
   });
   if (region === undefined && owed && readThreadDetail) {

@@ -9,7 +9,7 @@ const meta: Meta<ProgressLineProps> = {
 
 export default meta;
 
-/** Part way through a repository's pages. */
+/** Part way through the pages of the repositories begun. */
 export const Halfway: Story<ProgressLineProps> = {
   args: { fetched: 50, total: 89, width: 38 },
 };
