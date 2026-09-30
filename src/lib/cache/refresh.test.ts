@@ -108,7 +108,7 @@ describe("the refresh step of createCache", () => {
 
   it("pauses until the budget resets when less than a fifth of it remains", async () => {
     const provider = counting({
-      budget: vi.fn(() => ({ graphql: { ...fullBudget, remaining: 999 } })),
+      budget: () => ({ graphql: { ...fullBudget, remaining: 999 } }),
     });
     const cache = open(provider);
     await cache.refresh();
@@ -119,7 +119,7 @@ describe("the refresh step of createCache", () => {
     });
     later(30 * minute);
     await cache.refresh();
-    expect(provider.budget).toHaveBeenCalledTimes(1);
+    expect(provider.snapshot).not.toHaveBeenCalled();
     later(30 * minute);
     await cache.refresh();
     expect(provider.snapshot).toHaveBeenCalledTimes(1);

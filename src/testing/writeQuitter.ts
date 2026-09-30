@@ -14,6 +14,6 @@ const [file = ""] = process.argv.slice(2);
 
 await writeCacheFile(
   file,
-  { state: dehydrate(new QueryClient()), fullRefreshAt: undefined },
+  { state: dehydrate(new QueryClient()), fullRefreshAt: undefined, budget: {} },
   () => process.exit(0),
 );

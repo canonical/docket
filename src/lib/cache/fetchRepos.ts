@@ -13,7 +13,8 @@ const underWay: ReadonlySet<RepoStage["kind"]> = new Set([
 ]);
 
 /** What fetching the watched repositories reads, keeps and reports. */
-export interface FetchReposOptions extends Omit<SyncOptions, "onStage"> {
+export interface FetchReposOptions
+  extends Omit<SyncOptions, "onStage" | "spend"> {
   readonly provider: Provider;
   /** The watched repositories, as `owner/name`, in the order fetched. */
   readonly repos: readonly string[];
@@ -28,6 +29,12 @@ export interface FetchReposOptions extends Omit<SyncOptions, "onStage"> {
    * changes: each is `waiting` at first.
    */
   readonly report: (stages: readonly RepoProgress[]) => void;
+  /**
+   * Whether points may be spent now, asked before each repository and
+   * before the checks refresh, so a budget that falls below its floor
+   * during a refresh stops the spending there. Always, when not given.
+   */
+  readonly spend?: () => boolean;
   /**
    * Whether the checks still running are read again once every
    * repository is fetched, when points may be spent.
@@ -53,7 +60,7 @@ export default async function fetchRepos({
   find,
   keep,
   report,
-  spend = true,
+  spend = () => true,
   reconcile = true,
   checks = true,
 }: FetchReposOptions): Promise<void> {
@@ -85,7 +92,7 @@ export default async function fetchRepos({
   try {
     for (const repo of repos) {
       const value = await syncRepo(provider, repo, find(repo), at, {
-        spend,
+        spend: spend(),
         reconcile,
         onStage: (stage) => {
           if (stage.kind === "reading") {
@@ -100,7 +107,7 @@ export default async function fetchRepos({
       finish(repo, value);
     }
     const refreshed =
-      spend && checks
+      checks && spend()
         ? await refreshChecks(provider, [...synced.values()], (covered) =>
             reach(covered, (repo) => ({
               kind: "checks",

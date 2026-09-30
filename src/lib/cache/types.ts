@@ -2,6 +2,7 @@ import type { DehydratedState } from "@tanstack/query-core";
 import type { ThreadEvent } from "../events/index.js";
 import type { Account } from "../people/index.js";
 import type {
+  Budgets,
   Cursor,
   PageProgress,
   Provider,
@@ -58,6 +59,12 @@ export interface CacheFile {
    * cooldown holds across processes. Absent before the first.
    */
   readonly fullRefreshAt: Date | undefined;
+  /**
+   * The mirror of GitHub's budgets: the latest report of each that any
+   * process heard, so every process judges the floor on the same figures.
+   * Empty before the first answer.
+   */
+  readonly budget: Budgets;
 }
 
 /** The threads of every watched repository, and how old they are. */
@@ -332,6 +339,30 @@ export interface Cache {
     thread: Pick<Thread, "repo" | "number">,
     assignees: readonly Account[],
   ): () => void;
+  /**
+   * The mirror of the provider's budgets: for each kind, the latest
+   * report any docket process heard, as the cache file last gave it, or
+   * this process's own answers heard since, whichever is later.
+   */
+  budget(): Budgets;
+  /**
+   * Until when the queries' budget is below the floor, judged on the
+   * mirror now, or `undefined` while points may be spent: asked before
+   * each request that spends them. The status says so, with the reset,
+   * unless the provider refused a request for its rate limit.
+   */
+  findFloor(): { readonly until: Date; readonly reason: "budget" } | undefined;
+  /**
+   * Writes the budgets this process heard to the cache file, under the
+   * fetch lock, when the file holds none as late, so every docket process
+   * judges the floor on them: for answers heard outside a refresh, such as
+   * a read of details.
+   *
+   * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
+   * the fetch lock for longer than the wait allows, and `CACHE_UNUSABLE`
+   * when the cache folder cannot be made, read or written.
+   */
+  keepBudget(): Promise<void>;
   /** The cache's state: the same value on every call until it changes. */
   status(): CacheStatus;
   /** Calls `listener` whenever the threads or the status change. */

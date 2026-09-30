@@ -2,6 +2,7 @@ import { mkdirSync, watch as watchFolder } from "node:fs";
 import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { Account } from "../people/index.js";
+import type { Budgets } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
 import classifyFolderFailure from "./classifyFolderFailure.js";
 import classifyRefreshFailure from "./classifyRefreshFailure.js";
@@ -17,6 +18,7 @@ import fetchRepos, { type FetchReposOptions } from "./fetchRepos.js";
 import findBudgetFloor from "./findBudgetFloor.js";
 import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
+import mergeBudgets from "./mergeBudgets.js";
 import mergeSnapshot from "./mergeSnapshot.js";
 import readCacheFile from "./readCacheFile.js";
 import refreshChecks from "./refreshChecks.js";
@@ -60,6 +62,10 @@ export default function createCache({
   let fullRefreshAt: Date | undefined;
   // The file this process wrote last, as identifyFile names it.
   let written: string | undefined;
+  // The mirror of the budgets as the file last gave it or this process
+  // last wrote it; this process's own answers join it on each read.
+  let mirror: Budgets = {};
+  const figures = () => mergeBudgets(mirror, provider.budget());
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
@@ -158,13 +164,39 @@ export default function createCache({
       // Every write happens under the lock after a load, and carries the
       // start it loaded forward, so the file's is always the latest.
       fullRefreshAt = contents.fullRefreshAt ?? fullRefreshAt;
+      mirror = mergeBudgets(mirror, contents.budget);
     }
     publish();
   };
-  const save = () =>
-    writeCacheFile(file, { state: dehydrate(client), fullRefreshAt }, (id) => {
+  const save = () => {
+    mirror = figures();
+    const contents = {
+      state: dehydrate(client),
+      fullRefreshAt,
+      budget: mirror,
+    };
+    return writeCacheFile(file, contents, (id) => {
       written = id;
     });
+  };
+
+  /**
+   * Until when the budget is below its floor, judged on the mirror now,
+   * or `undefined` while points may be spent.
+   */
+  const judgeFloor = () => findBudgetFloor(figures().graphql, now());
+  /**
+   * `judgeFloor`, and the status says so, with the reset, unless the rate
+   * limit pauses the cycle.
+   */
+  const findFloor = () => {
+    const floor = judgeFloor();
+    const { paused } = status;
+    if (paused?.reason !== "rateLimit" || now() >= paused.until) {
+      publish({ paused: floor }, false);
+    }
+    return floor;
+  };
 
   /**
    * Fetches every repository, the lock held, as `fetchRepos` does with
@@ -175,7 +207,7 @@ export default function createCache({
   ) => {
     // Nothing is shown until every repository holds data, so a run that
     // may spend and starts with one lacking fetches while the list waits.
-    const whole = options.spend !== false && !syncedAt();
+    const whole = (options.spend?.() ?? true) && !syncedAt();
     // Every repository is dated from before its fetch, so the data is
     // never taken as newer than it is.
     const at = now();
@@ -322,9 +354,8 @@ export default function createCache({
           await load();
           const previous = entry(repo);
           if (!previous) return false;
-          const floor = findBudgetFloor(provider.budget().graphql, at);
           const value = await syncRepo(provider, repo, previous, at, {
-            spend: !floor,
+            spend: !findFloor(),
             reconcile: false,
           });
           // Unchanged, the repository keeps its data, and its tag, which
@@ -383,31 +414,30 @@ export default function createCache({
       const { paused } = status;
       if (paused && at < paused.until && paused.reason === "rateLimit") return;
       try {
-        // Below the floor the free checks still run, so the data a check
-        // finds unchanged stays current and a change waits for the reset.
-        const floor =
-          paused && at < paused.until
-            ? paused
-            : findBudgetFloor(provider.budget().graphql, at);
-        // A pause whose time is past no longer holds while reading resumes.
-        if (paused && at >= paused.until) publish({ paused: undefined });
         const idle = attention === "idle";
         // Waking catches up at once, whatever another pane fetched.
         const maxAge =
           attention === "waking" ? 0 : idle ? idleInterval : refreshInterval;
-        await sync(maxAge, { spend: !floor, reconcile: !idle, checks: !idle });
-        publish({ paused: floor, failure: undefined });
+        // Below the floor the free checks still run, so the data a check
+        // finds unchanged stays current and a change waits for the reset.
+        // The floor is judged again before each repository and the checks.
+        await sync(maxAge, {
+          spend: () => !findFloor(),
+          reconcile: !idle,
+          checks: !idle,
+        });
+        publish({ paused: judgeFloor(), failure: undefined });
       } catch (error) {
-        publish(classifyRefreshFailure(error, provider.budget()));
+        publish(classifyRefreshFailure(error, figures()));
       }
     },
     async fullRefresh() {
       try {
         if (await discardAndFetch()) {
-          publish({ paused: undefined, failure: undefined });
+          publish({ paused: judgeFloor(), failure: undefined });
         }
       } catch (error) {
-        publish(classifyRefreshFailure(error, provider.budget()));
+        publish(classifyRefreshFailure(error, figures()));
       }
     },
     watch() {
@@ -435,6 +465,20 @@ export default function createCache({
         patchCount++;
         publish();
       };
+    },
+    budget: figures,
+    findFloor,
+    async keepBudget() {
+      try {
+        await withFetchLock(directory, async () => {
+          await load();
+          // Only figures the file lacks are worth a write every process
+          // reloads.
+          if (!isSame(figures(), mirror)) await save();
+        });
+      } catch (error) {
+        throw classifyFolderFailure(error, directory);
+      }
     },
     status: () => status,
     subscribe(listener) {

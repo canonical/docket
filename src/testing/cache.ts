@@ -97,6 +97,13 @@ export function holdCache(
         publish();
       };
     },
+    budget: () => ({}),
+    // The floor the status holds, as a cache judging it would publish it.
+    findFloor: () =>
+      status.paused?.reason === "budget"
+        ? { until: status.paused.until, reason: "budget" }
+        : undefined,
+    keepBudget: async () => {},
     status: () => status,
     subscribe: (listener) => {
       listeners.add(listener);
