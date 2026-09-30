@@ -420,7 +420,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(drawn.lines.at(10)).toBe("paused: budget low · resumes 13:00");
     });
 
-    it("shows setup when gh gives no token: the notice for the list, no status, and only the keys that act", async () => {
+    it("shows setup when gh gives no token: the notice for the list, no status, and only the keys that act, in the key bar and the help", async () => {
       const view: TerminalView = {
         mode: "owed",
         owedGrouping: "none",
@@ -456,7 +456,17 @@ describe("Screen", { timeout: 15_000 }, () => {
       const keyed = await press(screen, "right", "g", "j");
       expect(keyed.lines).toEqual(screen.lines);
       const help = await press(screen, "?");
-      expect(help.lines.at(0)).toBe("help");
+      expect(help.lines.slice(0, 9)).toEqual([
+        "help",
+        "",
+        `App ${"─".repeat(36)}`,
+        "  ?        show or hide help",
+        "  esc      close help",
+        "  q        quit",
+        "",
+        "  windows are counted in working time",
+        "",
+      ]);
       expect((await press(screen, "escape")).lines).toEqual(screen.lines);
       await press(screen, "q");
       expect(onQuit).toHaveBeenCalledOnce();

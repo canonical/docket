@@ -236,6 +236,11 @@ describe("useScreenKeys", () => {
     expect(ran.slice(1)).toEqual(["moveSelection 1", "toggleHelp"]);
   });
 
+  it("lists in the help on setup only the keys that act there", async () => {
+    const { screen } = await bind({ setup: true });
+    expect(screen.lines.slice(1, 3)).toEqual(["? esc q", "App"]);
+  });
+
   it.each([
     { shown: "nothing open", help: false, editorOpen: false },
     { shown: "the help open", help: true, editorOpen: false },

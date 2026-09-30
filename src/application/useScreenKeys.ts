@@ -70,12 +70,25 @@ export interface UseScreenKeysProps {
 export interface UseScreenKeysResult {
   /** The commands a key runs now, which the key bar names. */
   readonly active: UseCommandsResult;
-  /** Every command bound, in the help's order of groups. */
+  /**
+   * Every command bound, in the help's order of groups, which the help
+   * lists; on setup, only those that act there.
+   */
   readonly bound: UseCommandsResult;
 }
 
 /** The help's groups, in the order keys act: from the mode down to the app. */
 const helpGroups = ["Mode", "List", "Thread", "Editor", "App"];
+
+/** What the keys that act on setup do: the help's and quitting. */
+const labels = {
+  toggleHelp: "show or hide help",
+  closeHelp: "close help",
+  quit: "quit",
+} as const;
+
+/** The labels of the commands that act on setup, the only ones its help lists. */
+const setupLabels: readonly string[] = Object.values(labels);
 
 /**
  * The screen's global layer of keys, and the commands the key bar and the
@@ -191,14 +204,14 @@ export default function useScreenKeys({
         },
         {
           name: "help.toggle",
-          desc: "show or hide help",
+          desc: labels.toggleHelp,
           group: "App",
           hint: "",
           run: () => latest.current.toggleHelp(),
         },
         {
           name: "help.close",
-          desc: "close help",
+          desc: labels.closeHelp,
           group: "App",
           hint: "",
           // Off while the help is closed, so `esc` reaches an open
@@ -214,7 +227,7 @@ export default function useScreenKeys({
         },
         {
           name: "app.quit",
-          desc: "quit",
+          desc: labels.quit,
           group: "App",
           // With no list to act on, quitting is the one way on.
           ...(setup && { hint: "quit" }),
@@ -263,8 +276,10 @@ export default function useScreenKeys({
     [mode, help, editorOpen, tooSmall, setup],
   );
   const active = useCommands({ visibility: "active" });
-  const bound = useCommands({ visibility: "registered" }).toSorted(
-    (a, b) => helpGroups.indexOf(a.group) - helpGroups.indexOf(b.group),
-  );
+  const bound = useCommands({ visibility: "registered" })
+    .filter(({ label }) => !setup || setupLabels.includes(label))
+    .toSorted(
+      (a, b) => helpGroups.indexOf(a.group) - helpGroups.indexOf(b.group),
+    );
   return { active, bound };
 }
