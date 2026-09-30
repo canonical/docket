@@ -61,7 +61,7 @@ describe("StatusLine", () => {
       <StatusLine {...FullRefresh.args} width={20} />,
       20,
     );
-    expect(narrow.lines.at(0)).toBe("full refresh · exam…");
+    expect(narrow.lines.at(0)).toBe("full refresh · … 1/2");
   });
 
   it("drops a full refresh's pages at 40 columns before it cuts a word, however many pages", async () => {
@@ -86,6 +86,30 @@ describe("StatusLine", () => {
       );
       expect(screen.lines.at(0)).toBe("full refresh · example 1/2");
     }
+  });
+
+  it("cuts a long short name in its middle, after the pages leave, so the place stays", async () => {
+    const names = {
+      "example-org/example-repo": "design-system-website-docs",
+    };
+    const full = await draw(
+      <StatusLine {...FullRefresh.args} names={names} />,
+      40,
+    );
+    expect(full.lines.at(0)).toBe("full refresh · design-sys…bsite-docs 1/2");
+    const refreshing = await draw(
+      <StatusLine
+        {...Refreshing.args}
+        names={{
+          "example-org/example-docs":
+            "design-system-website-documentation-pages",
+        }}
+      />,
+      40,
+    );
+    expect(refreshing.lines.at(0)).toBe(
+      "refreshing · design-syst…ation-pages 2/3",
+    );
   });
 
   it("shows the whole message at 60 columns", async () => {

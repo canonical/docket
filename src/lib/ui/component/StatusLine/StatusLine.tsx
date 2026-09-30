@@ -41,6 +41,33 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
 }
 
 /**
+ * A message's words fitted to `width`: a message too wide first drops the
+ * part that gives way, then cuts the repository's short name it names in
+ * its middle, so the place after it stays, and only then are its words
+ * cut, by the rule for docket's own words.
+ */
+function fitMessage(message: StatusMessage, width: number): string {
+  const { shorter, name } = message;
+  const chosen =
+    shorter !== undefined && measureText(message.text) > width
+      ? shorter
+      : message.text;
+  const over = measureText(chosen) - width;
+  if (name === undefined || over <= 0) {
+    return fitField({ text: chosen, kind: "words" }, "line", width);
+  }
+  // The name follows docket's fixed words, so its last place is its own.
+  const at = chosen.lastIndexOf(name);
+  const cut = fitField(
+    { text: name, kind: "identifier" },
+    "line",
+    measureText(name) - over,
+  );
+  const text = `${chosen.slice(0, at)}${cut}${chosen.slice(at + name.length)}`;
+  return fitField({ text, kind: "words" }, "line", width);
+}
+
+/**
  * docket's own state. The left side is the list's, one message at a
  * time: the cases are listed in priority order, the first that applies
  * is the one shown, and the side stays blank when none does (the
@@ -75,22 +102,7 @@ const StatusLine = ({
     action,
     attention,
   );
-  // A message too wide first drops the part that gives way, and only
-  // then are its words cut, by the rule for docket's own words.
-  const fitted = message && {
-    ...message,
-    text: fitField(
-      {
-        text:
-          message.shorter !== undefined && measureText(message.text) > width
-            ? message.shorter
-            : message.text,
-        kind: "words",
-      },
-      "line",
-      width,
-    ),
-  };
+  const fitted = message && { ...message, text: fitMessage(message, width) };
   const runs = fitted ? fitRuns(describeRuns(fitted), width) : [];
   const right = describeDetails(
     status,
