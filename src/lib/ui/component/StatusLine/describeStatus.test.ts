@@ -130,7 +130,7 @@ describe("describeStatus", () => {
     );
   });
 
-  it("names the furthest repository the full refresh has reached, with no pages until it reads one", () => {
+  it("names the furthest repository the full refresh has reached, naming no pages until a first page says how many there are", () => {
     const status = statusOf(FullRefresh);
     const stages = [
       {
@@ -140,7 +140,17 @@ describe("describeStatus", () => {
       { repo: "example-org/example-repo", stage: { kind: "checking" } },
     ] as const;
     expect(describeAt({ ...status, stages })?.text).toBe(
-      "full refresh · example 2/2 · pages 0/0",
+      "full refresh · example 2/2",
+    );
+    const reading = [
+      stages[0],
+      {
+        repo: "example-org/example-repo",
+        stage: { kind: "reading", fetched: 0, total: 0 },
+      },
+    ] as const;
+    expect(describeAt({ ...status, stages: reading })?.text).toBe(
+      "full refresh · example 2/2",
     );
   });
 

@@ -7,7 +7,8 @@ const muted = tokens["color.text.muted"];
 
 /**
  * A repository's stage in words, in the runs its line draws: what it is
- * doing, plain; `✓` in the success colour before the threads it holds;
+ * doing, plain, `reading` alone until its first page says how many
+ * there are; `✓` in the success colour before the threads it holds;
  * `waiting` and `paused`, dimmed, as context, `paused: rate limit` when
  * the rate limit paused it; and `✗ failed:` with the reason, in the error
  * colour.
@@ -19,8 +20,15 @@ export default function describeStage(stage: RepoStage): Piece[] {
     case "checking":
       return [{ text: "checking for changes", fg: plain }];
     case "reading":
+      // How many pages there are is known only once the first arrives.
       return [
-        { text: `reading page ${stage.fetched}/${stage.total}`, fg: plain },
+        {
+          text:
+            stage.total > 0
+              ? `reading page ${stage.fetched}/${stage.total}`
+              : "reading",
+          fg: plain,
+        },
       ];
     case "checks":
       return [{ text: "reading checks", fg: plain }];

@@ -24,8 +24,7 @@ const ProgressLine = ({
     0,
     Math.min(barCells, width - Bun.stringWidth(fraction) - 1),
   );
-  const filled =
-    total > 0 ? Math.min(cells, Math.floor((cells * fetched) / total)) : 0;
+  const filled = Math.min(cells, Math.floor((cells * fetched) / total));
   return (
     <text fg={tokens["color.text"]}>
       {tokens["glyph.progress.filled"].repeat(filled)}

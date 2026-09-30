@@ -57,11 +57,11 @@ describe("drawFirstRun", () => {
     expect(screen.look("Recovery")?.fg).toBe(tokens["color.text"]);
   });
 
-  it("draws no repository lines and no step before any repository has a stage", async () => {
+  it("draws no repository lines, no step and no progress line before any repository has a stage", async () => {
     const screen = await drawAt(undefined);
     expect(screen.lines.slice(0, 3)).toEqual([
       "  refresh in progress…",
-      `  ${"░".repeat(28)} 0/0 pages`,
+      "",
       "",
     ]);
   });

@@ -272,7 +272,7 @@ async function showRefreshing(
 // default of 5 s.
 describe("Screen", { timeout: 15_000 }, () => {
   describe("before the first data", () => {
-    it("opens on owed with the first run's progress and no counts, at 40 columns", async () => {
+    it("opens on owed with the first run's line and no progress line, pages or counts, at 40 columns", async () => {
       const screen = await (
         await show(viewOf(await openCache(fakeProvider())))
       ).redraw();
@@ -280,7 +280,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "owed",
         "",
         "  refresh in progress…",
-        `  ${"░".repeat(28)} 0/0 pages`,
+        "",
         "",
         "",
         "",
@@ -371,7 +371,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "          with GITHUB_TIMED_OUT",
         "  docs    waiting",
         "  Recovery: try again",
-        `  ${"░".repeat(28)} 0/0 pages`,
+        "",
       ]);
       expect(drawn.lines.at(10)).toBe("✗ offline");
       expect(drawn.look("✗ offline")?.fg).toBe(tokens["color.text.error"]);
@@ -453,7 +453,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "owed",
         "",
         "  refresh in progress…",
-        `  ${"░".repeat(28)} 0/0 pages`,
+        "",
       ]);
       expect(readWatched).toHaveBeenCalledOnce();
     });

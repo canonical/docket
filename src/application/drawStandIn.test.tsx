@@ -55,12 +55,9 @@ describe("drawStandIn", () => {
     expect(drawStandIn({ ...listing, refused, held: false })).toBe(refused);
   });
 
-  it("shows the first run's progress while nothing is fetched yet", async () => {
+  it("says the first run is in progress, with no progress line, while no page count is known", async () => {
     const screen = await drawFor({ held: false, status: undefined });
-    expect(screen.lines.slice(0, 2)).toEqual([
-      "  refresh in progress…",
-      `  ${"░".repeat(28)} 0/0 pages`,
-    ]);
+    expect(screen.lines.slice(0, 2)).toEqual(["  refresh in progress…", ""]);
     expect(screen.look("refresh in progress")?.fg).toBe(tokens["color.text"]);
   });
 

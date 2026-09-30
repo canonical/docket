@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { draw } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import ProgressLine from "./ProgressLine.js";
-import { Halfway, Starting } from "./ProgressLine.stories.js";
+import { Halfway } from "./ProgressLine.stories.js";
 
 describe("ProgressLine", () => {
   it("fills the bar in proportion, then states the pages, at 40 columns", async () => {
@@ -21,11 +21,6 @@ describe("ProgressLine", () => {
     expect(screen.lines.at(0)).toBe(
       `${"█".repeat(16)}${"░".repeat(13)} 50/89 pages`,
     );
-  });
-
-  it("leaves the bar empty before the first page", async () => {
-    const screen = await draw(<ProgressLine {...Starting.args} />, 40);
-    expect(screen.lines.at(0)).toBe(`${"░".repeat(28)} 0/0 pages`);
   });
 
   it("shortens the bar so the pages still fit a narrow line", async () => {

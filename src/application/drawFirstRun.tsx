@@ -21,7 +21,7 @@ const indent = 2;
  * run: `refresh in progress…`, then a line for each repository with its
  * stage, the step that recovers from the failure a repository stopped on
  * under them, and the progress line, counting the pages of the
- * repositories begun.
+ * repositories begun, once a first page says how many there are.
  */
 export default function drawFirstRun({
   status,
@@ -30,6 +30,7 @@ export default function drawFirstRun({
 }: FirstRunProps): ReactNode {
   const room = width - indent;
   const stages = status?.stages ?? [];
+  const pages = countPages(stages);
   const failed = stages
     .map(({ stage }) => stage)
     .find(
@@ -53,7 +54,7 @@ export default function drawFirstRun({
           {wrapNotice("", failed.error.recovery, room).recovery.join("\n")}
         </text>
       )}
-      <ProgressLine {...countPages(stages)} width={room} />
+      {pages.total > 0 && <ProgressLine {...pages} width={room} />}
     </box>
   );
 }

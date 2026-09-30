@@ -9,11 +9,12 @@ const words = (stage: Parameters<typeof describeStage>[0]) =>
     .join("");
 
 describe("describeStage", () => {
-  it("says what the refresh is doing to a repository, plainly", () => {
+  it("says what the refresh is doing to a repository, plainly, and names no pages before it knows how many", () => {
     expect(words({ kind: "checking" })).toBe("checking for changes");
     expect(words({ kind: "reading", fetched: 2, total: 3 })).toBe(
       "reading page 2/3",
     );
+    expect(words({ kind: "reading", fetched: 0, total: 0 })).toBe("reading");
     expect(words({ kind: "checks", fetched: 3, total: 3 })).toBe(
       "reading checks",
     );

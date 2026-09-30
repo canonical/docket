@@ -76,7 +76,9 @@ export default function describeStatus(
   const underWay = findStageUnderWay(status.stages);
   if (status.whole && underWay) {
     const { repo, position, count, fetched, total } = underWay;
-    const text = `full refresh${separator}${names[repo] ?? repo} ${position}/${count}${separator}pages ${fetched}/${total}`;
+    // The pages are named once a first page says how many there are.
+    const pages = total > 0 ? `${separator}pages ${fetched}/${total}` : "";
+    const text = `full refresh${separator}${names[repo] ?? repo} ${position}/${count}${pages}`;
     return { kind: "progress", text };
   }
   if (status.refreshing && underWay) {
