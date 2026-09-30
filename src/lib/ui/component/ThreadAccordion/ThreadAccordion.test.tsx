@@ -210,6 +210,30 @@ describe("ThreadAccordion", () => {
   });
 
   describe("fitting eight lines", () => {
+    it("keeps a failed read's recovery whole, cutting its long reason with …", async () => {
+      const failure = Object.assign(
+        new Error(
+          `GitHub answered with an error: ${"the connection was reset ".repeat(12)}`,
+        ),
+        {
+          recovery:
+            "check the network connection and https://www.githubstatus.com, then refresh",
+        },
+      );
+      const screen = await open({
+        ...RestingLoading.args,
+        detail: failDetail(failure),
+      });
+      const lines = readText(screen);
+      expect(lines.slice(4, 9)).toEqual([
+        expect.stringMatching(/…$/),
+        "Recovery: check the network connection",
+        "and https://www.githubstatus.com, then",
+        "refresh",
+        "",
+      ]);
+    });
+
     it("never passes eight lines when a stacked pull request's read fails with a long reason", async () => {
       const failure = Object.assign(
         new Error(

@@ -9,7 +9,7 @@ import type { WaitRow } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
 import describeClock from "../../describeClock.js";
-import { fitField } from "../../fit/index.js";
+import { endRuns, fitField } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import { Margin } from "../Margin/index.js";
@@ -183,20 +183,26 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
       typeof recovery === "string" ? recovery : "",
       room,
     );
-    // The reason and its recovery take their lines first; what the
+    // The recovery, the step to take, takes its lines first, then the
+    // reason, whose last line kept ends in … when it runs out; what the
     // snapshot shows fills the lines they leave.
-    const failed = [
-      ...notice.reason.map((text) => ({
-        text,
-        fg: tokens["color.text.error"],
-      })),
-      ...(typeof recovery === "string" ? notice.recovery : []).map((text) => ({
-        text,
-        fg: tokens["color.text"],
-      })),
-    ]
+    const steps = (typeof recovery === "string" ? notice.recovery : [])
       .slice(0, accordionMaxLines)
-      .map((piece) => [piece]);
+      .map((text) => [{ text, fg: tokens["color.text"] }]);
+    const reasons = notice.reason.map((text) => [
+      { text, fg: tokens["color.text.error"] },
+    ]);
+    const left = accordionMaxLines - steps.length;
+    const failed = [
+      ...(reasons.length > left
+        ? reasons
+            .slice(0, left)
+            .map((line, place) =>
+              place === left - 1 ? endRuns(line, room) : line,
+            )
+        : reasons),
+      ...steps,
+    ];
     const shown =
       "wait" in snapshot
         ? fitAccordion(
