@@ -186,13 +186,13 @@ describe("ThreadRow", () => {
       );
     });
 
-    it("marks a row whose repository file is invalid, as a field in trouble", async () => {
+    it("marks a row whose repository file is invalid as a field in trouble, ✗ file", async () => {
       const row = measureRow({}, true);
       const screen = await draw(<ThreadRow row={row} width={60} />, 60);
       expect(screen.lines.at(1)).toBe(
-        `╹ Example thread${" ".repeat(7)}✗ invalid repository file  unassigned`,
+        `╹ Example thread${" ".repeat(26)}✗ file  unassigned`,
       );
-      expect(screen.look("✗ invalid")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("✗ file")?.fg).toBe(tokens["color.text.error"]);
     });
   });
 

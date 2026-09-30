@@ -12,21 +12,24 @@ const read = (lines: ReturnType<typeof describeTitleLines>) =>
   lines.map((line) => line.map(({ text }) => text).join(""));
 
 describe("describeTitleLines", () => {
-  it("lets draft leave the group first once the title is down to 8 cells, then shortens the invalid file, and never drops the owner", () => {
+  it("writes ✗ file for an invalid repository file, lets draft leave once the title is down to 8 cells, and cuts the title below them rather than drop the owner", () => {
     expect(read(describeTitleLines(longReview, 80, false))).toEqual([
-      "Keep the comments at t…  draft  ✗ checks  ✗ invalid repository file  parser-team",
+      "Keep the comments at the ends of lines wh…  draft  ✗ checks  ✗ file  parser-team",
     ]);
     expect(read(describeTitleLines(longReview, 58, false))).toEqual([
-      "Keep th…  ✗ checks  ✗ invalid repository file  parser-team",
+      "Keep the comments a…  draft  ✗ checks  ✗ file  parser-team",
     ]);
     expect(read(describeTitleLines(longReview, 38, false))).toEqual([
       "Keep t…  ✗ checks  ✗ file  parser-team",
     ]);
   });
 
-  it("gives the selected row's group way only as far as a line of its own needs", () => {
+  it("keeps draft in the selected row's group when a line of its own holds it", () => {
     expect(read(describeTitleLines(longReview, 38, true)).at(-1)).toBe(
-      `${" ".repeat(9)}✗ checks  ✗ file  parser-team`,
+      "  draft  ✗ checks  ✗ file  parser-team",
+    );
+    expect(read(describeTitleLines(longReview, 34, true)).at(-1)).toBe(
+      "     ✗ checks  ✗ file  parser-team",
     );
   });
 
