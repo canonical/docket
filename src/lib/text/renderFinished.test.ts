@@ -8,6 +8,10 @@ import type { FinishedGrouping } from "../finished/index.js";
 import renderFinished from "./renderFinished.js";
 import type { Detail, Format, Freshness } from "./types.js";
 
+/** Every control character but the line feed. */
+// biome-ignore lint/suspicious/noControlCharactersInRegex: these are the characters looked for.
+const control = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/;
+
 const freshness: Freshness = {
   now: finishedNow,
   syncedAt: new Date(finishedNow.getTime() - 120_000),
@@ -164,5 +168,29 @@ describe("renderFinished", () => {
     expect(groups("repo")).toEqual([{ repo: "example" }, { repo: "docs" }]);
     expect(groups("none")).toEqual([{}]);
     expect(JSON.parse(render("json", "summary"))).not.toHaveProperty("groups");
+  });
+
+  it("prints no control character from a title, a login or a section's heading written on GitHub", () => {
+    const hostile = {
+      ...completed,
+      title: "Where do tokens live?\u001b[2J",
+      ending: {
+        ...completed.ending,
+        by: { login: "bob\u009b1;1H", type: "user" as const },
+      },
+    };
+    const list = finishedList("none", [hostile]);
+    const headed = {
+      ...list,
+      groups: list.groups.map((group) => ({
+        ...group,
+        heading: { text: "docs\u0007", fit: "trimmed" as const },
+      })),
+    };
+    for (const format of ["plain", "llm"] as const) {
+      const out = render(format, "standard", "none", headed);
+      expect(out).not.toMatch(control);
+      expect(out).toContain("Where do tokens live?");
+    }
   });
 });

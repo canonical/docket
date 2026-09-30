@@ -129,7 +129,7 @@ export default function recordTeam(
             {
               number: 14,
               url: `https://github.com/${repo}/pull/14`,
-              title: "Tidy the changelog",
+              title: words.mergedTitle,
               createdAt: "2026-09-20T08:00:00Z",
               updatedAt: "2026-09-27T13:00:01Z",
               ...buildStanding("MERGED", "2026-09-27T13:00:01Z", [], ["bob"]),

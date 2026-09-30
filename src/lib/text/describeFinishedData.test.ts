@@ -8,6 +8,10 @@ import {
 import type { FinishedThread } from "../endings/index.js";
 import describeFinishedData from "./describeFinishedData.js";
 
+/** Every control character but the line feed. */
+// biome-ignore lint/suspicious/noControlCharactersInRegex: these are the characters looked for.
+const control = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/;
+
 /** The one row finished gives for `thread`, as data. */
 const dataOf = (thread: FinishedThread) => {
   const [row] = finishedList("none", [thread]).groups[0]?.rows ?? [];
@@ -98,5 +102,41 @@ describe("describeFinishedData", () => {
       measures: { close: { state: "notApplicable" } },
     });
     expect(exempt).not.toHaveProperty("verdict");
+  });
+
+  it("gives every string written on GitHub free of control characters", () => {
+    const data = dataOf({
+      ...completed,
+      title: "Where do tokens live?\u001b[2J",
+      ending: {
+        ...completed.ending,
+        by: { login: "bob\u009b1;1H", type: "user" },
+        closer: {
+          kind: "pullRequest",
+          repo: "example-org/example-repo\u0007",
+          number: 2,
+          url: "https://github.com/example-org/example-repo/pull/2\u001b]0;x\u0007",
+        },
+        duplicateOf: {
+          repo: "example-org/example-docs\u0007",
+          number: 3,
+          url: "https://github.com/example-org/example-docs/issues/3\u009b2J",
+        },
+      },
+    });
+    const strings: string[] = [];
+    JSON.stringify(data, (_key, value) => {
+      if (typeof value === "string") strings.push(value);
+      return value;
+    });
+    expect(strings.filter((text) => control.test(text))).toEqual([]);
+    expect(data).toMatchObject({
+      title: "Where do tokens live?",
+      endedBy: { login: "bob" },
+      closer: { url: "https://github.com/example-org/example-repo/pull/2" },
+      duplicateOf: {
+        url: "https://github.com/example-org/example-docs/issues/3",
+      },
+    });
   });
 });

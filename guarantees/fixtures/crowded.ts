@@ -7,6 +7,7 @@ import recordTeam from "./recordTeam.js";
 export default recordTeam(
   {
     title: "Fix the parser",
+    mergedTitle: "Tidy the changelog",
     comment: "Rebased on main.\n\nCould someone look again?",
     label: "kind=bug",
     check: "lint",
