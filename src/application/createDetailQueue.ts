@@ -1,4 +1,5 @@
 import type { ThreadDetail } from "../lib/provider/index.js";
+import type { DetailsCount } from "../lib/ui/index.js";
 import type { ThreadSummary } from "../lib/waits/index.js";
 import { detailStaleAfter } from "./constants.js";
 import type { DetailReader } from "./createDetailReader.js";
@@ -33,15 +34,6 @@ interface Entry {
    * asks for it again.
    */
   failed: boolean;
-}
-
-/**
- * How far the details asked for since the queue last had nothing
- * pending have come: `read` of the `asked` threads have an answer.
- */
-export interface DetailProgress {
-  readonly read: number;
-  readonly asked: number;
 }
 
 /** Threads' details asked for one at a time, read together. */
@@ -79,7 +71,7 @@ export interface DetailQueue {
    * thread that gives way to a later window, or that a request leaves
    * out, is no longer counted as asked for.
    */
-  progress(): DetailProgress | undefined;
+  progress(): DetailsCount | undefined;
   /** How many times details arrived for `thread`: part of its version. */
   countArrivals(thread: ThreadSummary): number;
   /** Calls `listener` whenever details arrive, or the progress changes. */
@@ -129,7 +121,7 @@ export default function createDetailQueue(
   const tell = () => {
     for (const listener of listeners) listener();
   };
-  const progress = (): DetailProgress | undefined =>
+  const progress = (): DetailsCount | undefined =>
     round && !paused
       ? { read: round.answered.size, asked: round.asked.size }
       : undefined;

@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { AttentionState } from "../lib/cache/index.js";
 import type { ThreadDetail } from "../lib/provider/index.js";
+import type { DetailsCount } from "../lib/ui/index.js";
 import type { ThreadSummary } from "../lib/waits/index.js";
 import { detailRest, detailWindow } from "./constants.js";
-import createDetailQueue, {
-  type DetailProgress,
-  type WantedDetail,
-} from "./createDetailQueue.js";
+import createDetailQueue, { type WantedDetail } from "./createDetailQueue.js";
 import type { DetailReader } from "./createDetailReader.js";
 import identifyThread from "./identifyThread.js";
 
@@ -42,7 +40,7 @@ export interface UseReadAheadResult {
     version: string,
   ) => Promise<ThreadDetail>;
   readonly version: (thread: ThreadSummary, version: string) => string;
-  readonly progress?: DetailProgress;
+  readonly progress?: DetailsCount;
 }
 
 /** The rows nearest `place` first, each thread once, at most `limit`. */
