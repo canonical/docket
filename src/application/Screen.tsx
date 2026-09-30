@@ -29,7 +29,6 @@ import {
   Pane,
   PaneHeader,
   PeoplePicker,
-  StatusLine,
   wrapNotice,
 } from "../lib/ui/index.js";
 import type { Thread } from "../lib/waits/index.js";
@@ -38,6 +37,7 @@ import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
 import describeCandidate from "./describeCandidate.js";
 import drawStandIn from "./drawStandIn.js";
+import drawStatusLine from "./drawStatusLine.js";
 import findPeople from "./findPeople.js";
 import gatherNamed from "./gatherNamed.js";
 import identifyRow from "./identifyRow.js";
@@ -286,13 +286,6 @@ export default function Screen({
   });
   const room = width - indent;
   const listed = activity && "list" in activity ? activity.list : undefined;
-  // A failure reading activity's events, or whom gh is signed in as,
-  // leaves the rows held, and the status line names it as it names a
-  // failed refresh.
-  const failure =
-    (activity && "list" in activity ? activity.failure : undefined) ??
-    you.failure;
-  const shownStatus = status && failure ? { ...status, failure } : status;
   const rows: readonly (WaitRow | ActivityThread)[] =
     (owed ?? listed)?.groups.flatMap(
       (group): readonly (WaitRow | ActivityThread)[] => group.rows,
@@ -391,6 +384,7 @@ export default function Screen({
     teamless,
     owedListed: Boolean(owed && readThreadDetail),
     activity,
+    watched,
     width,
   });
   if (region === undefined && owed && readThreadDetail) {
@@ -450,20 +444,23 @@ export default function Screen({
           <CountsLine summary={summary} width={width} />
         )
       }
-      status={
-        <StatusLine
-          status={problem ? undefined : shownStatus}
-          action={action}
-          attention={attentionState}
-          detailsPaused={"cache" in source && source.details?.isCapped(at)}
-          now={at}
-          timezone={settings.time.timezone}
-          names={Object.fromEntries(
-            watched.map(({ repo, name }) => [repo, name]),
-          )}
-          width={width}
-        />
-      }
+      status={drawStatusLine({
+        problem,
+        status,
+        // A failure reading activity's events, or whom gh is signed in
+        // as, leaves the rows held.
+        failure:
+          (activity && "list" in activity ? activity.failure : undefined) ??
+          you.failure,
+        action,
+        attention: attentionState,
+        detailsPaused: "cache" in source && source.details?.isCapped(at),
+        details: ahead.progress,
+        now: at,
+        timezone: settings.time.timezone,
+        watched,
+        width,
+      })}
       keys={<KeyBar commands={active} width={width} />}
       help={
         help ? (

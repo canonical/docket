@@ -6,13 +6,20 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 /**
  * Whether two values of the status hold the same: the same value, dates
- * of the same instant, or object literals whose fields are each the same.
- * Anything else, such as an error, is the same only as itself.
+ * of the same instant, arrays whose entries are each the same, in order,
+ * or object literals whose fields are each the same. Anything else, such
+ * as an error, is the same only as itself.
  */
 export default function isSame(a: unknown, b: unknown): boolean {
   if (Object.is(a, b)) return true;
   if (a instanceof Date && b instanceof Date) {
     return a.getTime() === b.getTime();
+  }
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return (
+      a.length === b.length &&
+      a.every((entry, place) => isSame(entry, b[place]))
+    );
   }
   if (!isRecord(a) || !isRecord(b)) return false;
   const keys = Object.keys(a);

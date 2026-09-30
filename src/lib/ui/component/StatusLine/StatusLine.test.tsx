@@ -7,12 +7,16 @@ import {
   ActionFailed,
   Blank,
   BudgetPaused,
+  DetailsLoading,
   DetailsPaused,
   FullRefresh,
   Idle,
   RateLimited,
+  RefreshFailed,
   Refreshing,
+  RefreshingWithDetails,
   Synced,
+  Waking,
 } from "./StatusLine.stories.js";
 
 describe("StatusLine", () => {
@@ -23,14 +27,30 @@ describe("StatusLine", () => {
   });
 
   it("draws an error with its ✗ in the error colour", async () => {
-    const screen = await draw(<StatusLine {...RateLimited.args} />, 40);
-    expect(screen.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
-    expect(screen.look("✗ rate")?.fg).toBe(tokens["color.text.error"]);
+    const screen = await draw(<StatusLine {...RefreshFailed.args} />, 40);
+    expect(screen.lines.at(0)).toBe("✗ refresh failed · data from 10:12");
+    expect(screen.look("✗ refresh")?.fg).toBe(tokens["color.text.error"]);
+  });
+
+  it("draws a pause for the rate limit in the text colour, rows held or not", async () => {
+    const held = await draw(<StatusLine {...RateLimited.args} />, 40);
+    expect(held.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
+    expect(held.look("paused")?.fg).toBe(tokens["color.text"]);
+    const { status } = RateLimited.args;
+    const first = await draw(
+      <StatusLine
+        {...RateLimited.args}
+        status={status && { ...status, syncedAt: undefined }}
+      />,
+      40,
+    );
+    expect(first.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
+    expect(first.look("paused")?.fg).toBe(tokens["color.text"]);
   });
 
   it("draws a refresh in progress in the text colour", async () => {
     const screen = await draw(<StatusLine {...Refreshing.args} />, 40);
-    expect(screen.lines.at(0)).toBe("refreshing…");
+    expect(screen.lines.at(0)).toBe("refreshing · docs 2/3");
     expect(screen.look("refreshing")?.fg).toBe(tokens["color.text"]);
   });
 
@@ -49,7 +69,7 @@ describe("StatusLine", () => {
       <StatusLine {...RateLimited.args} width={60} />,
       60,
     );
-    expect(screen.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
+    expect(screen.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
   });
 
   it("draws a failed action's result with its ✗ in the error colour", async () => {
@@ -94,18 +114,63 @@ describe("StatusLine", () => {
         <StatusLine {...BudgetPaused.args} width={width} />,
         width,
       );
-      expect(screen.lines.at(0)).toBe("refresh paused · resumes 13:00");
+      expect(screen.lines.at(0)).toBe("paused: budget low · resumes 13:00");
     }
   });
 
-  it("hides details paused while the left side shows an error or the pane is idle", async () => {
+  it("hides details paused while the left side shows an error, the rate limit pauses the refresh, or the pane is idle", async () => {
+    const failed = await draw(
+      <StatusLine {...RefreshFailed.args} detailsPaused />,
+      40,
+    );
+    expect(failed.lines.at(0)).toBe("✗ refresh failed · data from 10:12");
     const limited = await draw(
       <StatusLine {...RateLimited.args} detailsPaused />,
       40,
     );
-    expect(limited.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
+    expect(limited.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
     const idle = await draw(<StatusLine {...Idle.args} detailsPaused />, 40);
     expect(idle.lines.at(0)).toBe("synced 25m ago · idle · any key wakes");
+  });
+
+  it("counts the details read on the right, dimmed, beside how old the data is", async () => {
+    const screen = await draw(<StatusLine {...DetailsLoading.args} />, 40);
+    expect(screen.lines.at(0)).toBe(
+      `synced 2m ago${" ".repeat(15)}details 0/12`,
+    );
+    expect(screen.look("details")?.fg).toBe(tokens["color.text.muted"]);
+  });
+
+  it("counts the details beside a background refresh, at 40 and 60 columns", async () => {
+    const narrow = await draw(
+      <StatusLine {...RefreshingWithDetails.args} />,
+      40,
+    );
+    expect(narrow.lines.at(0)).toBe(
+      `refreshing · docs 2/3${" ".repeat(7)}details 3/12`,
+    );
+    const wide = await draw(
+      <StatusLine {...RefreshingWithDetails.args} width={60} />,
+      60,
+    );
+    expect(wide.lines.at(0)).toBe(
+      `refreshing · docs 2/3${" ".repeat(27)}details 3/12`,
+    );
+  });
+
+  it("counts the whole window's details on waking", async () => {
+    const screen = await draw(<StatusLine {...Waking.args} />, 40);
+    expect(screen.lines.at(0)).toBe(
+      `refreshing · example 1/3${" ".repeat(4)}details 0/12`,
+    );
+  });
+
+  it("drops the count first when the two sides would meet", async () => {
+    const screen = await draw(
+      <StatusLine {...RefreshingWithDetails.args} width={32} />,
+      32,
+    );
+    expect(screen.lines.at(0)).toBe("refreshing · docs 2/3");
   });
 
   it("stays blank with no cache", async () => {

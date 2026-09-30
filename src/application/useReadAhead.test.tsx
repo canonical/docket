@@ -118,6 +118,22 @@ describe("useReadAhead", () => {
     expect(readDetails).toHaveBeenCalledOnce();
   });
 
+  it("counts the details read of those asked for while any are pending, and none once all are read", async () => {
+    const { promise, resolve } = Promise.withResolvers<void>();
+    const readDetails = vi.fn(async (threads: readonly ThreadSummary[]) => {
+      await promise;
+      return threads.map(() => parserFixDetail);
+    });
+    const screen = await open(createDetailReader(readDetails));
+    await screen.redraw();
+    expect(result?.progress).toEqual({ read: 0, asked: 14 });
+    resolve();
+    await vi.advanceTimersByTimeAsync(0);
+    await screen.redraw();
+    expect(readDetails).toHaveBeenCalledOnce();
+    expect(result?.progress).toBeUndefined();
+  });
+
   it("reads nothing ahead with no reader or no rows, and leaves the version as given", async () => {
     await open(undefined);
     expect(result?.read).toBeUndefined();

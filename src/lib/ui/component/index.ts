@@ -15,7 +15,12 @@ export {
 } from "./Notice/index.js";
 export { ProgressLine, type ProgressLineProps } from "./ProgressLine/index.js";
 export {
+  RefreshStages,
+  type RefreshStagesProps,
+} from "./RefreshStages/index.js";
+export {
   type ActionResult,
+  type DetailsCount,
   StatusLine,
   type StatusLineProps,
 } from "./StatusLine/index.js";

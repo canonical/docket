@@ -2,7 +2,6 @@ import { mkdirSync, watch as watchFolder } from "node:fs";
 import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { Account } from "../people/index.js";
-import type { PageProgress } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
 import classifyFolderFailure from "./classifyFolderFailure.js";
 import classifyRefreshFailure from "./classifyRefreshFailure.js";
@@ -13,12 +12,14 @@ import {
   refreshInterval,
 } from "./constants.js";
 import createReadQueries from "./createReadQueries.js";
+import fetchRepos, { type FetchReposOptions } from "./fetchRepos.js";
 import findBudgetFloor from "./findBudgetFloor.js";
 import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeSnapshot from "./mergeSnapshot.js";
 import readCacheFile from "./readCacheFile.js";
-import syncRepo, { type SyncOptions } from "./syncRepo.js";
+import refreshChecks from "./refreshChecks.js";
+import syncRepo from "./syncRepo.js";
 import type {
   Cache,
   CachedThreads,
@@ -108,7 +109,8 @@ export default function createCache({
   let status: CacheStatus = {
     syncedAt: undefined,
     refreshing: false,
-    fullRefresh: undefined,
+    whole: false,
+    stages: [],
     fullRefreshAvailableAt: undefined,
     paused: undefined,
     failure: undefined,
@@ -162,71 +164,37 @@ export default function createCache({
       written = id;
     });
 
-  /** Reads again the checks still running, on every repository at once. */
-  const refreshChecks = async (synced: readonly RepoCache[]) => {
-    if (!provider.capabilities().has("checks")) return [];
-    const running = synced.flatMap(({ threads }) =>
-      threads.filter(
-        ({ kind, checks }) => kind === "pullRequest" && checks === "running",
-      ),
-    );
-    return running.length === 0 ? [] : provider.refreshVolatile(running);
-  };
-
   /**
-   * Fetches every repository, the lock held, as `syncRepo` does with
-   * `options`, and reads the checks still running again when `checks`
-   * says so and points may be spent.
+   * Fetches every repository, the lock held, as `fetchRepos` does with
+   * `options`, reporting each repository's stage.
    */
-  const fetchAll = async ({
-    spend = true,
-    reconcile = true,
-    checks = true,
-  }: SyncOptions & { readonly checks?: boolean } = {}) => {
-    publish({ refreshing: true });
+  const fetchAll = async (
+    options: Pick<FetchReposOptions, "spend" | "reconcile" | "checks"> = {},
+  ) => {
+    // Nothing is shown until every repository holds data, so a run that
+    // may spend and starts with one lacking fetches while the list waits.
+    const whole = options.spend !== false && !syncedAt();
+    // Every repository is dated from before its fetch, so the data is
+    // never taken as newer than it is.
+    const at = now();
     try {
-      // Every repository is dated from before its fetch, so the data is
-      // never taken as newer than it is.
-      const at = now();
-      const synced = new Map<string, RepoCache>();
-      for (const [index, repo] of repos.entries()) {
-        const previous = entry(repo);
-        // A repository with nothing to show is fetched whole while the
-        // list waits for it, so its progress is reported.
-        const onPage =
-          previous || !spend
-            ? undefined
-            : (pages: PageProgress) =>
-                publish({
-                  fullRefresh: {
-                    repo,
-                    position: index + 1,
-                    count: repos.length,
-                    ...pages,
-                  },
-                });
-        onPage?.({ fetched: 0, total: 0 });
-        const value = await syncRepo(provider, repo, previous, at, {
-          spend,
-          reconcile,
-          onPage,
-        });
-        if (!value) continue;
-        synced.set(repo, value);
-        store(repo, value, at);
-      }
-      const refreshed =
-        spend && checks ? await refreshChecks([...synced.values()]) : [];
-      for (const [repo, value] of synced) {
-        const threads = applyChecks(value.threads, refreshed);
-        store(repo, { ...value, threads }, at);
-      }
+      // The first report comes before any request, every repository
+      // waiting, so the run and its stages are published together.
+      await fetchRepos({
+        provider,
+        repos,
+        at,
+        find: entry,
+        keep: (repo, value) => store(repo, value, at),
+        report: (stages) => publish({ refreshing: true, whole, stages }),
+        ...options,
+      });
     } finally {
       // Every other process reloads the file on each write, so a sync
       // writes it once, even when a repository fails, which keeps those
       // synced before it.
       await save();
-      publish({ refreshing: false, fullRefresh: undefined });
+      publish({ refreshing: false, whole: false });
     }
   };
 
@@ -373,7 +341,7 @@ export default function createCache({
             threads: mergeSnapshot(previous.threads, changed.threads),
             cursor: changed.cursor,
           };
-          const refreshed = await refreshChecks([value]);
+          const refreshed = await refreshChecks(provider, [value]);
           store(
             repo,
             { ...value, threads: applyChecks(value.threads, refreshed) },

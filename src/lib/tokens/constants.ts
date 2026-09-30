@@ -40,4 +40,6 @@ export const tokens: Tokens = {
   "glyph.below": "↓",
   "glyph.cut": "…",
   "glyph.separator": "·",
+  "glyph.progress.filled": "█",
+  "glyph.progress.unfilled": "░",
 };

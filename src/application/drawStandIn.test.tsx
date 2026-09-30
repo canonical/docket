@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { describeNoTeam } from "../lib/owed/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import { settleStatus } from "../testing/cache.js";
-import { recordedActivity, recordedNow } from "../testing/recorded.js";
+import {
+  recordedActivity,
+  recordedNow,
+  recordedRepos,
+} from "../testing/recorded.js";
 import { draw } from "../testing/terminal.js";
 import drawStandIn, { type StandInProps } from "./drawStandIn.js";
 
@@ -18,6 +22,7 @@ const listing: StandInProps = {
   teamless: undefined,
   owedListed: true,
   activity: undefined,
+  watched: recordedRepos,
   width: 40,
 };
 
@@ -50,37 +55,60 @@ describe("drawStandIn", () => {
     expect(drawStandIn({ ...listing, refused, held: false })).toBe(refused);
   });
 
-  it("shows the first run's progress while nothing is fetched yet", async () => {
+  it("says the first run is in progress, with no progress line, while no page count is known", async () => {
     const screen = await drawFor({ held: false, status: undefined });
-    expect(screen.lines.slice(0, 2)).toEqual([
-      "  refresh in progress…",
-      `  ${"░".repeat(29)} 0/0`,
-    ]);
+    expect(screen.lines.slice(0, 2)).toEqual(["  refresh in progress…", ""]);
     expect(screen.look("refresh in progress")?.fg).toBe(tokens["color.text"]);
   });
 
-  it("shows how many pages the first run fetched", async () => {
+  it("shows each repository's stage and the pages the first run read", async () => {
     const screen = await drawFor({
       held: false,
       status: {
         ...settleStatus(recordedNow),
         refreshing: true,
-        fullRefresh: {
-          repo: "example-org/example-repo",
-          position: 1,
-          count: 2,
-          fetched: 5,
-          total: 9,
+        whole: true,
+        stages: [
+          {
+            repo: "example-org/example-repo",
+            stage: { kind: "reading", fetched: 5, total: 9 },
+          },
+          { repo: "example-org/example-docs", stage: { kind: "waiting" } },
+        ],
+      },
+    });
+    expect(screen.lines.slice(0, 4)).toEqual([
+      "  refresh in progress…",
+      "  example reading page 5/9",
+      "  docs    waiting",
+      `  ${"█".repeat(15)}${"░".repeat(13)} 5/9 pages`,
+    ]);
+  });
+
+  it("shows the repositories a rate limit paused rather than why the first fetch waits, once each has a stage", async () => {
+    const screen = await drawFor({
+      held: false,
+      status: {
+        ...settleStatus(recordedNow),
+        paused: {
+          until: new Date("2026-01-01T12:00:00Z"),
+          reason: "rateLimit",
         },
+        stages: [
+          {
+            repo: "example-org/example-repo",
+            stage: { kind: "paused", reason: "rateLimit" },
+          },
+        ],
       },
     });
     expect(screen.lines.slice(0, 2)).toEqual([
       "  refresh in progress…",
-      `  ${"█".repeat(16)}${"░".repeat(13)} 5/9`,
+      "  example paused: rate limit",
     ]);
   });
 
-  it("says when docket resumes while the first fetch is held", async () => {
+  it("says when docket resumes while the first fetch is held and no repository has a stage", async () => {
     const screen = await drawFor({
       held: false,
       status: {

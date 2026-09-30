@@ -17,10 +17,25 @@ const now = new Date("2026-09-28T12:00:00Z");
 const settled: CacheStatus = {
   syncedAt: new Date("2026-09-28T11:58:00Z"),
   refreshing: false,
-  fullRefresh: undefined,
+  whole: false,
+  stages: [],
   fullRefreshAvailableAt: undefined,
   paused: undefined,
   failure: undefined,
+};
+
+/** A refresh in the background on the second of three repositories. */
+const background: CacheStatus = {
+  ...settled,
+  refreshing: true,
+  stages: [
+    {
+      repo: "example-org/example-repo",
+      stage: { kind: "done", threads: 12, fetched: 1, total: 1 },
+    },
+    { repo: "example-org/example-docs", stage: { kind: "checking" } },
+    { repo: "example-org/example-site", stage: { kind: "waiting" } },
+  ],
 };
 
 const timedOut: ProviderError = Object.assign(
@@ -36,7 +51,10 @@ const refused: ProviderError = Object.assign(
 const base = {
   now,
   timezone: "UTC",
-  names: { "example-org/example-repo": "example" },
+  names: {
+    "example-org/example-repo": "example",
+    "example-org/example-docs": "docs",
+  },
   width: 40,
 };
 
@@ -88,20 +106,21 @@ export const FullRefresh: Story<StatusLineProps> = {
       ...settled,
       syncedAt: undefined,
       refreshing: true,
-      fullRefresh: {
-        repo: "example-org/example-repo",
-        position: 1,
-        count: 2,
-        fetched: 5,
-        total: 9,
-      },
+      whole: true,
+      stages: [
+        {
+          repo: "example-org/example-repo",
+          stage: { kind: "reading", fetched: 5, total: 9 },
+        },
+        { repo: "example-org/example-docs", stage: { kind: "waiting" } },
+      ],
     },
   },
 };
 
 /** A refresh in the background, while the data shown stays. */
 export const Refreshing: Story<StatusLineProps> = {
-  args: { ...base, status: { ...settled, refreshing: true } },
+  args: { ...base, status: background },
 };
 
 /** A full refresh asked for within the cooldown of the last one. */
@@ -119,7 +138,7 @@ export const FullRefreshRefused: Story<StatusLineProps> = {
 export const ActionFailed: Story<StatusLineProps> = {
   args: {
     ...base,
-    status: { ...settled, refreshing: true },
+    status: background,
     action: {
       failed: true,
       text: "could not open the browser",
@@ -177,4 +196,34 @@ export const BudgetPaused: Story<StatusLineProps> = {
 /** No cache: gh is missing or not signed in. */
 export const Blank: Story<StatusLineProps> = {
   args: base,
+};
+
+/** The details near the selection being read, how old the data is on the left. */
+export const DetailsLoading: Story<StatusLineProps> = {
+  args: { ...base, status: settled, details: { read: 0, asked: 12 } },
+};
+
+/** A refresh in the background, and the details read so far. */
+export const RefreshingWithDetails: Story<StatusLineProps> = {
+  args: { ...base, status: background, details: { read: 3, asked: 12 } },
+};
+
+/**
+ * A key woke the pane: it catches up at once, and reads again the whole
+ * window of details around the selection.
+ */
+export const Waking: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: {
+      ...background,
+      stages: [
+        { repo: "example-org/example-repo", stage: { kind: "checking" } },
+        { repo: "example-org/example-docs", stage: { kind: "waiting" } },
+        { repo: "example-org/example-site", stage: { kind: "waiting" } },
+      ],
+    },
+    attention: "waking",
+    details: { read: 0, asked: 12 },
+  },
 };

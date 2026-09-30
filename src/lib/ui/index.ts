@@ -4,6 +4,7 @@ export {
   type CountsLineProps,
   countAccordionLines,
   countRowLines,
+  type DetailsCount,
   EmptyState,
   type EmptyStateProps,
   EventLine,
@@ -18,6 +19,8 @@ export {
   type NoticeProps,
   ProgressLine,
   type ProgressLineProps,
+  RefreshStages,
+  type RefreshStagesProps,
   type RestingThread,
   type ShownDetail,
   StatusLine,
@@ -32,6 +35,10 @@ export {
 export { minColumns } from "./constants.js";
 export { default as createKeymap } from "./createKeymap.js";
 export { default as describeClock } from "./describeClock.js";
+export {
+  default as findStageUnderWay,
+  type StageUnderWay,
+} from "./findStageUnderWay.js";
 export {
   type KeyCommand,
   type UseCommandsProps,

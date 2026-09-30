@@ -99,7 +99,11 @@ describe("the refresh step of createCache", () => {
     expect(provider.refreshVolatile).toHaveBeenCalledTimes(2);
     later(60 * minute);
     await cache.refresh("waking");
-    expect(provider.snapshot).toHaveBeenLastCalledWith(repo, null, undefined);
+    expect(provider.snapshot).toHaveBeenLastCalledWith(
+      repo,
+      null,
+      expect.any(Function),
+    );
   });
 
   it("pauses until the budget resets when less than a fifth of it remains", async () => {

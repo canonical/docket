@@ -15,5 +15,6 @@ export type {
   CacheErrorCode,
   CacheOptions,
   CacheStatus,
-  FullRefreshProgress,
+  RepoProgress,
+  RepoStage,
 } from "./types.js";

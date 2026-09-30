@@ -7,7 +7,8 @@ const barCells = 29;
 
 /**
  * The bar shown in the list area on a first run, under `refresh in
- * progress…`: `████████████████░░░░░░░░░░░░░ 50/89`.
+ * progress…`: `██████████████░░░░░░░░░░░░ 50/89 pages`, the pages read across
+ * the repositories begun, so the total grows as each begins.
  *
  * `import { ProgressLine } from "../lib/ui/index.js";`
  *
@@ -18,17 +19,16 @@ const ProgressLine = ({
   total,
   width,
 }: ProgressLineProps): ReactNode => {
-  const fraction = `${fetched}/${total}`;
+  const fraction = `${fetched}/${total} pages`;
   const cells = Math.max(
     0,
     Math.min(barCells, width - Bun.stringWidth(fraction) - 1),
   );
-  const filled =
-    total > 0 ? Math.min(cells, Math.floor((cells * fetched) / total)) : 0;
+  const filled = Math.min(cells, Math.floor((cells * fetched) / total));
   return (
     <text fg={tokens["color.text"]}>
-      {"█".repeat(filled)}
-      {"░".repeat(cells - filled)} {fraction}
+      {tokens["glyph.progress.filled"].repeat(filled)}
+      {tokens["glyph.progress.unfilled"].repeat(cells - filled)} {fraction}
     </text>
   );
 };

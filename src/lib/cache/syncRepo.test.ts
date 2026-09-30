@@ -14,8 +14,8 @@ const cached: RepoCache = {
 };
 
 describe("syncRepo", () => {
-  it("fetches every open thread when nothing is cached, reporting each page", async () => {
-    const onPage = vi.fn();
+  it("fetches every open thread when nothing is cached, reporting the check, then each page", async () => {
+    const onStage = vi.fn();
     const provider = fakeProvider({
       probe: vi.fn(async () => ({ changed: true, tag: '"tag-2"' })),
       snapshot: vi.fn(async (_repo, _cursor, report) => {
@@ -26,15 +26,30 @@ describe("syncRepo", () => {
         };
       }),
     });
-    expect(await syncRepo(provider, repo, undefined, at, { onPage })).toEqual({
+    expect(await syncRepo(provider, repo, undefined, at, { onStage })).toEqual({
       threads: [thread({ number: 3 })],
       cursor: { since: "2026-09-28T09:59:00Z" },
       tag: '"tag-2"',
       reconciledAt: at,
     });
     expect(provider.probe).toHaveBeenCalledWith(repo, undefined);
-    expect(provider.snapshot).toHaveBeenCalledWith(repo, null, onPage);
-    expect(onPage).toHaveBeenCalledWith({ fetched: 1, total: 1 });
+    expect(onStage.mock.calls).toEqual([
+      [{ kind: "checking" }],
+      [{ kind: "reading", fetched: 0, total: 0 }],
+      [{ kind: "reading", fetched: 1, total: 1 }],
+    ]);
+  });
+
+  it("reports reading, with no pages, while it fetches the threads changed since the cursor", async () => {
+    const onStage = vi.fn();
+    const provider = fakeProvider({
+      snapshot: async () => ({ threads: [], cursor: cached.cursor }),
+    });
+    await syncRepo(provider, repo, cached, at, { onStage });
+    expect(onStage.mock.calls).toEqual([
+      [{ kind: "checking" }],
+      [{ kind: "reading", fetched: 0, total: 0 }],
+    ]);
   });
 
   it("fetches nothing more when the free check sees no change", async () => {
@@ -71,7 +86,11 @@ describe("syncRepo", () => {
     });
     const later = new Date("2026-09-28T10:30:00Z");
     const synced = await syncRepo(provider, repo, cached, later);
-    expect(provider.snapshot).toHaveBeenCalledWith(repo, null, undefined);
+    expect(provider.snapshot).toHaveBeenCalledWith(
+      repo,
+      null,
+      expect.any(Function),
+    );
     expect(synced).toMatchObject({ threads: [thread()], reconciledAt: later });
   });
 
@@ -88,14 +107,19 @@ describe("syncRepo", () => {
     expect(provider.snapshot).not.toHaveBeenCalled();
   });
 
-  it("gives nothing when it may not spend and the check sees a change, or nothing is cached", async () => {
+  it("gives nothing, and reports the repository paused, when it may not spend and the check sees a change, or nothing is cached", async () => {
+    const onStage = vi.fn();
     const provider = fakeProvider({
       probe: vi.fn(async () => ({ changed: true, tag: '"tag-2"' })),
       snapshot: vi.fn(),
     });
     expect(
-      await syncRepo(provider, repo, cached, at, { spend: false }),
+      await syncRepo(provider, repo, cached, at, { spend: false, onStage }),
     ).toBeUndefined();
+    expect(onStage.mock.calls).toEqual([
+      [{ kind: "checking" }],
+      [{ kind: "paused", reason: "budget" }],
+    ]);
     expect(
       await syncRepo(provider, repo, undefined, at, { spend: false }),
     ).toBeUndefined();

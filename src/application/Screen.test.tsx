@@ -18,7 +18,7 @@ import {
   type ThreadSummary,
 } from "../lib/waits/index.js";
 import { pendingDetail } from "../testing/details.js";
-import { bob } from "../testing/facts.js";
+import { bob, thread } from "../testing/facts.js";
 import {
   everyCapability,
   fakeProvider,
@@ -272,7 +272,7 @@ async function showRefreshing(
 // default of 5 s.
 describe("Screen", { timeout: 15_000 }, () => {
   describe("before the first data", () => {
-    it("opens on owed with the first run's progress and no counts, at 40 columns", async () => {
+    it("opens on owed with the first run's line and no progress line, pages or counts, at 40 columns", async () => {
       const screen = await (
         await show(viewOf(await openCache(fakeProvider())))
       ).redraw();
@@ -280,7 +280,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "owed",
         "",
         "  refresh in progress…",
-        `  ${"░".repeat(29)} 0/0`,
+        "",
         "",
         "",
         "",
@@ -308,18 +308,56 @@ describe("Screen", { timeout: 15_000 }, () => {
       const cache = await openCache(provider);
       const screen = await show(viewOf(cache), 60);
       const refreshing = cache.refresh();
-      await waitUntil(() => expect(cache.status().fullRefresh).toBeDefined());
+      await waitUntil(() =>
+        expect(cache.status().stages.at(0)?.stage).toEqual({
+          kind: "reading",
+          fetched: 5,
+          total: 9,
+        }),
+      );
       const drawn = await screen.redraw();
-      expect(drawn.lines.slice(2, 4)).toEqual([
+      expect(drawn.lines.slice(2, 6)).toEqual([
         "  refresh in progress…",
-        `  ${"█".repeat(16)}${"░".repeat(13)} 5/9`,
+        "  example reading page 5/9",
+        "  docs    waiting",
+        `  ${"█".repeat(16)}${"░".repeat(13)} 5/9 pages`,
       ]);
       expect(drawn.lines.at(10)).toBe("full refresh · example 1/2 · pages 5/9");
       resolve();
       await refreshing;
     });
 
-    it("gives the reason and the recovery when the first fetch fails", async () => {
+    it("holds the position and the pages the first run reached while it reads the running checks again", async () => {
+      const { promise, resolve } = Promise.withResolvers<void>();
+      const reading = vi.fn();
+      const provider = fakeProvider({
+        snapshot: async (repo, _cursor, onPage) => {
+          onPage?.({ fetched: 3, total: 3 });
+          // Only the first repository has a check running.
+          const checks =
+            repo === "example-org/example-repo" ? "running" : "passing";
+          return {
+            threads: [thread({ repo, kind: "pullRequest", checks })],
+            cursor: null,
+          };
+        },
+        refreshVolatile: async () => {
+          reading();
+          await promise;
+          return [];
+        },
+      });
+      const cache = await openCache(provider);
+      const screen = await show(viewOf(cache), 60);
+      const refreshing = cache.refresh();
+      await waitUntil(() => expect(reading).toHaveBeenCalled());
+      const drawn = await screen.redraw();
+      expect(drawn.lines.at(10)).toBe("full refresh · docs 2/2 · pages 3/3");
+      resolve();
+      await refreshing;
+    });
+
+    it("gives each repository's stage, the reason and the recovery when the first fetch fails", async () => {
       const provider = fakeProvider({
         snapshot: () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
       });
@@ -327,15 +365,19 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(viewOf(cache));
       await cache.refresh();
       const drawn = await screen.redraw();
-      expect(drawn.lines.slice(2, 4)).toEqual([
-        "  ✗ The provider failed with",
-        "  GITHUB_TIMED_OUT",
+      expect(drawn.lines.slice(2, 8)).toEqual([
+        "  refresh in progress…",
+        "  example ✗ failed: The provider failed",
+        "          with GITHUB_TIMED_OUT",
+        "  docs    waiting",
+        "  Recovery: try again",
+        "",
       ]);
       expect(drawn.lines.at(10)).toBe("✗ offline");
       expect(drawn.look("✗ offline")?.fg).toBe(tokens["color.text.error"]);
     });
 
-    it("says when docket resumes when GitHub rate-limits the first fetch", async () => {
+    it("pauses every repository, and says when docket resumes, when GitHub rate-limits the first fetch", async () => {
       const provider = fakeProvider({
         snapshot: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
       });
@@ -343,16 +385,15 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(viewOf(cache));
       await cache.refresh();
       const drawn = await screen.redraw();
-      expect(drawn.lines.slice(2, 6)).toEqual([
-        "  ✗ GitHub refused requests for its rate",
-        "  limit",
-        "  Recovery: wait: docket resumes at",
-        "  13:00",
+      expect(drawn.lines.slice(2, 5)).toEqual([
+        "  refresh in progress…",
+        "  example paused: rate limit",
+        "  docs    paused: rate limit",
       ]);
-      expect(drawn.lines.at(10)).toBe("✗ rate limited · resumes 13:00");
+      expect(drawn.lines.at(10)).toBe("paused: rate limit · resumes 13:00");
     });
 
-    it("says when docket resumes when the first fetch waits for the request budget", async () => {
+    it("pauses every repository, and says when docket resumes, when the first fetch waits for the request budget", async () => {
       const provider = fakeProvider({
         budget: async () => ({ ...fullBudget, remaining: 1 }),
       });
@@ -360,13 +401,12 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(viewOf(cache));
       await cache.refresh();
       const drawn = await screen.redraw();
-      expect(drawn.lines.slice(2, 6)).toEqual([
-        "  ✗ docket paused the refresh to spare",
-        "  the request budget",
-        "  Recovery: wait: docket resumes at",
-        "  13:00",
+      expect(drawn.lines.slice(2, 5)).toEqual([
+        "  refresh in progress…",
+        "  example paused: budget low",
+        "  docs    paused: budget low",
       ]);
-      expect(drawn.lines.at(10)).toBe("refresh paused · resumes 13:00");
+      expect(drawn.lines.at(10)).toBe("paused: budget low · resumes 13:00");
     });
 
     it("stands in a notice for the list when gh gives no token, with no status", async () => {
@@ -413,7 +453,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "owed",
         "",
         "  refresh in progress…",
-        `  ${"░".repeat(29)} 0/0`,
+        "",
       ]);
       expect(readWatched).toHaveBeenCalledOnce();
     });
@@ -1639,6 +1679,29 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
     });
 
+    it("counts the details read of those asked for on the status line's right while they are read, and says nothing once all are", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const { promise, resolve } = Promise.withResolvers<void>();
+      const details = createDetailReader(async (threads) => {
+        await promise;
+        return readRecordedDetails(threads);
+      });
+      const view = viewOf(cache);
+      const screen = await show({
+        ...view,
+        source: { ...view.source, details },
+      });
+      expect(screen.lines.at(-2)).toBe(
+        `synced 0m ago${" ".repeat(16)}details 0/3`,
+      );
+      resolve();
+      await waitUntil(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(-2)).toBe("synced 0m ago");
+      });
+    });
+
     it("spends no point on details below the budget floor, neither the accordion's read nor reading ahead, and leaves the status line's right side empty", async () => {
       let remaining = fullBudget.limit;
       const provider = recordedProvider({
@@ -1662,7 +1725,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(readDetails).not.toHaveBeenCalled();
       expect(readDetail).not.toHaveBeenCalled();
       expect(drawn.lines.at(-2)).toMatch(
-        /^refresh paused · resumes \d\d:\d\d$/,
+        /^paused: budget low · resumes \d\d:\d\d$/,
       );
     });
 

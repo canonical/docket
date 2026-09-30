@@ -36,7 +36,8 @@ export const NothingOwed: Story<PaneProps> = {
         status={{
           syncedAt: new Date("2026-09-28T11:58:00Z"),
           refreshing: false,
-          fullRefresh: undefined,
+          whole: false,
+          stages: [],
           fullRefreshAvailableAt: undefined,
           paused: undefined,
           failure: undefined,

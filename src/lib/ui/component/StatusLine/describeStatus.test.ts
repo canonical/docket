@@ -15,7 +15,10 @@ import {
 } from "./StatusLine.stories.js";
 
 const now = new Date("2026-09-28T12:00:00Z");
-const names = { "example-org/example-repo": "example" };
+const names = {
+  "example-org/example-repo": "example",
+  "example-org/example-docs": "docs",
+};
 const statusOf = (story: { args: { status?: CacheStatus } }) => {
   const { status } = story.args;
   if (!status) throw new Error("the story has no status");
@@ -44,10 +47,18 @@ describe("describeStatus", () => {
     }
   });
 
-  it("names a rate limit and when requests resume, in the time zone given", () => {
+  it("says the refresh is paused for the rate limit with rows held, and when requests resume, in the time zone given", () => {
     expect(describeAt(statusOf(RateLimited), "Europe/Paris")).toEqual({
-      kind: "error",
-      text: "✗ rate limited · resumes 16:20",
+      kind: "notice",
+      text: "paused: rate limit · resumes 16:20",
+    });
+  });
+
+  it("says the refresh is paused for the rate limit while nothing is held, as on the first run", () => {
+    const status = { ...statusOf(RateLimited), syncedAt: undefined };
+    expect(describeAt(status)).toEqual({
+      kind: "notice",
+      text: "paused: rate limit · resumes 14:20",
     });
   });
 
@@ -110,19 +121,56 @@ describe("describeStatus", () => {
 
   it("names a repository with no short name in full", () => {
     const status = statusOf(FullRefresh);
-    const progress = status.fullRefresh && {
-      ...status.fullRefresh,
-      repo: "example-org/other",
-    };
-    expect(describeAt({ ...status, fullRefresh: progress })?.text).toBe(
-      "full refresh · example-org/other 1/2 · pages 5/9",
+    const stages = status.stages.map((each) => ({
+      ...each,
+      repo: `${each.repo}-other`,
+    }));
+    expect(describeAt({ ...status, stages })?.text).toBe(
+      "full refresh · example-org/example-repo-other 1/2 · pages 5/9",
     );
   });
 
-  it("says a background refresh is running", () => {
+  it("names the furthest repository the full refresh has reached, naming no pages until a first page says how many there are", () => {
+    const status = statusOf(FullRefresh);
+    const stages = [
+      {
+        repo: "example-org/example-docs",
+        stage: { kind: "done", threads: 1, fetched: 1, total: 1 },
+      },
+      { repo: "example-org/example-repo", stage: { kind: "checking" } },
+    ] as const;
+    expect(describeAt({ ...status, stages })?.text).toBe(
+      "full refresh · example 2/2",
+    );
+    const reading = [
+      stages[0],
+      {
+        repo: "example-org/example-repo",
+        stage: { kind: "reading", fetched: 0, total: 0 },
+      },
+    ] as const;
+    expect(describeAt({ ...status, stages: reading })?.text).toBe(
+      "full refresh · example 2/2",
+    );
+  });
+
+  it("says a refresh with something shown is running in the background, not a full refresh", () => {
+    const status = { ...statusOf(FullRefresh), whole: false };
+    expect(describeAt(status)?.kind).toBe("refreshing");
+  });
+
+  it("names the furthest repository a background refresh has reached, and its place among them", () => {
     expect(describeAt(statusOf(Refreshing))).toEqual({
       kind: "refreshing",
-      text: "refreshing…",
+      text: "refreshing · docs 2/3",
+    });
+  });
+
+  it("says how old the data is while a background refresh is on no repository", () => {
+    const status = { ...statusOf(Refreshing), stages: [] };
+    expect(describeAt(status)).toEqual({
+      kind: "freshness",
+      text: "synced 2m ago",
     });
   });
 
@@ -141,14 +189,14 @@ describe("describeStatus", () => {
     expect(describeAt(status)?.kind).toBe("freshness");
   });
 
-  it("says the refresh cycle is paused to spare the budget, and until when", () => {
+  it("says the refresh is paused because the budget is low, and until when", () => {
     const status: CacheStatus = {
       ...statusOf(Synced),
       paused: { until: new Date("2026-09-28T13:00:00Z"), reason: "budget" },
     };
     expect(describeAt(status)).toEqual({
       kind: "notice",
-      text: "refresh paused · resumes 13:00",
+      text: "paused: budget low · resumes 13:00",
     });
   });
 

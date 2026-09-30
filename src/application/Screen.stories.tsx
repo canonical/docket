@@ -240,13 +240,17 @@ export const FirstRun: Story<ScreenFrameProps> = {
       ...settled,
       syncedAt: undefined,
       refreshing: true,
-      fullRefresh: {
-        repo: "example-org/example-docs",
-        position: 2,
-        count: 2,
-        fetched: 5,
-        total: 9,
-      },
+      whole: true,
+      stages: [
+        {
+          repo: "example-org/example-repo",
+          stage: { kind: "done", threads: 2, fetched: 1, total: 1 },
+        },
+        {
+          repo: "example-org/example-docs",
+          stage: { kind: "reading", fetched: 5, total: 9 },
+        },
+      ],
     },
     threads: [],
   }),
@@ -254,7 +258,19 @@ export const FirstRun: Story<ScreenFrameProps> = {
 
 /** A refresh in the background: the rows stay, the status line says so. */
 export const Refreshing: Story<ScreenFrameProps> = {
-  args: viewRecording({ status: { ...settled, refreshing: true } }),
+  args: viewRecording({
+    status: {
+      ...settled,
+      refreshing: true,
+      stages: [
+        {
+          repo: "example-org/example-repo",
+          stage: { kind: "done", threads: 2, fetched: 1, total: 1 },
+        },
+        { repo: "example-org/example-docs", stage: { kind: "checking" } },
+      ],
+    },
+  }),
 };
 
 /** GitHub refused requests for its rate limit: the rows stay. */
