@@ -10,13 +10,14 @@ export interface Hold {
 
 /**
  * Why the first fetch cannot go on, and what to do about it, or nothing
- * while a refresh runs or none has stopped. The reasons come in the order
- * the status line names them: a rate limit, what stopped the last
- * refresh, then a pause to spare the request budget. A pause stops the
- * refresh without a failure, so without this the list would say
- * `refresh in progress…` until it resumes. The screen asks only while no
- * repository has a stage, as when the refresh stopped before it fetched
- * any: once each has one, its line says where the refresh stands.
+ * while a refresh runs or none has stopped: a rate limit, what stopped
+ * the last refresh, then a pause to spare the request budget, in that
+ * order. A pause stops the refresh without a failure, so without this
+ * the list would say `refresh in progress…` until it resumes. The
+ * screen asks while no repository has a stage, as when the refresh
+ * stopped before it fetched any, and while the stages are an earlier
+ * run's, which a failure no stage names shows: otherwise each
+ * repository's line says where the refresh stands.
  *
  * @param timezone The time zone the time the refresh resumes is written in.
  */

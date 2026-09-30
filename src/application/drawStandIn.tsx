@@ -44,11 +44,12 @@ const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
  * What stands in for the list, in this order: the problem that keeps the
  * screen from listing anything; why a key could not open an editor, while
  * no row is listed; before the first data, why the fetch waits while no
- * repository has a stage yet, or else each repository's stage and the
- * progress (`drawFirstRun`); nothing owed, under the notice while no team
- * is listed; then, unless owed's list is drawn, why activity's events
- * could not be read, or that they are being read for the window on
- * screen. Nothing stands in otherwise.
+ * repository has a stage yet, or while the stages are an earlier run's,
+ * which a failure no stage names shows, or else each repository's stage
+ * and the progress (`drawFirstRun`); nothing owed, under the notice
+ * while no team is listed; then, unless owed's list is drawn, why
+ * activity's events could not be read, or that they are being read for
+ * the window on screen. Nothing stands in otherwise.
  */
 export default function drawStandIn({
   mode,
