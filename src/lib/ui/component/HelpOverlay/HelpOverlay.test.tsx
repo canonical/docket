@@ -109,6 +109,20 @@ describe("HelpOverlay", () => {
     ]);
   });
 
+  it("ends on its last key line when given no closing note", async () => {
+    const screen = await draw(
+      <HelpOverlay {...Keys.args} note={undefined} height={20} />,
+      40,
+      20,
+    );
+    expect(screen.lines.slice(15, 19)).toEqual([
+      "  R        full refresh",
+      "  q        quit",
+      "",
+      "",
+    ]);
+  });
+
   it("shows its end when told to start past it", async () => {
     const screen = await draw(
       <HelpOverlay {...Keys.args} height={8} first={99} />,

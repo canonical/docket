@@ -463,7 +463,7 @@ export default function Screen({
         help ? (
           <HelpOverlay
             commands={bound}
-            note="windows are counted in working time"
+            {...(!setup && { note: "windows are counted in working time" })}
             width={width}
             height={Math.max(0, height - 1)}
             first={helpState.first}

@@ -464,7 +464,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  esc      close help",
         "  q        quit",
         "",
-        "  windows are counted in working time",
+        "",
         "",
       ]);
       expect((await press(screen, "escape")).lines).toEqual(screen.lines);

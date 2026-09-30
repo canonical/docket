@@ -10,10 +10,10 @@ export interface HelpOverlayProps {
   commands: readonly KeyCommand[];
   /**
    * The one line that closes the help: `windows are counted in working
-   * time`.
-   * Maps to DSL role: closing note (cardinality: 1)
+   * time`. Absent where no window applies, as on setup.
+   * Maps to DSL role: closing note (cardinality: 0..1)
    */
-  note: string;
+  note?: string;
   /** The width of the pane, in display cells. */
   width: number;
   /** The lines the help has: the pane's, but for the header's. */

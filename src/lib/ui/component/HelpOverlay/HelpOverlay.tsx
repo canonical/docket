@@ -72,11 +72,11 @@ const HelpOverlay = ({
         const room = width - indent - Bun.stringWidth(keys) - gap.length;
         // The closing note rides with the last key line, so it is never
         // cut off without that line being counted below.
-        const closes = line === last;
+        const closing = line === last ? note : undefined;
         return {
           key: `${group} ${line.label}`,
           kind: "row",
-          lines: 1 + line.notes.length + (closes ? 2 : 0),
+          lines: 1 + line.notes.length + (closing === undefined ? 0 : 2),
           node: (
             <>
               <text fg={tokens["color.text"]}>
@@ -91,10 +91,10 @@ const HelpOverlay = ({
                   {trimText(each, width - notePad.length)}
                 </text>
               ))}
-              {closes && (
+              {closing !== undefined && (
                 <text marginTop={1} fg={tokens["color.text"]}>
                   {pad}
-                  {trimText(note, width - indent)}
+                  {trimText(closing, width - indent)}
                 </text>
               )}
             </>
