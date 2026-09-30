@@ -7,17 +7,8 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import {
-  type ThreadRow as ActivityThread,
-  activityGroupings,
-  describeAddress as describeActivityAddress,
-} from "../lib/activity/index.js";
-import {
-  describeNoTeam,
-  describeAddress as describeOwedAddress,
-  owedGroupings,
-  type WaitRow,
-} from "../lib/owed/index.js";
+import type { ThreadRow as ActivityThread } from "../lib/activity/index.js";
+import { describeNoTeam, type WaitRow } from "../lib/owed/index.js";
 import {
   type ActionResult,
   CountsLine,
@@ -52,6 +43,7 @@ import type {
   WatchedFiles,
 } from "./types.js";
 import useActivity from "./useActivity.js";
+import useAddress from "./useAddress.js";
 import useAttention, { type UseAttentionProps } from "./useAttention.js";
 import useEditor from "./useEditor.js";
 import useHeldDetails from "./useHeldDetails.js";
@@ -63,12 +55,6 @@ import useViewer from "./useViewer.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
-
-/** The entry after `item` in `list`, and the first after the last. */
-function cycle<T>(list: readonly T[], item: T): T {
-  const [next] = [...list.slice(list.indexOf(item) + 1), ...list];
-  return next;
-}
 
 /** A thread's last change, as GitHub records it, and its checks. */
 const describeVersion = ({ updatedAt, checks }: Thread) =>
@@ -146,24 +132,14 @@ export default function Screen({
     return () => clearInterval(timer);
   }, [now]);
 
-  // Without the stack relation there is nothing to group by stack.
-  const owedChoices = owedGroupings.filter(
-    (grouping) =>
-      grouping !== "stack" ||
-      ("capabilities" in source && source.capabilities.has("stacks")),
-  );
-  const [firstOwed] = owedChoices;
-  const [firstActivity] = activityGroupings;
-  const [firstWindow] = settings.activity;
-  const [mode, setMode] = useState<TerminalMode>(openingMode);
-  // A call may name by stack when the provider has no stacks to group by.
-  const [owedGrouping, setOwedGrouping] = useState(
-    owedChoices.includes(openingGrouping) ? openingGrouping : firstOwed,
-  );
-  const [activityGrouping, setActivityGrouping] = useState(
-    openingActivity?.grouping ?? firstActivity,
-  );
-  const [window, setWindow] = useState(openingActivity?.window ?? firstWindow);
+  const address = useAddress({
+    mode: openingMode,
+    owedGrouping: openingGrouping,
+    activity: openingActivity,
+    windows: settings.activity,
+    stacks: "capabilities" in source && source.capabilities.has("stacks"),
+  });
+  const { mode, owedGrouping, activityGrouping, window, header } = address;
   const [help, setHelp] = useState(false);
   // Each mode keeps its own selection, so switching back finds it where it
   // was left.
@@ -223,7 +199,7 @@ export default function Screen({
     editorOpen: editor.open,
     narrow,
     actions: {
-      switchMode: setMode,
+      switchMode: address.setMode,
       moveSelection: (step) => moveTo((place) => place + step),
       movePage: (direction) =>
         moveTo((place) => place + direction * shownList.pageRows.current),
@@ -243,12 +219,8 @@ export default function Screen({
           }),
         );
       },
-      nextGrouping: () =>
-        mode === "owed"
-          ? setOwedGrouping((current) => cycle(owedChoices, current))
-          : setActivityGrouping((current) => cycle(activityGroupings, current)),
-      nextWindow: () =>
-        setWindow((current) => cycle(settings.activity, current)),
+      nextGrouping: address.nextGrouping,
+      nextWindow: address.nextWindow,
       edit: (action) => editor.start(action, selectThread()),
       toggleHelp: () => setHelp((open) => !open),
       closeHelp: () => setHelp(false),
@@ -257,10 +229,6 @@ export default function Screen({
     },
   });
 
-  const header =
-    mode === "owed"
-      ? describeOwedAddress({ mode, grouping: owedGrouping })
-      : describeActivityAddress({ mode, window, grouping: activityGrouping });
   // The threads once there is data to show, or nothing to watch.
   const threads =
     !problem && cached && (cached.syncedAt || watched.length === 0)
