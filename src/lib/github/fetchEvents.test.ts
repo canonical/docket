@@ -195,53 +195,77 @@ describe("fetchEvents", () => {
     });
   });
 
-  it("counts a merge once, and keeps a close that is not the merge's", async () => {
-    github.graphql(
-      "Events",
-      lists(
-        [],
-        [
-          pull({
-            timelineItems: {
-              nodes: [
-                item("MergedEvent", "2026-09-22T11:00:00Z"),
-                item("ClosedEvent", "2026-09-22T11:00:00Z", {
-                  stateReason: "COMPLETED",
-                }),
-              ],
-            },
-          }),
-          pull({
-            number: 3,
-            timelineItems: {
-              nodes: [
-                item("ClosedEvent", "2026-09-22T09:00:00Z", {
-                  actor: user("bob"),
-                }),
-                item("ReopenedEvent", "2026-09-22T10:00:00Z"),
-                item("MergedEvent", "2026-09-22T11:00:00Z"),
-                item("ClosedEvent", "2026-09-22T11:00:00Z"),
-              ],
-            },
-          }),
-          pull({
-            number: 4,
-            timelineItems: {
-              nodes: [item("ClosedEvent", "2026-09-22T11:00:00Z")],
-            },
-          }),
-        ],
-        [],
-      ),
+  /** Answers with pull requests whose timelines hold these items. */
+  const answer = (...items: unknown[][]) => {
+    const pulls = items.map((nodes, index) =>
+      pull({ number: index + 2, timelineItems: { nodes } }),
     );
+    github.graphql("Events", lists([], pulls, []));
     github.rest(feed, { body: [] });
-    const ends = (await events()).filter(({ kind }) => kind !== "opened");
-    expect(lines(ends)).toEqual([
+  };
+
+  /** The events read, openings aside. */
+  const endings = async () =>
+    lines((await events()).filter(({ kind }) => kind !== "opened"));
+
+  it("counts a merge once, whichever second GitHub dates its close at", async () => {
+    answer(
+      [
+        item("MergedEvent", "2026-09-22T11:00:00Z"),
+        item("ClosedEvent", "2026-09-22T11:00:00Z"),
+      ],
+      [
+        item("ClosedEvent", "2026-09-22T11:00:00Z"),
+        item("MergedEvent", "2026-09-22T11:00:01Z"),
+      ],
+      [
+        item("MergedEvent", "2026-09-22T11:00:00Z"),
+        item("ClosedEvent", "2026-09-22T11:00:01Z", { actor: user("bob") }),
+      ],
+    );
+    expect(await endings()).toEqual([
       [2, "merged", "alice", "11:00"],
-      [3, "closed", "bob", "09:00"],
-      [3, "reopened", "alice", "10:00"],
       [3, "merged", "alice", "11:00"],
-      [4, "closed", "alice", "11:00"],
+      [4, "merged", "alice", "11:00"],
+    ]);
+  });
+
+  it("keeps a close that is not the merge's", async () => {
+    answer(
+      [
+        item("ClosedEvent", "2026-09-22T11:00:38Z", { actor: user("bob") }),
+        item("ReopenedEvent", "2026-09-22T11:00:39Z"),
+        item("MergedEvent", "2026-09-22T11:00:40Z"),
+        item("ClosedEvent", "2026-09-22T11:00:41Z"),
+      ],
+      [item("ClosedEvent", "2026-09-22T11:00:00Z")],
+      [
+        item("ClosedEvent", "2026-09-22T10:59:58Z", { actor: user("bob") }),
+        item("MergedEvent", "2026-09-22T11:00:00Z"),
+        item("ClosedEvent", "2026-09-22T11:00:01Z"),
+      ],
+      [
+        item("MergedEvent", "2026-09-22T11:00:00Z"),
+        item("ClosedEvent", "2026-09-22T11:00:10Z", { actor: user("bob") }),
+      ],
+      [
+        item("ClosedEvent", "2026-09-22T11:00:39Z", { actor: user("bob") }),
+        item("ReopenedEvent", "2026-09-22T11:00:39Z"),
+        item("MergedEvent", "2026-09-22T11:00:40Z"),
+      ],
+    );
+    expect(await endings()).toEqual([
+      [2, "closed", "bob", "11:00"],
+      [2, "reopened", "alice", "11:00"],
+      [2, "merged", "alice", "11:00"],
+      [3, "closed", "alice", "11:00"],
+      [4, "closed", "bob", "10:59"],
+      [4, "merged", "alice", "11:00"],
+      [5, "merged", "alice", "11:00"],
+      [5, "closed", "bob", "11:00"],
+      [6, "closed", "bob", "11:00"],
+      [6, "reopened", "alice", "11:00"],
+      [6, "merged", "alice", "11:00"],
     ]);
   });
 
