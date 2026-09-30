@@ -22,11 +22,7 @@ export default function describeOption(
   // The mark and the space after it, before the name.
   const mark = person.text.slice(0, person.text.length - name.length);
   const indent = measureText(box.text) + measureText(mark);
-  const [first, ...rest] = fitField(
-    { text: name, kind: "identifier" },
-    "block",
-    room - indent,
-  );
+  const [first, ...rest] = fitField(owner, "block", room - indent);
   return [
     [box, { ...person, text: `${mark}${first}` }],
     ...rest.map((text) => [

@@ -46,7 +46,7 @@ const table: Readonly<
     40: {
       line: "a-team-with-a-very-long-name-indeed",
       event: "a-team-with-a-very-long-name-indeed",
-      block: ["example-org/a-team-with-a-very-long-name-indeed"],
+      block: ["example-org/a-team-with-a-very-long-name", "-indeed"],
     },
     60: {
       line: "a-team-with-a-very-long-name-indeed",

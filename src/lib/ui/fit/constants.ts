@@ -6,7 +6,8 @@ import type { FitRule } from "./types.js";
  * block of the terminal fits its text by. An identifier's end carries its
  * meaning, the number of `example#12` or a branch's last part, so it is
  * cut in its middle. On one line a team drops its `organisation/`, so
- * its own name shows; a block names it whole. An event's words end on
+ * its own name shows; a block names it whole, wrapped
+ * under itself where it is wider than the block. An event's words end on
  * what it acted on, `labelled priority: high` or `assigned bob`, so they
  * are cut in their middle too. A figure is never cut: the slot that holds
  * it leaves it room.
@@ -16,7 +17,7 @@ export const fitRules: Readonly<Record<FieldKind, FitRule>> = {
   person: {
     line: "dropOrganisation",
     event: "dropOrganisation",
-    block: "whole",
+    block: "wrap",
   },
   title: { line: "cutEnd", event: "cutEnd", block: "wrap" },
   quote: { line: "cutEnd", event: "cutEnd", block: "wrap" },
