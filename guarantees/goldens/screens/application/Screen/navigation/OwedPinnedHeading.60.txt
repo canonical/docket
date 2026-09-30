@@ -7,7 +7,7 @@
 |│ example#15 issue close ◐ carol                    29d left
 |│ Crash on start                                  unassigned
 |│ age 2d · owner unassigned
-|│ last activity 2d ago
+|│ last activity 2d ago · ◐ carol
 |╵ labels none
 |  ↓ 3 below
 |2 over · 1 soon · 3 on track                           3/3/6
@@ -43,8 +43,9 @@ runs
 8:28 "                                 " fg #ffffffff bg #2e3244ff
 9:1 "│" fg #818596ff bg #2e3244ff
 9:2 " " fg #6b7089ff bg #2e3244ff
-9:3 "last activity 2d ago" fg #c6c8d1ff bg #2e3244ff
-9:23 "                                      " fg #ffffffff bg #2e3244ff
+9:3 "last activity 2d ago · " fg #c6c8d1ff bg #2e3244ff
+9:26 "◐ carol" fg #a093c7ff bg #2e3244ff
+9:33 "                            " fg #ffffffff bg #2e3244ff
 10:1 "╵" fg #818596ff bg #2e3244ff
 10:2 " " fg #6b7089ff bg #2e3244ff
 10:3 "labels none" fg #c6c8d1ff bg #2e3244ff

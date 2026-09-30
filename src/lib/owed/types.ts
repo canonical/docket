@@ -122,8 +122,11 @@ export interface WaitRow {
    * record who asked.
    */
   readonly requester?: Person;
-  /** Who wrote the thread's latest message, a comment or a review, when it has one. */
-  readonly lastActor?: Person;
+  /**
+   * Who acted on the thread last: whoever wrote its latest message, a
+   * comment or a review, or, when it has none, whoever opened it.
+   */
+  readonly lastActor: Person;
   /** The one owner, or `unassigned`; absent when the owners take a line of their own. */
   readonly owner?: Owner;
   /** `draft`, on a draft pull request. */

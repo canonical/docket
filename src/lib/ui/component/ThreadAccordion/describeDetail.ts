@@ -220,9 +220,8 @@ function describeClose(row: WaitRow, { now }: Reading) {
     ),
     trimmed(
       plain(`last activity ${describeAge(thread.updatedAt, now)} ago`),
-      ...(row.lastActor
-        ? [plain(" · "), markPerson(row.lastActor, Number.POSITIVE_INFINITY)]
-        : []),
+      plain(" · "),
+      markPerson(row.lastActor, Number.POSITIVE_INFINITY),
     ),
     wrapped(plain(`labels ${labels}`)),
   ];

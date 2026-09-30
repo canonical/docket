@@ -142,15 +142,7 @@ const botUpdate: Thread = {
   updatedAt: at("2026-09-26T08:00+02:00"),
   labels: ["dependencies"],
   assignees: [bob],
-  // The bot describes its update as it opens the pull request, so it
-  // wrote last.
-  comments: [
-    {
-      author: exampleSync,
-      at: at("2026-09-26T08:00+02:00"),
-      text: "This updates zod from 3.23 to 3.24.",
-    },
-  ],
+  comments: [],
   reviewRequests: [
     {
       reviewer: bob,
@@ -161,22 +153,13 @@ const botUpdate: Thread = {
   checks: "passing",
 };
 
-/**
- * What GitHub gives for the update: the bot's own description, two files
- * changed and every check passed.
- */
+/** What GitHub gives for the update: two files changed and every check passed. */
 const botUpdateDetail: ThreadDetail = {
   createdAt: botUpdate.createdAt,
   updatedAt: botUpdate.updatedAt,
   labels: botUpdate.labels,
   assignees: [bob],
-  messages: [
-    {
-      author: exampleSync,
-      at: botUpdate.createdAt,
-      body: "This updates zod from 3.23 to 3.24.",
-    },
-  ],
+  messages: [],
   requests: [
     { reviewer: bob, requester: exampleSync, at: botUpdate.createdAt },
   ],

@@ -1352,7 +1352,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  Where do tokens live?",
         `${" ".repeat(26)}◉ alice, ● bob`,
         "  age 27d · owner ◉ alice, ● bob",
-        "  last activity 27d ago",
+        "  last activity 27d ago · ◉ alice",
         "  labels none",
         `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
         "PULL REQUESTS ──────────────────────────",

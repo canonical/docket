@@ -7,7 +7,7 @@
 |│ Where do tokens live?
 |│                         ◉ alice, ● bob
 |│ age 27d · owner ◉ alice, ● bob
-|│ last activity 27d ago
+|│ last activity 27d ago · ◉ alice
 |╵ labels none
 |  ↓ 4 below
 |2 over · 1 soon · 3 on track       3/3/6
@@ -53,8 +53,9 @@ runs
 8:33 "        " fg #ffffffff bg #2e3244ff
 9:1 "│" fg #818596ff bg #2e3244ff
 9:2 " " fg #6b7089ff bg #2e3244ff
-9:3 "last activity 27d ago" fg #c6c8d1ff bg #2e3244ff
-9:24 "                 " fg #ffffffff bg #2e3244ff
+9:3 "last activity 27d ago · " fg #c6c8d1ff bg #2e3244ff
+9:27 "◉ alice" fg #84a0c6ff bg #2e3244ff
+9:34 "       " fg #ffffffff bg #2e3244ff
 10:1 "╵" fg #818596ff bg #2e3244ff
 10:2 " " fg #6b7089ff bg #2e3244ff
 10:3 "labels none" fg #c6c8d1ff bg #2e3244ff

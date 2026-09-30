@@ -268,11 +268,11 @@ describe("describeDetail", () => {
       );
     });
 
-    it("says unassigned, no labels, and no one when nobody wrote", () => {
+    it("says unassigned, no labels, and whoever opened it when nobody wrote since", () => {
       const { body } = describeDetail(measureRow({}), undefined, reading);
       expect(texts(body)).toEqual([
         "age 6d · owner unassigned",
-        "last activity 6d ago",
+        "last activity 6d ago · ○ dave",
         "labels none",
       ]);
     });
