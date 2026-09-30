@@ -134,15 +134,23 @@ function describeReply(row: WaitRow, { now, timezone }: Reading) {
   ];
 }
 
-/** The checks on the head commit, a failure in the error colour. */
+/** A space that keeps a check's name on one line when the line wraps. */
+const joiner = "\u00a0";
+
+/**
+ * The checks on the head commit, a failure in the error colour. The
+ * failing checks' names wrap between names, each kept whole.
+ */
 function describeChecks({ checks }: ThreadDetail): DetailLine {
   const total = checks.length;
   const failing = checks.filter((check) => check.state === "failing");
   const running = checks.filter((check) => check.state === "running");
   if (total === 0) return trimmed(plain("no checks"));
   if (failing.length > 0) {
-    const names = failing.map(({ name }) => name).join(", ");
-    return trimmed(
+    const names = failing
+      .map(({ name }) => name.replaceAll(" ", joiner))
+      .join(", ");
+    return wrapped(
       failed(`checks: ${failing.length} of ${total} failed (${names})`),
     );
   }

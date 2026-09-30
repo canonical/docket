@@ -3,7 +3,8 @@
 |┃┆example-org/parser-team
 |┃┆asked by ● alice 6d ago
 |┃┆0 pushes since · 1 file · +40 −12
-|┃┆✗ checks: 3 of 4 failed (lint the whole repository, unit …
+|┃┆✗ checks: 3 of 4 failed (lint the whole repository,
+|┃┆unit tests on every platform,…
 |┃┆example-repository-with-a-long-name stack 7 · 2 of 3 · → …
 |╹┆below #12344 merged, above #12346 open
 
@@ -29,9 +30,14 @@ runs
 4:36 "                         " fg #ffffffff bg #2e3244ff
 5:1 "┃" fg #e27878ff bg #2e3244ff
 5:2 "┆" fg #6b7089ff bg #2e3244ff
-5:3 "✗ checks: 3 of 4 failed (lint the whole repository, unit …" fg #e27878ff bg #2e3244ff
+5:3 "✗ checks: 3 of 4 failed (lint the whole repository," fg #e27878ff bg #2e3244ff
+5:54 "       " fg #ffffffff bg #2e3244ff
 6:1 "┃" fg #e27878ff bg #2e3244ff
-6:2 "┆example-repository-with-a-long-name stack 7 · 2 of 3 · → …" fg #6b7089ff bg #2e3244ff
-7:1 "╹" fg #e27878ff bg #2e3244ff
-7:2 "┆below #12344 merged, above #12346 open" fg #6b7089ff bg #2e3244ff
-7:41 "                    " fg #ffffffff bg #2e3244ff
+6:2 "┆" fg #6b7089ff bg #2e3244ff
+6:3 "unit tests on every platform,…" fg #e27878ff bg #2e3244ff
+6:33 "                            " fg #ffffffff bg #2e3244ff
+7:1 "┃" fg #e27878ff bg #2e3244ff
+7:2 "┆example-repository-with-a-long-name stack 7 · 2 of 3 · → …" fg #6b7089ff bg #2e3244ff
+8:1 "╹" fg #e27878ff bg #2e3244ff
+8:2 "┆below #12344 merged, above #12346 open" fg #6b7089ff bg #2e3244ff
+8:41 "                    " fg #ffffffff bg #2e3244ff

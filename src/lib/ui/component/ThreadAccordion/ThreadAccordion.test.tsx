@@ -6,6 +6,7 @@ import {
   sharedCloseDetail,
 } from "../../../../testing/details.js";
 import { thread } from "../../../../testing/facts.js";
+import { longReviewDetail } from "../../../../testing/long.js";
 import { measureRow, overReview, soonReply } from "../../../../testing/rows.js";
 import { drawSuspending, type Screen } from "../../../../testing/terminal.js";
 import type { ThreadDetail } from "../../../provider/index.js";
@@ -203,6 +204,20 @@ describe("ThreadAccordion", () => {
   });
 
   describe("fitting eight lines", () => {
+    it("wraps the failing checks between their names, keeping each whole", async () => {
+      const detail = { ...overReviewDetail, checks: longReviewDetail.checks };
+      const screen = await open({
+        ...Review.args,
+        detail: Promise.resolve(detail),
+      });
+      expect(readText(screen).slice(2, 6)).toEqual([
+        "✗ checks: 3 of 4 failed",
+        "(lint the whole repository,",
+        "unit tests on every platform,",
+        "build the documentation site)",
+      ]);
+    });
+
     it("cuts a message past the eighth line, only the last line ending in …, and leaves out when the reply began", async () => {
       const long = measureRow({
         ...soonReply.wait,

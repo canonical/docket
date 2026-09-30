@@ -146,7 +146,7 @@ describe("describeDetail", () => {
       expect(body.map(({ fit }) => fit)).toEqual([
         "wrapped",
         "trimmed",
-        "trimmed",
+        "wrapped",
       ]);
     });
 
