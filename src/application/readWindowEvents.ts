@@ -1,24 +1,11 @@
-import { type Duration, measureDuration } from "../lib/clock/index.js";
-import type { Settings } from "../lib/config/index.js";
+import type { Duration } from "../lib/clock/index.js";
 import {
   type ThreadEvent,
   type TimedEvent,
   timeEvents,
 } from "../lib/events/index.js";
+import findWindowStart from "./findWindowStart.js";
 import type { Watched } from "./types.js";
-
-const day = 86_400_000;
-
-/**
- * How far back to ask for events so that none inside a window of working
- * time is missed. Every seven days hold each workday once, so `n` weeks
- * hold `n` working weeks; a day more covers a clock change.
- */
-function findEarliest(window: Duration, settings: Settings, now: Date): Date {
-  const workingWeek = settings.time.workdays.length * day;
-  const weeks = Math.ceil(measureDuration(window, settings.time) / workingWeek);
-  return new Date(now.getTime() - weeks * 7 * day - day);
-}
 
 /**
  * Reads the events of each watched repository from far enough back that
@@ -41,7 +28,7 @@ export default async function readWindowEvents(
   const events = new Map<string, readonly TimedEvent[]>();
   for (const { repo, resolved } of watched) {
     const { settings } = resolved;
-    const since = findEarliest(window, settings, now);
+    const since = findWindowStart(window, settings, now);
     events.set(
       repo,
       timeEvents(await readEvents(repo, since), window, settings),
