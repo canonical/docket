@@ -12,7 +12,7 @@ interface Measuring {
  */
 let measuring: Measuring | undefined;
 
-/** The cells of each character measured so far, which every draw reads again. */
+/** The cells of each character measured so far, which every draw reads. */
 const measured = new Map<string, number>();
 
 /** The widest line a character is measured on, far wider than any. */

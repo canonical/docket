@@ -65,7 +65,7 @@ function fitLine(line: DetailLine, room: number): Piece[][] {
 /**
  * `lines` with the last of them ending in `…`, to say more follows,
  * unless it already holds one: a line cut in its middle, or one still
- * waiting for the details, is not cut again.
+ * waiting for the details, keeps the one `…` it has.
  */
 const endLast = (lines: readonly Piece[][], room: number): Piece[][] => [
   ...lines.slice(0, -1),
