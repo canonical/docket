@@ -34,6 +34,14 @@ export interface ActionResult {
   readonly at: Date;
 }
 
+/** How far reading the details asked for has come. */
+export interface DetailsCount {
+  /** How many of them have an answer. */
+  readonly read: number;
+  /** How many are asked for. */
+  readonly asked: number;
+}
+
 /** Props for the StatusLine component. */
 export interface StatusLineProps {
   /**
@@ -53,6 +61,11 @@ export interface StatusLineProps {
    * right side of an active pane then says.
    */
   detailsPaused?: boolean;
+  /**
+   * How many of the details asked for are read, while any are pending,
+   * which the right side says as `details 3/12`.
+   */
+  details?: DetailsCount;
   /** The instant ages and waits are measured at. */
   now: Date;
   /** The time zone a time of day is written in, such as `Europe/Paris`. */

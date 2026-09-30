@@ -7,6 +7,7 @@ import {
   viewRecording,
 } from "../testing/screen.js";
 import type { Meta, Story } from "../testing/stories.js";
+import createDetailReader from "./createDetailReader.js";
 
 /** The composed screen while its data loads, or waits to. */
 const meta: Meta<ScreenFrameProps> = {
@@ -75,4 +76,30 @@ export const FirstRunFailed: Story<ScreenFrameProps> = {
     ],
     { failure: timedOut },
   ),
+};
+
+/** A reader of details ahead that never hears back, so every one stays unread. */
+const unanswered = () => createDetailReader(() => new Promise(() => {}));
+
+/** The details near the selection being read: none of them yet. */
+export const DetailsLoading: Story<ScreenFrameProps> = {
+  args: viewRecording({ details: unanswered() }),
+};
+
+/** A background refresh on the list's side, the details being read on the other. */
+export const RefreshingWithDetails: Story<ScreenFrameProps> = {
+  args: viewRecording({
+    details: unanswered(),
+    status: {
+      ...settled,
+      refreshing: true,
+      stages: [
+        {
+          repo,
+          stage: { kind: "done", threads: 2, fetched: 0, total: 0 },
+        },
+        { repo: docs, stage: { kind: "checking" } },
+      ],
+    },
+  }),
 };

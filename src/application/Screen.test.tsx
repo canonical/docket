@@ -1679,6 +1679,29 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
     });
 
+    it("counts the details read of those asked for on the status line's right while they are read, and says nothing once all are", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const { promise, resolve } = Promise.withResolvers<void>();
+      const details = createDetailReader(async (threads) => {
+        await promise;
+        return readRecordedDetails(threads);
+      });
+      const view = viewOf(cache);
+      const screen = await show({
+        ...view,
+        source: { ...view.source, details },
+      });
+      expect(screen.lines.at(-2)).toBe(
+        `synced 0m ago${" ".repeat(16)}details 0/3`,
+      );
+      resolve();
+      await waitUntil(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(-2)).toBe("synced 0m ago");
+      });
+    });
+
     it("spends no point on details below the budget floor, neither the accordion's read nor reading ahead, and leaves the status line's right side empty", async () => {
       let remaining = fullBudget.limit;
       const provider = recordedProvider({

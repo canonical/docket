@@ -20,6 +20,7 @@ export {
 } from "./RefreshStages/index.js";
 export {
   type ActionResult,
+  type DetailsCount,
   StatusLine,
   type StatusLineProps,
 } from "./StatusLine/index.js";

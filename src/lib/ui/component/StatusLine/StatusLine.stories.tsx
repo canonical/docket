@@ -197,3 +197,33 @@ export const BudgetPaused: Story<StatusLineProps> = {
 export const Blank: Story<StatusLineProps> = {
   args: base,
 };
+
+/** The details near the selection being read, how old the data is on the left. */
+export const DetailsLoading: Story<StatusLineProps> = {
+  args: { ...base, status: settled, details: { read: 0, asked: 12 } },
+};
+
+/** A refresh in the background, and the details read so far. */
+export const RefreshingWithDetails: Story<StatusLineProps> = {
+  args: { ...base, status: background, details: { read: 3, asked: 12 } },
+};
+
+/**
+ * A key woke the pane: it catches up at once, and reads again the whole
+ * window of details around the selection.
+ */
+export const Waking: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: {
+      ...background,
+      stages: [
+        { repo: "example-org/example-repo", stage: { kind: "checking" } },
+        { repo: "example-org/example-docs", stage: { kind: "waiting" } },
+        { repo: "example-org/example-site", stage: { kind: "waiting" } },
+      ],
+    },
+    attention: "waking",
+    details: { read: 0, asked: 12 },
+  },
+};

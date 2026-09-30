@@ -4,6 +4,7 @@ import fitPieces from "../../fitPieces.js";
 import markPerson from "../../markPerson.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
+import describeDetails from "./describeDetails.js";
 import describeStatus from "./describeStatus.js";
 import type { StatusLineProps, StatusMessage } from "./types.js";
 
@@ -43,11 +44,10 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
  * docket's own state. The left side is the list's, one message at a
  * time: the cases are listed in priority order, the first that applies
  * is the one shown, and the side stays blank when none does (the
- * prerequisite frames). The right side is the details', dimmed:
- * `details paused` once their hour's budget is spent, hidden while the
- * left side shows an error or the rate limit pauses the refresh, or the
- * pane is idle, since nothing is read then, and dropped when the two
- * sides would meet.
+ * prerequisite frames). The right side is the details', dimmed, as
+ * `describeDetails` chooses it: `details 3/12` while any asked for are
+ * unread, or `details paused` once their hour's budget is spent, hidden
+ * while nothing is read, and dropped when the two sides would meet.
  *
  * `import { StatusLine } from "../lib/ui/index.js";`
  *
@@ -58,6 +58,7 @@ const StatusLine = ({
   action,
   attention,
   detailsPaused,
+  details,
   now,
   timezone,
   names,
@@ -72,13 +73,13 @@ const StatusLine = ({
     attention,
   );
   const runs = message ? fitPieces(describeRuns(message), width) : [];
-  const right =
-    detailsPaused &&
-    message?.kind !== "error" &&
-    status?.paused?.reason !== "rateLimit" &&
-    attention !== "idle"
-      ? "details paused"
-      : "";
+  const right = describeDetails(
+    status,
+    message,
+    attention,
+    detailsPaused,
+    details,
+  );
   // At least one cell apart, or the right side is left out.
   const gap = width - measurePieces(runs) - Bun.stringWidth(right);
   return (

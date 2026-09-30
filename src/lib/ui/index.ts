@@ -4,6 +4,7 @@ export {
   type CountsLineProps,
   countAccordionLines,
   countRowLines,
+  type DetailsCount,
   EmptyState,
   type EmptyStateProps,
   EventLine,

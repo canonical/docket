@@ -455,6 +455,7 @@ export default function Screen({
         action,
         attention: attentionState,
         detailsPaused: "cache" in source && source.details?.isCapped(at),
+        details: ahead.progress,
         now: at,
         timezone: settings.time.timezone,
         watched,

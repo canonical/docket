@@ -5,6 +5,7 @@
  */
 import { useKeymap } from "@opentui/keymap/react";
 import { type ReactNode, useEffect, useState } from "react";
+import type { DetailReader } from "../application/createDetailReader.js";
 import readCandidates from "../application/readCandidates.js";
 import Screen from "../application/Screen.js";
 import type { TerminalView } from "../application/types.js";
@@ -178,18 +179,20 @@ export function standInGitHub(): Provider {
 
 /**
  * The recording's source, with the cache's `status` and `threads`, the
- * accordion's details read by `read`, and the editors reading and writing
- * `github`, when one is given.
+ * accordion's details read by `read`, details read ahead by `details`,
+ * and the editors reading and writing `github`, when each is given.
  */
 export function connectRecording({
   status = settled,
   threads = recordedThreads,
   read = readDetail(threads),
+  details,
   github,
 }: {
   readonly status?: CacheStatus;
   readonly threads?: readonly Thread[];
   readonly read?: (thread: ThreadSummary) => Promise<ThreadDetail>;
+  readonly details?: DetailReader;
   readonly github?: Provider;
 } = {}): Connected {
   const cache = holdCache(
@@ -204,6 +207,7 @@ export function connectRecording({
     readWatched: async () => ({ watched: recordedWatched() }),
     readViewer: async () => "alice",
     readDetail: read,
+    ...(details && { details }),
     readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
     readCandidates: github
       ? (action, thread) => readCandidates(github, action, thread)
