@@ -101,12 +101,11 @@ export default function placeList(
   let top = Math.max(0, Math.min(first, from, end - 1));
   while (top < to && !fits(top, to + 1)) top += 1;
   while (top > 0 && measureFrame(top - 1).whole) top -= 1;
-  const { pinned, signed, whole, lines } = measureFrame(top);
-  let shown = whole ? end - top : 1;
+  const { pinned, signed, lines } = measureFrame(top);
+  let shown = Math.min(1, end - top);
   while (top + shown < end && lines + measure(top, top + shown + 1) <= room) {
     shown += 1;
   }
-  shown = Math.min(shown, end - top);
   return {
     first: top,
     shown,
