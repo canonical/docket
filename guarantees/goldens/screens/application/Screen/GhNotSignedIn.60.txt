@@ -1,5 +1,5 @@
 60 columns
-|owed
+|owed                                one list · overdue first
 |
 |  ✗ gh is not signed in to github.com
 |  Recovery: run gh auth login
@@ -37,7 +37,8 @@
 |←→ mode ↑↓ sel ⏎ open g grp a r ?
 
 runs
-1:1 "owed                                                        " fg #c6c8d1ff bg #161821ff
+1:1 "owed                                one list · " fg #c6c8d1ff bg #161821ff
+1:48 "overdue first" fg #6b7089ff bg #161821ff
 3:3 "✗ gh is not signed in to github.com" fg #e27878ff bg #161821ff
 4:3 "Recovery: run gh auth login" fg #c6c8d1ff bg #161821ff
 36:1 "←→" fg #c6c8d1ff bg #161821ff

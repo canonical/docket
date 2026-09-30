@@ -110,6 +110,17 @@ const readRecordedDetail = async (
 const readRecordedDetails = (threads: readonly ThreadSummary[]) =>
   Promise.all(threads.map(readRecordedDetail));
 
+/**
+ * The header's line at `width`: the mode on the left, then its address
+ * and its sort against the right edge.
+ */
+const headerOf = (mode: TerminalMode, address: string, width = 40) => {
+  const sort = mode === "owed" ? "overdue first" : "newest first";
+  const right = `${address} · ${sort}`;
+  const gap = width - mode.length - Bun.stringWidth(right);
+  return `${mode}${" ".repeat(gap)}${right}`;
+};
+
 /** Opens nothing, and says it opened. */
 const openNothing = async (_url: string) => {};
 
@@ -277,7 +288,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         await show(viewOf(await openCache(fakeProvider())))
       ).redraw();
       expect(screen.lines).toEqual([
-        "owed",
+        headerOf("owed", "one list"),
         "",
         "  refresh in progress…",
         "",
@@ -428,7 +439,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       };
       const screen = await (await show(view)).redraw();
       expect(screen.lines).toEqual([
-        "owed",
+        headerOf("owed", "one list"),
         "",
         "  ✗ docket needs the GitHub CLI (gh)",
         "  Recovery: install it from",
@@ -450,7 +461,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const cache = await openCache(fakeProvider());
       const screen = await show(viewOf(cache, everyCapability, readWatched));
       expect(screen.lines.slice(0, 4)).toEqual([
-        "owed",
+        headerOf("owed", "one list"),
         "",
         "  refresh in progress…",
         "",
@@ -516,7 +527,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         await show(viewOf(cache, everyCapability, readFailed))
       ).redraw();
       expect(screen.lines).toEqual([
-        "owed",
+        headerOf("owed", "one list"),
         "",
         "  ✗ docket stopped on a failure it has",
         "  no name for: disk on fire",
@@ -538,7 +549,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       await cache.refresh();
       const screen = await (await show(viewOf(cache))).redraw();
       expect(screen.lines).toEqual([
-        "owed",
+        headerOf("owed", "one list"),
         `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
         `┃┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
         "┃┆○ dave · 3d ago",
@@ -782,7 +793,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showRecorded();
       const grouped = await press(screen, "j", "g");
       expect(grouped.lines.slice(0, 2)).toEqual([
-        `owed${" ".repeat(28)}by owner`,
+        headerOf("owed", "by owner"),
         `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
       ]);
       const first = await press(screen, "k");
@@ -883,7 +894,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(snapshot).not.toHaveBeenCalled();
       await press(screen, "right", "?", "t", "g", "escape");
       expect((await screen.redraw()).lines.at(0)).toBe(
-        `activity${" ".repeat(19)}24h · by kind`,
+        headerOf("activity", "24h · by kind"),
       );
       const moved = await press(screen, "left", "j");
       expect(moved.lines.at(1)).toBe(
@@ -1300,7 +1311,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       gate = Promise.withResolvers<void>();
       const wider = await press(screen, "t");
       expect(wider.lines.slice(0, 3)).toEqual([
-        `activity${" ".repeat(19)}48h · by kind`,
+        headerOf("activity", "48h · by kind"),
         "",
         "  refresh in progress…",
       ]);
@@ -1316,7 +1327,7 @@ describe("Screen", { timeout: 15_000 }, () => {
     it("lists each thread with its events under it, by kind, and counts them at 40 columns", async () => {
       const screen = await showActivity(40);
       expect(screen.lines).toEqual([
-        `activity${" ".repeat(19)}24h · by kind`,
+        headerOf("activity", "24h · by kind"),
         "ISSUES ─────────────────────────────────",
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
@@ -1380,7 +1391,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       });
       const row = drawn.indexOf(" ┃Fix the parser · alice");
       expect(drawn.slice(row + 1, row + 7)).toEqual([
-        `activity${" ".repeat(39)}24h · by kind`,
+        headerOf("activity", "24h · by kind", 60),
         "PULL REQUESTS ──────────────────────────────────────────────",
         ` ┆example#12 PR ○ dave${" ".repeat(35)}25m`,
         ` ┆Fix the parser${" ".repeat(37)}◉ alice`,
@@ -1446,7 +1457,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       ]);
       const closed = await press(screen, "escape");
       expect(closed.lines.slice(0, 3)).toEqual([
-        `activity${" ".repeat(19)}24h · by kind`,
+        headerOf("activity", "24h · by kind"),
         "ISSUES ─────────────────────────────────",
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
       ]);
@@ -1475,7 +1486,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showActivity(40);
       const refused = await press(screen, "r");
       expect(refused.lines).toEqual([
-        `activity${" ".repeat(19)}24h · by kind`,
+        headerOf("activity", "24h · by kind"),
         "ISSUES ─────────────────────────────────",
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
@@ -1508,7 +1519,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showActivity(40, cache);
       const refused = await press(screen, "a");
       expect(refused.lines).toEqual([
-        `activity${" ".repeat(19)}24h · by kind`,
+        headerOf("activity", "24h · by kind"),
         "ISSUES ─────────────────────────────────",
         `  docs#4 issue${" ".repeat(23)}16h`,
         "  Where do tokens live?",
@@ -1531,7 +1542,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showActivity(60);
       const byRepo = await press(screen, "g");
       expect(byRepo.lines.slice(0, 2)).toEqual([
-        `activity${" ".repeat(39)}24h · by repo`,
+        headerOf("activity", "24h · by repo", 60),
         "example ────────────────────────────────────────────────────",
       ]);
       const wider = await press(screen, "g", "t");
@@ -1540,7 +1551,9 @@ describe("Screen", { timeout: 15_000 }, () => {
           "2 threads · 4 events",
         ),
       );
-      expect(wider.lines.at(0)).toBe(`activity${" ".repeat(49)}48h`);
+      expect(wider.lines.at(0)).toBe(
+        headerOf("activity", "48h · one list", 60),
+      );
       expect((await screen.redraw()).lines).toContain(
         ` ┆  ○ dave commented${" ".repeat(38)}3d`,
       );
@@ -1795,9 +1808,9 @@ describe("Screen", { timeout: 15_000 }, () => {
         activity: { window: threeDays, grouping: "repo" },
       } as const;
       const screen = await (await show(view)).redraw();
-      expect(screen.lines.at(0)).toBe(`activity${" ".repeat(19)}72h · by repo`);
+      expect(screen.lines.at(0)).toBe(headerOf("activity", "72h · by repo"));
       expect((await press(screen, "t")).lines.at(0)).toBe(
-        `activity${" ".repeat(20)}1w · by repo`,
+        headerOf("activity", "1w · by repo"),
       );
     });
 
@@ -1807,15 +1820,17 @@ describe("Screen", { timeout: 15_000 }, () => {
         mode: "activity",
       } as const;
       const screen = await (await show(view)).redraw();
-      expect(screen.lines.at(0)).toBe(`activity${" ".repeat(19)}24h · by kind`);
-      expect((await press(screen, "left")).lines.at(0)).toBe("owed");
+      expect(screen.lines.at(0)).toBe(headerOf("activity", "24h · by kind"));
+      expect((await press(screen, "left")).lines.at(0)).toBe(
+        headerOf("owed", "one list"),
+      );
     });
 
     it("opens owed on the grouping the call names, ungrouped when that is by stack with no stacks", async () => {
       const cache = await openCache(fakeProvider());
       const byOwner = { ...viewOf(cache), owedGrouping: "owner" } as const;
       expect((await show(byOwner)).lines.at(0)).toBe(
-        `owed${" ".repeat(28)}by owner`,
+        headerOf("owed", "by owner"),
       );
       const withoutStacks = new Set(
         [...everyCapability].filter((each) => each !== "stacks"),
@@ -1824,18 +1839,22 @@ describe("Screen", { timeout: 15_000 }, () => {
         ...viewOf(cache, withoutStacks),
         owedGrouping: "stack",
       } as const;
-      expect((await show(byStack)).lines.at(0)).toBe("owed");
+      expect((await show(byStack)).lines.at(0)).toBe(
+        headerOf("owed", "one list"),
+      );
     });
 
     it("switches mode with the arrows and h and l, naming only the mode shown, and never wraps", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
-      expect((await press(screen, "left")).lines.at(0)).toBe("owed");
-      const activity = await press(screen, "right");
-      expect(activity.lines.at(0)).toBe(
-        `activity${" ".repeat(19)}24h · by kind`,
+      expect((await press(screen, "left")).lines.at(0)).toBe(
+        headerOf("owed", "one list"),
       );
+      const activity = await press(screen, "right");
+      expect(activity.lines.at(0)).toBe(headerOf("activity", "24h · by kind"));
       expect((await press(screen, "right")).lines.at(0)).toMatch(/^activity/);
-      expect((await press(screen, "h")).lines.at(0)).toBe("owed");
+      expect((await press(screen, "h")).lines.at(0)).toBe(
+        headerOf("owed", "one list"),
+      );
       expect((await press(screen, "l")).lines.at(0)).toMatch(/^activity/);
     });
 
@@ -1846,7 +1865,10 @@ describe("Screen", { timeout: 15_000 }, () => {
         const seen = [];
         for (let step = 0; step < 5; step += 1) {
           seen.push(
-            (await press(screen, "g")).lines.at(0)?.replace(/^owed */, ""),
+            (await press(screen, "g")).lines
+              .at(0)
+              ?.replace(/^owed */, "")
+              .replace(/ · overdue first$/, ""),
           );
         }
         return seen;
@@ -1856,13 +1878,13 @@ describe("Screen", { timeout: 15_000 }, () => {
         "by kind",
         "by repo",
         "by stack",
-        "",
+        "one list",
       ]);
       expect(await headers(new Set())).toEqual([
         "by owner",
         "by kind",
         "by repo",
-        "",
+        "one list",
         "by owner",
       ]);
     });
@@ -1871,20 +1893,23 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       await press(screen, "g", "right");
       const address = async (key: string) =>
-        (await press(screen, key)).lines.at(0)?.replace(/^activity */, "");
+        (await press(screen, key)).lines
+          .at(0)
+          ?.replace(/^activity */, "")
+          .replace(/ · newest first$/, "");
       expect(await address("g")).toBe("24h · by repo");
-      expect(await address("g")).toBe("24h");
-      expect(await address("t")).toBe("48h");
+      expect(await address("g")).toBe("24h · one list");
+      expect(await address("t")).toBe("48h · one list");
       expect(await address("g")).toBe("48h · by kind");
       expect((await press(screen, "left")).lines.at(0)).toBe(
-        `owed${" ".repeat(28)}by owner`,
+        headerOf("owed", "by owner"),
       );
     });
 
     it("leaves the time window alone in owed, and shows its key only in activity", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       const owed = await press(screen, "t");
-      expect(owed.lines.at(0)).toBe("owed");
+      expect(owed.lines.at(0)).toBe(headerOf("owed", "one list"));
       expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
       const activity = await press(screen, "right");
       expect(activity.lines.at(11)).toBe(
@@ -1935,13 +1960,17 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  windows are counted in working time",
         "",
       ]);
-      expect((await press(screen, "?")).lines.at(0)).toBe("owed");
+      expect((await press(screen, "?")).lines.at(0)).toBe(
+        headerOf("owed", "one list"),
+      );
     });
 
     it("closes the help with esc, in owed and in activity", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       expect((await press(screen, "?")).lines.at(0)).toBe("help");
-      expect((await press(screen, "escape")).lines.at(0)).toBe("owed");
+      expect((await press(screen, "escape")).lines.at(0)).toBe(
+        headerOf("owed", "one list"),
+      );
       await press(screen, "right");
       expect((await press(screen, "?")).lines.at(0)).toBe("help");
       expect((await press(screen, "escape")).lines.at(0)).toMatch(/^activity /);
@@ -2016,7 +2045,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(narrow.lines.filter(Boolean)).toEqual(["docket needs 40 columns"]);
       screen.setup.resize(60, 12);
       const wide = await screen.redraw();
-      expect(wide.lines.at(0)).toBe("owed");
+      expect(wide.lines.at(0)).toBe(headerOf("owed", "one list", 60));
       expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
     });
 

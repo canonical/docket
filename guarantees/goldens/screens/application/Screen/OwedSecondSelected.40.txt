@@ -1,5 +1,5 @@
 40 columns
-|owed
+|owed            one list · overdue first
 |┃┆example#12 PR reply ○ dave     4d over
 |╹┆Fix the parser       ✗ checks  ◉ alice
 |┃┆example#12 PR close ○ dave     2h over
@@ -37,7 +37,8 @@
 |←→ mode ↑↓ sel ⏎ open g grp a r ?
 
 runs
-1:1 "owed                                    " fg #c6c8d1ff bg #161821ff
+1:1 "owed            one list · " fg #c6c8d1ff bg #161821ff
+1:28 "overdue first" fg #6b7089ff bg #161821ff
 2:1 "┃" fg #e27878ff bg #161821ff
 2:2 "┆" fg #6b7089ff bg #161821ff
 2:3 "example#12 PR reply " fg #c6c8d1ff bg #161821ff bold

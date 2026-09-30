@@ -1,5 +1,5 @@
 60 columns
-|owed
+|owed                                one list · overdue first
 |
 |  refresh in progress…
 |  example ✓ 2 threads
@@ -37,7 +37,8 @@
 |←→ mode ↑↓ sel ⏎ open g grp a r ?
 
 runs
-1:1 "owed                                                        " fg #c6c8d1ff bg #161821ff
+1:1 "owed                                one list · " fg #c6c8d1ff bg #161821ff
+1:48 "overdue first" fg #6b7089ff bg #161821ff
 3:3 "refresh in progress…" fg #c6c8d1ff bg #161821ff
 4:3 "example " fg #c6c8d1ff bg #161821ff
 4:11 "✓" fg #b4be82ff bg #161821ff

@@ -13,10 +13,8 @@ const week = { amount: 1, unit: "w" } as const;
 /** Prints where the screen is, as the header names it. */
 function Placed(props: UseAddressProps) {
   address = useAddress(props);
-  const { title, address: grouping } = address.header;
-  return (
-    <text>{[title.text, grouping?.text ?? "no address"].join(" | ")}</text>
-  );
+  const { title, address: grouping, sort } = address.header;
+  return <text>{[title, grouping, sort].join(" | ")}</text>;
 }
 
 const opening: UseAddressProps = {
@@ -27,27 +25,27 @@ const opening: UseAddressProps = {
 };
 
 describe("useAddress", () => {
-  it("opens on the mode and grouping the call names", async () => {
+  it("opens on the mode and grouping the call names, and names the sort", async () => {
     const screen = await draw(
       <Placed {...opening} owedGrouping="owner" />,
       40,
       1,
     );
-    expect(screen.lines).toEqual(["owed | by owner"]);
+    expect(screen.lines).toEqual(["owed | by owner | overdue first"]);
   });
 
-  it("steps owed through its groupings, after the last the first", async () => {
+  it("steps owed through its groupings, after the last the first, naming the ungrouped list one list", async () => {
     const screen = await draw(<Placed {...opening} />, 40, 1);
     const seen: string[] = [];
     for (const _ of [1, 2, 3, 4, 5]) {
       seen.push((await screen.redraw(() => address?.nextGrouping())).lines[0]);
     }
     expect(seen).toEqual([
-      "owed | by owner",
-      "owed | by kind",
-      "owed | by repo",
-      "owed | by stack",
-      "owed | no address",
+      "owed | by owner | overdue first",
+      "owed | by kind | overdue first",
+      "owed | by repo | overdue first",
+      "owed | by stack | overdue first",
+      "owed | one list | overdue first",
     ]);
   });
 
@@ -57,13 +55,13 @@ describe("useAddress", () => {
       40,
       1,
     );
-    expect(screen.lines).toEqual(["owed | no address"]);
+    expect(screen.lines).toEqual(["owed | one list | overdue first"]);
     await screen.redraw(() => address?.nextGrouping());
     await screen.redraw(() => address?.nextGrouping());
     const after = await screen.redraw(() => address?.nextGrouping());
-    expect(after.lines).toEqual(["owed | by repo"]);
+    expect(after.lines).toEqual(["owed | by repo | overdue first"]);
     expect((await screen.redraw(() => address?.nextGrouping())).lines).toEqual([
-      "owed | no address",
+      "owed | one list | overdue first",
     ]);
   });
 
@@ -72,22 +70,22 @@ describe("useAddress", () => {
     const press = async (key: () => void) => (await screen.redraw(key)).lines;
     await press(() => address?.nextGrouping());
     expect(await press(() => address?.setMode("activity"))).toEqual([
-      "activity | 24h · by kind",
+      "activity | 24h · by kind | newest first",
     ]);
     await press(() => address?.nextGrouping());
     expect(await press(() => address?.nextWindow())).toEqual([
-      "activity | 1w · by repo",
+      "activity | 1w · by repo | newest first",
     ]);
     await press(() => address?.nextWindow());
     expect(await press(() => address?.setMode("owed"))).toEqual([
-      "owed | by owner",
+      "owed | by owner | overdue first",
     ]);
     expect(await press(() => address?.setMode("activity"))).toEqual([
-      "activity | 24h · by repo",
+      "activity | 24h · by repo | newest first",
     ]);
   });
 
-  it("opens activity on the window and grouping the call names", async () => {
+  it("opens activity on the window and grouping the call names, naming the ungrouped list one list", async () => {
     const screen = await draw(
       <Placed
         {...opening}
@@ -97,6 +95,6 @@ describe("useAddress", () => {
       40,
       1,
     );
-    expect(screen.lines).toEqual(["activity | 1w"]);
+    expect(screen.lines).toEqual(["activity | 1w · one list | newest first"]);
   });
 });

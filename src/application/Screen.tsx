@@ -404,8 +404,11 @@ export default function Screen({
           <PaneHeader title="help" width={width} />
         ) : (
           <PaneHeader
-            title={editor.title ?? header.title.text}
-            address={editor.title ? undefined : header.address?.text}
+            title={editor.title ?? header.title}
+            {...(!editor.title && {
+              address: header.address,
+              sort: header.sort,
+            })}
             width={width}
           />
         )

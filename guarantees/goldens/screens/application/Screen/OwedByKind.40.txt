@@ -1,5 +1,5 @@
 40 columns
-|owed                             by kind
+|owed             by kind · overdue first
 |ISSUES ─────────────────────────────────
 |┃ example#15 issue reply ◐ carol 4h left
 |┃ Crash on start              unassigned
@@ -37,7 +37,8 @@
 |←→ mode ↑↓ sel ⏎ open g grp a r ?
 
 runs
-1:1 "owed                             by kind" fg #c6c8d1ff bg #161821ff
+1:1 "owed             by kind · " fg #c6c8d1ff bg #161821ff
+1:28 "overdue first" fg #6b7089ff bg #161821ff
 2:1 "ISSUES ─────────────────────────────────" fg #c6c8d1ff bg #161821ff
 3:1 "┃" fg #e2a478ff bg #2e3244ff
 3:2 " " fg #6b7089ff bg #2e3244ff
