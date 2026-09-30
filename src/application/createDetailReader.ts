@@ -33,7 +33,8 @@ export interface DetailReader {
  * @note Impure: reads through `readDetails`.
  * @param readDetails Reads the details of several threads in one
  * request, as the provider's `threadDetails` does.
- * @param isBelowFloor Whether the budget is below its floor now.
+ * @param isBelowFloor Whether the budget is below its floor, asked before
+ * each request.
  */
 export default function createDetailReader(
   readDetails: (

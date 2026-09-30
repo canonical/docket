@@ -181,8 +181,8 @@ export default function createCache({
   };
 
   /**
-   * Until when the budget is below its floor, judged on the mirror now,
-   * or `undefined` while points may be spent.
+   * Until when the budget is below its floor, judged on the mirror at the
+   * cache's current time, or `undefined` while points may be spent.
    */
   const judgeFloor = () => findBudgetFloor(figures().graphql, now());
   /**
@@ -419,7 +419,7 @@ export default function createCache({
           attention === "waking" ? 0 : idle ? idleInterval : refreshInterval;
         // Below the floor the free checks still run, so the data a check
         // finds unchanged stays current and a change waits for the reset.
-        // The floor is judged again before each repository and the checks.
+        // The floor is judged before each repository and before the checks.
         await sync(maxAge, {
           spend: () => !findFloor(),
           reconcile: !idle,

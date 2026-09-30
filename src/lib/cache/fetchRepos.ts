@@ -30,7 +30,7 @@ export interface FetchReposOptions
    */
   readonly report: (stages: readonly RepoProgress[]) => void;
   /**
-   * Whether points may be spent now, asked before each repository and
+   * Whether points may be spent, asked before each repository and
    * before the checks refresh, so a budget that falls below its floor
    * during a refresh stops the spending there. Always, when not given.
    */

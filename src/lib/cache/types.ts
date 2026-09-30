@@ -349,9 +349,9 @@ export interface Cache {
   budget(): Budgets;
   /**
    * Until when the queries' budget is below the floor, judged on the
-   * mirror now, or `undefined` while points may be spent: asked before
-   * each request that spends them. The status says so, with the reset,
-   * unless the provider refused a request for its rate limit.
+   * mirror at the time asked, or `undefined` while points may be spent:
+   * asked before each request that spends them. The status says so, with
+   * the reset, unless the provider refused a request for its rate limit.
    */
   findFloor(): { readonly until: Date; readonly reason: "budget" } | undefined;
   /**
