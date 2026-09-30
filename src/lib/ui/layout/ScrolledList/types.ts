@@ -1,19 +1,4 @@
-import type { ReactNode } from "react";
-import type { Owner } from "../../../owed/index.js";
-import type { ListBlockKind } from "../../types.js";
-
-/** One block of a scrolled list, drawn whole or not at all, but for the first. */
-export interface ListBlock {
-  /** What names the block among its siblings, as React keys it. */
-  readonly key: string;
-  /** A group's heading, a row with what opens under it, or anything else. */
-  readonly kind: ListBlockKind;
-  /** The lines the block takes. */
-  readonly lines: number;
-  readonly node: ReactNode;
-  /** A heading's name, which the heading pinned above its rows gives. */
-  readonly heading?: Owner;
-}
+import type { ListBlock } from "../../types.js";
 
 /** Props for the ScrolledList layout. */
 export interface ScrolledListProps {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { draw } from "../../../testing/terminal.js";
-import type { ListBlockKind } from "../types.js";
+import type { ListBlock, ListBlockKind } from "../types.js";
 import useListScroll from "./useListScroll.js";
 
 /** Where the list's selection is, and the room it has. */
@@ -31,18 +31,25 @@ function Listed({
 }) {
   const [place, setPlace] = useState(start);
   move = setPlace;
-  const blocks = heights.map((lines, index) => ({
-    name: `${index}:${lines}`,
-    kind: kinds.at(index) ?? "row",
-    lines,
-  }));
+  const blocks = heights.map((lines, index): ListBlock => {
+    const key = `${index}:${lines}`;
+    return kinds.at(index) === "heading"
+      ? {
+          key,
+          kind: "heading",
+          lines,
+          node: null,
+          heading: { text: key, fit: "trimmed" },
+        }
+      : { key, kind: "row", lines, node: null };
+  });
   const { shown, pinned, below } = useListScroll({ blocks, ...place });
   const pin = pinned
-    ? [`[${pinned.heading.name} ${pinned.place} of ${pinned.size}]`]
+    ? [`[${pinned.heading.text} ${pinned.place} of ${pinned.size}]`]
     : [];
   const sign = below > 0 ? [`↓${below}`] : [];
   return (
-    <text>{[...pin, ...shown.map(({ name }) => name), ...sign].join(" ")}</text>
+    <text>{[...pin, ...shown.map(({ key }) => key), ...sign].join(" ")}</text>
   );
 }
 

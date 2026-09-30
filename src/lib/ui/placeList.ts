@@ -1,4 +1,58 @@
-import type { ListBlockKind, ListPlacement } from "./types.js";
+import type { Owner } from "../owed/index.js";
+
+/** What placing a list reads of each block: what it is, and its lines. */
+export type PlacedBlock =
+  | {
+      readonly kind: "heading";
+      readonly lines: number;
+      readonly heading: Owner;
+    }
+  | { readonly kind: "row"; readonly lines: number };
+
+/** Where a scrolled list starts, and what it shows from there. */
+export interface ListPlacement {
+  /** The place of the first block shown. */
+  readonly first: number;
+  /** How many blocks are shown from the first, whole but for the first. */
+  readonly shown: number;
+  /**
+   * How many rows are cut off below the blocks shown, in whichever group,
+   * which the list's last line signs; none while the room is the first
+   * block's alone.
+   */
+  readonly below: number;
+  /**
+   * The heading pinned above the first block, when that block is a row of
+   * a group: the heading's name, the place in the group of the first row
+   * shown, counted from one, and the group's rows.
+   */
+  readonly pinned?: {
+    readonly heading: Owner;
+    readonly place: number;
+    readonly size: number;
+  };
+}
+
+/** Where the selection is, the room the list has, and where it was. */
+export interface PlaceListOptions {
+  /**
+   * The first block that must be whole in view: the selected row, or the
+   * heading above it when the row is the first of its group.
+   */
+  readonly from: number;
+  /** The last block that must be whole in view: the selected row. */
+  readonly to: number;
+  /** The lines the list region has. */
+  readonly room: number;
+  /** The first block shown before. */
+  readonly first: number;
+}
+
+/** A group's heading and its rows, as its rows see it. */
+interface Group {
+  readonly heading: Owner;
+  size: number;
+}
 
 /**
  * Where a list of blocks starts, and what it shows, so that the blocks
@@ -18,61 +72,54 @@ import type { ListBlockKind, ListPlacement } from "./types.js";
  * them, every row under it in whichever group. Both keep their lines
  * while the room leaves the first block one, and a first block taller
  * than the rest of the room is cut at the bottom. After the first block,
- * as many whole blocks as fit are shown. Placed
- * again from the first block it gives, it gives the same place, so a
- * list that keeps its first block between draws settles in one.
- *
- * @param kinds What each block of the list is, in order.
- * @param heights The lines each block takes, in order.
- * @param room The lines the list region has.
- * @param first The first block shown before.
+ * as many whole blocks as fit are shown. Placed again from the first
+ * block it gives, it gives the same place, so a list that keeps its first
+ * block between draws settles in one.
  */
 export default function placeList(
-  kinds: readonly ListBlockKind[],
-  heights: readonly number[],
-  from: number,
-  to: number,
-  room: number,
-  first: number,
+  blocks: readonly PlacedBlock[],
+  { from, to, room, first }: PlaceListOptions,
 ): ListPlacement {
-  // The heading each block falls under, the place of each row under it,
-  // and how many rows each heading heads.
-  const headings: (number | undefined)[] = [];
-  const places: number[] = [];
-  const sizes = new Map<number, number>();
-  let heading: number | undefined;
-  for (const [index, kind] of kinds.entries()) {
-    if (kind === "heading") heading = index;
-    headings.push(heading);
-    const size = heading === undefined ? 0 : (sizes.get(heading) ?? 0);
-    places.push(size + 1);
-    if (kind === "row" && heading !== undefined) sizes.set(heading, size + 1);
+  // Each row's group, when it has one, and its place in it.
+  const groups: ({ group: Group; place: number } | undefined)[] = [];
+  let group: Group | undefined;
+  for (const block of blocks) {
+    if (block.kind === "heading") {
+      group = { heading: block.heading, size: 0 };
+      groups.push(undefined);
+    } else if (group) {
+      group.size += 1;
+      groups.push({ group, place: group.size });
+    } else {
+      groups.push(undefined);
+    }
   }
-  const measure = (start: number, end: number) =>
-    heights.slice(start, end).reduce((lines, height) => lines + height, 0);
-  const end = heights.length;
-  // The lines a list starting at `top` spends on its pinned heading and on
-  // the sign of the rows cut off below. Both keep their line while the
-  // room leaves the first block a line of its own, and the first block is
-  // cut instead, so what is above and below is always named.
-  const frame = (top: number) => {
-    const grouped = kinds.at(top) === "row" ? headings.at(top) : undefined;
-    const cuts = (pin: number) => pin + measure(top, end) > room;
-    const signs = (pin: number) => (cuts(pin) && room - pin >= 2 ? 1 : 0);
-    const pin = grouped !== undefined && room >= 2 ? 1 : 0;
+  const end = blocks.length;
+  const measure = (start: number, last: number) =>
+    blocks.slice(start, last).reduce((lines, block) => lines + block.lines, 0);
+  // What a list starting at `top` spends on its pinned heading and on the
+  // sign of the rows cut off below. Both keep their line while the room
+  // leaves the first block a line of its own, and the first block is cut
+  // instead, so what is above and below is always named.
+  const measureFrame = (top: number) => {
+    const grouped = groups.at(top);
+    const pinned = grouped !== undefined && room >= 2;
+    const pin = Number(pinned);
+    const cut = pin + measure(top, end) > room;
+    const signed = cut && room - pin >= 2;
     return {
-      pinned: pin === 1 ? grouped : undefined,
-      signed: signs(pin) === 1,
-      lines: pin + signs(pin),
-      whole: !cuts(pin),
+      pinned: pinned ? grouped : undefined,
+      signed,
+      lines: pin + Number(signed),
+      whole: !cut,
     };
   };
   const fits = (top: number, last: number) =>
-    frame(top).lines + measure(top, last) <= room;
+    measureFrame(top).lines + measure(top, last) <= room;
   let top = Math.max(0, Math.min(first, from, end - 1));
   while (top < to && !fits(top, to + 1)) top += 1;
-  while (top > 0 && frame(top - 1).whole) top -= 1;
-  const { pinned, signed, whole } = frame(top);
+  while (top > 0 && measureFrame(top - 1).whole) top -= 1;
+  const { pinned, signed, whole } = measureFrame(top);
   let shown = whole ? end - top : 1;
   while (top + shown < end && fits(top, top + shown + 1)) shown += 1;
   shown = Math.min(shown, end - top);
@@ -80,13 +127,13 @@ export default function placeList(
     first: top,
     shown,
     below: signed
-      ? kinds.slice(top + shown).filter((kind) => kind === "row").length
+      ? blocks.slice(top + shown).filter(({ kind }) => kind === "row").length
       : 0,
-    ...(pinned !== undefined && {
+    ...(pinned && {
       pinned: {
-        heading: pinned,
-        place: places.at(top) ?? 1,
-        size: sizes.get(pinned) ?? 0,
+        heading: pinned.group.heading,
+        place: pinned.place,
+        size: pinned.group.size,
       },
     }),
   };

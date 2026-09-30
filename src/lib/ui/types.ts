@@ -1,3 +1,6 @@
+import type { ReactNode } from "react";
+import type { Owner } from "../owed/index.js";
+
 /** A run of a line's text, in its own colour and, when it has one, text attribute. */
 export interface Piece {
   readonly text: string;
@@ -6,32 +9,23 @@ export interface Piece {
   readonly attributes?: number;
 }
 
-/**
- * What a block of a scrolled list is: a group's heading, a row, with what
- * opens under it, or anything else, such as the help's closing note.
- */
-export type ListBlockKind = "heading" | "row" | "other";
-
-/** Where a scrolled list starts, and what it shows from there. */
-export interface ListPlacement {
-  /** The place of the first block shown. */
-  readonly first: number;
-  /** How many blocks are shown from the first, whole but for the first. */
-  readonly shown: number;
-  /**
-   * How many rows are cut off below the blocks shown, in whichever group,
-   * which the list's last line signs; none while the first block is too
-   * tall to share the room with the sign.
-   */
-  readonly below: number;
-  /**
-   * The heading pinned above the first block, when that block is a row of
-   * a group: the heading's place among the blocks, the place in the group
-   * of the first row shown, counted from one, and the group's rows.
-   */
-  readonly pinned?: {
-    readonly heading: number;
-    readonly place: number;
-    readonly size: number;
-  };
+/** What every block of a scrolled list carries. */
+interface ListBlockBase {
+  /** What names the block among its siblings, as React keys it. */
+  readonly key: string;
+  /** The lines the block takes. */
+  readonly lines: number;
+  readonly node: ReactNode;
 }
+
+/**
+ * One block of a scrolled list, drawn whole or not at all, but for the
+ * first: a group's heading, with the name the heading pinned above its
+ * rows gives, or a row with what opens under it.
+ */
+export type ListBlock =
+  | (ListBlockBase & { readonly kind: "heading"; readonly heading: Owner })
+  | (ListBlockBase & { readonly kind: "row" });
+
+/** What a block of a scrolled list is: a group's heading, or a row. */
+export type ListBlockKind = ListBlock["kind"];

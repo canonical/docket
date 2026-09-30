@@ -38,10 +38,10 @@ const ScrolledList = ({
   });
   return (
     <box flexDirection="column" height={height} overflow="hidden">
-      {pinned?.heading.heading && (
+      {pinned && (
         <box flexShrink={0}>
           <GroupHeading
-            heading={pinned.heading.heading}
+            heading={pinned.heading}
             count={`${pinned.place} of ${pinned.size}`}
             width={width}
           />

@@ -48,7 +48,6 @@ export {
   useListScroll,
 } from "./hooks/index.js";
 export {
-  type ListBlock,
   Pane,
   type PaneProps,
   ScrolledList,
@@ -64,3 +63,4 @@ export {
   PaneHeader,
   type PaneHeaderProps,
 } from "./subcomponent/index.js";
+export type { ListBlock } from "./types.js";

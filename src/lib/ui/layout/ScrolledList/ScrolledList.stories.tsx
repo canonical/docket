@@ -1,7 +1,8 @@
 import type { Meta, Story } from "../../../../testing/stories.js";
 import { GroupHeading } from "../../component/index.js";
+import type { ListBlock } from "../../types.js";
 import ScrolledList from "./ScrolledList.js";
-import type { ListBlock, ScrolledListProps } from "./types.js";
+import type { ScrolledListProps } from "./types.js";
 
 const meta: Meta<ScrolledListProps> = {
   title: "layout/ScrolledList",
@@ -13,7 +14,7 @@ export default meta;
 const width = 40;
 
 /** A group's heading as a block of the list. */
-const heading = (text: string, group?: "team"): ListBlock => {
+const makeHeading = (text: string, group?: "team"): ListBlock => {
   const named = group
     ? { text, fit: "trimmed" as const, group }
     : { text, fit: "trimmed" as const };
@@ -27,7 +28,7 @@ const heading = (text: string, group?: "team"): ListBlock => {
 };
 
 /** A row of two lines as a block of the list. */
-const row = (name: string): ListBlock => ({
+const makeRow = (name: string): ListBlock => ({
   key: name,
   kind: "row",
   lines: 2,
@@ -40,12 +41,12 @@ const row = (name: string): ListBlock => ({
 });
 
 const blocks = [
-  heading("bob", "team"),
-  row("first of bob's"),
-  row("second of bob's"),
-  row("third of bob's"),
-  heading("unassigned"),
-  row("first unassigned"),
+  makeHeading("bob", "team"),
+  makeRow("first of bob's"),
+  makeRow("second of bob's"),
+  makeRow("third of bob's"),
+  makeHeading("unassigned"),
+  makeRow("first unassigned"),
 ];
 
 /**

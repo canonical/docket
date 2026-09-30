@@ -1,11 +1,9 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import type { KeyCommand } from "../../hooks/index.js";
-import {
-  type ListBlock,
-  ScrolledList,
-} from "../../layout/ScrolledList/index.js";
+import { ScrolledList } from "../../layout/ScrolledList/index.js";
 import trimText from "../../trimText.js";
+import type { ListBlock } from "../../types.js";
 import { GroupHeading } from "../GroupHeading/index.js";
 import type { HelpOverlayProps } from "./types.js";
 
