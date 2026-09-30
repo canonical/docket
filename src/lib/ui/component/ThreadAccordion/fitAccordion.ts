@@ -1,13 +1,12 @@
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
-import { fitRules } from "../../fit/constants.js";
 import {
   endRuns,
+  fitBlock,
   fitField,
   fitRuns,
   measurePieces,
   measureText,
-  wrapRuns,
 } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type { DetailLine, DetailText } from "./types.js";
@@ -60,9 +59,7 @@ function giveWay(
 function fitLine(line: DetailLine, room: number): Piece[][] {
   const { pieces, kind, most } = line;
   if (most === 1) return [fitRuns(giveWay(line, room), room)];
-  return fitRules[kind].block === "wrap"
-    ? wrapRuns(pieces, room)
-    : [fitRuns(pieces, room)];
+  return fitBlock(pieces, kind, room);
 }
 
 /**

@@ -363,6 +363,17 @@ function check(root: string): Finding[] {
     }
     if (!path.startsWith(fitting)) {
       for (const { specifier } of importsOf(source)) {
+        const target = join(dirname(path), specifier);
+        if (
+          target.startsWith(fitting) &&
+          !fittingPrimitives.test(specifier) &&
+          target !== `${fitting}index.js`
+        ) {
+          report(
+            "fitting",
+            `imports ${specifier}, past the fitting module's barrel: import from ${fitting}index.js`,
+          );
+        }
         if (fittingPrimitives.test(specifier)) {
           report(
             "fitting",
@@ -560,6 +571,10 @@ const breaks: Record<string, [string, string]> = {
     "fitting",
     'import fitPieces from "../../fit/fitPieces.js";\nexport default function Runs() { return fitPieces; }',
   ],
+  "src/lib/ui/component/Table/Table.tsx": [
+    "fitting",
+    'import { fitRules } from "../../fit/constants.js";\nexport default function Table() { return fitRules; }',
+  ],
   "src/lib/ui/component/Gap/Gap.tsx": [
     "fitting",
     "export default function Gap(text: string) { return Bun.stringWidth(text); }",
@@ -571,6 +586,10 @@ const breaks: Record<string, [string, string]> = {
   "src/lib/ui/component/Name/Name.tsx": [
     "fitting",
     'import cutMiddle from "../../fit/cutMiddle.js";\nexport default function Name() { return cutMiddle; }',
+  ],
+  "src/lib/ui/component/Cut/Cut.tsx": [
+    "fitting",
+    'import cutMiddle from "../../fit/cutMiddle";\nexport default function Cut() { return cutMiddle; }',
   ],
 };
 
@@ -621,6 +640,8 @@ const allowed: Record<string, string> = {
     'import clock from "../clock/index.js";',
     "export default function snapshot(): Port { return [provider, clock]; }",
   ].join("\n"),
+  "src/lib/ui/component/Fitted/Fitted.tsx":
+    'import { fitField } from "../../fit/index.js";\nexport default function Fitted() { return fitField; }',
   "src/lib/ui/fit/measureCluster.ts":
     "export default function measureCluster(text: string) { return Bun.stringWidth(text); }",
   "src/lib/ui/fit/fitField.ts": [

@@ -1,5 +1,6 @@
 export { noBreakSpace } from "./constants.js";
 export { default as endRuns } from "./endRuns.js";
+export { default as fitBlock } from "./fitBlock.js";
 export { default as fitField } from "./fitField.js";
 export { default as fitRuns } from "./fitRuns.js";
 export { default as markPerson } from "./markPerson.js";
