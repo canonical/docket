@@ -103,8 +103,6 @@ export default function useReadAhead({
   );
   useEffect(() => queue?.pause(paused === "rateLimit"), [queue, paused]);
   const moved = useRef(false);
-  // Counts the drops, so each asks for the window again.
-  const [dropped, setDropped] = useState(0);
   const chosen = rows.at(selected);
   const window = findNearest(rows, selected, detailWindow);
   const key = window
@@ -113,14 +111,20 @@ export default function useReadAhead({
   const chosenKey = chosen && identifyThread(chosen.thread);
   // biome-ignore lint/correctness/useExhaustiveDependencies: the window's key names what it holds.
   useEffect(() => {
-    if (!queue || attention === "idle" || paused === "rateLimit" || !chosen) {
+    if (
+      !queue ||
+      attention === "idle" ||
+      paused === "rateLimit" ||
+      !chosenKey
+    ) {
       return;
     }
     const delay = moved.current ? detailRest : 0;
     moved.current = true;
-    // Below the budget floor the selected thread alone is asked for.
-    queue.request(paused ? [chosen] : window, chosen.thread, delay);
-  }, [queue, key, chosenKey, attention, paused, dropped]);
+    // Below the budget floor the selected thread alone, the nearest row, is
+    // asked for.
+    queue.request(paused ? window.slice(0, 1) : window, chosen?.thread, delay);
+  }, [queue, key, chosenKey, attention, paused]);
   if (!queue) {
     return { version: (_thread, version) => version, drop: () => {} };
   }
@@ -128,10 +132,7 @@ export default function useReadAhead({
   return {
     read: (thread, version) => queue.read(thread, version),
     version: (thread, version) => `${version}|${queue.countArrivals(thread)}`,
-    drop: () => {
-      queue.forget();
-      setDropped((count) => count + 1);
-    },
+    drop: () => queue.forget(),
     ...(progress && { progress }),
   };
 }

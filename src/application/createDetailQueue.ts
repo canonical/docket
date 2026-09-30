@@ -83,7 +83,8 @@ export interface DetailQueue {
   pause(paused: boolean): void;
   /**
    * Forgets the details that arrived, and the reads that failed, so every
-   * thread is due again, as a full refresh asks; reads under way stay.
+   * thread is due again, as a full refresh asks, and asks at once for the
+   * window asked for last; reads under way stay.
    */
   forget(): void;
   /** Sends nothing more, when the pane closes. */
@@ -115,6 +116,8 @@ export default function createDetailQueue(
   const listeners = new Set<() => void>();
   let queued: (WantedDetail & { readonly entry: Entry })[] = [];
   let selected: ThreadSummary | undefined;
+  // The window the last request asked for, which a forget asks for again.
+  let lastWindow: readonly WantedDetail[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
   let paused = false;
   // The threads asked for since nothing was pending, and those answered.
@@ -233,7 +236,7 @@ export default function createDetailQueue(
     timer = setTimeout(() => void flush(), delay);
   };
 
-  return {
+  const queue: DetailQueue = {
     read(thread, version) {
       const known = entries.get(identifyThread(thread));
       if (known?.version === version && !known.failed) {
@@ -249,6 +252,7 @@ export default function createDetailQueue(
     request: (window, chosen, delay) =>
       changeAndTell(() => {
         selected = chosen;
+        lastWindow = window;
         const kept = new Set(
           window.map(({ thread }) => identifyThread(thread)),
         );
@@ -287,6 +291,8 @@ export default function createDetailQueue(
       for (const [key, entry] of entries) {
         if (entry.settled) entries.delete(key);
       }
+      // The window asked for last is due again, and is read at once.
+      queue.request(lastWindow, selected, 0);
     },
     stop() {
       clearTimeout(timer);
@@ -294,4 +300,5 @@ export default function createDetailQueue(
       round = undefined;
     },
   };
+  return queue;
 }

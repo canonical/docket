@@ -133,7 +133,7 @@ describe("createDetailQueue", () => {
     expect(reader.read).toHaveBeenCalledOnce();
   });
 
-  it("forgets the details that arrived and the reads that failed, so each is due again, and keeps a read under way", async () => {
+  it("forgets the details that arrived and the reads that failed, reads the window asked for last again at once, and keeps a read under way", async () => {
     const reader = reading();
     const queue = open(reader);
     queue.request(
@@ -147,10 +147,14 @@ describe("createDetailQueue", () => {
     await vi.advanceTimersByTimeAsync(0);
     const pending = queue.read(two, "v");
     queue.forget();
-    expect(queue.isDue(one, "v")).toBe(true);
-    expect(queue.isDue(three, "v")).toBe(true);
-    expect(queue.isDue(two, "v")).toBe(false);
     await vi.advanceTimersByTimeAsync(0);
+    const asked = reader.read.mock.calls.map(([threads]) =>
+      threads.map(({ number }) => number).sort(),
+    );
+    expect(asked).toEqual([
+      [1, 3],
+      [1, 2, 3],
+    ]);
     expect(await pending).toBe(parserFixDetail);
   });
 
