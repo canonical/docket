@@ -1,12 +1,12 @@
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
-import { fitPieces, trimText, wrapText } from "../../fit/index.js";
+import { fitRuns, trimText, wrapText } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type { DetailLine, DetailText } from "./types.js";
 
 /** One line's runs as they fill the room: wrapped over lines, or trimmed to one. */
 function fitLine({ pieces, fit }: DetailLine, room: number): Piece[][] {
-  if (fit === "trimmed") return [fitPieces(pieces, room)];
+  if (fit === "trimmed") return [fitRuns(pieces, room)];
   return pieces.flatMap((piece) =>
     wrapText(piece.text, room).map((text) => [{ ...piece, text }]),
   );

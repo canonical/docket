@@ -33,5 +33,5 @@ export default function markPerson(owner: Owner, cells?: number): Piece {
       : fitField(owner, "line", cells);
   if (!("group" in owner)) return { text: login, fg: tokens["color.text"] };
   const [mark, hue] = looks[owner.group];
-  return { text: `${mark} ${login}`, fg: hue };
+  return { text: `${mark} ${login}`, fg: hue, marked: true };
 }

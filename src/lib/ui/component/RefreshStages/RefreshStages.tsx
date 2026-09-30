@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { RepoStage } from "../../../cache/index.js";
 import { tokens } from "../../../tokens/index.js";
-import { fitField, fitPieces } from "../../fit/index.js";
+import { fitField, fitRuns } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import describeStage from "./describeStage.js";
 import type { RefreshStagesProps } from "./types.js";
@@ -12,7 +12,7 @@ import type { RefreshStagesProps } from "./types.js";
  */
 function fitStage(stage: RepoStage, room: number): Piece[][] {
   const pieces = describeStage(stage);
-  if (stage.kind !== "failed") return [fitPieces(pieces, room)];
+  if (stage.kind !== "failed") return [fitRuns(pieces, room)];
   return pieces.flatMap((piece) =>
     fitField({ text: piece.text, kind: "reason" }, "block", room).map(
       (text) => [{ ...piece, text }],

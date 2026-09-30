@@ -1,8 +1,10 @@
 60 columns
-|✓ review requested ◉ example-org/parser-team, ○ example-con…
+|✓ review requested ◉ example-org…, ○ example-con…, ◐ erin
 
 runs
 1:1 "✓ review requested" fg #b4be82ff bg #00000000
-1:20 "◉ example-org/parser-team" fg #84a0c6ff bg #00000000
-1:45 ", " fg #c6c8d1ff bg #00000000
-1:47 "○ example-con…" fg #89b8c2ff bg #00000000
+1:20 "◉ example-org…" fg #84a0c6ff bg #00000000
+1:34 ", " fg #c6c8d1ff bg #00000000
+1:36 "○ example-con…" fg #89b8c2ff bg #00000000
+1:50 ", " fg #c6c8d1ff bg #00000000
+1:52 "◐ erin" fg #a093c7ff bg #00000000

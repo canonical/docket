@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { Notice } from "../../component/index.js";
-import { fitPieces, markPerson } from "../../fit/index.js";
+import { fitRuns, markPerson } from "../../fit/index.js";
 import { pickerIndent as indent, shownOptions } from "./constants.js";
 import type { PeoplePickerProps } from "./types.js";
 
@@ -69,7 +69,7 @@ const PeoplePicker = ({
             }
           >
             <text>
-              {fitPieces(
+              {fitRuns(
                 [
                   {
                     text: `${tokens[ticked ? "glyph.ticked" : "glyph.unticked"]} `,

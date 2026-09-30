@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { WaitState } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import { fitField, fitPieces, markPerson } from "../../fit/index.js";
+import { fitField, fitRuns, markPerson } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
@@ -74,7 +74,7 @@ function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
 /** Draws the runs of one line, fitted to `width`. */
 const drawLine = (pieces: readonly Piece[], width: number) => (
   <text>
-    {fitPieces(pieces, width).map(({ text, fg, attributes }, index) => (
+    {fitRuns(pieces, width).map(({ text, fg, attributes }, index) => (
       // A line's runs never reorder, so their place is their key.
       // biome-ignore lint/suspicious/noArrayIndexKey: see above.
       <span key={index} fg={fg} attributes={attributes}>

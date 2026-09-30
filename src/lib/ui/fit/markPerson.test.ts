@@ -22,11 +22,11 @@ describe("markPerson", () => {
         person("renovate", "bot"),
       ].map((owner) => markPerson(owner, 12)),
     ).toEqual([
-      { text: "◉ alice", fg: tokens["color.text.team"] },
-      { text: "● bob", fg: tokens["color.text.team"] },
-      { text: "◐ erin", fg: tokens["color.text.internal"] },
-      { text: "○ dave", fg: tokens["color.text.outside"] },
-      { text: "■ renovate", fg: tokens["color.text.muted"] },
+      { text: "◉ alice", fg: tokens["color.text.team"], marked: true },
+      { text: "● bob", fg: tokens["color.text.team"], marked: true },
+      { text: "◐ erin", fg: tokens["color.text.internal"], marked: true },
+      { text: "○ dave", fg: tokens["color.text.outside"], marked: true },
+      { text: "■ renovate", fg: tokens["color.text.muted"], marked: true },
     ]);
   });
 

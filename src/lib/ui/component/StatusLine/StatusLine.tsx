@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import { fitPieces, markPerson } from "../../fit/index.js";
+import { loginCells } from "../../constants.js";
+import { fitRuns, markPerson } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import describeDetails from "./describeDetails.js";
@@ -26,7 +27,7 @@ const colours: Readonly<Record<StatusMessage["kind"], string>> = {
 /**
  * The message's runs: its words in its kind's colour, then the people it
  * names, each behind their group's mark and in its hue, as `✓ assigned
- * ◐ erin`.
+ * ◐ erin`, each login cut at 12 cells as on a row.
  */
 function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
   const plain = tokens["color.text"];
@@ -34,7 +35,7 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
     { text, fg: colours[kind] },
     ...people.flatMap((person, place) => [
       { text: place === 0 ? " " : ", ", fg: plain },
-      markPerson(person),
+      markPerson(person, loginCells),
     ]),
   ];
 }
@@ -79,7 +80,7 @@ const StatusLine = ({
     message?.shorter !== undefined && Bun.stringWidth(message.text) > width
       ? { ...message, text: message.shorter }
       : message;
-  const runs = fitted ? fitPieces(describeRuns(fitted), width) : [];
+  const runs = fitted ? fitRuns(describeRuns(fitted), width) : [];
   const right = describeDetails(
     status,
     message,

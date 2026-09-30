@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import { fitPieces, markPerson } from "../../fit/index.js";
+import { fitRuns, markPerson } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
@@ -59,7 +59,7 @@ const EventLine = ({ line, stacked, width }: EventLineProps): ReactNode => {
     fg: quiet ? tokens["color.text.muted"] : tokens["color.text"],
   };
   const room = width - indent - Bun.stringWidth(age.text) - 1;
-  const what = fitPieces(describeWhat(line), Math.max(0, room));
+  const what = fitRuns(describeWhat(line), Math.max(0, room));
   const gap = " ".repeat(Math.max(1, room + 1 - measurePieces(what)));
   return (
     <box flexDirection="row" flexShrink={0}>

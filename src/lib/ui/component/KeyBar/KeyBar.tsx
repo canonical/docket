@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import { fitPieces } from "../../fit/index.js";
+import { fitRuns } from "../../fit/index.js";
 import type { KeyBarProps } from "./types.js";
 
 /** A run of the bar's text: a key, its label, or the gap between hints. */
@@ -33,7 +33,7 @@ const KeyBar = ({ commands, width }: KeyBarProps): ReactNode => {
     ]);
   return (
     <text fg={tokens["color.text"]}>
-      {fitPieces(pieces, width).map(({ id, text, look }) => (
+      {fitRuns(pieces, width).map(({ id, text, look }) => (
         <span
           key={id}
           fg={
