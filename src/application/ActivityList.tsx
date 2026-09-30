@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect } from "react";
+import type { ReactNode } from "react";
 import type {
   ThreadRow as ActivityThread,
   ActivityList as List,
@@ -10,11 +10,12 @@ import {
   countRowLines,
   EventLine,
   GroupHeading,
+  type ListBlock,
+  ScrolledList,
   type ShownDetail,
   ThreadAccordion,
   ThreadRow,
   useDrawnLines,
-  useListScroll,
 } from "../lib/ui/index.js";
 import findThreadState from "./findThreadState.js";
 import listWaiting from "./listWaiting.js";
@@ -71,18 +72,6 @@ export interface ActivityListProps {
 }
 
 /**
- * One heading, or one thread with its events, and the accordion when it
- * is selected.
- */
-interface Block {
-  readonly key: string;
-  /** Whether the block holds a row, rather than a heading. */
-  readonly row: boolean;
-  readonly lines: number;
-  readonly node: ReactNode;
-}
-
-/**
  * activity's list region: each group's heading, when the list is grouped,
  * then each thread with its events nested under it, newest first. A
  * thread's events never leave it, whatever the grouping. The accordion
@@ -90,7 +79,8 @@ interface Block {
  * current state. Only the threads move the selection, so a heading is
  * never selected. The list scrolls as little as it must to keep the
  * selected thread whole in view, with its group's heading when it is the
- * group's first thread.
+ * group's first thread, and the heading of the group under its first line
+ * pinned there.
  */
 export default function ActivityList({
   list,
@@ -108,14 +98,20 @@ export default function ActivityList({
   firstShown,
 }: ActivityListProps): ReactNode {
   const drawn = useDrawnLines();
-  const blocks: Block[] = [];
+  const blocks: ListBlock[] = [];
   let place = 0;
   let from = 0;
   let to = 0;
   for (const { heading, rows } of list.groups) {
     if (heading) {
       const node = <GroupHeading heading={heading} width={width} />;
-      blocks.push({ key: heading.text, row: false, lines: 1, node });
+      blocks.push({
+        key: heading.text,
+        kind: "heading",
+        lines: 1,
+        node,
+        heading,
+      });
     }
     for (const row of rows) {
       const chosen = place === selected;
@@ -129,7 +125,7 @@ export default function ActivityList({
       }
       blocks.push({
         key: row.reference.text,
-        row: true,
+        kind: "row",
         lines:
           countRowLines(row, width, chosen && !editor) +
           (chosen
@@ -177,24 +173,15 @@ export default function ActivityList({
       place += 1;
     }
   }
-  const { shown, first } = useListScroll({
-    blocks,
-    from,
-    to,
-    room: height,
-    first: firstShown,
-  });
-  const shownRows = shown.filter(({ row }) => row).length;
-  useEffect(() => {
-    onShownRows(shownRows, first);
-  });
   return (
-    <box flexDirection="column" height={height} overflow="hidden">
-      {shown.map(({ key, node }) => (
-        <box key={key} flexDirection="column" flexShrink={0}>
-          {node}
-        </box>
-      ))}
-    </box>
+    <ScrolledList
+      blocks={blocks}
+      from={from}
+      to={to}
+      height={height}
+      first={firstShown}
+      onShown={onShownRows}
+      width={width}
+    />
   );
 }

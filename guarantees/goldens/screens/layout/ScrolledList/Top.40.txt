@@ -1,0 +1,14 @@
+40 columns
+|● bob ──────────────────────────────────
+|│ first of bob's
+|╵ a thread
+|│ second of bob's
+|╵ a thread
+
+runs
+1:1 "● bob" fg #84a0c6ff bg #00000000
+1:6 " ──────────────────────────────────" fg #c6c8d1ff bg #00000000
+2:1 "│ first of bob's                        " fg #ffffffff bg #00000000
+3:1 "╵ a thread                              " fg #ffffffff bg #00000000
+4:1 "│ second of bob's                       " fg #ffffffff bg #00000000
+5:1 "╵ a thread                              " fg #ffffffff bg #00000000

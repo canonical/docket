@@ -3,6 +3,8 @@
  * rules ask.
  */
 
+import type { ListBlockKind } from "../types.js";
+
 /**
  * The keys of one line of the help, and of one hint in the key bar: one
  * command, or neighbouring commands that share a label, such as the two
@@ -39,10 +41,12 @@ export interface UseCommandsProps {
 export type UseCommandsResult = readonly KeyCommand[];
 
 /** Props for the useListScroll hook. */
-export interface UseListScrollProps<Block extends { readonly lines: number }> {
+export interface UseListScrollProps<
+  Block extends { readonly lines: number; readonly kind: ListBlockKind },
+> {
   /**
-   * The list's blocks, in order: a heading, or a row with what opens under
-   * it. Each gives the lines it takes.
+   * The list's blocks, in order: a heading, a row with what opens under
+   * it, or anything else. Each gives what it is and the lines it takes.
    */
   readonly blocks: readonly Block[];
   /**
@@ -66,11 +70,22 @@ export interface UseListScrollProps<Block extends { readonly lines: number }> {
 export interface UseListScrollResult<Block> {
   /**
    * The blocks to draw, in order: whole blocks only, as many as fit the
-   * room, and always the first, whatever its height.
+   * room under the pinned heading, and always the first, whatever its
+   * height.
    */
   readonly shown: readonly Block[];
   /** The place of the first block drawn, which `first` takes back. */
   readonly first: number;
+  /**
+   * The heading pinned above the blocks, when the first is a row of a
+   * group: the heading's block, the place in the group of the first row
+   * shown, counted from one, and the group's rows.
+   */
+  readonly pinned?: {
+    readonly heading: Block;
+    readonly place: number;
+    readonly size: number;
+  };
 }
 
 /**

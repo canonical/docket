@@ -47,7 +47,13 @@ export {
   useDrawnLines,
   useListScroll,
 } from "./hooks/index.js";
-export { Pane, type PaneProps } from "./layout/index.js";
+export {
+  type ListBlock,
+  Pane,
+  type PaneProps,
+  ScrolledList,
+  type ScrolledListProps,
+} from "./layout/index.js";
 export {
   countPickerLines,
   PeoplePicker,

@@ -792,8 +792,9 @@ describe("Screen", { timeout: 15_000 }, () => {
     it("stays on its wait when the grouping changes, and never lands on a heading", async () => {
       const screen = await showRecorded();
       const grouped = await press(screen, "j", "g");
-      expect(grouped.lines.slice(0, 2)).toEqual([
+      expect(grouped.lines.slice(0, 3)).toEqual([
         headerOf("owed", "by owner"),
+        `◉ alice · 2 of 3 ${"─".repeat(23)}`,
         `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
       ]);
       const first = await press(screen, "k");

@@ -1,17 +1,19 @@
 import { useState } from "react";
-import keepInView from "../keepInView.js";
+import placeList from "../placeList.js";
+import type { ListBlockKind } from "../types.js";
 import type { UseListScrollProps, UseListScrollResult } from "./types.js";
 
 /**
  * Scrolls a list of blocks as little as it must to keep the blocks from
  * `from` to `to` whole in view, and back up as far as the blocks below
- * still fill the room once it grows. The first block shown is kept from
- * the frame before, so the list moves only when the selection would
- * leave it, and a row is never drawn without its second line. A list
- * drawn anew starts from `first`, so it opens where it was left.
+ * still fill the room once it grows, pinning the heading of the first
+ * row's group above it (`placeList`). The first block shown is kept from
+ * the frame before, so the list moves only when the selection would leave
+ * it, and a row is never drawn without its second line. A list drawn anew
+ * starts from `first`, so it opens where it was left.
  */
 export default function useListScroll<
-  Block extends { readonly lines: number },
+  Block extends { readonly lines: number; readonly kind: ListBlockKind },
 >({
   blocks,
   from,
@@ -20,19 +22,26 @@ export default function useListScroll<
   first: start = 0,
 }: UseListScrollProps<Block>): UseListScrollResult<Block> {
   const [first, setFirst] = useState(start);
-  const top = keepInView(
+  const placed = placeList(
+    blocks.map(({ kind }) => kind),
     blocks.map(({ lines }) => lines),
     from,
     to,
     room,
     first,
   );
-  if (top !== first) setFirst(top);
-  // The first block is drawn whatever its height, cut by the region.
-  let used = 0;
-  const shown = blocks.slice(top).filter(({ lines }, index) => {
-    used += lines;
-    return index === 0 || used <= room;
-  });
-  return { shown, first: top };
+  if (placed.first !== first) setFirst(placed.first);
+  const heading = placed.pinned && blocks.at(placed.pinned.heading);
+  return {
+    shown: blocks.slice(placed.first, placed.first + placed.shown),
+    first: placed.first,
+    ...(placed.pinned &&
+      heading && {
+        pinned: {
+          heading,
+          place: placed.pinned.place,
+          size: placed.pinned.size,
+        },
+      }),
+  };
 }

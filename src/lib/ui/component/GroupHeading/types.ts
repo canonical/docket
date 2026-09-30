@@ -10,6 +10,12 @@ export interface GroupHeadingProps {
    * Maps to DSL role: heading text (cardinality: 1)
    */
   heading: Owner;
+  /**
+   * On the pinned heading only, where the rows shown under it start in
+   * the group, and the group's size: `3 of 8`.
+   * Maps to DSL role: pinned count (cardinality: 0..1)
+   */
+  count?: string;
   /** The width of the pane, in display cells. */
   width: number;
 }
