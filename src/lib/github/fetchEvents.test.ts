@@ -5,6 +5,7 @@ import {
   feedEntry,
   page,
   repository,
+  selectNodeFields,
   settle,
   token,
   user,
@@ -468,5 +469,28 @@ describe("fetchEvents", () => {
     expect(
       finished.map(({ number, ending }) => [number, ending.label]),
     ).toEqual([[2, "merged"]]);
+  });
+
+  it("asks GitHub how each thread stands, who wrote it, and how and by whom it ended", async () => {
+    github.graphql("Events", lists([], [], []));
+    github.rest(feed, { body: [] });
+    await read();
+    const query = String(github.sent.at(0)?.body?.query);
+    const both = ["authorAssociation", "state", "closedAt", "labels(first:"];
+    const asked = (list: string, fields: string[]) =>
+      expect(selectNodeFields(query, list)).toEqual(
+        expect.arrayContaining([...both, "assignees(first:", ...fields]),
+      );
+    asked("issues", ["stateReason"]);
+    asked("pullRequests", ["mergedAt", "mergedBy", "isDraft"]);
+    // A close's own fields, what each selects left out.
+    let close = query
+      .split("... on ClosedEvent {")[1]
+      ?.split("... on Reopened")[0];
+    while (close && /\{[^{}]*\}/.test(close))
+      close = close.replace(/\{[^{}]*\}/g, "");
+    expect(close?.split(/[\s}]+/)).toEqual(
+      expect.arrayContaining(["stateReason", "closer", "duplicateOf"]),
+    );
   });
 });
