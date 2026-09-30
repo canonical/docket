@@ -20,18 +20,17 @@ const separator = ` ${tokens["glyph.separator"]} `;
  * not, or `paused: rate limit` alone when a refusal gives no time; with
  * data held, an error, which says `offline` when a request got no
  * answer, at all or in time, or else `refresh failed`, with the data's
- * time (before any data the list names it, and the line stays empty);
- * the result of the user's own
- * action, for 5 seconds after it; the progress of a full refresh; a
- * refresh in the background, naming the furthest repository it has
- * reached and its place among them, as `refreshing · docs 2/3` (while it
- * is on none, such as when it saves what it fetched, the messages below
- * stand); a short notice, such as when a full refresh is available
- * again, or `paused: budget low · resumes 14:20` while the budget is too
- * low to spend; and otherwise how old the data is, followed, while the
- * pane is idle, by `idle · any key wakes`. With no data and nothing
- * happening there is no message, and with no cache only an action's
- * result.
+ * time (before any data the list names it, and the line stays empty
+ * until a refresh tries again); the result of the user's own action,
+ * for 5 seconds after it; the progress of a full refresh; a refresh in
+ * the background, naming the furthest repository it has reached and its
+ * place among them, as `refreshing · docs 2/3` (while it is on none,
+ * such as when it saves what it fetched, the messages below stand); a
+ * short notice, such as when a full refresh is available again, or
+ * `paused: budget low · resumes 14:20` while the budget is too low to
+ * spend; and otherwise how old the data is, followed, while the pane is
+ * idle, by `idle · any key wakes`. With no data and nothing happening
+ * there is no message, and with no cache only an action's result.
  */
 export default function describeStatus(
   status: CacheStatus | undefined,
@@ -53,10 +52,7 @@ export default function describeStatus(
   if (failure?.code === "GITHUB_RATE_LIMITED") {
     return { kind: "notice", text: "paused: rate limit" };
   }
-  if (failure) {
-    // Before any data, the list names the failure and its recovery, and
-    // the line has no data to date, so it stays empty.
-    if (!syncedAt) return undefined;
+  if (failure && syncedAt) {
     const what =
       failure.code === "GITHUB_TIMED_OUT" ||
       failure.code === "GITHUB_UNREACHABLE"
@@ -65,6 +61,10 @@ export default function describeStatus(
     const from = `${separator}data from ${describeClock(syncedAt, timezone)}`;
     return { kind: "error", text: `${failed} ${what}${from}` };
   }
+  // Before any data, the list names a failure and its recovery, and the
+  // line has no data to date, so it stays empty, until a refresh tries
+  // again and the line says how far that has come.
+  if (failure && !status?.refreshing) return undefined;
   if (action && now.getTime() - action.at.getTime() < resultShown) {
     return action.failed
       ? { kind: "actionFailed", text: `${failed} ${action.text}` }

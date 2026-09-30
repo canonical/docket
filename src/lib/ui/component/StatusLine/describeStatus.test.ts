@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { providerError } from "../../../../testing/provider.js";
 import type { CacheStatus } from "../../../cache/index.js";
 import describeStatus from "./describeStatus.js";
 import {
@@ -86,6 +87,18 @@ describe("describeStatus", () => {
   it("says nothing of a failure before any data, which the list names", () => {
     const status = { ...statusOf(Offline), syncedAt: undefined };
     expect(describeAt(status)).toBeUndefined();
+  });
+
+  it("shows the progress of a first run that tries again after a failure, not the failure it replaces", () => {
+    const status = {
+      ...statusOf(FullRefresh),
+      failure: providerError("GITHUB_TIMED_OUT"),
+    };
+    expect(describeAt(status)).toEqual({
+      kind: "progress",
+      text: "full refresh · example 1/2 · pages 5/9",
+      shorter: "full refresh · example 1/2",
+    });
   });
 
   it("names any other failed refresh and the time of the data shown", () => {
