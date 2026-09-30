@@ -62,12 +62,17 @@ describe("HelpOverlay", () => {
     expect(screen.lines).toEqual(linesAt(40).slice(0, 6));
   });
 
-  it("cuts a label that crosses a narrow pane with an ellipsis", async () => {
+  it("wraps a label that crosses a narrow pane in its column, and each note under it", async () => {
     const screen = await draw(
       <HelpOverlay {...Keys.args} width={24} />,
       24,
       20,
     );
-    expect(screen.lines.at(2)).toBe("  ← →  h l switch mode …");
+    expect(screen.lines.slice(2, 6)).toEqual([
+      "  ← →  h l switch mode",
+      "           (owed ↔",
+      "           activity)",
+      "           docket opens",
+    ]);
   });
 });
