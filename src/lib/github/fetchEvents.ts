@@ -11,8 +11,7 @@ import fetchPushes from "./fetchPushes.js";
 import fragments from "./fragments.js";
 import readAccount from "./readAccount.js";
 import readCheck from "./readCheck.js";
-import type { CloseNode } from "./readEnding.js";
-import readFinished, { type FinishedNode } from "./readFinished.js";
+import readFinished from "./readFinished.js";
 import readOutcome from "./readOutcome.js";
 import readStackEntry from "./readStackEntry.js";
 import splitRepo from "./splitRepo.js";
@@ -20,7 +19,9 @@ import type {
   ActorNode,
   CheckNode,
   Client,
+  CloseNode,
   FeedPush,
+  FinishedNode,
   HeadCommitNode,
   StackEntryNode,
 } from "./types.js";

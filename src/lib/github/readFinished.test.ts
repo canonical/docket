@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { user } from "../../testing/github.js";
 import type { ThreadSummary } from "../waits/index.js";
-import readFinished, { type FinishedNode } from "./readFinished.js";
+import readFinished from "./readFinished.js";
+import type { FinishedNode } from "./types.js";
 
 const since = new Date("2026-09-22T00:00:00Z");
 const issue: ThreadSummary = {
