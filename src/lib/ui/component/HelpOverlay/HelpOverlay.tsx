@@ -32,11 +32,11 @@ const writeKeys = ({ keys, alternates }: KeyCommand) =>
  * Every key, grouped by the object it acts on, filling the pane under a
  * header that reads `help`. `?` shows and hides it. Its lines scroll as a
  * list's do, drawn through the same scrolled list: a group's heading, with
- * the blank line above it, is a heading; a key's line, with its notes, a
- * row; and the closing note neither. So a pane too short for the help
- * pins the heading of the keys under its first line and counts the key
- * lines under it, `↓ 8 below`, and the movement keys scroll it from
- * `first`.
+ * the blank line above it, is a heading, and a key's line, with its notes,
+ * a row, the last carrying the closing note. So a pane too short for
+ * the help pins the heading of the keys under its first line and counts
+ * the key lines under it, `↓ 8 below`, and the movement keys scroll it
+ * from `first`.
  *
  * `import { HelpOverlay } from "../lib/ui/index.js";`
  *
@@ -52,62 +52,58 @@ const HelpOverlay = ({
 }: HelpOverlayProps): ReactNode => {
   const pad = " ".repeat(indent);
   const notePad = " ".repeat(indent + keyColumn);
-  const blocks: ListBlock[] = groupCommands(commands).flatMap(
-    ([group, lines]): ListBlock[] => {
-      const heading = { text: group, fit: "trimmed" } as const;
-      return [
-        {
-          key: group,
-          kind: "heading",
-          lines: 2,
-          heading,
+  const groups = groupCommands(commands);
+  const last = groups.at(-1)?.[1].at(-1);
+  const blocks: ListBlock[] = groups.flatMap(([group, lines]): ListBlock[] => {
+    const heading = { text: group, fit: "trimmed" } as const;
+    return [
+      {
+        key: group,
+        kind: "heading",
+        lines: 2,
+        heading,
+        node: (
+          <box marginTop={1}>
+            <GroupHeading heading={heading} width={width} />
+          </box>
+        ),
+      },
+      ...lines.map((line): ListBlock => {
+        const keys = trimText(writeKeys(line), width - indent);
+        const gap = " ".repeat(Math.max(1, keyColumn - Bun.stringWidth(keys)));
+        const room = width - indent - Bun.stringWidth(keys) - gap.length;
+        // The closing note rides with the last key line, so it is never
+        // cut off without that line being counted below.
+        const closes = line === last;
+        return {
+          key: `${group} ${line.label}`,
+          kind: "row",
+          lines: 1 + line.notes.length + (closes ? 2 : 0),
           node: (
-            <box marginTop={1}>
-              <GroupHeading heading={heading} width={width} />
-            </box>
-          ),
-        },
-        ...lines.map((line): ListBlock => {
-          const keys = trimText(writeKeys(line), width - indent);
-          const gap = " ".repeat(
-            Math.max(1, keyColumn - Bun.stringWidth(keys)),
-          );
-          const room = width - indent - Bun.stringWidth(keys) - gap.length;
-          return {
-            key: `${group} ${line.label}`,
-            kind: "row",
-            lines: 1 + line.notes.length,
-            node: (
-              <>
-                <text fg={tokens["color.text"]}>
-                  {pad}
-                  {keys}
-                  {gap}
-                  {trimText(line.label, room)}
+            <>
+              <text fg={tokens["color.text"]}>
+                {pad}
+                {keys}
+                {gap}
+                {trimText(line.label, room)}
+              </text>
+              {line.notes.map((each) => (
+                <text key={each} fg={tokens["color.text"]}>
+                  {notePad}
+                  {trimText(each, width - notePad.length)}
                 </text>
-                {line.notes.map((each) => (
-                  <text key={each} fg={tokens["color.text"]}>
-                    {notePad}
-                    {trimText(each, width - notePad.length)}
-                  </text>
-                ))}
-              </>
-            ),
-          };
-        }),
-      ];
-    },
-  );
-  blocks.push({
-    key: "note",
-    kind: "other",
-    lines: 2,
-    node: (
-      <text marginTop={1} fg={tokens["color.text"]}>
-        {pad}
-        {trimText(note, width - indent)}
-      </text>
-    ),
+              ))}
+              {closes && (
+                <text marginTop={1} fg={tokens["color.text"]}>
+                  {pad}
+                  {trimText(note, width - indent)}
+                </text>
+              )}
+            </>
+          ),
+        };
+      }),
+    ];
   });
   return (
     <ScrolledList

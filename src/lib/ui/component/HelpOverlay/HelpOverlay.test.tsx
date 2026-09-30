@@ -96,6 +96,19 @@ describe("HelpOverlay", () => {
     expect(onShown).toHaveBeenLastCalledWith(3, 5);
   });
 
+  it("never cuts the closing note without counting the key line it closes", async () => {
+    const screen = await draw(
+      <HelpOverlay {...Keys.args} height={18} />,
+      40,
+      18,
+    );
+    expect(screen.lines.slice(15)).toEqual([
+      "  R        full refresh",
+      "",
+      "  ↓ 1 below",
+    ]);
+  });
+
   it("shows its end when told to start past it", async () => {
     const screen = await draw(
       <HelpOverlay {...Keys.args} height={8} first={99} />,
