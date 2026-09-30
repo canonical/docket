@@ -7,7 +7,8 @@ import makeHome from "./makeHome.js";
 /**
  * Text written on GitHub reaches docket's output, and anyone on GitHub
  * can write it. A title, a comment, a label, a check name and a branch
- * name carrying terminal control sequences are printed without them, in
+ * name carrying terminal control sequences or format characters, such
+ * as a bidirectional override, are printed without them, in
  * every format, on standard output and standard error, and every string
  * a program reads back from `json` output is free of them, a pull
  * request's base branch included. In `llm` output, which an agent reads,
@@ -37,10 +38,11 @@ const call = (args: readonly string[]) => {
 
 /**
  * Every control character but the line feed: the escape that starts a
- * sequence, its one-byte forms, and the bell that ends one.
+ * sequence, its one-byte forms, and the bell that ends one; and every
+ * format character, such as a bidirectional override.
  */
 // biome-ignore lint/suspicious/noControlCharactersInRegex: these are the characters looked for.
-const control = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]/;
+const control = /[\u0000-\u0009\u000b-\u001f\u007f-\u009f]|\p{Cf}/u;
 
 /** What the hostile label, check name and branch read as once printed. */
 const printedWords = { label: "kind=bug", check: "lint", branch: "main" };

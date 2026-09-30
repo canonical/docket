@@ -37,6 +37,14 @@ describe("sanitize", () => {
     );
   });
 
+  it("removes bidirectional overrides, isolates and marks, joiners, soft hyphens and tag characters", () => {
+    expect(
+      sanitize(
+        "a\u202eb\u2066c\u2069d\u200ee\u061cf\u200dg\u200bh\u00adi\u{e0041}j\ufeffk",
+      ),
+    ).toBe("abcdefghijk");
+  });
+
   it("puts a field on one line, each run of breaks becoming one space", () => {
     expect(sanitize("one\n\ntwo\tthree\u2028four")).toBe("one two three four");
   });
