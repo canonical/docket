@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { WaitState } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import { fitField, fitRuns, markPerson } from "../../fit/index.js";
+import { fitField, fitRuns, markPerson, measureText } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
@@ -50,11 +50,11 @@ function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
   const reference = fitField(
     row.reference,
     "line",
-    inner - Bun.stringWidth(kinds) - Bun.stringWidth(figure) - 2,
+    inner - measureText(kinds) - measureText(figure) - 2,
   );
   const words = `${reference} ${kinds}`;
   // The mark and the space after it take two cells beside the login.
-  const room = inner - Bun.stringWidth(words) - Bun.stringWidth(figure) - 4;
+  const room = inner - measureText(words) - measureText(figure) - 4;
   const author =
     row.author && room >= authorMinCells
       ? [space(1), markPerson(row.author, Math.min(loginCells, room))]
@@ -63,7 +63,7 @@ function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
   const state = "state" in row ? row.state : undefined;
   return [
     ...left,
-    space(inner - measurePieces(left) - Bun.stringWidth(figure)),
+    space(inner - measurePieces(left) - measureText(figure)),
     { text: figure, fg: state ? distanceColours[state] : text },
   ].map((piece) => ({
     ...piece,

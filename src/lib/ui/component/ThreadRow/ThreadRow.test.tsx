@@ -197,6 +197,16 @@ describe("ThreadRow", () => {
   });
 
   describe("narrower than its text", () => {
+    it("keeps the owner at the end of line 2 when the title holds characters drawn wider than Bun counts them", async () => {
+      const row = measureRow({
+        thread: thread({ title: `${"❤".repeat(12)} 👍🏽 Fix the parser` }),
+        owners: ["bob"],
+      });
+      const screen = await draw(<ThreadRow row={row} width={40} />, 40);
+      expect(screen.lines.at(1)).toBe("╹ ❤❤❤❤❤❤❤❤❤❤❤❤ 👍🏽 F…  bob");
+      expect(screen.lines.at(2)).toBe("");
+    });
+
     it("cuts the title first, then the reference in its middle, keeping its number, the kinds and the distance", async () => {
       const screen = await draw(
         <ThreadRow {...OverReviewSelected.args} width={24} />,

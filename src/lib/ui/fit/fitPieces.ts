@@ -1,4 +1,5 @@
 import { sanitize } from "../../text/index.js";
+import measureText from "./measureText.js";
 import trimText from "./trimText.js";
 
 /**
@@ -17,7 +18,7 @@ export default function fitPieces<Piece extends { readonly text: string }>(
   for (const piece of pieces) {
     if (room === 0) break;
     const text = sanitize(piece.text);
-    const cells = Bun.stringWidth(text);
+    const cells = measureText(text);
     if (cells > room) {
       fitted.push({ ...piece, text: trimText(text, room) });
       break;

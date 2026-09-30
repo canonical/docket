@@ -9,7 +9,7 @@ import { tokens } from "../../../tokens/index.js";
 import type { Message, Thread, ThreadSummary } from "../../../waits/index.js";
 import { loginCells } from "../../constants.js";
 import describeClock from "../../describeClock.js";
-import { markPerson } from "../../fit/index.js";
+import { markPerson, measureText } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type {
   DetailLine,
@@ -85,7 +85,7 @@ const listOwners = ({ owner, owners }: WaitRow): Owner[] =>
 function describeCutOwners(row: WaitRow): DetailLine[] {
   const owners = listOwners(row);
   const cut = owners.some(
-    ({ text }) => !text.includes("/") && Bun.stringWidth(text) > loginCells,
+    ({ text }) => !text.includes("/") && measureText(text) > loginCells,
   );
   return cut ? [wrapped(plain("owner "), ...listPeople(owners))] : [];
 }

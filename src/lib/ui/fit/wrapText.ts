@@ -1,4 +1,5 @@
 import { sanitize } from "../../text/index.js";
+import measureText from "./measureText.js";
 import trimText from "./trimText.js";
 
 /** A space that joins two words so no line breaks between them. */
@@ -11,7 +12,7 @@ const joiner = " ";
 function splitWord(word: string, width: number): string[] {
   const pieces: string[] = [];
   let rest = word;
-  while (Bun.stringWidth(rest) > width) {
+  while (measureText(rest) > width) {
     const piece = trimText(rest, width + 1).slice(0, -1);
     pieces.push(piece);
     rest = rest.slice(piece.length);
@@ -34,8 +35,7 @@ export default function wrapText(text: string, width: number): string[] {
     .flatMap((word) => splitWord(word, width));
   for (const word of words) {
     if (line === "") line = word;
-    else if (Bun.stringWidth(`${line} ${word}`) <= width)
-      line = `${line} ${word}`;
+    else if (measureText(`${line} ${word}`) <= width) line = `${line} ${word}`;
     else {
       lines.push(line);
       line = word;

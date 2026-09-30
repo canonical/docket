@@ -25,3 +25,6 @@ export const fitRules: Readonly<Record<FieldKind, FitRule>> = {
   recovery: { line: "cutEnd", event: "cutEnd", block: "wrap" },
   figure: { line: "whole", event: "whole", block: "whole" },
 };
+
+/** Splits text into what a reader sees as one character each. */
+export const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });

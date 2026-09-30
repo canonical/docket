@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { RepoStage } from "../../../cache/index.js";
 import { tokens } from "../../../tokens/index.js";
-import { fitField, fitRuns } from "../../fit/index.js";
+import { fitField, fitRuns, measureText } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import describeStage from "./describeStage.js";
 import type { RefreshStagesProps } from "./types.js";
@@ -50,8 +50,7 @@ const RefreshStages = ({
     ),
     stage,
   }));
-  const column =
-    Math.max(...shown.map(({ name }) => Bun.stringWidth(name))) + 1;
+  const column = Math.max(...shown.map(({ name }) => measureText(name))) + 1;
   const room = Math.max(1, width - column);
   return (
     <box flexDirection="column">
@@ -62,7 +61,7 @@ const RefreshStages = ({
           <text key={`${repo}:${place}`}>
             <span fg={tokens["color.text"]}>
               {place === 0
-                ? `${name}${" ".repeat(column - Bun.stringWidth(name))}`
+                ? `${name}${" ".repeat(column - measureText(name))}`
                 : " ".repeat(column)}
             </span>
             {runs.map(({ text, fg }, run) => (

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import { fitRuns } from "../../fit/index.js";
+import { fitRuns, measureText } from "../../fit/index.js";
 import type { KeyCommand } from "../../hooks/index.js";
 import type { KeyBarProps } from "./types.js";
 
@@ -22,7 +22,7 @@ const describeHints = (commands: readonly KeyCommand[]): Piece[] =>
   ]);
 
 const measure = (pieces: readonly Piece[]) =>
-  pieces.reduce((cells, { text }) => cells + Bun.stringWidth(text), 0);
+  pieces.reduce((cells, { text }) => cells + measureText(text), 0);
 
 /**
  * The last line of the pane: a reminder of the main keys, fitted to 40

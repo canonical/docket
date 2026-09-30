@@ -1,4 +1,5 @@
 import { sanitize } from "../../text/index.js";
+import measureText from "./measureText.js";
 
 const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
 
@@ -16,12 +17,12 @@ const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
  */
 export default function trimText(text: string, width: number): string {
   const clean = sanitize(text);
-  if (Bun.stringWidth(clean) <= width) return clean;
+  if (measureText(clean) <= width) return clean;
   if (width <= 0) return "";
   let kept = "";
   let used = 0;
   for (const { segment } of graphemes.segment(clean)) {
-    const cells = Bun.stringWidth(segment);
+    const cells = measureText(segment);
     if (used + cells > width - 1) break;
     kept += segment;
     used += cells;

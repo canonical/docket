@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import { fitField, fitRuns, markPerson } from "../../fit/index.js";
+import { fitField, fitRuns, markPerson, measureText } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
@@ -29,7 +29,7 @@ function describeWhat(
     const failed = `${tokens["glyph.failed"]} `;
     return [
       {
-        text: `${failed}${fitField(action, "event", room - Bun.stringWidth(failed))}`,
+        text: `${failed}${fitField(action, "event", room - measureText(failed))}`,
         fg: tokens["color.text.error"],
       },
     ];
@@ -63,7 +63,7 @@ const EventLine = ({ line, stacked, width }: EventLineProps): ReactNode => {
     text: line.age.text,
     fg: quiet ? tokens["color.text.muted"] : tokens["color.text"],
   };
-  const room = width - indent - Bun.stringWidth(age.text) - 1;
+  const room = width - indent - measureText(age.text) - 1;
   const what = fitRuns(describeWhat(line, room), Math.max(0, room));
   const gap = " ".repeat(Math.max(1, room + 1 - measurePieces(what)));
   return (

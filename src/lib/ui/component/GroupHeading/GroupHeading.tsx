@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import { markPerson } from "../../fit/index.js";
+import { markPerson, measureText } from "../../fit/index.js";
 import type { GroupHeadingProps } from "./types.js";
 
 /**
@@ -23,7 +23,7 @@ const GroupHeading = ({ heading, width }: GroupHeadingProps): ReactNode => {
   // mark and its space come before the login.
   const mark = "group" in heading ? 2 : 0;
   const name = markPerson(heading, width - 2 - mark);
-  const rule = width - Bun.stringWidth(name.text) - 1;
+  const rule = width - measureText(name.text) - 1;
   return (
     <text>
       <span fg={name.fg}>{name.text}</span>

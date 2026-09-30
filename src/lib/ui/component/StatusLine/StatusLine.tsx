@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import { fitField, fitRuns, markPerson } from "../../fit/index.js";
+import { fitField, fitRuns, markPerson, measureText } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import describeDetails from "./describeDetails.js";
@@ -82,7 +82,7 @@ const StatusLine = ({
     text: fitField(
       {
         text:
-          message.shorter !== undefined && Bun.stringWidth(message.text) > width
+          message.shorter !== undefined && measureText(message.text) > width
             ? message.shorter
             : message.text,
         kind: "words",
@@ -100,7 +100,7 @@ const StatusLine = ({
     details,
   );
   // At least one cell apart, or the right side is left out.
-  const gap = width - measurePieces(runs) - Bun.stringWidth(right);
+  const gap = width - measurePieces(runs) - measureText(right);
   return (
     <text>
       {runs.map(({ text, fg }, run) => (

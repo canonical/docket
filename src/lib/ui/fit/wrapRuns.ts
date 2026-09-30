@@ -1,4 +1,5 @@
 import { sanitize } from "../../text/index.js";
+import measureText from "./measureText.js";
 
 /** A space that joins two words so no line breaks between them. */
 const joiner = " ";
@@ -18,7 +19,7 @@ interface Word {
 }
 
 const measure = (fragments: readonly Fragment[]) =>
-  fragments.reduce((cells, { text }) => cells + Bun.stringWidth(text), 0);
+  fragments.reduce((cells, { text }) => cells + measureText(text), 0);
 
 /**
  * The words of `runs`, split at each space, none after a space that ends
@@ -54,7 +55,7 @@ function splitWide(word: Word, width: number): Word[] {
   let used = 0;
   for (const { run, text } of word.fragments) {
     for (const { segment } of graphemes.segment(text)) {
-      const cells = Bun.stringWidth(segment);
+      const cells = measureText(segment);
       if (used > 0 && used + cells > width) {
         pieces.push([]);
         used = 0;

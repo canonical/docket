@@ -1,5 +1,6 @@
 import { sanitize } from "../../text/index.js";
 import fitPieces from "./fitPieces.js";
+import measureText from "./measureText.js";
 
 /**
  * The fewest cells a marked person is drawn in: the mark, a space, and
@@ -30,7 +31,7 @@ export default function fitRuns<
   if (
     shortened &&
     kept[end].marked &&
-    Bun.stringWidth(kept[end].text) < markedCells
+    measureText(kept[end].text) < markedCells
   ) {
     kept.pop();
   }

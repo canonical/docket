@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import { fitField } from "../../fit/index.js";
+import { fitField, measureText } from "../../fit/index.js";
 import type { PaneHeaderProps } from "./types.js";
 
 /**
@@ -26,15 +26,12 @@ const PaneHeader = ({ title, address, width }: PaneHeaderProps): ReactNode => {
   // A space at least between the mode and the address.
   while (
     parts.length > 0 &&
-    Bun.stringWidth(left) + 1 + Bun.stringWidth(parts.join(separator)) > width
+    measureText(left) + 1 + measureText(parts.join(separator)) > width
   ) {
     parts.shift();
   }
   const right = parts.join(separator);
-  const gap = Math.max(
-    0,
-    width - Bun.stringWidth(left) - Bun.stringWidth(right),
-  );
+  const gap = Math.max(0, width - measureText(left) - measureText(right));
   return (
     <text fg={tokens["color.text"]}>
       {left}

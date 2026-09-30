@@ -1,4 +1,5 @@
 import { sanitize } from "../../text/index.js";
+import measureText from "./measureText.js";
 
 const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
 
@@ -7,7 +8,7 @@ function takeCells(segments: readonly string[], cells: number): string[] {
   const kept: string[] = [];
   let used = 0;
   for (const segment of segments) {
-    const width = Bun.stringWidth(segment);
+    const width = measureText(segment);
     if (used + width > cells) break;
     kept.push(segment);
     used += width;
@@ -24,11 +25,11 @@ function takeCells(segments: readonly string[], cells: number): string[] {
  */
 export default function cutMiddle(text: string, width: number): string {
   const clean = sanitize(text);
-  if (Bun.stringWidth(clean) <= width) return clean;
+  if (measureText(clean) <= width) return clean;
   if (width <= 0) return "";
   const segments = [...graphemes.segment(clean)].map(({ segment }) => segment);
   const room = width - 1;
   const tail = takeCells([...segments].reverse(), Math.ceil(room / 2));
-  const head = takeCells(segments, room - Bun.stringWidth(tail.join("")));
+  const head = takeCells(segments, room - measureText(tail.join("")));
   return `${head.join("")}…${tail.reverse().join("")}`;
 }

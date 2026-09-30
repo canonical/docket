@@ -1,6 +1,6 @@
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import { fitField, markPerson } from "../../fit/index.js";
+import { fitField, markPerson, measureText } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import type { ThreadRowProps } from "./types.js";
@@ -104,7 +104,7 @@ export default function describeTitleLines(
   }
   const titles = fitField(row.title, "block", inner);
   // The cells of the last line: a wrapped title takes one line at least.
-  const lastCells = titles.reduce((_, title) => Bun.stringWidth(title), 0);
+  const lastCells = titles.reduce((_, title) => measureText(title), 0);
   if (right.length > 0 && lastCells + gutter + rightCells > inner) {
     return [
       ...titles.map((title) => [italic(title)]),

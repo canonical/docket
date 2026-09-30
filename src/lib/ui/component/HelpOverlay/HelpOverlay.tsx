@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import { fitField } from "../../fit/index.js";
+import { fitField, measureText } from "../../fit/index.js";
 import type { KeyCommand } from "../../hooks/index.js";
 import { GroupHeading } from "../GroupHeading/index.js";
 import type { HelpOverlayProps } from "./types.js";
@@ -54,10 +54,8 @@ const HelpOverlay = ({
               "line",
               width - indent,
             );
-            const gap = " ".repeat(
-              Math.max(1, keyColumn - Bun.stringWidth(keys)),
-            );
-            const column = indent + Bun.stringWidth(keys) + gap.length;
+            const gap = " ".repeat(Math.max(1, keyColumn - measureText(keys)));
+            const column = indent + measureText(keys) + gap.length;
             // The label wraps in its own column, and each note under it.
             const [first, ...rest] = fitField(
               { text: line.label, kind: "words" },
