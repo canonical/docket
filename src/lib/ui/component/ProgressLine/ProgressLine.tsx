@@ -8,7 +8,8 @@ const barCells = 29;
 /**
  * The bar shown in the list area on a first run, under `refresh in
  * progress…`: `██████████████░░░░░░░░░░░░ 50/89 pages`, the pages read across
- * the repositories begun, so the total grows as each begins.
+ * the repositories begun, so the total grows as each begins. The cells
+ * still to go are dimmed, as context.
  *
  * `import { ProgressLine } from "../lib/ui/index.js";`
  *
@@ -28,7 +29,10 @@ const ProgressLine = ({
   return (
     <text fg={tokens["color.text"]}>
       {tokens["glyph.progress.filled"].repeat(filled)}
-      {tokens["glyph.progress.unfilled"].repeat(cells - filled)} {fraction}
+      <span fg={tokens["color.text.muted"]}>
+        {tokens["glyph.progress.unfilled"].repeat(cells - filled)}
+      </span>
+      {` ${fraction}`}
     </text>
   );
 };
