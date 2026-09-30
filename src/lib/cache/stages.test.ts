@@ -155,6 +155,19 @@ describe("the stages of createCache", () => {
     expect(seen).toEqual([undefined, undefined]);
   });
 
+  it("hands out the threads once a refresh ends, not as each repository arrives", async () => {
+    const cache = open(fakeProvider({ snapshot }));
+    await cache.refresh();
+    later(2 * minute);
+    const before = cache.threads();
+    const lists = new Set<unknown>();
+    cache.subscribe(() => lists.add(cache.threads()));
+    await cache.refresh();
+    expect(lists.size).toBe(2);
+    expect(lists.has(before)).toBe(true);
+    expect(cache.threads()).not.toBe(before);
+  });
+
   it("keeps each repository paused while the budget is low and it needs points to go on", async () => {
     const cache = open(
       fakeProvider({
@@ -178,7 +191,10 @@ describe("the stages of createCache", () => {
     later(2 * minute);
     const first: unknown[] = [];
     cache.subscribe(() => {
-      if (first.length === 0) first.push(cache.status());
+      // The threads thrown away are handed out first, then the run.
+      if (first.length === 0 && cache.status().refreshing) {
+        first.push(cache.status());
+      }
     });
     await cache.fullRefresh();
     expect(first.at(0)).toMatchObject({
