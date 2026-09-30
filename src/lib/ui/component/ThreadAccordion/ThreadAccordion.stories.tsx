@@ -5,6 +5,7 @@ import {
   pendingDetail,
   sharedCloseDetail,
   soonReplyDetail,
+  timedOut,
 } from "../../../../testing/details.js";
 import { teamSettings } from "../../../../testing/facts.js";
 import {
@@ -110,12 +111,15 @@ export const PausedUnheld: Story<ThreadAccordionProps> = {
   },
 };
 
-/** Reading the details failed: the reason under what the snapshot showed. */
+/**
+ * Reading the details failed: the reason and its recovery, wrapped, under
+ * what the snapshot showed.
+ */
 export const Failed: Story<ThreadAccordionProps> = {
   args: {
     ...reading,
     row: overReview,
-    detail: failDetail(new Error("GitHub timed out.")),
+    detail: failDetail(timedOut),
   },
 };
 

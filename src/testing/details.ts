@@ -4,7 +4,7 @@
  * tests. It imports nothing from vitest.
  */
 
-import type { ThreadDetail } from "../lib/provider/index.js";
+import type { ProviderError, ThreadDetail } from "../lib/provider/index.js";
 import { alice, at, bob, dave } from "./facts.js";
 
 /**
@@ -102,3 +102,17 @@ export function pauseDetail(
     partial: true,
   };
 }
+
+/**
+ * GitHub's failure when it gives no answer in time, in the words and with
+ * the recovery the GitHub provider gives it.
+ */
+export const timedOut: ProviderError = Object.assign(
+  new Error("GitHub gave no answer within 30 seconds."),
+  {
+    code: "GITHUB_TIMED_OUT" as const,
+    recovery:
+      "check the network connection and https://www.githubstatus.com, then refresh",
+    step: "check the network connection and https://www.githubstatus.com",
+  },
+);

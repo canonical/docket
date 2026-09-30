@@ -13,6 +13,7 @@ import { fitField } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import { Margin } from "../Margin/index.js";
+import { wrapNotice } from "../Notice/index.js";
 import describeDetail, { type Reading } from "./describeDetail.js";
 import fitAccordion from "./fitAccordion.js";
 import type { ShownDetail, ThreadAccordionProps } from "./types.js";
@@ -143,10 +144,11 @@ interface BoundaryState {
 }
 
 /**
- * Adds the reason under what the snapshot shows when reading the details
+ * Adds the reason, and the recovery step when the failure gives one,
+ * each wrapped, under what the snapshot shows when reading the details
  * fails, and forgets the failure once the accordion is given other
  * details, so a later read of the same thread gets its own chance. A
- * thread the snapshot holds nothing of shows the reason alone.
+ * thread the snapshot holds nothing of shows them alone.
  */
 class Boundary extends Component<BoundaryProps, BoundaryState> {
   override state: BoundaryState = { detail: this.props.detail };
@@ -172,24 +174,39 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
       failure instanceof Error
         ? failure.message.replace(/\.$/, "")
         : String(failure);
-    const failed: Piece = {
-      text: fitField(
-        { text: `${tokens["glyph.failed"]} failed: ${reason}`, kind: "reason" },
-        "line",
-        room,
-      ),
-      fg: tokens["color.text.error"],
-    };
+    const recovery =
+      failure instanceof Error && "recovery" in failure
+        ? failure.recovery
+        : undefined;
+    const notice = wrapNotice(
+      `failed: ${reason}`,
+      typeof recovery === "string" ? recovery : "",
+      room,
+    );
+    // The reason and its recovery take their lines first; what the
+    // snapshot shows fills the lines they leave.
+    const failed = [
+      ...notice.reason.map((text) => ({
+        text,
+        fg: tokens["color.text.error"],
+      })),
+      ...(typeof recovery === "string" ? notice.recovery : []).map((text) => ({
+        text,
+        fg: tokens["color.text"],
+      })),
+    ]
+      .slice(0, accordionMaxLines)
+      .map((piece) => [piece]);
     const shown =
       "wait" in snapshot
         ? fitAccordion(
             describeDetail(snapshot, undefined, reading),
             room,
-            accordionMaxLines - 1,
+            accordionMaxLines - failed.length,
           )
         : [];
     return (
-      <Lines lines={[...shown, [failed]]} stroke={stroke} onLines={onLines} />
+      <Lines lines={[...shown, ...failed]} stroke={stroke} onLines={onLines} />
     );
   }
 }
@@ -204,11 +221,11 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
  * `…` and grows in place when they arrive, and nothing blanks or changes
  * height meanwhile. It reads its details from GitHub, so a slow read
  * never holds up moving the selection, and a failed one adds its reason
- * as one line under what the snapshot showed. While reading is paused
+ * and its `Recovery:` line, each wrapped, under what the snapshot showed. While reading is paused
  * it shows what the snapshot holds, as it does while a read is under way,
  * and for a thread the snapshot holds nothing of, `paused · resumes 13:00`,
  * dimmed. Details that make it taller than the snapshot's lines, such as
- * a closed thread's close body or a failed read's line, are told through
+ * a closed thread's close body or a failed read's lines, are told through
  * `onLines`, so the list can make room. The thread's content wears no
  * state mark: docket's own words about it are dimmed, and each login
  * carries its group's mark and hue.

@@ -151,29 +151,34 @@ describe("ThreadAccordion", () => {
       );
     });
 
-    it("gives the reason in the error colour on one line under what the snapshot showed, when reading fails", async () => {
+    it("gives the reason in the error colour, then its recovery, each wrapped and first to take the eight lines, under what the snapshot showed, when reading fails", async () => {
       const screen = await open(Failed.args);
-      expect(readText(screen).slice(0, 7)).toEqual([
-        "asked by ● alice 3d ago",
-        "1 push since · …",
-        "✗ checks: …",
+      expect(readText(screen).slice(0, 9)).toEqual([
+        "asked by ● alice 3d ago…",
         "example stack 3 · 2 of 3 · → main",
         "…",
-        "✗ failed: GitHub timed out",
+        "✗ failed: GitHub gave no answer within",
+        "30 seconds",
+        "Recovery: check the network connection",
+        "and https://www.githubstatus.com, then",
+        "refresh",
         "",
       ]);
       expect(screen.look("✗ failed")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("30 seconds")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("Recovery:")?.fg).toBe(tokens["color.text"]);
     });
 
-    it("gives the reason alone for a thread the snapshot holds nothing of, cut to one line", async () => {
+    it("gives the reason alone, wrapped, for a thread the snapshot holds nothing of, and no recovery when the failure gives none", async () => {
       const screen = await open({
         ...RestingLoading.args,
         detail: failDetail(
           new Error("GitHub gave no answer within 10 seconds."),
         ),
       });
-      expect(readText(screen).slice(0, 2)).toEqual([
-        "✗ failed: GitHub gave no answer withi…",
+      expect(readText(screen).slice(0, 3)).toEqual([
+        "✗ failed: GitHub gave no answer within",
+        "10 seconds",
         "",
       ]);
     });
@@ -263,7 +268,9 @@ describe("ThreadAccordion", () => {
       return <ThreadAccordion {...Failed.args} detail={detail} />;
     };
     const screen = await drawSuspending(<Harness />, 40, 10);
-    expect(readText(screen).at(5)).toBe("✗ failed: GitHub timed out");
+    expect(readText(screen).at(3)).toBe(
+      "✗ failed: GitHub gave no answer within",
+    );
     const again = await screen.redraw(() =>
       show(Promise.resolve(overReviewDetail)),
     );
