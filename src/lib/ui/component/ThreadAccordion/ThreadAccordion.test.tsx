@@ -210,6 +210,23 @@ describe("ThreadAccordion", () => {
   });
 
   describe("fitting eight lines", () => {
+    it("never passes eight lines when a stacked pull request's read fails with a long reason", async () => {
+      const failure = Object.assign(
+        new Error(
+          `GitHub answered with an error: ${"the connection was reset ".repeat(6)}`,
+        ),
+        { recovery: "check the network connection, then refresh" },
+      );
+      const screen = await open(
+        { ...Long.args, detail: failDetail(failure) },
+        40,
+      );
+      expect(
+        readText(screen).findIndex((line) => line === ""),
+      ).toBeLessThanOrEqual(8);
+      expect(screen.lines.at(7)?.startsWith("╹")).toBe(true);
+    });
+
     it("ends the last line it keeps with …, each of its runs in its own colour", async () => {
       const screen = await open(Long.args);
       expect(readText(screen).at(2)).toBe("n, example-org/parser-team…");

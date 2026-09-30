@@ -19,6 +19,33 @@ const read = (lines: ReturnType<typeof fitAccordion>) =>
   lines.map((line) => line.map(({ text }) => text).join(""));
 
 describe("fitAccordion", () => {
+  it("never draws more lines than it is given, the stack's lines cut with … when they alone pass them", () => {
+    const text = {
+      body: [wrapped("body")],
+      stack: [wrapped("a b c d e f g h i j")],
+    };
+    expect(read(fitAccordion(text, 1, 8))).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "…",
+    ]);
+    expect(fitAccordion(text, 1, 0)).toEqual([]);
+    expect(fitAccordion(text, 1, -2)).toEqual([]);
+  });
+
+  it("ends the stack's last line with … when the stack leaves the body no line", () => {
+    const text = {
+      body: [wrapped("body")],
+      stack: [trimmed("stack"), trimmed("above")],
+    };
+    expect(read(fitAccordion(text, 10, 2))).toEqual(["stack", "above…"]);
+  });
+
   it("wraps a wrapped line over as many lines as it needs and trims a trimmed one to one", () => {
     const text = {
       body: [trimmed("one two three"), wrapped("one two three")],
