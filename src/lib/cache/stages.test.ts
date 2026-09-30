@@ -195,7 +195,8 @@ describe("the stages of createCache", () => {
       await cache.refresh();
       counts.push(told);
     }
-    expect(counts[1]).toBe(counts[0]);
+    expect(counts).toHaveLength(2);
+    expect(counts.at(1)).toBe(counts.at(0));
   });
 
   it("runs a first refresh that may not spend as a background one, never a full refresh", async () => {

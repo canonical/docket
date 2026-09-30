@@ -5,7 +5,7 @@ import type { CacheStatus } from "../lib/cache/index.js";
  * not the rate limit's and not under a pause, that no repository's
  * `failed` stage names, so it stopped a refresh before any fetch.
  */
-export default function findEarlierRun({
+export default function isEarlierRun({
   failure,
   paused,
   stages,

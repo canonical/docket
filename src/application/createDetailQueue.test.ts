@@ -384,7 +384,7 @@ describe("createDetailQueue's count of details", () => {
  * oldest first: with the details found for the threads `settle` keeps,
  * or failing with `reason`.
  */
-const held = () => {
+const holdReadings = () => {
   const pending: {
     readonly threads: readonly (typeof one)[];
     readonly resolve: (reading: DetailReading) => void;
@@ -418,7 +418,7 @@ const held = () => {
 };
 
 /** Two requests under way: `one` and `two` read ahead, then `four` alone. */
-async function overlap(reader: ReturnType<typeof held>["reader"]) {
+async function overlap(reader: ReturnType<typeof holdReadings>["reader"]) {
   const queue = open(reader);
   queue.request(wanted(one, two), one, 0);
   await vi.advanceTimersByTimeAsync(0);
@@ -430,7 +430,7 @@ async function overlap(reader: ReturnType<typeof held>["reader"]) {
 
 describe("createDetailQueue's count of details while requests overlap", () => {
   it("stops counting as asked a thread the reader left out", async () => {
-    const { reader, answer } = held();
+    const { reader, answer } = holdReadings();
     const queue = await overlap(reader);
     answer((each) => each.number === 1);
     await vi.advanceTimersByTimeAsync(0);
@@ -438,7 +438,7 @@ describe("createDetailQueue's count of details while requests overlap", () => {
   });
 
   it("counts as answered each thread of a request that failed", async () => {
-    const { reader, fail } = held();
+    const { reader, fail } = holdReadings();
     const queue = await overlap(reader);
     fail(new Error("offline"));
     await vi.advanceTimersByTimeAsync(0);
@@ -446,7 +446,7 @@ describe("createDetailQueue's count of details while requests overlap", () => {
   });
 
   it("counts again as unread a thread asked for at a new version after its answer", async () => {
-    const { reader, answer } = held();
+    const { reader, answer } = holdReadings();
     const queue = await overlap(reader);
     answer(() => true);
     await vi.advanceTimersByTimeAsync(0);

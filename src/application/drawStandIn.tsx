@@ -6,7 +6,7 @@ import { EmptyState, Notice } from "../lib/ui/index.js";
 import { standInIndent } from "./constants.js";
 import describeHold from "./describeHold.js";
 import drawFirstRun, { type FirstRunProps } from "./drawFirstRun.js";
-import findEarlierRun from "./findEarlierRun.js";
+import isEarlierRun from "./isEarlierRun.js";
 import type { TerminalMode } from "./types.js";
 import type { UseActivityResult } from "./useActivity.js";
 
@@ -82,9 +82,7 @@ export default function drawStandIn({
     // wait for another process's fetch, came before any fetch, so the
     // lines are an earlier run's, and its own reason and step stand in.
     const known =
-      status !== undefined &&
-      status.stages.length > 0 &&
-      !findEarlierRun(status);
+      status !== undefined && status.stages.length > 0 && !isEarlierRun(status);
     const hold = !known && status && describeHold(status, timezone);
     return hold ? (
       <Notice
