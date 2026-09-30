@@ -1,13 +1,14 @@
 import type { ThreadEvent } from "../events/index.js";
 import type { Account } from "../people/index.js";
 import type { ThreadKind, ThreadSummary } from "../waits/index.js";
-import { mergeCloseMargin } from "./constants.js";
+import { endingLabels, mergeCloseMargin } from "./constants.js";
 import countCommits from "./countCommits.js";
 import fetchLists from "./fetchLists.js";
 import fetchPushes from "./fetchPushes.js";
 import fragments from "./fragments.js";
 import readAccount from "./readAccount.js";
 import readCheck from "./readCheck.js";
+import readOutcome from "./readOutcome.js";
 import readStackEntry from "./readStackEntry.js";
 import splitRepo from "./splitRepo.js";
 import type {
@@ -23,7 +24,7 @@ const { account, check, stackEntry, pageInfo, order } = fragments;
 const actor = `actor { ${account} } createdAt`;
 const issueItems = `__typename
   ... on IssueComment { author { ${account} } createdAt }
-  ... on ClosedEvent { ${actor} }
+  ... on ClosedEvent { ${actor} stateReason }
   ... on ReopenedEvent { ${actor} }
   ... on AssignedEvent { ${actor} assignee { ... on User { login } ... on Bot { login } } }
   ... on LabeledEvent { ${actor} label { name } }`;
@@ -80,6 +81,7 @@ interface ItemNode {
   readonly actor?: ActorNode;
   readonly createdAt?: string;
   readonly submittedAt?: string | null;
+  readonly stateReason?: string | null;
   readonly assignee?: { readonly login?: string } | null;
   readonly label?: { readonly name: string } | null;
 }
@@ -153,8 +155,11 @@ function readItem(
       return item.submittedAt ? { ...facts, kind: "reviewed" } : undefined;
     case "ReviewRequestedEvent":
       return { ...facts, kind: "reviewRequested" };
-    case "ClosedEvent":
-      return { ...facts, kind: "closed" };
+    case "ClosedEvent": {
+      const outcome = readOutcome(thread.kind, item.stateReason);
+      const ending = { outcome, label: endingLabels[outcome] };
+      return { ...facts, kind: "closed", ending };
+    }
     case "MergedEvent":
       return { ...facts, kind: "merged" };
     case "ReopenedEvent":

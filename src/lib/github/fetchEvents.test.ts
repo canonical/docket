@@ -41,7 +41,10 @@ const lines = (found: readonly ThreadEvent[]) =>
       kind,
       actor.type === "bot" ? `${actor.login} (bot)` : actor.login,
       at.toISOString().slice(11, 16),
-      ...Object.values(detail),
+      // A close names its ending by the words shown for it.
+      ...Object.values(detail).map((value) =>
+        typeof value === "object" && "label" in value ? value.label : value,
+      ),
     ];
   });
 
@@ -118,7 +121,10 @@ describe("fetchEvents", () => {
                   label: { name: "kind=bug" },
                 }),
                 item("LabeledEvent", "2026-09-22T09:21:00Z", { label: null }),
-                item("ClosedEvent", "2026-09-22T10:00:00Z", { actor: null }),
+                item("ClosedEvent", "2026-09-22T10:00:00Z", {
+                  actor: null,
+                  stateReason: "NOT_PLANNED",
+                }),
                 item("ReopenedEvent", "2026-09-22T11:00:00Z"),
               ],
             },
@@ -135,7 +141,7 @@ describe("fetchEvents", () => {
       [1, "commented", "bob", "09:00"],
       [1, "assigned", "alice", "09:10", "bob"],
       [1, "labelled", "alice", "09:20", "kind=bug"],
-      [1, "closed", "ghost", "10:00"],
+      [1, "closed", "ghost", "10:00", "closed as not planned"],
       [1, "reopened", "alice", "11:00"],
     ]);
     expect(github.sent.at(0)?.body?.variables).toMatchObject({
@@ -255,15 +261,15 @@ describe("fetchEvents", () => {
       ],
     );
     expect(await endings()).toEqual([
-      [2, "closed", "bob", "11:00"],
+      [2, "closed", "bob", "11:00", "closed"],
       [2, "reopened", "alice", "11:00"],
       [2, "merged", "alice", "11:00"],
-      [3, "closed", "alice", "11:00"],
-      [4, "closed", "bob", "10:59"],
+      [3, "closed", "alice", "11:00", "closed"],
+      [4, "closed", "bob", "10:59", "closed"],
       [4, "merged", "alice", "11:00"],
       [5, "merged", "alice", "11:00"],
-      [5, "closed", "bob", "11:00"],
-      [6, "closed", "bob", "11:00"],
+      [5, "closed", "bob", "11:00", "closed"],
+      [6, "closed", "bob", "11:00", "closed"],
       [6, "reopened", "alice", "11:00"],
       [6, "merged", "alice", "11:00"],
     ]);

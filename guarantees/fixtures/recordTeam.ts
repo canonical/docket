@@ -20,7 +20,9 @@ const docs = "example-org/example-docs";
  * request dave opened from a fork, assigned to alice, with bob asked for
  * a review, failing checks and second in a stack of three; a pull request
  * bob opened and alice merged on Sunday; an issue carol opened on Friday;
- * and a documentation issue alice opened and a bot labelled. `words` gives the text written on GitHub, and `tag` the
+ * a documentation issue alice opened and a bot labelled; and two
+ * documentation issues closed since, one as completed and one as not
+ * planned. `words` gives the text written on GitHub, and `tag` the
  * entity tag the check for changes answers with, and `crowd` how many more
  * pull requests like dave's wait on bob's review.
  */
@@ -145,6 +147,7 @@ export default function recordTeam(
                     __typename: "ClosedEvent",
                     actor: buildUser("alice"),
                     createdAt: "2026-09-27T13:00:01Z",
+                    stateReason: "COMPLETED",
                   },
                 ],
               },
@@ -198,6 +201,24 @@ export default function recordTeam(
         repository: {
           issues: buildPage([
             {
+              number: 3,
+              url: `https://github.com/${docs}/issues/3`,
+              title: "Broken link in the footer",
+              createdAt: "2026-08-10T08:00:00Z",
+              updatedAt: "2026-09-28T08:30:00Z",
+              author: buildUser("carol"),
+              timelineItems: {
+                nodes: [
+                  {
+                    __typename: "ClosedEvent",
+                    actor: buildUser("bob"),
+                    createdAt: "2026-09-28T08:30:00Z",
+                    stateReason: "COMPLETED",
+                  },
+                ],
+              },
+            },
+            {
               ...buildOpened(tokens, tokens.createdAt),
               updatedAt: tokens.updatedAt,
               author: buildUser("alice"),
@@ -208,6 +229,24 @@ export default function recordTeam(
                     actor: buildBot("example-sync"),
                     createdAt: "2026-09-27T18:00:00Z",
                     label: { name: "kind=docs" },
+                  },
+                ],
+              },
+            },
+            {
+              number: 5,
+              url: `https://github.com/${docs}/issues/5`,
+              title: "Dark mode for the docs",
+              createdAt: "2026-09-24T09:00:00Z",
+              updatedAt: "2026-09-25T10:00:00Z",
+              author: buildUser("dave"),
+              timelineItems: {
+                nodes: [
+                  {
+                    __typename: "ClosedEvent",
+                    actor: buildUser("alice"),
+                    createdAt: "2026-09-25T10:00:00Z",
+                    stateReason: "NOT_PLANNED",
                   },
                 ],
               },

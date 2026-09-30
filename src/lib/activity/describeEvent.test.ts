@@ -15,7 +15,6 @@ describe("describeEvent", () => {
       "opened",
       "commented",
       "reviewed",
-      "closed",
       "merged",
       "reopened",
     ] as const;
@@ -23,9 +22,27 @@ describe("describeEvent", () => {
       "alice opened",
       "alice commented",
       "alice reviewed",
-      "alice closed",
       "alice merged",
       "alice reopened",
+    ]);
+  });
+
+  it("names a close in the provider's words", () => {
+    const closes: ThreadEvent[] = [
+      {
+        ...facts,
+        kind: "closed",
+        ending: { outcome: "completed", label: "closed as completed" },
+      },
+      {
+        ...facts,
+        kind: "closed",
+        ending: { outcome: "closed", label: "closed" },
+      },
+    ];
+    expect(closes.map((event) => describeEvent(event))).toEqual([
+      "alice closed as completed",
+      "alice closed",
     ]);
   });
 
