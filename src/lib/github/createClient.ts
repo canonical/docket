@@ -234,6 +234,6 @@ export default function createClient(
         throw describeFailure(error, host);
       }
     },
-    lastBudgets: () => budgets,
+    readBudgets: () => budgets,
   };
 }

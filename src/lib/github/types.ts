@@ -51,7 +51,7 @@ export interface Client {
    * The budgets the latest answer of each kind reported, whatever its
    * status, read from its headers and, for GraphQL, its rate figures.
    */
-  lastBudgets(): Budgets;
+  readBudgets(): Budgets;
 }
 
 /** An account as GraphQL gives it; `null` when the account was deleted. */

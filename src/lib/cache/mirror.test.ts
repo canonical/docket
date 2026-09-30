@@ -43,7 +43,7 @@ const makeHearingProvider = (overrides: Partial<Provider> = {}) => {
   const answers = { heard: {} as Budgets };
   const provider = fakeProvider({
     snapshot: vi.fn(async () => ({ threads: [thread()], cursor: null })),
-    budget: () => answers.heard,
+    readBudgets: () => answers.heard,
     ...overrides,
   });
   return { provider, answers };
@@ -59,7 +59,7 @@ describe("the budget mirror of createCache", () => {
     await open(provider).refresh();
     const other = open(makeHearingProvider().provider);
     await other.load();
-    expect(other.budget()).toEqual({
+    expect(other.readBudgets()).toEqual({
       graphql: makeBudget(900),
       rest: makeBudget(4000),
     });
@@ -76,7 +76,7 @@ describe("the budget mirror of createCache", () => {
       rest: makeBudget(4999, nextHour),
     };
     await other.load();
-    expect(other.budget()).toEqual({
+    expect(other.readBudgets()).toEqual({
       graphql: makeBudget(3000),
       rest: makeBudget(4999, nextHour),
     });
@@ -182,7 +182,7 @@ describe("the budget mirror of createCache", () => {
     expect(await identifyFile(file)).toBe(written);
     const other = open(makeHearingProvider().provider);
     await other.load();
-    expect(other.budget()).toEqual({ graphql: makeBudget(2000) });
+    expect(other.readBudgets()).toEqual({ graphql: makeBudget(2000) });
   });
 
   it("keeps a lower figure heard while another process fetches, whatever figures that process saves", async () => {
@@ -202,7 +202,7 @@ describe("the budget mirror of createCache", () => {
     await Promise.all([fetching, keeping]);
     const other = open(makeHearingProvider().provider);
     await other.load();
-    expect(other.budget()).toEqual({ graphql: makeBudget(900) });
+    expect(other.readBudgets()).toEqual({ graphql: makeBudget(900) });
   });
 
   it("takes no lock, and waits for none, when it heard nothing the file lacks", async () => {

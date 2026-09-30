@@ -37,7 +37,7 @@ describe("answerOwed", () => {
   it("says what is left of GitHub's budget once it runs live, and gives both budgets in JSON", async () => {
     const resetAt = new Date("2026-09-28T10:20:00Z");
     const live = { graphql: { limit: 5000, remaining: 1750, resetAt } };
-    const provider = recordedProvider({ budget: () => live });
+    const provider = recordedProvider({ readBudgets: () => live });
     const plain = openSession(home, ["owed", "--format", "llm"], provider);
     await answerOwed(plain.session);
     expect(plain.out()).toContain("0m old · budget 35% · resets 12:20.");
@@ -77,7 +77,7 @@ describe("answerOwed", () => {
     await answerOwed(openSession(home, ["owed"]).session);
     const limited = recordedProvider({
       snapshot: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
-      budget: () => ({}),
+      readBudgets: () => ({}),
     });
     const { session, out } = openSession(
       home,
@@ -123,7 +123,7 @@ describe("answerOwed", () => {
     const offline = recordedProvider({
       viewer: unreachable,
       snapshot: unreachable,
-      budget: () => ({}),
+      readBudgets: () => ({}),
     });
     const { session, out } = openSession(home, ["owed"], offline);
     expect(await answerOwed(session)).toBe(0);

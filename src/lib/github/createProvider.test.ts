@@ -134,10 +134,10 @@ describe("createProvider", () => {
 
   it("gives the budget the latest answer reported, asking GitHub nothing", async () => {
     const provider = await createProvider("github.com", "1.2.3");
-    expect(provider.budget()).toEqual({});
+    expect(provider.readBudgets()).toEqual({});
     github.graphql("Snapshot", repository(empty));
     await settle(provider.snapshot(repo, null));
-    expect(provider.budget()).toEqual({
+    expect(provider.readBudgets()).toEqual({
       graphql: {
         limit: 5000,
         remaining: 4990,

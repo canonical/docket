@@ -401,7 +401,7 @@ describe("Screen", { timeout: 15_000 }, () => {
 
     it("pauses every repository, and says when docket resumes, when the first fetch waits for the request budget", async () => {
       const provider = fakeProvider({
-        budget: () => ({ graphql: { ...fullBudget, remaining: 1 } }),
+        readBudgets: () => ({ graphql: { ...fullBudget, remaining: 1 } }),
       });
       const cache = await openCache(provider);
       const screen = await show(viewOf(cache));
@@ -1673,7 +1673,9 @@ describe("Screen", { timeout: 15_000 }, () => {
     it("says on the status line's right what is left of the budget the cache mirrors, once less than 40% of it is left", async () => {
       const resetAt = new Date("2026-09-28T10:20:00Z");
       const provider = recordedProvider({
-        budget: () => ({ graphql: { limit: 5000, remaining: 1750, resetAt } }),
+        readBudgets: () => ({
+          graphql: { limit: 5000, remaining: 1750, resetAt },
+        }),
       });
       const cache = await openCache(provider);
       await cache.refresh();
@@ -1712,7 +1714,7 @@ describe("Screen", { timeout: 15_000 }, () => {
     it("reads only the selected thread's details below the budget floor, one thread a request, and nothing ahead", async () => {
       let remaining = fullBudget.limit;
       const provider = recordedProvider({
-        budget: () => ({ graphql: { ...fullBudget, remaining } }),
+        readBudgets: () => ({ graphql: { ...fullBudget, remaining } }),
       });
       const cache = await openCache(provider);
       await cache.refresh();

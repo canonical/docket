@@ -83,7 +83,7 @@ describe("the refreshIfChanged step of createCache", () => {
   it("spends nothing below the budget floor, though the check sees a change", async () => {
     let remaining = fullBudget.remaining;
     const provider = watching(() => true, {
-      budget: () => ({ graphql: { ...fullBudget, remaining } }),
+      readBudgets: () => ({ graphql: { ...fullBudget, remaining } }),
     });
     const cache = await openFetched(provider);
     remaining = 999;

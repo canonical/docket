@@ -50,7 +50,7 @@ export function fakeProvider(overrides: Partial<Provider> = {}): Provider {
     teamMembers: unused("teamMembers"),
     probe: async () => ({ changed: true, tag: undefined }),
     readFile: async () => undefined,
-    budget: () => ({ graphql: fullBudget }),
+    readBudgets: () => ({ graphql: fullBudget }),
     viewer: unused("viewer"),
     capabilities: () => everyCapability,
     ...overrides,

@@ -61,7 +61,7 @@ export default async function createProvider(
     teamMembers: ({ team }) => teamMembers(team),
     probe: (repo, tag) => probeChanges(client, repo, tag),
     readFile: (repo, path) => fetchFile(client, repo, path),
-    budget: () => client.lastBudgets(),
+    readBudgets: () => client.readBudgets(),
     viewer: () => fetchViewer(client),
     capabilities: () => capabilities,
   };

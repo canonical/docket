@@ -458,7 +458,8 @@ export default function Screen({
         action,
         attention: attentionState,
         details: ahead.progress,
-        budget: "cache" in source ? source.cache.budget().graphql : undefined,
+        budget:
+          "cache" in source ? source.cache.readBudgets().graphql : undefined,
         now: at,
         timezone: settings.time.timezone,
         watched,

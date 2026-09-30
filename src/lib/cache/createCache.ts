@@ -65,7 +65,7 @@ export default function createCache({
   // The mirror of the budgets as the file last gave it or this process
   // last wrote it; this process's own answers join it on each read.
   let mirror: Budgets = {};
-  const readFigures = () => mergeBudgets(mirror, provider.budget());
+  const readFigures = () => mergeBudgets(mirror, provider.readBudgets());
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
@@ -195,11 +195,11 @@ export default function createCache({
    * `options`, reporting each repository's stage.
    */
   const fetchAll = async (
-    options: Pick<FetchReposOptions, "spend" | "reconcile" | "checks"> = {},
+    options: Pick<FetchReposOptions, "maySpend" | "reconcile" | "checks"> = {},
   ) => {
     // Nothing is shown until every repository holds data, so a run that
     // may spend and starts with one lacking fetches while the list waits.
-    const whole = (options.spend?.() ?? true) && !syncedAt();
+    const whole = (options.maySpend?.() ?? true) && !syncedAt();
     // Every repository is dated from before its fetch, so the data is
     // never taken as newer than it is.
     const at = now();
@@ -419,7 +419,7 @@ export default function createCache({
         // finds unchanged stays current and a change waits for the reset.
         // The floor is judged before each repository and before the checks.
         await sync(maxAge, {
-          spend: () => maySpend(),
+          maySpend,
           reconcile: !idle,
           checks: !idle,
         });
@@ -466,7 +466,7 @@ export default function createCache({
         publish();
       };
     },
-    budget: readFigures,
+    readBudgets: readFigures,
     maySpend,
     async keepBudget() {
       // This process's own answers can take the mirror below the floor.

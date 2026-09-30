@@ -21,7 +21,7 @@ afterEach(async () => {
 const failing = (error: Error) =>
   recordedProvider({
     snapshot: () => Promise.reject(error),
-    budget: () => ({}),
+    readBudgets: () => ({}),
   });
 
 describe("readThreads", () => {

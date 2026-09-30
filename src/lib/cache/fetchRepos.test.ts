@@ -124,7 +124,7 @@ describe("fetchRepos", () => {
   });
 
   it("reads no checks when told not to, or when nothing may be spent", async () => {
-    for (const options of [{ checks: false }, { spend: () => false }]) {
+    for (const options of [{ checks: false }, { maySpend: () => false }]) {
       const provider = fakeProvider({
         probe: async () => ({ changed: false, tag: '"tag-1"' }),
         refreshVolatile: vi.fn(),
@@ -139,7 +139,7 @@ describe("fetchRepos", () => {
   });
 
   it("keeps nothing of a repository that needs points it may not spend, and reports it paused", async () => {
-    const { fetching, kept, reported } = fetchFrom({ spend: () => false });
+    const { fetching, kept, reported } = fetchFrom({ maySpend: () => false });
     await fetching;
     expect(kept).toEqual([]);
     expect(reported.at(-1)).toEqual([
@@ -153,7 +153,7 @@ describe("fetchRepos", () => {
     const provider = fakeProvider({ refreshVolatile: vi.fn() });
     const { fetching, kept, reported } = fetchFrom({
       provider,
-      spend: () => {
+      maySpend: () => {
         left -= 1;
         return left >= 0;
       },

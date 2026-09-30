@@ -34,7 +34,7 @@ export interface FetchReposOptions
    * before the checks refresh, so a budget that falls below its floor
    * during a refresh stops the spending there. Always, when not given.
    */
-  readonly spend?: () => boolean;
+  readonly maySpend?: () => boolean;
   /**
    * Whether the checks still running are read again once every
    * repository is fetched, when points may be spent.
@@ -60,7 +60,7 @@ export default async function fetchRepos({
   find,
   keep,
   report,
-  spend = () => true,
+  maySpend = () => true,
   reconcile = true,
   checks = true,
 }: FetchReposOptions): Promise<void> {
@@ -92,7 +92,7 @@ export default async function fetchRepos({
   try {
     for (const repo of repos) {
       const value = await syncRepo(provider, repo, find(repo), at, {
-        spend: spend(),
+        spend: maySpend(),
         reconcile,
         onStage: (stage) => {
           if (stage.kind === "reading") {
@@ -107,7 +107,7 @@ export default async function fetchRepos({
       finish(repo, value);
     }
     const refreshed =
-      checks && spend()
+      checks && maySpend()
         ? await refreshChecks(provider, [...synced.values()], (covered) =>
             reach(covered, (repo) => ({
               kind: "checks",

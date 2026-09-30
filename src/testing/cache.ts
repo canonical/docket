@@ -97,7 +97,7 @@ export function holdCache(
         publish();
       };
     },
-    budget: () => ({}),
+    readBudgets: () => ({}),
     // The floor the status holds, as a cache judging it would publish it.
     maySpend: () => status.paused?.reason !== "budget",
     keepBudget: async () => {},

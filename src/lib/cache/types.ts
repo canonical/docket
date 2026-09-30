@@ -346,7 +346,7 @@ export interface Cache {
    * report any docket process heard, as the cache file last gave it, or
    * this process's own answers heard since, whichever is later.
    */
-  budget(): Budgets;
+  readBudgets(): Budgets;
   /**
    * Whether docket may spend points of its own at the time asked, judged
    * on the mirror: false below the budget floor, the share of the hourly

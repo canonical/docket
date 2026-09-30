@@ -115,19 +115,19 @@ describe("answerShow", () => {
 
   it("writes the budget the details' answer reported to the cache file, for later calls", async () => {
     const heard = { graphql: { ...fullBudget, remaining: 1234 } };
-    const provider = recordedProvider({ budget: () => heard });
+    const provider = recordedProvider({ readBudgets: () => heard });
     const { session } = openSession(home, ["show", "example#12"], provider);
     expect(await answerShow(session)).toBe(0);
     const later = openSession(home, ["owed"]).session.cache;
     await later.load();
-    expect(later.budget()).toEqual(heard);
+    expect(later.readBudgets()).toEqual(heard);
   });
 
   it("answers when the cache folder cannot keep the budget the details' answer reported", async () => {
     const folder = join(home.root, "cache", "docket");
     let heard = { graphql: { ...fullBudget, remaining: 1234 } };
     const provider = recordedProvider({
-      budget: () => heard,
+      readBudgets: () => heard,
       threadDetail: async (thread) => {
         heard = { graphql: { ...fullBudget, remaining: 1233 } };
         await rm(folder, { recursive: true, force: true });

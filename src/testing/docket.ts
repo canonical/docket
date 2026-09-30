@@ -164,7 +164,7 @@ export function openSession(
       syncedAt,
       timezone: resolved.settings.time.timezone,
       warnings,
-      budget: cache.budget(),
+      budget: cache.readBudgets(),
     }),
   };
   return { session, out: () => out, err: () => err };

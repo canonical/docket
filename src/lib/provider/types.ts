@@ -278,7 +278,7 @@ export interface Provider {
    * The budgets the latest answer of each kind reported, a refusal or
    * "not modified" included. It asks nothing.
    */
-  budget(): Budgets;
+  readBudgets(): Budgets;
   /** The login of the account the provider acts as. */
   viewer(): Promise<string>;
   capabilities(): ReadonlySet<Capability>;

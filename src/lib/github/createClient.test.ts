@@ -54,10 +54,10 @@ describe("createClient", () => {
 
   it("keeps the budget the latest GraphQL answer reports", async () => {
     const connected = client();
-    expect(connected.lastBudgets()).toEqual({});
+    expect(connected.readBudgets()).toEqual({});
     github.graphql("Viewer", { body: { data: { rateLimit } } });
     await settle(connected.query(viewer, {}));
-    expect(connected.lastBudgets()).toEqual({
+    expect(connected.readBudgets()).toEqual({
       graphql: {
         limit: 5000,
         remaining: 4990,
@@ -70,7 +70,7 @@ describe("createClient", () => {
     const connected = client();
     github.graphql("Viewer", { body: { data: {} } });
     await expect(settle(connected.query(viewer, {}))).resolves.toEqual({});
-    expect(connected.lastBudgets()).toEqual({});
+    expect(connected.readBudgets()).toEqual({});
   });
 
   /** The rate headers GitHub sends with an answer counted against `resource`. */
@@ -94,7 +94,7 @@ describe("createClient", () => {
     await settle(connected.request("GET /rate_limit"));
     await settle(connected.query(viewer, {}));
     const resetAt = new Date("2026-09-28T11:00:00Z");
-    expect(connected.lastBudgets()).toEqual({
+    expect(connected.readBudgets()).toEqual({
       rest: { limit: 5000, remaining: 4000, resetAt },
       graphql: { limit: 5000, remaining: 3000, resetAt },
     });
@@ -112,9 +112,9 @@ describe("createClient", () => {
       headers: buildRateHeaders("core", 3999),
     });
     await settle(connected.request("GET /rate_limit"));
-    expect(connected.lastBudgets().rest?.remaining).toBe(4000);
+    expect(connected.readBudgets().rest?.remaining).toBe(4000);
     await failure(connected.request("GET /user"));
-    expect(connected.lastBudgets().rest?.remaining).toBe(3999);
+    expect(connected.readBudgets().rest?.remaining).toBe(3999);
   });
 
   it("keeps nothing from headers of another resource, or missing a figure", async () => {
@@ -127,7 +127,7 @@ describe("createClient", () => {
     github.rest("GET /user", { body: {}, headers: partial });
     await settle(connected.request("GET /search"));
     await settle(connected.request("GET /user"));
-    expect(connected.lastBudgets()).toEqual({});
+    expect(connected.readBudgets()).toEqual({});
   });
 
   it("gives a 304 back as a status rather than an error", async () => {
@@ -313,7 +313,7 @@ describe("createClient", () => {
       connected.query(viewer, {}, { allowMissing: true }),
     );
     expect(data).toEqual({ rateLimit, repository: { pullRequest: null } });
-    expect(connected.lastBudgets().graphql?.remaining).toBe(4990);
+    expect(connected.readBudgets().graphql?.remaining).toBe(4990);
   });
 
   it("names GITHUB_REQUEST_FAILED for a node GitHub did not find, unless allowed", async () => {
