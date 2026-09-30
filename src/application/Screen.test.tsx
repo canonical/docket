@@ -403,8 +403,8 @@ describe("Screen", { timeout: 15_000 }, () => {
       const drawn = await screen.redraw();
       expect(drawn.lines.slice(2, 5)).toEqual([
         "  refresh in progress…",
-        "  example paused",
-        "  docs    paused",
+        "  example paused: budget low",
+        "  docs    paused: budget low",
       ]);
       expect(drawn.lines.at(10)).toBe("paused: budget low · resumes 13:00");
     });

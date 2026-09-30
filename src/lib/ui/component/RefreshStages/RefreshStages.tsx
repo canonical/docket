@@ -24,7 +24,8 @@ function fitStage(stage: RepoStage, room: number): Piece[][] {
  * One line for each watched repository while nothing is shown, as on the
  * first run: its short name, padded to the longest name and one cell
  * more, then its stage (`checking for changes`, `reading page 2/3`,
- * `reading checks`, `✓ 89 threads`, `waiting`, `paused`, `✗ failed: …`).
+ * `reading checks`, `✓ 89 threads`, `waiting`, `paused: budget low`,
+ * `paused: rate limit`, `✗ failed: …`).
  *
  * `import { RefreshStages } from "../lib/ui/index.js";`
  */

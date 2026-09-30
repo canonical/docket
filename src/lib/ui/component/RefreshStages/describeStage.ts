@@ -9,9 +9,9 @@ const muted = tokens["color.text.muted"];
  * A repository's stage in words, in the runs its line draws: what it is
  * doing, plain, `reading` alone until its first page says how many
  * there are; `✓` in the success colour before the threads it holds;
- * `waiting` and `paused`, dimmed, as context, `paused: rate limit` when
- * the rate limit paused it; and `✗ failed:` with the reason, in the error
- * colour.
+ * `waiting` and `paused`, dimmed, as context, with why: `paused: budget
+ * low` or `paused: rate limit`; and `✗ failed:` with the reason, in the
+ * error colour.
  */
 export default function describeStage(stage: RepoStage): Piece[] {
   switch (stage.kind) {
@@ -43,7 +43,10 @@ export default function describeStage(stage: RepoStage): Piece[] {
     case "paused":
       return [
         {
-          text: stage.reason === "rateLimit" ? "paused: rate limit" : "paused",
+          text:
+            stage.reason === "rateLimit"
+              ? "paused: rate limit"
+              : "paused: budget low",
           fg: muted,
         },
       ];

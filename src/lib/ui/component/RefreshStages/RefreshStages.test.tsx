@@ -28,11 +28,11 @@ describe("RefreshStages", () => {
     expect(screen.look("example")?.fg).toBe(tokens["color.text"]);
   });
 
-  it("dims the repositories the budget paused", async () => {
+  it("dims the repositories the budget paused, saying why", async () => {
     const screen = await draw(<RefreshStages {...BudgetPaused.args} />, 40);
     expect(screen.lines.slice(1, 3)).toEqual([
-      "docs    paused",
-      "site    paused",
+      "docs    paused: budget low",
+      "site    paused: budget low",
     ]);
     expect(screen.look("paused")?.fg).toBe(tokens["color.text.muted"]);
   });

@@ -30,11 +30,13 @@ describe("describeStage", () => {
     expect(words({ ...done, threads: 0 })).toBe("✓ 0 threads");
   });
 
-  it("dims a repository waiting or paused, and says when the rate limit paused it", () => {
+  it("dims a repository waiting or paused, and says why it paused: the budget or the rate limit", () => {
     expect(describeStage({ kind: "waiting" })).toEqual([
       { text: "waiting", fg: tokens["color.text.muted"] },
     ]);
-    expect(words({ kind: "paused", reason: "budget" })).toBe("paused");
+    expect(words({ kind: "paused", reason: "budget" })).toBe(
+      "paused: budget low",
+    );
     expect(describeStage({ kind: "paused", reason: "rateLimit" })).toEqual([
       { text: "paused: rate limit", fg: tokens["color.text.muted"] },
     ]);
