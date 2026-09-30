@@ -37,10 +37,6 @@ export { default as countPages } from "./countPages.js";
 export { default as createKeymap } from "./createKeymap.js";
 export { default as describeClock } from "./describeClock.js";
 export {
-  default as findStageUnderWay,
-  type StageUnderWay,
-} from "./findStageUnderWay.js";
-export {
   type KeyCommand,
   type UseCommandsProps,
   type UseCommandsResult,

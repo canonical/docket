@@ -1,7 +1,7 @@
 import type { RepoProgress } from "../cache/index.js";
 
 /** The furthest repository a refresh has reached, and its place. */
-export interface StageUnderWay {
+interface StageUnderWay {
   readonly repo: string;
   /** Its place among the watched repositories, from 1. */
   readonly position: number;
