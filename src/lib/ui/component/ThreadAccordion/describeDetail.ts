@@ -207,11 +207,15 @@ function describeReview(
 
 /**
  * The thread's age and owners, its last activity and who made it, and its
- * labels, as the snapshot holds them.
+ * labels, as the snapshot holds them. On a thread nobody has written on,
+ * the last activity is its opening, by whoever opened it, so the time is
+ * the opening's too.
  */
 function describeClose(row: WaitRow, { now }: Reading) {
   const { thread } = row.wait;
   const labels = thread.labels.map(decodeLabel).join(" · ") || "none";
+  const quiet = thread.comments.length === 0 && thread.reviews.length === 0;
+  const last = quiet ? thread.createdAt : thread.updatedAt;
   return [
     trimmed(
       plain(`age ${describeAge(thread.createdAt, now)} · owner `),
@@ -219,7 +223,7 @@ function describeClose(row: WaitRow, { now }: Reading) {
       ...listPeople(listOwners(row)),
     ),
     trimmed(
-      plain(`last activity ${describeAge(thread.updatedAt, now)} ago`),
+      plain(`last activity ${describeAge(last, now)} ago`),
       plain(" · "),
       markPerson(row.lastActor, Number.POSITIVE_INFINITY),
     ),

@@ -268,6 +268,30 @@ describe("describeDetail", () => {
       );
     });
 
+    it("gives the opening, its time and whoever opened it, as the last activity of a thread nobody wrote on, however recently it changed", () => {
+      const opened = thread({
+        createdAt: at("2026-09-22T10:00+02:00"),
+        updatedAt: at("2026-09-28T11:00+02:00"),
+      });
+      const quiet = describeDetail(
+        measureRow({ thread: opened }),
+        undefined,
+        reading,
+      );
+      expect(texts(quiet.body).at(1)).toBe("last activity 6d ago · ○ dave");
+      const answered = describeDetail(
+        measureRow({
+          thread: {
+            ...opened,
+            comments: [{ author: bob, at: at("2026-09-28T11:00+02:00") }],
+          },
+        }),
+        undefined,
+        reading,
+      );
+      expect(texts(answered.body).at(1)).toBe("last activity 1h ago · ● bob");
+    });
+
     it("says unassigned, no labels, and whoever opened it when nobody wrote since", () => {
       const { body } = describeDetail(measureRow({}), undefined, reading);
       expect(texts(body)).toEqual([
