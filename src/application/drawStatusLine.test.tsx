@@ -68,7 +68,7 @@ describe("drawStatusLine", () => {
       ],
     };
     expect(await drawFor({ status })).toBe(
-      "full refresh · docs 2/2 · pages 1/3",
+      "full refresh · docs 2/2 · pages 2/4",
     );
   });
 

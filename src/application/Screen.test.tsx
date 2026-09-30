@@ -352,7 +352,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const refreshing = cache.refresh();
       await waitUntil(() => expect(reading).toHaveBeenCalled());
       const drawn = await screen.redraw();
-      expect(drawn.lines.at(10)).toBe("full refresh · docs 2/2 · pages 3/3");
+      expect(drawn.lines.at(10)).toBe("full refresh · docs 2/2 · pages 6/6");
       resolve();
       await refreshing;
     });

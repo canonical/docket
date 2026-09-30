@@ -137,7 +137,7 @@ describe("describeStatus", () => {
     const stages = [
       {
         repo: "example-org/example-docs",
-        stage: { kind: "done", threads: 1, fetched: 1, total: 1 },
+        stage: { kind: "done", threads: 1, fetched: 0, total: 0 },
       },
       { repo: "example-org/example-repo", stage: { kind: "checking" } },
     ] as const;
@@ -153,6 +153,24 @@ describe("describeStatus", () => {
     ] as const;
     expect(describeAt({ ...status, stages: reading })?.text).toBe(
       "full refresh · example 2/2",
+    );
+  });
+
+  it("counts the full refresh's pages across the repositories begun, as the progress line does", () => {
+    const status = statusOf(FullRefresh);
+    const stages = [
+      {
+        repo: "example-org/example-repo",
+        stage: { kind: "done", threads: 89, fetched: 2, total: 2 },
+      },
+      {
+        repo: "example-org/example-docs",
+        stage: { kind: "reading", fetched: 1, total: 3 },
+      },
+      { repo: "example-org/example-site", stage: { kind: "waiting" } },
+    ] as const;
+    expect(describeAt({ ...status, stages })?.text).toBe(
+      "full refresh · docs 2/3 · pages 3/5",
     );
   });
 

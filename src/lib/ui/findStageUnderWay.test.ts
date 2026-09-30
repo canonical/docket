@@ -8,7 +8,7 @@ const docs = "example-org/example-docs";
 const site = "example-org/example-site";
 
 describe("findStageUnderWay", () => {
-  it("gives the repository being read, with its place and pages", () => {
+  it("gives the repository being read, with its place", () => {
     const stages: RepoProgress[] = [
       { repo, stage: { kind: "done", threads: 3, fetched: 1, total: 1 } },
       { repo: docs, stage: { kind: "reading", fetched: 2, total: 3 } },
@@ -18,26 +18,18 @@ describe("findStageUnderWay", () => {
       repo: docs,
       position: 2,
       count: 3,
-      fetched: 2,
-      total: 3,
     });
   });
 
-  it("counts no pages for a repository checking for changes", () => {
+  it("gives a repository checking for changes", () => {
     const stages: RepoProgress[] = [
       { repo, stage: { kind: "checking" } },
       { repo: docs, stage: { kind: "waiting" } },
     ];
-    expect(findStageUnderWay(stages)).toEqual({
-      repo,
-      position: 1,
-      count: 2,
-      fetched: 0,
-      total: 0,
-    });
+    expect(findStageUnderWay(stages)).toEqual({ repo, position: 1, count: 2 });
   });
 
-  it("keeps the last repository reached, with its pages, while the checks of an earlier one are read", () => {
+  it("keeps the last repository reached while the checks of an earlier one are read", () => {
     const stages: RepoProgress[] = [
       { repo, stage: { kind: "checks", fetched: 2, total: 2 } },
       { repo: docs, stage: { kind: "done", threads: 0, fetched: 3, total: 3 } },
@@ -46,12 +38,10 @@ describe("findStageUnderWay", () => {
       repo: docs,
       position: 2,
       count: 2,
-      fetched: 3,
-      total: 3,
     });
   });
 
-  it("gives nothing while every repository waits, is done, paused or failed", () => {
+  it("gives nothing while every repository waits, is done, paused or failed, or none is watched", () => {
     const stages: RepoProgress[] = [
       { repo, stage: { kind: "done", threads: 0, fetched: 0, total: 0 } },
       { repo, stage: { kind: "paused", reason: "budget" } },
@@ -62,8 +52,9 @@ describe("findStageUnderWay", () => {
       { repo, stage: { kind: "waiting" } },
     ];
     expect(findStageUnderWay(stages)).toBeUndefined();
-    expect(findStageUnderWay([{ repo, stage: { kind: "waiting" } }])).toBe(
-      undefined,
-    );
+    expect(
+      findStageUnderWay([{ repo, stage: { kind: "waiting" } }]),
+    ).toBeUndefined();
+    expect(findStageUnderWay([])).toBeUndefined();
   });
 });

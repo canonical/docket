@@ -1,6 +1,7 @@
 import { describeAge } from "../../../activity/index.js";
 import type { AttentionState, CacheStatus } from "../../../cache/index.js";
 import { tokens } from "../../../tokens/index.js";
+import countPages from "../../countPages.js";
 import describeClock from "../../describeClock.js";
 import findStageUnderWay from "../../findStageUnderWay.js";
 import type { ActionResult, StatusMessage } from "./types.js";
@@ -76,8 +77,10 @@ export default function describeStatus(
   if (!status) return undefined;
   const underWay = findStageUnderWay(status.stages);
   if (status.whole && underWay) {
-    const { repo, position, count, fetched, total } = underWay;
-    // The pages are named once a first page says how many there are.
+    const { repo, position, count } = underWay;
+    // The pages count across the repositories begun, as the progress
+    // line does, once a first page says how many there are.
+    const { fetched, total } = countPages(status.stages);
     const pages = total > 0 ? `${separator}pages ${fetched}/${total}` : "";
     const text = `full refresh${separator}${names[repo] ?? repo} ${position}/${count}${pages}`;
     return { kind: "progress", text };

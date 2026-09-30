@@ -2,8 +2,12 @@ import type { ReactNode } from "react";
 import type { CacheStatus, RepoStage } from "../lib/cache/index.js";
 import type { Repo } from "../lib/config/index.js";
 import { tokens } from "../lib/tokens/index.js";
-import { ProgressLine, RefreshStages, wrapNotice } from "../lib/ui/index.js";
-import countPages from "./countPages.js";
+import {
+  countPages,
+  ProgressLine,
+  RefreshStages,
+  wrapNotice,
+} from "../lib/ui/index.js";
 
 /** What the first run's lines are drawn from. */
 export interface FirstRunProps {
