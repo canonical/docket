@@ -29,6 +29,7 @@ import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
 import { standInIndent } from "./constants.js";
 import describeCandidate from "./describeCandidate.js";
+import describePosition from "./describePosition.js";
 import drawStandIn from "./drawStandIn.js";
 import drawStatusLine from "./drawStatusLine.js";
 import findPeople from "./findPeople.js";
@@ -394,6 +395,10 @@ export default function Screen({
     );
   }
   const summary = (owed ?? listed)?.summary.text;
+  const position = describePosition(
+    (owed ?? listed)?.groups ?? [],
+    placeSelection(rows, selections[mode]),
+  );
 
   return (
     <Pane
@@ -415,7 +420,11 @@ export default function Screen({
       }
       counts={
         summary === undefined ? undefined : (
-          <CountsLine summary={summary} width={width} />
+          <CountsLine
+            summary={summary}
+            {...(position && { position })}
+            width={width}
+          />
         )
       }
       status={drawStatusLine({

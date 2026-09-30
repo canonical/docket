@@ -483,12 +483,12 @@ describe("Screen", { timeout: 15_000 }, () => {
       const { promise, resolve } = Promise.withResolvers<WatchedFiles>();
       const screen = await show(viewOf(cache, everyCapability, () => promise));
       expect((await screen.redraw()).lines.at(9)).toBe(
-        "2 over · 1 soon · 3 on track",
+        `2 over · 1 soon · 3 on track${" ".repeat(9)}1/6`,
       );
       resolve({ watched: generous });
       await promise;
       expect((await screen.redraw()).lines.at(9)).toBe(
-        "0 over · 0 soon · 6 on track",
+        `0 over · 0 soon · 6 on track${" ".repeat(9)}1/6`,
       );
     });
 
@@ -558,7 +558,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "┃┆waiting since Mon 10:00 · target 24h",
         "┃┆example stack 3 · 2 of 3 · → main",
         "╹┆below #11 merged, above #13 open",
-        "2 over · 1 soon · 3 on track",
+        `2 over · 1 soon · 3 on track${" ".repeat(9)}1/6`,
         "synced 0m ago",
         "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
@@ -1305,7 +1305,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       gate.resolve();
       await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(9)).toBe(
-          "2 threads · 3 events",
+          `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         ),
       );
       gate = Promise.withResolvers<void>();
@@ -1319,7 +1319,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       gate.resolve();
       await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(9)).toBe(
-          "2 threads · 4 events",
+          `2 threads · 4 events${" ".repeat(15)}1/1/2`,
         ),
       );
     });
@@ -1340,7 +1340,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "",
         "",
         "",
-        "2 threads · 3 events",
+        `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "synced 0m ago",
         "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       ]);
@@ -1451,7 +1451,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
         "PULL REQUESTS ──────────────────────────",
         "",
-        "2 threads · 3 events",
+        `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "synced 0m ago",
         "type filter ↑↓ ␣ tick ⏎ apply esc ?",
       ]);
@@ -1499,7 +1499,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "PULL REQUESTS ──────────────────────────",
         "",
         "",
-        "2 threads · 3 events",
+        `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "✗ review refused",
         "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       ]);
@@ -1532,7 +1532,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "",
         "",
         "",
-        "2 threads · 3 events",
+        `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "✗ assign refused",
         "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       ]);
@@ -1548,7 +1548,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const wider = await press(screen, "g", "t");
       await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(13)).toBe(
-          "2 threads · 4 events",
+          `2 threads · 4 events${" ".repeat(37)}1/2`,
         ),
       );
       expect(wider.lines.at(0)).toBe(
@@ -1590,7 +1590,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
       ]);
       expect(screen.lines.slice(13, 15)).toEqual([
-        "1 thread · 2 events",
+        `1 thread · 2 events${" ".repeat(16)}1/1/1`,
         "✗ offline · data from 12:00",
       ]);
     });

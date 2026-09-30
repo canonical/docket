@@ -32,7 +32,7 @@
 |
 |
 |
-|2 over · 1 soon · 3 on track
+|2 over · 1 soon · 3 on track       1/3/6
 |synced 2m ago
 |←→ mode ↑↓ sel ⏎ open g grp a r ?
 
@@ -133,7 +133,7 @@ runs
 26:1 "╵" fg #818596ff bg #161821ff
 26:3 "Crash on start" fg #c6c8d1ff bg #161821ff italic
 26:17 "              unassigned" fg #c6c8d1ff bg #161821ff
-34:1 "2 over · 1 soon · 3 on track" fg #c6c8d1ff bg #161821ff
+34:1 "2 over · 1 soon · 3 on track       1/3/6" fg #c6c8d1ff bg #161821ff
 35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
 36:1 "←→" fg #c6c8d1ff bg #161821ff
 36:3 " mode" fg #6b7089ff bg #161821ff
