@@ -272,10 +272,14 @@ describe("ThreadAccordion", () => {
       expect(wide.look(",…")?.fg).toBe(tokens["color.text"]);
     });
 
-    it("keeps a stack's place and base branch on one line, its repository's short name giving way first", async () => {
+    it("keeps docket's words of a stack's place whole, the base branch giving way first from its middle, then the repository's short name", async () => {
       const narrow = await open(Long.args);
       expect(readText(narrow).at(6)).toBe(
-        "stack 7 · 2 of 3 ·…ch-with-a-long-name",
+        "stack 7 · 2 of 3 · → release…ong-name",
+      );
+      const wide = await open(Long.args, 60);
+      expect(readText(wide).at(6)).toBe(
+        "example-re…long-name stack 7 · 2 of 3 · → release…ong-name",
       );
       const screen = await open(
         {
@@ -294,7 +298,7 @@ describe("ThreadAccordion", () => {
         40,
       );
       expect(readText(screen).at(6)).toBe(
-        "examp…g-name stack 7 · 2 of 3 · → main",
+        "exampl…-name stack 7 · 2 of 3 · → main",
       );
     });
 

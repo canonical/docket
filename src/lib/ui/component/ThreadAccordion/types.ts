@@ -20,11 +20,14 @@ export interface DetailLine {
    */
   readonly most?: 1;
   /**
-   * The run that gives way first when the line, held to one, does not
-   * fit: cut by its kind's rule for a line to the room the others leave,
-   * as a stack's repository name gives way to its place and base branch.
+   * The runs that give way, in order, when the line, held to one, does
+   * not fit, each cut once by its kind's rule for a line: all but the last
+   * keep 16 cells at least, and the last may leave the line. The other
+   * runs, docket's own words, stay whole: a stack's base branch gives way
+   * first, then its repository's short name, and `stack 7 · 2 of 3 · →`
+   * stays.
    */
-  readonly gives?: number;
+  readonly gives?: readonly number[];
   /**
    * Whether the line takes only the lines left once every other line has
    * its own, as the owners line does before a review's checks.

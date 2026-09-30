@@ -5,7 +5,7 @@
 |┃┆(lint the whole repository,
 |┃┆unit tests on every platform,
 |┃┆build the documentation site)
-|┃┆stack 7 · 2 of 3 ·…ch-with-a-long-name
+|┃┆stack 7 · 2 of 3 · → release…ong-name
 |╹┆below #12344 merged, above #12346 open
 
 runs
@@ -35,6 +35,7 @@ runs
 6:3 "build the documentation site)" fg #e27878ff bg #2e3244ff
 6:32 "         " fg #ffffffff bg #2e3244ff
 7:1 "┃" fg #e27878ff bg #2e3244ff
-7:2 "┆stack 7 · 2 of 3 ·…ch-with-a-long-name" fg #6b7089ff bg #2e3244ff
+7:2 "┆stack 7 · 2 of 3 · → release…ong-name" fg #6b7089ff bg #2e3244ff
+7:40 " " fg #ffffffff bg #2e3244ff
 8:1 "╹" fg #e27878ff bg #2e3244ff
 8:2 "┆below #12344 merged, above #12346 open" fg #6b7089ff bg #2e3244ff

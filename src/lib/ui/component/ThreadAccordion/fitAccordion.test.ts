@@ -20,6 +20,19 @@ const read = (lines: ReturnType<typeof fitAccordion>) =>
   lines.map((line) => line.map(({ text }) => text).join(""));
 
 describe("fitAccordion", () => {
+  it("does not cut again a last line that already ends in … or was cut in its middle", () => {
+    const text = {
+      body: [trimmed("push since …"), wrapped("more")],
+      stack: [],
+    };
+    expect(read(fitAccordion(text, 20, 1))).toEqual(["push since …"]);
+    const cut = {
+      body: [trimmed("repo…name"), wrapped("more")],
+      stack: [],
+    };
+    expect(read(fitAccordion(cut, 9, 1))).toEqual(["repo…name"]);
+  });
+
   it("fits each line by its kind's rule: words wrap, a figure stays on one line, and a line held to one is cut by its kind's rule for a line", () => {
     const text = {
       body: [

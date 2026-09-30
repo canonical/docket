@@ -276,10 +276,9 @@ function describeRest(
 
 /**
  * The two dimmed lines that end a stacked pull request's accordion: which
- * stack and which place, from the snapshot, on one line where the
- * repository's short name gives way first so the place and the base
- * branch stay, then its neighbours below and
- * above, each with its state, or the kind of its running wait while it is
+ * stack and which place, from the snapshot, on one line where docket's
+ * words stay whole and the base branch, then the repository's short
+ * name, give way from their middle, then its neighbours below and above, each with its state, or the kind of its running wait while it is
  * open, which waits on the details.
  */
 function describeStack(
@@ -291,18 +290,18 @@ function describeStack(
   if (!stack) return [];
   const { number, position, size, base } = stack;
   const separator = ` ${tokens["glyph.separator"]} `;
-  // One line, where the repository's short name gives way first, from its
-  // middle, so the place and the base branch stay.
+  // One line, where docket's words and the place stay whole: the base
+  // branch gives way first, from its middle, then the repository's short
+  // name.
   const place: DetailLine = {
     pieces: [
-      muted(repo),
-      muted(
-        ` stack ${number}${separator}${position} of ${size}${separator}→ ${base}`,
-      ),
+      muted(`${repo} `),
+      muted(`stack ${number}${separator}${position} of ${size}${separator}→ `),
+      muted(base),
     ],
     kind: "identifier",
     most: 1,
-    gives: 0,
+    gives: [2, 0],
   };
   if (size < 2) return [place];
   if (!detail) return [place, trimmed(muted(tokens["glyph.cut"]))];

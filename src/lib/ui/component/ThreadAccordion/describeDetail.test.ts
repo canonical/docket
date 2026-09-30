@@ -387,12 +387,17 @@ describe("describeDetail", () => {
       ]);
     });
 
-    it("holds its place to one line, where the repository's short name gives way first", () => {
+    it("holds its place to one line, where the base branch gives way first, then the repository's short name", () => {
       const [place] = describeDetail(overReview, undefined, reading).stack;
-      expect(place).toMatchObject({ kind: "identifier", most: 1, gives: 0 });
+      expect(place).toMatchObject({
+        kind: "identifier",
+        most: 1,
+        gives: [2, 0],
+      });
       expect(place?.pieces.map(({ text }) => text)).toEqual([
-        "example",
-        " stack 3 · 2 of 3 · → main",
+        "example ",
+        "stack 3 · 2 of 3 · → ",
+        "main",
       ]);
     });
 

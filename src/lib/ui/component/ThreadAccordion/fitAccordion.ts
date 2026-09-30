@@ -1,3 +1,4 @@
+import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
 import { fitRules } from "../../fit/constants.js";
 import {
@@ -5,56 +6,79 @@ import {
   fitField,
   fitRuns,
   measurePieces,
+  measureText,
   wrapRuns,
 } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type { DetailLine, DetailText } from "./types.js";
 
+/** The cells a run that gives way keeps while another can give way after it: half the narrowest room. */
+const givingFloor = 16;
+
+/** The fewest cells a cut run shows: fewer, and it leaves the line. */
+const leastCut = 4;
+
+/**
+ * A held line's runs cut to `room`: the runs that give way, in order,
+ * each cut once in the way its kind is cut on a line, all but the last
+ * keeping 16 cells at least, and the last leaving the line when it
+ * must; a single run gives way alone. The other runs stay whole.
+ */
+function giveWay(
+  { pieces, kind, gives = [] }: DetailLine,
+  room: number,
+): Piece[] {
+  const order = pieces.length === 1 ? [0] : gives;
+  const plan = pieces
+    .map((piece, index) => ({ piece, step: order.indexOf(index) }))
+    .filter(({ step }) => step >= 0)
+    .sort((a, b) => a.step - b.step);
+  let over = measurePieces(pieces) - room;
+  const kept = new Map<Piece, string>();
+  for (const { piece, step } of plan) {
+    if (over <= 0) break;
+    const cells = measureText(piece.text);
+    const floor = step === order.length - 1 ? 0 : Math.min(cells, givingFloor);
+    // A run left with fewer cells than a cut can say anything in leaves.
+    const left = Math.max(floor, cells - over);
+    const keep = left < leastCut ? 0 : left;
+    kept.set(piece, fitField({ text: piece.text, kind }, "line", keep));
+    over -= cells - keep;
+  }
+  return pieces.map((piece) => ({
+    ...piece,
+    text: kept.get(piece) ?? piece.text,
+  }));
+}
+
 /**
  * One line's runs as they fill the room, by the rule the fitting table
  * gives its kind: wrapped in a block, or kept whole on one. A line held
- * to one is fitted by its kind's rule for a line: a single run as the
- * table fits that kind, several runs with the one that gives way cut by
- * the kind's rule, and the others at the end.
+ * to one gives way by its runs that may (`giveWay`), and any line still
+ * too wide is cut at its end.
  */
-function fitLine(
-  { pieces, kind, most, gives }: DetailLine,
-  room: number,
-): Piece[][] {
-  if (most === 1) {
-    // A single run gives way by its kind; of several, the one named.
-    const giving = pieces.length === 1 ? 0 : gives;
-    const others = pieces.filter((_, place) => place !== giving);
-    const rest = measurePieces(others);
-    const [first] = others;
-    if (first && giving !== undefined && rest >= room) {
-      // Even without the giving run the line is too wide: it leaves, and
-      // the rest is cut by the kind's rule, as one run.
-      const text = others
-        .map((piece) => piece.text)
-        .join("")
-        .trimStart();
-      return [[{ ...first, text: fitField({ text, kind }, "line", room) }]];
-    }
-    const fitted = pieces.map((piece, place) =>
-      place === giving
-        ? {
-            ...piece,
-            text: fitField({ text: piece.text, kind }, "line", room - rest),
-          }
-        : piece,
-    );
-    return [fitRuns(fitted, room)];
-  }
+function fitLine(line: DetailLine, room: number): Piece[][] {
+  const { pieces, kind, most } = line;
+  if (most === 1) return [fitRuns(giveWay(line, room), room)];
   return fitRules[kind].block === "wrap"
     ? wrapRuns(pieces, room)
     : [fitRuns(pieces, room)];
 }
 
-/** `lines` with the last of them ending in `…`, to say more follows. */
+/**
+ * `lines` with the last of them ending in `…`, to say more follows,
+ * unless it already holds one: a line cut in its middle, or one still
+ * waiting for the details, is not cut again.
+ */
 const endLast = (lines: readonly Piece[][], room: number): Piece[][] => [
   ...lines.slice(0, -1),
-  ...lines.slice(-1).map((line) => endRuns(line, room)),
+  ...lines
+    .slice(-1)
+    .map((line) =>
+      line.some(({ text }) => text.includes(tokens["glyph.cut"]))
+        ? line
+        : endRuns(line, room),
+    ),
 ];
 
 /**
