@@ -1,0 +1,174 @@
+exit 0
+--- out
+{
+  "mode": "finished",
+  "window": "72h",
+  "grouping": "kind",
+  "data": {
+    "syncedAt": "2026-09-28T10:00:00.000Z",
+    "ageSeconds": 0,
+    "warnings": []
+  },
+  "counts": {
+    "merged": 1,
+    "closed": 2,
+    "over": 1,
+    "byKind": {
+      "issue": {
+        "completed": 1,
+        "notPlanned": 1,
+        "duplicate": 0,
+        "closed": 0
+      },
+      "pullRequest": {
+        "merged": 1,
+        "closed": 0
+      }
+    }
+  },
+  "measures": {
+    "close": {
+      "state": "measured",
+      "of": 3,
+      "pending": 0
+    },
+    "firstResponse": {
+      "state": "unsupported",
+      "of": 0,
+      "pending": 0
+    },
+    "firstReview": {
+      "state": "unsupported",
+      "of": 0,
+      "pending": 0
+    }
+  },
+  "groups": [
+    {
+      "kind": "issue",
+      "threads": [
+        {
+          "reference": "docs#3",
+          "title": "Broken link in the footer",
+          "kind": "issue",
+          "owners": [
+            "bob"
+          ],
+          "draft": false,
+          "stack": null,
+          "invalidRepositoryFile": false,
+          "ending": {
+            "outcome": "completed",
+            "label": "closed as completed"
+          },
+          "endedAt": "2026-09-28T08:30:00.000Z",
+          "endedBy": {
+            "login": "bob",
+            "group": "team"
+          },
+          "closer": {
+            "kind": "pullRequest",
+            "repo": "example-org/example-repo",
+            "number": 14,
+            "url": "https://github.com/example-org/example-repo/pull/14"
+          },
+          "openedAt": "2026-08-10T08:00:00.000Z",
+          "exempt": false,
+          "verdict": "over",
+          "measures": {
+            "close": {
+              "state": "measured",
+              "target": "720h",
+              "overdue": 0.1673611111111111,
+              "verdict": "over"
+            },
+            "firstResponse": {
+              "state": "unsupported"
+            },
+            "firstReview": {
+              "state": "unsupported"
+            }
+          }
+        },
+        {
+          "reference": "docs#5",
+          "title": "Dark mode for the docs",
+          "kind": "issue",
+          "owners": [],
+          "draft": false,
+          "stack": null,
+          "invalidRepositoryFile": false,
+          "ending": {
+            "outcome": "notPlanned",
+            "label": "closed as not planned"
+          },
+          "endedAt": "2026-09-25T10:00:00.000Z",
+          "endedBy": {
+            "login": "alice",
+            "group": "you"
+          },
+          "openedAt": "2026-09-24T09:00:00.000Z",
+          "exempt": false,
+          "verdict": "within",
+          "measures": {
+            "close": {
+              "state": "measured",
+              "target": "720h",
+              "overdue": -0.9652777777777778,
+              "verdict": "within"
+            },
+            "firstResponse": {
+              "state": "unsupported"
+            },
+            "firstReview": {
+              "state": "unsupported"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "pullRequest",
+      "threads": [
+        {
+          "reference": "example#14",
+          "title": "Tidy the changelog",
+          "kind": "pullRequest",
+          "owners": [
+            "bob"
+          ],
+          "draft": false,
+          "stack": null,
+          "invalidRepositoryFile": false,
+          "ending": {
+            "outcome": "merged",
+            "label": "merged"
+          },
+          "endedAt": "2026-09-27T13:00:00.000Z",
+          "endedBy": {
+            "login": "alice",
+            "group": "you"
+          },
+          "openedAt": "2026-09-20T08:00:00.000Z",
+          "exempt": false,
+          "verdict": "within",
+          "measures": {
+            "close": {
+              "state": "measured",
+              "target": "120h",
+              "overdue": 0,
+              "verdict": "within"
+            },
+            "firstResponse": {
+              "state": "unsupported"
+            },
+            "firstReview": {
+              "state": "unsupported"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+--- err

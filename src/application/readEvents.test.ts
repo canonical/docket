@@ -3,6 +3,7 @@ import { type Home, makeHome, openSession } from "../testing/docket.js";
 import { providerError } from "../testing/provider.js";
 import {
   recordedEvents,
+  recordedFinished,
   recordedNow,
   recordedProvider,
 } from "../testing/recorded.js";
@@ -32,7 +33,7 @@ describe("readEvents", () => {
     );
     expect(read).toEqual({
       events: recordedEvents.filter(({ thread }) => thread.repo === repo),
-      finished: [],
+      finished: recordedFinished.filter((thread) => thread.repo === repo),
       syncedAt: recordedNow,
       warnings: [],
     });

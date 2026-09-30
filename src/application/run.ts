@@ -10,6 +10,7 @@ import {
 } from "../lib/text/index.js";
 import answerActivity from "./answerActivity.js";
 import answerConfig from "./answerConfig.js";
+import answerFinished from "./answerFinished.js";
 import answerOwed from "./answerOwed.js";
 import answerShow from "./answerShow.js";
 import answerTerminal from "./answerTerminal.js";
@@ -26,6 +27,7 @@ import type { Connection, Context, Session } from "./types.js";
 const answers = {
   owed: answerOwed,
   activity: answerActivity,
+  finished: answerFinished,
   show: answerShow,
   assign: answerWrite,
   review: answerWrite,

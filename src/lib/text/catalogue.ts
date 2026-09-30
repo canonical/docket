@@ -1,4 +1,5 @@
 import { activityGroupings } from "../activity/index.js";
+import { finishedGroupings } from "../finished/index.js";
 import { owedGroupings } from "../owed/index.js";
 import { defaultDetail, details, formats } from "./constants.js";
 import type { Command, Flag } from "./types.js";
@@ -33,6 +34,14 @@ const confirm: Flag = {
   name: "confirm",
   description:
     "Applies the change. Without it, docket prints the change it would make and changes nothing.",
+};
+
+const window: Flag = {
+  name: "window",
+  value: "window",
+  fallback: "the first window in the configuration's `activity` list",
+  description:
+    "How far back the list reaches: one of the windows in the configuration's `activity` list, 24h, 48h, 72h and 1w unless it says otherwise.",
 };
 
 const readExits = {
@@ -91,13 +100,7 @@ const catalogue: readonly Command[] = [
       "In a terminal, with no `--format`, `docket activity` opens the terminal interface on activity; piped or captured, or given `--format`, it prints the list.",
     ],
     flags: [
-      {
-        name: "window",
-        value: "window",
-        fallback: "the first window in the configuration's `activity` list",
-        description:
-          "How far back the list reaches: one of the windows in the configuration's `activity` list, 24h, 48h, 72h and 1w unless it says otherwise.",
-      },
+      window,
       {
         name: "by",
         value: "grouping",
@@ -111,6 +114,34 @@ const catalogue: readonly Command[] = [
       maxAge,
     ],
     example: "docket activity --window 48h --by repo",
+    exits: readExits,
+  },
+  {
+    name: "finished",
+    arguments: "",
+    answers:
+      "Which issues and pull requests were merged or closed within a time window and are still so, how each ended, and whether each closed within its target.",
+    notes: [
+      "Threads run by their ending, newest first. A thread closed more than once counts once, with its latest ending, and one reopened and open now is left out.",
+      "An ending is written as GitHub writes it: merged, closed, closed as completed, closed as not planned or closed as duplicate. The counts give merged, closed for every other ending, and over for the threads that closed past their target.",
+      "Windows count working time, as activity's do, and so does how long a thread was open, measured against the close target for its kind unless a label in `exempt.close` exempts it.",
+      "In JSON, each thread carries its measures: time to close, and time to first reply and time to first review, which read `unsupported` because docket does not read each thread's timeline.",
+    ],
+    flags: [
+      window,
+      {
+        name: "by",
+        value: "grouping",
+        choices: finishedGroupings,
+        default: "kind",
+        description:
+          "Splits the list into sections: by kind of thread (ISSUES, PULL REQUESTS), by ending, as GitHub words it, by repo, or none.",
+      },
+      format,
+      detail,
+      maxAge,
+    ],
+    example: "docket finished --window 1w --by ending",
     exits: readExits,
   },
   {

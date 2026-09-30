@@ -8,6 +8,7 @@ describe("catalogue", () => {
     expect(catalogue.map(({ name }) => name)).toEqual([
       "owed",
       "activity",
+      "finished",
       "show",
       "assign",
       "review",
