@@ -237,6 +237,22 @@ describe("placeList", () => {
       });
     });
 
+    it("keeps the pinned heading in a room of two lines, the row's first line under it and no sign", () => {
+      expect(
+        placeList(makeBlocks(["heading", "row", "row"], [1, 3, 2]), {
+          from: 1,
+          to: 1,
+          room: 2,
+          first: 0,
+        }),
+      ).toEqual({
+        first: 1,
+        shown: 1,
+        below: 0,
+        pinned: { heading: nameHeading(0), place: 1, size: 2 },
+      });
+    });
+
     it("keeps the pinned heading and the sign over a thread whose events outgrow the whole room", () => {
       expect(
         placeList(makeBlocks(["heading", ...makeRows(4)], [1, 40, 3, 3, 3]), {
