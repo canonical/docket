@@ -1,5 +1,6 @@
 40 columns
-|activity                   24h · by kind
+|activity    24h · by kind · newest first
 
 runs
-1:1 "activity                   24h · by kind" fg #c6c8d1ff bg #00000000
+1:1 "activity    24h · by kind · " fg #c6c8d1ff bg #00000000
+1:29 "newest first" fg #6b7089ff bg #00000000

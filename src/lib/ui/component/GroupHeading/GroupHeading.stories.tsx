@@ -26,3 +26,15 @@ export const Stack: Story<GroupHeadingProps> = {
 export const NotInAStack: Story<GroupHeadingProps> = {
   args: { heading: { text: "NOT IN A STACK", fit: "trimmed" }, width: 40 },
 };
+
+/**
+ * bob's section pinned above its rows while they scroll, the first row
+ * shown the third of his five.
+ */
+export const Pinned: Story<GroupHeadingProps> = {
+  args: {
+    heading: { text: "bob", fit: "trimmed", group: "team" },
+    count: "3 of 5",
+    width: 40,
+  },
+};

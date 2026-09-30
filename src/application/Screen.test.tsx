@@ -110,6 +110,17 @@ const readRecordedDetail = async (
 const readRecordedDetails = (threads: readonly ThreadSummary[]) =>
   Promise.all(threads.map(readRecordedDetail));
 
+/**
+ * The header's line at `width`: the mode on the left, then its address
+ * and its sort against the right edge.
+ */
+const describeHeader = (mode: TerminalMode, address: string, width = 40) => {
+  const sort = mode === "owed" ? "overdue first" : "newest first";
+  const right = `${address} · ${sort}`;
+  const gap = width - mode.length - Bun.stringWidth(right);
+  return `${mode}${" ".repeat(gap)}${right}`;
+};
+
 /** Opens nothing, and says it opened. */
 const openNothing = async (_url: string) => {};
 
@@ -277,7 +288,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         await show(viewOf(await openCache(fakeProvider())))
       ).redraw();
       expect(screen.lines).toEqual([
-        "owed",
+        describeHeader("owed", "one list"),
         "",
         "  refresh in progress…",
         "",
@@ -409,7 +420,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(drawn.lines.at(10)).toBe("paused: budget low · resumes 13:00");
     });
 
-    it("stands in a notice for the list when gh gives no token, with no status", async () => {
+    it("shows setup when gh gives no token: the notice for the list, no status, and only the keys that act, in the key bar and the help", async () => {
       const view: TerminalView = {
         mode: "owed",
         owedGrouping: "none",
@@ -426,9 +437,10 @@ describe("Screen", { timeout: 15_000 }, () => {
           },
         },
       };
-      const screen = await (await show(view)).redraw();
+      const onQuit = vi.fn();
+      const screen = await (await show(view, 40, onQuit)).redraw();
       expect(screen.lines).toEqual([
-        "owed",
+        "setup",
         "",
         "  ✗ docket needs the GitHub CLI (gh)",
         "  Recovery: install it from",
@@ -439,8 +451,25 @@ describe("Screen", { timeout: 15_000 }, () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
+        "? q quit",
       ]);
+      const keyed = await press(screen, "right", "g", "j");
+      expect(keyed.lines).toEqual(screen.lines);
+      const help = await press(screen, "?");
+      expect(help.lines.slice(0, 9)).toEqual([
+        "help",
+        "",
+        `App ${"─".repeat(36)}`,
+        "  ?        show or hide help",
+        "  esc      close help",
+        "  q        quit",
+        "",
+        "",
+        "",
+      ]);
+      expect((await press(screen, "escape")).lines).toEqual(screen.lines);
+      await press(screen, "q");
+      expect(onQuit).toHaveBeenCalledOnce();
     });
   });
 
@@ -450,7 +479,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const cache = await openCache(fakeProvider());
       const screen = await show(viewOf(cache, everyCapability, readWatched));
       expect(screen.lines.slice(0, 4)).toEqual([
-        "owed",
+        describeHeader("owed", "one list"),
         "",
         "  refresh in progress…",
         "",
@@ -472,12 +501,12 @@ describe("Screen", { timeout: 15_000 }, () => {
       const { promise, resolve } = Promise.withResolvers<WatchedFiles>();
       const screen = await show(viewOf(cache, everyCapability, () => promise));
       expect((await screen.redraw()).lines.at(9)).toBe(
-        "2 over · 1 soon · 3 on track",
+        `2 over · 1 soon · 3 on track${" ".repeat(9)}1/6`,
       );
       resolve({ watched: generous });
       await promise;
       expect((await screen.redraw()).lines.at(9)).toBe(
-        "0 over · 0 soon · 6 on track",
+        `0 over · 0 soon · 6 on track${" ".repeat(9)}1/6`,
       );
     });
 
@@ -516,7 +545,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         await show(viewOf(cache, everyCapability, readFailed))
       ).redraw();
       expect(screen.lines).toEqual([
-        "owed",
+        describeHeader("owed", "one list"),
         "",
         "  ✗ docket stopped on a failure it has",
         "  no name for: disk on fire",
@@ -538,7 +567,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       await cache.refresh();
       const screen = await (await show(viewOf(cache))).redraw();
       expect(screen.lines).toEqual([
-        "owed",
+        describeHeader("owed", "one list"),
         `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
         `┃┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
         "┃┆○ dave · 3d ago",
@@ -546,8 +575,8 @@ describe("Screen", { timeout: 15_000 }, () => {
         "┃┆again?",
         "┃┆waiting since Mon 10:00 · target 24h",
         "┃┆example stack 3 · 2 of 3 · → main",
-        "╹┆below #11 merged, above #13 open",
-        "2 over · 1 soon · 3 on track",
+        "  ↓ 5 below",
+        `2 over · 1 soon · 3 on track${" ".repeat(9)}1/6`,
         "synced 0m ago",
         "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
@@ -603,7 +632,7 @@ describe("Screen", { timeout: 15_000 }, () => {
           `┃${" ".repeat(25)}◉ alice, ◐ bob`,
           "┃ ◉ alice · 27d ago",
           "╹ waiting since Tue 10:00 · target 24h",
-          "",
+          "  ↓ 6 below",
         ],
       ],
       [
@@ -612,11 +641,11 @@ describe("Screen", { timeout: 15_000 }, () => {
           "┃ docs#4 issue reply ◉ alice    18d over",
           "┃ Where do tokens live?",
           `┃${" ".repeat(25)}◉ alice, ◐ bob`,
-          "┃ ◉ alice · 27d ago",
+          "  ↓ 6 below",
         ],
       ],
     ])(
-      "keeps the notice whole above the selected row, cut below it, at 40 by %i",
+      "keeps the notice whole above the selected row, cut above the sign of the rows below, at 40 by %i",
       async (height, rows) => {
         const cache = await openCache(recordedProvider());
         await cache.refresh();
@@ -781,14 +810,15 @@ describe("Screen", { timeout: 15_000 }, () => {
     it("stays on its wait when the grouping changes, and never lands on a heading", async () => {
       const screen = await showRecorded();
       const grouped = await press(screen, "j", "g");
-      expect(grouped.lines.slice(0, 2)).toEqual([
-        `owed${" ".repeat(28)}by owner`,
+      expect(grouped.lines.slice(0, 3)).toEqual([
+        describeHeader("owed", "by owner"),
+        `◉ alice · 2 of 3 ${"─".repeat(23)}`,
         `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
       ]);
       const first = await press(screen, "k");
       expect(first.lines.slice(1, 3)).toEqual([
+        `◉ alice · 1 of 3 ${"─".repeat(23)}`,
         `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
-        `┃┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
       ]);
       expect(first.look("example#12 PR reply")?.bg).toBe(
         tokens["color.background.selected"],
@@ -883,7 +913,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(snapshot).not.toHaveBeenCalled();
       await press(screen, "right", "?", "t", "g", "escape");
       expect((await screen.redraw()).lines.at(0)).toBe(
-        `activity${" ".repeat(19)}24h · by kind`,
+        describeHeader("activity", "24h · by kind"),
       );
       const moved = await press(screen, "left", "j");
       expect(moved.lines.at(1)).toBe(
@@ -1294,13 +1324,13 @@ describe("Screen", { timeout: 15_000 }, () => {
       gate.resolve();
       await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(9)).toBe(
-          "2 threads · 3 events",
+          `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         ),
       );
       gate = Promise.withResolvers<void>();
       const wider = await press(screen, "t");
       expect(wider.lines.slice(0, 3)).toEqual([
-        `activity${" ".repeat(19)}48h · by kind`,
+        describeHeader("activity", "48h · by kind"),
         "",
         "  refresh in progress…",
       ]);
@@ -1308,7 +1338,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       gate.resolve();
       await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(9)).toBe(
-          "2 threads · 4 events",
+          `2 threads · 4 events${" ".repeat(15)}1/1/2`,
         ),
       );
     });
@@ -1316,20 +1346,20 @@ describe("Screen", { timeout: 15_000 }, () => {
     it("lists each thread with its events under it, by kind, and counts them at 40 columns", async () => {
       const screen = await showActivity(40);
       expect(screen.lines).toEqual([
-        `activity${" ".repeat(19)}24h · by kind`,
+        describeHeader("activity", "24h · by kind"),
         "ISSUES ─────────────────────────────────",
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
         `${" ".repeat(26)}◉ alice, ● bob`,
         "  age 27d · owner ◉ alice, ● bob",
-        "  last activity 27d ago",
+        "  last activity 27d ago · ◉ alice",
         "  labels none",
         `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
         "PULL REQUESTS ──────────────────────────",
         "",
         "",
-        "",
-        "2 threads · 3 events",
+        "  ↓ 1 below",
+        `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "synced 0m ago",
         "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       ]);
@@ -1380,7 +1410,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       });
       const row = drawn.indexOf(" ┃Fix the parser · alice");
       expect(drawn.slice(row + 1, row + 7)).toEqual([
-        `activity${" ".repeat(39)}24h · by kind`,
+        describeHeader("activity", "24h · by kind", 60),
         "PULL REQUESTS ──────────────────────────────────────────────",
         ` ┆example#12 PR ○ dave${" ".repeat(35)}25m`,
         ` ┆Fix the parser${" ".repeat(37)}◉ alice`,
@@ -1439,14 +1469,14 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  ☐ ○ dave",
         `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
         "PULL REQUESTS ──────────────────────────",
-        "",
-        "2 threads · 3 events",
+        "  ↓ 1 below",
+        `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "synced 0m ago",
         "type filter ↑↓ ␣ tick ⏎ apply esc ?",
       ]);
       const closed = await press(screen, "escape");
       expect(closed.lines.slice(0, 3)).toEqual([
-        `activity${" ".repeat(19)}24h · by kind`,
+        describeHeader("activity", "24h · by kind"),
         "ISSUES ─────────────────────────────────",
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
       ]);
@@ -1475,7 +1505,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showActivity(40);
       const refused = await press(screen, "r");
       expect(refused.lines).toEqual([
-        `activity${" ".repeat(19)}24h · by kind`,
+        describeHeader("activity", "24h · by kind"),
         "ISSUES ─────────────────────────────────",
         `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
         "  Where do tokens live?",
@@ -1487,8 +1517,8 @@ describe("Screen", { timeout: 15_000 }, () => {
         `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
         "PULL REQUESTS ──────────────────────────",
         "",
-        "",
-        "2 threads · 3 events",
+        "  ↓ 1 below",
+        `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "✗ review refused",
         "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       ]);
@@ -1508,7 +1538,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showActivity(40, cache);
       const refused = await press(screen, "a");
       expect(refused.lines).toEqual([
-        `activity${" ".repeat(19)}24h · by kind`,
+        describeHeader("activity", "24h · by kind"),
         "ISSUES ─────────────────────────────────",
         `  docs#4 issue${" ".repeat(23)}16h`,
         "  Where do tokens live?",
@@ -1520,8 +1550,8 @@ describe("Screen", { timeout: 15_000 }, () => {
         "PULL REQUESTS ──────────────────────────",
         "",
         "",
-        "",
-        "2 threads · 3 events",
+        "  ↓ 1 below",
+        `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "✗ assign refused",
         "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       ]);
@@ -1531,16 +1561,18 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showActivity(60);
       const byRepo = await press(screen, "g");
       expect(byRepo.lines.slice(0, 2)).toEqual([
-        `activity${" ".repeat(39)}24h · by repo`,
+        describeHeader("activity", "24h · by repo", 60),
         "example ────────────────────────────────────────────────────",
       ]);
       const wider = await press(screen, "g", "t");
       await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(13)).toBe(
-          "2 threads · 4 events",
+          `2 threads · 4 events${" ".repeat(37)}1/2`,
         ),
       );
-      expect(wider.lines.at(0)).toBe(`activity${" ".repeat(49)}48h`);
+      expect(wider.lines.at(0)).toBe(
+        describeHeader("activity", "48h · one list", 60),
+      );
       expect((await screen.redraw()).lines).toContain(
         ` ┆  ○ dave commented${" ".repeat(38)}3d`,
       );
@@ -1577,7 +1609,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
       ]);
       expect(screen.lines.slice(13, 15)).toEqual([
-        "1 thread · 2 events",
+        `1 thread · 2 events${" ".repeat(16)}1/1/1`,
         "✗ offline · data from 12:00",
       ]);
     });
@@ -1795,9 +1827,11 @@ describe("Screen", { timeout: 15_000 }, () => {
         activity: { window: threeDays, grouping: "repo" },
       } as const;
       const screen = await (await show(view)).redraw();
-      expect(screen.lines.at(0)).toBe(`activity${" ".repeat(19)}72h · by repo`);
+      expect(screen.lines.at(0)).toBe(
+        describeHeader("activity", "72h · by repo"),
+      );
       expect((await press(screen, "t")).lines.at(0)).toBe(
-        `activity${" ".repeat(20)}1w · by repo`,
+        describeHeader("activity", "1w · by repo"),
       );
     });
 
@@ -1807,15 +1841,19 @@ describe("Screen", { timeout: 15_000 }, () => {
         mode: "activity",
       } as const;
       const screen = await (await show(view)).redraw();
-      expect(screen.lines.at(0)).toBe(`activity${" ".repeat(19)}24h · by kind`);
-      expect((await press(screen, "left")).lines.at(0)).toBe("owed");
+      expect(screen.lines.at(0)).toBe(
+        describeHeader("activity", "24h · by kind"),
+      );
+      expect((await press(screen, "left")).lines.at(0)).toBe(
+        describeHeader("owed", "one list"),
+      );
     });
 
     it("opens owed on the grouping the call names, ungrouped when that is by stack with no stacks", async () => {
       const cache = await openCache(fakeProvider());
       const byOwner = { ...viewOf(cache), owedGrouping: "owner" } as const;
       expect((await show(byOwner)).lines.at(0)).toBe(
-        `owed${" ".repeat(28)}by owner`,
+        describeHeader("owed", "by owner"),
       );
       const withoutStacks = new Set(
         [...everyCapability].filter((each) => each !== "stacks"),
@@ -1824,18 +1862,24 @@ describe("Screen", { timeout: 15_000 }, () => {
         ...viewOf(cache, withoutStacks),
         owedGrouping: "stack",
       } as const;
-      expect((await show(byStack)).lines.at(0)).toBe("owed");
+      expect((await show(byStack)).lines.at(0)).toBe(
+        describeHeader("owed", "one list"),
+      );
     });
 
     it("switches mode with the arrows and h and l, naming only the mode shown, and never wraps", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
-      expect((await press(screen, "left")).lines.at(0)).toBe("owed");
+      expect((await press(screen, "left")).lines.at(0)).toBe(
+        describeHeader("owed", "one list"),
+      );
       const activity = await press(screen, "right");
       expect(activity.lines.at(0)).toBe(
-        `activity${" ".repeat(19)}24h · by kind`,
+        describeHeader("activity", "24h · by kind"),
       );
       expect((await press(screen, "right")).lines.at(0)).toMatch(/^activity/);
-      expect((await press(screen, "h")).lines.at(0)).toBe("owed");
+      expect((await press(screen, "h")).lines.at(0)).toBe(
+        describeHeader("owed", "one list"),
+      );
       expect((await press(screen, "l")).lines.at(0)).toMatch(/^activity/);
     });
 
@@ -1844,23 +1888,28 @@ describe("Screen", { timeout: 15_000 }, () => {
       const headers = async (capabilities: ReadonlySet<Capability>) => {
         const screen = await show(viewOf(cache, capabilities));
         const seen = [];
-        for (let step = 0; step < 4; step += 1) {
+        for (let step = 0; step < 5; step += 1) {
           seen.push(
-            (await press(screen, "g")).lines.at(0)?.replace(/^owed */, ""),
+            (await press(screen, "g")).lines
+              .at(0)
+              ?.replace(/^owed */, "")
+              .replace(/ · overdue first$/, ""),
           );
         }
         return seen;
       };
       expect(await headers(everyCapability)).toEqual([
         "by owner",
+        "by kind",
         "by repo",
         "by stack",
-        "",
+        "one list",
       ]);
       expect(await headers(new Set())).toEqual([
         "by owner",
+        "by kind",
         "by repo",
-        "",
+        "one list",
         "by owner",
       ]);
     });
@@ -1869,20 +1918,23 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       await press(screen, "g", "right");
       const address = async (key: string) =>
-        (await press(screen, key)).lines.at(0)?.replace(/^activity */, "");
+        (await press(screen, key)).lines
+          .at(0)
+          ?.replace(/^activity */, "")
+          .replace(/ · newest first$/, "");
       expect(await address("g")).toBe("24h · by repo");
-      expect(await address("g")).toBe("24h");
-      expect(await address("t")).toBe("48h");
+      expect(await address("g")).toBe("24h · one list");
+      expect(await address("t")).toBe("48h · one list");
       expect(await address("g")).toBe("48h · by kind");
       expect((await press(screen, "left")).lines.at(0)).toBe(
-        `owed${" ".repeat(28)}by owner`,
+        describeHeader("owed", "by owner"),
       );
     });
 
     it("leaves the time window alone in owed, and shows its key only in activity", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       const owed = await press(screen, "t");
-      expect(owed.lines.at(0)).toBe("owed");
+      expect(owed.lines.at(0)).toBe(describeHeader("owed", "one list"));
       expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
       const activity = await press(screen, "right");
       expect(activity.lines.at(11)).toBe(
@@ -1933,13 +1985,55 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  windows are counted in working time",
         "",
       ]);
-      expect((await press(screen, "?")).lines.at(0)).toBe("owed");
+      expect((await press(screen, "?")).lines.at(0)).toBe(
+        describeHeader("owed", "one list"),
+      );
+    });
+
+    it("scrolls a help too tall for the pane with the movement keys, counting the key lines below, and leaves the selection where it was", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const screen = await show(viewOf(cache), 40, () => {}, 24);
+      const list = (await screen.redraw()).lines;
+      const opened = await press(screen, "?");
+      expect(opened.lines.slice(0, 3)).toEqual([
+        "help",
+        "",
+        `Mode ${"─".repeat(35)}`,
+      ]);
+      expect(opened.lines.at(23)).toBe("  ↓ 8 below");
+      const down = await press(screen, "j");
+      expect(down.lines.slice(1, 3)).toEqual([
+        `Mode · 1 of 3 ${"─".repeat(26)}`,
+        "  ← →  h l switch mode (owed ↔ activity)",
+      ]);
+      const end = await press(screen, "end");
+      expect(end.lines.at(1)).toBe(`List · 2 of 3 ${"─".repeat(26)}`);
+      expect(end.lines.at(23)).toBe("  windows are counted in working time");
+      const pagedUp = await press(screen, "pageup");
+      // A page back from the end is the whole help's height of key lines.
+      expect(pagedUp.lines).toEqual(opened.lines);
+      const top = await press(screen, "home");
+      expect(top.lines).toEqual(opened.lines);
+      const pagedDown = await press(screen, "pagedown");
+      expect([
+        pagedDown.lines.at(1),
+        pagedDown.lines.at(2),
+        pagedDown.lines.at(23),
+      ]).toEqual([
+        `List · 2 of 3 ${"─".repeat(26)}`,
+        "  ⇞ ⇟      a page up or down",
+        "  windows are counted in working time",
+      ]);
+      expect((await press(screen, "escape")).lines).toEqual(list);
     });
 
     it("closes the help with esc, in owed and in activity", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       expect((await press(screen, "?")).lines.at(0)).toBe("help");
-      expect((await press(screen, "escape")).lines.at(0)).toBe("owed");
+      expect((await press(screen, "escape")).lines.at(0)).toBe(
+        describeHeader("owed", "one list"),
+      );
       await press(screen, "right");
       expect((await press(screen, "?")).lines.at(0)).toBe("help");
       expect((await press(screen, "escape")).lines.at(0)).toMatch(/^activity /);
@@ -1972,6 +2066,37 @@ describe("Screen", { timeout: 15_000 }, () => {
   });
 
   describe("height", () => {
+    it("shows only that it needs 8 lines when shortened, acting on no key but q, and the screen again once tall enough", async () => {
+      const onQuit = vi.fn();
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const screen = await show(viewOf(cache), 40, onQuit);
+      const before = (await screen.redraw()).lines;
+      for (const lines of [7, 3]) {
+        screen.setup.resize(40, lines);
+        const short = await press(await screen.redraw(), "j", "?", "g");
+        expect(short.lines.filter(Boolean)).toEqual(["docket needs 8 lines"]);
+      }
+      screen.setup.resize(40, 12);
+      expect((await screen.redraw()).lines).toEqual(before);
+      screen.setup.resize(40, 7);
+      await press(await screen.redraw(), "q");
+      expect(onQuit).toHaveBeenCalledOnce();
+    });
+
+    it("names the selected row's group and counts the rows below at 8 lines, cutting the row's details instead", async () => {
+      const screen = await showRecorded();
+      screen.setup.resize(40, 8);
+      const kinds = await press(screen, "g", "g");
+      expect(kinds.lines.slice(0, 5)).toEqual([
+        describeHeader("owed", "by kind"),
+        `ISSUES · 1 of 3 ${"─".repeat(24)}`,
+        `┃ example#15 issue reply ◐ carol 4h left`,
+        `┃ Crash on start${" ".repeat(14)}unassigned`,
+        "  ↓ 5 below",
+      ]);
+    });
+
     it("shows the rows scrolled out above once the pane grows tall enough", async () => {
       const screen = await showRecorded();
       const short = await press(screen, "j");
@@ -1996,7 +2121,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(narrow.lines.filter(Boolean)).toEqual(["docket needs 40 columns"]);
       screen.setup.resize(60, 12);
       const wide = await screen.redraw();
-      expect(wide.lines.at(0)).toBe("owed");
+      expect(wide.lines.at(0)).toBe(describeHeader("owed", "one list", 60));
       expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
     });
 

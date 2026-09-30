@@ -7,17 +7,8 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import {
-  type ThreadRow as ActivityThread,
-  activityGroupings,
-  describeAddress as describeActivityAddress,
-} from "../lib/activity/index.js";
-import {
-  describeNoTeam,
-  describeAddress as describeOwedAddress,
-  owedGroupings,
-  type WaitRow,
-} from "../lib/owed/index.js";
+import type { ThreadRow as ActivityThread } from "../lib/activity/index.js";
+import { describeNoTeam, type WaitRow } from "../lib/owed/index.js";
 import {
   type ActionResult,
   CountsLine,
@@ -25,6 +16,7 @@ import {
   HelpOverlay,
   KeyBar,
   minColumns,
+  minLines,
   Notice,
   Pane,
   PaneHeader,
@@ -37,6 +29,7 @@ import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
 import { standInIndent } from "./constants.js";
 import describeCandidate from "./describeCandidate.js";
+import describePosition from "./describePosition.js";
 import drawStandIn from "./drawStandIn.js";
 import drawStatusLine from "./drawStatusLine.js";
 import findPeople from "./findPeople.js";
@@ -52,9 +45,11 @@ import type {
   WatchedFiles,
 } from "./types.js";
 import useActivity from "./useActivity.js";
+import useAddress from "./useAddress.js";
 import useAttention, { type UseAttentionProps } from "./useAttention.js";
 import useEditor from "./useEditor.js";
 import useHeldDetails from "./useHeldDetails.js";
+import useHelp from "./useHelp.js";
 import useReadAhead from "./useReadAhead.js";
 import useScreenKeys from "./useScreenKeys.js";
 import useSelectedWatch from "./useSelectedWatch.js";
@@ -63,12 +58,6 @@ import useViewer from "./useViewer.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
-
-/** The entry after `item` in `list`, and the first after the last. */
-function cycle<T>(list: readonly T[], item: T): T {
-  const [next] = [...list.slice(list.indexOf(item) + 1), ...list];
-  return next;
-}
 
 /** A thread's last change, as GitHub records it, and its checks. */
 const describeVersion = ({ updatedAt, checks }: Thread) =>
@@ -86,13 +75,14 @@ const readNothing = () => undefined;
 const unselected: Selection = { place: 0, row: "" };
 
 /**
- * The terminal interface's one screen: owed or activity, with the header
- * naming the mode and its address, the list region, the counts, the
- * status and the keys, or the help over all but the header. The keys are
- * bound in one global layer, beside the layer of the editor that `a` and
- * `r` open, and the help and the key bar are drawn from the keymap's
- * command catalogue. Every key, whatever it does, counts as attention: it
- * keeps the pane active, or wakes an idle one, and still acts.
+ * The terminal interface's one screen: owed or activity, or setup while a
+ * prerequisite is missing, with the header naming the mode and its
+ * address, the list region, the counts, the status and the keys, or the
+ * help over all but the header. The keys are bound in one global layer,
+ * beside the layer of the editor that `a` and `r` open, and the help and
+ * the key bar are drawn from the keymap's command catalogue. Every key,
+ * whatever it does, counts as attention: it keeps the pane active, or
+ * wakes an idle one, and still acts.
  */
 export default function Screen({
   mode: openingMode,
@@ -108,10 +98,14 @@ export default function Screen({
 }: TerminalView &
   Partial<UseAttentionProps> & { readonly onQuit: () => void }): ReactNode {
   const { width, height } = useTerminalDimensions();
-  // Below the narrowest pane the screen shows only that it needs more
-  // columns, so no key but `q` acts on the list or the editor it hides.
-  const narrow = width < minColumns;
+  // Below the narrowest or the shortest pane the screen shows only what
+  // it needs, so no key but `q` acts on the list or the editor it hides.
+  const tooSmall = width < minColumns || height < minLines;
   const attentionState = useAttention({ attention });
+  // Without gh, or signed out of it, the screen is setup, which stands in
+  // for either mode until the prerequisite is met: it names neither, and
+  // lists nothing.
+  const setup = "problem" in source;
   const cache = "cache" in source ? source.cache : undefined;
   const readWatched = "cache" in source ? source.readWatched : undefined;
   const readThreadDetail = "cache" in source ? source.readDetail : undefined;
@@ -146,25 +140,16 @@ export default function Screen({
     return () => clearInterval(timer);
   }, [now]);
 
-  // Without the stack relation there is nothing to group by stack.
-  const owedChoices = owedGroupings.filter(
-    (grouping) =>
-      grouping !== "stack" ||
-      ("capabilities" in source && source.capabilities.has("stacks")),
-  );
-  const [firstOwed] = owedChoices;
-  const [firstActivity] = activityGroupings;
-  const [firstWindow] = settings.activity;
-  const [mode, setMode] = useState<TerminalMode>(openingMode);
-  // A call may name by stack when the provider has no stacks to group by.
-  const [owedGrouping, setOwedGrouping] = useState(
-    owedChoices.includes(openingGrouping) ? openingGrouping : firstOwed,
-  );
-  const [activityGrouping, setActivityGrouping] = useState(
-    openingActivity?.grouping ?? firstActivity,
-  );
-  const [window, setWindow] = useState(openingActivity?.window ?? firstWindow);
-  const [help, setHelp] = useState(false);
+  const address = useAddress({
+    mode: openingMode,
+    owedGrouping: openingGrouping,
+    activity: openingActivity,
+    windows: settings.activity,
+    stacks: "capabilities" in source && source.capabilities.has("stacks"),
+  });
+  const { mode, owedGrouping, activityGrouping, window, header } = address;
+  const helpState = useHelp();
+  const help = helpState.open;
   // Each mode keeps its own selection, so switching back finds it where it
   // was left.
   const [selections, setSelections] = useState<
@@ -184,7 +169,7 @@ export default function Screen({
       describeCandidate(name, thread, watched, you.viewer, named),
     now,
     onResult: setAction,
-    covered: help || narrow,
+    covered: help || tooSmall,
   });
   const shownList = useShownList(mode);
   // Every move stops at the first or the last row, never past it.
@@ -221,14 +206,21 @@ export default function Screen({
     mode,
     help,
     editorOpen: editor.open,
-    narrow,
+    tooSmall,
+    setup,
     actions: {
-      switchMode: setMode,
-      moveSelection: (step) => moveTo((place) => place + step),
+      switchMode: address.setMode,
+      // While the help shows, the movement keys scroll it instead.
+      moveSelection: (step) =>
+        help ? helpState.scroll(step) : moveTo((place) => place + step),
       movePage: (direction) =>
-        moveTo((place) => place + direction * shownList.pageRows.current),
+        help
+          ? helpState.page(direction)
+          : moveTo((place) => place + direction * shownList.pageRows.current),
       moveToEnd: (direction) =>
-        moveTo((_place, last) => (direction < 0 ? 0 : last)),
+        help
+          ? helpState.end(direction)
+          : moveTo((_place, last) => (direction < 0 ? 0 : last)),
       // Only a row is ever selected, in either mode, so a heading or a
       // stack never opens.
       openSelected: () => {
@@ -243,24 +235,16 @@ export default function Screen({
           }),
         );
       },
-      nextGrouping: () =>
-        mode === "owed"
-          ? setOwedGrouping((current) => cycle(owedChoices, current))
-          : setActivityGrouping((current) => cycle(activityGroupings, current)),
-      nextWindow: () =>
-        setWindow((current) => cycle(settings.activity, current)),
+      nextGrouping: address.nextGrouping,
+      nextWindow: address.nextWindow,
       edit: (action) => editor.start(action, selectThread()),
-      toggleHelp: () => setHelp((open) => !open),
-      closeHelp: () => setHelp(false),
+      toggleHelp: helpState.toggle,
+      closeHelp: helpState.close,
       refresh: () => void cache?.fullRefresh(),
       quit: onQuit,
     },
   });
 
-  const header =
-    mode === "owed"
-      ? describeOwedAddress({ mode, grouping: owedGrouping })
-      : describeActivityAddress({ mode, window, grouping: activityGrouping });
   // The threads once there is data to show, or nothing to watch.
   const threads =
     !problem && cached && (cached.syncedAt || watched.length === 0)
@@ -283,6 +267,9 @@ export default function Screen({
     viewer: you.viewer,
   });
   const room = width - standInIndent;
+  // The header, the counts, the status and the keys take a line each, and
+  // a pane shorter than they are leaves the list no line, never fewer.
+  const listHeight = Math.max(0, height - 4);
   const listed = activity && "list" in activity ? activity.list : undefined;
   const rows: readonly (WaitRow | ActivityThread)[] =
     (owed ?? listed)?.groups.flatMap(
@@ -394,7 +381,7 @@ export default function Screen({
         now={at}
         timezone={settings.time.timezone}
         width={width}
-        height={height - 4}
+        height={listHeight}
         {...shownList.list}
         {...(teamless && { notice: teamless })}
         {...(slot && { editor: slot })}
@@ -415,31 +402,43 @@ export default function Screen({
         now={at}
         timezone={settings.time.timezone}
         width={width}
-        height={height - 4}
+        height={listHeight}
         {...shownList.list}
         {...(slot && { editor: slot })}
       />
     );
   }
   const summary = (owed ?? listed)?.summary.text;
+  const position = describePosition(
+    (owed ?? listed)?.groups ?? [],
+    placeSelection(rows, selections[mode]),
+  );
 
   return (
     <Pane
       width={width}
+      height={height}
       header={
-        help ? (
-          <PaneHeader title="help" width={width} />
+        help || setup ? (
+          <PaneHeader title={help ? "help" : "setup"} width={width} />
         ) : (
           <PaneHeader
-            title={editor.title ?? header.title.text}
-            address={editor.title ? undefined : header.address?.text}
+            title={editor.title ?? header.title}
+            {...(!editor.title && {
+              address: header.address,
+              sort: header.sort,
+            })}
             width={width}
           />
         )
       }
       counts={
         summary === undefined ? undefined : (
-          <CountsLine summary={summary} width={width} />
+          <CountsLine
+            summary={summary}
+            {...(position && { position })}
+            width={width}
+          />
         )
       }
       status={drawStatusLine({
@@ -464,8 +463,11 @@ export default function Screen({
         help ? (
           <HelpOverlay
             commands={bound}
-            note="windows are counted in working time"
+            {...(!setup && { note: "windows are counted in working time" })}
             width={width}
+            height={Math.max(0, height - 1)}
+            first={helpState.first}
+            onShown={helpState.onShown}
           />
         ) : undefined
       }

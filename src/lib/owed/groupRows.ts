@@ -1,5 +1,6 @@
 import type { Repo } from "../config/index.js";
 import { collectStacks } from "../stacks/index.js";
+import { kindSections } from "./constants.js";
 import type { OwedGrouping, Owner, WaitGroup, WaitRow } from "./types.js";
 
 type Section = readonly [heading: string, rows: readonly WaitRow[]];
@@ -66,7 +67,8 @@ function sectionStacks(rows: readonly WaitRow[], order: string[]): Section[] {
 
 /**
  * Splits sorted rows into the sections of a grouping. The order of the
- * sections is a fixed rule of each grouping and never follows the sort.
+ * sections is a fixed rule of each grouping and never follows the sort:
+ * kinds as `ISSUES`, `PULL REQUESTS`, `DISCUSSIONS`, as activity's.
  * Rows keep the sort inside a section, except inside a stack, and a
  * section with no rows is left out.
  *
@@ -83,11 +85,21 @@ export default function groupRows(
   const sections =
     grouping === "owner"
       ? sectionOwners(rows)
-      : grouping === "repo"
-        ? order.map(
-            (name): Section => [name, rows.filter((row) => row.repo === name)],
+      : grouping === "kind"
+        ? kindSections.map(
+            ([kind, text]): Section => [
+              text,
+              rows.filter((row) => row.wait.thread.kind === kind),
+            ],
           )
-        : sectionStacks(rows, order);
+        : grouping === "repo"
+          ? order.map(
+              (name): Section => [
+                name,
+                rows.filter((row) => row.repo === name),
+              ],
+            )
+          : sectionStacks(rows, order);
   return sections
     .filter(([, members]) => members.length > 0)
     .map(([text, members]) => ({

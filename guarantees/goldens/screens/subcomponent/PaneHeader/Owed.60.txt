@@ -1,5 +1,6 @@
 60 columns
-|owed
+|owed                                one list · overdue first
 
 runs
-1:1 "owed                                                        " fg #c6c8d1ff bg #00000000
+1:1 "owed                                one list · " fg #c6c8d1ff bg #00000000
+1:48 "overdue first" fg #6b7089ff bg #00000000

@@ -41,8 +41,8 @@ function quoteHeading(group: WaitGroup, grouping: OwedGrouping, text: string) {
 
 /**
  * What a section holds, as data: the owner, `null` over the waits no one
- * owns; the repository; or the stack, `null` over the pull requests in
- * none. A section always holds a row.
+ * owns; the kind of its threads; the repository; or the stack, `null`
+ * over the pull requests in none. A section always holds a row.
  */
 function describeGroupData(group: WaitGroup, grouping: OwedGrouping) {
   const [first] = group.rows;
@@ -50,6 +50,7 @@ function describeGroupData(group: WaitGroup, grouping: OwedGrouping) {
     // The heading of an owner's section is the owner's login.
     return { owner: first?.wait.owners.length ? group.heading?.text : null };
   }
+  if (grouping === "kind") return { kind: first?.wait.thread.kind };
   if (grouping === "repo") return { repo: first?.repo };
   if (grouping === "stack") {
     const stack = first?.stacked ? first.wait.thread.stack : undefined;

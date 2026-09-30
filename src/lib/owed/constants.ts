@@ -1,12 +1,27 @@
 import type { ThreadKind, WaitKind } from "../waits/index.js";
 import type { OwedGrouping } from "./types.js";
 
-/** The groupings, in the order the reader steps through them; the first is the default. */
+/**
+ * The groupings, in the order the reader steps through them; the first is
+ * the default. The two about what you must do, by owner and by kind of
+ * thread, come before the two about where a thread lives.
+ */
 export const owedGroupings: readonly OwedGrouping[] = [
   "none",
   "owner",
+  "kind",
   "repo",
   "stack",
+];
+
+/**
+ * The section of each kind of thread, in the order the sections come, in
+ * owed and in activity alike.
+ */
+export const kindSections: readonly (readonly [ThreadKind, string])[] = [
+  ["issue", "ISSUES"],
+  ["pullRequest", "PULL REQUESTS"],
+  ["discussion", "DISCUSSIONS"],
 ];
 
 /**

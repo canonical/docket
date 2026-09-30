@@ -1,6 +1,7 @@
 /**
  * The terminal's screens, as a person sees them: every story under
  * `src/`, drawn through OpenTUI's test renderer at 40 columns and at 60,
+ * on as many lines as the story names, or the approved frames' 36,
  * and compared with its saved copy, the characters of each line and then
  * the colours and weight of each run of text on it. A story names a state
  * worth pinning, so a stories file is the list of its screens: a new
@@ -32,11 +33,11 @@ const storyFiles = /^src\/.+\.stories\.tsx$/;
 /** The widths every story is drawn at: the least the pane allows, and one wider. */
 const widths = [40, 60];
 /**
- * The approved frames' height. The composed screen and the pane fill it,
- * so every group of a frame is drawn whole; a shorter story ends at its
- * last line, the blank lines below it left out.
+ * The approved frames' height, unless a story names its own. The composed
+ * screen and the pane fill it, so every group of a frame is drawn whole; a
+ * shorter story ends at its last line, the blank lines below it left out.
  */
-const height = 36;
+const framesHeight = 36;
 /** How narrow the screens drawn too narrow are. */
 const narrowWidth = 32;
 /** The screens drawn too narrow: the pane alone, and the composed screen. */
@@ -47,6 +48,7 @@ const narrow = [
 
 interface Story {
   readonly args: Readonly<Record<string, unknown>>;
+  readonly parameters?: { readonly height?: number };
 }
 interface StoryFile {
   readonly default: {
@@ -147,16 +149,21 @@ function reorderLines(lines: readonly string[]): readonly string[] {
 }
 
 /**
- * Draws `node` on a screen `width` columns wide and writes it out: the
- * characters of each line, then each run of text by line and column with
- * its colours and weight, one to a line, so a difference points at the
- * line or the run that changed. A run of spaces on no background of its
- * own is left out; its place is in the lines above.
+ * Draws `node` on a screen `width` columns wide and `height` lines tall,
+ * and writes it out: the characters of each line, then each run of text
+ * by line and column with its colours and weight, one to a line, so a
+ * difference points at the line or the run that changed. A run of spaces
+ * on no background of its own is left out; its place is in the lines
+ * above.
  *
  * The node mounts inside an awaited `act`, which lets a story that waits
  * on a promise, such as a thread's details, draw what the promise gives.
  */
-async function drawScreen(node: ReactNode, width: number): Promise<string> {
+async function drawScreen(
+  node: ReactNode,
+  width: number,
+  height: number,
+): Promise<string> {
   let mount = () => {};
   const Later = () => {
     const [shown, setShown] = useState(false);
@@ -199,7 +206,9 @@ async function drawScreen(node: ReactNode, width: number): Promise<string> {
       });
     });
   return [
-    `${width} columns`,
+    height === framesHeight
+      ? `${width} columns`
+      : `${width} columns, ${height} lines`,
     ...lines.slice(0, shown).map((line) => `|${line}`),
     "",
     "runs",
@@ -208,14 +217,21 @@ async function drawScreen(node: ReactNode, width: number): Promise<string> {
   ].join("\n");
 }
 
-/** Draws `story` from `file` at `width`, every block in it as wide. */
+/**
+ * Draws `story` from `file` at `width`, every block in it as wide, on the
+ * lines it names.
+ */
 function drawStory(file: StoryFile, story: Story, width: number) {
   const { component: Component } = file.default;
   const own = story.args.width;
   const args = (
     typeof own === "number" ? widen(story.args, own, width) : story.args
   ) as Record<string, unknown>;
-  return drawScreen(<Component {...args} />, width);
+  return drawScreen(
+    <Component {...args} />,
+    width,
+    story.parameters?.height ?? framesHeight,
+  );
 }
 
 const listStories = (file: StoryFile) =>

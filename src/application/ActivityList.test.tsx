@@ -266,7 +266,7 @@ describe("ActivityList", () => {
     ]);
   });
 
-  it("scrolls to keep a closed thread whole once its close body takes the place of loading…", async () => {
+  it("scrolls to keep a closed thread in view under its pinned heading, cut above the sign, once its close body takes the place of loading…", async () => {
     const closed = Promise.resolve(sharedCloseDetail);
     const shown: number[] = [];
     const screen = await drawSuspending(
@@ -283,13 +283,13 @@ describe("ActivityList", () => {
       7,
     );
     expect(screen.lines).toEqual([
+      `ISSUES · 1 of 1 ${"─".repeat(24)}`,
       `  docs#4 issue ● alice${" ".repeat(15)}16h`,
       "  Where do tokens live?",
       `${" ".repeat(26)}● alice, ● bob`,
       "  age 6d · owner ● alice, ● bob",
       "  last activity 3h ago · ● bob",
-      "  labels priority=high · kind=bug ·",
-      "  area/icons",
+      "  ↓ 1 below",
     ]);
     expect(shown.at(-1)).toBe(1);
   });
