@@ -198,6 +198,17 @@ describe("the stages of createCache", () => {
     expect(counts[1]).toBe(counts[0]);
   });
 
+  it("runs a first refresh that may not spend as a background one, never a full refresh", async () => {
+    const cache = open(
+      fakeProvider({ budget: async () => ({ ...fullBudget, remaining: 999 }) }),
+    );
+    const seen: boolean[] = [];
+    cache.subscribe(() => seen.push(cache.status().whole));
+    await cache.refresh();
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen).not.toContain(true);
+  });
+
   it("keeps each repository paused while the budget is low and it needs points to go on", async () => {
     const cache = open(
       fakeProvider({
