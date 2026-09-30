@@ -5,6 +5,7 @@ import { tokens } from "../lib/tokens/index.js";
 import { EmptyState, Notice } from "../lib/ui/index.js";
 import describeHold from "./describeHold.js";
 import drawFirstRun, { type FirstRunProps } from "./drawFirstRun.js";
+import findEarlierRun from "./findEarlierRun.js";
 import type { TerminalMode } from "./types.js";
 import type { UseActivityResult } from "./useActivity.js";
 
@@ -78,8 +79,13 @@ export default function drawStandIn({
   if (refused) return refused;
   if (!held) {
     // Once a refresh here has given each repository a stage, the lines
-    // say where it stands, and the status line why it waits.
-    const known = status !== undefined && status.stages.length > 0;
+    // say where it stands. A failure no repository stopped on, such as a
+    // wait for another process's fetch, came before any fetch, so the
+    // lines are an earlier run's, and its own reason and step stand in.
+    const known =
+      status !== undefined &&
+      status.stages.length > 0 &&
+      !findEarlierRun(status);
     const hold = !known && status && describeHold(status, timezone);
     return hold ? (
       <Notice
