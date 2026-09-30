@@ -27,7 +27,15 @@ import ts from "typescript";
 type Finding = { file: string; rule: string; message: string };
 type Reach = "values" | "types";
 
-const model = ["clock", "config", "people", "waits", "events", "stacks"];
+const model = [
+  "clock",
+  "config",
+  "people",
+  "waits",
+  "events",
+  "stacks",
+  "endings",
+];
 const viewModels = ["owed", "activity"];
 const surfaces = ["text", "tokens", "ui"];
 
