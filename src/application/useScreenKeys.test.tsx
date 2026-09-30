@@ -175,7 +175,7 @@ describe("useScreenKeys", () => {
     expect(ran).toEqual(["closeHelp"]);
   });
 
-  it("runs only the help's keys and q while the help shows, and every key again once it closes", async () => {
+  it("runs only the help's keys, the movement keys, which scroll it, and q while the help shows, and every key again once it closes", async () => {
     const { ran, change, screen } = await bind({
       mode: "activity",
       help: true,
@@ -186,20 +186,38 @@ describe("useScreenKeys", () => {
       ...["pageup", "pagedown", "home", "end", "return", "a", "r", "g", "t"],
       ...["R", "q", "?", "escape"],
     );
-    expect(ran).toEqual(["quit", "toggleHelp", "closeHelp"]);
+    expect(ran).toEqual([
+      "moveSelection -1",
+      "moveSelection -1",
+      "moveSelection 1",
+      "moveSelection 1",
+      "movePage -1",
+      "movePage 1",
+      "moveToEnd -1",
+      "moveToEnd 1",
+      "quit",
+      "toggleHelp",
+      "closeHelp",
+    ]);
     await screen.redraw(() => change({ help: false }));
     await press(screen, "j", "t");
-    expect(ran.slice(3)).toEqual(["moveSelection 1", "nextWindow"]);
+    expect(ran.slice(11)).toEqual(["moveSelection 1", "nextWindow"]);
   });
 
-  it("runs only the help's keys while an editor is open", async () => {
+  it("runs only the help's keys, and the movement keys once the help covers it, while an editor is open", async () => {
     const { ran, screen } = await bind({ editorOpen: true, help: true });
     const drawn = await press(
       screen,
       ...["j", "pagedown", "home", "a", "q", "R", "?", "escape"],
     );
-    expect(ran).toEqual(["toggleHelp", "closeHelp"]);
-    expect(drawn.lines.at(0)).toBe("? esc");
+    expect(ran).toEqual([
+      "moveSelection 1",
+      "movePage 1",
+      "moveToEnd -1",
+      "toggleHelp",
+      "closeHelp",
+    ]);
+    expect(drawn.lines.at(0)).toBe("↑ ↓ ⇞ ⇟ home end ? esc");
   });
 
   it.each([

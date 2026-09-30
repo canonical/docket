@@ -44,7 +44,7 @@ describe("Pane", () => {
   });
 
   it("gives the help everything under the header", async () => {
-    const screen = await draw(<Pane {...Help.args} height={14} />, 40, 14);
+    const screen = await draw(<Pane {...Help.args} height={36} />, 40, 36);
     expect(screen.lines.slice(0, 3)).toEqual([
       "help",
       "",

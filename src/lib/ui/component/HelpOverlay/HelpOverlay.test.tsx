@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { draw } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import HelpOverlay from "./HelpOverlay.js";
-import { Keys } from "./HelpOverlay.stories.js";
+import { Keys, Scrolled } from "./HelpOverlay.stories.js";
 
 /** A group's heading at `width`: its name and a rule to the edge. */
 const heading = (name: string, width: number) =>
@@ -32,13 +32,21 @@ const linesAt = (width: number) => [
 
 describe("HelpOverlay", () => {
   it("lists every key under its group, labels in one column, at 40 columns", async () => {
-    const screen = await draw(<HelpOverlay {...Keys.args} />, 40, 20);
+    const screen = await draw(
+      <HelpOverlay {...Keys.args} height={20} />,
+      40,
+      20,
+    );
     const lines = linesAt(40);
     expect(screen.lines.slice(0, lines.length)).toEqual(lines);
   });
 
   it("draws the group headings, the keys and the labels, none of them bold", async () => {
-    const screen = await draw(<HelpOverlay {...Keys.args} />, 40, 20);
+    const screen = await draw(
+      <HelpOverlay {...Keys.args} height={20} />,
+      40,
+      20,
+    );
     expect(screen.look("Mode")).toMatchObject({
       fg: tokens["color.text"],
       bold: false,
@@ -49,7 +57,7 @@ describe("HelpOverlay", () => {
 
   it("keeps the same lines at 60 columns, the rules drawn to the wider edge", async () => {
     const screen = await draw(
-      <HelpOverlay {...Keys.args} width={60} />,
+      <HelpOverlay {...Keys.args} width={60} height={20} />,
       60,
       20,
     );
@@ -57,14 +65,58 @@ describe("HelpOverlay", () => {
     expect(screen.lines.slice(0, lines.length)).toEqual(lines);
   });
 
-  it("cuts off at the bottom of a short pane, every line whole", async () => {
-    const screen = await draw(<HelpOverlay {...Keys.args} />, 40, 6);
-    expect(screen.lines).toEqual(linesAt(40).slice(0, 6));
+  it("opens at its top on a short pane, every line whole, the key lines under the pane counted, dimmed", async () => {
+    const screen = await draw(<HelpOverlay {...Keys.args} height={8} />, 40, 8);
+    expect(screen.lines).toEqual([
+      ...linesAt(40).slice(0, 5),
+      "",
+      "",
+      "  ↓ 5 below",
+    ]);
+    expect(screen.look("↓ 5 below")?.fg).toBe(tokens["color.text.muted"]);
+  });
+
+  it("scrolls as a list does, from the place it is given, the heading of its keys pinned with their place", async () => {
+    const onShown = vi.fn();
+    const screen = await draw(
+      <HelpOverlay {...Scrolled.args} onShown={onShown} />,
+      40,
+      8,
+    );
+    expect(screen.lines).toEqual([
+      `List · 1 of 1 ${"─".repeat(26)}`,
+      "  ↑ ↓  k j move the selection",
+      "           (opens the accordion)",
+      "",
+      heading("App", 40),
+      "  ?        show or hide help",
+      "  R        full refresh",
+      "  ↓ 1 below",
+    ]);
+    expect(onShown).toHaveBeenLastCalledWith(3, 5);
+  });
+
+  it("shows its end when told to start past it", async () => {
+    const screen = await draw(
+      <HelpOverlay {...Keys.args} height={8} first={99} />,
+      40,
+      8,
+    );
+    expect(screen.lines).toEqual([
+      "",
+      heading("App", 40),
+      "  ?        show or hide help",
+      "  R        full refresh",
+      "  q        quit",
+      "",
+      "  windows are counted in working time",
+      "",
+    ]);
   });
 
   it("cuts a label that crosses a narrow pane with an ellipsis", async () => {
     const screen = await draw(
-      <HelpOverlay {...Keys.args} width={24} />,
+      <HelpOverlay {...Keys.args} width={24} height={20} />,
       24,
       20,
     );

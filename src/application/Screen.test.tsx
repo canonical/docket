@@ -1966,6 +1966,33 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
     });
 
+    it("scrolls a help too tall for the pane with the movement keys, counting the key lines below, and leaves the selection where it was", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const screen = await show(viewOf(cache), 40, () => {}, 24);
+      const list = (await screen.redraw()).lines;
+      const opened = await press(screen, "?");
+      expect(opened.lines.slice(0, 3)).toEqual([
+        "help",
+        "",
+        `Mode ${"─".repeat(35)}`,
+      ]);
+      expect(opened.lines.at(23)).toBe("  ↓ 8 below");
+      const down = await press(screen, "j");
+      expect(down.lines.slice(1, 3)).toEqual([
+        `Mode · 1 of 3 ${"─".repeat(26)}`,
+        "  ← →  h l switch mode (owed ↔ activity)",
+      ]);
+      const end = await press(screen, "end");
+      expect(end.lines.at(1)).toBe(`List · 2 of 3 ${"─".repeat(26)}`);
+      expect(end.lines.at(23)).toBe("  windows are counted in working time");
+      const paged = await press(screen, "pageup");
+      expect(paged.lines.at(23)).toMatch(/below$/);
+      const top = await press(screen, "home");
+      expect(top.lines).toEqual(opened.lines);
+      expect((await press(screen, "escape")).lines).toEqual(list);
+    });
+
     it("closes the help with esc, in owed and in activity", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       expect((await press(screen, "?")).lines.at(0)).toBe("help");

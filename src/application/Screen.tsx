@@ -49,6 +49,7 @@ import useAddress from "./useAddress.js";
 import useAttention, { type UseAttentionProps } from "./useAttention.js";
 import useEditor from "./useEditor.js";
 import useHeldDetails from "./useHeldDetails.js";
+import useHelp from "./useHelp.js";
 import useReadAhead from "./useReadAhead.js";
 import useScreenKeys from "./useScreenKeys.js";
 import useSelectedWatch from "./useSelectedWatch.js";
@@ -142,7 +143,8 @@ export default function Screen({
     stacks: "capabilities" in source && source.capabilities.has("stacks"),
   });
   const { mode, owedGrouping, activityGrouping, window, header } = address;
-  const [help, setHelp] = useState(false);
+  const helpState = useHelp();
+  const help = helpState.open;
   // Each mode keeps its own selection, so switching back finds it where it
   // was left.
   const [selections, setSelections] = useState<
@@ -202,11 +204,17 @@ export default function Screen({
     tooSmall,
     actions: {
       switchMode: address.setMode,
-      moveSelection: (step) => moveTo((place) => place + step),
+      // While the help shows, the movement keys scroll it instead.
+      moveSelection: (step) =>
+        help ? helpState.scroll(step) : moveTo((place) => place + step),
       movePage: (direction) =>
-        moveTo((place) => place + direction * shownList.pageRows.current),
+        help
+          ? helpState.page(direction)
+          : moveTo((place) => place + direction * shownList.pageRows.current),
       moveToEnd: (direction) =>
-        moveTo((_place, last) => (direction < 0 ? 0 : last)),
+        help
+          ? helpState.end(direction)
+          : moveTo((_place, last) => (direction < 0 ? 0 : last)),
       // Only a row is ever selected, in either mode, so a heading or a
       // stack never opens.
       openSelected: () => {
@@ -224,8 +232,8 @@ export default function Screen({
       nextGrouping: address.nextGrouping,
       nextWindow: address.nextWindow,
       edit: (action) => editor.start(action, selectThread()),
-      toggleHelp: () => setHelp((open) => !open),
-      closeHelp: () => setHelp(false),
+      toggleHelp: helpState.toggle,
+      closeHelp: helpState.close,
       refresh: () => void cache?.fullRefresh(),
       quit: onQuit,
     },
@@ -451,6 +459,9 @@ export default function Screen({
             commands={bound}
             note="windows are counted in working time"
             width={width}
+            height={Math.max(0, height - 1)}
+            first={helpState.first}
+            onShown={helpState.onShown}
           />
         ) : undefined
       }

@@ -72,7 +72,7 @@ export default function placeList(
   };
   const fits = (top: number, last: number) =>
     frame(top).lines + measure(top, last) <= room;
-  let top = Math.max(0, Math.min(first, from));
+  let top = Math.max(0, Math.min(first, from, end - 1));
   while (top < to && !fits(top, to + 1)) top += 1;
   while (top > 0 && frame(top - 1).whole) top -= 1;
   const { pinned, signed, whole } = frame(top);

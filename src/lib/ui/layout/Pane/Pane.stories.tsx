@@ -65,6 +65,7 @@ export const Help: Story<PaneProps> = {
         commands={owedCommands}
         note="windows are counted in working time"
         width={width}
+        height={height - 1}
       />
     ),
   },

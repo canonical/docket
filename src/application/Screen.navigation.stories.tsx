@@ -42,3 +42,13 @@ export const OwedScrolled: Story<ScreenFrameProps> = {
   },
   parameters: { height: 14 },
 };
+
+/**
+ * The help at 24 lines, too short for it: it opens at its top, and its
+ * last line counts the key lines under the pane, as a list counts its
+ * rows.
+ */
+export const HelpShort: Story<ScreenFrameProps> = {
+  args: { ...recording, run: ["help.toggle"] },
+  parameters: { height: 24 },
+};

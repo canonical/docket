@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect } from "react";
 import { tokens } from "../../../tokens/index.js";
-import { GroupHeading } from "../../component/index.js";
+import { GroupHeading } from "../../component/GroupHeading/index.js";
 import { useListScroll } from "../../hooks/index.js";
 import type { ScrolledListProps } from "./types.js";
 

@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import type { KeyCommand } from "../../hooks/index.js";
+import {
+  type ListBlock,
+  ScrolledList,
+} from "../../layout/ScrolledList/index.js";
 import trimText from "../../trimText.js";
 import { GroupHeading } from "../GroupHeading/index.js";
 import type { HelpOverlayProps } from "./types.js";
@@ -26,7 +30,13 @@ const writeKeys = ({ keys, alternates }: KeyCommand) =>
 
 /**
  * Every key, grouped by the object it acts on, filling the pane under a
- * header that reads `help`. `?` shows and hides it.
+ * header that reads `help`. `?` shows and hides it. Its lines scroll as a
+ * list's do, drawn through the same scrolled list: a group's heading, with
+ * the blank line above it, is a heading; a key's line, with its notes, a
+ * row; and the closing note neither. So a pane too short for the help
+ * pins the heading of the keys under its first line and counts the key
+ * lines under it, `↓ 8 below`, and the movement keys scroll it from
+ * `first`.
  *
  * `import { HelpOverlay } from "../lib/ui/index.js";`
  *
@@ -36,25 +46,39 @@ const HelpOverlay = ({
   commands,
   note,
   width,
+  height,
+  first = 0,
+  onShown = () => {},
 }: HelpOverlayProps): ReactNode => {
   const pad = " ".repeat(indent);
   const notePad = " ".repeat(indent + keyColumn);
-  return (
-    <box flexDirection="column">
-      {groupCommands(commands).map(([group, lines]) => (
-        <box key={group} flexDirection="column" flexShrink={0} marginTop={1}>
-          <GroupHeading
-            heading={{ text: group, fit: "trimmed" }}
-            width={width}
-          />
-          {lines.map((line) => {
-            const keys = trimText(writeKeys(line), width - indent);
-            const gap = " ".repeat(
-              Math.max(1, keyColumn - Bun.stringWidth(keys)),
-            );
-            const room = width - indent - Bun.stringWidth(keys) - gap.length;
-            return (
-              <box key={line.label} flexDirection="column" flexShrink={0}>
+  const blocks: ListBlock[] = groupCommands(commands).flatMap(
+    ([group, lines]): ListBlock[] => {
+      const heading = { text: group, fit: "trimmed" } as const;
+      return [
+        {
+          key: group,
+          kind: "heading",
+          lines: 2,
+          heading,
+          node: (
+            <box marginTop={1}>
+              <GroupHeading heading={heading} width={width} />
+            </box>
+          ),
+        },
+        ...lines.map((line): ListBlock => {
+          const keys = trimText(writeKeys(line), width - indent);
+          const gap = " ".repeat(
+            Math.max(1, keyColumn - Bun.stringWidth(keys)),
+          );
+          const room = width - indent - Bun.stringWidth(keys) - gap.length;
+          return {
+            key: `${group} ${line.label}`,
+            kind: "row",
+            lines: 1 + line.notes.length,
+            node: (
+              <>
                 <text fg={tokens["color.text"]}>
                   {pad}
                   {keys}
@@ -67,16 +91,37 @@ const HelpOverlay = ({
                     {trimText(each, width - notePad.length)}
                   </text>
                 ))}
-              </box>
-            );
-          })}
-        </box>
-      ))}
+              </>
+            ),
+          };
+        }),
+      ];
+    },
+  );
+  blocks.push({
+    key: "note",
+    kind: "other",
+    lines: 2,
+    node: (
       <text marginTop={1} fg={tokens["color.text"]}>
         {pad}
         {trimText(note, width - indent)}
       </text>
-    </box>
+    ),
+  });
+  return (
+    <ScrolledList
+      // Drawn anew at each step, so the step's block is the first shown,
+      // or the list's end is on the last line.
+      key={first}
+      blocks={blocks}
+      from={first}
+      to={first}
+      height={height}
+      first={first}
+      onShown={onShown}
+      width={width}
+    />
   );
 };
 

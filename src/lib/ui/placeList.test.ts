@@ -115,6 +115,15 @@ describe("placeList", () => {
       }
     });
 
+    it("starts no further than the last block when told to start past it", () => {
+      expect(placeList(grouped, lines, 99, 99, 4, 99)).toEqual({
+        first: 6,
+        shown: 1,
+        below: 0,
+        pinned: { heading: 4, place: 2, size: 2 },
+      });
+    });
+
     it("places nothing in a list with no block", () => {
       expect(placeList([], [], 0, 0, 5, 3)).toEqual({
         first: 0,

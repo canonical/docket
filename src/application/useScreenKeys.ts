@@ -44,7 +44,8 @@ export interface UseScreenKeysProps {
   readonly mode: TerminalMode;
   /**
    * Whether the help is open, which `esc` then closes, and which turns
-   * every key but the help's and `q` off.
+   * every key but the help's, the movement keys, which scroll it, and `q`
+   * off.
    */
   readonly help: boolean;
   /** Whether an editor is open, which turns every key but the help's off. */
@@ -211,13 +212,16 @@ export default function useScreenKeys({
         },
       ].map((command) => {
         // No key acts on what the screen does not show: below the narrowest
-        // or the shortest pane only quitting runs, and while the help shows only its own
-        // keys and quitting. An open editor takes the typing, so no key but
-        // the help's runs.
+        // or the shortest pane only quitting runs, and while the help shows
+        // only its own keys, the movement keys, which scroll it, and
+        // quitting. An open editor takes the typing, so no key but the
+        // help's runs, and the movement keys once the help covers it.
         const quits = command.name === "app.quit";
+        const moves = command.name.startsWith("selection.");
         const runs = tooSmall
           ? quits
           : command.name.startsWith("help.") ||
+            (help && moves) ||
             (!editorOpen && (!help || quits));
         return runs ? command : { ...command, enabled: false };
       }),
