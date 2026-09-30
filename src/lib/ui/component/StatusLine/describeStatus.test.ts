@@ -83,9 +83,9 @@ describe("describeStatus", () => {
     });
   });
 
-  it("says docket is offline with no data yet", () => {
+  it("says nothing of a failure before any data, which the list names", () => {
     const status = { ...statusOf(Offline), syncedAt: undefined };
-    expect(describeAt(status)).toEqual({ kind: "error", text: "✗ offline" });
+    expect(describeAt(status)).toBeUndefined();
   });
 
   it("names any other failed refresh and the time of the data shown", () => {
