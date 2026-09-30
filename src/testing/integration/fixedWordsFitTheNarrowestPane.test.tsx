@@ -1,18 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { longReview } from "../../testing/long.js";
-import { draw } from "../../testing/terminal.js";
 import {
   activityGroupings,
   describeAddress as describeActivityAddress,
-} from "../activity/index.js";
-import type { CacheStatus, RepoStage } from "../cache/index.js";
-import { describeAddress, owedGroupings } from "../owed/index.js";
-import { CountsLine, StatusLine, ThreadRow } from "./component/index.js";
-import describeStage from "./component/RefreshStages/describeStage.js";
-import describeDetails from "./component/StatusLine/describeDetails.js";
-import describeStatus from "./component/StatusLine/describeStatus.js";
-import { minColumns } from "./constants.js";
-import { PaneHeader } from "./subcomponent/index.js";
+} from "../../lib/activity/index.js";
+import type { CacheStatus, RepoStage } from "../../lib/cache/index.js";
+import { describeAddress, owedGroupings } from "../../lib/owed/index.js";
+import {
+  CountsLine,
+  StatusLine,
+  ThreadRow,
+} from "../../lib/ui/component/index.js";
+import describeStage from "../../lib/ui/component/RefreshStages/describeStage.js";
+import describeDetails from "../../lib/ui/component/StatusLine/describeDetails.js";
+import describeStatus from "../../lib/ui/component/StatusLine/describeStatus.js";
+import { minColumns } from "../../lib/ui/constants.js";
+import { PaneHeader } from "../../lib/ui/subcomponent/index.js";
+import { longReview } from "../long.js";
+import { draw } from "../terminal.js";
 
 const now = new Date("2026-09-28T12:00:00Z");
 const idle: CacheStatus = {
@@ -58,7 +62,7 @@ const messages: readonly CacheStatus[] = [
   fullRefresh,
 ];
 
-describe("minColumns", () => {
+describe("docket's own words at the narrowest pane", () => {
   it("holds each status message whole, a full refresh without its pages, and the details' count, which leaves whole where they would meet", () => {
     for (const status of messages) {
       for (const attention of ["active", "idle"] as const) {
