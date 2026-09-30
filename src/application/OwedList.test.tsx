@@ -65,7 +65,7 @@ describe("OwedList", () => {
       "│ Where do tokens live?",
       `╵${" ".repeat(25)}● alice, ● bob`,
       "● bob ──────────────────────────────────",
-      "",
+      "  ↓ 4 below",
     ]);
     expect(screen.look("● alice")).toMatchObject({
       fg: tokens["color.text.team"],

@@ -4,6 +4,7 @@
 |╵ a thread
 |│ second of bob's
 |╵ a thread
+|  ↓ 2 below
 
 runs
 1:1 "● bob" fg #84a0c6ff bg #00000000
@@ -12,3 +13,4 @@ runs
 3:1 "╵ a thread                                                  " fg #ffffffff bg #00000000
 4:1 "│ second of bob's                                           " fg #ffffffff bg #00000000
 5:1 "╵ a thread                                                  " fg #ffffffff bg #00000000
+6:1 "  ↓ 2 below" fg #6b7089ff bg #00000000

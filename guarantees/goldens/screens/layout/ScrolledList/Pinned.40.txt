@@ -4,7 +4,7 @@
 |╵ a thread
 |│ third of bob's
 |╵ a thread
-|unassigned ─────────────────────────────
+|  ↓ 1 below
 
 runs
 1:1 "● bob" fg #84a0c6ff bg #00000000
@@ -13,4 +13,4 @@ runs
 3:1 "╵ a thread                              " fg #ffffffff bg #00000000
 4:1 "│ third of bob's                        " fg #ffffffff bg #00000000
 5:1 "╵ a thread                              " fg #ffffffff bg #00000000
-6:1 "unassigned ─────────────────────────────" fg #c6c8d1ff bg #00000000
+6:1 "  ↓ 1 below" fg #6b7089ff bg #00000000

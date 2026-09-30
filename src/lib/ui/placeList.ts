@@ -14,11 +14,13 @@ import type { ListBlockKind, ListPlacement } from "./types.js";
  * When the first block shown is a row of a group, the group's heading is
  * pinned above it on a line of the room, with the place in the group of
  * that row, so the group is named wherever its rows scroll, unless that
- * row is too tall to share the room with it. The first
- * block is shown whatever its height, and after it as many whole blocks
- * as fit. Placed again from the first block it gives, it gives the same
- * place, so a list that keeps its first block between draws settles in
- * one.
+ * row is too tall to share the room with it. When rows are cut off
+ * below, the list's last line is kept for the sign that counts them,
+ * every row under it in whichever group, unless the first block is too
+ * tall to share the room with it. The first block is shown
+ * whatever its height, and after it as many whole blocks as fit. Placed
+ * again from the first block it gives, it gives the same place, so a
+ * list that keeps its first block between draws settles in one.
  *
  * @param kinds What each block of the list is, in order.
  * @param heights The lines each block takes, in order.
@@ -48,25 +50,41 @@ export default function placeList(
   }
   const measure = (start: number, end: number) =>
     heights.slice(start, end).reduce((lines, height) => lines + height, 0);
-  // A row too tall for the room under the heading takes the room alone.
-  const pinnedAt = (top: number) =>
-    kinds.at(top) === "row" && 1 + (heights.at(top) ?? 0) <= room
-      ? headings.at(top)
-      : undefined;
-  const pins = (top: number) => (pinnedAt(top) === undefined ? 0 : 1);
-  const fits = (top: number, end: number) =>
-    pins(top) + measure(top, end) <= room;
+  const end = heights.length;
+  // The lines a list starting at `top` spends on its pinned heading and on
+  // the sign of the rows cut off below. The first block is kept whole
+  // before either: a block too tall to share the room with the sign goes
+  // without it, and one too tall to share it with the heading as well goes
+  // without the heading.
+  const frame = (top: number) => {
+    const grouped = kinds.at(top) === "row" ? headings.at(top) : undefined;
+    const tall = heights.at(top) ?? 0;
+    const cuts = (pin: number) => pin + measure(top, end) > room;
+    const signs = (pin: number) =>
+      cuts(pin) && pin + tall + 1 <= room ? 1 : 0;
+    const pin = grouped !== undefined && 1 + tall + signs(1) <= room ? 1 : 0;
+    return {
+      pinned: pin === 1 ? grouped : undefined,
+      signed: signs(pin) === 1,
+      lines: pin + signs(pin),
+      whole: !cuts(pin),
+    };
+  };
+  const fits = (top: number, last: number) =>
+    frame(top).lines + measure(top, last) <= room;
   let top = Math.max(0, Math.min(first, from));
   while (top < to && !fits(top, to + 1)) top += 1;
-  while (top > 0 && fits(top - 1, heights.length)) top -= 1;
-  let shown = 1;
-  while (top + shown < heights.length && fits(top, top + shown + 1)) {
-    shown += 1;
-  }
-  const pinned = pinnedAt(top);
+  while (top > 0 && frame(top - 1).whole) top -= 1;
+  const { pinned, signed, whole } = frame(top);
+  let shown = whole ? end - top : 1;
+  while (top + shown < end && fits(top, top + shown + 1)) shown += 1;
+  shown = Math.min(shown, end - top);
   return {
     first: top,
-    shown: Math.min(shown, heights.length - top),
+    shown,
+    below: signed
+      ? kinds.slice(top + shown).filter((kind) => kind === "row").length
+      : 0,
     ...(pinned !== undefined && {
       pinned: {
         heading: pinned,

@@ -19,6 +19,12 @@ export interface ListPlacement {
   /** How many blocks are shown from the first, whole but for the first. */
   readonly shown: number;
   /**
+   * How many rows are cut off below the blocks shown, in whichever group,
+   * which the list's last line signs; none while the first block is too
+   * tall to share the room with the sign.
+   */
+  readonly below: number;
+  /**
    * The heading pinned above the first block, when that block is a row of
    * a group: the heading's place among the blocks, the place in the group
    * of the first row shown, counted from one, and the group's rows.

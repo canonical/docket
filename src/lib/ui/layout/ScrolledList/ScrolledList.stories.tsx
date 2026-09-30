@@ -48,14 +48,18 @@ const blocks = [
   row("first unassigned"),
 ];
 
-/** The top of the list: its first heading in its place, nothing pinned. */
+/**
+ * The top of the list: its first heading in its place, nothing pinned,
+ * and the rows under the pane counted on its last line.
+ */
 export const Top: Story<ScrolledListProps> = {
   args: { blocks, from: 1, to: 1, height: 6, onShown: () => {}, width },
 };
 
 /**
  * Scrolled to bob's third row: his heading pinned above his second, with
- * where the rows shown start among his three.
+ * where the rows shown start among his three, and the unassigned row
+ * under the pane counted.
  */
 export const Pinned: Story<ScrolledListProps> = {
   args: { ...Top.args, from: 3, to: 3, first: 2 },

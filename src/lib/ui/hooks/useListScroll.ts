@@ -7,7 +7,7 @@ import type { UseListScrollProps, UseListScrollResult } from "./types.js";
  * Scrolls a list of blocks as little as it must to keep the blocks from
  * `from` to `to` whole in view, and back up as far as the blocks below
  * still fill the room once it grows, pinning the heading of the first
- * row's group above it (`placeList`). The first block shown is kept from
+ * row's group above it and counting the rows cut off below (`placeList`). The first block shown is kept from
  * the frame before, so the list moves only when the selection would leave
  * it, and a row is never drawn without its second line. A list drawn anew
  * starts from `first`, so it opens where it was left.
@@ -35,6 +35,7 @@ export default function useListScroll<
   return {
     shown: blocks.slice(placed.first, placed.first + placed.shown),
     first: placed.first,
+    below: placed.below,
     ...(placed.pinned &&
       heading && {
         pinned: {

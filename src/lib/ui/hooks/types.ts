@@ -70,12 +70,17 @@ export interface UseListScrollProps<
 export interface UseListScrollResult<Block> {
   /**
    * The blocks to draw, in order: whole blocks only, as many as fit the
-   * room under the pinned heading, and always the first, whatever its
-   * height.
+   * room between the pinned heading and the sign of the rows cut off, and
+   * always the first, whatever its height.
    */
   readonly shown: readonly Block[];
   /** The place of the first block drawn, which `first` takes back. */
   readonly first: number;
+  /**
+   * How many rows are cut off below the blocks shown, in whichever group,
+   * which the list's last line signs.
+   */
+  readonly below: number;
   /**
    * The heading pinned above the blocks, when the first is a row of a
    * group: the heading's block, the place in the group of the first row

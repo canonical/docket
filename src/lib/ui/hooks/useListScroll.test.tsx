@@ -17,7 +17,8 @@ let move: (place: Place) => void = () => {};
 /**
  * A list of blocks named by their place and height, such as `2:3` for the
  * third block, three lines tall, rows unless `kinds` says otherwise, that
- * prints the heading it would pin, then the blocks it would draw.
+ * prints the heading it would pin, the blocks it would draw, then how
+ * many rows it would sign as cut off below.
  */
 function Listed({
   heights,
@@ -35,11 +36,14 @@ function Listed({
     kind: kinds.at(index) ?? "row",
     lines,
   }));
-  const { shown, pinned } = useListScroll({ blocks, ...place });
+  const { shown, pinned, below } = useListScroll({ blocks, ...place });
   const pin = pinned
     ? [`[${pinned.heading.name} ${pinned.place} of ${pinned.size}]`]
     : [];
-  return <text>{[...pin, ...shown.map(({ name }) => name)].join(" ")}</text>;
+  const sign = below > 0 ? [`↓${below}`] : [];
+  return (
+    <text>{[...pin, ...shown.map(({ name }) => name), ...sign].join(" ")}</text>
+  );
 }
 
 /**
@@ -67,9 +71,9 @@ async function scroll(
 }
 
 describe("useListScroll", () => {
-  it("draws the whole blocks that fit from the top while the selection is in view", async () => {
+  it("draws the whole blocks that fit from the top while the selection is in view, signing the rows cut off", async () => {
     expect(await scroll([1, 2, 2, 2], { from: 0, to: 0, room: 4 })).toEqual([
-      "0:1 1:2",
+      "0:1 1:2 ↓2",
     ]);
   });
 
@@ -81,7 +85,7 @@ describe("useListScroll", () => {
         { from: 3, to: 3, room: 4 },
         { from: 2, to: 2, room: 4 },
       ),
-    ).toEqual(["0:1 1:2", "2:2 3:2", "2:2 3:2"]);
+    ).toEqual(["0:1 1:2 ↓2", "2:2 3:2", "2:2 3:2"]);
   });
 
   it("scrolls back up as far as the blocks below fill the room once it grows", async () => {
@@ -101,10 +105,10 @@ describe("useListScroll", () => {
 
   it("opens where it is told when drawn anew, keeping the selection in view from there", async () => {
     expect(
-      await scroll([1, 2, 2, 2, 2], { from: 2, to: 2, room: 4, first: 2 }),
-    ).toEqual(["2:2 3:2"]);
-    expect(await scroll([1, 2, 2, 2, 2], { from: 2, to: 2, room: 4 })).toEqual([
-      "1:2 2:2",
+      await scroll([1, 2, 2, 2, 2], { from: 2, to: 2, room: 5, first: 2 }),
+    ).toEqual(["2:2 3:2 ↓1"]);
+    expect(await scroll([1, 2, 2, 2, 2], { from: 2, to: 2, room: 5 })).toEqual([
+      "1:2 2:2 ↓2",
     ]);
   });
 
@@ -118,6 +122,6 @@ describe("useListScroll", () => {
         { from: 3, to: 3, room: 5 },
         { from: 4, to: 5, room: 5 },
       ),
-    ).toEqual(["[0:1 2 of 3] 2:2 3:2", "4:1 5:2"]);
+    ).toEqual(["[0:1 3 of 3] 3:2 4:1 ↓1", "4:1 5:2"]);
   });
 });

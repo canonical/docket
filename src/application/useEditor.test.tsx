@@ -216,7 +216,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         `╹┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
         "┃ example#15 issue reply ◐ carol 4h left",
         `╹ Crash on start${" ".repeat(14)}unassigned`,
-        "",
+        "  ↓ 3 below",
         `2 over · 1 soon · 3 on track${" ".repeat(9)}1/6`,
         "synced 0m ago",
         "type filter ↑↓ ␣ tick ⏎ apply esc ?",
