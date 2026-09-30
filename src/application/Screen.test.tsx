@@ -1844,7 +1844,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const headers = async (capabilities: ReadonlySet<Capability>) => {
         const screen = await show(viewOf(cache, capabilities));
         const seen = [];
-        for (let step = 0; step < 4; step += 1) {
+        for (let step = 0; step < 5; step += 1) {
           seen.push(
             (await press(screen, "g")).lines.at(0)?.replace(/^owed */, ""),
           );
@@ -1853,12 +1853,14 @@ describe("Screen", { timeout: 15_000 }, () => {
       };
       expect(await headers(everyCapability)).toEqual([
         "by owner",
+        "by kind",
         "by repo",
         "by stack",
         "",
       ]);
       expect(await headers(new Set())).toEqual([
         "by owner",
+        "by kind",
         "by repo",
         "",
         "by owner",

@@ -39,11 +39,12 @@ describe("useAddress", () => {
   it("steps owed through its groupings, after the last the first", async () => {
     const screen = await draw(<Placed {...opening} />, 40, 1);
     const seen: string[] = [];
-    for (const _ of [1, 2, 3, 4]) {
+    for (const _ of [1, 2, 3, 4, 5]) {
       seen.push((await screen.redraw(() => address?.nextGrouping())).lines[0]);
     }
     expect(seen).toEqual([
       "owed | by owner",
+      "owed | by kind",
       "owed | by repo",
       "owed | by stack",
       "owed | no address",
@@ -57,6 +58,7 @@ describe("useAddress", () => {
       1,
     );
     expect(screen.lines).toEqual(["owed | no address"]);
+    await screen.redraw(() => address?.nextGrouping());
     await screen.redraw(() => address?.nextGrouping());
     const after = await screen.redraw(() => address?.nextGrouping());
     expect(after.lines).toEqual(["owed | by repo"]);

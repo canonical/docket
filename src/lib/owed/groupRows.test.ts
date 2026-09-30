@@ -75,6 +75,33 @@ describe("groupRows", () => {
     });
   });
 
+  describe("by kind", () => {
+    it("heads issues, pull requests and discussions in that order, keeping the sort inside, and skips an empty kind", () => {
+      const discussion = row({ thread: thread({ kind: "discussion" }) });
+      const first = row({ thread: pull(1) });
+      const issue = row({ thread: thread({ kind: "issue" }) });
+      const second = row({ thread: pull(2) });
+      const groups = groupRows(
+        [discussion, first, issue, second],
+        "kind",
+        repos,
+      );
+      expect(headings(groups)).toEqual([
+        "ISSUES",
+        "PULL REQUESTS",
+        "DISCUSSIONS",
+      ]);
+      expect(groups.map(({ rows }) => rows)).toEqual([
+        [issue],
+        [first, second],
+        [discussion],
+      ]);
+      expect(headings(groupRows([first], "kind", repos))).toEqual([
+        "PULL REQUESTS",
+      ]);
+    });
+  });
+
   describe("by repo", () => {
     it("orders repositories as the configuration lists them and skips empty ones", () => {
       const rows = [row({}, "docs"), row({}, "example"), row({}, "docs")];

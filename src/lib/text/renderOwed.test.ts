@@ -174,6 +174,7 @@ describe("renderOwed", () => {
       { owner: "bob" },
       { owner: null },
     ]);
+    expect(data("kind")).toEqual([{ kind: "issue" }, { kind: "pullRequest" }]);
     expect(data("repo")).toEqual([{ repo: "example" }, { repo: "docs" }]);
     expect(data("stack")).toEqual([
       { stack: { repo: "example", number: 3, size: 3, base: "main" } },

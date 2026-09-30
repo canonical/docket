@@ -71,7 +71,7 @@ const catalogue: readonly Command[] = [
         choices: owedGroupings,
         default: "none",
         description:
-          "Splits the list into sections: by owner, by repo, or by stack; a wait with two owners appears under each.",
+          "Splits the list into sections: by owner, by kind of thread (ISSUES, PULL REQUESTS, DISCUSSIONS), by repo, or by stack; a wait with two owners appears under each owner.",
       },
       format,
       detail,

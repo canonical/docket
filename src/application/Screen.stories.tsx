@@ -76,6 +76,14 @@ export const OwedByOwner: Story<ScreenFrameProps> = {
   args: { ...recording, owedGrouping: "owner" },
 };
 
+/**
+ * owed by kind of thread: ISSUES, then PULL REQUESTS, as activity heads
+ * them, with no section for a kind that owes nothing.
+ */
+export const OwedByKind: Story<ScreenFrameProps> = {
+  args: { ...recording, owedGrouping: "kind" },
+};
+
 /** owed by repo, in the configuration's order, the accordion still loading. */
 export const OwedByRepo: Story<ScreenFrameProps> = {
   args: {
