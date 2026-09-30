@@ -84,8 +84,8 @@ const endLast = (lines: readonly Piece[][], room: number): Piece[][] => [
 /**
  * Fits what the accordion shows into at most `lines` lines of `room`
  * cells, never more: the stack lines first, and the body in the lines
- * they leave, a line that yields in those the others leave it, cut with
- * `…` if it runs out. A line marked optional shows only when it fits
+ * they leave, a line that yields in those the others leave it, one at
+ * least, cut with `…` if it runs out. A line marked optional shows only when it fits
  * whole.
  * Content past the last line is cut, and only the last line kept ends in
  * `…`.
@@ -110,8 +110,20 @@ export default function fitAccordion(
   const drawn: Piece[][] = [];
   for (const { line, fitted } of lined) {
     if (line.yields) {
-      const taken = Math.max(0, Math.min(spare, fitted.length));
-      const kept = fitted.slice(0, taken);
+      // It keeps one line at least, ending in … when it is cut, while any
+      // is left: the lines after it give way then, so it never leaves
+      // without a mark.
+      const taken = Math.max(
+        0,
+        Math.min(Math.max(1, spare), fitted.length, left - drawn.length),
+      );
+      if (taken === 0) return endLast([...drawn, ...bottom], room);
+      // Held to one line, it names what it can there, a person cut after
+      // their mark.
+      const kept =
+        taken === 1 && fitted.length > 1
+          ? [fitRuns(line.pieces, room)]
+          : fitted.slice(0, taken);
       drawn.push(...(taken < fitted.length ? endLast(kept, room) : kept));
       spare -= taken;
     } else if (fitted.length <= left - drawn.length) {

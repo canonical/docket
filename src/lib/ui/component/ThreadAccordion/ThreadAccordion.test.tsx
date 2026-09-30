@@ -252,24 +252,24 @@ describe("ThreadAccordion", () => {
       expect(screen.lines.at(7)?.startsWith("╹")).toBe(true);
     });
 
-    it("gives the owners line only the lines a review's checks leave, ending it with …, each run in its own colour", async () => {
+    it("gives the owners line the lines a review's checks leave, one at least, ending it with …, each run in its own colour", async () => {
       const narrow = await open(Long.args);
       expect(readText(narrow).slice(0, 6)).toEqual([
+        "owner ○ example-contributor-with-a-lo…",
         "asked by ● alice 6d ago",
         "0 pushes since · 1 file · +40 −12",
         "✗ checks: 3 of 4 failed",
         "(lint the whole repository,",
-        "unit tests on every platform,",
-        "build the documentation site)",
+        "unit tests on every platform,…",
       ]);
       const wide = await open(Long.args, 60);
       expect(readText(wide).at(0)).toBe(
-        "owner ○ example-contributor-with-a-long-login,…",
+        "owner ○ example-contributor-with-a-long-login, example-or…",
       );
       expect(wide.look("○ example-contributor")?.fg).toBe(
         tokens["color.text.outside"],
       );
-      expect(wide.look(",…")?.fg).toBe(tokens["color.text"]);
+      expect(wide.look(", example-or…")?.fg).toBe(tokens["color.text"]);
     });
 
     it("keeps docket's words of a stack's place whole, the base branch giving way first from its middle, then the repository's short name", async () => {
