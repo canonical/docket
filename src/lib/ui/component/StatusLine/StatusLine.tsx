@@ -44,7 +44,9 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
  * docket's own state. The left side is the list's, one message at a
  * time: the cases are listed in priority order, the first that applies
  * is the one shown, and the side stays blank when none does (the
- * prerequisite frames). The right side is the details', dimmed, as
+ * prerequisite frames). A message too wide for the pane drops its part
+ * that gives way first, a full refresh its pages, and only then is cut
+ * with `…`. The right side is the details', dimmed, as
  * `describeDetails` chooses it: `details 3/12` while any asked for are
  * unread, or `details paused` once their hour's budget is spent, hidden
  * while nothing is read, and dropped when the two sides would meet.
@@ -72,7 +74,13 @@ const StatusLine = ({
     action,
     attention,
   );
-  const runs = message ? fitPieces(describeRuns(message), width) : [];
+  // A message too wide first drops the part that gives way, and only
+  // then is cut.
+  const fitted =
+    message?.shorter !== undefined && Bun.stringWidth(message.text) > width
+      ? { ...message, text: message.shorter }
+      : message;
+  const runs = fitted ? fitPieces(describeRuns(fitted), width) : [];
   const right = describeDetails(
     status,
     message,

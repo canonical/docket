@@ -114,10 +114,11 @@ describe("describeStatus", () => {
     expect(describeAt(status)?.kind).toBe("error");
   });
 
-  it("states a full refresh's repository by its short name and its pages", () => {
+  it("states a full refresh's repository by its short name and its pages, and the words without the pages that give way first", () => {
     expect(describeAt(statusOf(FullRefresh))).toEqual({
       kind: "progress",
       text: "full refresh · example 1/2 · pages 5/9",
+      shorter: "full refresh · example 1/2",
     });
   });
 
