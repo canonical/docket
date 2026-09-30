@@ -73,7 +73,8 @@ const isFailure = (error: unknown): error is Failure => isNamedError(error);
  * them at every instant the screen is drawn at. The events are read
  * whenever the window, the watched repositories or the cache's last
  * sync change; a list already shown for the window stays while they
- * are. When GitHub or the cache fails for a repository, the events the
+ * are. Below the budget floor, the events the cache holds for the window
+ * answer however old, and only a window it holds none of is read. When GitHub or the cache fails for a repository, the events the
  * cache holds for it answer, however old and however far back they
  * reach, and the failure goes with the list for the status line to name.
  * A repository with none held has none, so one failure never takes the
@@ -106,6 +107,11 @@ export default function useActivity({
     let failure: Failure | undefined;
     let missing = 0;
     const readHeld = async (repo: string, since: Date) => {
+      // Below the budget floor, reading again what the cache holds is
+      // docket's own spending, which waits for the reset; a window whose
+      // events it holds none of is the user's own request, and is read.
+      const kept = cache.findEvents(repo, since);
+      if (kept && !cache.maySpend()) return kept.events;
       try {
         return (await readEvents(repo, since)).events;
       } catch (error) {
