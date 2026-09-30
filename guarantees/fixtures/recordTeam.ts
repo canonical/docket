@@ -18,9 +18,9 @@ const docs = "example-org/example-docs";
 /**
  * Two watched repositories on the Monday 28 September 2026: a pull
  * request dave opened from a fork, assigned to alice, with bob asked for
- * a review, failing checks and second in a stack of three; an issue carol
- * opened on Friday; and a documentation issue alice opened and a bot
- * labelled. `words` gives the text written on GitHub, and `tag` the
+ * a review, failing checks and second in a stack of three; a pull request
+ * bob opened and alice merged on Sunday; an issue carol opened on Friday;
+ * and a documentation issue alice opened and a bot labelled. `words` gives the text written on GitHub, and `tag` the
  * entity tag the check for changes answers with, and `crowd` how many more
  * pull requests like dave's wait on bob's review.
  */
@@ -122,6 +122,35 @@ export default function recordTeam(
             },
           ]),
           pullRequests: buildPage([
+            {
+              number: 14,
+              url: `https://github.com/${repo}/pull/14`,
+              title: "Tidy the changelog",
+              createdAt: "2026-09-20T08:00:00Z",
+              updatedAt: "2026-09-27T13:00:01Z",
+              author: buildUser("bob"),
+              headRefName: "docs/changelog",
+              isCrossRepository: false,
+              stackEntry: null,
+              // GitHub records the merge and a close with it, here a
+              // second apart.
+              timelineItems: {
+                nodes: [
+                  {
+                    __typename: "MergedEvent",
+                    actor: buildUser("alice"),
+                    createdAt: "2026-09-27T13:00:00Z",
+                  },
+                  {
+                    __typename: "ClosedEvent",
+                    actor: buildUser("alice"),
+                    createdAt: "2026-09-27T13:00:01Z",
+                  },
+                ],
+              },
+              commits: { nodes: [{ commit: { oid: "d0c5e1a" } }] },
+              head: { nodes: [] },
+            },
             {
               ...buildOpened(parserFix, parserFix.createdAt),
               updatedAt: parserFix.updatedAt,

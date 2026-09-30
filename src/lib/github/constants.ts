@@ -38,3 +38,12 @@ export const capabilities: ReadonlySet<Capability> = new Set<Capability>([
  * that will never answer.
  */
 export const requestTimeout = 30_000;
+
+/**
+ * How far apart, in milliseconds, GitHub may date a merge and the close
+ * it records with it. It dates the two separately: mostly at the same
+ * second, sometimes a second apart either way. A close that is not the
+ * merge's comes that near only with a reopen between them, which the
+ * rule checks too.
+ */
+export const mergeCloseMargin = 3_000;

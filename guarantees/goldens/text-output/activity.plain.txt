@@ -2,7 +2,7 @@ exit 0
 --- out
 activity · 72h · by kind
 synced 0m ago
-3 threads · 6 events
+4 threads · 7 events
 
 ISSUES
 docs#4 · issue · 16h
@@ -22,4 +22,7 @@ example#12 · PR · 25m
   alice requested review · 3h ago
   dave commented · 3d ago
   dave pushed · 3d ago
+example#14 · PR · 21h
+  Tidy the changelog
+  alice merged · 21h ago
 --- err

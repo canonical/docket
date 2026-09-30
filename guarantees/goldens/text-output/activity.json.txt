@@ -10,8 +10,8 @@ exit 0
     "warnings": []
   },
   "counts": {
-    "threads": 3,
-    "events": 6
+    "threads": 4,
+    "events": 7
   },
   "groups": [
     {
@@ -102,6 +102,23 @@ exit 0
               "bot": false,
               "actor": "dave",
               "at": "2026-09-24T12:00:00.000Z"
+            }
+          ]
+        },
+        {
+          "reference": "example#14",
+          "title": "Tidy the changelog",
+          "kind": "pullRequest",
+          "owners": null,
+          "draft": false,
+          "stack": null,
+          "invalidRepositoryFile": false,
+          "events": [
+            {
+              "kind": "merged",
+              "bot": false,
+              "actor": "alice",
+              "at": "2026-09-27T13:00:00.000Z"
             }
           ]
         }

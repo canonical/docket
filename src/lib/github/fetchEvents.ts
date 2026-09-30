@@ -1,6 +1,7 @@
 import type { ThreadEvent } from "../events/index.js";
 import type { Account } from "../people/index.js";
 import type { ThreadKind, ThreadSummary } from "../waits/index.js";
+import { mergeCloseMargin } from "./constants.js";
 import countCommits from "./countCommits.js";
 import fetchLists from "./fetchLists.js";
 import fetchPushes from "./fetchPushes.js";
@@ -233,6 +234,52 @@ function findFailure(
 }
 
 /**
+ * The close GitHub records with `merge`: the close nearest it in
+ * `timeline`, within `mergeCloseMargin` and with no reopen between them.
+ * A pull request that has none gives undefined.
+ */
+function findMergeClose(
+  timeline: readonly ThreadEvent[],
+  merge: ThreadEvent,
+): ThreadEvent | undefined {
+  const gap = (event: ThreadEvent) =>
+    Math.abs(event.at.getTime() - merge.at.getTime());
+  const nearest = (side: readonly ThreadEvent[]) => {
+    const reopen = side.findIndex(({ kind }) => kind === "reopened");
+    return side
+      .slice(0, reopen < 0 ? side.length : reopen)
+      .find(
+        (event) => event.kind === "closed" && gap(event) <= mergeCloseMargin,
+      );
+  };
+  const index = timeline.indexOf(merge);
+  return [
+    nearest(timeline.slice(index + 1)),
+    nearest(timeline.slice(0, index).reverse()),
+  ]
+    .filter((close) => close !== undefined)
+    .sort((a, b) => gap(a) - gap(b))
+    .at(0);
+}
+
+/**
+ * A thread's timeline with each merge counted once. GitHub records a
+ * merge as a merge and a close, dated separately, so the two can be a
+ * second apart; the merge alone counts. A close of a pull request never
+ * merged, and a close before a reopen, stay.
+ */
+function dropMergeCloses(
+  timeline: readonly ThreadEvent[],
+): readonly ThreadEvent[] {
+  const merges = timeline.filter(({ kind }) => kind === "merged");
+  if (merges.length === 0) return timeline;
+  const closes = new Set(
+    merges.map((merge) => findMergeClose(timeline, merge)),
+  );
+  return timeline.filter((event) => !closes.has(event));
+}
+
+/**
  * Fetches the events on `repo`'s threads at or after `since`, oldest
  * thread first as GitHub lists them. Pushes come from the repository
  * activity feed, each counted from the pull request's commits where the
@@ -258,10 +305,10 @@ export default async function fetchEvents(
     if (at >= since) events.push({ thread, actor, at, kind: "opened" });
   };
   const addTimeline = (thread: ThreadSummary, node: IssueEventsNode) => {
-    for (const item of node.timelineItems.nodes) {
-      const event = readItem(thread, item);
-      if (event) events.push(event);
-    }
+    const timeline = node.timelineItems.nodes
+      .map((item) => readItem(thread, item))
+      .filter((event) => event !== undefined);
+    events.push(...dropMergeCloses(timeline));
   };
   for (const node of found.issues) {
     const thread = summarise(repo, "issue", node);
