@@ -387,16 +387,12 @@ describe("describeDetail", () => {
       ]);
     });
 
-    it("wraps its place only between the parts, each kept whole with the · after it", () => {
+    it("holds its place to one line, where the repository's short name gives way first", () => {
       const [place] = describeDetail(overReview, undefined, reading).stack;
-      expect(place).toMatchObject({ kind: "identifier" });
-      expect(place?.most).toBeUndefined();
-      expect(place?.pieces.map(({ text }) => text.split(" "))).toEqual([
-        [
-          "example\u00a0stack\u00a03\u00a0·",
-          "2\u00a0of\u00a03\u00a0·",
-          "→\u00a0main",
-        ],
+      expect(place).toMatchObject({ kind: "identifier", most: 1, gives: 0 });
+      expect(place?.pieces.map(({ text }) => text)).toEqual([
+        "example",
+        " stack 3 · 2 of 3 · → main",
       ]);
     });
 

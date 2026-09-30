@@ -6,7 +6,10 @@ import {
   sharedCloseDetail,
 } from "../../../../testing/details.js";
 import { thread } from "../../../../testing/facts.js";
-import { longReviewDetail } from "../../../../testing/long.js";
+import {
+  longReviewDetail,
+  longSharedReview,
+} from "../../../../testing/long.js";
 import { measureRow, overReview, soonReply } from "../../../../testing/rows.js";
 import { drawSuspending, type Screen } from "../../../../testing/terminal.js";
 import type { ThreadDetail } from "../../../provider/index.js";
@@ -249,11 +252,49 @@ describe("ThreadAccordion", () => {
       expect(screen.lines.at(7)?.startsWith("╹")).toBe(true);
     });
 
-    it("ends the last line it keeps with …, each of its runs in its own colour", async () => {
-      const screen = await open(Long.args);
-      expect(readText(screen).at(2)).toBe("n, example-org/parser-team…");
-      expect(screen.look(", example-org/parser-team…")?.fg).toBe(
-        tokens["color.text"],
+    it("gives the owners line only the lines a review's checks leave, ending it with …, each run in its own colour", async () => {
+      const narrow = await open(Long.args);
+      expect(readText(narrow).slice(0, 6)).toEqual([
+        "asked by ● alice 6d ago",
+        "0 pushes since · 1 file · +40 −12",
+        "✗ checks: 3 of 4 failed",
+        "(lint the whole repository,",
+        "unit tests on every platform,",
+        "build the documentation site)",
+      ]);
+      const wide = await open(Long.args, 60);
+      expect(readText(wide).at(0)).toBe(
+        "owner ○ example-contributor-with-a-long-login,…",
+      );
+      expect(wide.look("○ example-contributor")?.fg).toBe(
+        tokens["color.text.outside"],
+      );
+      expect(wide.look(",…")?.fg).toBe(tokens["color.text"]);
+    });
+
+    it("keeps a stack's place and base branch on one line, its repository's short name giving way first", async () => {
+      const narrow = await open(Long.args);
+      expect(readText(narrow).at(6)).toBe(
+        "stack 7 · 2 of 3 ·…ch-with-a-long-name",
+      );
+      const screen = await open(
+        {
+          ...Long.args,
+          row: {
+            ...longSharedReview,
+            wait: {
+              ...longSharedReview.wait,
+              thread: {
+                ...longSharedReview.wait.thread,
+                stack: { number: 7, position: 2, size: 3, base: "main" },
+              },
+            },
+          },
+        },
+        40,
+      );
+      expect(readText(screen).at(6)).toBe(
+        "examp…g-name stack 7 · 2 of 3 · → main",
       );
     });
 

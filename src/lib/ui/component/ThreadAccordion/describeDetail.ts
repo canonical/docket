@@ -83,7 +83,8 @@ const listOwners = ({ owner, owners }: WaitRow): Owner[] =>
 /**
  * The owners, each whole, wrapped between them, when the row cuts a
  * person's login: only the close body names them otherwise. It comes
- * first, so no message pushes it out of the accordion. A team's name,
+ * first, and takes only the lines the others leave, so it never pushes
+ * a review's checks out of the accordion. A team's name,
  * `organisation/team`, never earns the line, cut or not: on a stacked
  * review the line would push the checks out.
  */
@@ -92,7 +93,9 @@ function describeCutOwners(row: WaitRow): DetailLine[] {
   const cut = owners.some(
     ({ text }) => !text.includes("/") && measureText(text) > loginCells,
   );
-  return cut ? [wrapped(plain("owner "), ...listPeople(owners))] : [];
+  return cut
+    ? [{ ...wrapped(plain("owner "), ...listPeople(owners)), yields: true }]
+    : [];
 }
 
 /**
@@ -276,8 +279,9 @@ function describeRest(
 
 /**
  * The two dimmed lines that end a stacked pull request's accordion: which
- * stack and which place, from the snapshot, wrapped between its parts so
- * the base branch shows whole, then its neighbours below and
+ * stack and which place, from the snapshot, on one line where the
+ * repository's short name gives way first so the place and the base
+ * branch stay, then its neighbours below and
  * above, each with its state, or the kind of its running wait while it is
  * open, which waits on the details.
  */
@@ -289,22 +293,19 @@ function describeStack(
 ): DetailLine[] {
   if (!stack) return [];
   const { number, position, size, base } = stack;
-  // Each part stays whole and keeps the `·` after it, so the line wraps
-  // only between parts and the base branch is never cut.
-  const parts = [
-    `${repo} stack ${number}`,
-    `${position} of ${size}`,
-    `→ ${base}`,
-  ];
+  const separator = ` ${tokens["glyph.separator"]} `;
+  // One line, where the repository's short name gives way first, from its
+  // middle, so the place and the base branch stay.
   const place: DetailLine = {
     pieces: [
+      muted(repo),
       muted(
-        parts
-          .map((part) => part.replaceAll(" ", joiner))
-          .join(`${joiner}${tokens["glyph.separator"]} `),
+        ` stack ${number}${separator}${position} of ${size}${separator}→ ${base}`,
       ),
     ],
     kind: "identifier",
+    most: 1,
+    gives: 0,
   };
   if (size < 2) return [place];
   if (!detail) return [place, trimmed(muted(tokens["glyph.cut"]))];

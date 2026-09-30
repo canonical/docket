@@ -19,6 +19,17 @@ export interface DetailLine {
    * rule for a line.
    */
   readonly most?: 1;
+  /**
+   * The run that gives way first when the line, held to one, does not
+   * fit: cut by its kind's rule for a line to the room the others leave,
+   * as a stack's repository name gives way to its place and base branch.
+   */
+  readonly gives?: number;
+  /**
+   * Whether the line takes only the lines left once every other line has
+   * its own, as the owners line does before a review's checks.
+   */
+  readonly yields?: boolean;
   /** Shown only when it fits whole, such as when a reply began. */
   readonly optional?: boolean;
 }
