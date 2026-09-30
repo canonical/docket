@@ -72,6 +72,29 @@ describe("createBudgetKeeper", () => {
     expect(save).not.toHaveBeenCalled();
   });
 
+  it("runs one keeping at a time, which a call made meanwhile joins and runs once more", async () => {
+    const loading = Promise.withResolvers<void>();
+    const loads = vi.fn(() => loading.promise);
+    const keeper = createBudgetKeeper({
+      directory,
+      isKept: () => false,
+      load: loads,
+      save: async () => {},
+      publishFloor: () => {},
+    });
+    const first = keeper();
+    await waitUntil(() => expect(loads).toHaveBeenCalledOnce());
+    const second = keeper();
+    const third = keeper();
+    expect(second).toBe(first);
+    expect(third).toBe(first);
+    loading.resolve();
+    await first;
+    expect(loads).toHaveBeenCalledTimes(2);
+    await keeper();
+    expect(loads).toHaveBeenCalledTimes(3);
+  });
+
   it("goes on at once, writing nothing, while another process holds the fetch lock", async () => {
     const held = Promise.withResolvers<void>();
     const holding = withFetchLock(directory, () => held.promise);

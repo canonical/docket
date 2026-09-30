@@ -19,7 +19,9 @@ export interface BudgetKeeperOptions {
  * cache file, so every docket process judges the floor on them: the
  * status says the floor at once, and, when the file lacks any of them,
  * they are written under the fetch lock, after a load, unless another
- * process holds the lock, which it never waits for.
+ * process holds the lock, which it never waits for. One keeping runs at
+ * a time: a call made while one runs joins it, and it runs once more for
+ * the figures heard meanwhile.
  *
  * @note Impure: writes the status, and reads and writes the cache file.
  */
@@ -30,9 +32,7 @@ export default function createBudgetKeeper({
   save,
   publishFloor,
 }: BudgetKeeperOptions): () => Promise<void> {
-  return async () => {
-    // This process's own answers can take the mirror below the floor.
-    publishFloor();
+  const keep = async () => {
     // With nothing heard since the last load or save, the file holds
     // these figures or later ones.
     if (isKept()) return;
@@ -50,5 +50,28 @@ export default function createBudgetKeeper({
       },
       () => undefined,
     );
+  };
+  // The keeping under way, which a call made meanwhile joins, and whether
+  // one did, which keeps the figures heard since once it ends.
+  let flight: Promise<void> | undefined;
+  let again = false;
+  return () => {
+    // This process's own answers can take the mirror below the floor.
+    publishFloor();
+    if (flight) {
+      again = true;
+      return flight;
+    }
+    flight = (async () => {
+      try {
+        do {
+          again = false;
+          await keep();
+        } while (again);
+      } finally {
+        flight = undefined;
+      }
+    })();
+    return flight;
   };
 }
