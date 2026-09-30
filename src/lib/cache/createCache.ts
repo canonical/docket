@@ -173,6 +173,8 @@ export default function createCache({
   };
   const save = () => {
     mirror = readFigures();
+    // Any of this process's own reads may have taken it below the floor.
+    publishFloor();
     const contents = {
       state: dehydrate(client),
       fullRefreshAt,

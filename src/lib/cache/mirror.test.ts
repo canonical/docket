@@ -155,6 +155,24 @@ describe("the budget mirror of createCache", () => {
     }
   });
 
+  it("says the pause once the read after a write takes the budget below the floor", async () => {
+    const { provider, answers } = makeHearingProvider();
+    const cache = open(provider);
+    await cache.refresh();
+    const snapshot = vi.fn(async () => {
+      answers.heard = { graphql: makeBudget(900) };
+      return { threads: [thread()], cursor: null };
+    });
+    const writer = open({ ...provider, snapshot });
+    await writer.load();
+    await writer.refreshRepo(repo);
+    expect(snapshot).toHaveBeenCalledOnce();
+    expect(writer.status().paused).toEqual({
+      until: fullBudget.resetAt,
+      reason: "budget",
+    });
+  });
+
   it("stops docket's own spending below the floor, and still spends on what the user asks for", async () => {
     const { provider, answers } = makeHearingProvider();
     await open(provider).refresh();
