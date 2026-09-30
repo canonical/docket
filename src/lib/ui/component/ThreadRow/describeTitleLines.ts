@@ -13,25 +13,41 @@ const space = (count: number): Piece => ({
   fg: tokens["color.text"],
 });
 
+/** The fewest cells a title keeps beside the group before the group gives way. */
+const titleFloor = 8;
+
+/** What `✗ invalid repository file` shortens to when the group gives way. */
+const shortInvalidFile = "file";
+
+/** How much of the group gives way: nothing, `draft`, then the file's words. */
+type Giving = 0 | 1 | 2;
+
 /**
  * The group at the right of the title: `draft` dimmed, then each field in
  * trouble in the error colour after `✗`, so the colour is never the only
  * sign, then the owner with their mark. Failing checks are a field in
  * trouble of a running wait; activity tells of them as an event. With two
  * or more owners the owner is left out: they take a line of their own.
+ * As the group gives way, `draft` leaves it first, then `✗ invalid
+ * repository file` becomes `✗ file`; the owner never leaves it.
  */
-function listRight(row: ThreadRowProps["row"]): Piece[] {
+function listRight(row: ThreadRowProps["row"], giving: Giving): Piece[] {
   const error = tokens["color.text.error"];
   const failed = tokens["glyph.failed"];
   const parts: Piece[] = [
-    ...(row.draft
+    ...(row.draft && giving === 0
       ? [{ text: row.draft.text, fg: tokens["color.text.muted"] }]
       : []),
     ...("wait" in row && row.wait.thread.checks === "failing"
       ? [{ text: `${failed} checks`, fg: error }]
       : []),
     ...(row.invalidFile
-      ? [{ text: `${failed} ${row.invalidFile.text}`, fg: error }]
+      ? [
+          {
+            text: `${failed} ${giving === 2 ? shortInvalidFile : row.invalidFile.text}`,
+            fg: error,
+          },
+        ]
       : []),
     ...(row.owner ? [markPerson(row.owner, loginCells)] : []),
   ];
@@ -40,12 +56,23 @@ function listRight(row: ThreadRowProps["row"]): Piece[] {
   );
 }
 
+/** The group, given way only as far as `fits` asks of its cells. */
+function chooseRight(
+  row: ThreadRowProps["row"],
+  fits: (cells: number) => boolean,
+): Piece[] {
+  const tries = ([0, 1, 2] as const).map((giving) => listRight(row, giving));
+  return tries.find((right) => fits(measurePieces(right))) ?? tries[2];
+}
+
 /**
  * The lines under the row's head: the title in italic at the left, then
  * the group at the right edge. The title gives way first: on a row that
- * is not selected it is trimmed to one line so the group always fits;
- * on the selected row it wraps in full, and the group sits on its last
- * line when it fits there, else on a line of its own.
+ * is not selected it is trimmed to one line so the group always fits,
+ * down to 8 cells, and past that the group gives way, the owner never;
+ * on the selected row it wraps in full, and the group, given way only
+ * as far as the line needs, sits on its last line when it fits there,
+ * else on a line of its own.
  *
  * @param inner The cells beside the margin.
  */
@@ -54,7 +81,9 @@ export default function describeTitleLines(
   inner: number,
   selected: boolean,
 ): Piece[][] {
-  const right = listRight(row);
+  const right = chooseRight(row, (cells) =>
+    selected ? cells <= inner : inner - cells - gutter >= titleFloor,
+  );
   const rightCells = measurePieces(right);
   const italic = (text: string): Piece => ({
     text,

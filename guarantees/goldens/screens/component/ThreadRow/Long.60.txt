@@ -1,6 +1,6 @@
 60 columns
 |┃┆example-repository-…th-a-long-name#12345 PR review 1d over
-|╹┆…  draft  ✗ checks  ✗ invalid repository file  parser-team
+|╹┆Keep th…  ✗ checks  ✗ invalid repository file  parser-team
 
 runs
 1:1 "┃" fg #e27878ff bg #00000000
@@ -9,8 +9,7 @@ runs
 1:54 "1d over" fg #e27878ff bg #00000000 bold
 2:1 "╹" fg #e27878ff bg #00000000
 2:2 "┆" fg #6b7089ff bg #00000000
-2:3 "…" fg #c6c8d1ff bg #00000000 italic
-2:6 "draft" fg #6b7089ff bg #00000000
+2:3 "Keep th…" fg #c6c8d1ff bg #00000000 italic
 2:13 "✗ checks" fg #e27878ff bg #00000000
 2:23 "✗ invalid repository file" fg #e27878ff bg #00000000
 2:48 "  parser-team" fg #c6c8d1ff bg #00000000

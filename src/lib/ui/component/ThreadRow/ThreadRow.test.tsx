@@ -208,10 +208,10 @@ describe("ThreadRow", () => {
       ]);
     });
 
-    it("cuts the right group too when even it does not fit", async () => {
+    it("shortens the invalid file's words once the title is down to its floor, and keeps the owner", async () => {
       const row = measureRow({ owners: ["alice"] }, true);
       const screen = await draw(<ThreadRow row={row} width={24} />, 24);
-      expect(screen.lines.at(1)).toBe("╹   ✗ invalid repositor…");
+      expect(screen.lines.at(1)).toBe("╹ Exampl…  ✗ file  alice");
     });
   });
 
@@ -256,15 +256,15 @@ describe("ThreadRow", () => {
       ]);
     });
 
-    it("marks a repository's invalid file with ✗ in the error colour", async () => {
+    it("marks a repository's invalid file with ✗ in the error colour, shortened so the title keeps 8 cells", async () => {
       const screen = await draw(
         <ThreadRow {...ActivityInvalidFile.args} />,
         40,
       );
       expect(screen.lines.at(1)).toBe(
-        "  Whe…  ✗ invalid repository file  ● bob",
+        "  Where do tokens live?    ✗ file  ● bob",
       );
-      expect(screen.look("✗ invalid")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("✗ file")?.fg).toBe(tokens["color.text.error"]);
     });
 
     it("caps a long login at 12 cells", async () => {
