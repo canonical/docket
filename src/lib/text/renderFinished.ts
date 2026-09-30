@@ -135,7 +135,13 @@ export default function renderFinished({
       grouping: list.address.grouping,
       data: describeDataAge(freshness),
       counts: { merged, closed, over: over.value, byKind },
-      measures: list.measures,
+      // Each measure's availability; its figure over the list, with how
+      // many threads that figure covers, comes with the figure.
+      measures: {
+        close: { state: list.measures.close.state },
+        firstResponse: { state: list.measures.firstResponse.state },
+        firstReview: { state: list.measures.firstReview.state },
+      },
       ...(detail === "summary"
         ? {}
         : {

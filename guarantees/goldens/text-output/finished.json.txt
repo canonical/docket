@@ -28,19 +28,13 @@ exit 0
   },
   "measures": {
     "close": {
-      "state": "measured",
-      "of": 3,
-      "pending": 0
+      "state": "measured"
     },
     "firstResponse": {
-      "state": "unsupported",
-      "of": 0,
-      "pending": 0
+      "state": "unsupported"
     },
     "firstReview": {
-      "state": "unsupported",
-      "of": 0,
-      "pending": 0
+      "state": "unsupported"
     }
   },
   "groups": [

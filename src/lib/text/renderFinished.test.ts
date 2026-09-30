@@ -121,11 +121,11 @@ describe("renderFinished", () => {
           pullRequest: { merged: 1, closed: 1 },
         },
       },
-      measures: {
-        close: { state: "measured", of: 3, pending: 0 },
-        firstResponse: { state: "unsupported", of: 0, pending: 0 },
-        firstReview: { state: "unsupported", of: 0, pending: 0 },
-      },
+    });
+    expect(answer.measures).toEqual({
+      close: { state: "measured" },
+      firstResponse: { state: "unsupported" },
+      firstReview: { state: "unsupported" },
     });
     expect(
       answer.groups.map(
