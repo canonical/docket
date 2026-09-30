@@ -1,5 +1,4 @@
 import { readFile } from "node:fs/promises";
-import type { Budget, Budgets } from "../provider/index.js";
 import { cacheFormat, dateTag } from "./constants.js";
 import type { CacheFile } from "./types.js";
 
@@ -13,36 +12,6 @@ function readDates(_key: string, value: unknown): unknown {
 }
 
 /**
- * `value` as a budget, when it holds one whole: every figure a number,
- * and the reset a date that exists.
- */
-function readBudget(value: unknown): Budget | undefined {
-  const { limit, remaining, resetAt } = (value ?? {}) as Partial<Budget>;
-  const isFigure = (figure: unknown): figure is number =>
-    typeof figure === "number" && Number.isFinite(figure);
-  return isFigure(limit) &&
-    isFigure(remaining) &&
-    resetAt instanceof Date &&
-    isFigure(resetAt.getTime())
-    ? { limit, remaining, resetAt }
-    : undefined;
-}
-
-/**
- * The budgets the file mirrors, each kind that is whole: another version
- * of docket may have written none.
- */
-function readBudgets(value: unknown): Budgets {
-  const { graphql, rest } = (value ?? {}) as Record<string, unknown>;
-  const queries = readBudget(graphql);
-  const requests = readBudget(rest);
-  return {
-    ...(queries && { graphql: queries }),
-    ...(requests && { rest: requests }),
-  };
-}
-
-/**
  * Reads the cache file that `writeCacheFile` wrote.
  *
  * @note Impure: reads the filesystem.
@@ -53,7 +22,7 @@ export default async function readCacheFile(
   file: string,
 ): Promise<CacheFile | undefined> {
   try {
-    const { format, state, fullRefreshAt, budget } = JSON.parse(
+    const { format, state, fullRefreshAt } = JSON.parse(
       await readFile(file, "utf8"),
       readDates,
     );
@@ -61,7 +30,6 @@ export default async function readCacheFile(
     return {
       state,
       fullRefreshAt: fullRefreshAt instanceof Date ? fullRefreshAt : undefined,
-      budget: readBudgets(budget),
     };
   } catch {
     return undefined;

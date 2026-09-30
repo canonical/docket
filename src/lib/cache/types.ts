@@ -59,12 +59,6 @@ export interface CacheFile {
    * cooldown holds across processes. Absent before the first.
    */
   readonly fullRefreshAt: Date | undefined;
-  /**
-   * The mirror of GitHub's budgets: the latest report of each that any
-   * process heard, so every process judges the floor on the same figures.
-   * Empty before the first answer.
-   */
-  readonly budget: Budgets;
 }
 
 /** The threads of every watched repository, and how old they are. */
@@ -343,7 +337,7 @@ export interface Cache {
   ): () => void;
   /**
    * The mirror of the provider's budgets: for each kind, the latest
-   * report any docket process heard, as the cache file last gave it, or
+   * report any docket process heard, as the budget file last gave it, or
    * this process's own answers heard since, whichever is later.
    */
   readBudgets(): Budgets;
@@ -362,12 +356,13 @@ export interface Cache {
    */
   maySpend(): boolean;
   /**
-   * Writes the budgets this process heard to the cache file, under the
-   * fetch lock, when the file holds none as late, so every docket process
-   * judges the floor on them: for answers heard outside a refresh, such as
-   * a read of details. It never waits for the lock: another process that
-   * holds it is fetching, and GitHub counts the account's every request
-   * against one budget, so the figures that process saves are as late.
+   * Merges the budgets this process heard into the budget file, beside
+   * the cache file, under that file's own lock and never the fetch lock,
+   * so every docket process judges the floor on them: after a read of
+   * details, and after each save of the cache. Of each kind the later
+   * report stays, so an older figure never overwrites a newer one. It
+   * gives the status the floor at once, returns at once when the file
+   * holds every figure heard, and a call made while one runs joins it.
    *
    * @throws CacheError `CACHE_UNUSABLE` when the cache folder cannot be
    * made, read or written.

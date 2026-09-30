@@ -39,6 +39,22 @@ export const lockTiming = {
   },
 } as const;
 
+/** The file, in the cache folder, that mirrors GitHub's budgets. */
+export const budgetFileName = "budget.json";
+
+/**
+ * How the budget file's own lock is held and waited for, in
+ * milliseconds. It is held only to read, merge and write that small file,
+ * so a process waits for it, retrying between `minTimeout` and
+ * `maxTimeout` apart, at most `retries` times; a lock untouched for
+ * `stale` is left by a process that died, and is taken over.
+ */
+export const budgetLockTiming = {
+  stale: 10_000,
+  update: 1_000,
+  retries: { retries: 50, minTimeout: 10, maxTimeout: 200 },
+} as const;
+
 /**
  * How long, in milliseconds, cached data serves a reader that names no
  * maximum age, so an agent asking in a loop causes at most one refresh

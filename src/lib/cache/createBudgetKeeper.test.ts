@@ -1,120 +1,117 @@
-import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { fullBudget } from "../../testing/provider.js";
 import { waitUntil } from "../../testing/wait.js";
+import type { Budgets } from "../provider/index.js";
 import { lockName } from "./constants.js";
 import createBudgetKeeper from "./createBudgetKeeper.js";
+import isSame from "./isSame.js";
+import mergeBudgets from "./mergeBudgets.js";
+import readBudgetFile from "./readBudgetFile.js";
 import withFetchLock from "./withFetchLock.js";
+import writeBudgetFile from "./writeBudgetFile.js";
 
 let directory: string;
+let file: string;
 
 beforeEach(async () => {
   directory = await mkdtemp(join(tmpdir(), "docket-keeper-"));
+  file = join(directory, "budget.json");
 });
 
 afterEach(async () => {
   await rm(directory, { recursive: true, force: true });
 });
 
-/** A keeper over a file that `kept` says holds the figures, or not. */
-const keep = (kept: () => boolean) => {
-  const steps: string[] = [];
+const makeBudget = (remaining: number) => ({
+  graphql: { ...fullBudget, remaining },
+});
+
+/**
+ * A keeper for one process that heard `heard`, as a cache makes it: its
+ * mirror is what the file last gave it, and it records the floor said.
+ */
+const createProcess = (heard: Budgets) => {
+  const told: string[] = [];
+  const process = { mirror: {} as Budgets, heard, told };
+  const readFigures = () => mergeBudgets(process.mirror, process.heard);
   const keeper = createBudgetKeeper({
-    directory,
-    isKept: () => {
-      steps.push("judge");
-      return kept();
+    file,
+    readFigures,
+    isKept: () => isSame(readFigures(), process.mirror),
+    adopt: (kept) => {
+      process.mirror = kept;
     },
-    load: async () => {
-      steps.push("load");
-    },
-    save: async () => {
-      steps.push("save");
-    },
-    publishFloor: () => steps.push("floor"),
+    publishFloor: () => told.push("floor"),
   });
-  return { keeper, steps };
+  return { process, keeper };
 };
 
 describe("createBudgetKeeper", () => {
-  it("says the floor, and writes nothing when the file holds every figure", async () => {
-    const { keeper, steps } = keep(() => true);
+  it("says the floor, and touches no file when it heard nothing the file lacks", async () => {
+    const { process, keeper } = createProcess({});
     await keeper();
-    expect(steps).toEqual(["floor", "judge"]);
+    expect(process.told).toEqual(["floor"]);
     expect(await readdir(directory)).toEqual([]);
   });
 
-  it("loads under the fetch lock before it writes the figures the file lacks", async () => {
-    let judged = 0;
-    const { keeper, steps } = keep(() => {
-      judged += 1;
-      return false;
-    });
+  it("merges what it heard into the file, keeping a later report the file holds", async () => {
+    await writeBudgetFile(file, makeBudget(800));
+    const { process, keeper } = createProcess(makeBudget(900));
     await keeper();
-    expect(steps).toEqual(["floor", "judge", "load", "judge", "save"]);
-    expect(judged).toBe(2);
+    expect(await readBudgetFile(file)).toEqual(makeBudget(800));
+    expect(process.mirror).toEqual(makeBudget(800));
+    const lower = createProcess(makeBudget(700));
+    await lower.keeper();
+    expect(await readBudgetFile(file)).toEqual(makeBudget(700));
   });
 
-  it("writes nothing when the load finds the figures another process wrote", async () => {
-    let loaded = false;
-    const save = vi.fn(async () => {});
-    const keeper = createBudgetKeeper({
-      directory,
-      isKept: () => loaded,
-      load: async () => {
-        loaded = true;
-      },
-      save,
-      publishFloor: () => {},
-    });
-    await keeper();
-    expect(save).not.toHaveBeenCalled();
-  });
-
-  it("runs one keeping at a time, which a call made meanwhile joins and runs once more", async () => {
-    const loading = Promise.withResolvers<void>();
-    const loads = vi.fn(() => loading.promise);
-    const keeper = createBudgetKeeper({
-      directory,
-      isKept: () => false,
-      load: loads,
-      save: async () => {},
-      publishFloor: () => {},
-    });
-    const first = keeper();
-    await waitUntil(() => expect(loads).toHaveBeenCalledOnce());
-    const second = keeper();
-    const third = keeper();
-    expect(second).toBe(first);
-    expect(third).toBe(first);
-    loading.resolve();
-    await first;
-    expect(loads).toHaveBeenCalledTimes(2);
-    await keeper();
-    expect(loads).toHaveBeenCalledTimes(3);
-  });
-
-  it("goes on at once, writing nothing, while another process holds the fetch lock", async () => {
+  it("keeps the figures while another process holds the fetch lock, and writes nothing to it", async () => {
     const held = Promise.withResolvers<void>();
     const holding = withFetchLock(directory, () => held.promise);
     try {
       await waitUntil(async () => {
         expect(await readdir(directory)).toContain(lockName);
       });
-      const { keeper, steps } = keep(() => false);
-      const waited = new Promise((resolve) =>
-        setTimeout(() => resolve("waited for the lock"), 5_000),
-      );
-      const outcome = await Promise.race([
-        keeper().then(() => "went on"),
-        waited,
-      ]);
-      expect(outcome).toBe("went on");
-      expect(steps).toEqual(["floor", "judge"]);
+      await createProcess(makeBudget(900)).keeper();
+      expect(await readBudgetFile(file)).toEqual(makeBudget(900));
     } finally {
       held.resolve();
       await holding;
     }
+  });
+
+  it("leaves the lowest figure of the window when processes keep falling figures together", async () => {
+    const figures = [950, 900, 850, 800, 750, 700];
+    await Promise.all(
+      figures.map((remaining) => createProcess(makeBudget(remaining)).keeper()),
+    );
+    expect(await readBudgetFile(file)).toEqual(makeBudget(700));
+  });
+
+  it("runs one keeping at a time, which a call made meanwhile joins, saying the floor, and runs once more", async () => {
+    const { process, keeper } = createProcess(makeBudget(900));
+    const first = keeper();
+    process.heard = makeBudget(800);
+    const second = keeper();
+    expect(second).toBe(first);
+    // The call that joined says the floor its own figures reach.
+    expect(process.told).toEqual(["floor", "floor"]);
+    await first;
+    expect(await readBudgetFile(file)).toEqual(makeBudget(800));
+    const third = keeper();
+    expect(third).not.toBe(first);
+    await third;
+  });
+
+  it("fails every call that joined a keeping that fails", async () => {
+    await mkdir(join(directory, "budget.json", "inside"), { recursive: true });
+    const { keeper } = createProcess(makeBudget(900));
+    const first = keeper();
+    const second = keeper();
+    await expect(first).rejects.toThrow();
+    await expect(second).rejects.toThrow();
   });
 });

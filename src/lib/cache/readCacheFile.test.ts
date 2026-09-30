@@ -43,37 +43,6 @@ describe("readCacheFile", () => {
     expect(await readCacheFile(file)).toEqual({
       state: {},
       fullRefreshAt: undefined,
-      budget: {},
     });
-  });
-
-  it("reads each budget the file mirrors whole, and none it holds in part, with a date that does not exist, or not at all", async () => {
-    const resetAt = { $date: "2026-09-28T11:00:00.000Z" };
-    const whole = { limit: 5000, remaining: 900, resetAt };
-    await writeFile(
-      file,
-      JSON.stringify({
-        format: cacheFormat,
-        state: {},
-        budget: { graphql: whole, rest: { limit: 5000, resetAt } },
-      }),
-    );
-    expect((await readCacheFile(file))?.budget).toEqual({
-      graphql: { ...whole, resetAt: new Date(resetAt.$date) },
-    });
-    await writeFile(
-      file,
-      JSON.stringify({
-        format: cacheFormat,
-        state: {},
-        budget: {
-          graphql: { ...whole, resetAt: { $date: "not a date" } },
-          rest: { ...whole, remaining: null },
-        },
-      }),
-    );
-    expect((await readCacheFile(file))?.budget).toEqual({});
-    await writeFile(file, JSON.stringify({ format: cacheFormat, state: {} }));
-    expect((await readCacheFile(file))?.budget).toEqual({});
   });
 });

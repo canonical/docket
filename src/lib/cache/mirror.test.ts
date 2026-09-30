@@ -247,43 +247,23 @@ describe("the budget mirror of createCache", () => {
     expect(other.readBudgets()).toEqual({ graphql: makeBudget(2000) });
   });
 
-  it("leaves the file to another process fetching under the lock, whose save writes its later figures", async () => {
-    const held = Promise.withResolvers<void>();
-    const fetcher = makeHearingProvider();
-    const snapshot = vi.fn(async () => {
-      await held.promise;
-      fetcher.answers.heard = { graphql: makeBudget(800) };
-      return { threads: [thread()], cursor: null };
-    });
-    const fetching = open({ ...fetcher.provider, snapshot }).refresh();
-    await waitUntil(() => expect(snapshot).toHaveBeenCalled());
-    const { provider, answers } = makeHearingProvider();
-    answers.heard = { graphql: makeBudget(900) };
-    // The fetcher holds the lock until the keeper has tried it.
-    await open(provider).keepBudget();
-    const meanwhile = open(makeHearingProvider().provider);
-    await meanwhile.load();
-    expect(meanwhile.readBudgets()).toEqual({});
-    held.resolve();
-    await fetching;
-    const other = open(makeHearingProvider().provider);
-    await other.load();
-    expect(other.readBudgets()).toEqual({ graphql: makeBudget(800) });
-  });
-
-  it("takes no lock, and waits for none, when it heard nothing the file lacks", async () => {
-    const { provider, answers } = makeHearingProvider();
-    const cache = open(provider);
-    answers.heard = { graphql: makeBudget(2000) };
-    await cache.keepBudget();
+  it("keeps a figure heard while another process holds the fetch lock and writes nothing", async () => {
     const held = Promise.withResolvers<void>();
     const holding = withFetchLock(directory, () => held.promise);
-    await waitUntil(async () => {
-      expect(await readdir(directory)).toContain(lockName);
-    });
-    await cache.keepBudget();
-    held.resolve();
-    await holding;
+    try {
+      await waitUntil(async () => {
+        expect(await readdir(directory)).toContain(lockName);
+      });
+      const { provider, answers } = makeHearingProvider();
+      answers.heard = { graphql: makeBudget(900) };
+      await open(provider).keepBudget();
+    } finally {
+      held.resolve();
+      await holding;
+    }
+    const other = open(makeHearingProvider().provider);
+    await other.load();
+    expect(other.readBudgets()).toEqual({ graphql: makeBudget(900) });
   });
 
   it("names a cache folder it cannot use when it keeps the budgets", async () => {

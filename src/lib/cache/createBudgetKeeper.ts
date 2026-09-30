@@ -1,55 +1,67 @@
-import withFetchLock from "./withFetchLock.js";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import { lock } from "proper-lockfile";
+import type { Budgets } from "../provider/index.js";
+import { budgetLockTiming } from "./constants.js";
+import isSame from "./isSame.js";
+import mergeBudgets from "./mergeBudgets.js";
+import readBudgetFile from "./readBudgetFile.js";
+import writeBudgetFile from "./writeBudgetFile.js";
 
 /** What keeping the budgets reads and writes of the cache it serves. */
-export interface BudgetKeeperOptions {
-  /** The cache folder, whose fetch lock guards the file. */
-  readonly directory: string;
+interface BudgetKeeperOptions {
+  /** The budget file, beside the cache file. */
+  readonly file: string;
+  /** The budgets the file last gave this process, its own answers joined. */
+  readonly readFigures: () => Budgets;
   /** Whether the file holds every figure this process heard, or later ones. */
   readonly isKept: () => boolean;
-  /** Loads the cache file, merging its budgets into the mirror. */
-  readonly load: () => Promise<void>;
-  /** Writes the cache file, the mirror's budgets with it. */
-  readonly save: () => Promise<void>;
+  /** Takes what the file holds once the keeping has written it. */
+  readonly adopt: (kept: Budgets) => void;
   /** Gives the status the floor as the mirror stands. */
   readonly publishFloor: () => void;
 }
 
 /**
- * The keeping of the budgets a process heard outside a refresh in the
- * cache file, so every docket process judges the floor on them: the
- * status says the floor at once, and, when the file lacks any of them,
- * they are written under the fetch lock, after a load, unless another
- * process holds the lock, which it never waits for. One keeping runs at
- * a time: a call made while one runs joins it, and it runs once more for
- * the figures heard meanwhile.
+ * The keeping of the budgets a process heard in the budget file, so every
+ * docket process judges the floor on them. The status says the floor at
+ * once. When the file lacks any of the figures, they are merged into it
+ * under the file's own lock, which is held only to read, merge and write
+ * it: of each kind the later report stays, so an older figure never
+ * overwrites a newer one, and the fetch lock plays no part. One keeping
+ * runs at a time: a call made while one runs joins it, and it runs once
+ * more for the figures heard meanwhile; when it fails, every call that
+ * joined it fails with it.
  *
- * @note Impure: writes the status, and reads and writes the cache file.
+ * @note Impure: writes the status, and reads, locks and writes the budget
+ * file.
  */
 export default function createBudgetKeeper({
-  directory,
+  file,
+  readFigures,
   isKept,
-  load,
-  save,
+  adopt,
   publishFloor,
 }: BudgetKeeperOptions): () => Promise<void> {
   const keep = async () => {
-    // With nothing heard since the last load or save, the file holds
+    // With nothing heard since the file was last read or written, it holds
     // these figures or later ones.
     if (isKept()) return;
-    // Another process holding the lock is fetching now, and GitHub counts
-    // every request of the account against one budget, so the figures its
-    // save writes are as late as these: nothing waits for it, and no
-    // older figure overwrites a later one.
-    await withFetchLock(
-      directory,
-      async () => {
-        await load();
-        // Only figures the file lacks are worth a write every process
-        // reloads.
-        if (!isKept()) await save();
-      },
+    // The lock resolves the real path of the file it locks, which
+    // therefore exists first; one that exists is left as it is.
+    await mkdir(dirname(file), { recursive: true, mode: 0o700 });
+    await writeFile(file, "{}", { flag: "wx", mode: 0o600 }).catch(
       () => undefined,
     );
+    const release = await lock(file, budgetLockTiming);
+    try {
+      const held = await readBudgetFile(file);
+      const kept = mergeBudgets(held, readFigures());
+      if (!isSame(kept, held)) await writeBudgetFile(file, kept);
+      adopt(kept);
+    } finally {
+      await release();
+    }
   };
   // The keeping under way, which a call made meanwhile joins, and whether
   // one did, which keeps the figures heard since once it ends.

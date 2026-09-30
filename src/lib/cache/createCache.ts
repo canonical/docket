@@ -7,6 +7,7 @@ import applyChecks from "./applyChecks.js";
 import classifyFolderFailure from "./classifyFolderFailure.js";
 import classifyRefreshFailure from "./classifyRefreshFailure.js";
 import {
+  budgetFileName,
   cacheFileName,
   fullRefreshCooldown,
   idleInterval,
@@ -21,6 +22,7 @@ import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeBudgets from "./mergeBudgets.js";
 import mergeSnapshot from "./mergeSnapshot.js";
+import readBudgetFile from "./readBudgetFile.js";
 import readCacheFile from "./readCacheFile.js";
 import refreshChecks from "./refreshChecks.js";
 import syncRepo from "./syncRepo.js";
@@ -59,12 +61,13 @@ export default function createCache({
     defaultOptions: { queries: { gcTime: Number.POSITIVE_INFINITY } },
   });
   const file = join(directory, cacheFileName);
+  const budgetFile = join(directory, budgetFileName);
   const listeners = new Set<() => void>();
   let fullRefreshAt: Date | undefined;
   // The file this process wrote last, as identifyFile names it.
   let written: string | undefined;
-  // The mirror of the budgets as the file last gave it or this process
-  // last wrote it; this process's own answers join it on each read.
+  // The mirror of the budgets as the budget file last gave it or this
+  // process last kept it; this process's own answers join it on each read.
   let mirror: Budgets = {};
   const readFigures = () => mergeBudgets(mirror, provider.readBudgets());
 
@@ -165,24 +168,22 @@ export default function createCache({
       // Every write happens under the lock after a load, and carries the
       // start it loaded forward, so the file's is always the latest.
       fullRefreshAt = contents.fullRefreshAt ?? fullRefreshAt;
-      mirror = mergeBudgets(mirror, contents.budget);
     }
     publish();
-    // Another process's answers may have taken the mirror below the floor.
+    await loadBudget();
+  };
+  /** Takes the budget file's figures into the mirror; says their floor. */
+  const loadBudget = async () => {
+    mirror = mergeBudgets(mirror, await readBudgetFile(budgetFile));
     publishFloor();
   };
-  const save = () => {
-    mirror = readFigures();
-    // Any of this process's own reads may have taken it below the floor.
-    publishFloor();
-    const contents = {
-      state: dehydrate(client),
-      fullRefreshAt,
-      budget: mirror,
-    };
-    return writeCacheFile(file, contents, (id) => {
+  /** Writes the cache file, then keeps the budgets its reads heard. */
+  const save = async () => {
+    const contents = { state: dehydrate(client), fullRefreshAt };
+    await writeCacheFile(file, contents, (id) => {
       written = id;
     });
+    await keepBudget();
   };
 
   const { judgeFloor, maySpend, publishFloor } = createBudgetRule({
@@ -193,10 +194,12 @@ export default function createCache({
     publish: (change) => publish(change, false),
   });
   const keepBudget = createBudgetKeeper({
-    directory,
+    file: budgetFile,
+    readFigures,
     isKept: () => isSame(readFigures(), mirror),
-    load,
-    save,
+    adopt: (kept) => {
+      mirror = kept;
+    },
     publishFloor,
   });
 
@@ -453,6 +456,7 @@ export default function createCache({
     watch() {
       mkdirSync(directory, { recursive: true, mode: 0o700 });
       const watcher = watchFolder(directory, (_event, name) => {
+        if (name === budgetFileName) void loadBudget();
         if (name !== cacheFileName) return;
         // The file this process wrote holds nothing it lacks.
         void identifyFile(file).then((found) =>

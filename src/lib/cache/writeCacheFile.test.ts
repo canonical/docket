@@ -7,7 +7,6 @@ import { join } from "node:path";
 import { dehydrate, QueryClient } from "@tanstack/query-core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { thread } from "../../testing/facts.js";
-import { fullBudget } from "../../testing/provider.js";
 import identifyFile from "./identifyFile.js";
 import readCacheFile from "./readCacheFile.js";
 import writeCacheFile from "./writeCacheFile.js";
@@ -33,7 +32,7 @@ function stateOf(threads: unknown, fullRefreshAt?: Date) {
   client.setQueryData(["snapshot", "example-org/example-repo"], threads, {
     updatedAt: Date.parse("2026-09-28T10:00:00Z"),
   });
-  return { state: dehydrate(client), fullRefreshAt, budget: {} };
+  return { state: dehydrate(client), fullRefreshAt };
 }
 
 describe("writeCacheFile", () => {
@@ -65,15 +64,6 @@ describe("writeCacheFile", () => {
     const started = new Date("2026-09-28T09:59:00Z");
     await writeCacheFile(file, stateOf([], started), ignore);
     expect((await readCacheFile(file))?.fullRefreshAt).toEqual(started);
-  });
-
-  it("writes the budgets it mirrors, which readCacheFile reads back", async () => {
-    const budget = {
-      graphql: fullBudget,
-      rest: { ...fullBudget, remaining: 10 },
-    };
-    await writeCacheFile(file, { ...stateOf([]), budget }, ignore);
-    expect((await readCacheFile(file))?.budget).toEqual(budget);
   });
 
   it("writes a title written like a date as text", async () => {
