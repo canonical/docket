@@ -36,9 +36,11 @@ describe("useAddress", () => {
 
   it("steps owed through its groupings, after the last the first, naming the ungrouped list one list", async () => {
     const screen = await draw(<Placed {...opening} />, 40, 1);
-    const seen: string[] = [];
-    for (const _ of [1, 2, 3, 4, 5]) {
-      seen.push((await screen.redraw(() => address?.nextGrouping())).lines[0]);
+    const seen: (string | undefined)[] = [];
+    for (let step = 0; step < 5; step += 1) {
+      seen.push(
+        (await screen.redraw(() => address?.nextGrouping())).lines.at(0),
+      );
     }
     expect(seen).toEqual([
       "owed | by owner | overdue first",
