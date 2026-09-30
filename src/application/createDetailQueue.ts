@@ -1,7 +1,6 @@
 import type { ThreadDetail } from "../lib/provider/index.js";
 import type { DetailsCount } from "../lib/ui/index.js";
 import type { ThreadSummary } from "../lib/waits/index.js";
-import { detailStaleAfter } from "./constants.js";
 import type { DetailReader } from "./createDetailReader.js";
 import identifyThread from "./identifyThread.js";
 
@@ -21,8 +20,6 @@ interface Entry {
     readonly resolve: (detail: ThreadDetail) => void;
     readonly reject: (reason: unknown) => void;
   };
-  /** When they arrived, once they have. */
-  readAt?: number;
   /**
    * Whether a read was given them, which keeps them asked for when the
    * selection moves on.
@@ -45,11 +42,12 @@ export interface DetailQueue {
    */
   read(thread: ThreadSummary, version: string): Promise<ThreadDetail>;
   /**
-   * Whether `thread`'s details are due a read at `at`: none were asked
-   * for at `version`, or those that arrived are `detailStaleAfter` old. A
-   * read that failed at `version` leaves them not due.
+   * Whether `thread`'s details are due a read: none were asked for at
+   * `version`. Details read at a version stay current until it moves,
+   * however long ago they arrived, and a read that failed at `version`
+   * leaves them not due.
    */
-  isDue(thread: ThreadSummary, version: string, at: Date): boolean;
+  isDue(thread: ThreadSummary, version: string): boolean;
   /**
    * Asks for the details of the threads of `window` that are due,
    * `selected` first among them, in the next request, which goes `delay`
@@ -91,18 +89,19 @@ export interface DetailQueue {
  * around it cost one point together. A read asked for alone goes at once,
  * unless an ask for the rows around it is pending, which it joins. A
  * thread the request leaves out, as the reader does below the budget
- * floor, is asked for again when it is due. One the provider no longer finds, or
- * one a request that fails asked for, fails its read, and is not asked
- * for again until its version moves or a read asks for it, as the
- * accordion does when the selection comes back to it.
- * Nothing is sent while it is paused.
+ * floor, is asked for again when it is due. A thread's details are due
+ * again only when its version moves: a change GitHub records on it, or
+ * one the list's roll-up of its checks shows. One the provider no longer
+ * finds, or one a request that fails asked for, fails its read, and is
+ * not asked for again until its version moves or a read asks for it, as
+ * the accordion does when the selection comes back to it. Nothing is sent
+ * while it is paused.
  *
  * @note Impure: sets a timer for each request, and reads through
  * `reader`.
  */
 export default function createDetailQueue(
   reader: Pick<DetailReader, "read">,
-  now: () => Date,
 ): DetailQueue {
   const entries = new Map<string, Entry>();
   const arrivals = new Map<string, number>();
@@ -176,7 +175,6 @@ export default function createDetailQueue(
       key: identifyThread(thread),
       entry,
     }));
-    const at = now();
     sending += 1;
     try {
       const read = await reader.read(
@@ -200,7 +198,6 @@ export default function createDetailQueue(
           entry.settle.reject(new Error(`${key} was not found.`));
           continue;
         }
-        entry.readAt = at.getTime();
         entry.settle.resolve(detail);
         arrivals.set(key, (arrivals.get(key) ?? 0) + 1);
       }
@@ -216,14 +213,8 @@ export default function createDetailQueue(
     settleRound();
     tell();
   };
-  const isDue = (thread: ThreadSummary, version: string, at: Date) => {
-    const known = entries.get(identifyThread(thread));
-    if (known?.version !== version) return true;
-    return (
-      known.readAt !== undefined &&
-      at.getTime() - known.readAt >= detailStaleAfter
-    );
-  };
+  const isDue = (thread: ThreadSummary, version: string) =>
+    entries.get(identifyThread(thread))?.version !== version;
   const schedule = (delay: number) => {
     clearTimeout(timer);
     timer = undefined;
@@ -257,9 +248,8 @@ export default function createDetailQueue(
           round?.asked.delete(key);
           return false;
         });
-        const at = now();
         for (const each of window) {
-          if (isDue(each.thread, each.version, at)) ask(each);
+          if (isDue(each.thread, each.version)) ask(each);
         }
         if (queued.length > 0) schedule(delay);
         else {

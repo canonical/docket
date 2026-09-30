@@ -315,7 +315,6 @@ export default function Screen({
     selected: placeSelection(rows, selections[mode]),
     attention: attentionState,
     paused: status?.paused?.reason,
-    now,
   });
   // A thread's details are read once for each change GitHub records on it,
   // and once for each change the list's roll-up of its checks shows, since

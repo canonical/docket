@@ -61,7 +61,6 @@ const open = async (
       selected={0}
       attention={attention}
       paused={paused}
-      now={() => new Date()}
     />,
     40,
     1,
@@ -94,19 +93,28 @@ describe("useReadAhead", () => {
     ]);
   });
 
-  it("reads the selected thread again once its details are 30 seconds old, and moves its version when they arrive", async () => {
+  it("never reads an unchanged thread again, however long ago it was read, and reads a changed one alone", async () => {
     const { readDetails, reader } = reading();
     const screen = await open(reader);
     await vi.advanceTimersByTimeAsync(0);
     const first = rows.at(0)?.thread ?? thread();
     const arrived = result?.version(first, "v");
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(3_600_000);
     await screen.redraw(() => steer({ selected: 1 }));
     await vi.advanceTimersByTimeAsync(200);
+    await screen.redraw(() => steer({ selected: 0 }));
+    await vi.advanceTimersByTimeAsync(200);
+    expect(readDetails).toHaveBeenCalledOnce();
+    const changed = rows.map((row, place) =>
+      place === 0 ? { ...row, version: "w" } : row,
+    );
+    await screen.redraw(() => steer({ rows: changed }));
+    await vi.advanceTimersByTimeAsync(200);
     expect(readDetails).toHaveBeenCalledTimes(2);
+    expect(readDetails.mock.calls.at(1)?.[0]).toEqual([first]);
     await screen.redraw();
-    expect(result?.version(first, "v")).not.toBe(arrived);
-    expect(await result?.read?.(first, "v")).toBe(parserFixDetail);
+    expect(result?.version(first, "w")).not.toBe(arrived);
+    expect(await result?.read?.(first, "w")).toBe(parserFixDetail);
   });
 
   it("reads nothing while the pane is idle or the rate limit pauses reading, the accordion's read included, and catches up once it does not", async () => {
@@ -170,7 +178,6 @@ describe("useReadAhead", () => {
         selected={0}
         attention="active"
         paused={undefined}
-        now={() => new Date()}
       />,
       40,
       1,

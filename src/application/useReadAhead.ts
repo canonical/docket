@@ -28,8 +28,6 @@ export interface UseReadAheadProps {
    * accordion's read waits until the pause ends.
    */
   readonly paused: NonNullable<CacheStatus["paused"]>["reason"] | undefined;
-  /** The current time, read whenever what is due is decided. */
-  readonly now: () => Date;
 }
 
 /**
@@ -73,8 +71,8 @@ function findNearest(
  * Reads ahead the details of the selected thread and the rows around it,
  * at most `detailWindow` threads in one request: at once when the list
  * first shows, and `detailRest` after the selection last moved, for the
- * threads whose details are missing, out of date or `detailStaleAfter`
- * old. Nothing is read ahead while the pane is idle or the refresh cycle
+ * threads whose details are missing or out of date: read at a version the
+ * row no longer shows. Nothing is read ahead while the pane is idle or the refresh cycle
  * paused: below the budget floor only the selected thread is read, and
  * under the rate limit nothing is, the accordion's own read included.
  * Details read ahead reach the accordion through the details it holds,
@@ -90,9 +88,8 @@ export default function useReadAhead({
   selected,
   attention,
   paused,
-  now,
 }: UseReadAheadProps): UseReadAheadResult {
-  const [queue] = useState(() => reader && createDetailQueue(reader, now));
+  const [queue] = useState(() => reader && createDetailQueue(reader));
   useEffect(() => () => queue?.stop(), [queue]);
   const [, redraw] = useState(0);
   useEffect(

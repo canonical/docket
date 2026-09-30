@@ -23,11 +23,5 @@ export const selectedThreadInterval = 60_000;
  */
 export const detailRest = 200;
 
-/**
- * How old, in milliseconds, a thread's details may be before the
- * selection resting on it, or near it, reads them again: 30 seconds.
- */
-export const detailStaleAfter = 30_000;
-
 /** The indent of what stands in for the list, in display cells. */
 export const standInIndent = 2;

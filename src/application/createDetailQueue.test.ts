@@ -30,8 +30,7 @@ const reading = () => ({
       })),
   ),
 });
-const open = (reader = reading()) =>
-  createDetailQueue(reader, () => new Date());
+const open = (reader = reading()) => createDetailQueue(reader);
 
 describe("createDetailQueue", () => {
   it("reads alone a thread asked for with nothing pending, once for its version", async () => {
@@ -97,9 +96,9 @@ describe("createDetailQueue", () => {
     await vi.advanceTimersByTimeAsync(200);
     expect(reader.read).toHaveBeenCalledOnce();
     expect(reader.read.mock.calls.at(0)?.[0]).toEqual([four, three]);
-    expect(queue.isDue(one, "v", new Date())).toBe(true);
-    expect(queue.isDue(two, "v", new Date())).toBe(true);
-    expect(queue.isDue(four, "v", new Date())).toBe(false);
+    expect(queue.isDue(one, "v")).toBe(true);
+    expect(queue.isDue(two, "v")).toBe(true);
+    expect(queue.isDue(four, "v")).toBe(false);
   });
 
   it("lets a thread fall due again whatever version its dropped asks were at", async () => {
@@ -110,7 +109,7 @@ describe("createDetailQueue", () => {
     queue.request([{ thread: two, version: "v" }], two, 200);
     await vi.advanceTimersByTimeAsync(200);
     expect(reader.read.mock.calls.at(0)?.[0]).toEqual([two]);
-    expect(queue.isDue(one, "v2", new Date())).toBe(true);
+    expect(queue.isDue(one, "v2")).toBe(true);
   });
 
   it("keeps a read given out when the selection moves on", async () => {
@@ -134,31 +133,31 @@ describe("createDetailQueue", () => {
     expect(reader.read).toHaveBeenCalledOnce();
   });
 
-  it("counts each arrival, telling its listeners, and says details are due once 30 seconds old or for another version", async () => {
+  it("counts each arrival, telling its listeners, and says details are due only for another version, however old", async () => {
     const queue = open();
     const listener = vi.fn();
     queue.subscribe(listener);
-    expect(queue.isDue(one, "v", new Date())).toBe(true);
+    expect(queue.isDue(one, "v")).toBe(true);
     queue.request([{ thread: one, version: "v" }], one, 0);
-    expect(queue.isDue(one, "v", new Date())).toBe(false);
+    expect(queue.isDue(one, "v")).toBe(false);
     await vi.advanceTimersByTimeAsync(0);
     expect(queue.countArrivals(one)).toBe(1);
     expect(queue.countArrivals(two)).toBe(0);
     expect(listener).toHaveBeenCalledTimes(2);
-    expect(queue.isDue(one, "v", new Date())).toBe(false);
-    expect(queue.isDue(one, "w", new Date())).toBe(true);
-    await vi.advanceTimersByTimeAsync(30_000);
-    expect(queue.isDue(one, "v", new Date())).toBe(true);
+    expect(queue.isDue(one, "v")).toBe(false);
+    expect(queue.isDue(one, "w")).toBe(true);
+    await vi.advanceTimersByTimeAsync(24 * 3_600_000);
+    expect(queue.isDue(one, "v")).toBe(false);
   });
 
-  it("asks again for a thread the budget left out, and fails every read of a request that fails, so each is read again", async () => {
+  it("asks again for a thread the reader left out, and fails every read of a request that fails, so each is read again", async () => {
     const reader = {
       read: vi.fn(async (): Promise<DetailReading> => []),
     };
     const queue = open(reader);
     queue.request([{ thread: two, version: "v" }], undefined, 0);
     await vi.advanceTimersByTimeAsync(0);
-    expect(queue.isDue(two, "v", new Date())).toBe(true);
+    expect(queue.isDue(two, "v")).toBe(true);
     reader.read.mockRejectedValueOnce(new Error("offline"));
     const failed = queue.read(one, "v");
     await vi.advanceTimersByTimeAsync(0);
@@ -184,8 +183,8 @@ describe("createDetailQueue", () => {
       await vi.advanceTimersByTimeAsync(200);
     }
     expect(reader.read).toHaveBeenCalledTimes(2);
-    expect(queue.isDue(three, "w", new Date())).toBe(true);
-    expect(queue.isDue(one, "w", new Date())).toBe(true);
+    expect(queue.isDue(three, "w")).toBe(true);
+    expect(queue.isDue(one, "w")).toBe(true);
     const again = queue.read(one, "v");
     await vi.advanceTimersByTimeAsync(0);
     expect(await again).toBe(parserFixDetail);
