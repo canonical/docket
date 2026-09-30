@@ -34,7 +34,7 @@
 |
 |9999 over · 9999 soon · 9999 on track
 |synced 2m ago
-|←→ mode ↑↓ sel ⏎ open g grp t time a r R
+|←→ mode ↑↓ sel ⏎ open g grp t time a r ?
 
 runs
 1:1 "assigning example-r…th-a-long-name#12345" fg #c6c8d1ff bg #161821ff
@@ -51,4 +51,4 @@ runs
 36:24 " grp" fg #6b7089ff bg #161821ff
 36:28 " t" fg #c6c8d1ff bg #161821ff
 36:30 " time" fg #6b7089ff bg #161821ff
-36:35 " a r R" fg #c6c8d1ff bg #161821ff
+36:35 " a r ?" fg #c6c8d1ff bg #161821ff
