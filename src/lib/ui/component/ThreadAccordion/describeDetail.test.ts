@@ -337,7 +337,7 @@ describe("describeDetail", () => {
       expect(colourOf(body[1], "● bob")).toBe(tokens["color.text.team"]);
     });
 
-    it("gives a closed thread its age, its assignees that are not bots as owners behind their marks, and its labels, then its stack lines", () => {
+    it("gives a closed thread its age, its assignees that are not bots as owners behind their marks, its labels and no opener, then its stack lines; an open one nobody wrote on its opener", () => {
       const resting = {
         repo: "example",
         thread: overReview.wait.thread,
@@ -361,6 +361,21 @@ describe("describeDetail", () => {
       expect(texts(describeDetail(resting, unassigned, reading).body)).toEqual([
         "age 6d · owner unassigned",
         "last activity 3h ago",
+        "labels priority=high · kind=bug · area/icons",
+      ]);
+      // The same thread open, which nobody has written on: its opener,
+      // at its opening.
+      const open = {
+        ...resting,
+        author: {
+          text: "dave",
+          fit: "trimmed" as const,
+          group: "outside" as const,
+        },
+      };
+      expect(texts(describeDetail(open, unassigned, reading).body)).toEqual([
+        "age 6d · owner unassigned",
+        "last activity 6d ago · ○ dave",
         "labels priority=high · kind=bug · area/icons",
       ]);
       expect(

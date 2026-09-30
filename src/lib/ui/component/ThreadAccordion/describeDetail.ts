@@ -235,15 +235,19 @@ function describeClose(row: WaitRow, { now }: Reading) {
  * A thread no wait runs on, as its details give it: its age and owners,
  * its last activity and its labels. The owners are the row's when it
  * names them; a thread whose row names none, such as a closed one, takes
- * its assignees that are not bots. Each person, the one who wrote last
- * included, carries their group's mark, from the repository's people.
+ * its assignees that are not bots. The last activity names whoever wrote
+ * last, or, on an open thread nobody has written on, whoever opened it,
+ * at its opening. Each person carries their group's mark, from the
+ * repository's people.
  */
 function describeRest(
-  { owners, people, viewer }: RestingThread,
+  { owners, author, people, viewer }: RestingThread,
   detail: ThreadDetail,
   { now }: Reading,
 ) {
   const latest = detail.messages.at(-1);
+  const actor = latest ? describePerson(latest.author, people, viewer) : author;
+  const last = latest || !author ? detail.updatedAt : detail.createdAt;
   const assigned = detail.assignees
     .filter(({ type }) => type !== "bot")
     .map((account) => describePerson(account, people, viewer));
@@ -255,15 +259,9 @@ function describeRest(
       ...(named.length > 0 ? listPeople(named) : [plain("unassigned")]),
     ),
     trimmed(
-      plain(`last activity ${describeAge(detail.updatedAt, now)} ago`),
-      ...(latest
-        ? [
-            plain(" · "),
-            markPerson(
-              describePerson(latest.author, people, viewer),
-              Number.POSITIVE_INFINITY,
-            ),
-          ]
+      plain(`last activity ${describeAge(last, now)} ago`),
+      ...(actor
+        ? [plain(" · "), markPerson(actor, Number.POSITIVE_INFINITY)]
         : []),
     ),
     wrapped(plain(`labels ${labels}`)),
