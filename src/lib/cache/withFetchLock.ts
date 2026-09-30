@@ -33,9 +33,6 @@ const describeWait = (error: unknown): never => {
  * process's data and fetches only if that is still needed. A lost lock is
  * never given up: it belongs to the process that took it.
  *
- * With `whenHeld`, nothing waits: while another holder keeps the lock,
- * `task` does not run and `whenHeld` gives the result.
- *
  * @note Impure: creates the folder and the lock in the filesystem.
  * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds the
  * lock for longer than `lockTiming` waits.
@@ -43,7 +40,6 @@ const describeWait = (error: unknown): never => {
 export default async function withFetchLock<T>(
   directory: string,
   task: () => Promise<T>,
-  whenHeld?: () => T,
 ): Promise<T> {
   // The lock library resolves the real path of what it locks, which
   // therefore exists first.
@@ -54,19 +50,12 @@ export default async function withFetchLock<T>(
     const forgotten = Promise.withResolvers<void>();
     const release = await lock(directory, {
       ...lockTiming,
-      ...(whenHeld && { retries: 0 }),
       lockfilePath,
       onCompromised: () => {
         lost = true;
         forgotten.resolve();
       },
-    }).catch((error: unknown) =>
-      whenHeld && (error as { code?: unknown }).code === "ELOCKED"
-        ? undefined
-        : describeWait(error),
-    );
-    // Only a lock taken without waiting is ever refused rather than thrown.
-    if (!release) return (whenHeld as () => T)();
+    }).catch(describeWait);
     const held = await identifyFile(lockfilePath);
     let outcome: { readonly value: T } | { readonly error: unknown };
     try {

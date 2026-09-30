@@ -363,14 +363,15 @@ export interface Cache {
   maySpend(): boolean;
   /**
    * Writes the budgets this process heard to the cache file, under the
-   * fetch lock, when the file holds none as late and no other process
-   * holds the lock, which it never waits for, so every docket process
+   * fetch lock, when the file holds none as late, so every docket process
    * judges the floor on them: for answers heard outside a refresh, such as
-   * a read of details. The holder's own answers report this spending,
-   * since GitHub counts the account's requests against one budget.
+   * a read of details. It waits for another process holding the lock, whose
+   * save may carry older figures, so a lower figure is never lost; a caller
+   * that answers someone keeps the budget only once it has answered.
    *
-   * @throws CacheError `CACHE_UNUSABLE` when the cache folder cannot be
-   * made, read or written.
+   * @throws CacheError `CACHE_LOCK_TIMED_OUT` when another process holds
+   * the fetch lock for longer than the wait allows, and `CACHE_UNUSABLE`
+   * when the cache folder cannot be made, read or written.
    */
   keepBudget(): Promise<void>;
   /** The cache's state: the same value on every call until it changes. */

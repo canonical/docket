@@ -472,19 +472,15 @@ export default function createCache({
       // This process's own answers can take the mirror below the floor.
       publishFloor();
       try {
-        // GitHub counts every request of the account against one budget,
-        // so while another process holds the lock, its own next answers
-        // report this spending too: nothing waits for it.
-        await withFetchLock(
-          directory,
-          async () => {
-            await load();
-            // Only figures the file lacks are worth a write every process
-            // reloads.
-            if (!isSame(readFigures(), mirror)) await save();
-          },
-          () => undefined,
-        );
+        // While another process holds the lock, its save may write figures
+        // older than this one's, so they wait for it to end, and a lower
+        // figure is never lost to an older one.
+        await withFetchLock(directory, async () => {
+          await load();
+          // Only figures the file lacks are worth a write every process
+          // reloads.
+          if (!isSame(readFigures(), mirror)) await save();
+        });
       } catch (error) {
         throw classifyFolderFailure(error, directory);
       }
