@@ -1,3 +1,4 @@
+import { recordedWatched, yourTeamSettings } from "../testing/recorded.js";
 import {
   connectRecording,
   ScreenFrame,
@@ -86,5 +87,47 @@ export const AssignSucceeded: Story<ScreenFrameProps> = {
       "editor.toggle",
       "editor.apply",
     ],
+  },
+};
+
+/** The recording, editable, with the personal file naming alice's team. */
+const editableYours: ScreenFrameProps = {
+  ...editable,
+  settings: yourTeamSettings,
+  watched: recordedWatched(yourTeamSettings),
+  connect: () => ({
+    ...connectRecording({ github: standInGitHub() }),
+    readWatched: async () => ({ watched: recordedWatched(yourTeamSettings) }),
+  }),
+};
+
+/** The review picker's steps to its last option, the team. */
+const toTheTeam = [
+  "selection.next",
+  "selection.next",
+  "selection.next",
+  "selection.next",
+  "thread.review",
+  "editor.next",
+  "editor.next",
+  "editor.next",
+];
+
+/**
+ * `r` on the review row while the personal file names the team as
+ * alice's: the team takes her mark, though no thread shows her in it.
+ */
+export const RequestReviewYourTeam: Story<ScreenFrameProps> = {
+  args: { ...editableYours, run: toTheTeam },
+};
+
+/**
+ * The team ticked beside bob and applied: the status line names it with
+ * alice's mark, as the picker did.
+ */
+export const RequestReviewYourTeamSucceeded: Story<ScreenFrameProps> = {
+  args: {
+    ...editableYours,
+    run: [...toTheTeam, "editor.toggle", "editor.apply"],
   },
 };

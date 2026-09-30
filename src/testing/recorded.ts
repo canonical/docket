@@ -48,6 +48,12 @@ export const recordedSettings: Settings = {
   repos: recordedRepos,
 };
 
+/** The recorded settings, with the personal file naming alice's team. */
+export const yourTeamSettings: Settings = {
+  ...recordedSettings,
+  you: { teams: ["example-org/reviewers"] },
+};
+
 /**
  * A pull request dave opened, assigned to alice, with bob asked for a
  * review, failing checks, second in a stack of three, and dave's comment
