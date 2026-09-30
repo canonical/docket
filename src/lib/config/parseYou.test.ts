@@ -58,7 +58,7 @@ describe("parseYou", () => {
         message:
           '`you.teams` lists `"ui"`, which is not a team written as org/team.',
         recovery:
-          "Write each team as its organisation and its name, such as `example-org/reviewers`.",
+          "Write each team as its organisation and its slug, the name in the team's address on GitHub, such as `example-org/reviewers`.",
       },
       expect.objectContaining({
         code: "CONFIG_WRONG_TYPE",

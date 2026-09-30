@@ -31,7 +31,7 @@ export default function parseYou(value: unknown): Checked<Partial<You>> {
         code: "CONFIG_INVALID_TEAM",
         message: `\`you.teams\` lists \`${formatValue(text.value)}\`, which is not a team written as org/team.`,
         recovery:
-          "Write each team as its organisation and its name, such as `example-org/reviewers`.",
+          "Write each team as its organisation and its slug, the name in the team's address on GitHub, such as `example-org/reviewers`.",
       });
     }
   }
