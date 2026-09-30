@@ -14,7 +14,7 @@
 |│ example#20 PR close ■ example-sync                 4d left
 |│ Update dependency zod to 3.24                        ● bob
 |│ age 2d · owner ● bob
-|│ last activity 2d ago
+|│ last activity 2d ago · ■ example-sync
 |╵ labels dependencies
 |│┆example#12 PR review ○ dave                        1d left
 |╵┆Fix the parser                             ✗ checks  ● bob
@@ -100,8 +100,9 @@ runs
 15:23 "                                      " fg #ffffffff bg #2e3244ff
 16:1 "│" fg #818596ff bg #2e3244ff
 16:2 " " fg #6b7089ff bg #2e3244ff
-16:3 "last activity 2d ago" fg #c6c8d1ff bg #2e3244ff
-16:23 "                                      " fg #ffffffff bg #2e3244ff
+16:3 "last activity 2d ago · " fg #c6c8d1ff bg #2e3244ff
+16:26 "■ example-sync" fg #6b7089ff bg #2e3244ff
+16:40 "                     " fg #ffffffff bg #2e3244ff
 17:1 "╵" fg #818596ff bg #2e3244ff
 17:2 " " fg #6b7089ff bg #2e3244ff
 17:3 "labels dependencies" fg #c6c8d1ff bg #2e3244ff
