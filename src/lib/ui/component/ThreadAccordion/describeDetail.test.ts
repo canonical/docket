@@ -279,17 +279,14 @@ describe("describeDetail", () => {
         reading,
       );
       expect(texts(quiet.body).at(1)).toBe("last activity 6d ago · ○ dave");
-      const answered = describeDetail(
-        measureRow({
-          thread: {
-            ...opened,
-            comments: [{ author: bob, at: at("2026-09-28T11:00+02:00") }],
-          },
-        }),
-        undefined,
-        reading,
-      );
-      expect(texts(answered.body).at(1)).toBe("last activity 1h ago · ● bob");
+      // A comment or a review makes the thread no longer quiet.
+      const bobWrote = [{ author: bob, at: at("2026-09-28T11:00+02:00") }];
+      for (const written of [{ comments: bobWrote }, { reviews: bobWrote }]) {
+        const row = measureRow({ thread: { ...opened, ...written } });
+        expect(texts(describeDetail(row, undefined, reading).body).at(1)).toBe(
+          "last activity 1h ago · ● bob",
+        );
+      }
     });
 
     it("says unassigned, no labels, and whoever opened it when nobody wrote since", () => {
