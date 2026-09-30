@@ -111,6 +111,50 @@ describe("the budget mirror of createCache", () => {
     });
   });
 
+  it("says the pause as a refresh starts, while another process holds the lock", async () => {
+    const { provider, answers } = makeHearingProvider();
+    const cache = open(provider);
+    await cache.refresh();
+    const held = Promise.withResolvers<void>();
+    const holding = withFetchLock(directory, () => held.promise);
+    await waitUntil(async () => {
+      expect(await readdir(directory)).toContain(lockName);
+    });
+    answers.heard = { graphql: makeBudget(900) };
+    const running = cache.refresh();
+    try {
+      expect(cache.status().paused).toEqual({
+        until: fullBudget.resetAt,
+        reason: "budget",
+      });
+    } finally {
+      held.resolve();
+      await Promise.all([holding, running]);
+    }
+  });
+
+  it("says the pause as it keeps the budget, before it tries the lock another process holds", async () => {
+    const { provider, answers } = makeHearingProvider();
+    const cache = open(provider);
+    await cache.refresh();
+    const held = Promise.withResolvers<void>();
+    const holding = withFetchLock(directory, () => held.promise);
+    await waitUntil(async () => {
+      expect(await readdir(directory)).toContain(lockName);
+    });
+    answers.heard = { graphql: makeBudget(900) };
+    const keeping = cache.keepBudget();
+    try {
+      expect(cache.status().paused).toEqual({
+        until: fullBudget.resetAt,
+        reason: "budget",
+      });
+    } finally {
+      held.resolve();
+      await Promise.all([holding, keeping]);
+    }
+  });
+
   it("stops docket's own spending below the floor, and still spends on what the user asks for", async () => {
     const { provider, answers } = makeHearingProvider();
     await open(provider).refresh();
