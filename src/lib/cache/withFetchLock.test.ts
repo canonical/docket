@@ -95,6 +95,20 @@ describe("withFetchLock", () => {
     });
   });
 
+  it("runs nothing and waits for nothing while another holder keeps the lock, when told what to give then", async () => {
+    const held = Promise.withResolvers<void>();
+    const holding = withFetchLock(directory, () => held.promise);
+    await waitUntil(async () => {
+      expect(await readdir(directory)).toHaveLength(1);
+    });
+    const task = vi.fn(async () => "ran");
+    expect(await withFetchLock(directory, task, () => "held")).toBe("held");
+    expect(task).not.toHaveBeenCalled();
+    held.resolve();
+    await holding;
+    expect(await withFetchLock(directory, task, () => "held")).toBe("ran");
+  });
+
   it("passes on a failure to take the lock that is not another holder's", async () => {
     await mkdir(directory, { recursive: true, mode: 0o500 });
     vi.useFakeTimers({ toFake: ["Date"] });

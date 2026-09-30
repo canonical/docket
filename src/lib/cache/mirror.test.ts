@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,10 +8,12 @@ import {
   fullBudget,
   providerError,
 } from "../../testing/provider.js";
+import { waitUntil } from "../../testing/wait.js";
 import type { Budgets, Provider } from "../provider/index.js";
-import { cacheFileName } from "./constants.js";
+import { cacheFileName, lockName } from "./constants.js";
 import createCache from "./createCache.js";
 import identifyFile from "./identifyFile.js";
+import withFetchLock from "./withFetchLock.js";
 
 const repo = "example-org/example-repo";
 const docs = "example-org/example-docs";
@@ -168,6 +170,23 @@ describe("the budget mirror of createCache", () => {
     const other = open(makeHearingProvider().provider);
     await other.load();
     expect(other.budget()).toEqual({ graphql: makeBudget(2000) });
+  });
+
+  it("keeps the budgets without waiting while another holder keeps the fetch lock", async () => {
+    const { provider, answers } = makeHearingProvider();
+    const cache = open(provider);
+    answers.heard = { graphql: makeBudget(2000) };
+    const held = Promise.withResolvers<void>();
+    const holding = withFetchLock(directory, () => held.promise);
+    await waitUntil(async () => {
+      expect(await readdir(directory)).toContain(lockName);
+    });
+    await cache.keepBudget();
+    held.resolve();
+    await holding;
+    const other = open(makeHearingProvider().provider);
+    await other.load();
+    expect(other.budget()).toEqual({});
   });
 
   it("names a cache folder it cannot use when it keeps the budgets", async () => {

@@ -464,12 +464,19 @@ export default function createCache({
     maySpend,
     async keepBudget() {
       try {
-        await withFetchLock(directory, async () => {
-          await load();
-          // Only figures the file lacks are worth a write every process
-          // reloads.
-          if (!isSame(readFigures(), mirror)) await save();
-        });
+        // GitHub counts every request of the account against one budget,
+        // so while another process holds the lock, its own next answers
+        // report this spending too: nothing waits for it.
+        await withFetchLock(
+          directory,
+          async () => {
+            await load();
+            // Only figures the file lacks are worth a write every process
+            // reloads.
+            if (!isSame(readFigures(), mirror)) await save();
+          },
+          () => undefined,
+        );
       } catch (error) {
         throw classifyFolderFailure(error, directory);
       }
