@@ -61,7 +61,6 @@ export default function buildRow(
   return {
     thread,
     repo,
-    stacked: thread.stack !== undefined,
     reference: field(`${repo}#${thread.number}`),
     kind: field(threadWords[thread.kind]),
     distance: field(measured ? (over ?? open) : age),

@@ -33,7 +33,6 @@ describe("buildRow", () => {
     ]);
     expect(row.targetHours).toBe(120);
     expect(row.verdict).toBe("within");
-    expect(row.stacked).toBe(true);
   });
 
   it("gives a thread that finished past its target how far past on line 1", () => {
@@ -46,7 +45,6 @@ describe("buildRow", () => {
     ]);
     expect(row.verdict).toBe("over");
     expect(text(row.ending.text)).toBe("alice closed as not planned");
-    expect(row.stacked).toBe(false);
   });
 
   it("gives a thread a label exempts no verdict and no target, and its ending's age on line 1", () => {

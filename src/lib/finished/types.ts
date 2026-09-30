@@ -57,8 +57,6 @@ export interface FinishedRow {
   readonly thread: FinishedThread;
   /** The short name of the thread's repository. */
   readonly repo: string;
-  /** Whether the pull request sits in a stack, shown by the margin rule. */
-  readonly stacked: boolean;
   /** `example#12`. */
   readonly reference: Field;
   /** `issue` or `PR`. */
