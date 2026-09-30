@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { RepoStage } from "../../../cache/index.js";
 import { tokens } from "../../../tokens/index.js";
 import fitPieces from "../../fitPieces.js";
 import trimText from "../../trimText.js";
@@ -11,12 +12,12 @@ import type { RefreshStagesProps } from "./types.js";
  * The lines of each run a stage takes: a failure's reason wraps under
  * the stage's column, and any other stage is trimmed to one line.
  */
-function fitStage(pieces: readonly Piece[], room: number): Piece[][] {
-  const [only] = pieces;
-  if (pieces.length === 1 && only) {
-    return wrapText(only.text, room).map((text) => [{ ...only, text }]);
-  }
-  return [fitPieces(pieces, room)];
+function fitStage(stage: RepoStage, room: number): Piece[][] {
+  const pieces = describeStage(stage);
+  if (stage.kind !== "failed") return [fitPieces(pieces, room)];
+  return pieces.flatMap((piece) =>
+    wrapText(piece.text, room).map((text) => [{ ...piece, text }]),
+  );
 }
 
 /**
@@ -43,7 +44,7 @@ const RefreshStages = ({
   return (
     <box flexDirection="column">
       {shown.flatMap(({ repo, name, stage }) =>
-        fitStage(describeStage(stage), room).map((runs, place) => (
+        fitStage(stage, room).map((runs, place) => (
           // A stage's wrapped lines never reorder, so their place is their key.
           // biome-ignore lint/suspicious/noArrayIndexKey: see above.
           <text key={`${repo}:${place}`}>

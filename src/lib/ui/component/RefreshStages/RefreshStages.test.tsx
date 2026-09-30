@@ -60,6 +60,31 @@ describe("RefreshStages", () => {
     );
   });
 
+  it("trims every stage but a failure to one line, whatever the width of the names", async () => {
+    const screen = await draw(
+      <RefreshStages
+        stages={[
+          { repo: "example-org/example-repo", stage: { kind: "checking" } },
+          {
+            repo: "example-org/example-docs",
+            stage: { kind: "paused", reason: "rateLimit" },
+          },
+        ]}
+        names={{
+          "example-org/example-repo": "design-system-docs",
+          "example-org/example-docs": "docs",
+        }}
+        width={38}
+      />,
+      40,
+    );
+    expect(screen.lines.slice(0, 3)).toEqual([
+      "design-system-docs checking for chang…",
+      "docs               paused: rate limit",
+      "",
+    ]);
+  });
+
   it("names a repository with no short name in full", async () => {
     const screen = await draw(
       <RefreshStages
