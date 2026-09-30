@@ -24,14 +24,17 @@ export default function gatherPeople(
   authors: readonly Author[] = [],
 ): People {
   const gathered = new Map(people);
-  const written = threads.flatMap((thread) =>
-    [thread, ...thread.comments, ...thread.reviews].map(({ author }) => author),
-  );
-  for (const author of [...written, ...authors]) {
+  const consider = (author: Author) => {
     const login = author.login.toLowerCase();
     if (author.member && author.type !== "bot" && !gathered.has(login)) {
       gathered.set(login, "internal");
     }
+  };
+  for (const thread of threads) {
+    for (const { author } of [thread, ...thread.comments, ...thread.reviews]) {
+      consider(author);
+    }
   }
+  for (const author of authors) consider(author);
   return gathered;
 }
