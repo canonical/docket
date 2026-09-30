@@ -471,6 +471,9 @@ export default function createCache({
     async keepBudget() {
       // This process's own answers can take the mirror below the floor.
       publishFloor();
+      // With nothing heard since the last load or save, the file holds
+      // these figures or later ones.
+      if (isSame(readFigures(), mirror)) return;
       try {
         // While another process holds the lock, its save may write figures
         // older than this one's, so they wait for it to end, and a lower

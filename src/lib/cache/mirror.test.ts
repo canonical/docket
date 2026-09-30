@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,9 +10,10 @@ import {
 } from "../../testing/provider.js";
 import { waitUntil } from "../../testing/wait.js";
 import type { Budgets, Provider } from "../provider/index.js";
-import { cacheFileName } from "./constants.js";
+import { cacheFileName, lockName } from "./constants.js";
 import createCache from "./createCache.js";
 import identifyFile from "./identifyFile.js";
+import withFetchLock from "./withFetchLock.js";
 
 const repo = "example-org/example-repo";
 const docs = "example-org/example-docs";
@@ -175,7 +176,9 @@ describe("the budget mirror of createCache", () => {
     await cache.keepBudget();
     const file = join(directory, cacheFileName);
     const written = await identifyFile(file);
-    await cache.keepBudget();
+    const same = makeHearingProvider();
+    same.answers.heard = { graphql: makeBudget(2000) };
+    await open(same.provider).keepBudget();
     expect(await identifyFile(file)).toBe(written);
     const other = open(makeHearingProvider().provider);
     await other.load();
@@ -202,10 +205,27 @@ describe("the budget mirror of createCache", () => {
     expect(other.budget()).toEqual({ graphql: makeBudget(900) });
   });
 
+  it("takes no lock, and waits for none, when it heard nothing the file lacks", async () => {
+    const { provider, answers } = makeHearingProvider();
+    const cache = open(provider);
+    answers.heard = { graphql: makeBudget(2000) };
+    await cache.keepBudget();
+    const held = Promise.withResolvers<void>();
+    const holding = withFetchLock(directory, () => held.promise);
+    await waitUntil(async () => {
+      expect(await readdir(directory)).toContain(lockName);
+    });
+    await cache.keepBudget();
+    held.resolve();
+    await holding;
+  });
+
   it("names a cache folder it cannot use when it keeps the budgets", async () => {
     await Bun.write(join(root, "file"), "");
+    const { provider, answers } = makeHearingProvider();
+    answers.heard = { graphql: makeBudget(2000) };
     const cache = createCache({
-      provider: makeHearingProvider().provider,
+      provider,
       repos: [repo],
       directory: join(root, "file", "docket"),
       now: () => clock,

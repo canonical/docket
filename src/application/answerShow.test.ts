@@ -125,8 +125,11 @@ describe("answerShow", () => {
 
   it("answers when the cache folder cannot keep the budget the details' answer reported", async () => {
     const folder = join(home.root, "cache", "docket");
+    let heard = { graphql: { ...fullBudget, remaining: 1234 } };
     const provider = recordedProvider({
+      budget: () => heard,
       threadDetail: async (thread) => {
+        heard = { graphql: { ...fullBudget, remaining: 1233 } };
         await rm(folder, { recursive: true, force: true });
         await Bun.write(folder, "");
         return recordedProvider().threadDetail(thread);
