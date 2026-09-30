@@ -33,8 +33,8 @@ describe("listWaits", () => {
     const onTrack = wait({ thread: onDocs, due: at("2026-09-23T20:00+02:00") });
     const list = listWaits(
       [
-        { repo: example, time, people, waits: [close, reply] },
-        { repo: docs, time, people, waits: [onTrack] },
+        { repo: example, time, people, yours: [], waits: [close, reply] },
+        { repo: docs, time, people, yours: [], waits: [onTrack] },
       ],
       now,
     );
@@ -46,7 +46,7 @@ describe("listWaits", () => {
     const first = wait({ kind: "response" });
     const second = wait({ kind: "close" });
     const list = listWaits(
-      [{ repo: example, time, people, waits: [first, second] }],
+      [{ repo: example, time, people, yours: [], waits: [first, second] }],
       now,
     );
     expect(list.rows.map((row) => row.wait)).toEqual([first, second]);
@@ -56,7 +56,7 @@ describe("listWaits", () => {
     const over = wait({ due: at("2026-09-22T22:00+02:00") });
     const soon = wait({ due: at("2026-09-23T12:00+02:00") });
     const list = listWaits(
-      [{ repo: example, time, people, waits: [over, soon] }],
+      [{ repo: example, time, people, yours: [], waits: [over, soon] }],
       now,
     );
     expect(list.counts).toEqual({ over: 1, soon: 1, onTrack: 0 });
@@ -67,7 +67,10 @@ describe("listWaits", () => {
   });
 
   it("gives no row when nothing is owed", () => {
-    const list = listWaits([{ repo: example, time, people, waits: [] }], now);
+    const list = listWaits(
+      [{ repo: example, time, people, yours: [], waits: [] }],
+      now,
+    );
     expect(list.rows).toEqual([]);
     expect(list.summary.text).toBe("0 over · 0 soon · 0 on track");
   });
@@ -77,7 +80,7 @@ describe("listWaits, later than the waits were found", () => {
   it("reads a wait found before its due time as over once listed after it", () => {
     const found = findWaits(thread(), teamSettings);
     const list = listWaits(
-      [{ repo: example, time, people, waits: found }],
+      [{ repo: example, time, people, yours: [], waits: found }],
       at("2026-09-23T15:00+02:00"),
     );
     const reply = list.rows.find((row) => row.kind.text === "reply");
@@ -124,8 +127,14 @@ describe("listWaits, against targets written in days", () => {
         });
     return listWaits(
       [
-        { repo: example, time: everyDay, people, waits: waits("example") },
-        { repo: docs, time: everyDay, people, waits: waits("docs") },
+        {
+          repo: example,
+          time: everyDay,
+          people,
+          yours: [],
+          waits: waits("example"),
+        },
+        { repo: docs, time: everyDay, people, yours: [], waits: waits("docs") },
       ],
       now,
     );
@@ -161,8 +170,21 @@ describe("listWaits, against targets written in days", () => {
   it("marks every row of a repository whose own file is invalid, and no other", () => {
     const { rows } = listWaits(
       [
-        { repo: example, time, people, waits: [wait()], invalidFile: true },
-        { repo: docs, time, people, waits: [wait({ thread: onDocs })] },
+        {
+          repo: example,
+          time,
+          people,
+          yours: [],
+          waits: [wait()],
+          invalidFile: true,
+        },
+        {
+          repo: docs,
+          time,
+          people,
+          yours: [],
+          waits: [wait({ thread: onDocs })],
+        },
       ],
       now,
     );

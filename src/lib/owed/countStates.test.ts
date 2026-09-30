@@ -11,6 +11,7 @@ const row = (due: string) =>
     teamSettings.time,
     now,
     teamSettings.people,
+    [],
   );
 
 describe("countStates", () => {

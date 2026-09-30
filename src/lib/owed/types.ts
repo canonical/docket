@@ -77,6 +77,8 @@ export interface RepoWaits {
    * from the settings and the threads.
    */
   readonly people: People;
+  /** The teams the personal file names as the viewer's. */
+  readonly yours: readonly string[];
   /**
    * Whether the repository's own file is invalid, so its settings are the
    * built-in defaults.

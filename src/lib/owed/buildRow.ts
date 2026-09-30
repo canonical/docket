@@ -19,6 +19,7 @@ import type { Owner, WaitRow } from "./types.js";
  * @param time The working clock of the wait's repository.
  * @param people The people of the repository's settings, which give each
  * login its group.
+ * @param yours The teams the personal file names as the viewer's.
  * @param viewer The login gh is signed in with, when it is known.
  */
 export default function buildRow(
@@ -27,6 +28,7 @@ export default function buildRow(
   time: WorkingClock,
   now: Date,
   people: People,
+  yours: readonly string[],
   viewer?: string,
 ): WaitRow {
   const { thread } = wait;
@@ -43,7 +45,7 @@ export default function buildRow(
     );
     if (!found) return { text: login, fit: "trimmed" };
     return "team" in found
-      ? describeTeam(found, viewer)
+      ? describeTeam(found, viewer, yours)
       : describePerson(found, people, viewer);
   });
   const [first] = wait.owners;

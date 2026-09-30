@@ -8,6 +8,7 @@ import {
   recordedSettings,
   recordedThreads,
   recordedWatched,
+  yourTeamSettings,
 } from "../testing/recorded.js";
 import {
   connectRecording,
@@ -340,4 +341,41 @@ export const GhNotSignedIn: Story<ScreenFrameProps> = {
 /** The help, open over all but the header. */
 export const Help: Story<ScreenFrameProps> = {
   args: { ...recording, run: ["help.toggle"] },
+};
+
+/** The pull request to fix the parser, its review also asked of alice's team. */
+const askedOfYourTeam = recordedThreads.map((thread) =>
+  thread === parserFix
+    ? {
+        ...parserFix,
+        reviewRequests: [
+          ...parserFix.reviewRequests,
+          {
+            reviewer: { team: "example-org/reviewers", members: [] },
+            requester: bob,
+            at: at("2026-09-28T09:00+02:00"),
+          },
+        ],
+      }
+    : thread,
+);
+
+/**
+ * owed by owner while the personal file names example-org/reviewers as
+ * alice's team: its heading and its row take her mark, though docket
+ * never read its members.
+ */
+export const OwedByOwnerYourTeam: Story<ScreenFrameProps> = {
+  args: {
+    ...viewRecording({ threads: askedOfYourTeam }),
+    owedGrouping: "owner",
+    settings: yourTeamSettings,
+    watched: recordedWatched(yourTeamSettings),
+    source: {
+      ...connectRecording({ threads: askedOfYourTeam }),
+      readWatched: async () => ({
+        watched: recordedWatched(yourTeamSettings),
+      }),
+    },
+  },
 };

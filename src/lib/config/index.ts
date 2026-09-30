@@ -18,4 +18,5 @@ export type {
   Section,
   Settings,
   Targets,
+  You,
 } from "./types.js";

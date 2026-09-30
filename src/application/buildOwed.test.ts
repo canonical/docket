@@ -94,6 +94,33 @@ describe("buildOwed", () => {
     ]);
   });
 
+  it("names a team the personal file lists as yours you, on its row and its owner's heading", () => {
+    const asked = thread({
+      kind: "pullRequest",
+      repo: "example-org/example-repo",
+      reviewRequests: [
+        {
+          reviewer: { team: "example-org/ui", members: [] },
+          at: new Date("2026-09-28T09:00+02:00"),
+        },
+      ],
+    });
+    const yours = recordedWatched({
+      ...recordedSettings,
+      you: { teams: ["example-org/ui"] },
+    });
+    const byOwner = (watched: typeof yours) =>
+      buildOwed([asked], watched, "owner", recordedNow, "alice").groups.find(
+        ({ heading }) => heading?.text === "example-org/ui",
+      );
+    const mine = byOwner(yours);
+    expect(mine?.heading).toMatchObject({ group: "you" });
+    expect(mine?.rows.at(0)?.owner).toMatchObject({ group: "you" });
+    const unlisted = byOwner(recordedWatched());
+    expect(unlisted?.heading).not.toHaveProperty("group");
+    expect(unlisted?.rows.at(0)?.owner).not.toHaveProperty("group");
+  });
+
   it("marks the rows of a repository whose own file is invalid", () => {
     const invalid = recordedWatched(recordedSettings, [
       {

@@ -33,6 +33,7 @@ export default function buildOwed(
         repo,
         time: settings.time,
         people: gatherPeople(own, settings.people),
+        yours: settings.you.teams,
         waits: own.flatMap((thread) => findWaits(thread, settings)),
         invalidFile: repositoryErrors.length > 0,
       };

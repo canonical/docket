@@ -20,6 +20,7 @@ const build = (wait: Wait) =>
     teamSettings.time,
     now,
     teamSettings.people,
+    [],
     "alice",
   );
 const person = (text: string, group: string) => ({

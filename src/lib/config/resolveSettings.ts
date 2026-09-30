@@ -61,6 +61,7 @@ export default function resolveSettings(
   const time = declared("time");
   const targets = declared("targets");
   const exempt = declared("exempt");
+  const you = declared("you");
   const settings: Settings = {
     repos: declared("repos") ?? builtIn.repos,
     people: declared("people") ?? builtIn.people,
@@ -72,6 +73,7 @@ export default function resolveSettings(
     exempt: { ...builtIn.exempt, ...exempt },
     activity: declared("activity") ?? builtIn.activity,
     hosts: declared("hosts") ?? builtIn.hosts,
+    you: { ...builtIn.you, ...you },
   };
   return { settings, origins, repositoryErrors };
 }

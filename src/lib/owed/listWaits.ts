@@ -23,9 +23,9 @@ export default function listWaits(
   viewer?: string,
 ): WaitList {
   const rows = repos
-    .flatMap(({ repo, time, waits, people, invalidFile }) =>
+    .flatMap(({ repo, time, waits, people, yours, invalidFile }) =>
       waits.map((wait) => {
-        const row = buildRow(wait, repo.name, time, now, people, viewer);
+        const row = buildRow(wait, repo.name, time, now, people, yours, viewer);
         return invalidFile
           ? {
               ...row,
