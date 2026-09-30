@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import { fitRuns, markPerson } from "../../fit/index.js";
+import { loginCells } from "../../constants.js";
+import { fitField, fitRuns, markPerson } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
@@ -14,36 +15,40 @@ const indent = 4;
 const gutter = " ".repeat(indent - marginCells);
 
 /**
- * Who did what: failed checks after `✗` in the error colour, whoever ran
- * them; otherwise the actor behind their group's mark, then what they
- * did, dimmed when a bot did it, since a bot's event is context.
+ * Who did what, in `room` cells: failed checks after `✗` in the error
+ * colour, whoever ran them; otherwise the actor behind their group's
+ * mark, their login cut at 12 cells, then what they did, dimmed when a
+ * bot did it, since a bot's event is context. What they did is cut in its
+ * middle, so what it acted on, a label or a person, stays at its end.
  */
-function describeWhat({
-  event,
-  actor,
-  action,
-}: EventLineProps["line"]): Piece[] {
+function describeWhat(
+  { event, actor, action }: EventLineProps["line"],
+  room: number,
+): Piece[] {
   if (event.kind === "checksFailed") {
+    const failed = `${tokens["glyph.failed"]} `;
     return [
       {
-        text: `${tokens["glyph.failed"]} ${action.text}`,
+        text: `${failed}${fitField(action, "event", room - Bun.stringWidth(failed))}`,
         fg: tokens["color.text.error"],
       },
     ];
   }
   const tone = event.bot ? tokens["color.text.muted"] : tokens["color.text"];
-  return [
-    ...(actor ? [markPerson(actor)] : []),
-    { text: actor ? ` ${action.text}` : action.text, fg: tone },
-  ];
+  const who = actor ? [markPerson(actor, loginCells)] : [];
+  // A space between the actor and what they did.
+  const left = room - measurePieces(who) - who.length;
+  const what = fitField(action, "event", left);
+  return [...who, { text: actor ? ` ${what}` : what, fg: tone }];
 }
 
 /**
  * One event in activity, nested under its thread: who did what, and how
  * long ago at the right edge. The thread's margin runs beside it: no
  * clock runs in activity, so the bar's column is blank, and the stack
- * mark goes on under a stacked pull request. The line is trimmed, and the
- * event gives way before the age does. A bot's age is dimmed with its
+ * mark goes on under a stacked pull request. The line stays one line,
+ * and the event gives way before the age does: the actor's login first,
+ * cut at 12 cells, then what they did, from its middle. A bot's age is dimmed with its
  * event, failed checks aside; every other age is plain.
  *
  * `import { EventLine } from "../lib/ui/index.js";`
@@ -59,7 +64,7 @@ const EventLine = ({ line, stacked, width }: EventLineProps): ReactNode => {
     fg: quiet ? tokens["color.text.muted"] : tokens["color.text"],
   };
   const room = width - indent - Bun.stringWidth(age.text) - 1;
-  const what = fitRuns(describeWhat(line), Math.max(0, room));
+  const what = fitRuns(describeWhat(line, room), Math.max(0, room));
   const gap = " ".repeat(Math.max(1, room + 1 - measurePieces(what)));
   return (
     <box flexDirection="row" flexShrink={0}>

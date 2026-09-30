@@ -7,7 +7,7 @@
 |  age 27d · owner ◉ alice, ● bob
 |  last activity 27d ago
 |  labels none
-|    ■ example-sync labelled kind=do… 16h
+|    ■ example-sync labelled…ind=docs 16h
 |PULL REQUESTS ──────────────────────────
 | ┆example#12 PR ○ dave               25m
 | ┆Fix the parser                 ◉ alice
@@ -69,7 +69,7 @@ runs
 8:2 " " fg #6b7089ff bg #2e3244ff
 8:3 "labels none" fg #c6c8d1ff bg #2e3244ff
 8:14 "                           " fg #ffffffff bg #2e3244ff
-9:5 "■ example-sync labelled kind=do…" fg #6b7089ff bg #161821ff
+9:5 "■ example-sync labelled…ind=docs" fg #6b7089ff bg #161821ff
 9:38 "16h" fg #6b7089ff bg #161821ff
 10:1 "PULL REQUESTS ──────────────────────────" fg #c6c8d1ff bg #161821ff
 11:2 "┆" fg #6b7089ff bg #161821ff

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { draw } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import EventLine from "./EventLine.js";
-import { Bot, ChecksFailed, Pushed } from "./EventLine.stories.js";
+import { Bot, ChecksFailed, Long, Pushed } from "./EventLine.stories.js";
 
 describe("EventLine", () => {
   it("says who did what under its thread, the actor behind their mark, the stack mark running on beside it, with the age at the right edge at 40 columns", async () => {
@@ -41,14 +41,19 @@ describe("EventLine", () => {
     expect(screen.look("3h")?.fg).toBe(tokens["color.text.muted"]);
   });
 
+  it("cuts a long actor's login at 12 cells, keeping what was done on the line", async () => {
+    const screen = await draw(<EventLine {...Long.args} />, 40);
+    expect(screen.lines.at(0)).toBe(" ┆  ○ example-con… labelled…intainers 3h");
+  });
+
   it("draws what happened alone when no actor is named", async () => {
     const { actor: _, ...line } = Pushed.args.line;
     const screen = await draw(<EventLine {...Pushed.args} line={line} />, 40);
     expect(screen.lines.at(0)).toBe(` ┆  pushed 2 commits${" ".repeat(17)}25m`);
   });
 
-  it("cuts the event with an ellipsis before the age gives way", async () => {
+  it("cuts what was done in its middle, keeping its end, before the age gives way", async () => {
     const screen = await draw(<EventLine {...Pushed.args} width={20} />, 20);
-    expect(screen.lines.at(0)).toBe(" ┆  ● alice pus… 25m");
+    expect(screen.lines.at(0)).toBe(" ┆  ● alice p…ts 25m");
   });
 });
