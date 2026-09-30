@@ -33,7 +33,10 @@ const reading = () => {
   const readDetails = vi.fn(async (threads: readonly ThreadSummary[]) =>
     threads.map(() => parserFixDetail),
   );
-  return { readDetails, reader: createDetailReader(readDetails) };
+  return {
+    readDetails,
+    reader: createDetailReader(readDetails, () => false),
+  };
 };
 
 let result: UseReadAheadResult | undefined;
@@ -49,7 +52,7 @@ function Probe(props: UseReadAheadProps) {
 const open = async (
   reader: UseReadAheadProps["reader"],
   attention: AttentionState = "active",
-  paused = false,
+  paused?: UseReadAheadProps["paused"],
 ) =>
   draw(
     <Probe
@@ -106,16 +109,37 @@ describe("useReadAhead", () => {
     expect(await result?.read?.(first, "v")).toBe(parserFixDetail);
   });
 
-  it("reads nothing ahead while the pane is idle or the refresh paused, and catches up once it is not", async () => {
+  it("reads nothing while the pane is idle or the rate limit pauses reading, the accordion's read included, and catches up once it does not", async () => {
     const { readDetails, reader } = reading();
     const screen = await open(reader, "idle");
     await vi.advanceTimersByTimeAsync(1_000);
-    await screen.redraw(() => steer({ attention: "active", paused: true }));
+    await screen.redraw(() =>
+      steer({ attention: "active", paused: "rateLimit" }),
+    );
+    const first = rows.at(0)?.thread ?? thread();
+    const waiting = result?.read?.(first, "v");
     await vi.advanceTimersByTimeAsync(1_000);
     expect(readDetails).not.toHaveBeenCalled();
-    await screen.redraw(() => steer({ paused: false }));
+    await screen.redraw(() => steer({ paused: undefined }));
     await vi.advanceTimersByTimeAsync(1_000);
     expect(readDetails).toHaveBeenCalledOnce();
+    expect(await waiting).toBe(parserFixDetail);
+  });
+
+  it("reads only the selected thread below the budget floor, and the rows around it once above it", async () => {
+    const { readDetails, reader } = reading();
+    const screen = await open(reader, "active", "budget");
+    await vi.advanceTimersByTimeAsync(0);
+    await screen.redraw(() => steer({ selected: 5 }));
+    await vi.advanceTimersByTimeAsync(200);
+    const asked = () =>
+      readDetails.mock.calls.map(([threads]) =>
+        threads.map(({ number }) => number),
+      );
+    expect(asked()).toEqual([[1], [6]]);
+    await screen.redraw(() => steer({ paused: undefined }));
+    await vi.advanceTimersByTimeAsync(200);
+    expect(asked().at(2)).toHaveLength(12);
   });
 
   it("counts the details read of those asked for while any are pending, and none once all are read", async () => {
@@ -124,7 +148,7 @@ describe("useReadAhead", () => {
       await promise;
       return threads.map(() => parserFixDetail);
     });
-    const screen = await open(createDetailReader(readDetails));
+    const screen = await open(createDetailReader(readDetails, () => false));
     await screen.redraw();
     expect(result?.progress).toEqual({ read: 0, asked: 14 });
     resolve();
@@ -145,7 +169,7 @@ describe("useReadAhead", () => {
         rows={[]}
         selected={0}
         attention="active"
-        paused={false}
+        paused={undefined}
         now={() => new Date()}
       />,
       40,

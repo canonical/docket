@@ -4,9 +4,8 @@ import type { DetailReader } from "./createDetailReader.js";
 import identifyThread from "./identifyThread.js";
 
 /**
- * Reads the selected thread's details through `reader` at `at`, which
- * counts it against the hour's budget and reads it even once that is
- * spent.
+ * Reads the selected thread's details through `reader`, which reads it
+ * even below the budget floor.
  *
  * @note Impure: reads through `reader`.
  * @throws Error when the provider no longer finds the thread.
@@ -14,9 +13,8 @@ import identifyThread from "./identifyThread.js";
 export default async function readOneDetail(
   reader: Pick<DetailReader, "read">,
   thread: ThreadSummary,
-  at: Date,
 ): Promise<ThreadDetail> {
-  const [read] = await reader.read([thread], thread, at);
+  const [read] = await reader.read([thread], thread);
   if (!read?.detail)
     throw new Error(`${identifyThread(thread)} was not found.`);
   return read.detail;

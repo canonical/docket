@@ -12,7 +12,7 @@ import type { Outcome, SentRequest } from "./types.js";
  * most every 30 minutes once 20 minutes have passed, sends nothing else,
  * and so spends no points while nothing changes; scrolled through a list
  * longer than one read, it reads the details of at most 14 threads a
- * request, a point each, within 300 points an hour.
+ * request, a point each.
  *
  * The budget, per repository, is what docket's page sizes cost: a whole
  * fetch asks for 50 threads a page and costs 8 points, a fetch of what
@@ -134,8 +134,6 @@ const detailWindow = 14;
 const idleAfter = 20 * 60_000;
 /** An idle pane checks each repository at most every 30 minutes. */
 const idleInterval = 30 * 60_000;
-/** Details may spend 300 points an hour. */
-const detailBudgetPerHour = 300;
 const day = 24 * 3_600_000;
 
 /** The points and requests one refresh spent. */
@@ -272,7 +270,7 @@ describe("request-budget", () => {
       expect(sent.length).toBeLessThanOrEqual(cycles * repositories);
     }, 180_000);
 
-    it("reads details at most 14 threads and a point a request, within 300 points an hour, while a pane is scrolled", async () => {
+    it("reads details at most 14 threads and a point a request, while a pane is scrolled", async () => {
       const { code, requests } = await scrolled;
       expect(code).toBe(0);
       const reads = requests.filter(isDetailRead);
@@ -281,9 +279,6 @@ describe("request-budget", () => {
       // The list holds more threads than a read asks for, so the read on
       // opening, of the selected thread and those around it, is full.
       expect(Math.max(...reads.map(countThreads))).toBe(detailWindow);
-      expect(reads.length).toBeLessThanOrEqual(
-        (detailBudgetPerHour * minutes) / 60,
-      );
     }, 180_000);
   });
 

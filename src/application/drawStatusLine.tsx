@@ -20,8 +20,6 @@ export interface StatusLineState {
   readonly failure: CacheStatus["failure"];
   readonly action: ActionResult | undefined;
   readonly attention: AttentionState;
-  /** Whether reading details spent the hour's budget for them. */
-  readonly detailsPaused: boolean | undefined;
   /** How many of the details asked for are read, while any are pending. */
   readonly details: DetailsCount | undefined;
   readonly now: Date;
@@ -44,7 +42,6 @@ export default function drawStatusLine({
   failure,
   action,
   attention,
-  detailsPaused,
   details,
   now,
   timezone,
@@ -57,7 +54,6 @@ export default function drawStatusLine({
       status={problem ? undefined : shown}
       action={action}
       attention={attention}
-      detailsPaused={detailsPaused}
       details={details}
       now={now}
       timezone={timezone}

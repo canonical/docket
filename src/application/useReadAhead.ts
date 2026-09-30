@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { AttentionState } from "../lib/cache/index.js";
+import type { AttentionState, CacheStatus } from "../lib/cache/index.js";
 import type { ThreadDetail } from "../lib/provider/index.js";
 import type { DetailsCount } from "../lib/ui/index.js";
 import type { ThreadSummary } from "../lib/waits/index.js";
@@ -11,8 +11,8 @@ import identifyThread from "./identifyThread.js";
 /** Props for the useReadAhead hook. */
 export interface UseReadAheadProps {
   /**
-   * Reads threads' details in batches within the hour's budget; without
-   * it, nothing is read ahead, and the accordion reads alone.
+   * Reads threads' details in batches above the budget floor; without it,
+   * nothing is read ahead, and the accordion reads alone.
    */
   readonly reader: DetailReader | undefined;
   /** Each row's thread and its version, in the order drawn. */
@@ -21,8 +21,13 @@ export interface UseReadAheadProps {
   readonly selected: number;
   /** The pane's attention: an idle pane reads nothing ahead. */
   readonly attention: AttentionState;
-  /** Whether the refresh cycle is paused, which spends no points. */
-  readonly paused: boolean;
+  /**
+   * Why the refresh cycle is paused, if it is: nothing is read ahead then.
+   * Below the budget floor the selected thread is still read; under the
+   * rate limit, when GitHub refuses every request, nothing is, and the
+   * accordion's read waits until the pause ends.
+   */
+  readonly paused: NonNullable<CacheStatus["paused"]>["reason"] | undefined;
   /** The current time, read whenever what is due is decided. */
   readonly now: () => Date;
 }
@@ -70,9 +75,11 @@ function findNearest(
  * first shows, and `detailRest` after the selection last moved, for the
  * threads whose details are missing, out of date or `detailStaleAfter`
  * old. Nothing is read ahead while the pane is idle or the refresh cycle
- * paused. Details read ahead reach the accordion through the details it
- * holds, by the version they move: old details stay on screen until new
- * ones arrive. It draws again whenever details arrive or the count of
+ * paused: below the budget floor only the selected thread is read, and
+ * under the rate limit nothing is, the accordion's own read included.
+ * Details read ahead reach the accordion through the details it holds,
+ * by the version they move: old details stay on screen until new ones
+ * arrive. It draws again whenever details arrive or the count of
  * those read moves.
  *
  * @note Impure: reads through the reader, and sets its timers.
@@ -92,7 +99,7 @@ export default function useReadAhead({
     () => queue?.subscribe(() => redraw((count) => count + 1)),
     [queue],
   );
-  useEffect(() => queue?.pause(paused), [queue, paused]);
+  useEffect(() => queue?.pause(paused === "rateLimit"), [queue, paused]);
   const moved = useRef(false);
   const chosen = rows.at(selected);
   const window = findNearest(rows, selected, detailWindow);
@@ -102,10 +109,13 @@ export default function useReadAhead({
   const chosenKey = chosen && identifyThread(chosen.thread);
   // biome-ignore lint/correctness/useExhaustiveDependencies: the window's key names what it holds.
   useEffect(() => {
-    if (!queue || attention === "idle" || paused || !chosenKey) return;
+    if (!queue || attention === "idle" || paused === "rateLimit" || !chosen) {
+      return;
+    }
     const delay = moved.current ? detailRest : 0;
     moved.current = true;
-    queue.request(window, chosen?.thread, delay);
+    // Below the budget floor the selected thread alone is asked for.
+    queue.request(paused ? [chosen] : window, chosen.thread, delay);
   }, [queue, key, chosenKey, attention, paused]);
   if (!queue) return { version: (_thread, version) => version };
   const progress = queue.countDetails();

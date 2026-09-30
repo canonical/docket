@@ -13,7 +13,6 @@ const synced: StatusLineState = {
   failure: undefined,
   action: undefined,
   attention: "active",
-  detailsPaused: false,
   details: undefined,
   now: recordedNow,
   timezone: "Europe/Paris",
@@ -75,10 +74,5 @@ describe("drawStatusLine", () => {
   it("counts the details read of those asked for", async () => {
     const line = await drawFor({ details: { read: 2, asked: 3 } });
     expect(line).toBe(`synced 2m ago${" ".repeat(16)}details 2/3`);
-  });
-
-  it("says the details are paused once their budget is spent", async () => {
-    const line = await drawFor({ detailsPaused: true });
-    expect(line).toBe(`synced 2m ago${" ".repeat(13)}details paused`);
   });
 });

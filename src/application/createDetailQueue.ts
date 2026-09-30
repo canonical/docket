@@ -77,9 +77,8 @@ export interface DetailQueue {
   /** Calls `listener` whenever details arrive, or their count moves. */
   subscribe(listener: () => void): () => void;
   /**
-   * Holds back every request while `paused`, as below the budget floor or
-   * under the rate limit, when no point may be spent; what waits is sent
-   * once it is not.
+   * Holds back every request while `paused`, as under the rate limit,
+   * when GitHub refuses every request; what waits is sent once it is not.
    */
   pause(paused: boolean): void;
   /** Sends nothing more, when the pane closes. */
@@ -91,8 +90,8 @@ export interface DetailQueue {
  * at most `detailWindow` threads each, so the selected thread and those
  * around it cost one point together. A read asked for alone goes at once,
  * unless an ask for the rows around it is pending, which it joins. A
- * thread the request leaves out, once the hour's budget is spent, is
- * asked for again when it is due. One the provider no longer finds, or
+ * thread the request leaves out, as the reader does below the budget
+ * floor, is asked for again when it is due. One the provider no longer finds, or
  * one a request that fails asked for, fails its read, and is not asked
  * for again until its version moves or a read asks for it, as the
  * accordion does when the selection comes back to it.
@@ -183,7 +182,6 @@ export default function createDetailQueue(
       const read = await reader.read(
         ordered.map(({ thread }) => thread),
         selected,
-        at,
       );
       const found = new Map(
         read.map(({ thread, detail }) => [identifyThread(thread), detail]),

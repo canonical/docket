@@ -173,15 +173,9 @@ export const Idle: Story<StatusLineProps> = {
   },
 };
 
-/** Reading details spent the hour's budget: only the selected thread's are read. */
-export const DetailsPaused: Story<StatusLineProps> = {
-  args: { ...base, status: settled, detailsPaused: true },
-};
-
 /**
- * Below the budget floor: neither the list nor the details spend a point,
- * and the right side stays empty, since the details' own budget is not
- * what stopped them.
+ * Below the budget floor: the list spends no point, nothing is read ahead,
+ * and the right side stays empty.
  */
 export const BudgetPaused: Story<StatusLineProps> = {
   args: {

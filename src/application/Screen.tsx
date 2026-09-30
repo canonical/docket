@@ -314,7 +314,7 @@ export default function Screen({
     })),
     selected: placeSelection(rows, selections[mode]),
     attention: attentionState,
-    paused: status?.paused !== undefined,
+    paused: status?.paused?.reason,
     now,
   });
   // A thread's details are read once for each change GitHub records on it,
@@ -331,7 +331,8 @@ export default function Screen({
       const row = drawnSelection.current;
       return row && summarize(row);
     },
-    resumes: status?.paused?.until,
+    resumes:
+      status?.paused?.reason === "rateLimit" ? status.paused.until : undefined,
   });
   /** The details the accordion under a row is given: read ahead, or alone. */
   const readRowDetail = (
@@ -452,7 +453,6 @@ export default function Screen({
           you.failure,
         action,
         attention: attentionState,
-        detailsPaused: "cache" in source && source.details?.isCapped(at),
         details: ahead.progress,
         now: at,
         timezone: settings.time.timezone,

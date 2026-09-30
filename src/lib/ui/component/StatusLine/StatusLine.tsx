@@ -48,8 +48,8 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
  * that gives way first, a full refresh its pages, and only then is cut
  * with `…`. The right side is the details', dimmed, as
  * `describeDetails` chooses it: `details 3/12` while any asked for are
- * unread, or `details paused` once their hour's budget is spent, hidden
- * while nothing is read, and dropped when the two sides would meet.
+ * unread, hidden while nothing is read, and dropped when the two sides
+ * would meet.
  *
  * `import { StatusLine } from "../lib/ui/index.js";`
  *
@@ -59,7 +59,6 @@ const StatusLine = ({
   status,
   action,
   attention,
-  detailsPaused,
   details,
   now,
   timezone,
@@ -81,13 +80,7 @@ const StatusLine = ({
       ? { ...message, text: message.shorter }
       : message;
   const runs = fitted ? fitPieces(describeRuns(fitted), width) : [];
-  const right = describeDetails(
-    status,
-    message,
-    attention,
-    detailsPaused,
-    details,
-  );
+  const right = describeDetails(status, message, attention, details);
   // At least one cell apart, or the right side is left out.
   const gap = width - measurePieces(runs) - Bun.stringWidth(right);
   return (

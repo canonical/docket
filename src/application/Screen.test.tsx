@@ -156,6 +156,12 @@ function viewOf(
   };
 }
 
+/** Reads details as the terminal does, above the floor `cache` judges. */
+const floored = (
+  cache: Cache,
+  readDetails: Parameters<typeof createDetailReader>[0],
+) => createDetailReader(readDetails, () => cache.findFloor() !== undefined);
+
 /** The cache and readings a view reads from. */
 function cacheSourceOf({ source }: TerminalView) {
   if (!("cache" in source)) throw new Error("the view reads a cache");
@@ -1664,26 +1670,11 @@ describe("Screen", { timeout: 15_000 }, () => {
       }
     });
 
-    it("says details are paused once reading them spent the hour's budget", async () => {
-      const cache = await openCache(recordedProvider());
-      await cache.refresh();
-      const view = viewOf(cache);
-      const reader = createDetailReader(vi.fn(readRecordedDetails));
-      const details = { ...reader, isCapped: () => true };
-      const screen = await show({
-        ...view,
-        source: { ...view.source, details },
-      });
-      expect(screen.lines.at(-2)).toBe(
-        `synced 0m ago${" ".repeat(13)}details paused`,
-      );
-    });
-
     it("counts the details read of those asked for on the status line's right while they are read, and says nothing once all are", async () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const { promise, resolve } = Promise.withResolvers<void>();
-      const details = createDetailReader(async (threads) => {
+      const details = floored(cache, async (threads) => {
         await promise;
         return readRecordedDetails(threads);
       });
@@ -1702,7 +1693,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       });
     });
 
-    it("spends no point on details below the budget floor, neither the accordion's read nor reading ahead, and leaves the status line's right side empty", async () => {
+    it("reads only the selected thread's details below the budget floor, one thread a request, and nothing ahead", async () => {
       let remaining = fullBudget.limit;
       const provider = recordedProvider({
         budget: () => ({ graphql: { ...fullBudget, remaining } }),
@@ -1712,36 +1703,44 @@ describe("Screen", { timeout: 15_000 }, () => {
       remaining = 100;
       await cache.refresh();
       const readDetails = vi.fn(readRecordedDetails);
-      const readDetail = vi.fn(readRecordedDetail);
-      const view = viewOf(cache, everyCapability, readRecorded, readDetail);
-      const details = createDetailReader(readDetails);
+      const view = viewOf(cache, everyCapability, readRecorded);
+      const details = floored(cache, readDetails);
       const screen = await show(
         { ...view, source: { ...view.source, details } },
         60,
       );
+      await waitUntil(() => expect(readDetails).toHaveBeenCalledOnce());
       const moved = await press(screen, "down", "down", "down");
+      await waitUntil(() =>
+        expect(readDetails.mock.calls.length).toBeGreaterThan(1),
+      );
       await new Promise((resolve) => setTimeout(resolve, 300));
       const drawn = await moved.redraw();
-      expect(readDetails).not.toHaveBeenCalled();
-      expect(readDetail).not.toHaveBeenCalled();
+      for (const [threads] of readDetails.mock.calls) {
+        expect(threads).toHaveLength(1);
+      }
       expect(drawn.lines.at(-2)).toMatch(
         /^paused: budget low · resumes \d\d:\d\d$/,
       );
     });
 
-    it("shows what the snapshot holds in the accordion below the budget floor, each line that needs the read ending in a dimmed …, and reads nothing", async () => {
-      let remaining = fullBudget.limit;
+    it("shows what the snapshot holds in the accordion under the rate limit, each line that needs the read ending in a dimmed …, and reads nothing", async () => {
+      let limited = false;
+      const recorded = recordedProvider();
       const provider = recordedProvider({
-        budget: () => ({ graphql: { ...fullBudget, remaining } }),
+        snapshot: (...args) =>
+          limited
+            ? Promise.reject(providerError("GITHUB_RATE_LIMITED"))
+            : recorded.snapshot(...args),
       });
       const cache = await openCache(provider);
       await cache.refresh();
-      remaining = 100;
-      await cache.refresh();
+      limited = true;
+      await cache.refresh("waking");
       const readDetails = vi.fn(readRecordedDetails);
       const readDetail = vi.fn(readRecordedDetail);
       const view = viewOf(cache, everyCapability, readRecorded, readDetail);
-      const details = createDetailReader(readDetails);
+      const details = floored(cache, readDetails);
       const screen = await show(
         { ...view, source: { ...view.source, details } },
         60,
@@ -1768,7 +1767,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const view = viewOf(cache, everyCapability, readRecorded, readDetail);
-      const details = createDetailReader(readDetails);
+      const details = floored(cache, readDetails);
       const screen = await show({
         ...view,
         source: { ...view.source, details },

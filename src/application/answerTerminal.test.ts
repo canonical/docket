@@ -137,12 +137,11 @@ describe("answerTerminal", () => {
     });
   });
 
-  it("reads a thread's details from the provider, for the accordion, counting each read against the hour's budget", async () => {
+  it("reads a thread's details from the provider, for the accordion", async () => {
     const { view } = await openOn(recordedProvider());
     const [thread] = recordedThreads;
     if (!thread) throw new Error("the recording has a thread");
     expect(await cacheOf(view).readDetail(thread)).toEqual(parserFixDetail);
-    expect(cacheOf(view).details?.isCapped(new Date())).toBe(false);
   });
 
   it("gives the editors whom GitHub offers, and writes as a confirmed text write does", async () => {
