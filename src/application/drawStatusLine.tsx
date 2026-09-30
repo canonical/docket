@@ -24,7 +24,10 @@ export interface StatusLineState {
   readonly attention: AttentionState;
   /** How many of the details asked for are read, while any are pending. */
   readonly details: DetailsCount | undefined;
-  /** The queries' budget, which the right side names once it runs low. */
+  /**
+   * The queries' budget, whose live figures the right side says once less
+   * than 40% of it is left.
+   */
   readonly budget: Budget | undefined;
   readonly now: Date;
   /** The time zone a time of day is written in. */

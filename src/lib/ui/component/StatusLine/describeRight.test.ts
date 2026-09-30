@@ -42,20 +42,20 @@ describe("describeRight", () => {
   });
 
   it("says the budget's words with no details pending, and the count over them when both apply", () => {
-    const low = "budget 35% · resets 14:20";
-    expect(describeRight(settled, fresh, "active", undefined, low)).toBe(low);
-    expect(describeRight(settled, fresh, "active", count, low)).toBe(
+    const live = "budget 35% · resets 14:20";
+    expect(describeRight(settled, fresh, "active", undefined, live)).toBe(live);
+    expect(describeRight(settled, fresh, "active", count, live)).toBe(
       "details 3/12",
     );
   });
 
   it("hides the budget's words on an error, at the floor, while idle and while nothing is shown", () => {
-    const low = "budget 35% · resets 14:20";
+    const live = "budget 35% · resets 14:20";
     const error: StatusMessage = { kind: "error", text: "✗ offline" };
     const floor = { ...settled, paused: { until, reason: "budget" as const } };
-    expect(describeRight(settled, error, "active", undefined, low)).toBe("");
-    expect(describeRight(floor, fresh, "active", undefined, low)).toBe("");
-    expect(describeRight(settled, fresh, "idle", undefined, low)).toBe("");
+    expect(describeRight(settled, error, "active", undefined, live)).toBe("");
+    expect(describeRight(floor, fresh, "active", undefined, live)).toBe("");
+    expect(describeRight(settled, fresh, "idle", undefined, live)).toBe("");
   });
 
   it("says neither while the rate limit refused a request", () => {
@@ -67,8 +67,8 @@ describe("describeRight", () => {
       } as const),
     };
     const pause: StatusMessage = { kind: "notice", text: "paused: rate limit" };
-    const low = "budget 35% · resets 14:20";
-    expect(describeRight(refused, pause, "active", count, low)).toBe("");
-    expect(describeRight(refused, pause, "active", undefined, low)).toBe("");
+    const live = "budget 35% · resets 14:20";
+    expect(describeRight(refused, pause, "active", count, live)).toBe("");
+    expect(describeRight(refused, pause, "active", undefined, live)).toBe("");
   });
 });

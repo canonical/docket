@@ -124,7 +124,8 @@ export interface Freshness {
   readonly warnings: readonly Problem[];
   /**
    * GitHub's budgets, as the mirror every docket process shares gives
-   * them: the queries' is said when it runs low, and a program reads both.
+   * them: the live figures of the queries' are said once less than 40% of
+   * it is left, and a program reads both.
    */
   readonly budget: Budgets;
 }

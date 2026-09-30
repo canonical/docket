@@ -1670,7 +1670,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       }
     });
 
-    it("says on the status line's right what is left of the budget the cache mirrors, once it runs low", async () => {
+    it("says on the status line's right what is left of the budget the cache mirrors, once less than 40% of it is left", async () => {
       const resetAt = new Date("2026-09-28T10:20:00Z");
       const provider = recordedProvider({
         budget: () => ({ graphql: { limit: 5000, remaining: 1750, resetAt } }),

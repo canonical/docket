@@ -49,7 +49,7 @@ const refused: ProviderError = Object.assign(
 );
 
 /** The live budget figures for 35% left of the budget, which resets at 14:20. */
-const low = "budget 35% · resets 14:20";
+const live = "budget 35% · resets 14:20";
 
 const base = {
   now,
@@ -192,16 +192,16 @@ export const BudgetPaused: Story<StatusLineProps> = {
 };
 
 /** Less than 40% of the queries' budget left: how much, and when it resets, dimmed. */
-export const BudgetLow: Story<StatusLineProps> = {
-  args: { ...base, status: settled, liveBudget: low },
+export const LiveBudget: Story<StatusLineProps> = {
+  args: { ...base, status: settled, liveBudget: live },
 };
 
-/** The budget low while details are read: the count takes the right side. */
-export const BudgetLowWithDetails: Story<StatusLineProps> = {
+/** The budget live while details are read: the count takes the right side. */
+export const LiveBudgetWithDetails: Story<StatusLineProps> = {
   args: {
     ...base,
     status: settled,
-    liveBudget: low,
+    liveBudget: live,
     details: { read: 0, asked: 12 },
   },
 };

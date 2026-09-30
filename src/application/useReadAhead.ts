@@ -77,8 +77,8 @@ function findNearest(
  * at most `detailWindow` threads in one request: at once when the list
  * first shows, and `detailRest` after the selection last moved, for the
  * threads whose details are missing or out of date: read at a version the
- * row no longer shows. Nothing is read ahead while the pane is idle or the refresh cycle
- * paused: below the budget floor only the selected thread is read, and
+ * row no longer shows. Nothing is read ahead while the pane is idle or
+ * the refresh cycle paused: below the budget floor only the selected thread is read, and
  * under the rate limit nothing is, the accordion's own read included.
  * Details read ahead reach the accordion through the details it holds,
  * by the version they move: old details stay on screen until new ones

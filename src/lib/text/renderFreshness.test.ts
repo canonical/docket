@@ -43,14 +43,14 @@ describe("renderFreshness", () => {
 
   it("says what is left of the queries' budget, and when it resets, once less than 40% is left", () => {
     const resetAt = new Date("2026-09-28T10:20:00Z");
-    const low = {
+    const live = {
       ...freshness,
       budget: { graphql: { limit: 5000, remaining: 1750, resetAt } },
     };
-    expect(renderFreshness(low, "plain")).toEqual([
+    expect(renderFreshness(live, "plain")).toEqual([
       "synced 2h ago · budget 35% · resets 10:20",
     ]);
-    expect(renderFreshness(low, "llm")).toEqual([
+    expect(renderFreshness(live, "llm")).toEqual([
       "Data from 2026-09-28 07:30 UTC, 2h old · budget 35% · resets 10:20.",
     ]);
     const plenty = {

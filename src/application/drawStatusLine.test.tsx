@@ -72,7 +72,7 @@ describe("drawStatusLine", () => {
     );
   });
 
-  it("says what is left of the queries' budget once it runs low", async () => {
+  it("says what is left of the queries' budget once less than 40% of it is left", async () => {
     const resetAt = new Date("2026-09-28T12:20:00Z");
     const line = await drawFor({
       budget: { limit: 5000, remaining: 1750, resetAt },

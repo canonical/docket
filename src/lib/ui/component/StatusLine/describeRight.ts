@@ -3,8 +3,9 @@ import type { DetailsCount, StatusMessage } from "./types.js";
 
 /**
  * What the right side of the status line says, or nothing: `details 3/12`
- * while any details asked for are unread, else `budget`, the words for the
- * queries' budget once it runs low, such as `budget 35% · resets 14:20`.
+ * while any details asked for are unread, else `budget`, the live budget
+ * figures once less than 40% of the queries' budget is left, such as
+ * `budget 35% · resets 14:20`.
  * Neither shows while the left side shows an error, the rate limit
  * refused a request, the refresh is paused, the pane is idle or nothing is
  * shown yet, as on the first run: at the budget floor the left side says
