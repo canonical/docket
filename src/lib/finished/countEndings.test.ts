@@ -15,7 +15,7 @@ describe("countEndings", () => {
     expect(countEndings(rows)).toEqual({
       merged: 1,
       closed: 3,
-      over: 1,
+      over: { value: 1, of: 3, pending: 0 },
       byKind: {
         issue: { completed: 1, notPlanned: 1, duplicate: 0, closed: 0 },
         pullRequest: { merged: 1, closed: 1 },
@@ -27,7 +27,7 @@ describe("countEndings", () => {
     expect(countEndings([])).toMatchObject({
       merged: 0,
       closed: 0,
-      over: 0,
+      over: { value: 0, of: 0, pending: 0 },
     });
   });
 

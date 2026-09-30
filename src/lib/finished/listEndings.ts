@@ -49,6 +49,6 @@ export default function listEndings(
     firstResponse: cover("firstResponse"),
     firstReview: cover("firstReview"),
   };
-  const text = `${counts.merged} merged · ${counts.closed} closed · ${counts.over} over`;
+  const text = `${counts.merged} merged · ${counts.closed} closed · ${counts.over.value} over`;
   return { rows, counts, measures, summary: { text, fit: "trimmed" } };
 }
