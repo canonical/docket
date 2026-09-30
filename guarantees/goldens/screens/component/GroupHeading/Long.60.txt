@@ -1,0 +1,5 @@
+60 columns
+|example-repository-with-a-long-name stack 7 · 3 PRs → rel… ─
+
+runs
+1:1 "example-repository-with-a-long-name stack 7 · 3 PRs → rel… ─" fg #c6c8d1ff bg #00000000

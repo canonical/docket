@@ -36,3 +36,14 @@ export const Activity: Story<PaneHeaderProps> = {
 export const Help: Story<PaneHeaderProps> = {
   args: { title: { text: "help", kind: "words" }, width: 40 },
 };
+
+/** An editor open on a thread of a repository with a long short name. */
+export const Long: Story<PaneHeaderProps> = {
+  args: {
+    title: {
+      text: "requesting review example-repository-with-a-long-name#12345",
+      kind: "identifier",
+    },
+    width: 40,
+  },
+};

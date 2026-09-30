@@ -1,0 +1,6 @@
+40 columns
+|✓ review requested ◉ example-org/parser…
+
+runs
+1:1 "✓ review requested" fg #b4be82ff bg #00000000
+1:20 "◉ example-org/parser…" fg #84a0c6ff bg #00000000

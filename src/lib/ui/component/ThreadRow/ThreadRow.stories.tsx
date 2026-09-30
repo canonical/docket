@@ -1,4 +1,5 @@
 import { findActivityRow } from "../../../../testing/activity.js";
+import { longReview } from "../../../../testing/long.js";
 import {
   botReview,
   crowdedReply,
@@ -77,4 +78,13 @@ export const ActivityTwoOwners: Story<ThreadRowProps> = {
 /** In activity: an issue in a repository whose own file is invalid. */
 export const ActivityInvalidFile: Story<ThreadRowProps> = {
   args: { row: findActivityRow(4), width: 40 },
+};
+
+/**
+ * A review the parser team owes on a draft pull request, its checks
+ * failing, in a repository with a long short name whose own file is
+ * invalid: more than the row holds on either line.
+ */
+export const Long: Story<ThreadRowProps> = {
+  args: { row: longReview, width: 40 },
 };

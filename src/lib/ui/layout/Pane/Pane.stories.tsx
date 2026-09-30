@@ -1,4 +1,4 @@
-import { owedCommands } from "../../../../testing/commands.js";
+import { longCommands, owedCommands } from "../../../../testing/commands.js";
 import type { Meta, Story } from "../../../../testing/stories.js";
 import {
   CountsLine,
@@ -82,4 +82,34 @@ export const Help: Story<PaneProps> = {
 /** No counts line: its place stays blank. */
 export const NoCounts: Story<PaneProps> = {
   args: { ...NothingOwed.args, counts: undefined },
+};
+
+/**
+ * Every line of the pane with more than 40 columns hold: an editor's
+ * header on a repository with a long short name, the widest counts, and
+ * more keys than the bar holds.
+ */
+export const Long: Story<PaneProps> = {
+  args: {
+    ...NothingOwed.args,
+    header: (
+      <PaneHeader
+        title={{
+          text: "assigning example-repository-with-a-long-name#12345",
+          kind: "identifier",
+        }}
+        width={width}
+      />
+    ),
+    counts: (
+      <CountsLine
+        summary={{
+          text: "9999 over · 9999 soon · 9999 on track",
+          kind: "words",
+        }}
+        width={width}
+      />
+    ),
+    keys: <KeyBar commands={longCommands} width={width} />,
+  },
 };

@@ -1,0 +1,36 @@
+40 columns
+|example-repository-with-a-long-name ✓ 1…
+|docs                                rea…
+|site                                ✗
+|                                    fail
+|                                    ed:
+|                                    The
+|                                    prov
+|                                    ider
+|                                    fail
+|                                    ed
+|                                    with
+|                                    GITH
+|                                    UB_T
+|                                    IMED
+|                                    _OUT
+
+runs
+1:1 "example-repository-with-a-long-name " fg #c6c8d1ff bg #00000000
+1:37 "✓" fg #b4be82ff bg #00000000
+1:38 " 1…" fg #c6c8d1ff bg #00000000
+2:1 "docs                                rea…" fg #c6c8d1ff bg #00000000
+3:1 "site                                " fg #c6c8d1ff bg #00000000
+3:37 "✗" fg #e27878ff bg #00000000
+4:37 "fail" fg #e27878ff bg #00000000
+5:37 "ed:" fg #e27878ff bg #00000000
+6:37 "The" fg #e27878ff bg #00000000
+7:37 "prov" fg #e27878ff bg #00000000
+8:37 "ider" fg #e27878ff bg #00000000
+9:37 "fail" fg #e27878ff bg #00000000
+10:37 "ed" fg #e27878ff bg #00000000
+11:37 "with" fg #e27878ff bg #00000000
+12:37 "GITH" fg #e27878ff bg #00000000
+13:37 "UB_T" fg #e27878ff bg #00000000
+14:37 "IMED" fg #e27878ff bg #00000000
+15:37 "_OUT" fg #e27878ff bg #00000000

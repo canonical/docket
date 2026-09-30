@@ -1,0 +1,7 @@
+60 columns
+| ┆  ○ example-contributor-with-a-long-login labelled pri… 3h
+
+runs
+1:2 "┆" fg #6b7089ff bg #00000000
+1:5 "○ example-contributor-with-a-long-login" fg #89b8c2ff bg #00000000
+1:44 " labelled pri… 3h" fg #c6c8d1ff bg #00000000

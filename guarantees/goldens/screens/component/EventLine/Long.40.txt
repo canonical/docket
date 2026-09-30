@@ -1,0 +1,7 @@
+40 columns
+| ┆  ○ example-contributor-with-a-lon… 3h
+
+runs
+1:2 "┆" fg #6b7089ff bg #00000000
+1:5 "○ example-contributor-with-a-lon…" fg #89b8c2ff bg #00000000
+1:38 " 3h" fg #c6c8d1ff bg #00000000

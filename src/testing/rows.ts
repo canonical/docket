@@ -26,16 +26,20 @@ const example: Repo = {
 };
 
 /**
- * Measures one wait in `example` at `recordedNow`, Monday 28 September
- * 2026 at 12:00 in Paris, as owed lists it.
+ * Measures one wait in `repo`, `example` unless given, at `recordedNow`,
+ * Monday 28 September 2026 at 12:00 in Paris, as owed lists it.
  *
- * @param invalidFile Whether `example`'s own file is invalid.
+ * @param invalidFile Whether the repository's own file is invalid.
  */
-export function measureRow(facts: Partial<Wait>, invalidFile = false): WaitRow {
+export function measureRow(
+  facts: Partial<Wait>,
+  invalidFile = false,
+  repo: Repo = example,
+): WaitRow {
   const { rows } = listWaits(
     [
       {
-        repo: example,
+        repo,
         time: teamSettings.time,
         people: teamSettings.people,
         yours: teamSettings.you.teams,

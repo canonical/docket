@@ -26,3 +26,26 @@ export const Stack: Story<GroupHeadingProps> = {
 export const NotInAStack: Story<GroupHeadingProps> = {
   args: { heading: { text: "NOT IN A STACK", kind: "words" }, width: 40 },
 };
+
+/** A stack in a repository with a long short name, on a long base branch. */
+export const Long: Story<GroupHeadingProps> = {
+  args: {
+    heading: {
+      text: "example-repository-with-a-long-name stack 7 · 3 PRs → release/example-branch-with-a-long-name",
+      kind: "identifier",
+    },
+    width: 40,
+  },
+};
+
+/** A team you belong to, named with its organisation, heading its section. */
+export const LongTeam: Story<GroupHeadingProps> = {
+  args: {
+    heading: {
+      text: "example-org/a-team-with-a-very-long-name",
+      kind: "person",
+      group: "you",
+    },
+    width: 40,
+  },
+};

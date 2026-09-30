@@ -7,6 +7,10 @@ import {
   soonReplyDetail,
 } from "../../../../testing/details.js";
 import { teamSettings } from "../../../../testing/facts.js";
+import {
+  longReviewDetail,
+  longSharedReview,
+} from "../../../../testing/long.js";
 import { recordedNow } from "../../../../testing/recorded.js";
 import {
   overReview,
@@ -112,5 +116,17 @@ export const Failed: Story<ThreadAccordionProps> = {
     ...reading,
     row: overReview,
     detail: failDetail(new Error("GitHub timed out.")),
+  },
+};
+
+/**
+ * The long review, owned by a long login and a team, its checks with long
+ * names failing, on a long base branch: more than eight lines hold.
+ */
+export const Long: Story<ThreadAccordionProps> = {
+  args: {
+    ...reading,
+    row: longSharedReview,
+    detail: Promise.resolve(longReviewDetail),
   },
 };

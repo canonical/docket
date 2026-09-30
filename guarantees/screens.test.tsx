@@ -7,7 +7,8 @@
  * story is drawn and compared from the first run, and until its copy is
  * saved it fails.
  *
- * Below 40 columns the pane says only that it needs 40.
+ * Below 40 columns the pane says only that it needs 40. Each block of
+ * the terminal has a story named `Long`, with text longer than it holds.
  *
  * The stories are found by their file names, so this file loads each
  * one by a path it builds, and checks every such path against the one
@@ -28,6 +29,11 @@ import expectGolden from "./expectGolden.js";
 
 const repoRoot = resolve(import.meta.dirname, "..");
 const storyFiles = /^src\/.+\.stories\.tsx$/;
+/**
+ * The terminal's blocks, each of which draws text longer than its slot
+ * gives it in a story named `Long`, so how each gives way is pinned.
+ */
+const blockFiles = /^src\/lib\/ui\/.+\.stories\.tsx$/;
 
 /** The widths every story is drawn at: the least the pane allows, and one wider. */
 const widths = [40, 60];
@@ -231,6 +237,11 @@ describe("screens", () => {
   for (const [index, file] of files.entries()) {
     const { title } = file.default;
     describe(`${title} (${paths.at(index)})`, () => {
+      if (blockFiles.test(paths.at(index) ?? "")) {
+        it("draws the block with text longer than it holds, in a Long story", () => {
+          expect(listStories(file).map(([name]) => name)).toContain("Long");
+        });
+      }
       for (const [name, story] of listStories(file)) {
         for (const width of widths) {
           it(`draws ${name} at ${width} columns as its saved copy shows`, async () => {

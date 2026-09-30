@@ -24,3 +24,11 @@ export const Activity: Story<CountsLineProps> = {
     width: 40,
   },
 };
+
+/** owed with four digits of waits in every state: its widest summary. */
+export const Long: Story<CountsLineProps> = {
+  args: {
+    summary: { text: "9999 over · 9999 soon · 9999 on track", kind: "words" },
+    width: 40,
+  },
+};

@@ -104,3 +104,29 @@ export const Scrolled: Story<PeoplePickerProps> = {
     width: 40,
   },
 };
+
+/** Requesting review from a login and a team longer than the pane. */
+export const Long: Story<PeoplePickerProps> = {
+  args: {
+    filter: "",
+    onFilter: ignoreTyping,
+    options: [
+      {
+        owner: person(
+          "example-contributor-with-a-long-login-past-the-pane",
+          "outside",
+        ),
+        ticked: true,
+      },
+      {
+        owner: person(
+          "example-org/a-team-with-a-very-long-name-past-the-pane",
+          "internal",
+        ),
+        ticked: false,
+      },
+    ],
+    cursor: 1,
+    width: 40,
+  },
+};
