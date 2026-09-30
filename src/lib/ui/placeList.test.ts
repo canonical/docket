@@ -49,8 +49,20 @@ describe("placeList", () => {
       ).toEqual({ first: 0, shown: 4, below: 0 });
     });
 
-    it("shows the selected block from its top when it is taller than the room, with no sign", () => {
+    it("shows the selected block from its top when it is taller than the room, cut between the pinned heading and the sign", () => {
       expect(placeList(kinds, heights, 3, 3, 4, 0)).toEqual({
+        first: 3,
+        shown: 1,
+        below: 3,
+        pinned: { heading: 0, place: 3, size: 6 },
+      });
+      expect(placeList(rows(2), [9, 2], 0, 0, 2, 0)).toEqual({
+        first: 0,
+        shown: 1,
+        below: 1,
+      });
+      // A line of room is the first block's alone.
+      expect(placeList(kinds, heights, 3, 3, 1, 0)).toEqual({
         first: 3,
         shown: 1,
         below: 0,
@@ -75,7 +87,7 @@ describe("placeList", () => {
       ).toBe(0);
     });
 
-    it("drops the heading before the selected row when both do not fit, pins nothing over a row too tall to share the room, and gives the pin a line before the sign", () => {
+    it("pins the heading over the selected row when both do not fit, and keeps the sign, cutting the row instead", () => {
       expect(placeList(["heading", "row"], [1, 7], 0, 1, 8, 0)).toEqual({
         first: 0,
         shown: 2,
@@ -85,11 +97,12 @@ describe("placeList", () => {
         first: 1,
         shown: 1,
         below: 0,
+        pinned: { heading: 0, place: 1, size: 1 },
       });
       expect(placeList(grouped, [1, 5, 2, 2, 1, 2, 2], 1, 1, 6, 0)).toEqual({
         first: 1,
         shown: 1,
-        below: 0,
+        below: 4,
         pinned: { heading: 0, place: 1, size: 3 },
       });
       expect(placeList(grouped, [1, 5, 2, 2, 1, 2, 2], 1, 1, 7, 1)).toEqual({
@@ -97,6 +110,17 @@ describe("placeList", () => {
         shown: 1,
         below: 4,
         pinned: { heading: 0, place: 1, size: 3 },
+      });
+    });
+
+    it("keeps the pinned heading and the sign over a thread whose events outgrow the whole room", () => {
+      expect(
+        placeList(["heading", ...rows(4)], [1, 40, 3, 3, 3], 0, 1, 32, 0),
+      ).toEqual({
+        first: 1,
+        shown: 1,
+        below: 3,
+        pinned: { heading: 0, place: 1, size: 4 },
       });
     });
 

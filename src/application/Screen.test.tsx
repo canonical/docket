@@ -565,7 +565,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "┃┆again?",
         "┃┆waiting since Mon 10:00 · target 24h",
         "┃┆example stack 3 · 2 of 3 · → main",
-        "╹┆below #11 merged, above #13 open",
+        "  ↓ 5 below",
         `2 over · 1 soon · 3 on track${" ".repeat(9)}1/6`,
         "synced 0m ago",
         "←→ mode ↑↓ sel ⏎ open g grp a r ?",
@@ -631,11 +631,11 @@ describe("Screen", { timeout: 15_000 }, () => {
           "┃ docs#4 issue reply ◉ alice    18d over",
           "┃ Where do tokens live?",
           `┃${" ".repeat(25)}◉ alice, ◐ bob`,
-          "┃ ◉ alice · 27d ago",
+          "  ↓ 6 below",
         ],
       ],
     ])(
-      "keeps the notice whole above the selected row, cut below it, at 40 by %i",
+      "keeps the notice whole above the selected row, cut above the sign of the rows below, at 40 by %i",
       async (height, rows) => {
         const cache = await openCache(recordedProvider());
         await cache.refresh();
@@ -807,8 +807,8 @@ describe("Screen", { timeout: 15_000 }, () => {
       ]);
       const first = await press(screen, "k");
       expect(first.lines.slice(1, 3)).toEqual([
+        `◉ alice · 1 of 3 ${"─".repeat(23)}`,
         `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
-        `┃┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
       ]);
       expect(first.look("example#12 PR reply")?.bg).toBe(
         tokens["color.background.selected"],
@@ -2055,6 +2055,19 @@ describe("Screen", { timeout: 15_000 }, () => {
       screen.setup.resize(40, 7);
       await press(await screen.redraw(), "q");
       expect(onQuit).toHaveBeenCalledOnce();
+    });
+
+    it("names the selected row's group and counts the rows below at 8 lines, cutting the row's details instead", async () => {
+      const screen = await showRecorded();
+      screen.setup.resize(40, 8);
+      const kinds = await press(screen, "g", "g");
+      expect(kinds.lines.slice(0, 5)).toEqual([
+        headerOf("owed", "by kind"),
+        `ISSUES · 1 of 3 ${"─".repeat(24)}`,
+        `┃ example#15 issue reply ◐ carol 4h left`,
+        `┃ Crash on start${" ".repeat(14)}unassigned`,
+        "  ↓ 5 below",
+      ]);
     });
 
     it("shows the rows scrolled out above once the pane grows tall enough", async () => {

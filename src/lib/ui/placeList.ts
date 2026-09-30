@@ -13,12 +13,12 @@ import type { ListBlockKind, ListPlacement } from "./types.js";
  *
  * When the first block shown is a row of a group, the group's heading is
  * pinned above it on a line of the room, with the place in the group of
- * that row, so the group is named wherever its rows scroll, unless that
- * row is too tall to share the room with it. When rows are cut off
- * below, the list's last line is kept for the sign that counts them,
- * every row under it in whichever group, unless the first block is too
- * tall to share the room with it. The first block is shown
- * whatever its height, and after it as many whole blocks as fit. Placed
+ * that row, so the group is named wherever its rows scroll. When rows are
+ * cut off below, the list's last line is kept for the sign that counts
+ * them, every row under it in whichever group. Both keep their lines
+ * while the room leaves the first block one, and a first block taller
+ * than the rest of the room is cut at the bottom. After the first block,
+ * as many whole blocks as fit are shown. Placed
  * again from the first block it gives, it gives the same place, so a
  * list that keeps its first block between draws settles in one.
  *
@@ -52,17 +52,14 @@ export default function placeList(
     heights.slice(start, end).reduce((lines, height) => lines + height, 0);
   const end = heights.length;
   // The lines a list starting at `top` spends on its pinned heading and on
-  // the sign of the rows cut off below. The first block is kept whole
-  // before either: a block too tall to share the room with the sign goes
-  // without it, and one too tall to share it with the heading as well goes
-  // without the heading.
+  // the sign of the rows cut off below. Both keep their line while the
+  // room leaves the first block a line of its own, and the first block is
+  // cut instead, so what is above and below is always named.
   const frame = (top: number) => {
     const grouped = kinds.at(top) === "row" ? headings.at(top) : undefined;
-    const tall = heights.at(top) ?? 0;
     const cuts = (pin: number) => pin + measure(top, end) > room;
-    const signs = (pin: number) =>
-      cuts(pin) && pin + tall + 1 <= room ? 1 : 0;
-    const pin = grouped !== undefined && 1 + tall + signs(1) <= room ? 1 : 0;
+    const signs = (pin: number) => (cuts(pin) && room - pin >= 2 ? 1 : 0);
+    const pin = grouped !== undefined && room >= 2 ? 1 : 0;
     return {
       pinned: pin === 1 ? grouped : undefined,
       signed: signs(pin) === 1,

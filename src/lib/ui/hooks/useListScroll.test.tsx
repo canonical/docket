@@ -99,8 +99,10 @@ describe("useListScroll", () => {
     ).toEqual(["2:2 3:2", "1:2 2:2 3:2", "0:1 1:2 2:2 3:2"]);
   });
 
-  it("draws the first block whatever its height, and nothing after it that does not fit", async () => {
-    expect(await scroll([5, 1], { from: 0, to: 0, room: 3 })).toEqual(["0:5"]);
+  it("draws the first block whatever its height, cut above the sign, and nothing after it that does not fit", async () => {
+    expect(await scroll([5, 1], { from: 0, to: 0, room: 3 })).toEqual([
+      "0:5 ↓1",
+    ]);
   });
 
   it("opens where it is told when drawn anew, keeping the selection in view from there", async () => {
