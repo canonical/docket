@@ -12,6 +12,7 @@ import {
   refreshInterval,
 } from "./constants.js";
 import createReadQueries from "./createReadQueries.js";
+import dropPages from "./dropPages.js";
 import fetchRepos, { type FetchReposOptions } from "./fetchRepos.js";
 import findBudgetFloor from "./findBudgetFloor.js";
 import identifyFile from "./identifyFile.js";
@@ -189,7 +190,15 @@ export default function createCache({
         at,
         find: entry,
         keep: (repo, value) => store(repo, value, at),
-        report: (stages) => publish({ refreshing: true, whole, stages }, false),
+        report: (stages) => {
+          // With rows on screen no page is drawn, so a report that moves
+          // only the pages read would redraw the screen for nothing.
+          const unseen =
+            !whole &&
+            status.refreshing &&
+            isSame(dropPages(stages), dropPages(status.stages));
+          if (!unseen) publish({ refreshing: true, whole, stages }, false);
+        },
         ...options,
       });
     } finally {

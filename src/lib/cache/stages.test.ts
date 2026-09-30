@@ -8,7 +8,7 @@ import {
   fullBudget,
   providerError,
 } from "../../testing/provider.js";
-import type { Provider } from "../provider/index.js";
+import type { PageProgress, Provider } from "../provider/index.js";
 import createCache from "./createCache.js";
 
 const repo = "example-org/example-repo";
@@ -166,6 +166,36 @@ describe("the stages of createCache", () => {
     expect(lists.size).toBe(2);
     expect(lists.has(before)).toBe(true);
     expect(cache.threads()).not.toBe(before);
+  });
+
+  it("tells its listeners as often however many pages a background re-read takes, since none is drawn", async () => {
+    const counts: number[] = [];
+    for (const pages of [2, 10]) {
+      const paged = vi.fn(
+        async (
+          name: string,
+          _cursor: unknown,
+          onPage?: (progress: PageProgress) => void,
+        ) => {
+          for (let fetched = 1; fetched <= pages; fetched += 1) {
+            onPage?.({ fetched, total: pages });
+          }
+          return { threads: [thread({ repo: name })], cursor: null };
+        },
+      );
+      directory = join(root, `pages-${pages}`);
+      const cache = open(fakeProvider({ snapshot: paged }));
+      await cache.refresh();
+      // The hourly whole re-read reads every page again.
+      later(61 * minute);
+      let told = 0;
+      cache.subscribe(() => {
+        told += 1;
+      });
+      await cache.refresh();
+      counts.push(told);
+    }
+    expect(counts[1]).toBe(counts[0]);
   });
 
   it("keeps each repository paused while the budget is low and it needs points to go on", async () => {
