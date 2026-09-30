@@ -1,5 +1,5 @@
 60 columns
-|owed                                one list · overdue first
+|setup
 |
 |  ✗ gh is not signed in to github.com
 |  Recovery: run gh auth login
@@ -34,19 +34,11 @@
 |
 |
 |
-|←→ mode ↑↓ sel ⏎ open g grp a r ?
+|? q quit
 
 runs
-1:1 "owed                                one list · " fg #c6c8d1ff bg #161821ff
-1:48 "overdue first" fg #6b7089ff bg #161821ff
+1:1 "setup                                                       " fg #c6c8d1ff bg #161821ff
 3:3 "✗ gh is not signed in to github.com" fg #e27878ff bg #161821ff
 4:3 "Recovery: run gh auth login" fg #c6c8d1ff bg #161821ff
-36:1 "←→" fg #c6c8d1ff bg #161821ff
-36:3 " mode" fg #6b7089ff bg #161821ff
-36:8 " ↑↓" fg #c6c8d1ff bg #161821ff
-36:11 " sel" fg #6b7089ff bg #161821ff
-36:15 " ⏎" fg #c6c8d1ff bg #161821ff
-36:17 " open" fg #6b7089ff bg #161821ff
-36:22 " g" fg #c6c8d1ff bg #161821ff
-36:24 " grp" fg #6b7089ff bg #161821ff
-36:28 " a r ?" fg #c6c8d1ff bg #161821ff
+36:1 "? q" fg #c6c8d1ff bg #161821ff
+36:4 " quit" fg #6b7089ff bg #161821ff

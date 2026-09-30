@@ -55,6 +55,13 @@ export interface UseScreenKeysProps {
    * turns every key but `q` off.
    */
   readonly tooSmall: boolean;
+  /**
+   * Whether the screen is setup, which stands in for either mode while a
+   * prerequisite is missing, such as gh: it lists nothing and is never
+   * reached or left with a key, so only the help's keys, the movement keys
+   * while the help shows, and `q` act, and the key bar names `q`.
+   */
+  readonly setup: boolean;
   /** What each key does, as the frame on show gives it. */
   readonly actions: ScreenActions;
 }
@@ -80,6 +87,7 @@ export default function useScreenKeys({
   help,
   editorOpen,
   tooSmall,
+  setup,
   actions,
 }: UseScreenKeysProps): UseScreenKeysResult {
   // The keys run closures made when their layer was bound, so they read
@@ -208,6 +216,8 @@ export default function useScreenKeys({
           name: "app.quit",
           desc: "quit",
           group: "App",
+          // With no list to act on, quitting is the one way on.
+          ...(setup && { hint: "quit" }),
           run: () => latest.current.quit(),
         },
       ].map((command) => {
@@ -215,14 +225,15 @@ export default function useScreenKeys({
         // or the shortest pane only quitting runs, and while the help shows
         // only its own keys, the movement keys, which scroll it, and
         // quitting. An open editor takes the typing, so no key but the
-        // help's runs, and the movement keys once the help covers it.
+        // help's runs, and the movement keys once the help covers it. On
+        // setup, which lists nothing, only the help's keys and quitting run.
         const quits = command.name === "app.quit";
         const moves = command.name.startsWith("selection.");
         const runs = tooSmall
           ? quits
           : command.name.startsWith("help.") ||
             (help && moves) ||
-            (!editorOpen && (!help || quits));
+            (!editorOpen && (quits || (!setup && !help)));
         return runs ? command : { ...command, enabled: false };
       }),
       bindings: [
@@ -249,7 +260,7 @@ export default function useScreenKeys({
         { key: "q", cmd: "app.quit" },
       ],
     }),
-    [mode, help, editorOpen, tooSmall],
+    [mode, help, editorOpen, tooSmall, setup],
   );
   const active = useCommands({ visibility: "active" });
   const bound = useCommands({ visibility: "registered" }).toSorted(

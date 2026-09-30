@@ -315,7 +315,10 @@ export const FullRefreshRefused: Story<ScreenFrameProps> = {
   }),
 };
 
-/** gh is not installed: the reason and the recovery stand in for the list. */
+/**
+ * gh is not installed: setup, the reason and the recovery in the list's
+ * place, and only the keys that act.
+ */
 export const GhNotInstalled: Story<ScreenFrameProps> = {
   args: {
     ...recording,
@@ -331,7 +334,7 @@ export const GhNotInstalled: Story<ScreenFrameProps> = {
   },
 };
 
-/** gh is not signed in: the reason and the recovery stand in for the list. */
+/** gh is not signed in: setup, as when gh is not installed. */
 export const GhNotSignedIn: Story<ScreenFrameProps> = {
   args: {
     ...recording,

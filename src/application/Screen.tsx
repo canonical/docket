@@ -75,13 +75,14 @@ const readNothing = () => undefined;
 const unselected: Selection = { place: 0, row: "" };
 
 /**
- * The terminal interface's one screen: owed or activity, with the header
- * naming the mode and its address, the list region, the counts, the
- * status and the keys, or the help over all but the header. The keys are
- * bound in one global layer, beside the layer of the editor that `a` and
- * `r` open, and the help and the key bar are drawn from the keymap's
- * command catalogue. Every key, whatever it does, counts as attention: it
- * keeps the pane active, or wakes an idle one, and still acts.
+ * The terminal interface's one screen: owed or activity, or setup while a
+ * prerequisite is missing, with the header naming the mode and its
+ * address, the list region, the counts, the status and the keys, or the
+ * help over all but the header. The keys are bound in one global layer,
+ * beside the layer of the editor that `a` and `r` open, and the help and
+ * the key bar are drawn from the keymap's command catalogue. Every key,
+ * whatever it does, counts as attention: it keeps the pane active, or
+ * wakes an idle one, and still acts.
  */
 export default function Screen({
   mode: openingMode,
@@ -101,6 +102,10 @@ export default function Screen({
   // it needs, so no key but `q` acts on the list or the editor it hides.
   const tooSmall = width < minColumns || height < minLines;
   const attentionState = useAttention({ attention });
+  // Without gh, or signed out of it, the screen is setup, which stands in
+  // for either mode until the prerequisite is met: it names neither, and
+  // lists nothing.
+  const setup = "problem" in source;
   const cache = "cache" in source ? source.cache : undefined;
   const readWatched = "cache" in source ? source.readWatched : undefined;
   const readThreadDetail = "cache" in source ? source.readDetail : undefined;
@@ -202,6 +207,7 @@ export default function Screen({
     help,
     editorOpen: editor.open,
     tooSmall,
+    setup,
     actions: {
       switchMode: address.setMode,
       // While the help shows, the movement keys scroll it instead.
@@ -413,8 +419,8 @@ export default function Screen({
       width={width}
       height={height}
       header={
-        help ? (
-          <PaneHeader title="help" width={width} />
+        help || setup ? (
+          <PaneHeader title={help ? "help" : "setup"} width={width} />
         ) : (
           <PaneHeader
             title={editor.title ?? header.title}

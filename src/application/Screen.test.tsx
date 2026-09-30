@@ -420,7 +420,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(drawn.lines.at(10)).toBe("paused: budget low · resumes 13:00");
     });
 
-    it("stands in a notice for the list when gh gives no token, with no status", async () => {
+    it("shows setup when gh gives no token: the notice for the list, no status, and only the keys that act", async () => {
       const view: TerminalView = {
         mode: "owed",
         owedGrouping: "none",
@@ -437,9 +437,10 @@ describe("Screen", { timeout: 15_000 }, () => {
           },
         },
       };
-      const screen = await (await show(view)).redraw();
+      const onQuit = vi.fn();
+      const screen = await (await show(view, 40, onQuit)).redraw();
       expect(screen.lines).toEqual([
-        headerOf("owed", "one list"),
+        "setup",
         "",
         "  ✗ docket needs the GitHub CLI (gh)",
         "  Recovery: install it from",
@@ -450,8 +451,15 @@ describe("Screen", { timeout: 15_000 }, () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
+        "? q quit",
       ]);
+      const keyed = await press(screen, "right", "g", "j");
+      expect(keyed.lines).toEqual(screen.lines);
+      const help = await press(screen, "?");
+      expect(help.lines.at(0)).toBe("help");
+      expect((await press(screen, "escape")).lines).toEqual(screen.lines);
+      await press(screen, "q");
+      expect(onQuit).toHaveBeenCalledOnce();
     });
   });
 

@@ -146,7 +146,7 @@ describe("openTerminal", () => {
       const frame = setup.captureCharFrame();
       expect(frame).toContain("✗ gh is not signed in to github.com");
       // The keys work once the key bar, drawn from them, shows.
-      expect(frame).toContain("←→ mode ↑↓ sel ⏎ open g grp a r ?");
+      expect(frame).toContain("? q quit");
     });
     setup.mockInput.pressKey("q");
     expect(await closed).toBe(0);
