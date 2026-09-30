@@ -9,7 +9,7 @@ import { tokens } from "../../../tokens/index.js";
 import type { Message, Thread, ThreadSummary } from "../../../waits/index.js";
 import { loginCells } from "../../constants.js";
 import describeClock from "../../describeClock.js";
-import { markPerson, measureText } from "../../fit/index.js";
+import { markPerson, measureText, noBreakSpace } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type {
   DetailLine,
@@ -144,9 +144,6 @@ function describeReply(row: WaitRow, { now, timezone }: Reading) {
   ];
 }
 
-/** A space that keeps a check's name on one line when the line wraps. */
-const joiner = "\u00a0";
-
 /**
  * The checks on the head commit, a failure in the error colour. The
  * failing checks' names wrap between names, each kept whole.
@@ -158,7 +155,7 @@ function describeChecks({ checks }: ThreadDetail): DetailLine {
   if (total === 0) return trimmed(plain("no checks"));
   if (failing.length > 0) {
     const names = failing
-      .map(({ name }) => name.replaceAll(" ", joiner))
+      .map(({ name }) => name.replaceAll(" ", noBreakSpace))
       .join(", ");
     return wrapped(
       failed(`checks: ${failing.length} of ${total} failed (${names})`),

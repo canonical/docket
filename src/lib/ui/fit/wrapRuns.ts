@@ -1,10 +1,6 @@
 import { sanitize } from "../../text/index.js";
+import { graphemes, noBreakSpace } from "./constants.js";
 import measureText from "./measureText.js";
-
-/** A space that joins two words so no line breaks between them. */
-const joiner = " ";
-
-const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
 
 /** Part of a word: its text, and which run it came from. */
 interface Fragment {
@@ -109,7 +105,7 @@ export default function wrapRuns<
   return [...lines, line].map((each) =>
     each.map(({ run, text }) => ({
       ...runs[run],
-      text: text.replaceAll(joiner, " "),
+      text: text.replaceAll(noBreakSpace, " "),
     })),
   );
 }

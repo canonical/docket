@@ -28,3 +28,10 @@ export const fitRules: Readonly<Record<FieldKind, FitRule>> = {
 
 /** Splits text into what a reader sees as one character each. */
 export const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
+
+/**
+ * A space that joins two words so no line breaks between them: a caller
+ * puts it between the words of a name or a command it wants kept on one
+ * line, and wrapping draws it as an ordinary space.
+ */
+export const noBreakSpace = "\u00a0";

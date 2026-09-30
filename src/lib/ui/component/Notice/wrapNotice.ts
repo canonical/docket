@@ -1,4 +1,4 @@
-import { fitField } from "../../fit/index.js";
+import { fitField, noBreakSpace } from "../../fit/index.js";
 
 /** A notice's two parts, each wrapped into the lines it is drawn on. */
 export interface WrappedNotice {
@@ -16,7 +16,7 @@ export interface WrappedNotice {
 const keepCommandsWhole = (step: string) =>
   step.replace(
     /\brun ([^,;]+)/g,
-    (_, command: string) => `run ${command.replaceAll(" ", " ")}`,
+    (_, command: string) => `run ${command.replaceAll(" ", noBreakSpace)}`,
   );
 
 /**

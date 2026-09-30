@@ -1,7 +1,6 @@
 import { sanitize } from "../../text/index.js";
+import { graphemes } from "./constants.js";
 import measureText from "./measureText.js";
-
-const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
 
 /**
  * Fits `text` into `width` display cells on one line: whole when it fits,

@@ -1,7 +1,6 @@
 import { sanitize } from "../../text/index.js";
+import { graphemes } from "./constants.js";
 import measureText from "./measureText.js";
-
-const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
 
 /** The graphemes of `segments`, in order, that fit `cells` display cells. */
 function takeCells(segments: readonly string[], cells: number): string[] {

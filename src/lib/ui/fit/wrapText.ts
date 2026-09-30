@@ -1,9 +1,6 @@
 import { sanitize } from "../../text/index.js";
-import { graphemes } from "./constants.js";
+import { graphemes, noBreakSpace } from "./constants.js";
 import measureText from "./measureText.js";
-
-/** A space that joins two words so no line breaks between them. */
-const joiner = " ";
 
 /**
  * Splits a word too wide for a line into pieces that fit, between its
@@ -48,5 +45,5 @@ export default function wrapText(text: string, width: number): string[] {
     }
   }
   lines.push(line);
-  return lines.map((each) => each.replaceAll(joiner, " "));
+  return lines.map((each) => each.replaceAll(noBreakSpace, " "));
 }
