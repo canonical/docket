@@ -318,7 +318,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const drawn = await screen.redraw();
       expect(drawn.lines.slice(2, 6)).toEqual([
         "  refresh in progress…",
-        "  example reading page 5/9",
+        "  example reading page 6/9",
         "  docs    waiting",
         `  ${"█".repeat(16)}${"░".repeat(13)} 5/9 pages`,
       ]);

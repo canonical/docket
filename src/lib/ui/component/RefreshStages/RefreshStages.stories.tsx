@@ -23,7 +23,7 @@ export const Running: Story<RefreshStagesProps> = {
         repo,
         stage: { kind: "done", threads: 89, fetched: 4, total: 4 },
       },
-      { repo: docs, stage: { kind: "reading", fetched: 2, total: 3 } },
+      { repo: docs, stage: { kind: "reading", fetched: 1, total: 3 } },
       { repo: site, stage: { kind: "waiting" } },
     ],
     names,

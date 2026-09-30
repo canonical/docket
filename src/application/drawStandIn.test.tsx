@@ -81,7 +81,7 @@ describe("drawStandIn", () => {
     });
     expect(screen.lines.slice(0, 4)).toEqual([
       "  refresh in progress…",
-      "  example reading page 5/9",
+      "  example reading page 6/9",
       "  docs    waiting",
       `  ${"█".repeat(15)}${"░".repeat(13)} 5/9 pages`,
     ]);
