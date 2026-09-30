@@ -1,4 +1,5 @@
 import type { People } from "../config/index.js";
+import type { Author } from "../people/index.js";
 import type { Thread } from "../waits/index.js";
 
 /**
@@ -14,18 +15,22 @@ import type { Thread } from "../waits/index.js";
  *
  * @param threads The repository's threads.
  * @param people The people of the repository's settings.
+ * @param authors The authors of anything else the repository holds, such
+ * as its finished threads.
  */
 export default function gatherPeople(
   threads: readonly Thread[],
   people: People,
+  authors: readonly Author[] = [],
 ): People {
   const gathered = new Map(people);
-  for (const thread of threads) {
-    for (const { author } of [thread, ...thread.comments, ...thread.reviews]) {
-      const login = author.login.toLowerCase();
-      if (author.member && author.type !== "bot" && !gathered.has(login)) {
-        gathered.set(login, "internal");
-      }
+  const written = threads.flatMap((thread) =>
+    [thread, ...thread.comments, ...thread.reviews].map(({ author }) => author),
+  );
+  for (const author of [...written, ...authors]) {
+    const login = author.login.toLowerCase();
+    if (author.member && author.type !== "bot" && !gathered.has(login)) {
+      gathered.set(login, "internal");
     }
   }
   return gathered;

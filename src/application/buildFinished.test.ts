@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { timeEndings } from "../lib/endings/index.js";
-import { at } from "../testing/facts.js";
+import { at, finishedThread } from "../testing/facts.js";
 import {
   recordedFinished,
   recordedNow,
@@ -96,5 +96,52 @@ describe("buildFinished", () => {
       recordedNow,
     );
     expect(references(list)).toEqual(["example#14"]);
+  });
+
+  it("gives a member who wrote only a finished thread one group wherever the row names them", () => {
+    const repo = "example-org/example-repo";
+    const erin = { login: "erin", type: "user" } as const;
+    const wrote = finishedThread({
+      number: 1,
+      kind: "issue",
+      author: { ...erin, member: true },
+      ending: {
+        outcome: "completed",
+        label: "closed as completed",
+        at: at("2026-09-29T10:00Z"),
+        by: erin,
+      },
+    });
+    const merged = finishedThread({
+      number: 2,
+      assignees: [erin],
+      ending: {
+        outcome: "merged",
+        label: "merged",
+        at: at("2026-09-29T11:00Z"),
+        by: erin,
+      },
+    });
+    const until = at("2026-10-05T00:00Z");
+    const list = buildFinished(
+      new Map([[repo, [wrote, merged].map((thread) => ({ thread, until }))]]),
+      [],
+      recordedWatched(),
+      { amount: 1, unit: "w" },
+      "none",
+      at("2026-09-30T10:00Z"),
+    );
+    const rows = list.groups.flatMap(({ rows }) => rows);
+    expect(
+      rows.map(({ reference, author, ending, owner }) => [
+        reference.text,
+        author.group,
+        ending.actor?.group,
+        owner && "group" in owner ? owner.group : undefined,
+      ]),
+    ).toEqual([
+      ["example#2", "team", "internal", "internal"],
+      ["example#1", "internal", "internal", undefined],
+    ]);
   });
 });

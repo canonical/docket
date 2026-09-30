@@ -41,4 +41,17 @@ describe("gatherPeople", () => {
     ];
     expect(gatherPeople(threads, listed)).toEqual(listed);
   });
+
+  it("adds as internal a member among the other authors given, but not a bot", () => {
+    const authors = [
+      { ...carol, login: "erin" },
+      dave,
+      { ...exampleSync, member: true },
+    ];
+    expect([...gatherPeople([], people, authors)]).toEqual([
+      ["alice", "team"],
+      ["bob", "team"],
+      ["erin", "internal"],
+    ]);
+  });
 });
