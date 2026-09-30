@@ -33,6 +33,9 @@ describe("readCacheFile", () => {
     // Threads in layout 3 carry no text of what was written, and no requester.
     await writeFile(file, JSON.stringify({ format: 3, state: {} }));
     expect(await readCacheFile(file)).toBeUndefined();
+    // Events in layout 4 carry no threads that finished.
+    await writeFile(file, JSON.stringify({ format: 4, state: {} }));
+    expect(await readCacheFile(file)).toBeUndefined();
   });
 
   it("reads no start of a full refresh that is not a date", async () => {
