@@ -60,4 +60,4 @@ export {
   PaneHeader,
   type PaneHeaderProps,
 } from "./subcomponent/index.js";
-export type { ListBlock, ListBlockKind } from "./types.js";
+export type { ListBlock } from "./types.js";

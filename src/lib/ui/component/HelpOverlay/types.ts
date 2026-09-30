@@ -19,9 +19,9 @@ export interface HelpOverlayProps {
   /** The lines the help has: the pane's, but for the header's. */
   height: number;
   /**
-   * The place, among the help's groups, key lines and closing note, of
-   * the first shown; the top when absent. Past the last that fills the
-   * help, the help shows its end.
+   * The place, among the help's groups and key lines, of the first
+   * shown; the top when absent. Past the last that fills the help, the
+   * help shows its end.
    */
   first?: number;
   /**

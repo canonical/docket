@@ -9,23 +9,26 @@ export interface Piece {
   readonly attributes?: number;
 }
 
-/** What every block of a scrolled list carries. */
-interface ListBlockBase {
-  /** What names the block among its siblings, as React keys it. */
-  readonly key: string;
-  /** The lines the block takes. */
-  readonly lines: number;
-  readonly node: ReactNode;
-}
-
 /**
  * One block of a scrolled list, drawn whole or not at all, but for the
  * first: a group's heading, with the name the heading pinned above its
- * rows gives, or a row with what opens under it.
+ * rows gives, or a row with what opens under it. Each carries the key
+ * React names it by among its siblings, and the lines it takes.
  */
 export type ListBlock =
-  | (ListBlockBase & { readonly kind: "heading"; readonly heading: Owner })
-  | (ListBlockBase & { readonly kind: "row" });
+  | {
+      readonly kind: "heading";
+      readonly key: string;
+      readonly lines: number;
+      readonly node: ReactNode;
+      readonly heading: Owner;
+    }
+  | {
+      readonly kind: "row";
+      readonly key: string;
+      readonly lines: number;
+      readonly node: ReactNode;
+    };
 
 /** What a block of a scrolled list is: a group's heading, or a row. */
 export type ListBlockKind = ListBlock["kind"];
