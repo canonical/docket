@@ -41,9 +41,32 @@ describe("EventLine", () => {
     expect(screen.look("3h")?.fg).toBe(tokens["color.text.muted"]);
   });
 
-  it("cuts a long actor's login at 12 cells, keeping what was done on the line", async () => {
+  it("keeps docket's words whole and the target as whole as it can, leaving out the actor first", async () => {
     const screen = await draw(<EventLine {...Long.args} />, 40);
-    expect(screen.lines.at(0)).toBe(" ┆  ○ example-con… labelled…intainers 3h");
+    expect(screen.lines.at(0)).toBe(" ┆  labelled priority: n…-maintainers 3h");
+    const wide = await draw(<EventLine {...Long.args} width={80} />, 80);
+    expect(wide.lines.at(0)).toBe(
+      ` ┆  ○ example-con… labelled priority: needs-a-decision-from-the-maintainers${" ".repeat(3)}3h`,
+    );
+  });
+
+  it("cuts a failed check's names inside their brackets, keeping the brackets", async () => {
+    const line = {
+      ...ChecksFailed.args.line,
+      action: {
+        text: "checks failed (lint the whole repository, unit tests)",
+        kind: "words" as const,
+      },
+      target: {
+        text: "lint the whole repository, unit tests",
+        kind: "identifier" as const,
+      },
+    };
+    const screen = await draw(
+      <EventLine {...ChecksFailed.args} line={line} />,
+      40,
+    );
+    expect(screen.lines.at(0)).toBe(" ┆  ✗ checks failed (lint t…t tests) 20m");
   });
 
   it("draws what happened alone when no actor is named", async () => {
@@ -52,8 +75,8 @@ describe("EventLine", () => {
     expect(screen.lines.at(0)).toBe(` ┆  pushed 2 commits${" ".repeat(17)}25m`);
   });
 
-  it("cuts what was done in its middle, keeping its end, before the age gives way", async () => {
+  it("leaves out the actor before what was done, and cuts that in its middle last, before the age gives way", async () => {
     const screen = await draw(<EventLine {...Pushed.args} width={20} />, 20);
-    expect(screen.lines.at(0)).toBe(" ┆  ● alice p…ts 25m");
+    expect(screen.lines.at(0)).toBe(" ┆  pushe…ommits 25m");
   });
 });

@@ -51,6 +51,13 @@ export interface EventLine {
   readonly actor?: Person;
   /** What they did, `pushed 2 commits`: the text after the actor. */
   readonly action: Field;
+  /**
+   * What the action acted on, as GitHub writes it, which the action's
+   * text holds at its end or, for failed checks, in its brackets: the
+   * label, the person assigned, or the checks' names. Absent when the
+   * action names nothing written on GitHub, as a push does.
+   */
+  readonly target?: Field;
   /** `25m`, `3h` or `1d`. */
   readonly age: Field;
 }

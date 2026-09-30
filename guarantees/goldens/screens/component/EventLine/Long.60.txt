@@ -1,7 +1,6 @@
 60 columns
-| ┆  ○ example-con… labelled priority:…rom-the-maintainers 3h
+| ┆  labelled priority: needs-a-dec…n-from-the-maintainers 3h
 
 runs
 1:2 "┆" fg #6b7089ff bg #00000000
-1:5 "○ example-con…" fg #89b8c2ff bg #00000000
-1:19 " labelled priority:…rom-the-maintainers 3h" fg #c6c8d1ff bg #00000000
+1:5 "labelled priority: needs-a-dec…n-from-the-maintainers 3h" fg #c6c8d1ff bg #00000000

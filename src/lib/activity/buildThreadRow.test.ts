@@ -34,6 +34,27 @@ const opened: WindowEvent = {
 };
 
 describe("buildThreadRow", () => {
+  it("names what each event acted on, as GitHub writes it: the person assigned, the label, the failing checks", () => {
+    const events: [WindowEvent, ...WindowEvent[]] = [
+      { ...pushed, kind: "assigned", assignee: "bob" },
+      { ...pushed, kind: "labelled", label: "kind: bug" },
+      { ...pushed, kind: "checksFailed", checks: ["lint", "test"] },
+      pushed,
+    ];
+    const row = buildThreadRow(pull, "example", pull, people, events, now);
+    expect(
+      row.events.map(({ action, target }) => [action.text, target]),
+    ).toEqual([
+      ["assigned bob", { text: "bob", kind: "person" }],
+      ["labelled kind: bug", { text: "kind: bug", kind: "identifier" }],
+      [
+        "checks failed (lint, test)",
+        { text: "lint, test", kind: "identifier" },
+      ],
+      ["pushed 2 commits", undefined],
+    ]);
+  });
+
   it("names the thread with its kind and the age of its newest event, events nested", () => {
     const facts = { ...pull, assignees: [alice] };
     const row = buildThreadRow(
