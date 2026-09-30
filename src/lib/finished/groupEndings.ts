@@ -35,7 +35,7 @@ function split(
             ({ thread }) =>
               thread.kind === kind && thread.ending.outcome === outcome,
           );
-          return [members[0]?.ending.action.text, members] as const;
+          return [members.at(0)?.ending.action.text, members] as const;
         }),
       );
     default:
