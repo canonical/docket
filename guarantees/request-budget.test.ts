@@ -15,9 +15,9 @@ import type { Outcome, SentRequest } from "./types.js";
  * request, a point each, and a thread's details once for each change
  * GitHub records to it: never again when the selection comes back to it
  * unchanged, however long after, and alone when it changes. Below a
- * fifth of the hourly budget it sends no GraphQL request until the
- * budget resets but the reads of the selected thread's details, one
- * thread each, while the free checks for changes go on.
+ * fifth of the hourly budget it spends nothing of its own, though GitHub
+ * changed, but reads the selected thread's details, one thread each, the
+ * user's own request, while the refresh cycle's free checks go on.
  *
  * The budget, per repository, is what docket's page sizes cost: a whole
  * fetch asks for 50 threads a page and costs 8 points, a fetch of what
@@ -260,7 +260,9 @@ describe("request-budget", () => {
         changed: "crowdedChanged",
       });
       // A call leaves 900 of the 5,000 points, below the floor of 1,000,
-      // in the cache the pane opens on.
+      // in the cache the pane opens on, and GitHub then records a change
+      // on both repositories, which a cycle spending below the floor would
+      // fetch.
       floored = floorHome
         .call(["owed", "--format", "json"], {
           now: opened,
@@ -275,6 +277,7 @@ describe("request-budget", () => {
             remaining: 900,
             ready: "Fix the parser",
             keys: [..."jjjjj"],
+            changed: "crowdedChanged",
           }),
         );
     });
@@ -340,7 +343,7 @@ describe("request-budget", () => {
       expect(after.map(listThreads)).toEqual([["example-org/example-repo#12"]]);
     }, 180_000);
 
-    it("sends no GraphQL request below the budget floor until the reset but the selected thread's reads, one thread each, while the free checks go on", async () => {
+    it("spends nothing of its own below the budget floor, though GitHub changed, reading only the selected thread's details, one thread each, while the free checks go on", async () => {
       const { code, requests } = await floored;
       expect(code).toBe(0);
       const spent = requests.filter(
@@ -353,9 +356,12 @@ describe("request-budget", () => {
         expect(isDetailRead(request)).toBe(true);
         expect(listThreads(request)).toHaveLength(1);
       }
+      // The watch of the selected thread checks only its own repository, so
+      // the other's checks are the refresh cycle's.
       const checks = requests.filter(
         ({ method, url }) =>
-          method === "GET" && new URL(url).pathname.endsWith("/issues"),
+          method === "GET" &&
+          new URL(url).pathname === "/repos/example-org/example-docs/issues",
       );
       const firstCycle = Date.parse(opened) + 120_000;
       expect(
