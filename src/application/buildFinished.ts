@@ -14,8 +14,9 @@ import type { Watched } from "./types.js";
  * Builds finished at `now`: the threads each watched repository saw
  * merged or closed within the window of working time before it, on that
  * repository's working clock, measured against its settings. Each login
- * has one group in its repository, from the settings and from what it
- * wrote on the open threads and the finished ones. The rows of a repository whose own file
+ * has one group in its repository, from the settings, the open threads it
+ * wrote on, and every finished thread given for the repository that it
+ * opened, in the window or not. The rows of a repository whose own file
  * is invalid are marked.
  *
  * @param endings Each repository's finished threads, timed against the
@@ -36,7 +37,8 @@ export default function buildFinished(
   const repos = watched.map((repo) => {
     const { settings, repositoryErrors } = repo.resolved;
     const own = threads.filter((thread) => thread.repo === repo.repo);
-    const finished = (endings.get(repo.repo) ?? [])
+    const held = endings.get(repo.repo) ?? [];
+    const finished = held
       .filter(({ until }) => until >= now)
       .map(({ thread }) => thread);
     return {
@@ -44,7 +46,7 @@ export default function buildFinished(
       people: gatherPeople(
         own,
         settings.people,
-        finished.map(({ author }) => author),
+        held.map(({ thread }) => thread.author),
       ),
       settings,
       finished,

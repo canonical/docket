@@ -144,4 +144,53 @@ describe("buildFinished", () => {
       ["example#1", "internal", "internal", undefined],
     ]);
   });
+
+  it("groups a member from a thread they opened that finished before the window", () => {
+    const repo = "example-org/example-repo";
+    const erin = { login: "erin", type: "user" } as const;
+    const before = finishedThread({
+      number: 1,
+      kind: "issue",
+      author: { ...erin, member: true },
+      ending: {
+        outcome: "completed",
+        label: "closed as completed",
+        at: at("2026-09-01T10:00Z"),
+        by: erin,
+      },
+    });
+    const inside = finishedThread({
+      number: 2,
+      ending: {
+        outcome: "merged",
+        label: "merged",
+        at: at("2026-09-29T11:00Z"),
+        by: erin,
+      },
+    });
+    const list = buildFinished(
+      new Map([
+        [
+          repo,
+          [
+            { thread: before, until: at("2026-09-08T00:00Z") },
+            { thread: inside, until: at("2026-10-05T00:00Z") },
+          ],
+        ],
+      ]),
+      [],
+      recordedWatched(),
+      { amount: 1, unit: "w" },
+      "none",
+      at("2026-09-30T10:00Z"),
+    );
+    expect(
+      list.groups.flatMap(({ rows }) =>
+        rows.map(({ reference, ending }) => [
+          reference.text,
+          ending.actor?.group,
+        ]),
+      ),
+    ).toEqual([["example#2", "internal"]]);
+  });
 });
