@@ -12,6 +12,7 @@ import {
   idleInterval,
   refreshInterval,
 } from "./constants.js";
+import createBudgetKeeper from "./createBudgetKeeper.js";
 import createBudgetRule from "./createBudgetRule.js";
 import createReadQueries from "./createReadQueries.js";
 import dropPages from "./dropPages.js";
@@ -188,6 +189,13 @@ export default function createCache({
     status: () => status,
     // The threads are handed out once, when the run ends.
     publish: (change) => publish(change, false),
+  });
+  const keepBudget = createBudgetKeeper({
+    directory,
+    isKept: () => isSame(readFigures(), mirror),
+    load,
+    save,
+    publishFloor,
   });
 
   /**
@@ -469,21 +477,8 @@ export default function createCache({
     readBudgets: readFigures,
     maySpend,
     async keepBudget() {
-      // This process's own answers can take the mirror below the floor.
-      publishFloor();
-      // With nothing heard since the last load or save, the file holds
-      // these figures or later ones.
-      if (isSame(readFigures(), mirror)) return;
       try {
-        // While another process holds the lock, its save may write figures
-        // older than this one's, so they wait for it to end, and a lower
-        // figure is never lost to an older one.
-        await withFetchLock(directory, async () => {
-          await load();
-          // Only figures the file lacks are worth a write every process
-          // reloads.
-          if (!isSame(readFigures(), mirror)) await save();
-        });
+        await keepBudget();
       } catch (error) {
         throw classifyFolderFailure(error, directory);
       }
