@@ -372,6 +372,29 @@ describe("describeDetail", () => {
     });
   });
 
+  describe("a repository whose own file is invalid", () => {
+    it("names it first, in full, in the error colour, as its row writes ✗ file", () => {
+      const row = measureRow({}, true);
+      const [first] = describeDetail(row, undefined, reading).body;
+      expect(texts(first ? [first] : [])).toEqual([
+        "✗ invalid repository file",
+      ]);
+      expect(first?.pieces.at(0)?.fg).toBe(tokens["color.text.error"]);
+      const resting = {
+        repo: "example",
+        thread: overReview.wait.thread,
+        people: teamSettings.people,
+        invalidFile: {
+          text: "invalid repository file",
+          kind: "words" as const,
+        },
+      };
+      expect(
+        texts(describeDetail(resting, sharedCloseDetail, reading).body).at(0),
+      ).toBe("✗ invalid repository file");
+    });
+  });
+
   describe("a stacked pull request", () => {
     it("ends with its place in the stack at once, and its neighbours once the details arrive, both dimmed", () => {
       const before = describeDetail(overReview, undefined, reading).stack;

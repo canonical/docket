@@ -1,5 +1,5 @@
 import type { People } from "../../../config/index.js";
-import type { FieldKind, Owner, WaitRow } from "../../../owed/index.js";
+import type { Field, FieldKind, Owner, WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import type { ThreadSummary } from "../../../waits/index.js";
 import type { Piece } from "../../types.js";
@@ -77,6 +77,8 @@ export interface RestingThread {
   readonly people: People;
   /** The login gh is signed in with, when it is known: `you` among them. */
   readonly viewer?: string;
+  /** `invalid repository file`, when the repository's own file is invalid. */
+  readonly invalidFile?: Field;
 }
 
 /** Props for the ThreadAccordion component. */

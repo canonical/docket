@@ -323,7 +323,9 @@ function describeStack(
 }
 
 /**
- * Describes what the accordion shows for a row, from the snapshot alone
+ * Describes what the accordion shows for a row, from the snapshot alone,
+ * first `✗ invalid repository file` in a repository whose own file is
+ * invalid, as its row writes `✗ file`,
  * while `detail` is absent and with the details once they arrive. A reply
  * shows who wrote the message awaiting it and when, the message in full,
  * then when the reply began and its target; a review shows who asked and
@@ -346,12 +348,17 @@ export default function describeDetail(
 ): DetailText {
   // What the snapshot holds while reading is paused completes no line.
   const read = detail?.partial ? undefined : detail;
+  // A repository's invalid file, which a row calls `✗ file`, named in
+  // full, first.
+  const trouble = row.invalidFile
+    ? [wrapped(failed(row.invalidFile.text))]
+    : [];
   if (!("wait" in row)) {
     if (!detail) {
       return { body: [trimmed(muted("loading…"))], stack: [] };
     }
     return {
-      body: describeRest(row, detail, reading),
+      body: [...trouble, ...describeRest(row, detail, reading)],
       stack: describeStack(row.repo, row.thread, read, reading),
     };
   }
@@ -362,7 +369,7 @@ export default function describeDetail(
         ? describeReview(row, read, reading)
         : describeClose(row, reading);
   return {
-    body,
+    body: [...trouble, ...body],
     stack: describeStack(row.repo, row.wait.thread, read, reading),
   };
 }
