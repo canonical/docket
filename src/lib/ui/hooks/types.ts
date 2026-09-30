@@ -3,8 +3,7 @@
  * rules ask.
  */
 
-import type { ListPlacement } from "../placeList.js";
-import type { ListBlock } from "../types.js";
+import type { ListBlock, ListPlacement } from "../types.js";
 
 /**
  * The keys of one line of the help, and of one hint in the key bar: one
