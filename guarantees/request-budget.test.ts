@@ -270,6 +270,7 @@ describe("request-budget", () => {
             recording: "crowded",
             remaining: 900,
             ready: "Fix the parser",
+            opens: "example-org/example-repo#12",
             // Each move is a stop: the next key waits for the read it causes.
             keys: [100, 101, 102, 103, 104].map((number) => ({
               key: "j",

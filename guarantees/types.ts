@@ -95,6 +95,12 @@ export interface Opening extends Call {
   readonly ready?: string;
   readonly pause?: number;
   /**
+   * A thread whose details the interface reads as it opens, as
+   * `owner/name#number`: the first key waits until docket has sent that
+   * read.
+   */
+  readonly opens?: string;
+  /**
    * The recording module GitHub answers from once the clock first moves
    * on through a wait of docket's, as if something changed on GitHub
    * meanwhile.

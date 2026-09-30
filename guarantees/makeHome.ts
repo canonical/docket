@@ -34,13 +34,14 @@ const readLog = (log: string) =>
  * aliased per thread: `t0: repository(owner: "o", name: "n") {
  * pullRequest(number: 4) … }`.
  *
- * @throws Error naming the key when no such read is sent in `readWait`.
+ * @throws Error naming `cause`, such as the key, when no such read is
+ * sent in `readWait`.
  */
 async function waitForRead(
   log: string,
   sent: number,
   thread: string,
-  place: number,
+  cause: string,
 ): Promise<void> {
   const started = Date.now();
   while (Date.now() - started < readWait) {
@@ -52,7 +53,7 @@ async function waitForRead(
     if (read) return;
     await Bun.sleep(20);
   }
-  throw new Error(`key ${place} sent no read of ${thread}`);
+  throw new Error(`${cause} sent no read of ${thread}`);
 }
 
 /**
@@ -144,6 +145,7 @@ export default function makeHome(personalFile: string): Home {
       ready = "",
       pause = 250,
       changed,
+      opens,
       ...call
     }) {
       const { log, env } = prepare(call, {
@@ -173,6 +175,8 @@ export default function makeHome(personalFile: string): Home {
       });
       if (keys.length > 0) {
         await drawn;
+        // Past the log's first line, the time zone, every request counts.
+        if (opens) await waitForRead(log, 1, opens, "the opening");
         for (const [place, key] of keys.entries()) {
           await Bun.sleep(pause);
           if (child.exitCode !== null) {
@@ -185,7 +189,7 @@ export default function makeHome(personalFile: string): Home {
           else {
             const sent = readLog(log).length;
             child.terminal?.write(key.key);
-            await waitForRead(log, sent, key.reads, place + 1);
+            await waitForRead(log, sent, key.reads, `key ${place + 1}`);
           }
         }
         // The stand-in's clock moves on only once the last key is pressed.

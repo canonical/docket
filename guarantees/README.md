@@ -19,7 +19,7 @@ The unit tests beside the code pin behaviour from inside. The corpus pins it fro
 - a change: GitHub answers from a second recording once the clock first moves on through one of docket's waits, as if something changed on GitHub meanwhile;
 - the budget: every GraphQL answer says how many points are left, 4,900 of 5,000 unless the call names another figure.
 
-`makeHome.ts` also opens the terminal interface in a pseudo-terminal (`open`), as a person does with `docket` alone, and can press keys once it has drawn a given text. A key can name the read of details it causes: the next key, and the end of the keys, wait until the request log shows that read, so each move is a stop however slow the machine.
+`makeHome.ts` also opens the terminal interface in a pseudo-terminal (`open`), as a person does with `docket` alone, and can press keys once it has drawn a given text. A key can name the read of details it causes: the next key, and the end of the keys, wait until the request log shows that read, so each move is a stop however slow the machine. An opening can name the thread whose details the interface reads as it opens, and the first key waits for that read too.
 
 The recordings are written in GitHub's own response shapes, from GitHub's API, with neutral names only.
 
