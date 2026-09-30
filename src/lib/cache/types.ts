@@ -126,18 +126,6 @@ export interface RepoProgress {
   readonly stage: RepoStage;
 }
 
-/**
- * Who spends the points a request costs, which decides whether it goes
- * below the budget floor, the share of the hourly budget kept for the
- * user's own requests. `background` is docket's own spending, which stops
- * there: the refresh cycle, reading details ahead of the selection, and
- * the watch of the selected thread's repository. `asked` is what the user
- * or an agent asks for directly, which still spends from the reserve: the
- * selected thread's details, a full refresh, `show`, the read after a
- * write, the read of the viewer on opening, and every text command.
- */
-export type Spender = "background" | "asked";
-
 /** What the faces show of the cache's own state, whatever the provider. */
 export interface CacheStatus {
   /** When the data was last synced, as `CachedThreads` gives it. */
@@ -360,13 +348,19 @@ export interface Cache {
    */
   budget(): Budgets;
   /**
-   * Whether `spender` may spend points at the time asked, judged on the
-   * mirror before each request that spends them. Below the floor, docket's
-   * own background spending stops until the queries' budget resets, and
-   * the status says so, with the reset, unless the provider refused a
-   * request for its rate limit; what the user asks for still spends.
+   * Whether docket may spend points of its own at the time asked, judged
+   * on the mirror: false below the budget floor, the share of the hourly
+   * budget kept for the user's own requests, until the queries' budget
+   * resets, and the status then says so, with the reset, unless the
+   * provider refused a request for its rate limit. docket's own
+   * background spending asks it before each request: the refresh cycle,
+   * reading details ahead of the selection, and the watch of the selected
+   * thread's repository. What the user or an agent asks for directly never
+   * asks, and still spends from the reserve: the selected thread's
+   * details, a full refresh, `show`, the read after a write, the read of
+   * the viewer on opening, and every text command.
    */
-  maySpend(spender: Spender): boolean;
+  maySpend(): boolean;
   /**
    * Writes the budgets this process heard to the cache file, under the
    * fetch lock, when the file holds none as late and no other process

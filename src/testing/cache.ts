@@ -99,8 +99,7 @@ export function holdCache(
     },
     budget: () => ({}),
     // The floor the status holds, as a cache judging it would publish it.
-    maySpend: (spender) =>
-      spender === "asked" || status.paused?.reason !== "budget",
+    maySpend: () => status.paused?.reason !== "budget",
     keepBudget: async () => {},
     status: () => status,
     subscribe: (listener) => {

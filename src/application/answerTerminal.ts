@@ -78,7 +78,7 @@ export default async function answerTerminal(
         cache.keepBudget().catch(() => undefined);
       }
     },
-    () => cache.maySpend("background"),
+    () => cache.maySpend(),
   );
   const readWatched = async (): Promise<WatchedFiles> => {
     try {

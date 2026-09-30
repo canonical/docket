@@ -269,7 +269,7 @@ export default function createCache({
       // fetch that replaces them ends.
       publish();
       await save();
-      await fetchAll({ spend: () => maySpend("asked") });
+      await fetchAll();
     });
 
   /**
@@ -344,7 +344,7 @@ export default function createCache({
           const previous = entry(repo);
           if (!previous) return false;
           const value = await syncRepo(provider, repo, previous, at, {
-            spend: maySpend("background"),
+            spend: maySpend(),
             reconcile: false,
           });
           // Unchanged, the repository keeps its data, and its tag, which
@@ -393,7 +393,7 @@ export default function createCache({
       try {
         await load();
         if (!isFresh(maxAge)) {
-          await sync(maxAge, { spend: () => maySpend("asked") });
+          await sync(maxAge);
         }
         return shown;
       } catch (error) {
@@ -413,7 +413,7 @@ export default function createCache({
         // finds unchanged stays current and a change waits for the reset.
         // The floor is judged before each repository and before the checks.
         await sync(maxAge, {
-          spend: () => maySpend("background"),
+          spend: () => maySpend(),
           reconcile: !idle,
           checks: !idle,
         });

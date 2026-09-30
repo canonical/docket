@@ -38,16 +38,10 @@ describe("createBudgetRule", () => {
 
   it("stops background spending below the floor, and the status says until when", () => {
     const { rule, told } = judge();
-    expect(rule.maySpend("background")).toBe(false);
+    expect(rule.maySpend()).toBe(false);
     expect(told).toEqual([
       { paused: { until: fullBudget.resetAt, reason: "budget" } },
     ]);
-  });
-
-  it("lets what is asked for directly spend from the reserve, the status left alone", () => {
-    const { rule, told } = judge();
-    expect(rule.maySpend("asked")).toBe(true);
-    expect(told).toEqual([]);
   });
 
   it("leaves a rate-limit pause to its reset", () => {
@@ -57,7 +51,7 @@ describe("createBudgetRule", () => {
       paused: { until: later, reason: "rateLimit" as const },
     };
     const { rule, told } = judge(low, limited);
-    expect(rule.maySpend("background")).toBe(false);
+    expect(rule.maySpend()).toBe(false);
     expect(told).toEqual([]);
   });
 });

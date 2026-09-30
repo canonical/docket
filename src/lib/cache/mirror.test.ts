@@ -90,7 +90,7 @@ describe("the budget mirror of createCache", () => {
     const own = makeHearingProvider();
     const other = open(own.provider);
     await other.load();
-    expect(other.maySpend("background")).toBe(false);
+    expect(other.maySpend()).toBe(false);
     expect(other.status().paused).toEqual({
       until: fullBudget.resetAt,
       reason: "budget",
@@ -105,8 +105,7 @@ describe("the budget mirror of createCache", () => {
     answers.heard = { graphql: makeBudget(999) };
     const cache = open(provider);
     await cache.load();
-    expect(cache.maySpend("background")).toBe(false);
-    expect(cache.maySpend("asked")).toBe(true);
+    expect(cache.maySpend()).toBe(false);
     vi.mocked(provider.snapshot).mockClear();
     await cache.refresh("waking");
     expect(provider.snapshot).not.toHaveBeenCalled();
@@ -147,14 +146,14 @@ describe("the budget mirror of createCache", () => {
       },
     });
     await cache.refresh();
-    expect(cache.maySpend("background")).toBe(false);
+    expect(cache.maySpend()).toBe(false);
     expect(cache.status().paused).toEqual({
       until: fullBudget.resetAt,
       reason: "rateLimit",
     });
     answers.heard = { graphql: makeBudget(1000) };
     const fresh = open(provider);
-    expect(fresh.maySpend("background")).toBe(true);
+    expect(fresh.maySpend()).toBe(true);
     expect(fresh.status().paused).toBeUndefined();
   });
 

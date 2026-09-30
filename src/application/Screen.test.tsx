@@ -160,7 +160,7 @@ function viewOf(
 const createTerminalReader = (
   cache: Cache,
   readDetails: Parameters<typeof createDetailReader>[0],
-) => createDetailReader(readDetails, () => cache.maySpend("background"));
+) => createDetailReader(readDetails, () => cache.maySpend());
 
 /** The cache and readings a view reads from. */
 function cacheSourceOf({ source }: TerminalView) {

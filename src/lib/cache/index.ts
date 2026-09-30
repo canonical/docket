@@ -17,5 +17,4 @@ export type {
   CacheStatus,
   RepoProgress,
   RepoStage,
-  Spender,
 } from "./types.js";
