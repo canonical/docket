@@ -6,7 +6,12 @@
 
 import type { Repo, Settings } from "../lib/config/index.js";
 import type { FinishedThread } from "../lib/endings/index.js";
-import type { RepoEndings } from "../lib/finished/index.js";
+import {
+  type FinishedGrouping,
+  groupEndings,
+  listEndings,
+  type RepoEndings,
+} from "../lib/finished/index.js";
 import {
   alice,
   at,
@@ -117,4 +122,20 @@ export function repoEndings(
     finished: finished.filter((thread) => thread.repo === repo.repo),
     ...(invalid && repo.name === "docs" ? { invalidFile: true } : {}),
   }));
+}
+
+/**
+ * finished over the week to `finishedNow`, as alice sees it, grouped as
+ * asked; `invalid` marks the docs repository's file invalid.
+ */
+export function finishedList(
+  grouping: FinishedGrouping = "kind",
+  finished?: readonly FinishedThread[],
+  invalid = false,
+) {
+  return groupEndings(
+    listEndings(repoEndings(finished, invalid), finishedNow, "alice"),
+    { mode: "finished", window: { amount: 1, unit: "w" }, grouping },
+    finishedRepos,
+  );
 }

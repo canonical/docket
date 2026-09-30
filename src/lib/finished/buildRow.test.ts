@@ -31,6 +31,7 @@ describe("buildRow", () => {
       "target 5d",
       undefined,
     ]);
+    expect(row.targetHours).toBe(120);
     expect(row.verdict).toBe("within");
     expect(row.stacked).toBe(true);
   });

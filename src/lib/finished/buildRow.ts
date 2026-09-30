@@ -1,5 +1,9 @@
 import { describeAge } from "../activity/index.js";
-import { measureDuration, measureWorkingTime } from "../clock/index.js";
+import {
+  hourMilliseconds,
+  measureDuration,
+  measureWorkingTime,
+} from "../clock/index.js";
 import type { People, Settings } from "../config/index.js";
 import { type FinishedThread, measureFinished } from "../endings/index.js";
 import {
@@ -73,6 +77,8 @@ export default function buildRow(
           target: field(
             `target ${measured.target.amount}${measured.target.unit}`,
           ),
+          targetHours:
+            measureDuration(measured.target, time) / hourMilliseconds,
           verdict: measured.verdict,
         }
       : {}),

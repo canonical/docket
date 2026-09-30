@@ -84,6 +84,11 @@ export interface FinishedRow {
   readonly open: Field;
   /** Time to close's target, `target 5d`; absent when a label exempts the thread. */
   readonly target?: Field;
+  /**
+   * The same target in working hours, which a program reads: a week's
+   * length depends on the workdays of the repository's clock.
+   */
+  readonly targetHours?: number;
   /** How far past its target it closed, `4d over`; absent within it. */
   readonly over?: Field;
   /** Time to close's verdict; absent when a label exempts the thread. */
