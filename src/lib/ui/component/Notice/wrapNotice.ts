@@ -1,4 +1,4 @@
-import wrapText from "../../wrapText.js";
+import { fitField } from "../../fit/index.js";
 
 /** A notice's two parts, each wrapped into the lines it is drawn on. */
 export interface WrappedNotice {
@@ -30,7 +30,11 @@ export default function wrapNotice(
   room: number,
 ): WrappedNotice {
   return {
-    reason: wrapText(`✗ ${reason}`, room),
-    recovery: wrapText(`Recovery: ${keepCommandsWhole(recovery)}`, room),
+    reason: fitField({ text: `✗ ${reason}`, kind: "reason" }, "block", room),
+    recovery: fitField(
+      { text: `Recovery: ${keepCommandsWhole(recovery)}`, kind: "recovery" },
+      "block",
+      room,
+    ),
   };
 }

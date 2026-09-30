@@ -33,7 +33,11 @@ describe("PaneHeader", () => {
 
   it("cuts an address that leaves no room with an ellipsis", async () => {
     const screen = await draw(
-      <PaneHeader title="activity" address="1w · by repo" width={16} />,
+      <PaneHeader
+        title={{ text: "activity", kind: "words" }}
+        address={{ text: "1w · by repo", kind: "words" }}
+        width={16}
+      />,
       16,
     );
     expect(screen.lines.at(0)).toBe("activity 1w · b…");

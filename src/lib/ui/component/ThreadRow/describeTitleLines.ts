@@ -1,10 +1,8 @@
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import markPerson from "../../markPerson.js";
+import { fitField, markPerson } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
-import trimText from "../../trimText.js";
 import type { Piece } from "../../types.js";
-import wrapText from "../../wrapText.js";
 import type { ThreadRowProps } from "./types.js";
 
 /** The cells between the title and the group at its right, and inside the group. */
@@ -73,10 +71,10 @@ export default function describeTitleLines(
         ];
   if (!selected) {
     const room = right.length > 0 ? inner - rightCells - gutter : inner;
-    return [pair(italic(trimText(row.title.text, Math.max(0, room))))];
+    return [pair(italic(fitField(row.title, "line", Math.max(0, room))))];
   }
-  const titles = wrapText(row.title.text, inner);
-  // The cells of the last line: wrapText gives one line at least.
+  const titles = fitField(row.title, "block", inner);
+  // The cells of the last line: a wrapped title takes one line at least.
   const lastCells = titles.reduce((_, title) => Bun.stringWidth(title), 0);
   if (right.length > 0 && lastCells + gutter + rightCells > inner) {
     return [

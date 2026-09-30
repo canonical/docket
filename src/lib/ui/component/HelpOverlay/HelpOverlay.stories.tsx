@@ -14,7 +14,7 @@ export default meta;
 export const Keys: Story<HelpOverlayProps> = {
   args: {
     commands: everyCommand,
-    note: "windows are counted in working time",
+    note: { text: "windows are counted in working time", kind: "words" },
     width: 40,
   },
 };

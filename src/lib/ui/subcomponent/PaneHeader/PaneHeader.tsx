@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import trimText from "../../trimText.js";
+import { fitField } from "../../fit/index.js";
 import type { PaneHeaderProps } from "./types.js";
 
 /**
@@ -12,13 +12,11 @@ import type { PaneHeaderProps } from "./types.js";
  *
  * @implements apps_docket.subcomponent.pane-header
  */
-const PaneHeader = ({
-  title,
-  address = "",
-  width,
-}: PaneHeaderProps): ReactNode => {
-  const left = trimText(title, width);
-  const right = trimText(address, width - Bun.stringWidth(left) - 1);
+const PaneHeader = ({ title, address, width }: PaneHeaderProps): ReactNode => {
+  const left = fitField(title, "line", width);
+  const right = address
+    ? fitField(address, "line", width - Bun.stringWidth(left) - 1)
+    : "";
   const gap = Math.max(
     0,
     width - Bun.stringWidth(left) - Bun.stringWidth(right),

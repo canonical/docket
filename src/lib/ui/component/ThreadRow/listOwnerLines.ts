@@ -1,6 +1,6 @@
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import markPerson from "../../markPerson.js";
+import { markPerson } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import type { ThreadRowProps } from "./types.js";

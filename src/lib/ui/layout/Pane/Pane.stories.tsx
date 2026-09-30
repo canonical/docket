@@ -24,13 +24,23 @@ const width = 40;
 export const NothingOwed: Story<PaneProps> = {
   args: {
     width,
-    header: <PaneHeader title="owed" width={width} />,
+    header: (
+      <PaneHeader title={{ text: "owed", kind: "words" }} width={width} />
+    ),
     children: (
       <box paddingTop={1}>
-        <EmptyState message="nothing owed" width={width} />
+        <EmptyState
+          message={{ text: "nothing owed", kind: "words" }}
+          width={width}
+        />
       </box>
     ),
-    counts: <CountsLine summary="0 over · 0 soon · 0 on track" width={width} />,
+    counts: (
+      <CountsLine
+        summary={{ text: "0 over · 0 soon · 0 on track", kind: "words" }}
+        width={width}
+      />
+    ),
     status: (
       <StatusLine
         status={{
@@ -56,11 +66,13 @@ export const NothingOwed: Story<PaneProps> = {
 export const Help: Story<PaneProps> = {
   args: {
     ...NothingOwed.args,
-    header: <PaneHeader title="help" width={width} />,
+    header: (
+      <PaneHeader title={{ text: "help", kind: "words" }} width={width} />
+    ),
     help: (
       <HelpOverlay
         commands={owedCommands}
-        note="windows are counted in working time"
+        note={{ text: "windows are counted in working time", kind: "words" }}
         width={width}
       />
     ),

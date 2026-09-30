@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { minColumns } from "../../constants.js";
-import wrapText from "../../wrapText.js";
+import { fitField } from "../../fit/index.js";
 import type { PaneProps } from "./types.js";
 
 /**
@@ -29,7 +29,11 @@ const Pane = ({
   >
     {width < minColumns ? (
       <text fg={tokens["color.text"]}>
-        {wrapText(`docket needs ${minColumns} columns`, width).join("\n")}
+        {fitField(
+          { text: `docket needs ${minColumns} columns`, kind: "words" },
+          "block",
+          width,
+        ).join("\n")}
       </text>
     ) : (
       <>

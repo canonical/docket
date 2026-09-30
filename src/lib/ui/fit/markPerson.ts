@@ -1,7 +1,7 @@
-import type { Owner, PersonGroup } from "../owed/index.js";
-import { tokens } from "../tokens/index.js";
-import trimText from "./trimText.js";
-import type { Piece } from "./types.js";
+import type { Owner, PersonGroup } from "../../owed/index.js";
+import { tokens } from "../../tokens/index.js";
+import type { Piece } from "../types.js";
+import fitField from "./fitField.js";
 
 /**
  * Each group's mark and hue. The fill reads as distance from you: the
@@ -20,13 +20,17 @@ const looks: Readonly<Record<PersonGroup, readonly [string, string]>> = {
 
 /**
  * A login as every list draws it: its group's mark, a space, then the
- * login cut to `cells` display cells, all in the group's hue. The login
- * gives way and the mark never does, so a bot never passes for a person.
- * An owner that names no person, such as `unassigned` or a team the
- * viewer is not in, stays plain text.
+ * login, all in the group's hue. Given `cells`, the login is fitted to
+ * them as its kind is on one line; without, it is whole, as a block names
+ * people. The login gives way and the mark never does, so a bot never
+ * passes for a person. An owner that names no person, such as
+ * `unassigned` or a team the viewer is not in, stays plain text.
  */
-export default function markPerson(owner: Owner, cells: number): Piece {
-  const login = trimText(owner.text, cells);
+export default function markPerson(owner: Owner, cells?: number): Piece {
+  const login =
+    cells === undefined
+      ? fitField(owner, "block", Number.POSITIVE_INFINITY).join(" ")
+      : fitField(owner, "line", cells);
   if (!("group" in owner)) return { text: login, fg: tokens["color.text"] };
   const [mark, hue] = looks[owner.group];
   return { text: `${mark} ${login}`, fg: hue };

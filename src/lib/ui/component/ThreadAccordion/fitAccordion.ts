@@ -1,9 +1,7 @@
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
-import fitPieces from "../../fitPieces.js";
-import trimText from "../../trimText.js";
+import { fitPieces, trimText, wrapText } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
-import wrapText from "../../wrapText.js";
 import type { DetailLine, DetailText } from "./types.js";
 
 /** One line's runs as they fill the room: wrapped over lines, or trimmed to one. */

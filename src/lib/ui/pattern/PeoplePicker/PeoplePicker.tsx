@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { Notice } from "../../component/index.js";
-import fitPieces from "../../fitPieces.js";
-import markPerson from "../../markPerson.js";
+import { fitPieces, markPerson } from "../../fit/index.js";
 import { pickerIndent as indent, shownOptions } from "./constants.js";
 import type { PeoplePickerProps } from "./types.js";
 
@@ -76,7 +75,7 @@ const PeoplePicker = ({
                     text: `${tokens[ticked ? "glyph.ticked" : "glyph.unticked"]} `,
                     fg: tokens["color.text"],
                   },
-                  markPerson(owner, Number.POSITIVE_INFINITY),
+                  markPerson(owner),
                 ],
                 room,
               ).map(({ text, fg }, run) => (

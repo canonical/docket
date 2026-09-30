@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tokens } from "../tokens/index.js";
+import { tokens } from "../../tokens/index.js";
 import markPerson from "./markPerson.js";
 
 const person = (

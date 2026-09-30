@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
 import type { RepoStage } from "../../../cache/index.js";
 import { tokens } from "../../../tokens/index.js";
-import fitPieces from "../../fitPieces.js";
-import trimText from "../../trimText.js";
+import { fitField, fitPieces } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
-import wrapText from "../../wrapText.js";
 import describeStage from "./describeStage.js";
 import type { RefreshStagesProps } from "./types.js";
 
@@ -16,7 +14,9 @@ function fitStage(stage: RepoStage, room: number): Piece[][] {
   const pieces = describeStage(stage);
   if (stage.kind !== "failed") return [fitPieces(pieces, room)];
   return pieces.flatMap((piece) =>
-    wrapText(piece.text, room).map((text) => [{ ...piece, text }]),
+    fitField({ text: piece.text, kind: "reason" }, "block", room).map(
+      (text) => [{ ...piece, text }],
+    ),
   );
 }
 
@@ -36,7 +36,11 @@ const RefreshStages = ({
 }: RefreshStagesProps): ReactNode => {
   const shown = stages.map(({ repo, stage }) => ({
     repo,
-    name: trimText(names[repo] ?? repo, width),
+    name: fitField(
+      { text: names[repo] ?? repo, kind: "identifier" },
+      "line",
+      width,
+    ),
     stage,
   }));
   const column =

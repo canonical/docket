@@ -1,4 +1,4 @@
-import { sanitize } from "../text/index.js";
+import { sanitize } from "../../text/index.js";
 import trimText from "./trimText.js";
 
 /** A space that joins two words so no line breaks between them. */

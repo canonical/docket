@@ -196,9 +196,12 @@ function exportsOf(source: ts.SourceFile): Exports {
         }
       }
     } else if (hasModifier(statement, ts.SyntaxKind.ExportKeyword)) {
+      // An overload's signature declares no value: the body that follows
+      // it is the one export.
       if (
         ts.isInterfaceDeclaration(statement) ||
-        ts.isTypeAliasDeclaration(statement)
+        ts.isTypeAliasDeclaration(statement) ||
+        (ts.isFunctionDeclaration(statement) && !statement.body)
       ) {
         continue;
       }
@@ -541,6 +544,11 @@ const allowed: Record<string, string> = {
   "src/lib/owed/types.ts":
     "export type Group = string;\nexport interface Kind {}",
   "src/lib/owed/constants.ts": "export const limit = 3;",
+  "src/lib/owed/fitRow.ts": [
+    "export default function fitRow(row: string): string;",
+    "export default function fitRow(row: number): number;",
+    "export default function fitRow(row: string | number) { return row; }",
+  ].join("\n"),
   "src/lib/owed/index.ts": [
     'export { default as rows } from "./rows.js";',
     'export type { Group } from "./types.js";',

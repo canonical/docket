@@ -421,18 +421,22 @@ export default function Screen({
       />
     );
   }
-  const summary = (owed ?? listed)?.summary.text;
+  const summary = (owed ?? listed)?.summary;
 
   return (
     <Pane
       width={width}
       header={
         help ? (
-          <PaneHeader title="help" width={width} />
+          <PaneHeader title={{ text: "help", kind: "words" }} width={width} />
         ) : (
           <PaneHeader
-            title={editor.title ?? header.title.text}
-            address={editor.title ? undefined : header.address?.text}
+            title={
+              editor.title
+                ? { text: editor.title, kind: "words" }
+                : header.title
+            }
+            address={editor.title ? undefined : header.address}
             width={width}
           />
         )
@@ -464,7 +468,10 @@ export default function Screen({
         help ? (
           <HelpOverlay
             commands={bound}
-            note="windows are counted in working time"
+            note={{
+              text: "windows are counted in working time",
+              kind: "words",
+            }}
             width={width}
           />
         ) : undefined

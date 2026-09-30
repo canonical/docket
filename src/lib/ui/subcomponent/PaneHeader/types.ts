@@ -1,3 +1,5 @@
+import type { Field } from "../../../owed/index.js";
+
 /** Props for the PaneHeader subcomponent. */
 export interface PaneHeaderProps {
   /**
@@ -5,14 +7,14 @@ export interface PaneHeaderProps {
    * (`owed`, `activity`) or `help`.
    * Maps to DSL role: mode name, help title (cardinality: 1)
    */
-  title: string;
+  title: Field;
   /**
    * The mode's address, right-aligned: its grouping, such as `by owner`,
    * and in activity its window first, such as `24h · by kind`. Absent for
    * owed without a grouping, and for help.
    * Maps to DSL role: address (cardinality: 0..1)
    */
-  address?: string;
+  address?: Field;
   /** The width of the pane, in display cells. */
   width: number;
 }

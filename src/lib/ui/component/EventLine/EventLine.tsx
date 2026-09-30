@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import fitPieces from "../../fitPieces.js";
-import markPerson from "../../markPerson.js";
+import { fitPieces, markPerson } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
@@ -34,7 +33,7 @@ function describeWhat({
   }
   const tone = event.bot ? tokens["color.text.muted"] : tokens["color.text"];
   return [
-    ...(actor ? [markPerson(actor, Number.POSITIVE_INFINITY)] : []),
+    ...(actor ? [markPerson(actor)] : []),
     { text: actor ? ` ${action.text}` : action.text, fg: tone },
   ];
 }

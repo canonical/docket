@@ -9,7 +9,7 @@ import type { WaitRow } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
 import describeClock from "../../describeClock.js";
-import trimText from "../../trimText.js";
+import { fitField } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import { Margin } from "../Margin/index.js";
@@ -105,7 +105,12 @@ const Loaded = ({
     return (
       <Lines
         lines={[
-          [{ text: trimText(paused, room), fg: tokens["color.text.muted"] }],
+          [
+            {
+              text: fitField({ text: paused, kind: "words" }, "line", room),
+              fg: tokens["color.text.muted"],
+            },
+          ],
         ]}
         stroke={stroke}
         onLines={onLines}
@@ -168,7 +173,11 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
         ? failure.message.replace(/\.$/, "")
         : String(failure);
     const failed: Piece = {
-      text: trimText(`${tokens["glyph.failed"]} failed: ${reason}`, room),
+      text: fitField(
+        { text: `${tokens["glyph.failed"]} failed: ${reason}`, kind: "reason" },
+        "line",
+        room,
+      ),
       fg: tokens["color.text.error"],
     };
     const shown =

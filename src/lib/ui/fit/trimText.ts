@@ -1,4 +1,4 @@
-import { sanitize } from "../text/index.js";
+import { sanitize } from "../../text/index.js";
 
 const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
 

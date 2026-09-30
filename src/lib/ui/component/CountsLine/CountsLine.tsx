@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import trimText from "../../trimText.js";
+import { fitField } from "../../fit/index.js";
 import type { CountsLineProps } from "./types.js";
 
 /**
@@ -12,7 +12,7 @@ import type { CountsLineProps } from "./types.js";
  * @implements apps_docket.component.counts_line
  */
 const CountsLine = ({ summary, width }: CountsLineProps): ReactNode => (
-  <text fg={tokens["color.text"]}>{trimText(summary, width)}</text>
+  <text fg={tokens["color.text"]}>{fitField(summary, "line", width)}</text>
 );
 
 export default CountsLine;

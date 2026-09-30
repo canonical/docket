@@ -2,10 +2,8 @@ import type { ReactNode } from "react";
 import type { WaitState } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import fitPieces from "../../fitPieces.js";
-import markPerson from "../../markPerson.js";
+import { fitField, fitPieces, markPerson } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
-import trimText from "../../trimText.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import { Margin } from "../Margin/index.js";
@@ -46,8 +44,9 @@ function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
   const figure = row.distance.text;
   const kinds =
     "wait" in row ? [row.threadKind.text, row.kind.text] : [row.kind.text];
-  const words = trimText(
-    [row.reference.text, ...kinds].join(" "),
+  const words = fitField(
+    { text: [row.reference.text, ...kinds].join(" "), kind: "identifier" },
+    "line",
     inner - Bun.stringWidth(figure) - 1,
   );
   // The mark and the space after it take two cells beside the login.

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import fitPieces from "../../fitPieces.js";
-import markPerson from "../../markPerson.js";
+import { fitPieces, markPerson } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import describeDetails from "./describeDetails.js";
@@ -35,7 +34,7 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
     { text, fg: colours[kind] },
     ...people.flatMap((person, place) => [
       { text: place === 0 ? " " : ", ", fg: plain },
-      markPerson(person, Number.POSITIVE_INFINITY),
+      markPerson(person),
     ]),
   ];
 }

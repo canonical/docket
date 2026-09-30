@@ -9,7 +9,7 @@ import { tokens } from "../../../tokens/index.js";
 import type { Message, Thread, ThreadSummary } from "../../../waits/index.js";
 import { loginCells } from "../../constants.js";
 import describeClock from "../../describeClock.js";
-import markPerson from "../../markPerson.js";
+import { markPerson } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type {
   DetailLine,
@@ -61,7 +61,7 @@ const nameReviewer = (reviewer: Reviewer) =>
 const listPeople = (owners: readonly Owner[]): Piece[] =>
   owners.flatMap((owner, place) => [
     ...(place === 0 ? [] : [plain(", ")]),
-    markPerson(owner, Number.POSITIVE_INFINITY),
+    markPerson(owner),
   ]);
 
 /**
@@ -125,7 +125,7 @@ function describeReply(row: WaitRow, { now, timezone }: Reading) {
   return [
     ...describeCutOwners(row),
     trimmed(
-      markPerson(row.author, Number.POSITIVE_INFINITY),
+      markPerson(row.author),
       muted(` · ${describeAge(awaited.at, now)} ago`),
     ),
     ...(awaited.text ? [wrapped(plain(awaited.text))] : []),
@@ -194,11 +194,7 @@ function describeReview(
   return [
     ...describeCutOwners(row),
     row.requester
-      ? trimmed(
-          muted("asked by "),
-          markPerson(row.requester, Number.POSITIVE_INFINITY),
-          muted(age),
-        )
+      ? trimmed(muted("asked by "), markPerson(row.requester), muted(age))
       : trimmed(muted(`asked${age}`)),
     trimmed(plain(count(pushes, "push since", "pushes since")), ...changes),
     detail ? describeChecks(detail) : describeSnapshotChecks(thread),
@@ -220,9 +216,7 @@ function describeClose(row: WaitRow, { now }: Reading) {
     ),
     trimmed(
       plain(`last activity ${describeAge(thread.updatedAt, now)} ago`),
-      ...(row.lastActor
-        ? [plain(" · "), markPerson(row.lastActor, Number.POSITIVE_INFINITY)]
-        : []),
+      ...(row.lastActor ? [plain(" · "), markPerson(row.lastActor)] : []),
     ),
     wrapped(plain(`labels ${labels}`)),
   ];
@@ -256,10 +250,7 @@ function describeRest(
       ...(latest
         ? [
             plain(" · "),
-            markPerson(
-              describePerson(latest.author, people, viewer),
-              Number.POSITIVE_INFINITY,
-            ),
+            markPerson(describePerson(latest.author, people, viewer)),
           ]
         : []),
     ),

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import markPerson from "../../markPerson.js";
+import { markPerson } from "../../fit/index.js";
 import type { GroupHeadingProps } from "./types.js";
 
 /**

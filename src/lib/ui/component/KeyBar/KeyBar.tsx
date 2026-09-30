@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import fitPieces from "../../fitPieces.js";
+import { fitPieces } from "../../fit/index.js";
 import type { KeyBarProps } from "./types.js";
 
 /** A run of the bar's text: a key, its label, or the gap between hints. */

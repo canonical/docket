@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
+import { fitField } from "../../fit/index.js";
 import type { KeyCommand } from "../../hooks/index.js";
-import trimText from "../../trimText.js";
 import { GroupHeading } from "../GroupHeading/index.js";
 import type { HelpOverlayProps } from "./types.js";
 
@@ -48,7 +48,11 @@ const HelpOverlay = ({
             width={width}
           />
           {lines.map((line) => {
-            const keys = trimText(writeKeys(line), width - indent);
+            const keys = fitField(
+              { text: writeKeys(line), kind: "words" },
+              "line",
+              width - indent,
+            );
             const gap = " ".repeat(
               Math.max(1, keyColumn - Bun.stringWidth(keys)),
             );
@@ -59,12 +63,16 @@ const HelpOverlay = ({
                   {pad}
                   {keys}
                   {gap}
-                  {trimText(line.label, room)}
+                  {fitField({ text: line.label, kind: "words" }, "line", room)}
                 </text>
                 {line.notes.map((each) => (
                   <text key={each} fg={tokens["color.text"]}>
                     {notePad}
-                    {trimText(each, width - notePad.length)}
+                    {fitField(
+                      { text: each, kind: "words" },
+                      "line",
+                      width - notePad.length,
+                    )}
                   </text>
                 ))}
               </box>
@@ -74,7 +82,7 @@ const HelpOverlay = ({
       ))}
       <text marginTop={1} fg={tokens["color.text"]}>
         {pad}
-        {trimText(note, width - indent)}
+        {fitField(note, "line", width - indent)}
       </text>
     </box>
   );
