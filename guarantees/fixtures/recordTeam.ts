@@ -14,20 +14,28 @@ import {
 
 const repo = "example-org/example-repo";
 const docs = "example-org/example-docs";
+/**
+ * When GitHub last recorded a change to dave's pull request, and to those
+ * like it.
+ */
+const lastChange = "2026-09-28T09:35:00Z";
 
 /**
  * Two watched repositories on the Monday 28 September 2026: a pull
  * request dave opened from a fork, assigned to alice, with bob asked for
  * a review, failing checks and second in a stack of three; a pull request
  * bob opened and alice merged on Sunday; an issue carol opened on Friday;
- * and a documentation issue alice opened and a bot labelled. `words` gives the text written on GitHub, and `tag` the
- * entity tag the check for changes answers with, and `crowd` how many more
- * pull requests like dave's wait on bob's review.
+ * and a documentation issue alice opened and a bot labelled. `words`
+ * gives the text written on GitHub, and `tag` the entity tag the check
+ * for changes answers with, `crowd` how many more pull requests like
+ * dave's wait on bob's review, and `changedAt` when GitHub last recorded
+ * a change to dave's.
  */
 export default function recordTeam(
   words: Words,
   tag = "first",
   crowd = 0,
+  changedAt = lastChange,
 ): Recording {
   const parserFix = {
     ...buildIssueNode({
@@ -35,7 +43,7 @@ export default function recordTeam(
       url: `https://github.com/${repo}/pull/12`,
       title: words.title,
       createdAt: "2026-09-21T08:00:00Z",
-      updatedAt: "2026-09-28T09:35:00Z",
+      updatedAt: changedAt,
       author: "dave",
       assignees: ["alice"],
       labels: [words.label],
@@ -289,6 +297,7 @@ export default function recordTeam(
     return {
       ...parserFix,
       number,
+      updatedAt: lastChange,
       url: `https://github.com/${repo}/pull/${number}`,
       title: `${words.title} ${number}`,
     };

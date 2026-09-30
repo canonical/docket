@@ -55,6 +55,16 @@ export interface Call {
   readonly recording: string;
   /** The machine's time zone, which no output may depend on. */
   readonly machineZone?: string;
+  /**
+   * How many of GitHub's hourly 5,000 points every GraphQL answer says
+   * are left, 4,900 unless given.
+   */
+  readonly remaining?: number;
+}
+
+/** A minute passing while keys are pressed, as a person pausing. */
+export interface Pause {
+  readonly pause: "minute";
 }
 
 /** How the terminal interface is opened, and what a person does in it. */
@@ -67,11 +77,18 @@ export interface Opening extends Call {
   /**
    * The keys pressed once the interface has drawn `ready`, one at a time,
    * each `pause` milliseconds of real time after the last, 250 unless
-   * given: the stand-in's clock stands still until the last is pressed.
+   * given: the stand-in's clock stands still until the last is pressed,
+   * but for each `Pause` among them, which moves it on by a minute.
    */
-  readonly keys?: readonly string[];
+  readonly keys?: readonly (string | Pause)[];
   readonly ready?: string;
   readonly pause?: number;
+  /**
+   * The recording module GitHub answers from once the clock first moves
+   * on through a wait of docket's, as if something changed on GitHub
+   * meanwhile.
+   */
+  readonly changed?: string;
 }
 
 /** A temporary home, and docket run in it. */

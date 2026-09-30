@@ -12,7 +12,12 @@ import type { Outcome, SentRequest } from "./types.js";
  * most every 30 minutes once 20 minutes have passed, sends nothing else,
  * and so spends no points while nothing changes; scrolled through a list
  * longer than one read, it reads the details of at most 14 threads a
- * request, a point each.
+ * request, a point each, and a thread's details once for each change
+ * GitHub records to it: never again when the selection comes back to it
+ * unchanged, however long after, and alone when it changes. Below a
+ * fifth of the hourly budget it sends no GraphQL request until the
+ * budget resets but the reads of the selected thread's details, one
+ * thread each, while the free checks for changes go on.
  *
  * The budget, per repository, is what docket's page sizes cost: a whole
  * fetch asks for 50 threads a page and costs 8 points, a fetch of what
@@ -121,12 +126,13 @@ const isCallRead = (request: SentRequest) =>
 const isDetailRead = (request: SentRequest) =>
   ["Detail", "Details"].includes(nameOperation(request) ?? "");
 
-/**
- * How many threads a request reads the details of: one alias each, such
- * as `t0: repository(…)`.
- */
-const countThreads = ({ body }: SentRequest) =>
-  String(body.query).match(/\bt\d+: repository\(/g)?.length ?? 0;
+/** The threads a request reads the details of, as `owner/name#number`. */
+const listThreads = ({ body }: SentRequest) =>
+  [
+    ...String(body.query).matchAll(
+      /\bt\d+: repository\(owner: "([^"]+)", name: "([^"]+)"\) \{ \w+\(number: (\d+)\)/g,
+    ),
+  ].map(([, owner, name, number]) => `${owner}/${name}#${number}`);
 
 /** A read of details asks for at most 14 threads, which cost a point. */
 const detailWindow = 14;
@@ -151,8 +157,12 @@ const home = makeHome(readFileSync(findFixture("team.yaml"), "utf8"));
 // calls above or with the other pane.
 const idleHome = makeHome(readFileSync(findFixture("team.yaml"), "utf8"));
 const scrollHome = makeHome(readFileSync(findFixture("team.yaml"), "utf8"));
+const changeHome = makeHome(readFileSync(findFixture("team.yaml"), "utf8"));
+const floorHome = makeHome(readFileSync(findFixture("team.yaml"), "utf8"));
 afterAll(() => {
-  for (const each of [home, idleHome, scrollHome]) each.remove();
+  for (const each of [home, idleHome, scrollHome, changeHome, floorHome]) {
+    each.remove();
+  }
 });
 
 // A refresh every 120 seconds: each call is two minutes after the last,
@@ -222,21 +232,51 @@ describe("request-budget", () => {
   // so a run that selects none of them opens none.
   describe("an open pane", () => {
     const minutes = 10;
+    const opened = "2026-09-30T12:00:00Z";
     let idleDay: Promise<Outcome>;
     let scrolled: Promise<Outcome>;
+    let changed: Promise<Outcome>;
+    let floored: Promise<Outcome>;
     beforeAll(() => {
       idleDay = idleHome.open({
         now: "2026-09-29T10:00:00Z",
         until: "2026-09-30T10:00:00Z",
         recording: "team",
       });
+      // Down through the list, a minute's pause, then back up over the
+      // threads already read.
       scrolled = scrollHome.open({
-        now: "2026-09-30T12:00:00Z",
+        now: opened,
         until: `2026-09-30T12:${minutes}:00Z`,
         recording: "crowded",
         ready: "Fix the parser",
-        keys: [..."jjjjjjjjjjjjjjjjjjjjkkkkk"],
+        keys: [...Array(20).fill("j"), { pause: "minute" }, ..."kkkkkkkkkk"],
       });
+      // GitHub records a change to dave's pull request while the pane waits.
+      changed = changeHome.open({
+        now: opened,
+        until: `2026-09-30T12:${minutes}:00Z`,
+        recording: "crowded",
+        changed: "crowdedChanged",
+      });
+      // A call leaves 900 of the 5,000 points, below the floor of 1,000,
+      // in the cache the pane opens on.
+      floored = floorHome
+        .call(["owed", "--format", "json"], {
+          now: opened,
+          recording: "crowded",
+          remaining: 900,
+        })
+        .then(() =>
+          floorHome.open({
+            now: opened,
+            until: "2026-09-30T12:30:00Z",
+            recording: "crowded",
+            remaining: 900,
+            ready: "Fix the parser",
+            keys: [..."jjjjj"],
+          }),
+        );
     });
     /** The requests an idle day sent once the pane was idle. */
     const sentIdle = async () => {
@@ -278,7 +318,47 @@ describe("request-budget", () => {
       for (const { body } of reads) expect(countPoints(body)).toBe(1);
       // The list holds more threads than a read asks for, so the read on
       // opening, of the selected thread and those around it, is full.
-      expect(Math.max(...reads.map(countThreads))).toBe(detailWindow);
+      expect(Math.max(...reads.map((read) => listThreads(read).length))).toBe(
+        detailWindow,
+      );
+    }, 180_000);
+
+    it("never reads an unchanged thread's details again, however long after the selection comes back to it", async () => {
+      const { requests } = await scrolled;
+      const read = requests.filter(isDetailRead).flatMap(listThreads);
+      expect(read.length).toBeGreaterThan(detailWindow);
+      expect(new Set(read).size).toBe(read.length);
+    }, 180_000);
+
+    it("reads again, alone, the details of the thread GitHub changed", async () => {
+      const { code, requests } = await changed;
+      expect(code).toBe(0);
+      const [first, ...after] = requests.filter(isDetailRead);
+      expect(first && listThreads(first)).toContain(
+        "example-org/example-repo#12",
+      );
+      expect(after.map(listThreads)).toEqual([["example-org/example-repo#12"]]);
+    }, 180_000);
+
+    it("sends no GraphQL request below the budget floor until the reset but the selected thread's reads, one thread each, while the free checks go on", async () => {
+      const { code, requests } = await floored;
+      expect(code).toBe(0);
+      const spent = requests.filter(
+        (request) => request.url.endsWith("/graphql") && !isCallRead(request),
+      );
+      expect(spent.length).toBeGreaterThan(1);
+      for (const request of spent) {
+        expect(isDetailRead(request)).toBe(true);
+        expect(listThreads(request)).toHaveLength(1);
+      }
+      const checks = requests.filter(
+        ({ method, url }) =>
+          method === "GET" && new URL(url).pathname.endsWith("/issues"),
+      );
+      const firstCycle = Date.parse(opened) + 120_000;
+      expect(
+        checks.filter(({ at }) => Date.parse(at) >= firstCycle).length,
+      ).toBeGreaterThan(0);
     }, 180_000);
   });
 

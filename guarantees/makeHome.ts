@@ -38,7 +38,7 @@ export default function makeHome(personalFile: string): Home {
   let calls = 0;
   /** A fresh request log, and the environment a call runs in. */
   const prepare = (
-    { now, recording, machineZone = "UTC" }: Call,
+    { now, recording, machineZone = "UTC", remaining }: Call,
     extra: Record<string, string> = {},
   ) => {
     calls += 1;
@@ -56,6 +56,9 @@ export default function makeHome(personalFile: string): Home {
       GUARANTEES_NOW: now,
       GUARANTEES_RECORDING: recording,
       GUARANTEES_REQUESTS: log,
+      ...(remaining === undefined
+        ? {}
+        : { GUARANTEES_REMAINING: String(remaining) }),
       // Set by `guarantees:prove` alone, to break the stand-in.
       ...(process.env.GUARANTEES_BREAK
         ? { GUARANTEES_BREAK: process.env.GUARANTEES_BREAK }
@@ -97,11 +100,19 @@ export default function makeHome(personalFile: string): Home {
       ]);
       return conclude(log, code, out, err);
     },
-    async open({ until, keys = [], ready = "", pause = 250, ...call }) {
+    async open({
+      until,
+      keys = [],
+      ready = "",
+      pause = 250,
+      changed,
+      ...call
+    }) {
       const { log, env } = prepare(call, {
         GUARANTEES_UNTIL: until,
         TERM: "xterm-256color",
         ...(keys.length > 0 ? { GUARANTEES_KEYS: "1" } : {}),
+        ...(changed ? { GUARANTEES_CHANGED: changed } : {}),
       });
       let out = "";
       const { promise: drawn, resolve: showDrawn } =
@@ -131,7 +142,8 @@ export default function makeHome(personalFile: string): Home {
               `docket ended before key ${place + 1} of ${keys.length} was pressed`,
             );
           }
-          child.terminal?.write(key);
+          if (typeof key === "string") child.terminal?.write(key);
+          else child.kill("SIGUSR1");
         }
         // The stand-in's clock moves on only once the last key is pressed.
         child.kill("SIGUSR2");
