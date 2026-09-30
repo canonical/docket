@@ -85,7 +85,7 @@ export function holdCache(
     readViewer: async () => ({ login: "alice", syncedAt }),
     refresh: async () => {},
     refreshIfChanged: async () => false,
-    fullRefresh: async () => {},
+    fullRefresh: async () => false,
     watch: () => () => {},
     patchAssignees: ({ repo, number }, assignees) => {
       const id = `${repo}#${number}`;

@@ -31,6 +31,8 @@ interface Entry {
    * asks for it again.
    */
   failed: boolean;
+  /** True once they arrived, or failed. */
+  settled: boolean;
 }
 
 /** Threads' details asked for one at a time, read together. */
@@ -79,6 +81,11 @@ export interface DetailQueue {
    * when GitHub refuses every request; what waits is sent once it is not.
    */
   pause(paused: boolean): void;
+  /**
+   * Forgets the details that arrived, and the reads that failed, so every
+   * thread is due again, as a full refresh asks; reads under way stay.
+   */
+  forget(): void;
   /** Sends nothing more, when the pane closes. */
   stop(): void;
 }
@@ -148,6 +155,7 @@ export default function createDetailQueue(
       settle: { resolve, reject },
       awaited: false,
       failed: false,
+      settled: false,
     };
     const key = identifyThread(thread);
     entries.set(key, entry);
@@ -195,9 +203,11 @@ export default function createDetailQueue(
         const detail = found.get(key);
         if (!detail) {
           entry.failed = true;
+          entry.settled = true;
           entry.settle.reject(new Error(`${key} was not found.`));
           continue;
         }
+        entry.settled = true;
         entry.settle.resolve(detail);
         arrivals.set(key, (arrivals.get(key) ?? 0) + 1);
       }
@@ -206,6 +216,7 @@ export default function createDetailQueue(
         if (entries.get(key) !== entry) continue;
         round?.answered.add(key);
         entry.failed = true;
+        entry.settled = true;
         entry.settle.reject(reason);
       }
     }
@@ -271,6 +282,11 @@ export default function createDetailQueue(
         paused = holding;
       });
       if (paused || queued.length > 0) schedule(0);
+    },
+    forget() {
+      for (const [key, entry] of entries) {
+        if (entry.settled) entries.delete(key);
+      }
     },
     stop() {
       clearTimeout(timer);

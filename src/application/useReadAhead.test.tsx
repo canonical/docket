@@ -150,6 +150,22 @@ describe("useReadAhead", () => {
     expect(asked().at(2)).toHaveLength(12);
   });
 
+  it("reads the rows around the selection again once their details are dropped, and moves their versions when they arrive", async () => {
+    const { readDetails, reader } = reading();
+    const screen = await open(reader);
+    await vi.advanceTimersByTimeAsync(0);
+    const first = rows.at(0)?.thread ?? thread();
+    const arrived = result?.version(first, "v");
+    await screen.redraw(() => result?.drop());
+    await vi.advanceTimersByTimeAsync(200);
+    expect(readDetails).toHaveBeenCalledTimes(2);
+    expect(readDetails.mock.calls.at(1)?.[0]).toEqual(
+      readDetails.mock.calls.at(0)?.[0],
+    );
+    await screen.redraw();
+    expect(result?.version(first, "v")).not.toBe(arrived);
+  });
+
   it("counts the details read of those asked for while any are pending, and none once all are read", async () => {
     const { promise, resolve } = Promise.withResolvers<void>();
     const readDetails = vi.fn(async (threads: readonly ThreadSummary[]) => {
@@ -169,6 +185,7 @@ describe("useReadAhead", () => {
   it("reads nothing ahead with no reader or no rows, and leaves the version as given", async () => {
     await open(undefined);
     expect(result?.read).toBeUndefined();
+    result?.drop();
     expect(result?.version(thread(), "v")).toBe("v");
     const { readDetails, reader } = reading();
     await draw(

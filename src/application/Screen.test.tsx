@@ -1958,6 +1958,33 @@ describe("Screen", { timeout: 15_000 }, () => {
       ]);
     });
 
+    it("reads the details again with R, once the cache is thrown away, in one request, and not when R is refused", async () => {
+      const readDetails = vi.fn(readRecordedDetails);
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const view = viewOf(cache);
+      const screen = await show({
+        ...view,
+        source: { ...view.source, details: floored(cache, readDetails) },
+      });
+      await waitUntil(() => expect(readDetails).toHaveBeenCalledOnce());
+      const [first] = readDetails.mock.calls.at(0) ?? [];
+      await press(screen, "R");
+      await waitUntil(async () => {
+        await screen.redraw();
+        expect(readDetails).toHaveBeenCalledTimes(2);
+      });
+      const [again] = readDetails.mock.calls.at(1) ?? [];
+      expect(again).toEqual(first);
+      await press(screen, "R");
+      await waitUntil(() =>
+        expect(cache.status().fullRefreshAvailableAt).toBeDefined(),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await screen.redraw();
+      expect(readDetails).toHaveBeenCalledTimes(2);
+    });
+
     it("quits with q", async () => {
       const onQuit = vi.fn();
       const screen = await show(

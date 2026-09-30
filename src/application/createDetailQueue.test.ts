@@ -133,6 +133,27 @@ describe("createDetailQueue", () => {
     expect(reader.read).toHaveBeenCalledOnce();
   });
 
+  it("forgets the details that arrived and the reads that failed, so each is due again, and keeps a read under way", async () => {
+    const reader = reading();
+    const queue = open(reader);
+    queue.request(
+      [
+        { thread: one, version: "v" },
+        { thread: three, version: "v" },
+      ],
+      one,
+      0,
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    const pending = queue.read(two, "v");
+    queue.forget();
+    expect(queue.isDue(one, "v")).toBe(true);
+    expect(queue.isDue(three, "v")).toBe(true);
+    expect(queue.isDue(two, "v")).toBe(false);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(await pending).toBe(parserFixDetail);
+  });
+
   it("counts each arrival, telling its listeners, and says details are due only for another version, however old", async () => {
     const queue = open();
     const listener = vi.fn();

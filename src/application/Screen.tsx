@@ -252,7 +252,12 @@ export default function Screen({
       edit: (action) => editor.start(action, selectThread()),
       toggleHelp: () => setHelp((open) => !open),
       closeHelp: () => setHelp(false),
-      refresh: () => void cache?.fullRefresh(),
+      // A full refresh reads everything again, the details held included,
+      // once it has thrown the data away.
+      refresh: () =>
+        void cache?.fullRefresh().then((discarded) => {
+          if (discarded) ahead.drop();
+        }),
       quit: onQuit,
     },
   });

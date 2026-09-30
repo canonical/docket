@@ -113,12 +113,12 @@ describe("the full refresh of createCache", () => {
     expect(whole).toContain(true);
   });
 
-  it("refuses another within 60 seconds, saying in the status when one is available", async () => {
+  it("refuses another within 60 seconds, saying so and in the status when one is available", async () => {
     const snapshot = paged(1);
     const cache = open(fakeProvider({ snapshot }));
-    await cache.fullRefresh();
+    expect(await cache.fullRefresh()).toBe(true);
     later(17_500);
-    await cache.fullRefresh();
+    expect(await cache.fullRefresh()).toBe(false);
     expect(snapshot).toHaveBeenCalledTimes(1);
     expect(cache.status().fullRefreshAvailableAt).toEqual(
       new Date("2026-09-28T10:01:00Z"),
@@ -158,7 +158,7 @@ describe("the full refresh of createCache", () => {
     expect(refused).toContainEqual(new Date("2026-09-28T10:01:00Z"));
   });
 
-  it("keeps the provider's error in the status rather than throwing it", async () => {
+  it("keeps the provider's error in the status rather than throwing it, and says the data was thrown away", async () => {
     const error = providerError("GITHUB_REQUEST_FAILED");
     const cache = open(
       fakeProvider({
@@ -167,7 +167,7 @@ describe("the full refresh of createCache", () => {
         },
       }),
     );
-    await cache.fullRefresh();
+    expect(await cache.fullRefresh()).toBe(true);
     expect(cache.status()).toMatchObject({
       failure: error,
       refreshing: false,

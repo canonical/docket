@@ -34,8 +34,8 @@ export interface UseReadAheadProps {
  * Result of the useReadAhead hook: how the accordion reads a thread's
  * details, which joins the reads ahead, when there is a reader; the
  * version the details held for it key on, which moves whenever details
- * read ahead arrive for it; and how many of the details asked for have
- * been read, while any are pending.
+ * read ahead arrive for it; how many of the details asked for have been
+ * read, while any are pending; and how to drop every thread's details.
  */
 export interface UseReadAheadResult {
   readonly read?: (
@@ -44,6 +44,11 @@ export interface UseReadAheadResult {
   ) => Promise<ThreadDetail>;
   readonly version: (thread: ThreadSummary, version: string) => string;
   readonly progress?: DetailsCount;
+  /**
+   * Drops every thread's details read so far, as a full refresh asks, and
+   * reads those near the selection again.
+   */
+  readonly drop: () => void;
 }
 
 /** The rows nearest `place` first, each thread once, at most `limit`. */
@@ -98,6 +103,8 @@ export default function useReadAhead({
   );
   useEffect(() => queue?.pause(paused === "rateLimit"), [queue, paused]);
   const moved = useRef(false);
+  // Counts the drops, so each asks for the window again.
+  const [dropped, setDropped] = useState(0);
   const chosen = rows.at(selected);
   const window = findNearest(rows, selected, detailWindow);
   const key = window
@@ -113,12 +120,18 @@ export default function useReadAhead({
     moved.current = true;
     // Below the budget floor the selected thread alone is asked for.
     queue.request(paused ? [chosen] : window, chosen.thread, delay);
-  }, [queue, key, chosenKey, attention, paused]);
-  if (!queue) return { version: (_thread, version) => version };
+  }, [queue, key, chosenKey, attention, paused, dropped]);
+  if (!queue) {
+    return { version: (_thread, version) => version, drop: () => {} };
+  }
   const progress = queue.countDetails();
   return {
     read: (thread, version) => queue.read(thread, version),
     version: (thread, version) => `${version}|${queue.countArrivals(thread)}`,
+    drop: () => {
+      queue.forget();
+      setDropped((count) => count + 1);
+    },
     ...(progress && { progress }),
   };
 }

@@ -257,11 +257,10 @@ export default function createCache({
    * Throws the cached data away, here and in the file, and fetches
    * everything, under the fetch lock, unless a full refresh started within
    * `fullRefreshCooldown` in any process: the file says when the last
-   * one started, and it is read once the lock is held.
-   *
-   * @returns Whether it fetched rather than being refused.
+   * one started, and it is read once the lock is held. `discarded` hears
+   * when the data is thrown away, before the fetch, which may fail.
    */
-  const discardAndFetch = () =>
+  const discardAndFetch = (discarded: () => void) =>
     withFetchLock(directory, async () => {
       await load();
       const at = now();
@@ -270,17 +269,17 @@ export default function createCache({
         fullRefreshCooldown;
       if (at.getTime() < available) {
         publish({ fullRefreshAvailableAt: new Date(available) });
-        return false;
+        return;
       }
       publish({ fullRefreshAvailableAt: undefined });
       fullRefreshAt = at;
       client.clear();
+      discarded();
       // The threads thrown away leave the screen at once, not once the
       // fetch that replaces them ends.
       publish();
       await save();
       await fetchAll();
-      return true;
     });
 
   /**
@@ -432,13 +431,16 @@ export default function createCache({
       }
     },
     async fullRefresh() {
+      let discarded = false;
       try {
-        if (await discardAndFetch()) {
-          publish({ paused: judgeFloor(), failure: undefined });
-        }
+        await discardAndFetch(() => {
+          discarded = true;
+        });
+        if (discarded) publish({ paused: judgeFloor(), failure: undefined });
       } catch (error) {
         publish(classifyRefreshFailure(error, figures()));
       }
+      return discarded;
     },
     watch() {
       mkdirSync(directory, { recursive: true, mode: 0o700 });

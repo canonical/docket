@@ -313,11 +313,13 @@ export interface Cache {
    * repository whole, reporting its progress in the status. One is
    * refused within `fullRefreshCooldown` of the last, in any process,
    * checked under the fetch lock so two asked together fetch once, and
-   * the status then
-   * says when one is available. It never throws: whatever stops it is
-   * kept in the status, as `refresh` keeps it.
+   * the status then says when one is available. It never throws: whatever
+   * stops it is kept in the status, as `refresh` keeps it.
+   *
+   * @returns Whether it threw the data away, rather than being refused,
+   * whether or not the fetch after it succeeded.
    */
-  fullRefresh(): Promise<void>;
+  fullRefresh(): Promise<boolean>;
   /**
    * Reloads the cache whenever another process writes it, watching the
    * cache folder: the file itself is replaced on every write.
