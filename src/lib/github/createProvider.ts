@@ -1,4 +1,4 @@
-import type { Budget, Provider } from "../provider/index.js";
+import type { Provider } from "../provider/index.js";
 import { capabilities } from "./constants.js";
 import createClient from "./createClient.js";
 import fetchAssignees from "./fetchAssignees.js";
@@ -8,7 +8,6 @@ import fetchSnapshot from "./fetchSnapshot.js";
 import fetchThreadDetail from "./fetchThreadDetail.js";
 import fetchThreadDetails from "./fetchThreadDetails.js";
 import fetchViewer from "./fetchViewer.js";
-import fragments from "./fragments.js";
 import listAssignableUsers from "./listAssignableUsers.js";
 import listReviewCandidates from "./listReviewCandidates.js";
 import listTeamMembers from "./listTeamMembers.js";
@@ -17,16 +16,6 @@ import readToken from "./readToken.js";
 import refreshChecks from "./refreshChecks.js";
 import setAssignees from "./setAssignees.js";
 import setReviewers from "./setReviewers.js";
-
-const budgetDocument = `query Budget { ${fragments.rateLimit} }`;
-
-interface BudgetAnswer {
-  readonly rateLimit: {
-    readonly limit: number;
-    readonly remaining: number;
-    readonly resetAt: string;
-  };
-}
 
 /**
  * Connects to GitHub as the account `gh` is signed in with. The token is
@@ -72,18 +61,7 @@ export default async function createProvider(
     teamMembers: ({ team }) => teamMembers(team),
     probe: (repo, tag) => probeChanges(client, repo, tag),
     readFile: (repo, path) => fetchFile(client, repo, path),
-    async budget(): Promise<Budget> {
-      // Asking for the rate figures alone is not charged, so the first
-      // call costs nothing; later ones reuse the latest answer's figures.
-      const known = client.lastBudget();
-      if (known) return known;
-      const { rateLimit } = await client.query<BudgetAnswer>(
-        budgetDocument,
-        {},
-      );
-      const { limit, remaining, resetAt } = rateLimit;
-      return { limit, remaining, resetAt: new Date(resetAt) };
-    },
+    budget: () => client.lastBudgets(),
     viewer: () => fetchViewer(client),
     capabilities: () => capabilities,
   };

@@ -322,7 +322,7 @@ export default function createCache({
           await load();
           const previous = entry(repo);
           if (!previous) return false;
-          const floor = await findBudgetFloor(provider, at);
+          const floor = findBudgetFloor(provider.budget().graphql, at);
           const value = await syncRepo(provider, repo, previous, at, {
             spend: !floor,
             reconcile: false,
@@ -388,7 +388,7 @@ export default function createCache({
         const floor =
           paused && at < paused.until
             ? paused
-            : await findBudgetFloor(provider, at);
+            : findBudgetFloor(provider.budget().graphql, at);
         // A pause whose time is past no longer holds while reading resumes.
         if (paused && at >= paused.until) publish({ paused: undefined });
         const idle = attention === "idle";
@@ -398,7 +398,7 @@ export default function createCache({
         await sync(maxAge, { spend: !floor, reconcile: !idle, checks: !idle });
         publish({ paused: floor, failure: undefined });
       } catch (error) {
-        publish(await classifyRefreshFailure(error, provider));
+        publish(classifyRefreshFailure(error, provider.budget()));
       }
     },
     async fullRefresh() {
@@ -407,7 +407,7 @@ export default function createCache({
           publish({ paused: undefined, failure: undefined });
         }
       } catch (error) {
-        publish(await classifyRefreshFailure(error, provider));
+        publish(classifyRefreshFailure(error, provider.budget()));
       }
     },
     watch() {

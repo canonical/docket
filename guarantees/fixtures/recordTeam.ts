@@ -100,8 +100,6 @@ export default function recordTeam(
   });
   const recording: Recording = {
     Viewer: viewer,
-    // The rate figures alone, which every answer carries.
-    Budget: { data: {} },
     [`File ${repo}`]: noFile,
     [`File ${docs}`]: noFile,
     [`GET /repos/${repo}/issues`]: buildProbe(`${tag}-example`),

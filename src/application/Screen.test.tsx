@@ -395,7 +395,7 @@ describe("Screen", { timeout: 15_000 }, () => {
 
     it("pauses every repository, and says when docket resumes, when the first fetch waits for the request budget", async () => {
       const provider = fakeProvider({
-        budget: async () => ({ ...fullBudget, remaining: 1 }),
+        budget: () => ({ graphql: { ...fullBudget, remaining: 1 } }),
       });
       const cache = await openCache(provider);
       const screen = await show(viewOf(cache));
@@ -1705,7 +1705,7 @@ describe("Screen", { timeout: 15_000 }, () => {
     it("spends no point on details below the budget floor, neither the accordion's read nor reading ahead, and leaves the status line's right side empty", async () => {
       let remaining = fullBudget.limit;
       const provider = recordedProvider({
-        budget: async () => ({ ...fullBudget, remaining }),
+        budget: () => ({ graphql: { ...fullBudget, remaining } }),
       });
       const cache = await openCache(provider);
       await cache.refresh();
@@ -1732,7 +1732,7 @@ describe("Screen", { timeout: 15_000 }, () => {
     it("shows what the snapshot holds in the accordion below the budget floor, each line that needs the read ending in a dimmed …, and reads nothing", async () => {
       let remaining = fullBudget.limit;
       const provider = recordedProvider({
-        budget: async () => ({ ...fullBudget, remaining }),
+        budget: () => ({ graphql: { ...fullBudget, remaining } }),
       });
       const cache = await openCache(provider);
       await cache.refresh();

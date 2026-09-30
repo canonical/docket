@@ -62,7 +62,7 @@ describe("answerOwed", () => {
     await answerOwed(openSession(home, ["owed"]).session);
     const limited = recordedProvider({
       snapshot: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
-      budget: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+      budget: () => ({}),
     });
     const { session, out } = openSession(
       home,
@@ -108,7 +108,7 @@ describe("answerOwed", () => {
     const offline = recordedProvider({
       viewer: unreachable,
       snapshot: unreachable,
-      budget: unreachable,
+      budget: () => ({}),
     });
     const { session, out } = openSession(home, ["owed"], offline);
     expect(await answerOwed(session)).toBe(0);

@@ -132,19 +132,19 @@ describe("createProvider", () => {
     expect(operations).toEqual(["Snapshot", "TeamMembers", "Snapshot"]);
   });
 
-  it("asks for the budget once, then reads it from the latest answer", async () => {
+  it("gives the budget the latest answer reported, asking GitHub nothing", async () => {
     const provider = await createProvider("github.com", "1.2.3");
-    github.graphql("Budget", { body: { data: { rateLimit } } });
-    const expected = {
-      limit: 5000,
-      remaining: 4990,
-      resetAt: new Date("2026-09-28T11:00:00Z"),
-    };
-    expect(await settle(provider.budget())).toEqual(expected);
+    expect(provider.budget()).toEqual({});
     github.graphql("Snapshot", repository(empty));
     await settle(provider.snapshot(repo, null));
-    expect(await settle(provider.budget())).toEqual(expected);
-    expect(github.sent).toHaveLength(2);
+    expect(provider.budget()).toEqual({
+      graphql: {
+        limit: 5000,
+        remaining: 4990,
+        resetAt: new Date("2026-09-28T11:00:00Z"),
+      },
+    });
+    expect(github.sent).toHaveLength(1);
   });
 
   it("sends each operation to GitHub with the token gh gave", async () => {

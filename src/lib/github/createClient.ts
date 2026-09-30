@@ -4,7 +4,7 @@ import { paginateRest } from "@octokit/plugin-paginate-rest";
 import { retry } from "@octokit/plugin-retry";
 import { throttling } from "@octokit/plugin-throttling";
 import Bottleneck from "bottleneck";
-import type { Budget } from "../provider/index.js";
+import type { Budget, Budgets } from "../provider/index.js";
 import { requestTimeout } from "./constants.js";
 import describeFailure from "./describeFailure.js";
 import type { Client, RestResponse } from "./types.js";
@@ -17,6 +17,37 @@ interface RateLimitNode {
   readonly remaining: number;
   readonly resetAt: string;
 }
+
+/**
+ * The budget each resource GitHub names in `x-ratelimit-resource` counts
+ * against: `graphql` for queries, `core` for the REST requests docket
+ * sends. Any other resource, such as search, is none of docket's.
+ */
+const kinds: Readonly<Record<string, keyof Budgets>> = {
+  graphql: "graphql",
+  core: "rest",
+};
+
+/**
+ * The budget an answer's headers report, and its kind, or nothing when
+ * they report none of docket's. GitHub sends them on every answer to a
+ * signed request, a refusal and "not modified" included, and gives the
+ * reset in seconds since 1970.
+ */
+const readRateHeaders = (
+  headers: Headers,
+): { readonly kind: keyof Budgets; readonly budget: Budget } | undefined => {
+  const kind = kinds[headers.get("x-ratelimit-resource") ?? ""];
+  const read = (name: string) =>
+    Number(headers.get(`x-ratelimit-${name}`) ?? Number.NaN);
+  const budget = {
+    limit: read("limit"),
+    remaining: read("remaining"),
+    resetAt: new Date(read("reset") * 1000),
+  };
+  const whole = [budget.limit, budget.remaining, budget.resetAt.getTime()];
+  return kind && !whole.some(Number.isNaN) ? { kind, budget } : undefined;
+};
 
 /**
  * Retries a request refused for a rate limit once, after the wait GitHub
@@ -110,6 +141,10 @@ export default function createClient(
     onRateLimit: retrySoon,
     onSecondaryRateLimit: retryOnce,
   };
+  let budgets: Budgets = {};
+  const keep = (kind: keyof Budgets, budget: Budget) => {
+    budgets = { ...budgets, [kind]: budget };
+  };
   const octokit = new GitHub({
     auth: token,
     // Octokit calls github.com's API unless told otherwise; an Enterprise
@@ -122,9 +157,17 @@ export default function createClient(
     // The retry plugin would otherwise send a 429 three more times, a few
     // seconds apart, whatever wait GitHub named.
     retry: { doNotRetry: [400, 401, 403, 404, 410, 422, 429, 451] },
-    request: { fetch: fetchInTime },
+    request: {
+      // Every answer reaches here, those Octokit turns into errors too,
+      // so its headers' figures are kept before anything else reads it.
+      fetch: async (...args: Parameters<typeof fetchInTime>) => {
+        const response = await fetchInTime(...args);
+        const found = readRateHeaders(response.headers);
+        if (found) keep(found.kind, found.budget);
+        return response;
+      },
+    },
   });
-  let budget: Budget | undefined;
   // Every GraphQL answer carries the rate figures its document asks for,
   // pages of a list and answers with an error among them, so the budget
   // is read from each answer as it arrives.
@@ -132,7 +175,7 @@ export default function createClient(
     const rate: RateLimitNode | undefined = data?.data?.rateLimit;
     if (rate) {
       const { limit, remaining, resetAt } = rate;
-      budget = { limit, remaining, resetAt: new Date(resetAt) };
+      keep("graphql", { limit, remaining, resetAt: new Date(resetAt) });
     }
   });
   return {
@@ -191,6 +234,6 @@ export default function createClient(
         throw describeFailure(error, host);
       }
     },
-    lastBudget: () => budget,
+    lastBudgets: () => budgets,
   };
 }

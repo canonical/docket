@@ -54,13 +54,15 @@ describe("createClient", () => {
 
   it("keeps the budget the latest GraphQL answer reports", async () => {
     const connected = client();
-    expect(connected.lastBudget()).toBeUndefined();
+    expect(connected.lastBudgets()).toEqual({});
     github.graphql("Viewer", { body: { data: { rateLimit } } });
     await settle(connected.query(viewer, {}));
-    expect(connected.lastBudget()).toEqual({
-      limit: 5000,
-      remaining: 4990,
-      resetAt: new Date("2026-09-28T11:00:00Z"),
+    expect(connected.lastBudgets()).toEqual({
+      graphql: {
+        limit: 5000,
+        remaining: 4990,
+        resetAt: new Date("2026-09-28T11:00:00Z"),
+      },
     });
   });
 
@@ -68,7 +70,61 @@ describe("createClient", () => {
     const connected = client();
     github.graphql("Viewer", { body: { data: {} } });
     await expect(settle(connected.query(viewer, {}))).resolves.toEqual({});
-    expect(connected.lastBudget()).toBeUndefined();
+    expect(connected.lastBudgets()).toEqual({});
+  });
+
+  /** The rate headers GitHub sends with an answer counted against `resource`. */
+  const rateHeaders = (resource: string, remaining: number) => ({
+    "x-ratelimit-resource": resource,
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": String(remaining),
+    "x-ratelimit-reset": String(Date.parse("2026-09-28T11:00:00Z") / 1000),
+  });
+
+  it("keeps the REST and GraphQL budgets apart, from each answer's headers", async () => {
+    const connected = client();
+    github.rest("GET /rate_limit", {
+      body: {},
+      headers: rateHeaders("core", 4000),
+    });
+    github.graphql("Viewer", {
+      body: { data: {} },
+      headers: rateHeaders("graphql", 3000),
+    });
+    await settle(connected.request("GET /rate_limit"));
+    await settle(connected.query(viewer, {}));
+    const resetAt = new Date("2026-09-28T11:00:00Z");
+    expect(connected.lastBudgets()).toEqual({
+      rest: { limit: 5000, remaining: 4000, resetAt },
+      graphql: { limit: 5000, remaining: 3000, resetAt },
+    });
+  });
+
+  it('keeps the budget a "not modified" answer and a refusal report', async () => {
+    const connected = client();
+    github.rest("GET /rate_limit", {
+      status: 304,
+      headers: { etag: 'W/"one"', ...rateHeaders("core", 4000) },
+    });
+    github.rest("GET /user", {
+      status: 404,
+      body: { message: "Not Found" },
+      headers: rateHeaders("core", 3999),
+    });
+    await settle(connected.request("GET /rate_limit"));
+    expect(connected.lastBudgets().rest?.remaining).toBe(4000);
+    await failure(connected.request("GET /user"));
+    expect(connected.lastBudgets().rest?.remaining).toBe(3999);
+  });
+
+  it("keeps nothing from headers of another resource, or missing a figure", async () => {
+    const connected = client();
+    const { "x-ratelimit-reset": _, ...partial } = rateHeaders("core", 1);
+    github.rest("GET /search", { body: {}, headers: rateHeaders("search", 1) });
+    github.rest("GET /user", { body: {}, headers: partial });
+    await settle(connected.request("GET /search"));
+    await settle(connected.request("GET /user"));
+    expect(connected.lastBudgets()).toEqual({});
   });
 
   it("gives a 304 back as a status rather than an error", async () => {
@@ -254,7 +310,7 @@ describe("createClient", () => {
       connected.query(viewer, {}, { allowMissing: true }),
     );
     expect(data).toEqual({ rateLimit, repository: { pullRequest: null } });
-    expect(connected.lastBudget()?.remaining).toBe(4990);
+    expect(connected.lastBudgets().graphql?.remaining).toBe(4990);
   });
 
   it("names GITHUB_REQUEST_FAILED for a node GitHub did not find, unless allowed", async () => {

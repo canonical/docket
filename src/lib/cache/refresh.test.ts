@@ -108,7 +108,7 @@ describe("the refresh step of createCache", () => {
 
   it("pauses until the budget resets when less than a fifth of it remains", async () => {
     const provider = counting({
-      budget: vi.fn(async () => ({ ...fullBudget, remaining: 999 })),
+      budget: vi.fn(() => ({ graphql: { ...fullBudget, remaining: 999 } })),
     });
     const cache = open(provider);
     await cache.refresh();
@@ -139,7 +139,7 @@ describe("the refresh step of createCache", () => {
         threads: [thread({ kind: "pullRequest", checks: "running" })],
         cursor: null,
       })),
-      budget: async () => ({ ...fullBudget, remaining }),
+      budget: () => ({ graphql: { ...fullBudget, remaining } }),
       refreshVolatile: vi.fn(async () => []),
     });
     const cache = createCache({
@@ -189,18 +189,10 @@ describe("the refresh step of createCache", () => {
     expect(probe).toHaveBeenCalledOnce();
   });
 
-  it("keeps the rate limit as the failure when the budget cannot be read", async () => {
+  it("keeps the rate limit as the failure when no budget is known", async () => {
     const error = providerError("GITHUB_RATE_LIMITED");
-    let budgets = 0;
     const cache = open(
-      counting({
-        snapshot: failing(error),
-        budget: async () => {
-          budgets += 1;
-          if (budgets > 1) throw error;
-          return fullBudget;
-        },
-      }),
+      counting({ snapshot: failing(error), budget: () => ({}) }),
     );
     await cache.refresh();
     expect(cache.status()).toMatchObject({ paused: undefined, failure: error });
