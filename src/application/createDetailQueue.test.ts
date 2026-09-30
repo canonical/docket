@@ -378,3 +378,80 @@ describe("createDetailQueue's count of details", () => {
     expect(queue.countDetails()).toBeUndefined();
   });
 });
+
+/**
+ * A reader whose every request waits until the test settles it, the
+ * oldest first: with the details found for the threads `settle` keeps,
+ * or failing with `reason`.
+ */
+const held = () => {
+  const pending: {
+    readonly threads: readonly (typeof one)[];
+    readonly resolve: (reading: DetailReading) => void;
+    readonly reject: (reason: unknown) => void;
+  }[] = [];
+  const reader = {
+    read: vi.fn(
+      (threads: readonly (typeof one)[]) =>
+        new Promise<DetailReading>((resolve, reject) =>
+          pending.push({ threads, resolve, reject }),
+        ),
+    ),
+  };
+  const next = () => {
+    const first = pending.shift();
+    if (!first) throw new Error("no request is pending");
+    return first;
+  };
+  return {
+    reader,
+    answer: (keep: (thread: typeof one) => boolean) => {
+      const { threads, resolve } = next();
+      resolve(
+        threads
+          .filter(keep)
+          .map((each) => ({ thread: each, detail: parserFixDetail })),
+      );
+    },
+    fail: (reason: unknown) => next().reject(reason),
+  };
+};
+
+/** Two requests under way: `one` and `two` read ahead, then `four` alone. */
+async function overlap(reader: ReturnType<typeof held>["reader"]) {
+  const queue = open(reader);
+  queue.request(wanted(one, two), one, 0);
+  await vi.advanceTimersByTimeAsync(0);
+  void queue.read(four, "v").catch(() => {});
+  await vi.advanceTimersByTimeAsync(0);
+  expect(reader.read).toHaveBeenCalledTimes(2);
+  return queue;
+}
+
+describe("createDetailQueue's count of details while requests overlap", () => {
+  it("stops counting as asked a thread the reader left out", async () => {
+    const { reader, answer } = held();
+    const queue = await overlap(reader);
+    answer((each) => each.number === 1);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(queue.countDetails()).toEqual({ read: 1, asked: 2 });
+  });
+
+  it("counts as answered each thread of a request that failed", async () => {
+    const { reader, fail } = held();
+    const queue = await overlap(reader);
+    fail(new Error("offline"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(queue.countDetails()).toEqual({ read: 2, asked: 3 });
+  });
+
+  it("counts again as unread a thread asked for at a new version after its answer", async () => {
+    const { reader, answer } = held();
+    const queue = await overlap(reader);
+    answer(() => true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(queue.countDetails()).toEqual({ read: 2, asked: 3 });
+    void queue.read(one, "w");
+    expect(queue.countDetails()).toEqual({ read: 1, asked: 3 });
+  });
+});
