@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type Home, makeHome, openSession } from "../testing/docket.js";
 import { providerError } from "../testing/provider.js";
-import { recordedProvider } from "../testing/recorded.js";
+import { recordedNow, recordedProvider } from "../testing/recorded.js";
 import answerFinished from "./answerFinished.js";
 
 let home: Home;
@@ -56,6 +56,24 @@ describe("answerFinished", () => {
     expect(await answerFinished(session)).toBe(0);
     expect(out().split("## Warning: GITHUB_RATE_LIMITED\n")).toHaveLength(2);
     expect(out()).toContain("\n1 merged · 1 closed · 1 over target\n");
+  });
+
+  it("gives the data's age as that of the oldest part it read", async () => {
+    await answerFinished(openSession(home, ["finished"]).session);
+    const later = new Date(recordedNow.getTime() + 10 * 60_000);
+    const eventsDown = recordedProvider({
+      events: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+    });
+    const { session, out } = openSession(
+      home,
+      ["finished", "--max-age", "0"],
+      eventsDown,
+      later,
+    );
+    expect(await answerFinished(session)).toBe(0);
+    expect(out()).toContain(
+      "\nData from 2026-09-28 12:00 Europe/Paris, 10m old.\n",
+    );
   });
 
   it("takes another configured window and grouping", async () => {
