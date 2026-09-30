@@ -5,16 +5,11 @@ import { useListScroll } from "../../hooks/index.js";
 import type { ScrolledListProps } from "./types.js";
 
 /**
- * The pane's list region: the list is the only part that grows or
- * shrinks with the terminal, and it clips what does not fit rather than
- * scrolling on its own. It shows the selection whole where the room
- * allows (`useListScroll`). While the first line shows a row of a group,
- * that group's heading is pinned there with the place of the row in the
- * group, `● bob · 3 of 5`, and the next group's heading replaces it as it
- * arrives. When rows are cut off below, the last line counts them all, in
- * whichever group, dimmed as context, `↓ 12 below`. owed's and
- * activity's lists are drawn through it, and the help is scrolled by it
- * too.
+ * The list is the only part that grows; the three lines under it keep
+ * their height. The region is the scrolled list: it keeps the selection
+ * whole where the room allows, pins the heading of the group under its
+ * first line, and counts the rows below. The help overlay is scrolled by
+ * the same rules.
  *
  * `import { ScrolledList } from "../lib/ui/index.js";`
  *
