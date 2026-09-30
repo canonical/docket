@@ -3,6 +3,7 @@ import type { CacheStatus } from "../lib/cache/index.js";
 import type { Problem } from "../lib/text/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import { EmptyState, Notice } from "../lib/ui/index.js";
+import { standInIndent } from "./constants.js";
 import describeHold from "./describeHold.js";
 import drawFirstRun, { type FirstRunProps } from "./drawFirstRun.js";
 import findEarlierRun from "./findEarlierRun.js";
@@ -35,9 +36,6 @@ export interface StandInProps {
   /** The width of the pane, in display cells. */
   readonly width: number;
 }
-
-/** The indent of what stands in for the list, in display cells. */
-const indent = 2;
 
 /** Reads a sentence as a line on screen, which ends without a full stop. */
 const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
@@ -119,7 +117,7 @@ export default function drawStandIn({
   if (mode === "activity" && !activity) {
     // No list is held for the window yet: on opening, and after t.
     return (
-      <box paddingLeft={indent}>
+      <box paddingLeft={standInIndent}>
         <text fg={tokens["color.text"]}>refresh in progress…</text>
       </box>
     );

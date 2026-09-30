@@ -35,6 +35,7 @@ import type { Thread } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
+import { standInIndent } from "./constants.js";
 import describeCandidate from "./describeCandidate.js";
 import drawStandIn from "./drawStandIn.js";
 import drawStatusLine from "./drawStatusLine.js";
@@ -62,9 +63,6 @@ import useViewer from "./useViewer.js";
 
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
-
-/** The indent of what stands in for the list, in display cells. */
-const indent = 2;
 
 /** The entry after `item` in `list`, and the first after the last. */
 function cycle<T>(list: readonly T[], item: T): T {
@@ -284,7 +282,7 @@ export default function Screen({
     at,
     viewer: you.viewer,
   });
-  const room = width - indent;
+  const room = width - standInIndent;
   const listed = activity && "list" in activity ? activity.list : undefined;
   const rows: readonly (WaitRow | ActivityThread)[] =
     (owed ?? listed)?.groups.flatMap(
