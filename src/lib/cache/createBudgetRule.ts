@@ -5,7 +5,7 @@ import type { CacheStatus, Spender } from "./types.js";
 /** What the budget floor's rule reads of the cache it serves. */
 export interface BudgetRuleOptions {
   /** The mirror of the budgets, this process's own answers joined. */
-  readonly figures: () => Budgets;
+  readonly readFigures: () => Budgets;
   /** The cache's current time. */
   readonly now: () => Date;
   /** The status the cache gives out. */
@@ -26,12 +26,12 @@ export interface BudgetRuleOptions {
  * from the reserve.
  */
 export default function createBudgetRule({
-  figures,
+  readFigures,
   now,
   status,
   publish,
 }: BudgetRuleOptions) {
-  const judgeFloor = () => findBudgetFloor(figures().graphql, now());
+  const judgeFloor = () => findBudgetFloor(readFigures().graphql, now());
   const findFloor = () => {
     const floor = judgeFloor();
     const { paused } = status();

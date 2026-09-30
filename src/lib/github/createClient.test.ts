@@ -74,7 +74,7 @@ describe("createClient", () => {
   });
 
   /** The rate headers GitHub sends with an answer counted against `resource`. */
-  const rateHeaders = (resource: string, remaining: number) => ({
+  const buildRateHeaders = (resource: string, remaining: number) => ({
     "x-ratelimit-resource": resource,
     "x-ratelimit-limit": "5000",
     "x-ratelimit-remaining": String(remaining),
@@ -85,11 +85,11 @@ describe("createClient", () => {
     const connected = client();
     github.rest("GET /rate_limit", {
       body: {},
-      headers: rateHeaders("core", 4000),
+      headers: buildRateHeaders("core", 4000),
     });
     github.graphql("Viewer", {
       body: { data: {} },
-      headers: rateHeaders("graphql", 3000),
+      headers: buildRateHeaders("graphql", 3000),
     });
     await settle(connected.request("GET /rate_limit"));
     await settle(connected.query(viewer, {}));
@@ -104,12 +104,12 @@ describe("createClient", () => {
     const connected = client();
     github.rest("GET /rate_limit", {
       status: 304,
-      headers: { etag: 'W/"one"', ...rateHeaders("core", 4000) },
+      headers: { etag: 'W/"one"', ...buildRateHeaders("core", 4000) },
     });
     github.rest("GET /user", {
       status: 404,
       body: { message: "Not Found" },
-      headers: rateHeaders("core", 3999),
+      headers: buildRateHeaders("core", 3999),
     });
     await settle(connected.request("GET /rate_limit"));
     expect(connected.lastBudgets().rest?.remaining).toBe(4000);
@@ -119,8 +119,11 @@ describe("createClient", () => {
 
   it("keeps nothing from headers of another resource, or missing a figure", async () => {
     const connected = client();
-    const { "x-ratelimit-reset": _, ...partial } = rateHeaders("core", 1);
-    github.rest("GET /search", { body: {}, headers: rateHeaders("search", 1) });
+    const { "x-ratelimit-reset": _, ...partial } = buildRateHeaders("core", 1);
+    github.rest("GET /search", {
+      body: {},
+      headers: buildRateHeaders("search", 1),
+    });
     github.rest("GET /user", { body: {}, headers: partial });
     await settle(connected.request("GET /search"));
     await settle(connected.request("GET /user"));

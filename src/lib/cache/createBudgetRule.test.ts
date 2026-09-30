@@ -19,7 +19,7 @@ const low = { graphql: { ...fullBudget, remaining: 900 } };
 const judge = (figures = low, status = settled) => {
   const told: Partial<CacheStatus>[] = [];
   const rule = createBudgetRule({
-    figures: () => figures,
+    readFigures: () => figures,
     now: () => clock,
     status: () => status,
     publish: (change) => told.push(change),

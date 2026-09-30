@@ -30,14 +30,14 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-const leaving = (remaining: number, resetAt = fullBudget.resetAt) => ({
+const makeBudget = (remaining: number, resetAt = fullBudget.resetAt) => ({
   ...fullBudget,
   remaining,
   resetAt,
 });
 
 /** A provider whose answers so far reported `heard`, which a test moves. */
-const hearing = (overrides: Partial<Provider> = {}) => {
+const makeHearingProvider = (overrides: Partial<Provider> = {}) => {
   const answers = { heard: {} as Budgets };
   const provider = fakeProvider({
     snapshot: vi.fn(async () => ({ threads: [thread()], cursor: null })),
@@ -52,40 +52,40 @@ const open = (provider: Provider, repos = [repo]) =>
 
 describe("the budget mirror of createCache", () => {
   it("gives every process the budgets any process heard, through the cache file", async () => {
-    const { provider, answers } = hearing();
-    answers.heard = { graphql: leaving(900), rest: leaving(4000) };
+    const { provider, answers } = makeHearingProvider();
+    answers.heard = { graphql: makeBudget(900), rest: makeBudget(4000) };
     await open(provider).refresh();
-    const other = open(hearing().provider);
+    const other = open(makeHearingProvider().provider);
     await other.load();
     expect(other.budget()).toEqual({
-      graphql: leaving(900),
-      rest: leaving(4000),
+      graphql: makeBudget(900),
+      rest: makeBudget(4000),
     });
   });
 
   it("keeps, of the file's report and its own answers', the later of each kind", async () => {
-    const { provider, answers } = hearing();
-    answers.heard = { graphql: leaving(3000), rest: leaving(4000) };
+    const { provider, answers } = makeHearingProvider();
+    answers.heard = { graphql: makeBudget(3000), rest: makeBudget(4000) };
     await open(provider).refresh();
-    const own = hearing();
+    const own = makeHearingProvider();
     const other = open(own.provider);
     own.answers.heard = {
-      graphql: leaving(3500),
-      rest: leaving(4999, nextHour),
+      graphql: makeBudget(3500),
+      rest: makeBudget(4999, nextHour),
     };
     await other.load();
     expect(other.budget()).toEqual({
-      graphql: leaving(3000),
-      rest: leaving(4999, nextHour),
+      graphql: makeBudget(3000),
+      rest: makeBudget(4999, nextHour),
     });
   });
 
   it("pauses at the floor another process's answers reached, with their reset, and spends nothing", async () => {
-    const { provider, answers } = hearing();
-    answers.heard = { graphql: leaving(999) };
+    const { provider, answers } = makeHearingProvider();
+    answers.heard = { graphql: makeBudget(999) };
     const writer = open(provider);
     await writer.keepBudget();
-    const own = hearing();
+    const own = makeHearingProvider();
     const other = open(own.provider);
     await other.load();
     expect(other.maySpend("background")).toBe(false);
@@ -98,9 +98,9 @@ describe("the budget mirror of createCache", () => {
   });
 
   it("stops docket's own spending below the floor, and still spends on what the user asks for", async () => {
-    const { provider, answers } = hearing();
+    const { provider, answers } = makeHearingProvider();
     await open(provider).refresh();
-    answers.heard = { graphql: leaving(999) };
+    answers.heard = { graphql: makeBudget(999) };
     const cache = open(provider);
     await cache.load();
     expect(cache.maySpend("background")).toBe(false);
@@ -117,9 +117,9 @@ describe("the budget mirror of createCache", () => {
   });
 
   it("stops spending at the repository the refresh's own answers take below the floor", async () => {
-    const { provider, answers } = hearing();
+    const { provider, answers } = makeHearingProvider();
     const snapshot = vi.fn(async () => {
-      answers.heard = { graphql: leaving(999) };
+      answers.heard = { graphql: makeBudget(999) };
       return { threads: [thread()], cursor: null };
     });
     const cache = open({ ...provider, snapshot }, [repo, docs]);
@@ -136,11 +136,11 @@ describe("the budget mirror of createCache", () => {
   });
 
   it("lets points be spent above the floor, and leaves a rate limit's pause as it is", async () => {
-    const { provider, answers } = hearing();
+    const { provider, answers } = makeHearingProvider();
     const cache = open({
       ...provider,
       snapshot: async () => {
-        answers.heard = { graphql: leaving(0) };
+        answers.heard = { graphql: makeBudget(0) };
         throw providerError("GITHUB_RATE_LIMITED");
       },
     });
@@ -150,30 +150,30 @@ describe("the budget mirror of createCache", () => {
       until: fullBudget.resetAt,
       reason: "rateLimit",
     });
-    answers.heard = { graphql: leaving(1000) };
+    answers.heard = { graphql: makeBudget(1000) };
     const fresh = open(provider);
     expect(fresh.maySpend("background")).toBe(true);
     expect(fresh.status().paused).toBeUndefined();
   });
 
   it("writes the budgets heard outside a refresh, and leaves the file alone when it holds none later", async () => {
-    const { provider, answers } = hearing();
+    const { provider, answers } = makeHearingProvider();
     const cache = open(provider);
-    answers.heard = { graphql: leaving(2000) };
+    answers.heard = { graphql: makeBudget(2000) };
     await cache.keepBudget();
     const file = join(directory, cacheFileName);
     const written = await identifyFile(file);
     await cache.keepBudget();
     expect(await identifyFile(file)).toBe(written);
-    const other = open(hearing().provider);
+    const other = open(makeHearingProvider().provider);
     await other.load();
-    expect(other.budget()).toEqual({ graphql: leaving(2000) });
+    expect(other.budget()).toEqual({ graphql: makeBudget(2000) });
   });
 
   it("names a cache folder it cannot use when it keeps the budgets", async () => {
     await Bun.write(join(root, "file"), "");
     const cache = createCache({
-      provider: hearing().provider,
+      provider: makeHearingProvider().provider,
       repos: [repo],
       directory: join(root, "file", "docket"),
       now: () => clock,

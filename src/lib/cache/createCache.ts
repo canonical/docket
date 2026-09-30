@@ -65,7 +65,7 @@ export default function createCache({
   // The mirror of the budgets as the file last gave it or this process
   // last wrote it; this process's own answers join it on each read.
   let mirror: Budgets = {};
-  const figures = () => mergeBudgets(mirror, provider.budget());
+  const readFigures = () => mergeBudgets(mirror, provider.budget());
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
@@ -169,7 +169,7 @@ export default function createCache({
     publish();
   };
   const save = () => {
-    mirror = figures();
+    mirror = readFigures();
     const contents = {
       state: dehydrate(client),
       fullRefreshAt,
@@ -181,7 +181,7 @@ export default function createCache({
   };
 
   const { judgeFloor, maySpend } = createBudgetRule({
-    figures,
+    readFigures,
     now,
     status: () => status,
     // The threads are handed out once, when the run ends.
@@ -419,7 +419,7 @@ export default function createCache({
         });
         publish({ paused: judgeFloor(), failure: undefined });
       } catch (error) {
-        publish(classifyRefreshFailure(error, figures()));
+        publish(classifyRefreshFailure(error, readFigures()));
       }
     },
     async fullRefresh() {
@@ -430,7 +430,7 @@ export default function createCache({
         });
         if (discarded) publish({ paused: judgeFloor(), failure: undefined });
       } catch (error) {
-        publish(classifyRefreshFailure(error, figures()));
+        publish(classifyRefreshFailure(error, readFigures()));
       }
       return discarded;
     },
@@ -460,7 +460,7 @@ export default function createCache({
         publish();
       };
     },
-    budget: figures,
+    budget: readFigures,
     maySpend,
     async keepBudget() {
       try {
@@ -468,7 +468,7 @@ export default function createCache({
           await load();
           // Only figures the file lacks are worth a write every process
           // reloads.
-          if (!isSame(figures(), mirror)) await save();
+          if (!isSame(readFigures(), mirror)) await save();
         });
       } catch (error) {
         throw classifyFolderFailure(error, directory);

@@ -157,7 +157,7 @@ function viewOf(
 }
 
 /** Reads details as the terminal does, above the floor `cache` judges. */
-const floored = (
+const createTerminalReader = (
   cache: Cache,
   readDetails: Parameters<typeof createDetailReader>[0],
 ) => createDetailReader(readDetails, () => cache.maySpend("background"));
@@ -1674,7 +1674,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const { promise, resolve } = Promise.withResolvers<void>();
-      const details = floored(cache, async (threads) => {
+      const details = createTerminalReader(cache, async (threads) => {
         await promise;
         return readRecordedDetails(threads);
       });
@@ -1704,7 +1704,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       await cache.refresh();
       const readDetails = vi.fn(readRecordedDetails);
       const view = viewOf(cache, everyCapability, readRecorded);
-      const details = floored(cache, readDetails);
+      const details = createTerminalReader(cache, readDetails);
       const screen = await show(
         { ...view, source: { ...view.source, details } },
         60,
@@ -1740,7 +1740,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const readDetails = vi.fn(readRecordedDetails);
       const readDetail = vi.fn(readRecordedDetail);
       const view = viewOf(cache, everyCapability, readRecorded, readDetail);
-      const details = floored(cache, readDetails);
+      const details = createTerminalReader(cache, readDetails);
       const screen = await show(
         { ...view, source: { ...view.source, details } },
         60,
@@ -1767,7 +1767,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       const view = viewOf(cache, everyCapability, readRecorded, readDetail);
-      const details = floored(cache, readDetails);
+      const details = createTerminalReader(cache, readDetails);
       const screen = await show({
         ...view,
         source: { ...view.source, details },
@@ -1967,7 +1967,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         ...view,
         source: {
           ...view.source,
-          details: floored(cache, readDetails),
+          details: createTerminalReader(cache, readDetails),
         },
       });
       await waitUntil(() => expect(readDetails).toHaveBeenCalledOnce());

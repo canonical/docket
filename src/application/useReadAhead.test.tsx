@@ -140,14 +140,14 @@ describe("useReadAhead", () => {
     await vi.advanceTimersByTimeAsync(0);
     await screen.redraw(() => steer({ selected: 5 }));
     await vi.advanceTimersByTimeAsync(200);
-    const asked = () =>
+    const listAsked = () =>
       readDetails.mock.calls.map(([threads]) =>
         threads.map(({ number }) => number),
       );
-    expect(asked()).toEqual([[1], [6]]);
+    expect(listAsked()).toEqual([[1], [6]]);
     await screen.redraw(() => steer({ paused: undefined }));
     await vi.advanceTimersByTimeAsync(200);
-    expect(asked().at(2)).toHaveLength(12);
+    expect(listAsked().at(2)).toHaveLength(12);
   });
 
   it("reads the rows around the selection again once their details are dropped, and moves their versions when they arrive", async () => {
