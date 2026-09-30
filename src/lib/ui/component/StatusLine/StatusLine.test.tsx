@@ -88,6 +88,18 @@ describe("StatusLine", () => {
     }
   });
 
+  it("cuts the short name, not docket's words, when the name is a word docket writes", async () => {
+    const screen = await draw(
+      <StatusLine
+        {...FullRefresh.args}
+        names={{ "example-org/example-repo": "refresh" }}
+        width={20}
+      />,
+      20,
+    );
+    expect(screen.lines.at(0)).toBe("full refresh · … 1/2");
+  });
+
   it("cuts a long short name in its middle, after the pages leave, so the place stays", async () => {
     const names = {
       "example-org/example-repo": "design-system-website-docs",

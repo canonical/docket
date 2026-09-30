@@ -22,6 +22,21 @@ describe("countPickerLines", () => {
     expect(countPickerLines({ ...Long.args, width: 80 })).toBe(3);
   });
 
+  it("counts a name at the width it is drawn at, inside the picker's indent", () => {
+    const owner = {
+      text: "a".repeat(35),
+      kind: "person" as const,
+      group: "outside" as const,
+    };
+    expect(
+      countPickerLines({
+        ...Assigning.args,
+        options: [{ owner, ticked: false }],
+        cursor: 0,
+      }),
+    ).toBe(3);
+  });
+
   it("counts the loading line while the options are read", () => {
     expect(countPickerLines(Loading.args)).toBe(2);
   });
