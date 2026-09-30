@@ -35,9 +35,14 @@ const reading = {
   waiting: { "example#13": "close" },
 };
 
-/** Each line's text, its runs joined. */
+/** Each line's text, its runs joined, a no-break space read as the space it shows. */
 const texts = (lines: readonly DetailLine[]) =>
-  lines.map(({ pieces }) => pieces.map(({ text }) => text).join(""));
+  lines.map(({ pieces }) =>
+    pieces
+      .map(({ text }) => text)
+      .join("")
+      .replaceAll("\u00a0", " "),
+  );
 
 /** The colour of the run of `line` that reads `text`. */
 const colourOf = (line: DetailLine | undefined, text: string) =>
@@ -377,6 +382,18 @@ describe("describeDetail", () => {
       expect(stack.map(({ pieces }) => pieces.at(0)?.fg)).toEqual([
         tokens["color.text.muted"],
         tokens["color.text.muted"],
+      ]);
+    });
+
+    it("wraps its place only between the parts, each kept whole with the · after it", () => {
+      const [place] = describeDetail(overReview, undefined, reading).stack;
+      expect(place?.fit).toBe("wrapped");
+      expect(place?.pieces.map(({ text }) => text.split(" "))).toEqual([
+        [
+          "example\u00a0stack\u00a03\u00a0·",
+          "2\u00a0of\u00a03\u00a0·",
+          "→\u00a0main",
+        ],
       ]);
     });
 

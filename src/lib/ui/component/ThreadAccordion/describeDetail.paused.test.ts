@@ -33,9 +33,14 @@ const reading = {
   waiting: { "example#13": "close" },
 };
 
-/** Each line's text, its runs joined. */
+/** Each line's text, its runs joined, a no-break space read as the space it shows. */
 const texts = (lines: readonly DetailLine[]) =>
-  lines.map(({ pieces }) => pieces.map(({ text }) => text).join(""));
+  lines.map(({ pieces }) =>
+    pieces
+      .map(({ text }) => text)
+      .join("")
+      .replaceAll("\u00a0", " "),
+  );
 
 describe("describeDetail, while reading is paused", () => {
   it("gives a reply, a review and a close as the snapshot gives them while the details are read", () => {
