@@ -38,10 +38,10 @@ export default function buildThreadRow(
     const action = actor ? text.slice(actor.text.length + 1) : text;
     return {
       event,
-      text: { text, fit: "trimmed" as const },
+      text: { text, kind: "words" as const },
       ...(actor ? { actor } : {}),
-      action: { text: action, fit: "trimmed" as const },
-      age: { text: describeAge(event.at, now), fit: "trimmed" as const },
+      action: { text: action, kind: "words" as const },
+      age: { text: describeAge(event.at, now), kind: "figure" as const },
     };
   });
   const owners = facts?.assignees
@@ -51,12 +51,12 @@ export default function buildThreadRow(
     thread,
     repo,
     stacked: thread.stack !== undefined,
-    reference: { text: `${repo}#${thread.number}`, fit: "trimmed" },
-    kind: { text: threadWords[thread.kind], fit: "trimmed" },
-    distance: { text: describeAge(events[0].at, now), fit: "trimmed" },
-    title: { text: thread.title, fit: "trimmed" },
+    reference: { text: `${repo}#${thread.number}`, kind: "identifier" },
+    kind: { text: threadWords[thread.kind], kind: "words" },
+    distance: { text: describeAge(events[0].at, now), kind: "figure" },
+    title: { text: thread.title, kind: "title" },
     ...(facts ? { author: describePerson(facts.author, people, viewer) } : {}),
-    ...(facts?.draft ? { draft: { text: "draft", fit: "trimmed" } } : {}),
+    ...(facts?.draft ? { draft: { text: "draft", kind: "words" } } : {}),
     ...(owners ? describeOwners(owners) : {}),
     events: lines,
   };

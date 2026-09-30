@@ -11,8 +11,8 @@ export { default as listWaits } from "./listWaits.js";
 export type {
   Counts,
   Field,
+  FieldKind,
   FieldList,
-  Fit,
   Header,
   OwedAddress,
   OwedGrouping,

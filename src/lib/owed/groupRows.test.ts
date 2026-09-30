@@ -57,8 +57,8 @@ describe("groupRows", () => {
       const first = row({ owners: ["bob", "alice"] });
       const second = row({ owners: ["alice"] });
       expect(groupRows([first, second], "owner", repos)).toEqual([
-        { heading: { text: "alice", fit: "trimmed" }, rows: [first, second] },
-        { heading: { text: "bob", fit: "trimmed" }, rows: [first] },
+        { heading: { text: "alice", kind: "person" }, rows: [first, second] },
+        { heading: { text: "bob", kind: "person" }, rows: [first] },
       ]);
     });
 
@@ -69,8 +69,8 @@ describe("groupRows", () => {
       });
       const groups = groupRows([assigned, row({ owners: [] })], "owner", repos);
       expect(groups.map(({ heading }) => heading)).toEqual([
-        { text: "alice", fit: "trimmed", group: "team" },
-        { text: "unassigned", fit: "trimmed" },
+        { text: "alice", kind: "person", group: "team" },
+        { text: "unassigned", kind: "words" },
       ]);
     });
   });
@@ -95,7 +95,10 @@ describe("groupRows", () => {
       ];
       expect(groupRows(rows, "stack", repos)).toEqual([
         {
-          heading: { text: "example stack 12 · 5 PRs → main", fit: "trimmed" },
+          heading: {
+            text: "example stack 12 · 5 PRs → main",
+            kind: "identifier",
+          },
           rows: [rows[1], rows[0]],
         },
       ]);
@@ -142,7 +145,7 @@ describe("groupRows, owners written in two cases", () => {
   it("gathers one owner written two ways in one section, headed as first written", () => {
     const rows = [row({ owners: ["Alice"] }), row({ owners: ["alice"] })];
     expect(groupRows(rows, "owner", repos)).toEqual([
-      { heading: { text: "Alice", fit: "trimmed" }, rows },
+      { heading: { text: "Alice", kind: "person" }, rows },
     ]);
   });
 });

@@ -18,7 +18,7 @@ export default function describePerson(
   const group = classify(account, people);
   return {
     text: account.login,
-    fit: "trimmed",
+    kind: "person",
     group:
       account.login.toLowerCase() === viewer?.toLowerCase()
         ? "you"

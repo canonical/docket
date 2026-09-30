@@ -156,8 +156,8 @@ export const ActionDone: Story<StatusLineProps> = {
       failed: false,
       text: "assigned",
       people: [
-        { text: "alice", fit: "trimmed", group: "you" },
-        { text: "erin", fit: "trimmed", group: "internal" },
+        { text: "alice", kind: "person", group: "you" },
+        { text: "erin", kind: "person", group: "internal" },
       ],
       at: new Date("2026-09-28T11:59:59Z"),
     },

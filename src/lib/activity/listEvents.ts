@@ -51,7 +51,7 @@ export default function listEvents(
           row: invalidFile
             ? {
                 ...row,
-                invalidFile: { text: invalidFileMark, fit: "trimmed" as const },
+                invalidFile: { text: invalidFileMark, kind: "words" as const },
               }
             : row,
         };
@@ -64,6 +64,6 @@ export default function listEvents(
   return {
     rows,
     counts: { threads: rows.length, events },
-    summary: { text, fit: "trimmed" },
+    summary: { text, kind: "words" },
   };
 }

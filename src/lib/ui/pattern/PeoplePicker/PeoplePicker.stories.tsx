@@ -15,7 +15,7 @@ const ignoreTyping = () => {};
 /** A login or team the picker offers, with its group. */
 const person = (text: string, group: PersonGroup) => ({
   text,
-  fit: "trimmed" as const,
+  kind: "person" as const,
   group,
 });
 

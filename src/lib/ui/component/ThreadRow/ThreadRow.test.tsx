@@ -270,7 +270,7 @@ describe("ThreadRow", () => {
     it("caps a long login at 12 cells", async () => {
       const row = {
         ...ActivityStacked.args.row,
-        owner: { text: "example-maintainer", fit: "trimmed" as const },
+        owner: { text: "example-maintainer", kind: "person" as const },
       };
       const screen = await draw(<ThreadRow row={row} width={40} />, 40);
       expect(screen.lines.at(1)).toBe(

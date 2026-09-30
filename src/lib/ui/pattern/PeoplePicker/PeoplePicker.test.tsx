@@ -80,7 +80,7 @@ describe("PeoplePicker", () => {
           {
             owner: {
               text: "a-very-long-login-for-a-narrow-pane",
-              fit: "trimmed",
+              kind: "person",
               group: "outside",
             },
             ticked: false,

@@ -48,8 +48,8 @@ describe("buildOwed", () => {
     expect(rows.map(({ kind }) => kind.text)).toEqual(["reply", "close"]);
     for (const { author, owner } of rows) {
       expect([author, owner]).toEqual([
-        { text: "carol", fit: "trimmed", group: "internal" },
-        { text: "carol", fit: "trimmed", group: "internal" },
+        { text: "carol", kind: "person", group: "internal" },
+        { text: "carol", kind: "person", group: "internal" },
       ]);
     }
   });

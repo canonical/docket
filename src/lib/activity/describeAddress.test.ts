@@ -11,8 +11,8 @@ describe("describeAddress", () => {
       grouping: "none",
     } as const;
     expect(describeAddress(address)).toEqual({
-      title: { text: "activity", fit: "trimmed" },
-      address: { text: "1w", fit: "trimmed" },
+      title: { text: "activity", kind: "words" },
+      address: { text: "1w", kind: "words" },
     });
   });
 

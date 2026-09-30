@@ -838,7 +838,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const editor = useEditor({
         source,
         findTeam: () => [],
-        describeCandidate: (name) => ({ text: name, fit: "trimmed" }),
+        describeCandidate: (name) => ({ text: name, kind: "person" }),
         now: () => recordedNow,
         onResult: () => {},
         covered: false,

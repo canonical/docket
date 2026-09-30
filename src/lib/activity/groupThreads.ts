@@ -21,16 +21,24 @@ export default function groupThreads(
     grouping === "kind"
       ? kindSections.map(
           ([kind, text]) =>
-            [text, rows.filter((row) => row.thread.kind === kind)] as const,
+            [
+              text,
+              rows.filter((row) => row.thread.kind === kind),
+              "words",
+            ] as const,
         )
       : repos.map(
           ({ name }) =>
-            [name, rows.filter((row) => row.repo === name)] as const,
+            [
+              name,
+              rows.filter((row) => row.repo === name),
+              "identifier",
+            ] as const,
         );
   return sections
     .filter(([, members]) => members.length > 0)
-    .map(([text, members]) => ({
-      heading: { text, fit: "trimmed" },
+    .map(([text, members, kind]) => ({
+      heading: { text, kind },
       rows: members,
     }));
 }

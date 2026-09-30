@@ -62,7 +62,7 @@ describe("listWaits", () => {
     expect(list.counts).toEqual({ over: 1, soon: 1, onTrack: 0 });
     expect(list.summary).toEqual({
       text: "1 over · 1 soon · 0 on track",
-      fit: "trimmed",
+      kind: "words",
     });
   });
 
@@ -190,7 +190,7 @@ describe("listWaits, against targets written in days", () => {
     );
     expect(rows.map((row) => [row.repo, row.invalidFile])).toEqual(
       expect.arrayContaining([
-        ["example", { text: "invalid repository file", fit: "trimmed" }],
+        ["example", { text: "invalid repository file", kind: "words" }],
         ["docs", undefined],
       ]),
     );

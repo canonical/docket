@@ -49,26 +49,26 @@ describe("buildThreadRow", () => {
       thread: pull,
       repo: "example",
       stacked: false,
-      reference: { text: "example#12", fit: "trimmed" },
-      kind: { text: "PR", fit: "trimmed" },
-      distance: { text: "25m", fit: "trimmed" },
-      title: { text: "Example title", fit: "trimmed" },
-      author: { text: "dave", fit: "trimmed", group: "outside" },
-      owner: { text: "alice", fit: "trimmed", group: "you" },
+      reference: { text: "example#12", kind: "identifier" },
+      kind: { text: "PR", kind: "words" },
+      distance: { text: "25m", kind: "figure" },
+      title: { text: "Example title", kind: "title" },
+      author: { text: "dave", kind: "person", group: "outside" },
+      owner: { text: "alice", kind: "person", group: "you" },
       events: [
         {
           event: pushed,
-          text: { text: "alice pushed 2 commits", fit: "trimmed" },
-          actor: { text: "alice", fit: "trimmed", group: "you" },
-          action: { text: "pushed 2 commits", fit: "trimmed" },
-          age: { text: "25m", fit: "trimmed" },
+          text: { text: "alice pushed 2 commits", kind: "words" },
+          actor: { text: "alice", kind: "person", group: "you" },
+          action: { text: "pushed 2 commits", kind: "words" },
+          age: { text: "25m", kind: "figure" },
         },
         {
           event: opened,
-          text: { text: "example-sync opened", fit: "trimmed" },
-          actor: { text: "example-sync", fit: "trimmed", group: "bot" },
-          action: { text: "opened", fit: "trimmed" },
-          age: { text: "3h", fit: "trimmed" },
+          text: { text: "example-sync opened", kind: "words" },
+          actor: { text: "example-sync", kind: "person", group: "bot" },
+          action: { text: "opened", kind: "words" },
+          age: { text: "3h", kind: "figure" },
         },
       ],
     });
@@ -136,7 +136,7 @@ describe("buildThreadRow", () => {
       now,
     );
     expect(row.stacked).toBe(true);
-    expect(row.draft).toEqual({ text: "draft", fit: "trimmed" });
+    expect(row.draft).toEqual({ text: "draft", kind: "words" });
   });
 
   it("names no actor for failed checks, whose line names the checks", () => {

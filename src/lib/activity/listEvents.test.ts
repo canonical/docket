@@ -87,7 +87,7 @@ describe("listEvents", () => {
     expect(list.counts).toEqual({ threads: 2, events: 3 });
     expect(list.summary).toEqual({
       text: "2 threads · 3 events",
-      fit: "trimmed",
+      kind: "words",
     });
   });
 
@@ -129,7 +129,7 @@ describe("listEvents", () => {
       now,
     );
     expect(list.rows.map((row) => [row.repo, row.invalidFile])).toEqual([
-      ["example", { text: "invalid repository file", fit: "trimmed" }],
+      ["example", { text: "invalid repository file", kind: "words" }],
       ["docs", undefined],
     ]);
   });

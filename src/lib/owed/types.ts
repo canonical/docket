@@ -3,24 +3,36 @@ import type { People, Repo } from "../config/index.js";
 import type { Wait } from "../waits/index.js";
 
 /**
- * How a face fits a field to the pane: trimmed text takes one line and is
- * cut with `…`, wrapped text flows over as many lines as it needs.
+ * What a field's text is, which decides how a face fits it to a slot too
+ * narrow for it: an `identifier`, such as `example#12` or a branch, whose
+ * end carries its meaning; a `person`, a login or a team's name; a
+ * thread's `title`; a `quote` of what someone wrote on GitHub; docket's
+ * own `words`, such as `review` or `unassigned`; a failure's `reason` and
+ * its `recovery`; and a `figure`, such as `1d over` or `25m`.
  */
-export type Fit = "trimmed" | "wrapped";
+export type FieldKind =
+  | "identifier"
+  | "person"
+  | "title"
+  | "quote"
+  | "words"
+  | "reason"
+  | "recovery"
+  | "figure";
 
 /**
- * One piece of text a face draws, whole. The view model never cuts text
- * and caps no field, because only a face knows its width and measures
- * display cells: a face that trims decides how much room each slot gets.
+ * One piece of text a face draws, whole, with the kind of text it is. The
+ * view model never cuts text and caps no field, because only a face knows
+ * its width and measures display cells: a face fits each field to its
+ * slot by the field's kind.
  */
 export interface Field {
   readonly text: string;
-  readonly fit: Fit;
+  readonly kind: FieldKind;
 }
 
-/** Fields that share a line and wrap between each other. */
+/** Fields that share a line, which a face wraps between each other. */
 export interface FieldList<F extends Field = Field> {
-  readonly fit: "wrapped";
   readonly fields: readonly F[];
 }
 
@@ -35,6 +47,7 @@ export type PersonGroup = "you" | "team" | "internal" | "outside" | "bot";
 
 /** A login a list names, or a team the viewer belongs to, with its group. */
 export interface Person extends Field {
+  readonly kind: "person";
   readonly group: PersonGroup;
 }
 

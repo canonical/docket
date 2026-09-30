@@ -42,9 +42,9 @@ describe("groupThreads", () => {
     const rows = [row("discussion"), row("issue"), row("discussion")];
     const groups = groupThreads(rows, "kind", repos);
     expect(groups).toEqual([
-      { heading: { text: "ISSUES", fit: "trimmed" }, rows: [rows[1]] },
+      { heading: { text: "ISSUES", kind: "words" }, rows: [rows[1]] },
       {
-        heading: { text: "DISCUSSIONS", fit: "trimmed" },
+        heading: { text: "DISCUSSIONS", kind: "words" },
         rows: [rows[0], rows[2]],
       },
     ]);

@@ -105,7 +105,7 @@ describe("buildActivity", () => {
     );
     expect(list.groups.at(0)?.rows.at(0)?.owner).toEqual({
       text: "carol",
-      fit: "trimmed",
+      kind: "person",
       group: "internal",
     });
   });

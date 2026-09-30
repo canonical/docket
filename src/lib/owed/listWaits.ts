@@ -29,7 +29,7 @@ export default function listWaits(
         return invalidFile
           ? {
               ...row,
-              invalidFile: { text: invalidFileMark, fit: "trimmed" as const },
+              invalidFile: { text: invalidFileMark, kind: "words" as const },
             }
           : row;
       }),
@@ -37,5 +37,5 @@ export default function listWaits(
     .sort((a, b) => b.overdue - a.overdue);
   const counts = countStates(rows);
   const text = `${counts.over} over · ${counts.soon} soon · ${counts.onTrack} on track`;
-  return { rows, counts, summary: { text, fit: "trimmed" } };
+  return { rows, counts, summary: { text, kind: "words" } };
 }

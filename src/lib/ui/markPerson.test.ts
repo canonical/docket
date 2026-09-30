@@ -7,7 +7,7 @@ const person = (
   group: "you" | "team" | "internal" | "outside" | "bot",
 ) => ({
   text,
-  fit: "trimmed" as const,
+  kind: "person" as const,
   group,
 });
 
@@ -37,7 +37,7 @@ describe("markPerson", () => {
   });
 
   it("draws an owner that names no person as plain text", () => {
-    expect(markPerson({ text: "unassigned", fit: "trimmed" }, 12)).toEqual({
+    expect(markPerson({ text: "unassigned", kind: "words" }, 12)).toEqual({
       text: "unassigned",
       fg: tokens["color.text"],
     });

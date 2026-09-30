@@ -44,7 +44,7 @@ const HelpOverlay = ({
       {groupCommands(commands).map(([group, lines]) => (
         <box key={group} flexDirection="column" flexShrink={0} marginTop={1}>
           <GroupHeading
-            heading={{ text: group, fit: "trimmed" }}
+            heading={{ text: group, kind: "words" }}
             width={width}
           />
           {lines.map((line) => {

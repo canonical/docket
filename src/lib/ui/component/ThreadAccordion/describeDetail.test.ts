@@ -298,8 +298,8 @@ describe("describeDetail", () => {
         repo: "example",
         thread: sharedClose.wait.thread,
         owners: [
-          { text: "alice", fit: "trimmed" as const, group: "you" as const },
-          { text: "bob", fit: "trimmed" as const, group: "team" as const },
+          { text: "alice", kind: "person" as const, group: "you" as const },
+          { text: "bob", kind: "person" as const, group: "team" as const },
         ],
         people,
         viewer: "alice",
