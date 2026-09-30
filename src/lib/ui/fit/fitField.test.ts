@@ -34,11 +34,11 @@ const table: Readonly<
   },
   person: {
     40: {
-      line: "example-org/a-team-with-a-very-long-nam…",
+      line: "a-team-with-a-very-long-name-indeed",
       block: ["example-org/a-team-with-a-very-long-name-indeed"],
     },
     60: {
-      line: "example-org/a-team-with-a-very-long-name-indeed",
+      line: "a-team-with-a-very-long-name-indeed",
       block: ["example-org/a-team-with-a-very-long-name-indeed"],
     },
   },

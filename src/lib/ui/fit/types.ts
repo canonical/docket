@@ -7,10 +7,13 @@
 export type Slot = "line" | "block";
 
 /**
- * How a field is fitted to one line too narrow for it: kept `whole`, or
- * cut with `…` at its end (`cutEnd`) or in its middle (`cutMiddle`).
+ * How a field is fitted to one line: kept `whole`, or, when too narrow
+ * for it, cut with `…` at its end (`cutEnd`) or in its middle
+ * (`cutMiddle`); `dropOrganisation` names a team without its
+ * `organisation/`, which every team of a repository shares, then cuts at
+ * the end.
  */
-export type LineRule = "whole" | "cutEnd" | "cutMiddle";
+export type LineRule = "whole" | "cutEnd" | "cutMiddle" | "dropOrganisation";
 
 /** How a field is fitted to a block: kept `whole` on one line, or wrapped (`wrap`). */
 export type BlockRule = "whole" | "wrap";

@@ -30,10 +30,16 @@ export default function fitField(
 ): string | string[] {
   const rule = fitRules[field.kind];
   if (slot === "line") {
-    if (rule.line === "cutMiddle") return cutMiddle(field.text, cells);
-    return rule.line === "whole"
-      ? sanitize(field.text)
-      : trimText(field.text, cells);
+    switch (rule.line) {
+      case "whole":
+        return sanitize(field.text);
+      case "cutMiddle":
+        return cutMiddle(field.text, cells);
+      case "dropOrganisation":
+        return trimText(field.text.replace(/^[^/]*\//, ""), cells);
+      case "cutEnd":
+        return trimText(field.text, cells);
+    }
   }
   return rule.block === "wrap"
     ? wrapText(field.text, cells)

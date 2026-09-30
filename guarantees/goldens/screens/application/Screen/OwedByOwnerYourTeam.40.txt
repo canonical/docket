@@ -20,9 +20,9 @@
 |╵                         ◉ alice, ● bob
 |│┆example#12 PR review ○ dave    1d left
 |╵┆Fix the parser         ✗ checks  ● bob
-|◉ example-org/reviewers ────────────────
+|◉ reviewers ────────────────────────────
 |│┆example#12 PR review ○ dave    1d left
-|╵┆Fix the par…  ✗ checks  ◉ example-org…
+|╵┆Fix the parser   ✗ checks  ◉ reviewers
 |unassigned ─────────────────────────────
 |┃ example#15 issue reply ◐ carol 4h left
 |╹ Crash on start              unassigned
@@ -117,8 +117,8 @@ runs
 21:3 "Fix the parser" fg #c6c8d1ff bg #161821ff italic
 21:26 "✗ checks" fg #e27878ff bg #161821ff
 21:36 "● bob" fg #84a0c6ff bg #161821ff
-22:1 "◉ example-org/reviewers" fg #84a0c6ff bg #161821ff
-22:24 " ────────────────" fg #c6c8d1ff bg #161821ff
+22:1 "◉ reviewers" fg #84a0c6ff bg #161821ff
+22:12 " ────────────────────────────" fg #c6c8d1ff bg #161821ff
 23:1 "│" fg #818596ff bg #161821ff
 23:2 "┆" fg #6b7089ff bg #161821ff
 23:3 "example#12 PR review " fg #c6c8d1ff bg #161821ff bold
@@ -126,9 +126,9 @@ runs
 23:30 "    1d left" fg #c6c8d1ff bg #161821ff bold
 24:1 "╵" fg #818596ff bg #161821ff
 24:2 "┆" fg #6b7089ff bg #161821ff
-24:3 "Fix the par…" fg #c6c8d1ff bg #161821ff italic
-24:17 "✗ checks" fg #e27878ff bg #161821ff
-24:27 "◉ example-org…" fg #84a0c6ff bg #161821ff
+24:3 "Fix the parser" fg #c6c8d1ff bg #161821ff italic
+24:20 "✗ checks" fg #e27878ff bg #161821ff
+24:30 "◉ reviewers" fg #84a0c6ff bg #161821ff
 25:1 "unassigned ─────────────────────────────" fg #c6c8d1ff bg #161821ff
 26:1 "┃" fg #e2a478ff bg #161821ff
 26:3 "example#15 issue reply " fg #c6c8d1ff bg #161821ff bold
