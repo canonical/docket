@@ -47,7 +47,7 @@ describe("describeDetails", () => {
     );
   });
 
-  it("says details paused once their budget is spent, before any count, unless nothing is read", () => {
+  it("says details paused once their budget is spent, before any count, unless nothing is read, as under the rate limit", () => {
     const limited = {
       ...settled,
       paused: { until, reason: "rateLimit" as const },
@@ -56,5 +56,15 @@ describe("describeDetails", () => {
       "details paused",
     );
     expect(describeDetails(limited, undefined, "active", true, count)).toBe("");
+    const refused = {
+      ...settled,
+      failure: Object.assign(new Error("limited"), {
+        code: "GITHUB_RATE_LIMITED",
+        recovery: "wait",
+      } as const),
+    };
+    const pause: StatusMessage = { kind: "notice", text: "paused: rate limit" };
+    expect(describeDetails(refused, pause, "active", true, count)).toBe("");
+    expect(describeDetails(refused, pause, "active", false, count)).toBe("");
   });
 });

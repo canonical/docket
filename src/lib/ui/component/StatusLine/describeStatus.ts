@@ -16,9 +16,9 @@ const separator = ` ${tokens["glyph.separator"]} `;
  * Chooses the one message the status line shows for the cache's state
  * and the user's last action. The first that applies wins: a pause for
  * the rate limit, `paused: rate limit · resumes 14:20`, rows held or
- * not; an error, which says `rate limited`, `offline` when a
- * request got no answer, at all or in time, or else `refresh failed`;
- * the result of the user's own
+ * not, or `paused: rate limit` alone when a refusal gives no time; an
+ * error, which says `offline` when a request got no answer, at all or
+ * in time, or else `refresh failed`; the result of the user's own
  * action, for 5 seconds after it; the progress of a full refresh; a
  * refresh in the background, naming the furthest repository it has
  * reached and its place among them, as `refreshing · docs 2/3` (while it
@@ -45,14 +45,17 @@ export default function describeStatus(
     const text = `paused: rate limit${separator}resumes ${describeClock(paused.until, timezone)}`;
     return { kind: "notice", text };
   }
+  // A refusal for the rate limit is a pause wherever it comes from, such
+  // as activity's events, even when no time says when it ends.
+  if (failure?.code === "GITHUB_RATE_LIMITED") {
+    return { kind: "notice", text: "paused: rate limit" };
+  }
   if (failure) {
     const what =
-      failure.code === "GITHUB_RATE_LIMITED"
-        ? "rate limited"
-        : failure.code === "GITHUB_TIMED_OUT" ||
-            failure.code === "GITHUB_UNREACHABLE"
-          ? "offline"
-          : "refresh failed";
+      failure.code === "GITHUB_TIMED_OUT" ||
+      failure.code === "GITHUB_UNREACHABLE"
+        ? "offline"
+        : "refresh failed";
     const from = syncedAt
       ? `${separator}data from ${describeClock(syncedAt, timezone)}`
       : "";

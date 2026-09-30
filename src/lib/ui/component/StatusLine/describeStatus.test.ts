@@ -95,16 +95,18 @@ describe("describeStatus", () => {
     });
   });
 
-  it("names a rate limit whose reset time is unknown, with no data yet", () => {
+  it("says the rate limit paused the refresh when a refusal gives no time, rows held or not, as when activity's events are refused", () => {
     const failure = Object.assign(new Error("limited"), {
       code: "GITHUB_RATE_LIMITED",
       recovery: "wait",
     } as const);
-    const status = { ...statusOf(Synced), syncedAt: undefined, failure };
-    expect(describeAt(status)).toEqual({
-      kind: "error",
-      text: "✗ rate limited",
-    });
+    const held = { ...statusOf(Synced), failure };
+    for (const status of [held, { ...held, syncedAt: undefined }]) {
+      expect(describeAt(status)).toEqual({
+        kind: "notice",
+        text: "paused: rate limit",
+      });
+    }
   });
 
   it("puts an error before a refresh in progress", () => {
