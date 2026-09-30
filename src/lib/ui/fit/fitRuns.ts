@@ -27,17 +27,21 @@ export default function fitRuns<Look extends Run>(
   width: number,
 ): Look[] {
   const kept = fitPieces(runs, width);
-  const end = kept.length - 1;
-  const shortened = end >= 0 && kept[end].text !== sanitize(runs[end].text);
+  const last = kept.at(-1);
+  const whole = runs.at(kept.length - 1);
+  const shortened =
+    last !== undefined &&
+    whole !== undefined &&
+    last.text !== sanitize(whole.text);
   if (!shortened && kept.length === runs.length) return kept;
-  if (
-    shortened &&
-    kept[end].marked &&
-    measureText(kept[end].text) < markedCells
-  ) {
+  if (shortened && last.marked && measureText(last.text) < markedCells) {
     kept.pop();
   }
-  while (kept.length > 0 && joining.test(kept[kept.length - 1].text)) {
+  for (
+    let end = kept.at(-1);
+    end && joining.test(end.text);
+    end = kept.at(-1)
+  ) {
     kept.pop();
   }
   return kept;

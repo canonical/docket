@@ -4,37 +4,39 @@ import measurePieces from "./measurePieces.js";
 import measureText from "./measureText.js";
 import type { Run } from "./types.js";
 
-/** Part of a word: its text, and which run it came from. */
-interface Fragment {
-  readonly run: number;
+/** Part of a word: its text, in the look of the run it came from. */
+interface Fragment<Look> {
+  readonly look: Look;
   readonly text: string;
 }
 
-/** A word, and the run the space before it came from. */
-interface Word {
-  readonly space: number;
-  readonly fragments: readonly Fragment[];
+/** A word, and the look of the space before it. */
+interface Word<Look> {
+  readonly space: Look;
+  readonly fragments: Fragment<Look>[];
 }
 
 /**
  * The words of `runs`, split at each space, none after a space that ends
- * them. A marked person is one word
- * with its mark, and a no-break space joins two words into one.
+ * them. A marked person is one word with its mark, and a no-break space
+ * joins two words into one.
  */
-function splitWords(runs: readonly Run[]): Word[] {
-  const words: Word[] = [];
-  let word: Word = { space: 0, fragments: [] };
-  runs.forEach(({ text, marked }, run) => {
-    const clean = sanitize(text);
-    (marked ? [clean] : clean.split(" ")).forEach((part, place) => {
+function splitWords<Look extends Run>(
+  runs: readonly Look[],
+  first: Look,
+): Word<Look>[] {
+  const words: Word<Look>[] = [];
+  let word: Word<Look> = { space: first, fragments: [] };
+  for (const look of runs) {
+    const clean = sanitize(look.text);
+    (look.marked ? [clean] : clean.split(" ")).forEach((part, place) => {
       if (place > 0) {
         words.push(word);
-        word = { space: run, fragments: [] };
+        word = { space: look, fragments: [] };
       }
-      if (part !== "")
-        word = { ...word, fragments: [...word.fragments, { run, text: part }] };
+      if (part !== "") word.fragments.push({ look, text: part });
     });
-  });
+  }
   // A space that ends the runs opens no word of its own.
   return word.fragments.length > 0 || words.length === 0
     ? [...words, word]
@@ -42,31 +44,32 @@ function splitWords(runs: readonly Run[]): Word[] {
 }
 
 /** Splits a word wider than a line into pieces that fit, losing no character. */
-function splitWide(word: Word, width: number): Word[] {
+function splitWide<Look extends Run>(
+  word: Word<Look>,
+  width: number,
+): Word<Look>[] {
   if (measurePieces(word.fragments) <= width) return [word];
-  const pieces: Fragment[][] = [[]];
+  let piece: Word<Look> = { space: word.space, fragments: [] };
+  const pieces = [piece];
   let used = 0;
-  for (const { run, text } of word.fragments) {
+  for (const { look, text } of word.fragments) {
     for (const { segment } of graphemes.segment(text)) {
       const cells = measureText(segment);
       if (used > 0 && used + cells > width) {
-        pieces.push([]);
+        piece = { space: look, fragments: [] };
+        pieces.push(piece);
         used = 0;
       }
-      const piece = pieces[pieces.length - 1];
-      const last = piece.pop();
-      piece.push(
-        ...(last?.run === run
-          ? [{ run, text: last.text + segment }]
-          : [...(last ? [last] : []), { run, text: segment }]),
-      );
+      const last = piece.fragments.at(-1);
+      if (last?.look === look) {
+        piece.fragments.splice(-1, 1, { look, text: last.text + segment });
+      } else {
+        piece.fragments.push({ look, text: segment });
+      }
       used += cells;
     }
   }
-  return pieces.map((fragments, place) => ({
-    space: place === 0 ? word.space : fragments[0].run,
-    fragments,
-  }));
+  return pieces;
 }
 
 /**
@@ -81,17 +84,19 @@ export default function wrapRuns<Look extends Run>(
   runs: readonly Look[],
   width: number,
 ): Look[][] {
+  const [head] = runs;
+  if (head === undefined) return [[]];
   // splitWords gives one word at least, and splitWide one piece of each.
-  const [first, ...rest] = splitWords(runs).flatMap((each) =>
+  const [first, ...rest] = splitWords(runs, head).flatMap((each) =>
     splitWide(each, width),
   );
-  const lines: Fragment[][] = [];
+  const lines: Fragment<Look>[][] = [];
   let line = [...first.fragments];
   let used = measurePieces(line);
   for (const word of rest) {
     const cells = measurePieces(word.fragments);
     if (used + 1 + cells <= width) {
-      line.push({ run: word.space, text: " " }, ...word.fragments);
+      line.push({ look: word.space, text: " " }, ...word.fragments);
       used += 1;
     } else {
       lines.push(line);
@@ -101,8 +106,8 @@ export default function wrapRuns<Look extends Run>(
     used += cells;
   }
   return [...lines, line].map((each) =>
-    each.map(({ run, text }) => ({
-      ...runs[run],
+    each.map(({ look, text }) => ({
+      ...look,
       text: text.replaceAll(noBreakSpace, " "),
     })),
   );

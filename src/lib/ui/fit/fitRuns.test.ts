@@ -45,6 +45,18 @@ describe("fitRuns", () => {
     ]);
   });
 
+  it("gives nothing when every run kept is a separator", () => {
+    expect(
+      fitRuns(
+        [
+          { text: " ", look: "words" },
+          { text: "abc", look: "words" },
+        ],
+        1,
+      ),
+    ).toEqual([]);
+  });
+
   it("gives nothing for no runs", () => {
     expect(fitRuns([], 40)).toEqual([]);
   });
