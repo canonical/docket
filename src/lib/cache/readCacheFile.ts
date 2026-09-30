@@ -12,12 +12,18 @@ function readDates(_key: string, value: unknown): unknown {
     : value;
 }
 
-/** `value` as a budget, when it holds one whole. */
+/**
+ * `value` as a budget, when it holds one whole: every figure a number,
+ * and the reset a date that exists.
+ */
 function readBudget(value: unknown): Budget | undefined {
   const { limit, remaining, resetAt } = (value ?? {}) as Partial<Budget>;
-  return typeof limit === "number" &&
-    typeof remaining === "number" &&
-    resetAt instanceof Date
+  const isFigure = (figure: unknown): figure is number =>
+    typeof figure === "number" && Number.isFinite(figure);
+  return isFigure(limit) &&
+    isFigure(remaining) &&
+    resetAt instanceof Date &&
+    isFigure(resetAt.getTime())
     ? { limit, remaining, resetAt }
     : undefined;
 }
