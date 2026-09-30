@@ -12,11 +12,22 @@ import describeAge from "./describeAge.js";
 import describeEvent from "./describeEvent.js";
 import type { ThreadRow } from "./types.js";
 
-/** What an event acted on, as GitHub writes it, when it names anything. */
-function findTarget(event: WindowEvent): Field | undefined {
+/**
+ * What an event acted on, as GitHub writes it, when it names anything: a
+ * person assigned comes with their group, as every person a list names.
+ */
+function findTarget(
+  event: WindowEvent,
+  people: People,
+  viewer: string | undefined,
+): Field | undefined {
   switch (event.kind) {
     case "assigned":
-      return { text: event.assignee, kind: "person" };
+      return describePerson(
+        { login: event.assignee, type: "user" },
+        people,
+        viewer,
+      );
     case "labelled":
       return { text: event.label, kind: "identifier" };
     case "checksFailed":
@@ -55,7 +66,7 @@ export default function buildThreadRow(
         : describePerson(event.actor, people, viewer);
     // describeEvent writes the actor first, then one space, then the action.
     const action = actor ? text.slice(actor.text.length + 1) : text;
-    const target = findTarget(event);
+    const target = findTarget(event, people, viewer);
     return {
       event,
       text: { text, kind: "words" as const },

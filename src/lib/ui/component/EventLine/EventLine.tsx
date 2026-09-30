@@ -36,25 +36,36 @@ const targetCells = 12;
 function describeAction(
   { action, target }: EventLineProps["line"],
   room: number,
-): string {
-  if (!target) return fitField(action, "event", room);
+  fg: string,
+): Piece[] {
+  if (!target) return [{ text: fitField(action, "event", room), fg }];
   const at = action.text.lastIndexOf(target.text);
   const words = action.text.slice(0, at).trimEnd();
   const space = action.text.slice(words.length, at);
   const after = action.text.slice(at + target.text.length);
-  const tail = measureText(target.text) + measureText(after);
+  // A person the event acted on is drawn behind their mark and a space.
+  const mark = "group" in target ? 2 : 0;
+  const fitTarget = (cells: number): Piece =>
+    "group" in target
+      ? markPerson(target, cells - mark)
+      : { text: fitField(target, "event", cells), fg };
+  const tail = mark + measureText(target.text) + measureText(after);
   const targetRoom =
     room - measureText(words) - measureText(space) - measureText(after);
-  if (targetRoom >= Math.min(measureText(target.text), targetCells)) {
-    return `${words}${space}${fitField(target, "event", targetRoom)}${after}`;
-  }
-  const wordsRoom = Math.max(
-    Math.min(measureText(words), wordsCells),
-    room - measureText(space) - tail,
-  );
+  const wordsRoom =
+    targetRoom >= Math.min(tail - measureText(after), targetCells)
+      ? measureText(words)
+      : Math.max(
+          Math.min(measureText(words), wordsCells),
+          room - measureText(space) - tail,
+        );
   const before = `${fitField({ text: words, kind: "words" }, "line", wordsRoom)}${space}`;
   const cells = room - measureText(before) - measureText(after);
-  return `${before}${fitField(target, "event", cells)}${after}`;
+  return [
+    { text: before, fg },
+    fitTarget(cells),
+    ...(after ? [{ text: after, fg }] : []),
+  ];
 }
 
 /**
@@ -68,18 +79,25 @@ function describeWhat(line: EventLineProps["line"], room: number): Piece[] {
   const { event, actor } = line;
   if (event.kind === "checksFailed") {
     const failed = `${tokens["glyph.failed"]} `;
+    const error = tokens["color.text.error"];
     return [
-      {
-        text: `${failed}${describeAction(line, room - measureText(failed))}`,
-        fg: tokens["color.text.error"],
-      },
+      { text: failed, fg: error },
+      ...describeAction(line, room - measureText(failed), error),
     ];
   }
   const tone = event.bot ? tokens["color.text.muted"] : tokens["color.text"];
   const who = actor ? [markPerson(actor, loginCells)] : [];
   // A space between the actor and what they did.
-  const what = describeAction(line, room - measurePieces(who) - who.length);
-  return [...who, { text: who.length > 0 ? ` ${what}` : what, fg: tone }];
+  const what = describeAction(
+    line,
+    room - measurePieces(who) - who.length,
+    tone,
+  );
+  return [
+    ...who,
+    ...(who.length > 0 ? [{ text: " ", fg: tone }] : []),
+    ...what,
+  ];
 }
 
 /**

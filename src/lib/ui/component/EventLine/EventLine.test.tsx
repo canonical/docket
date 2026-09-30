@@ -50,6 +50,21 @@ describe("EventLine", () => {
     );
   });
 
+  it("draws a person the event assigned behind their mark, in their group's hue", async () => {
+    const line = {
+      ...Pushed.args.line,
+      action: { text: "assigned bob", kind: "words" as const },
+      target: {
+        text: "bob",
+        kind: "person" as const,
+        group: "team" as const,
+      },
+    };
+    const screen = await draw(<EventLine {...Pushed.args} line={line} />, 40);
+    expect(screen.lines.at(0)).toMatch(/^ ┆ {2}● alice assigned ● bob +25m$/);
+    expect(screen.look("● bob")?.fg).toBe(tokens["color.text.team"]);
+  });
+
   it("cuts a failed check's names inside their brackets, keeping the brackets", async () => {
     const line = {
       ...ChecksFailed.args.line,

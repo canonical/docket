@@ -45,7 +45,7 @@ describe("buildThreadRow", () => {
     expect(
       row.events.map(({ action, target }) => [action.text, target]),
     ).toEqual([
-      ["assigned bob", { text: "bob", kind: "person" }],
+      ["assigned bob", { text: "bob", kind: "person", group: "team" }],
       ["labelled kind: bug", { text: "kind: bug", kind: "identifier" }],
       [
         "checks failed (lint, test)",
