@@ -33,7 +33,7 @@ describe("drawFirstRun", () => {
     expect(screen.lines.slice(0, 4)).toEqual([
       "  refresh in progress…",
       "  example ✓ 89 threads",
-      "  docs    reading page 1/5",
+      "  docs    reading page 2/5",
       `  ${"█".repeat(16)}${"░".repeat(13)} 5/9 pages`,
     ]);
   });

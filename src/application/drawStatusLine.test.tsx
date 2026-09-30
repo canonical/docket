@@ -37,6 +37,11 @@ describe("drawStatusLine", () => {
     expect(await drawFor({ failure })).toBe("✗ offline · data from 11:58");
   });
 
+  it("says the rate limit paused reading when activity's events are refused for it, with rows held", async () => {
+    const failure = providerError("GITHUB_RATE_LIMITED");
+    expect(await drawFor({ failure })).toBe("paused: rate limit");
+  });
+
   it("says nothing of the cache while a problem stands in for the list", async () => {
     const problem = {
       code: "GH_NOT_INSTALLED",
@@ -63,7 +68,7 @@ describe("drawStatusLine", () => {
       ],
     };
     expect(await drawFor({ status })).toBe(
-      "full refresh · docs 2/2 · pages 1/3",
+      "full refresh · docs 2/2 · pages 2/4",
     );
   });
 

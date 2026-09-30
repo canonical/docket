@@ -18,7 +18,7 @@ export default function isSame(a: unknown, b: unknown): boolean {
   if (Array.isArray(a) && Array.isArray(b)) {
     return (
       a.length === b.length &&
-      a.every((entry, place) => isSame(entry, b[place]))
+      a.every((entry, place) => isSame(entry, b.at(place)))
     );
   }
   if (!isRecord(a) || !isRecord(b)) return false;

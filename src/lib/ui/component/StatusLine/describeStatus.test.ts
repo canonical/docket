@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { providerError } from "../../../../testing/provider.js";
 import type { CacheStatus } from "../../../cache/index.js";
 import describeStatus from "./describeStatus.js";
 import {
@@ -83,9 +84,21 @@ describe("describeStatus", () => {
     });
   });
 
-  it("says docket is offline with no data yet", () => {
+  it("says nothing of a failure before any data, which the list names", () => {
     const status = { ...statusOf(Offline), syncedAt: undefined };
-    expect(describeAt(status)).toEqual({ kind: "error", text: "✗ offline" });
+    expect(describeAt(status)).toBeUndefined();
+  });
+
+  it("shows the progress of a first run that tries again after a failure, not the failure it replaces", () => {
+    const status = {
+      ...statusOf(FullRefresh),
+      failure: providerError("GITHUB_TIMED_OUT"),
+    };
+    expect(describeAt(status)).toEqual({
+      kind: "progress",
+      text: "full refresh · example 1/2 · pages 5/9",
+      shorter: "full refresh · example 1/2",
+    });
   });
 
   it("names any other failed refresh and the time of the data shown", () => {
@@ -95,16 +108,18 @@ describe("describeStatus", () => {
     });
   });
 
-  it("names a rate limit whose reset time is unknown, with no data yet", () => {
+  it("says the rate limit paused the refresh when a refusal gives no time, rows held or not, as when activity's events are refused", () => {
     const failure = Object.assign(new Error("limited"), {
       code: "GITHUB_RATE_LIMITED",
       recovery: "wait",
     } as const);
-    const status = { ...statusOf(Synced), syncedAt: undefined, failure };
-    expect(describeAt(status)).toEqual({
-      kind: "error",
-      text: "✗ rate limited",
-    });
+    const held = { ...statusOf(Synced), failure };
+    for (const status of [held, { ...held, syncedAt: undefined }]) {
+      expect(describeAt(status)).toEqual({
+        kind: "notice",
+        text: "paused: rate limit",
+      });
+    }
   });
 
   it("puts an error before a refresh in progress", () => {
@@ -112,10 +127,11 @@ describe("describeStatus", () => {
     expect(describeAt(status)?.kind).toBe("error");
   });
 
-  it("states a full refresh's repository by its short name and its pages", () => {
+  it("states a full refresh's repository by its short name and its pages, and the words without the pages that give way first", () => {
     expect(describeAt(statusOf(FullRefresh))).toEqual({
       kind: "progress",
       text: "full refresh · example 1/2 · pages 5/9",
+      shorter: "full refresh · example 1/2",
     });
   });
 
@@ -135,7 +151,7 @@ describe("describeStatus", () => {
     const stages = [
       {
         repo: "example-org/example-docs",
-        stage: { kind: "done", threads: 1, fetched: 1, total: 1 },
+        stage: { kind: "done", threads: 1, fetched: 0, total: 0 },
       },
       { repo: "example-org/example-repo", stage: { kind: "checking" } },
     ] as const;
@@ -151,6 +167,24 @@ describe("describeStatus", () => {
     ] as const;
     expect(describeAt({ ...status, stages: reading })?.text).toBe(
       "full refresh · example 2/2",
+    );
+  });
+
+  it("counts the full refresh's pages across the repositories begun, as the progress line does", () => {
+    const status = statusOf(FullRefresh);
+    const stages = [
+      {
+        repo: "example-org/example-repo",
+        stage: { kind: "done", threads: 89, fetched: 2, total: 2 },
+      },
+      {
+        repo: "example-org/example-docs",
+        stage: { kind: "reading", fetched: 1, total: 3 },
+      },
+      { repo: "example-org/example-site", stage: { kind: "waiting" } },
+    ] as const;
+    expect(describeAt({ ...status, stages })?.text).toBe(
+      "full refresh · docs 2/3 · pages 3/5",
     );
   });
 

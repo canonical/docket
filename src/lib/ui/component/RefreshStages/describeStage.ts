@@ -20,12 +20,13 @@ export default function describeStage(stage: RepoStage): Piece[] {
     case "checking":
       return [{ text: "checking for changes", fg: plain }];
     case "reading":
-      // How many pages there are is known only once the first arrives.
+      // How many pages there are is known only once the first arrives;
+      // the page named is the one being read, after those read.
       return [
         {
           text:
             stage.total > 0
-              ? `reading page ${stage.fetched}/${stage.total}`
+              ? `reading page ${Math.min(stage.fetched + 1, stage.total)}/${stage.total}`
               : "reading",
           fg: plain,
         },

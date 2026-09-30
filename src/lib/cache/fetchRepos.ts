@@ -74,12 +74,13 @@ export default async function fetchRepos({
   const synced = new Map<string, RepoCache>();
   // The pages each repository's read reached, which its later stages keep.
   const pages = new Map<string, PageProgress>();
-  const reached = (repo: string) => pages.get(repo) ?? { fetched: 0, total: 0 };
+  const findPagesRead = (repo: string) =>
+    pages.get(repo) ?? { fetched: 0, total: 0 };
   const finish = (repo: string, value: RepoCache) =>
     reach([repo], () => ({
       kind: "done",
       threads: value.threads.length,
-      ...reached(repo),
+      ...findPagesRead(repo),
     }));
   try {
     for (const repo of repos) {
@@ -101,7 +102,10 @@ export default async function fetchRepos({
     const refreshed =
       spend && checks
         ? await refreshChecks(provider, [...synced.values()], (covered) =>
-            reach(covered, (repo) => ({ kind: "checks", ...reached(repo) })),
+            reach(covered, (repo) => ({
+              kind: "checks",
+              ...findPagesRead(repo),
+            })),
           )
         : [];
     for (const [repo, value] of synced) {

@@ -15,6 +15,11 @@ export interface StatusMessage {
     | "notice"
     | "freshness";
   readonly text: string;
+  /**
+   * The words without their part that gives way first, drawn when the
+   * whole words don't fit: a full refresh without its pages.
+   */
+  readonly shorter?: string;
   /** The people the message names, drawn after its words behind their marks. */
   readonly people?: readonly Owner[];
 }

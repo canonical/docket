@@ -8,7 +8,7 @@ import {
   fullBudget,
   providerError,
 } from "../../testing/provider.js";
-import type { Provider } from "../provider/index.js";
+import type { PageProgress, Provider } from "../provider/index.js";
 import createCache from "./createCache.js";
 
 const repo = "example-org/example-repo";
@@ -139,6 +139,77 @@ describe("the stages of createCache", () => {
     expect(failure?.code).toBe("CACHE_REFRESH_FAILED");
   });
 
+  it("drops a rate limit's pause once its time is past and a refresh reads again", async () => {
+    const limited = providerError("GITHUB_RATE_LIMITED");
+    const seen: unknown[] = [];
+    const snapshot = vi.fn(async () => {
+      seen.push(cache.status().paused);
+      return { threads: [], cursor: null };
+    });
+    snapshot.mockRejectedValueOnce(limited);
+    const cache = open(fakeProvider({ snapshot }));
+    await cache.refresh();
+    expect(cache.status().paused?.reason).toBe("rateLimit");
+    later(61 * minute);
+    await cache.refresh();
+    expect(seen).toEqual([undefined, undefined]);
+  });
+
+  it("hands out the threads once a refresh ends, not as each repository arrives", async () => {
+    const cache = open(fakeProvider({ snapshot }));
+    await cache.refresh();
+    later(2 * minute);
+    const before = cache.threads();
+    const lists = new Set<unknown>();
+    cache.subscribe(() => lists.add(cache.threads()));
+    await cache.refresh();
+    expect(lists.size).toBe(2);
+    expect(lists.has(before)).toBe(true);
+    expect(cache.threads()).not.toBe(before);
+  });
+
+  it("tells its listeners as often however many pages a background re-read takes, since none is drawn", async () => {
+    const counts: number[] = [];
+    for (const pages of [2, 10]) {
+      const paged = vi.fn(
+        async (
+          name: string,
+          _cursor: unknown,
+          onPage?: (progress: PageProgress) => void,
+        ) => {
+          for (let fetched = 1; fetched <= pages; fetched += 1) {
+            onPage?.({ fetched, total: pages });
+          }
+          return { threads: [thread({ repo: name })], cursor: null };
+        },
+      );
+      directory = join(root, `pages-${pages}`);
+      const cache = open(fakeProvider({ snapshot: paged }));
+      await cache.refresh();
+      // The hourly whole re-read reads every page again.
+      later(61 * minute);
+      let told = 0;
+      cache.subscribe(() => {
+        told += 1;
+      });
+      await cache.refresh();
+      counts.push(told);
+    }
+    expect(counts).toHaveLength(2);
+    expect(counts.at(1)).toBe(counts.at(0));
+  });
+
+  it("runs a first refresh that may not spend as a background one, never a full refresh", async () => {
+    const cache = open(
+      fakeProvider({ budget: async () => ({ ...fullBudget, remaining: 999 }) }),
+    );
+    const seen: boolean[] = [];
+    cache.subscribe(() => seen.push(cache.status().whole));
+    await cache.refresh();
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen).not.toContain(true);
+  });
+
   it("keeps each repository paused while the budget is low and it needs points to go on", async () => {
     const cache = open(
       fakeProvider({
@@ -162,7 +233,10 @@ describe("the stages of createCache", () => {
     later(2 * minute);
     const first: unknown[] = [];
     cache.subscribe(() => {
-      if (first.length === 0) first.push(cache.status());
+      // The threads thrown away are handed out first, then the run.
+      if (first.length === 0 && cache.status().refreshing) {
+        first.push(cache.status());
+      }
     });
     await cache.fullRefresh();
     expect(first.at(0)).toMatchObject({

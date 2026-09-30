@@ -1,6 +1,7 @@
 import { describeAge } from "../../../activity/index.js";
 import type { AttentionState, CacheStatus } from "../../../cache/index.js";
 import { tokens } from "../../../tokens/index.js";
+import countPages from "../../countPages.js";
 import describeClock from "../../describeClock.js";
 import findStageUnderWay from "../../findStageUnderWay.js";
 import type { ActionResult, StatusMessage } from "./types.js";
@@ -16,19 +17,20 @@ const separator = ` ${tokens["glyph.separator"]} `;
  * Chooses the one message the status line shows for the cache's state
  * and the user's last action. The first that applies wins: a pause for
  * the rate limit, `paused: rate limit · resumes 14:20`, rows held or
- * not; an error, which says `rate limited`, `offline` when a
- * request got no answer, at all or in time, or else `refresh failed`;
- * the result of the user's own
- * action, for 5 seconds after it; the progress of a full refresh; a
- * refresh in the background, naming the furthest repository it has
- * reached and its place among them, as `refreshing · docs 2/3` (while it
- * is on none, such as when it saves what it fetched, the messages below
- * stand); a short notice, such as when a full refresh is available
- * again, or `paused: budget low · resumes 14:20` while the budget is too
- * low to spend; and otherwise how old the data is, followed, while the
- * pane is idle, by `idle · any key wakes`. With no data and nothing
- * happening there is no message, and with no cache only an action's
- * result.
+ * not, or `paused: rate limit` alone when a refusal gives no time; with
+ * data held, an error, which says `offline` when a request got no
+ * answer, at all or in time, or else `refresh failed`, with the data's
+ * time (before any data the list names it, and the line stays empty
+ * until a refresh tries again); the result of the user's own action,
+ * for 5 seconds after it; the progress of a full refresh; a refresh in
+ * the background, naming the furthest repository it has reached and its
+ * place among them, as `refreshing · docs 2/3` (while it is on none,
+ * such as when it saves what it fetched, the messages below stand); a
+ * short notice, such as when a full refresh is available again, or
+ * `paused: budget low · resumes 14:20` while the budget is too low to
+ * spend; and otherwise how old the data is, followed, while the pane is
+ * idle, by `idle · any key wakes`. With no data and nothing happening
+ * there is no message, and with no cache only an action's result.
  */
 export default function describeStatus(
   status: CacheStatus | undefined,
@@ -45,19 +47,24 @@ export default function describeStatus(
     const text = `paused: rate limit${separator}resumes ${describeClock(paused.until, timezone)}`;
     return { kind: "notice", text };
   }
-  if (failure) {
+  // A refusal for the rate limit is a pause wherever it comes from, such
+  // as activity's events, even when no time says when it ends.
+  if (failure?.code === "GITHUB_RATE_LIMITED") {
+    return { kind: "notice", text: "paused: rate limit" };
+  }
+  if (failure && syncedAt) {
     const what =
-      failure.code === "GITHUB_RATE_LIMITED"
-        ? "rate limited"
-        : failure.code === "GITHUB_TIMED_OUT" ||
-            failure.code === "GITHUB_UNREACHABLE"
-          ? "offline"
-          : "refresh failed";
-    const from = syncedAt
-      ? `${separator}data from ${describeClock(syncedAt, timezone)}`
-      : "";
+      failure.code === "GITHUB_TIMED_OUT" ||
+      failure.code === "GITHUB_UNREACHABLE"
+        ? "offline"
+        : "refresh failed";
+    const from = `${separator}data from ${describeClock(syncedAt, timezone)}`;
     return { kind: "error", text: `${failed} ${what}${from}` };
   }
+  // Before any data, the list names a failure and its recovery, and the
+  // line has no data to date, so it stays empty, until a refresh tries
+  // again and the line says how far that has come.
+  if (failure && !status?.refreshing) return undefined;
   if (action && now.getTime() - action.at.getTime() < resultShown) {
     return action.failed
       ? { kind: "actionFailed", text: `${failed} ${action.text}` }
@@ -70,11 +77,14 @@ export default function describeStatus(
   if (!status) return undefined;
   const underWay = findStageUnderWay(status.stages);
   if (status.whole && underWay) {
-    const { repo, position, count, fetched, total } = underWay;
-    // The pages are named once a first page says how many there are.
-    const pages = total > 0 ? `${separator}pages ${fetched}/${total}` : "";
-    const text = `full refresh${separator}${names[repo] ?? repo} ${position}/${count}${pages}`;
-    return { kind: "progress", text };
+    const { repo, position, count } = underWay;
+    // The pages count across the repositories begun, as the progress
+    // line does, once a first page says how many there are.
+    const { fetched, total } = countPages(status.stages);
+    const shorter = `full refresh${separator}${names[repo] ?? repo} ${position}/${count}`;
+    if (total === 0) return { kind: "progress", text: shorter };
+    const text = `${shorter}${separator}pages ${fetched}/${total}`;
+    return { kind: "progress", text, shorter };
   }
   if (status.refreshing && underWay) {
     const { repo, position, count } = underWay;

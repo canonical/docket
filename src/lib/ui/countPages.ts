@@ -1,5 +1,5 @@
-import type { RepoProgress } from "../lib/cache/index.js";
-import type { ProgressLineProps } from "../lib/ui/index.js";
+import type { RepoProgress } from "../cache/index.js";
+import type { ProgressLineProps } from "./component/index.js";
 
 /**
  * The pages read of the repositories a refresh has begun reading, and

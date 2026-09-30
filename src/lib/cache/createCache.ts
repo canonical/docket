@@ -12,6 +12,7 @@ import {
   refreshInterval,
 } from "./constants.js";
 import createReadQueries from "./createReadQueries.js";
+import dropPages from "./dropPages.js";
 import fetchRepos, { type FetchReposOptions } from "./fetchRepos.js";
 import findBudgetFloor from "./findBudgetFloor.js";
 import identifyFile from "./identifyFile.js";
@@ -117,22 +118,23 @@ export default function createCache({
   };
 
   /**
-   * Brings the threads and the status given out up to date with the
-   * queries and with `change`, and tells the listeners when either
-   * changed.
+   * Brings the status given out up to date with `change`, and the threads
+   * with the queries unless `withThreads` is false, and tells the
+   * listeners when either changed.
    */
-  const publish = (change: Partial<CacheStatus> = {}) => {
+  const publish = (change: Partial<CacheStatus> = {}, withThreads = true) => {
     const data = repos.map((repo) => {
       const state = client.getQueryState(key(repo));
       return { data: state?.data, at: state?.dataUpdatedAt ?? 0 };
     });
     const threadsChanged =
-      shownPatches !== patchCount ||
-      data.some(
-        (now, index) =>
-          now.data !== shownData[index]?.data ||
-          now.at !== shownData[index]?.at,
-      );
+      withThreads &&
+      (shownPatches !== patchCount ||
+        data.some(
+          (now, index) =>
+            now.data !== shownData[index]?.data ||
+            now.at !== shownData[index]?.at,
+        ));
     if (threadsChanged) {
       shownData = data;
       shownPatches = patchCount;
@@ -179,14 +181,24 @@ export default function createCache({
     const at = now();
     try {
       // The first report comes before any request, every repository
-      // waiting, so the run and its stages are published together.
+      // waiting, so the run and its stages are published together. The
+      // threads are handed out once, when the run ends: each repository's
+      // alone would rebuild every list on screen for each.
       await fetchRepos({
         provider,
         repos,
         at,
         find: entry,
         keep: (repo, value) => store(repo, value, at),
-        report: (stages) => publish({ refreshing: true, whole, stages }),
+        report: (stages) => {
+          // With rows on screen no page is drawn, so a report that moves
+          // only the pages read would redraw the screen for nothing.
+          const unseen =
+            !whole &&
+            status.refreshing &&
+            isSame(dropPages(stages), dropPages(status.stages));
+          if (!unseen) publish({ refreshing: true, whole, stages }, false);
+        },
         ...options,
       });
     } finally {
@@ -231,6 +243,9 @@ export default function createCache({
       publish({ fullRefreshAvailableAt: undefined });
       fullRefreshAt = at;
       client.clear();
+      // The threads thrown away leave the screen at once, not once the
+      // fetch that replaces them ends.
+      publish();
       await save();
       await fetchAll();
       return true;
@@ -374,6 +389,8 @@ export default function createCache({
           paused && at < paused.until
             ? paused
             : await findBudgetFloor(provider, at);
+        // A pause whose time is past no longer holds while reading resumes.
+        if (paused && at >= paused.until) publish({ paused: undefined });
         const idle = attention === "idle";
         // Waking catches up at once, whatever another pane fetched.
         const maxAge =

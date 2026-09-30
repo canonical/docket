@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { describeNoTeam } from "../lib/owed/index.js";
+import type { ProviderError } from "../lib/provider/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import { settleStatus } from "../testing/cache.js";
+import { providerError } from "../testing/provider.js";
 import {
   recordedActivity,
   recordedNow,
@@ -79,7 +81,7 @@ describe("drawStandIn", () => {
     });
     expect(screen.lines.slice(0, 4)).toEqual([
       "  refresh in progress…",
-      "  example reading page 5/9",
+      "  example reading page 6/9",
       "  docs    waiting",
       `  ${"█".repeat(15)}${"░".repeat(13)} 5/9 pages`,
     ]);
@@ -105,6 +107,32 @@ describe("drawStandIn", () => {
     expect(screen.lines.slice(0, 2)).toEqual([
       "  refresh in progress…",
       "  example paused: rate limit",
+    ]);
+  });
+
+  it("gives a failure that came before any fetch its own reason and step, not an earlier run's failed line", async () => {
+    const refused: ProviderError = Object.assign(
+      new Error("GitHub refused the request."),
+      { code: "GITHUB_REQUEST_FAILED", recovery: "check gh's access" } as const,
+    );
+    const screen = await drawFor({
+      held: false,
+      status: {
+        ...settleStatus(recordedNow),
+        syncedAt: undefined,
+        failure: refused,
+        stages: [
+          {
+            repo: "example-org/example-repo",
+            stage: { kind: "failed", error: providerError("GITHUB_TIMED_OUT") },
+          },
+        ],
+      },
+    });
+    expect(screen.lines.slice(0, 3)).toEqual([
+      "  ✗ GitHub refused the request",
+      "  Recovery: check gh's access",
+      "",
     ]);
   });
 

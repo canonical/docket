@@ -318,7 +318,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       const drawn = await screen.redraw();
       expect(drawn.lines.slice(2, 6)).toEqual([
         "  refresh in progress…",
-        "  example reading page 5/9",
+        "  example reading page 6/9",
         "  docs    waiting",
         `  ${"█".repeat(16)}${"░".repeat(13)} 5/9 pages`,
       ]);
@@ -352,12 +352,12 @@ describe("Screen", { timeout: 15_000 }, () => {
       const refreshing = cache.refresh();
       await waitUntil(() => expect(reading).toHaveBeenCalled());
       const drawn = await screen.redraw();
-      expect(drawn.lines.at(10)).toBe("full refresh · docs 2/2 · pages 3/3");
+      expect(drawn.lines.at(10)).toBe("full refresh · docs 2/2 · pages 6/6");
       resolve();
       await refreshing;
     });
 
-    it("gives each repository's stage, the reason and the recovery when the first fetch fails", async () => {
+    it("gives each repository's stage, the reason and the recovery when the first fetch fails, the status line empty", async () => {
       const provider = fakeProvider({
         snapshot: () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
       });
@@ -373,8 +373,8 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  Recovery: try again",
         "",
       ]);
-      expect(drawn.lines.at(10)).toBe("✗ offline");
-      expect(drawn.look("✗ offline")?.fg).toBe(tokens["color.text.error"]);
+      // The list names the failure, so the status line stays empty.
+      expect(drawn.lines.at(10)).toBe("");
     });
 
     it("pauses every repository, and says when docket resumes, when GitHub rate-limits the first fetch", async () => {

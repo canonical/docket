@@ -2,8 +2,13 @@ import type { ReactNode } from "react";
 import type { CacheStatus, RepoStage } from "../lib/cache/index.js";
 import type { Repo } from "../lib/config/index.js";
 import { tokens } from "../lib/tokens/index.js";
-import { ProgressLine, RefreshStages, wrapNotice } from "../lib/ui/index.js";
-import countPages from "./countPages.js";
+import {
+  countPages,
+  ProgressLine,
+  RefreshStages,
+  wrapNotice,
+} from "../lib/ui/index.js";
+import { standInIndent } from "./constants.js";
 
 /** What the first run's lines are drawn from. */
 export interface FirstRunProps {
@@ -12,9 +17,6 @@ export interface FirstRunProps {
   /** The width of the pane, in display cells. */
   readonly width: number;
 }
-
-/** The indent of what stands in for the list, in display cells. */
-const indent = 2;
 
 /**
  * What stands in for the list while nothing is shown, as on the first
@@ -28,7 +30,7 @@ export default function drawFirstRun({
   watched,
   width,
 }: FirstRunProps): ReactNode {
-  const room = width - indent;
+  const room = width - standInIndent;
   const stages = status?.stages ?? [];
   const pages = countPages(stages);
   const failed = stages
@@ -38,7 +40,7 @@ export default function drawFirstRun({
         stage.kind === "failed",
     );
   return (
-    <box flexDirection="column" paddingLeft={indent}>
+    <box flexDirection="column" paddingLeft={standInIndent}>
       <text fg={tokens["color.text"]}>refresh in progress…</text>
       {stages.length > 0 && (
         <RefreshStages

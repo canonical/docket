@@ -64,6 +64,30 @@ describe("StatusLine", () => {
     expect(narrow.lines.at(0)).toBe("full refresh · exam…");
   });
 
+  it("drops a full refresh's pages at 40 columns before it cuts a word, however many pages", async () => {
+    const { status } = FullRefresh.args;
+    for (const [fetched, total] of [
+      [123, 456],
+      [1234, 5678],
+    ] as const) {
+      const stages = [
+        {
+          repo: "example-org/example-repo",
+          stage: { kind: "reading", fetched, total },
+        },
+        { repo: "example-org/example-docs", stage: { kind: "waiting" } },
+      ] as const;
+      const screen = await draw(
+        <StatusLine
+          {...FullRefresh.args}
+          status={status && { ...status, stages }}
+        />,
+        40,
+      );
+      expect(screen.lines.at(0)).toBe("full refresh · example 1/2");
+    }
+  });
+
   it("shows the whole message at 60 columns", async () => {
     const screen = await draw(
       <StatusLine {...RateLimited.args} width={60} />,
