@@ -138,7 +138,11 @@ const catalogue: readonly Command[] = [
           "Splits the list into sections: by kind of thread (ISSUES, PULL REQUESTS), by ending, as GitHub words it, by repo, or none.",
       },
       format,
-      detail,
+      {
+        ...detail,
+        description:
+          "How much each thread shows: summary gives the counts alone, and detailed adds when each thread ended, as a date and time, which llm and JSON always give. The close target shows at every level but summary.",
+      },
       maxAge,
     ],
     example: "docket finished --window 1w --by ending",
