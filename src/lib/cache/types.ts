@@ -94,12 +94,13 @@ export interface CachedViewer {
  * `checking` for changes with the free check; `reading` its threads,
  * with the pages of a whole fetch, 0 of 0 until the first and for a
  * fetch since its cursor; `checks`, while the checks still running are
- * read again; `done`, with the open threads it holds; `paused`, when
- * the budget is low and it needs points to go on; or `failed`, when the
- * refresh stopped on it, with the error that stopped it, named as the
- * status names a failure. A rate limit is such an error too, though the
- * status then holds a pause rather than a failure, and may still hold an
- * earlier refresh's failure: the stage's own error is the reason.
+ * read again; `done`, with the open threads it holds; `paused`, for the
+ * budget when it is low and the repository needs points to go on, or
+ * for the rate limit when the provider refused the refresh for it,
+ * which pauses the repository it stopped on and every one after it; or
+ * `failed`, when any other failure stopped the refresh on it, with the
+ * error that stopped it, named as the status names a failure: the
+ * stage's own error is the reason, whatever failure the status holds.
  * `checks` and `done` keep the pages its read reached, 0 of 0 when it
  * read none, so the figure a refresh reached holds while it goes on.
  */
@@ -109,7 +110,7 @@ export type RepoStage =
   | ({ readonly kind: "reading" } & PageProgress)
   | ({ readonly kind: "checks" } & PageProgress)
   | ({ readonly kind: "done"; readonly threads: number } & PageProgress)
-  | { readonly kind: "paused" }
+  | { readonly kind: "paused"; readonly reason: "budget" | "rateLimit" }
   | { readonly kind: "failed"; readonly error: ProviderError | CacheError };
 
 /** One watched repository, as `owner/name`, and its stage. */

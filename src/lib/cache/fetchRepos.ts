@@ -41,7 +41,8 @@ export interface FetchReposOptions extends Omit<SyncOptions, "onStage"> {
  * reads again the checks still running on all of them at once. It
  * reports each repository's stage as it goes: those a failure stops
  * on are `failed`, with that failure, and those after them stay
- * `waiting`.
+ * `waiting`; a rate limit pauses those it stops on and every one after
+ * them instead.
  *
  * @note Impure: reads from the provider.
  */
@@ -109,11 +110,20 @@ export default async function fetchRepos({
       finish(repo, { ...value, threads });
     }
   } catch (error) {
+    const named = nameRefreshFailure(error);
+    const limited = named.code === "GITHUB_RATE_LIMITED";
+    // A rate limit stops every repository not yet fetched as well: none
+    // is read until the budget resets.
+    const stopped = stages.filter(
+      ({ stage }) =>
+        underWay.has(stage.kind) || (limited && stage.kind === "waiting"),
+    );
     reach(
-      stages
-        .filter(({ stage }) => underWay.has(stage.kind))
-        .map(({ repo }) => repo),
-      () => ({ kind: "failed", error: nameRefreshFailure(error) }),
+      stopped.map(({ repo }) => repo),
+      (): RepoStage =>
+        limited
+          ? { kind: "paused", reason: "rateLimit" }
+          : { kind: "failed", error: named },
     );
     throw error;
   }

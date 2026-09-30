@@ -143,8 +143,8 @@ describe("fetchRepos", () => {
     await fetching;
     expect(kept).toEqual([]);
     expect(reported.at(-1)).toEqual([
-      { repo, stage: { kind: "paused" } },
-      { repo: docs, stage: { kind: "paused" } },
+      { repo, stage: { kind: "paused", reason: "budget" } },
+      { repo: docs, stage: { kind: "paused", reason: "budget" } },
     ]);
   });
 
@@ -164,6 +164,27 @@ describe("fetchRepos", () => {
       { repo, stage: { kind: "done", threads: 0, fetched: 0, total: 0 } },
       { repo: docs, stage: { kind: "failed", error } },
       { repo: "example-org/example-site", stage: { kind: "waiting" } },
+    ]);
+  });
+
+  it("pauses the repository a rate limit stops on and every one not yet fetched, and throws its error", async () => {
+    const error = providerError("GITHUB_RATE_LIMITED");
+    const snapshot = vi.fn(async (name: string) => {
+      if (name === docs) throw error;
+      return { threads: [], cursor: null };
+    });
+    const { fetching, reported } = fetchFrom({
+      provider: fakeProvider({ snapshot }),
+      repos: [repo, docs, "example-org/example-site"],
+    });
+    await expect(fetching).rejects.toBe(error);
+    expect(reported.at(-1)).toEqual([
+      { repo, stage: { kind: "done", threads: 0, fetched: 0, total: 0 } },
+      { repo: docs, stage: { kind: "paused", reason: "rateLimit" } },
+      {
+        repo: "example-org/example-site",
+        stage: { kind: "paused", reason: "rateLimit" },
+      },
     ]);
   });
 

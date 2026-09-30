@@ -11,6 +11,7 @@ import {
   FullRefresh,
   Idle,
   RateLimited,
+  RefreshFailed,
   Refreshing,
   Synced,
 } from "./StatusLine.stories.js";
@@ -23,9 +24,15 @@ describe("StatusLine", () => {
   });
 
   it("draws an error with its ✗ in the error colour", async () => {
+    const screen = await draw(<StatusLine {...RefreshFailed.args} />, 40);
+    expect(screen.lines.at(0)).toBe("✗ refresh failed · data from 10:12");
+    expect(screen.look("✗ refresh")?.fg).toBe(tokens["color.text.error"]);
+  });
+
+  it("draws a pause for the rate limit in the text colour", async () => {
     const screen = await draw(<StatusLine {...RateLimited.args} />, 40);
-    expect(screen.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
-    expect(screen.look("✗ rate")?.fg).toBe(tokens["color.text.error"]);
+    expect(screen.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
+    expect(screen.look("paused")?.fg).toBe(tokens["color.text"]);
   });
 
   it("draws a refresh in progress in the text colour", async () => {
@@ -49,7 +56,7 @@ describe("StatusLine", () => {
       <StatusLine {...RateLimited.args} width={60} />,
       60,
     );
-    expect(screen.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
+    expect(screen.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
   });
 
   it("draws a failed action's result with its ✗ in the error colour", async () => {
@@ -98,12 +105,17 @@ describe("StatusLine", () => {
     }
   });
 
-  it("hides details paused while the left side shows an error or the pane is idle", async () => {
+  it("hides details paused while the left side shows an error, the rate limit pauses the refresh, or the pane is idle", async () => {
+    const failed = await draw(
+      <StatusLine {...RefreshFailed.args} detailsPaused />,
+      40,
+    );
+    expect(failed.lines.at(0)).toBe("✗ refresh failed · data from 10:12");
     const limited = await draw(
       <StatusLine {...RateLimited.args} detailsPaused />,
       40,
     );
-    expect(limited.lines.at(0)).toBe("✗ rate limited · resumes 14:20");
+    expect(limited.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
     const idle = await draw(<StatusLine {...Idle.args} detailsPaused />, 40);
     expect(idle.lines.at(0)).toBe("synced 25m ago · idle · any key wakes");
   });

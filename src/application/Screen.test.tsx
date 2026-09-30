@@ -385,7 +385,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  Recovery: wait: docket resumes at",
         "  13:00",
       ]);
-      expect(drawn.lines.at(10)).toBe("✗ rate limited · resumes 13:00");
+      expect(drawn.lines.at(10)).toBe("paused: rate limit · resumes 13:00");
     });
 
     it("says when docket resumes when the first fetch waits for the request budget", async () => {

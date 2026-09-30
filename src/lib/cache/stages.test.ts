@@ -85,7 +85,7 @@ describe("the stages of createCache", () => {
     });
   });
 
-  it("gives a failed repository the error that stopped it, a rate limit included, never an earlier failure", async () => {
+  it("pauses the repository a rate limit stopped on and every one after it, whatever failure the status still holds", async () => {
     const offline = providerError("GITHUB_UNREACHABLE");
     const limited = providerError("GITHUB_RATE_LIMITED");
     const snapshot = vi.fn(async () => {
@@ -100,9 +100,28 @@ describe("the stages of createCache", () => {
     expect(paused).toEqual({ until: fullBudget.resetAt, reason: "rateLimit" });
     // The rate limit pauses the cycle and leaves the earlier failure held.
     expect(failure).toBe(offline);
+    expect(stages).toEqual([
+      { repo, stage: { kind: "paused", reason: "rateLimit" } },
+      { repo: docs, stage: { kind: "paused", reason: "rateLimit" } },
+    ]);
+  });
+
+  it("gives a failed repository the error that stopped it, not the one the status held before", async () => {
+    const offline = providerError("GITHUB_UNREACHABLE");
+    const refused = providerError("GITHUB_REQUEST_FAILED");
+    const snapshot = vi.fn(async () => {
+      throw offline;
+    });
+    const cache = open(fakeProvider({ snapshot }));
+    await cache.refresh();
+    snapshot.mockRejectedValueOnce(refused);
+    later(2 * minute);
+    await cache.refresh();
+    const { failure, stages } = cache.status();
+    expect(failure).toBe(refused);
     expect(stages.at(0)).toEqual({
       repo,
-      stage: { kind: "failed", error: limited },
+      stage: { kind: "failed", error: refused },
     });
   });
 
@@ -131,8 +150,8 @@ describe("the stages of createCache", () => {
       paused: { until: fullBudget.resetAt, reason: "budget" },
       whole: false,
       stages: [
-        { repo, stage: { kind: "paused" } },
-        { repo: docs, stage: { kind: "paused" } },
+        { repo, stage: { kind: "paused", reason: "budget" } },
+        { repo: docs, stage: { kind: "paused", reason: "budget" } },
       ],
     });
   });

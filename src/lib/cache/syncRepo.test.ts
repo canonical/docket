@@ -118,7 +118,7 @@ describe("syncRepo", () => {
     ).toBeUndefined();
     expect(onStage.mock.calls).toEqual([
       [{ kind: "checking" }],
-      [{ kind: "paused" }],
+      [{ kind: "paused", reason: "budget" }],
     ]);
     expect(
       await syncRepo(provider, repo, undefined, at, { spend: false }),

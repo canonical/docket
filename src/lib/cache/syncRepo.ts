@@ -59,7 +59,7 @@ export default async function syncRepo(
   if (!spend) {
     const found = previous && (await check(previous.tag));
     if (found && !found.changed) return { ...previous, tag: found.tag };
-    onStage?.({ kind: "paused" });
+    onStage?.({ kind: "paused", reason: "budget" });
     return undefined;
   }
   const { changed, tag } = await check(previous?.tag);

@@ -47,10 +47,10 @@ describe("describeStatus", () => {
     }
   });
 
-  it("names a rate limit and when requests resume, in the time zone given", () => {
+  it("says the refresh is paused for the rate limit, and when requests resume, in the time zone given", () => {
     expect(describeAt(statusOf(RateLimited), "Europe/Paris")).toEqual({
-      kind: "error",
-      text: "✗ rate limited · resumes 16:20",
+      kind: "notice",
+      text: "paused: rate limit · resumes 16:20",
     });
   });
 

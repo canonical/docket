@@ -54,7 +54,7 @@ describe("findStageUnderWay", () => {
   it("gives nothing while every repository waits, is done, paused or failed", () => {
     const stages: RepoProgress[] = [
       { repo, stage: { kind: "done", threads: 0, fetched: 0, total: 0 } },
-      { repo, stage: { kind: "paused" } },
+      { repo, stage: { kind: "paused", reason: "budget" } },
       {
         repo,
         stage: { kind: "failed", error: providerError("GITHUB_TIMED_OUT") },

@@ -12,21 +12,20 @@ const failed = tokens["glyph.failed"];
 const succeeded = tokens["glyph.succeeded"];
 /** Between the fields of a message, a space either side. */
 const separator = ` ${tokens["glyph.separator"]} `;
-
 /**
  * Chooses the one message the status line shows for the cache's state
- * and the user's last action. The first that applies wins: an error,
- * which says `rate limited`, `offline` when a request got no answer, at
- * all or in time, or else `refresh failed`; the result of the user's own
+ * and the user's last action. The first that applies wins: a pause for
+ * the rate limit, `paused: rate limit · resumes 14:20`; an error, which
+ * says `rate limited`, `offline` when a request got no answer, at all or
+ * in time, or else `refresh failed`; the result of the user's own
  * action, for 5 seconds after it; the progress of a full refresh; a
  * refresh in the background, naming the furthest repository it has
- * reached and its place among them, as `refreshing · docs 2/3` (while
- * it is on none,
- * such as when it saves what it fetched, the messages below stand); a
- * short notice, such as when a full refresh is available again, or
- * `paused: budget low · resumes 14:20` while the budget is too low to
- * spend; and otherwise how old the data is, followed, while
- * the pane is idle, by `idle · any key wakes`. With no data and nothing
+ * reached and its place among them, as `refreshing · docs 2/3` (while it
+ * is on none, such as when it saves what it fetched, the messages below
+ * stand); a short notice, such as when a full refresh is available
+ * again, or `paused: budget low · resumes 14:20` while the budget is too
+ * low to spend; and otherwise how old the data is, followed, while the
+ * pane is idle, by `idle · any key wakes`. With no data and nothing
  * happening there is no message, and with no cache only an action's
  * result.
  */
@@ -42,8 +41,8 @@ export default function describeStatus(
   const failure = status?.failure;
   const syncedAt = status?.syncedAt;
   if (paused?.reason === "rateLimit") {
-    const text = `${failed} rate limited${separator}resumes ${describeClock(paused.until, timezone)}`;
-    return { kind: "error", text };
+    const text = `paused: rate limit${separator}resumes ${describeClock(paused.until, timezone)}`;
+    return { kind: "notice", text };
   }
   if (failure) {
     const what =

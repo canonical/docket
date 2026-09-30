@@ -45,8 +45,9 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
  * is the one shown, and the side stays blank when none does (the
  * prerequisite frames). The right side is the details', dimmed:
  * `details paused` once their hour's budget is spent, hidden while the
- * left side shows an error or the pane is idle, since nothing is read
- * then, and dropped when the two sides would meet.
+ * left side shows an error or the rate limit pauses the refresh, or the
+ * pane is idle, since nothing is read then, and dropped when the two
+ * sides would meet.
  *
  * `import { StatusLine } from "../lib/ui/index.js";`
  *
@@ -72,7 +73,10 @@ const StatusLine = ({
   );
   const runs = message ? fitPieces(describeRuns(message), width) : [];
   const right =
-    detailsPaused && message?.kind !== "error" && attention !== "idle"
+    detailsPaused &&
+    message?.kind !== "error" &&
+    status?.paused?.reason !== "rateLimit" &&
+    attention !== "idle"
       ? "details paused"
       : "";
   // At least one cell apart, or the right side is left out.
