@@ -51,7 +51,7 @@ export interface OwedListProps {
   readonly onShownRows: (rows: number, first: number) => void;
   /**
    * The place of the first block shown when the list is drawn anew, such
-   * as after the help or a pane too narrow took its place.
+   * as after the help or a pane too small took its place.
    */
   readonly firstShown?: number;
 }

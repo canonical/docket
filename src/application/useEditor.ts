@@ -334,7 +334,7 @@ export default function useEditor({
         },
         // On exactly while an editor is open and in sight, never by the
         // focus: the filter is drawn anew after the help, or after a pane
-        // too narrow for it, and the keys outlast it.
+        // too small for it, and the keys outlast it.
       ].map((command) => ({ ...command, enabled: open && !covered })),
       bindings: [
         { key: "up", cmd: "editor.previous" },
