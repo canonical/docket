@@ -1,7 +1,10 @@
+import { rm } from "node:fs/promises";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseFile, resolveSettings } from "../lib/config/index.js";
 import { type Home, makeHome, openSession } from "../testing/docket.js";
 import { carol, thread } from "../testing/facts.js";
+import { fullBudget } from "../testing/provider.js";
 import { parserFix, recordedProvider } from "../testing/recorded.js";
 import answerShow from "./answerShow.js";
 
@@ -95,6 +98,34 @@ describe("answerShow", () => {
       { login: "carol", group: "internal" },
       { login: "carol", group: "internal" },
     ]);
+  });
+
+  it("writes the budget the details' answer reported to the cache file, for later calls", async () => {
+    const heard = { graphql: { ...fullBudget, remaining: 1234 } };
+    const provider = recordedProvider({ budget: () => heard });
+    const { session } = openSession(home, ["show", "example#12"], provider);
+    expect(await answerShow(session)).toBe(0);
+    const later = openSession(home, ["owed"]).session.cache;
+    await later.load();
+    expect(later.budget()).toEqual(heard);
+  });
+
+  it("answers when the cache folder cannot keep the budget the details' answer reported", async () => {
+    const folder = join(home.root, "cache", "docket");
+    const provider = recordedProvider({
+      threadDetail: async (thread) => {
+        await rm(folder, { recursive: true, force: true });
+        await Bun.write(folder, "");
+        return recordedProvider().threadDetail(thread);
+      },
+    });
+    const { session, out } = openSession(
+      home,
+      ["show", "example#12"],
+      provider,
+    );
+    expect(await answerShow(session)).toBe(0);
+    expect(out()).toMatch(/^# show example#12\n/);
   });
 
   it("refuses more than one reference", async () => {

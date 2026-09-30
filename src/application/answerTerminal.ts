@@ -68,7 +68,16 @@ export default async function answerTerminal(
   const { provider, cache } = connection;
   // Below the budget floor only the selected thread's details are read.
   const details = createDetailReader(
-    (threads) => provider.threadDetails(threads),
+    async (threads) => {
+      try {
+        return await provider.threadDetails(threads);
+      } finally {
+        // The read spent points outside any refresh, so its figures go to
+        // the cache file for every other process; the next write of the
+        // file carries them when this one cannot.
+        cache.keepBudget().catch(() => undefined);
+      }
+    },
     () => cache.findFloor() !== undefined,
   );
   const readWatched = async (): Promise<WatchedFiles> => {
