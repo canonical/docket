@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import { fitRuns, markPerson } from "../../fit/index.js";
+import { fitField, fitRuns, markPerson } from "../../fit/index.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
 import describeDetails from "./describeDetails.js";
@@ -45,11 +45,12 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
  * time: the cases are listed in priority order, the first that applies
  * is the one shown, and the side stays blank when none does (the
  * prerequisite frames). A message too wide for the pane drops its part
- * that gives way first, a full refresh its pages, and only then is cut
- * with `…`. The right side is the details', dimmed, as
- * `describeDetails` chooses it: `details 3/12` while any asked for are
- * unread, or `details paused` once their hour's budget is spent, hidden
- * while nothing is read, and dropped when the two sides would meet.
+ * that gives way first, a full refresh its pages, and only then are its
+ * words cut with `…` by `fitField`, as docket's own words. The right
+ * side is the details', dimmed, as `describeDetails` chooses it:
+ * `details 3/12` while any asked for are unread, or `details paused`
+ * once their hour's budget is spent, hidden while nothing is read, and
+ * dropped when the two sides would meet.
  *
  * `import { StatusLine } from "../lib/ui/index.js";`
  *
@@ -75,11 +76,21 @@ const StatusLine = ({
     attention,
   );
   // A message too wide first drops the part that gives way, and only
-  // then is cut.
-  const fitted =
-    message?.shorter !== undefined && Bun.stringWidth(message.text) > width
-      ? { ...message, text: message.shorter }
-      : message;
+  // then are its words cut, by the rule for docket's own words.
+  const fitted = message && {
+    ...message,
+    text: fitField(
+      {
+        text:
+          message.shorter !== undefined && Bun.stringWidth(message.text) > width
+            ? message.shorter
+            : message.text,
+        kind: "words",
+      },
+      "line",
+      width,
+    ),
+  };
   const runs = fitted ? fitRuns(describeRuns(fitted), width) : [];
   const right = describeDetails(
     status,
