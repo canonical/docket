@@ -195,6 +195,56 @@ describe("fetchEvents", () => {
     });
   });
 
+  it("counts a merge once, and keeps a close that is not the merge's", async () => {
+    github.graphql(
+      "Events",
+      lists(
+        [],
+        [
+          pull({
+            timelineItems: {
+              nodes: [
+                item("MergedEvent", "2026-09-22T11:00:00Z"),
+                item("ClosedEvent", "2026-09-22T11:00:00Z", {
+                  stateReason: "COMPLETED",
+                }),
+              ],
+            },
+          }),
+          pull({
+            number: 3,
+            timelineItems: {
+              nodes: [
+                item("ClosedEvent", "2026-09-22T09:00:00Z", {
+                  actor: user("bob"),
+                }),
+                item("ReopenedEvent", "2026-09-22T10:00:00Z"),
+                item("MergedEvent", "2026-09-22T11:00:00Z"),
+                item("ClosedEvent", "2026-09-22T11:00:00Z"),
+              ],
+            },
+          }),
+          pull({
+            number: 4,
+            timelineItems: {
+              nodes: [item("ClosedEvent", "2026-09-22T11:00:00Z")],
+            },
+          }),
+        ],
+        [],
+      ),
+    );
+    github.rest(feed, { body: [] });
+    const ends = (await events()).filter(({ kind }) => kind !== "opened");
+    expect(lines(ends)).toEqual([
+      [2, "merged", "alice", "11:00"],
+      [3, "closed", "bob", "09:00"],
+      [3, "reopened", "alice", "10:00"],
+      [3, "merged", "alice", "11:00"],
+      [4, "closed", "alice", "11:00"],
+    ]);
+  });
+
   it("reads failed checks as one event, at the latest failure", async () => {
     const rollup = (state: string, checks: unknown[]) => ({
       nodes: [

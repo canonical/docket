@@ -258,9 +258,18 @@ export default async function fetchEvents(
     if (at >= since) events.push({ thread, actor, at, kind: "opened" });
   };
   const addTimeline = (thread: ThreadSummary, node: IssueEventsNode) => {
-    for (const item of node.timelineItems.nodes) {
-      const event = readItem(thread, item);
-      if (event) events.push(event);
+    const read = node.timelineItems.nodes
+      .map((item) => readItem(thread, item))
+      .filter((event) => event !== undefined);
+    // GitHub records a merge as a merge and a close at the same instant;
+    // the merge alone counts. A close at another instant stays.
+    const merges = new Set(
+      read.filter(({ kind }) => kind === "merged").map(({ at }) => Number(at)),
+    );
+    for (const event of read) {
+      if (event.kind !== "closed" || !merges.has(Number(event.at))) {
+        events.push(event);
+      }
     }
   };
   for (const node of found.issues) {
