@@ -203,7 +203,7 @@ describe("ThreadRow", () => {
         owners: ["bob"],
       });
       const screen = await draw(<ThreadRow row={row} width={40} />, 40);
-      expect(screen.lines.at(1)).toBe("╹ ❤❤❤❤❤❤❤❤❤❤❤❤ 👍🏽 F…  bob");
+      expect(screen.lines.at(1)).toBe("╹ ❤❤❤❤❤❤❤❤❤❤❤❤ 👍🏽 Fi…  bob");
       expect(screen.lines.at(2)).toBe("");
     });
 

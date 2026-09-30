@@ -1,7 +1,7 @@
 import { sanitize } from "../../text/index.js";
 import { graphemes, noBreakSpace } from "./constants.js";
+import measureCluster from "./measureCluster.js";
 import measurePieces from "./measurePieces.js";
-import measureText from "./measureText.js";
 import type { Run } from "./types.js";
 
 /** Part of a word: its text, in the look of the run it came from. */
@@ -54,7 +54,7 @@ function splitWide<Look extends Run>(
   let used = 0;
   for (const { look, text } of word.fragments) {
     for (const { segment } of graphemes.segment(text)) {
-      const cells = measureText(segment);
+      const cells = measureCluster(segment);
       if (used > 0 && used + cells > width) {
         piece = { space: look, fragments: [] };
         pieces.push(piece);

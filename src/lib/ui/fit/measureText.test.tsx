@@ -1,72 +1,49 @@
-import { resolveRenderLib } from "@opentui/core";
-import { testRender } from "@opentui/react/test-utils";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { draw } from "../../../testing/terminal.js";
 import measureText from "./measureText.js";
 
-const drawn: { destroy: () => void }[] = [];
-afterEach(() => {
-  for (const renderer of drawn.splice(0)) renderer.destroy();
-});
-
-/** The cells OpenTUI's renderer gives `text`, read from where a mark after it lands. */
+/** The cells OpenTUI draws `text` in, read from the renderer's cell grid. */
 async function drawCells(text: string): Promise<number> {
-  const width = 30;
-  const setup = await testRender(<text>{`${text}|`}</text>, {
-    width,
-    height: 1,
-  });
-  drawn.push(setup.renderer);
-  await setup.renderOnce();
-  const line = (setup.captureSpans().lines.at(0)?.spans ?? [])
-    .map((span) => span.text)
-    .join("");
-  // Each cell after the mark holds one space.
-  return width - 1 - (line.length - line.lastIndexOf("|") - 1);
+  const screen = await draw(<text>{`${text}|`}</text>, 60, 1);
+  const cells = [...screen.setup.renderer.currentRenderBuffer.buffers.char];
+  return cells.indexOf("|".charCodeAt(0));
 }
 
-/** Text of one code point a character, which OpenTUI draws as measured. */
-const single = [
+/**
+ * Text Bun measures differently from OpenTUI, or that a measure could
+ * split: keycaps, emoji presentation, flags, skin tones, a Devanagari
+ * cluster, a Thai title, Hangul written as jamo, a family joined by
+ * zero-width joiners, and Persian with its non-joiner.
+ */
+const corpus = [
   "Fix the parser",
   "Réparer l'éditeur",
   "漢字",
-  "ｱ",
-  "🙂🚀",
-  "❤",
-  "✓ ✗ ◉ ● ◐ ○ ■",
-  "↔ → ⏎ ⇞ ␣ … · ─ ┃ ╹ ┆ █",
-  "™ © ① × °",
+  "✓ ✗ ◉ ● ◐ ○ ■ ↔ → ⏎ … · ─ ┃ ╹ ┆ █",
+  "1️⃣ #️⃣",
+  "❤️ ❤",
+  "🇫🇷 🇺🇸🇬",
+  "👍🏽 🧑🏿",
+  "क्षि",
+  "แก้ไขตัวแยกวิเคราะห์ให้ถูกต้อง",
+  "각",
+  "👨‍👩‍👧 👩🏽‍💻",
+  "می‌خواهم",
+  "é",
 ];
 
-/** Characters of several code points, which OpenTUI draws in fewer cells than measured or as many. */
-const clusters = ["👍🏽", "🇫🇷", "é", "❤️", "1️⃣", "क्षि"];
-
 describe("measureText", () => {
-  for (const text of single) {
-    it(`counts ${text} in the cells OpenTUI draws it in`, async () => {
+  for (const text of corpus) {
+    it(`counts ${text} in exactly the cells OpenTUI draws it in`, async () => {
       expect(measureText(text)).toBe(await drawCells(text));
-    });
-  }
-
-  for (const text of clusters) {
-    it(`never counts ${text} narrower than OpenTUI draws it`, async () => {
-      expect(measureText(text)).toBeGreaterThanOrEqual(await drawCells(text));
     });
   }
 
   it("counts where Bun's measure counts fewer cells than are drawn", () => {
     expect(Bun.stringWidth("❤")).toBe(1);
     expect(measureText("❤")).toBe(2);
-    expect(measureText("👍🏽")).toBeGreaterThan(Bun.stringWidth("👍🏽"));
-  });
-
-  it("counts a character as Bun does when OpenTUI's library cannot encode it", () => {
-    // The native library is the boundary: it fails only when it cannot
-    // allocate, which a test cannot bring about.
-    const encode = vi
-      .spyOn(resolveRenderLib(), "encodeUnicode")
-      .mockReturnValueOnce(null);
-    expect(measureText("½")).toBe(1);
-    encode.mockRestore();
+    expect(measureText("👍🏽")).toBe(4);
+    expect(Bun.stringWidth("👍🏽")).toBe(2);
   });
 
   it("counts nothing for no text, and a half of a broken pair as one cell", () => {

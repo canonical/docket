@@ -1,5 +1,6 @@
 import { sanitize } from "../../text/index.js";
 import { graphemes, noBreakSpace } from "./constants.js";
+import measureCluster from "./measureCluster.js";
 import measureText from "./measureText.js";
 
 /**
@@ -12,7 +13,7 @@ function splitWord(word: string, width: number): string[] {
   const pieces: string[] = [""];
   let used = 0;
   for (const { segment } of graphemes.segment(word)) {
-    const cells = measureText(segment);
+    const cells = measureCluster(segment);
     if (used > 0 && used + cells > width) {
       pieces.push("");
       used = 0;

@@ -1,5 +1,6 @@
 import { sanitize } from "../../text/index.js";
 import { graphemes } from "./constants.js";
+import measureCluster from "./measureCluster.js";
 import measureText from "./measureText.js";
 
 /** The graphemes of `segments`, in order, that fit `cells` display cells. */
@@ -7,7 +8,7 @@ function takeCells(segments: readonly string[], cells: number): string[] {
   const kept: string[] = [];
   let used = 0;
   for (const segment of segments) {
-    const width = measureText(segment);
+    const width = measureCluster(segment);
     if (used + width > cells) break;
     kept.push(segment);
     used += width;
