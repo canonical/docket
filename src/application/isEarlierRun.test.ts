@@ -22,6 +22,23 @@ describe("isEarlierRun", () => {
     ).toBe(true);
   });
 
+  it("judges the stages an earlier run's when the failure held has a stage's code but another message and step", () => {
+    const refusedBefore = Object.assign(new Error("GitHub refused the list."), {
+      code: "GITHUB_REQUEST_FAILED",
+      recovery: "check gh's access",
+    } as const);
+    const refusedNow = Object.assign(new Error("GitHub refused the query."), {
+      code: "GITHUB_REQUEST_FAILED",
+      recovery: "report it",
+    } as const);
+    expect(
+      isEarlierRun({
+        ...buildFailedStatus(refusedBefore),
+        failure: refusedNow,
+      }),
+    ).toBe(true);
+  });
+
   it("judges them this run's when a repository stopped on the failure held, even as a copy of it", () => {
     const copy = Object.assign(new Error(timedOut.message), {
       code: timedOut.code,
