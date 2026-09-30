@@ -239,13 +239,14 @@ export default function useScreenKeys({
         // only its own keys, the movement keys, which scroll it, and
         // quitting. An open editor takes the typing, so no key but the
         // help's runs, and the movement keys once the help covers it. On
-        // setup, which lists nothing, only the help's keys and quitting run.
+        // setup, which lists nothing and whose help always fits, only the
+        // help's keys and quitting run.
         const quits = command.name === "app.quit";
         const moves = command.name.startsWith("selection.");
         const runs = tooSmall
           ? quits
           : command.name.startsWith("help.") ||
-            (help && moves) ||
+            (help && moves && !setup) ||
             (!editorOpen && (quits || (!setup && !help)));
         return runs ? command : { ...command, enabled: false };
       }),

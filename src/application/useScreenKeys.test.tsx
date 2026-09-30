@@ -221,7 +221,7 @@ describe("useScreenKeys", () => {
     expect(drawn.lines.at(0)).toBe("↑ ↓ ⇞ ⇟ home end ? esc");
   });
 
-  it("runs only the help's keys and q on setup, the movement keys only while the help shows, and names q in the key bar", async () => {
+  it("runs only the help's keys and q on setup, whether or not the help shows, and names q in the key bar", async () => {
     const { ran, change, screen } = await bind({ setup: true });
     const drawn = await press(
       screen,
@@ -232,8 +232,8 @@ describe("useScreenKeys", () => {
     expect(ran).toEqual(["quit"]);
     expect(drawn.lines.at(0)).toBe("? q");
     await screen.redraw(() => change({ help: true }));
-    await press(screen, "j", "g", "?");
-    expect(ran.slice(1)).toEqual(["moveSelection 1", "toggleHelp"]);
+    await press(screen, "j", "pagedown", "end", "g", "?");
+    expect(ran.slice(1)).toEqual(["toggleHelp"]);
   });
 
   it("lists in the help on setup only the keys that act there", async () => {
