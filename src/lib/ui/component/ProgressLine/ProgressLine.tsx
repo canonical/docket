@@ -27,8 +27,8 @@ const ProgressLine = ({
     total > 0 ? Math.min(cells, Math.floor((cells * fetched) / total)) : 0;
   return (
     <text fg={tokens["color.text"]}>
-      {"█".repeat(filled)}
-      {"░".repeat(cells - filled)} {fraction}
+      {tokens["glyph.progress.filled"].repeat(filled)}
+      {tokens["glyph.progress.unfilled"].repeat(cells - filled)} {fraction}
     </text>
   );
 };

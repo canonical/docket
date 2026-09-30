@@ -77,4 +77,8 @@ export interface Tokens {
   readonly "glyph.cut": string;
   /** Separates fields on a line. */
   readonly "glyph.separator": string;
+  /** The part of a progress bar done. */
+  readonly "glyph.progress.filled": string;
+  /** The part of a progress bar still to go. */
+  readonly "glyph.progress.unfilled": string;
 }
