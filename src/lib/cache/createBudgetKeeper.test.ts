@@ -72,18 +72,26 @@ describe("createBudgetKeeper", () => {
     expect(save).not.toHaveBeenCalled();
   });
 
-  it("writes only once another process has let the fetch lock go", async () => {
+  it("goes on at once, writing nothing, while another process holds the fetch lock", async () => {
     const held = Promise.withResolvers<void>();
     const holding = withFetchLock(directory, () => held.promise);
-    await waitUntil(async () => {
-      expect(await readdir(directory)).toContain(lockName);
-    });
-    const { keeper, steps } = keep(() => false);
-    const keeping = keeper();
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    expect(steps).toEqual(["floor", "judge"]);
-    held.resolve();
-    await Promise.all([holding, keeping]);
-    expect(steps).toEqual(["floor", "judge", "load", "judge", "save"]);
+    try {
+      await waitUntil(async () => {
+        expect(await readdir(directory)).toContain(lockName);
+      });
+      const { keeper, steps } = keep(() => false);
+      const waited = new Promise((resolve) =>
+        setTimeout(() => resolve("waited for the lock"), 5_000),
+      );
+      const outcome = await Promise.race([
+        keeper().then(() => "went on"),
+        waited,
+      ]);
+      expect(outcome).toBe("went on");
+      expect(steps).toEqual(["floor", "judge"]);
+    } finally {
+      held.resolve();
+      await holding;
+    }
   });
 });

@@ -185,24 +185,28 @@ describe("the budget mirror of createCache", () => {
     expect(other.readBudgets()).toEqual({ graphql: makeBudget(2000) });
   });
 
-  it("keeps a lower figure heard while another process fetches, whatever figures that process saves", async () => {
+  it("leaves the file to another process fetching under the lock, whose save writes its later figures", async () => {
     const held = Promise.withResolvers<void>();
     const fetcher = makeHearingProvider();
-    fetcher.answers.heard = { graphql: makeBudget(3000) };
     const snapshot = vi.fn(async () => {
       await held.promise;
+      fetcher.answers.heard = { graphql: makeBudget(800) };
       return { threads: [thread()], cursor: null };
     });
     const fetching = open({ ...fetcher.provider, snapshot }).refresh();
     await waitUntil(() => expect(snapshot).toHaveBeenCalled());
     const { provider, answers } = makeHearingProvider();
     answers.heard = { graphql: makeBudget(900) };
-    const keeping = open(provider).keepBudget();
+    // The fetcher holds the lock until the keeper has tried it.
+    await open(provider).keepBudget();
+    const meanwhile = open(makeHearingProvider().provider);
+    await meanwhile.load();
+    expect(meanwhile.readBudgets()).toEqual({});
     held.resolve();
-    await Promise.all([fetching, keeping]);
+    await fetching;
     const other = open(makeHearingProvider().provider);
     await other.load();
-    expect(other.readBudgets()).toEqual({ graphql: makeBudget(900) });
+    expect(other.readBudgets()).toEqual({ graphql: makeBudget(800) });
   });
 
   it("takes no lock, and waits for none, when it heard nothing the file lacks", async () => {

@@ -18,7 +18,8 @@ export interface BudgetKeeperOptions {
  * The keeping of the budgets a process heard outside a refresh in the
  * cache file, so every docket process judges the floor on them: the
  * status says the floor at once, and, when the file lacks any of them,
- * they are written under the fetch lock, after a load.
+ * they are written under the fetch lock, after a load, unless another
+ * process holds the lock, which it never waits for.
  *
  * @note Impure: writes the status, and reads and writes the cache file.
  */
@@ -35,14 +36,19 @@ export default function createBudgetKeeper({
     // With nothing heard since the last load or save, the file holds
     // these figures or later ones.
     if (isKept()) return;
-    // While another process holds the lock, its save may write figures
-    // older than this one's, so they wait for it to end, and a lower
-    // figure is never lost to an older one.
-    await withFetchLock(directory, async () => {
-      await load();
-      // Only figures the file lacks are worth a write every process
-      // reloads.
-      if (!isKept()) await save();
-    });
+    // Another process holding the lock is fetching now, and GitHub counts
+    // every request of the account against one budget, so the figures its
+    // save writes are as late as these: nothing waits for it, and no
+    // older figure overwrites a later one.
+    await withFetchLock(
+      directory,
+      async () => {
+        await load();
+        // Only figures the file lacks are worth a write every process
+        // reloads.
+        if (!isKept()) await save();
+      },
+      () => undefined,
+    );
   };
 }
