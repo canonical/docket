@@ -74,9 +74,9 @@ export default async function answerShow(session: Session): Promise<number> {
     }),
   );
   // The reads of details spent points outside any refresh, so their
-  // figures go to the cache file for every other process, once the
-  // answer is out: it stands without them, and the next write of the
-  // file carries them when this one cannot.
-  await session.cache.keepBudget().catch(() => undefined);
+  // figures go to the budget file for every other process, once the
+  // answer is out: it stands without them, and the next keeping carries
+  // them when this one cannot.
+  await session.cache.keepBudget();
   return 0;
 }

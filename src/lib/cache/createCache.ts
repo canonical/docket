@@ -183,7 +183,7 @@ export default function createCache({
     await writeCacheFile(file, contents, (id) => {
       written = id;
     });
-    await keepBudget();
+    await keepInFile();
   };
 
   const { judgeFloor, maySpend, publishFloor } = createBudgetRule({
@@ -193,7 +193,7 @@ export default function createCache({
     // The threads are handed out once, when the run ends.
     publish: (change) => publish(change, false),
   });
-  const keepBudget = createBudgetKeeper({
+  const keepInFile = createBudgetKeeper({
     file: budgetFile,
     readFigures,
     isKept: () => isSame(readFigures(), mirror),
@@ -482,13 +482,7 @@ export default function createCache({
     },
     readBudgets: readFigures,
     maySpend,
-    async keepBudget() {
-      try {
-        await keepBudget();
-      } catch (error) {
-        throw classifyFolderFailure(error, directory);
-      }
-    },
+    keepBudget: keepInFile,
     status: () => status,
     subscribe(listener) {
       listeners.add(listener);

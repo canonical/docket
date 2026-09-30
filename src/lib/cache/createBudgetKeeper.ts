@@ -30,8 +30,9 @@ interface BudgetKeeperOptions {
  * it: of each kind the later report stays, so an older figure never
  * overwrites a newer one, and the fetch lock plays no part. One keeping
  * runs at a time: a call made while one runs joins it, and it runs once
- * more for the figures heard meanwhile; when it fails, every call that
- * joined it fails with it.
+ * more for the figures heard meanwhile. It never fails: a keeping that
+ * cannot read, lock or write the file is dropped, its lock let go, and the
+ * next keeping carries the figures.
  *
  * @note Impure: writes the status, and reads, locks and writes the budget
  * file.
@@ -78,7 +79,9 @@ export default function createBudgetKeeper({
       try {
         do {
           again = false;
-          await keep();
+          // Keeping is best effort: a failure is dropped, and the next
+          // keeping carries the figures.
+          await keep().catch(() => undefined);
         } while (again);
       } finally {
         flight = undefined;

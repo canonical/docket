@@ -356,16 +356,16 @@ export interface Cache {
    */
   maySpend(): boolean;
   /**
-   * Merges the budgets this process heard into the budget file, beside
-   * the cache file, under that file's own lock and never the fetch lock,
-   * so every docket process judges the floor on them: after a read of
-   * details, and after each save of the cache. Of each kind the later
-   * report stays, so an older figure never overwrites a newer one. It
-   * gives the status the floor at once, returns at once when the file
-   * holds every figure heard, and a call made while one runs joins it.
-   *
-   * @throws CacheError `CACHE_UNUSABLE` when the cache folder cannot be
-   * made, read or written.
+   * Merges the budgets this process heard into the budget file,
+   * `budget.json` beside the cache file, under that file's own lock and
+   * never the fetch lock, so every docket process judges the floor on
+   * them: after a read of details, and after each save of the cache. Of
+   * each kind the later report stays, so an older figure never overwrites
+   * a newer one. It gives the status the floor at once, returns at once
+   * when this process heard nothing since it last read or wrote the file,
+   * and a call made while one runs joins it. It never fails: a keeping
+   * that cannot read, lock or write the file is dropped, and the next
+   * keeping carries the figures.
    */
   keepBudget(): Promise<void>;
   /** The cache's state: the same value on every call until it changes. */

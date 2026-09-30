@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,7 +10,7 @@ import {
 } from "../../testing/provider.js";
 import { waitUntil } from "../../testing/wait.js";
 import type { Budgets, Provider } from "../provider/index.js";
-import { cacheFileName, lockName } from "./constants.js";
+import { budgetFileName, cacheFileName, lockName } from "./constants.js";
 import createCache from "./createCache.js";
 import identifyFile from "./identifyFile.js";
 import withFetchLock from "./withFetchLock.js";
@@ -266,18 +266,18 @@ describe("the budget mirror of createCache", () => {
     expect(other.readBudgets()).toEqual({ graphql: makeBudget(900) });
   });
 
-  it("names a cache folder it cannot use when it keeps the budgets", async () => {
-    await Bun.write(join(root, "file"), "");
+  it("reads and saves the cache though the budget file cannot be written, keeping no figure", async () => {
+    await mkdir(join(directory, budgetFileName, "inside"), { recursive: true });
     const { provider, answers } = makeHearingProvider();
     answers.heard = { graphql: makeBudget(2000) };
-    const cache = createCache({
-      provider,
-      repos: [repo],
-      directory: join(root, "file", "docket"),
-      now: () => clock,
+    const cache = open(provider);
+    await expect(cache.read(0)).resolves.toMatchObject({
+      threads: [thread()],
     });
-    await expect(cache.keepBudget()).rejects.toMatchObject({
-      code: "CACHE_UNUSABLE",
-    });
+    await expect(cache.keepBudget()).resolves.toBeUndefined();
+    const other = open(makeHearingProvider().provider);
+    await other.load();
+    expect(other.threads().threads).toEqual([thread()]);
+    expect(other.readBudgets()).toEqual({});
   });
 });

@@ -106,12 +106,17 @@ describe("createBudgetKeeper", () => {
     await third;
   });
 
-  it("fails every call that joined a keeping that fails", async () => {
-    await mkdir(join(directory, "budget.json", "inside"), { recursive: true });
-    const { keeper } = createProcess(makeBudget(900));
+  it("drops a keeping that fails, lets its lock go, and keeps at the next call", async () => {
+    await mkdir(join(file, "inside"), { recursive: true });
+    const { process, keeper } = createProcess(makeBudget(900));
     const first = keeper();
     const second = keeper();
-    await expect(first).rejects.toThrow();
-    await expect(second).rejects.toThrow();
+    await expect(first).resolves.toBeUndefined();
+    await expect(second).resolves.toBeUndefined();
+    await rm(file, { recursive: true, force: true });
+    await createProcess(makeBudget(800)).keeper();
+    expect(await readBudgetFile(file)).toEqual(makeBudget(800));
+    await keeper();
+    expect(process.mirror).toEqual(makeBudget(800));
   });
 });
