@@ -1,3 +1,4 @@
+import { describeClock } from "../activity/index.js";
 import type { Budget } from "../provider/index.js";
 import { budgetShownBelow } from "./constants.js";
 
@@ -16,11 +17,5 @@ export default function describeBudget(
   const { limit, remaining, resetAt } = budget;
   if (remaining >= limit * budgetShownBelow) return "";
   const share = Math.floor((remaining * 100) / limit);
-  const resets = new Intl.DateTimeFormat("en-GB", {
-    timeZone: timezone,
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).format(resetAt);
-  return `budget ${share}% · resets ${resets}`;
+  return `budget ${share}% · resets ${describeClock(resetAt, timezone)}`;
 }

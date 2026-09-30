@@ -35,7 +35,6 @@ export {
 export { minColumns } from "./constants.js";
 export { default as countPages } from "./countPages.js";
 export { default as createKeymap } from "./createKeymap.js";
-export { default as describeClock } from "./describeClock.js";
 export {
   type KeyCommand,
   type UseCommandsProps,

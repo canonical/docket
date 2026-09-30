@@ -1,8 +1,7 @@
-import { describeAge } from "../../../activity/index.js";
+import { describeAge, describeClock } from "../../../activity/index.js";
 import type { AttentionState, CacheStatus } from "../../../cache/index.js";
 import { tokens } from "../../../tokens/index.js";
 import countPages from "../../countPages.js";
-import describeClock from "../../describeClock.js";
 import findStageUnderWay from "../../findStageUnderWay.js";
 import type { ActionResult, StatusMessage } from "./types.js";
 
