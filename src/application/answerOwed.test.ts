@@ -34,6 +34,21 @@ describe("answerOwed", () => {
     ]);
   });
 
+  it("says what is left of GitHub's budget once it runs low, and gives both budgets in JSON", async () => {
+    const resetAt = new Date("2026-09-28T10:20:00Z");
+    const low = { graphql: { limit: 5000, remaining: 1750, resetAt } };
+    const provider = recordedProvider({ budget: () => low });
+    const plain = openSession(home, ["owed", "--format", "llm"], provider);
+    await answerOwed(plain.session);
+    expect(plain.out()).toContain("0m old · budget 35% · resets 12:20.");
+    const json = openSession(home, ["owed", "--format", "json"], provider);
+    await answerOwed(json.session);
+    expect(JSON.parse(json.out()).data.budget).toEqual({
+      graphql: { limit: 5000, remaining: 1750, resetAt: resetAt.toISOString() },
+      rest: null,
+    });
+  });
+
   it("splits the list by the grouping --by names, in the format --format names", async () => {
     const { session, out } = openSession(home, [
       "owed",

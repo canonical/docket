@@ -145,6 +145,12 @@ export function openSession(
     openTerminal: refuseTerminal,
     version: "1.2.3",
   };
+  const cache = createCache({
+    provider,
+    repos: resolved.settings.repos.map(({ repo }) => repo),
+    directory: locateCacheDirectory(environment),
+    now: () => now,
+  });
   const session: Session = {
     context,
     invocation: request.invocation,
@@ -152,17 +158,13 @@ export function openSession(
     resolved,
     watched: resolved.settings.repos.map((repo) => ({ ...repo, resolved })),
     provider,
-    cache: createCache({
-      provider,
-      repos: resolved.settings.repos.map(({ repo }) => repo),
-      directory: locateCacheDirectory(environment),
-      now: () => now,
-    }),
+    cache,
     describeFreshness: (syncedAt, warnings = []) => ({
       now,
       syncedAt,
       timezone: resolved.settings.time.timezone,
       warnings,
+      budget: cache.budget(),
     }),
   };
   return { session, out: () => out, err: () => err };

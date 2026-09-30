@@ -1,6 +1,6 @@
 import type { CacheErrorCode } from "../cache/index.js";
 import type { ConfigErrorCode } from "../config/index.js";
-import type { ProviderErrorCode } from "../provider/index.js";
+import type { Budgets, ProviderErrorCode } from "../provider/index.js";
 
 /** Where the output goes decides its form: a person, an agent or a program. */
 export type Format = "plain" | "llm" | "json";
@@ -122,4 +122,9 @@ export interface Freshness {
    * rate limit.
    */
   readonly warnings: readonly Problem[];
+  /**
+   * GitHub's budgets, as the mirror every docket process shares gives
+   * them: the queries' is said when it runs low, and a program reads both.
+   */
+  readonly budget: Budgets;
 }

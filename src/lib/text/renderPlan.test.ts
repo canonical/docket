@@ -12,6 +12,7 @@ const plan: WritePlan = {
     syncedAt: new Date("2026-09-28T09:58:00Z"),
     timezone: "Europe/Paris",
     warnings: [],
+    budget: {},
   },
   format: "llm",
 };

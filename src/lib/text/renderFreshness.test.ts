@@ -8,6 +8,7 @@ const freshness: Freshness = {
   syncedAt: new Date("2026-09-28T07:30:00Z"),
   timezone: "UTC",
   warnings: [],
+  budget: {},
 };
 
 describe("renderFreshness", () => {
@@ -38,6 +39,25 @@ describe("renderFreshness", () => {
       "## Warning: GITHUB_RATE_LIMITED\nGitHub is refusing requests until 11:00.\nRecovery: wait for the limit to reset, then refresh",
       "",
     ]);
+  });
+
+  it("says what is left of the queries' budget, and when it resets, once less than 40% is left", () => {
+    const resetAt = new Date("2026-09-28T10:20:00Z");
+    const low = {
+      ...freshness,
+      budget: { graphql: { limit: 5000, remaining: 1750, resetAt } },
+    };
+    expect(renderFreshness(low, "plain")).toEqual([
+      "synced 2h ago · budget 35% · resets 10:20",
+    ]);
+    expect(renderFreshness(low, "llm")).toEqual([
+      "Data from 2026-09-28 07:30 UTC, 2h old · budget 35% · resets 10:20.",
+    ]);
+    const plenty = {
+      ...freshness,
+      budget: { graphql: { limit: 5000, remaining: 2000, resetAt } },
+    };
+    expect(renderFreshness(plenty, "plain")).toEqual(["synced 2h ago"]);
   });
 
   it("says there is no data when no repository is watched", () => {
