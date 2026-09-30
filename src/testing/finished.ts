@@ -139,3 +139,31 @@ export function finishedList(
     finishedRepos,
   );
 }
+
+/** Issues closed as duplicates of example#7, and one closed with no reason recorded. */
+export const duplicatesAndQuiet: readonly FinishedThread[] = [11, 12, 13].map(
+  (number) =>
+    finishedThread({
+      number,
+      url: `https://github.com/example-org/example-repo/issues/${number}`,
+      kind: "issue",
+      title: `Example issue ${number}`,
+      ending:
+        number === 13
+          ? {
+              outcome: "closed",
+              label: "closed",
+              at: at("2026-09-24T09:00+02:00"),
+            }
+          : {
+              outcome: "duplicate",
+              label: "closed as duplicate",
+              at: at(`2026-09-24T1${number - 11}:00+02:00`),
+              duplicateOf: {
+                repo: "example-org/example-repo",
+                number: 7,
+                url: "https://github.com/example-org/example-repo/issues/7",
+              },
+            },
+    }),
+);

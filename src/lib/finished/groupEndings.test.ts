@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  duplicatesAndQuiet,
   finishedNow,
   finishedRepos,
+  notPlanned,
   repoEndings,
 } from "../../testing/finished.js";
 import groupEndings from "./groupEndings.js";
@@ -60,5 +62,22 @@ describe("groupEndings", () => {
       text: "nothing merged or closed in 1w",
       fit: "trimmed",
     });
+  });
+
+  it("orders an issue's endings as GitHub does, a duplicate before a close with no reason", () => {
+    const list = listEndings(
+      repoEndings([...duplicatesAndQuiet, notPlanned]),
+      finishedNow,
+    );
+    expect(
+      group("ending", list).groups.map(({ heading, rows }) => [
+        heading?.text,
+        rows.length,
+      ]),
+    ).toEqual([
+      ["closed as not planned", 1],
+      ["closed as duplicate", 2],
+      ["closed", 1],
+    ]);
   });
 });
