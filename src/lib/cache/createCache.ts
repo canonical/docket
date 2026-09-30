@@ -167,6 +167,8 @@ export default function createCache({
       mirror = mergeBudgets(mirror, contents.budget);
     }
     publish();
+    // Another process's answers may have taken the mirror below the floor.
+    publishFloor();
   };
   const save = () => {
     mirror = readFigures();
@@ -467,6 +469,8 @@ export default function createCache({
     budget: readFigures,
     maySpend,
     async keepBudget() {
+      // This process's own answers can take the mirror below the floor.
+      publishFloor();
       try {
         // GitHub counts every request of the account against one budget,
         // so while another process holds the lock, its own next answers

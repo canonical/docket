@@ -91,9 +91,21 @@ describe("the budget mirror of createCache", () => {
     const other = open(own.provider);
     await other.load();
     expect(other.maySpend()).toBe(false);
+    expect(other.status().paused).toEqual({
+      until: fullBudget.resetAt,
+      reason: "budget",
+    });
     await other.refresh();
     expect(own.provider.snapshot).not.toHaveBeenCalled();
-    expect(other.status().paused).toEqual({
+  });
+
+  it("says the pause as soon as a read of its own takes the budget below the floor", async () => {
+    const { provider, answers } = makeHearingProvider();
+    const cache = open(provider);
+    await cache.refresh();
+    answers.heard = { graphql: makeBudget(900) };
+    await cache.keepBudget();
+    expect(cache.status().paused).toEqual({
       until: fullBudget.resetAt,
       reason: "budget",
     });
