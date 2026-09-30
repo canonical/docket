@@ -9,7 +9,7 @@ export type DetailReading = readonly {
   readonly detail: ThreadDetail | undefined;
 }[];
 
-/** Reads threads' details, in batches, above the budget floor. */
+/** Reads threads' details in batches, ahead only above the floor. */
 export interface DetailReader {
   /**
    * Reads the details of `threads`, at most `detailWindow` of them, in
@@ -25,31 +25,31 @@ export interface DetailReader {
 /**
  * The reading of threads' details for the terminal interface: each read
  * is one request of at most `detailWindow` threads, which GitHub charges
- * one point. Before each request it asks whether the budget is below its
- * floor; below it, the thread the user is looking at is still read, one a
- * request, from the reserve the floor keeps for what the user asks for,
- * and no other.
+ * one point. Before each request it asks whether docket may read ahead:
+ * reading the rows around the selection is docket's own spending, which
+ * stops below the budget floor, while the thread the user is looking at
+ * is their own request, still read, one a request, from the reserve.
  *
  * @note Impure: reads through `readDetails`.
  * @param readDetails Reads the details of several threads in one
  * request, as the provider's `threadDetails` does.
- * @param isBelowFloor Whether the budget is below its floor, asked before
- * each request.
+ * @param mayReadAhead Whether docket may spend points of its own, asked
+ * before each request.
  */
 export default function createDetailReader(
   readDetails: (
     threads: readonly ThreadSummary[],
   ) => Promise<readonly (ThreadDetail | undefined)[]>,
-  isBelowFloor: () => boolean,
+  mayReadAhead: () => boolean,
 ): DetailReader {
   return {
     async read(threads, selected) {
-      const chosen = isBelowFloor()
-        ? threads.filter(
+      const chosen = mayReadAhead()
+        ? threads
+        : threads.filter(
             (thread) =>
               selected && identifyThread(thread) === identifyThread(selected),
-          )
-        : threads;
+          );
       const batch = chosen.slice(0, detailWindow);
       if (batch.length === 0) return [];
       const details = await readDetails(batch);

@@ -88,16 +88,32 @@ describe("the budget mirror of createCache", () => {
     const own = hearing();
     const other = open(own.provider);
     await other.load();
-    expect(other.findFloor()).toEqual({
-      until: fullBudget.resetAt,
-      reason: "budget",
-    });
+    expect(other.maySpend("background")).toBe(false);
     expect(other.status().paused).toEqual({
       until: fullBudget.resetAt,
       reason: "budget",
     });
     await other.refresh();
     expect(own.provider.snapshot).not.toHaveBeenCalled();
+  });
+
+  it("stops docket's own spending below the floor, and still spends on what the user asks for", async () => {
+    const { provider, answers } = hearing();
+    await open(provider).refresh();
+    answers.heard = { graphql: leaving(999) };
+    const cache = open(provider);
+    await cache.load();
+    expect(cache.maySpend("background")).toBe(false);
+    expect(cache.maySpend("asked")).toBe(true);
+    vi.mocked(provider.snapshot).mockClear();
+    await cache.refresh("waking");
+    expect(provider.snapshot).not.toHaveBeenCalled();
+    expect(await cache.refreshIfChanged(repo)).toBe(false);
+    expect(provider.snapshot).not.toHaveBeenCalled();
+    await cache.read(0);
+    expect(provider.snapshot).toHaveBeenCalledOnce();
+    expect(await cache.fullRefresh()).toBe(true);
+    expect(provider.snapshot).toHaveBeenCalledTimes(2);
   });
 
   it("stops spending at the repository the refresh's own answers take below the floor", async () => {
@@ -129,17 +145,14 @@ describe("the budget mirror of createCache", () => {
       },
     });
     await cache.refresh();
-    expect(cache.findFloor()).toEqual({
-      until: fullBudget.resetAt,
-      reason: "budget",
-    });
+    expect(cache.maySpend("background")).toBe(false);
     expect(cache.status().paused).toEqual({
       until: fullBudget.resetAt,
       reason: "rateLimit",
     });
     answers.heard = { graphql: leaving(1000) };
     const fresh = open(provider);
-    expect(fresh.findFloor()).toBeUndefined();
+    expect(fresh.maySpend("background")).toBe(true);
     expect(fresh.status().paused).toBeUndefined();
   });
 

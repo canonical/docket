@@ -12,10 +12,10 @@ import {
   idleInterval,
   refreshInterval,
 } from "./constants.js";
+import createBudgetRule from "./createBudgetRule.js";
 import createReadQueries from "./createReadQueries.js";
 import dropPages from "./dropPages.js";
 import fetchRepos, { type FetchReposOptions } from "./fetchRepos.js";
-import findBudgetFloor from "./findBudgetFloor.js";
 import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeBudgets from "./mergeBudgets.js";
@@ -180,23 +180,13 @@ export default function createCache({
     });
   };
 
-  /**
-   * Until when the budget is below its floor, judged on the mirror at the
-   * cache's current time, or `undefined` while points may be spent.
-   */
-  const judgeFloor = () => findBudgetFloor(figures().graphql, now());
-  /**
-   * `judgeFloor`, and the status says so, with the reset, unless the rate
-   * limit pauses the cycle.
-   */
-  const findFloor = () => {
-    const floor = judgeFloor();
-    const { paused } = status;
-    if (paused?.reason !== "rateLimit" || now() >= paused.until) {
-      publish({ paused: floor }, false);
-    }
-    return floor;
-  };
+  const { judgeFloor, maySpend } = createBudgetRule({
+    figures,
+    now,
+    status: () => status,
+    // The threads are handed out once, when the run ends.
+    publish: (change) => publish(change, false),
+  });
 
   /**
    * Fetches every repository, the lock held, as `fetchRepos` does with
@@ -279,7 +269,7 @@ export default function createCache({
       // fetch that replaces them ends.
       publish();
       await save();
-      await fetchAll();
+      await fetchAll({ spend: () => maySpend("asked") });
     });
 
   /**
@@ -354,7 +344,7 @@ export default function createCache({
           const previous = entry(repo);
           if (!previous) return false;
           const value = await syncRepo(provider, repo, previous, at, {
-            spend: !findFloor(),
+            spend: maySpend("background"),
             reconcile: false,
           });
           // Unchanged, the repository keeps its data, and its tag, which
@@ -402,7 +392,9 @@ export default function createCache({
     async read(maxAge) {
       try {
         await load();
-        if (!isFresh(maxAge)) await sync(maxAge);
+        if (!isFresh(maxAge)) {
+          await sync(maxAge, { spend: () => maySpend("asked") });
+        }
         return shown;
       } catch (error) {
         throw classifyFolderFailure(error, directory);
@@ -421,7 +413,7 @@ export default function createCache({
         // finds unchanged stays current and a change waits for the reset.
         // The floor is judged before each repository and before the checks.
         await sync(maxAge, {
-          spend: () => !findFloor(),
+          spend: () => maySpend("background"),
           reconcile: !idle,
           checks: !idle,
         });
@@ -469,7 +461,7 @@ export default function createCache({
       };
     },
     budget: figures,
-    findFloor,
+    maySpend,
     async keepBudget() {
       try {
         await withFetchLock(directory, async () => {

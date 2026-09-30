@@ -82,7 +82,7 @@ export const FirstRunFailed: Story<ScreenFrameProps> = {
 const unanswered = () =>
   createDetailReader(
     () => new Promise(() => {}),
-    () => false,
+    () => true,
   );
 
 /** The details near the selection being read: none of them yet. */

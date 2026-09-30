@@ -34,7 +34,7 @@ Flags:
   --detail summary|standard|detailed
       How much each item shows: summary gives the counts alone, and detailed adds when each wait started and every message, file and check. A wait's target shows at detailed in plain and llm, and at every level in JSON. Default: standard.
   --max-age <seconds>
-      How old the cached data may be before docket fetches from GitHub; 0 always fetches. Default: 300.
+      How old the cached data may be before docket fetches from GitHub; 0 always fetches. A call is a request of your own, so it fetches even when less than a fifth of GitHub's hourly budget is left, the share docket keeps for your requests; only docket's own refreshing in the terminal interface stops then. Default: 300.
   --help
       Prints this help.
 

@@ -78,7 +78,7 @@ export default async function answerTerminal(
         cache.keepBudget().catch(() => undefined);
       }
     },
-    () => cache.findFloor() !== undefined,
+    () => cache.maySpend("background"),
   );
   const readWatched = async (): Promise<WatchedFiles> => {
     try {

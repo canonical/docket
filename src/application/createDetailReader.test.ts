@@ -6,7 +6,7 @@ import createDetailReader from "./createDetailReader.js";
 const threads = Array.from({ length: 20 }, (_, index) =>
   thread({ number: index + 1 }),
 );
-const aboveFloor = () => false;
+const alwaysReadAhead = () => true;
 
 /** Reads every thread's details, as one request, finding all but #13. */
 const readAll = () =>
@@ -17,7 +17,7 @@ const readAll = () =>
 describe("createDetailReader", () => {
   it("reads at most 14 threads in one request, each with its details or none", async () => {
     const readDetails = readAll();
-    const read = await createDetailReader(readDetails, aboveFloor).read(
+    const read = await createDetailReader(readDetails, alwaysReadAhead).read(
       threads,
       undefined,
     );
@@ -33,21 +33,24 @@ describe("createDetailReader", () => {
   it("asks nothing when given nothing to read", async () => {
     const readDetails = readAll();
     expect(
-      await createDetailReader(readDetails, aboveFloor).read([], undefined),
+      await createDetailReader(readDetails, alwaysReadAhead).read(
+        [],
+        undefined,
+      ),
     ).toEqual([]);
     expect(readDetails).not.toHaveBeenCalled();
   });
 
   it("reads only the selected thread below the budget floor, as the floor stands at each request", async () => {
     const readDetails = readAll();
-    let below = true;
-    const reader = createDetailReader(readDetails, () => below);
+    let ahead = false;
+    const reader = createDetailReader(readDetails, () => ahead);
     const [first, second] = threads;
     const floored = await reader.read(threads.slice(0, 3), second);
     expect(floored.map(({ thread: read }) => read)).toEqual([second]);
     expect(await reader.read([first], undefined)).toEqual([]);
     expect(readDetails).toHaveBeenCalledOnce();
-    below = false;
+    ahead = true;
     expect(await reader.read(threads.slice(0, 3), second)).toHaveLength(3);
   });
 });

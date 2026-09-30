@@ -4,14 +4,14 @@ import { parserFixDetail } from "../testing/recorded.js";
 import createDetailReader from "./createDetailReader.js";
 import readOneDetail from "./readOneDetail.js";
 
-const belowFloor = () => true;
+const neverReadAhead = () => false;
 
 describe("readOneDetail", () => {
   it("gives the thread's details, read as one request, even below the budget floor", async () => {
     const readDetails = vi.fn(async () => [parserFixDetail]);
     expect(
       await readOneDetail(
-        createDetailReader(readDetails, belowFloor),
+        createDetailReader(readDetails, neverReadAhead),
         thread(),
       ),
     ).toBe(parserFixDetail);
@@ -19,7 +19,7 @@ describe("readOneDetail", () => {
   });
 
   it("fails naming a thread the provider no longer finds", async () => {
-    const reader = createDetailReader(async () => [undefined], belowFloor);
+    const reader = createDetailReader(async () => [undefined], neverReadAhead);
     await expect(readOneDetail(reader, thread())).rejects.toThrow(
       "example-org/example-repo#1 was not found.",
     );

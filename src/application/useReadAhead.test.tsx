@@ -35,7 +35,7 @@ const reading = () => {
   );
   return {
     readDetails,
-    reader: createDetailReader(readDetails, () => false),
+    reader: createDetailReader(readDetails, () => true),
   };
 };
 
@@ -172,7 +172,7 @@ describe("useReadAhead", () => {
       await promise;
       return threads.map(() => parserFixDetail);
     });
-    const screen = await open(createDetailReader(readDetails, () => false));
+    const screen = await open(createDetailReader(readDetails, () => true));
     await screen.redraw();
     expect(result?.progress).toEqual({ read: 0, asked: 14 });
     resolve();

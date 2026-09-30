@@ -26,7 +26,7 @@ const maxAge: Flag = {
   value: "seconds",
   default: "300",
   description:
-    "How old the cached data may be before docket fetches from GitHub; 0 always fetches.",
+    "How old the cached data may be before docket fetches from GitHub; 0 always fetches. A call is a request of your own, so it fetches even when less than a fifth of GitHub's hourly budget is left, the share docket keeps for your requests; only docket's own refreshing in the terminal interface stops then.",
 };
 
 const confirm: Flag = {

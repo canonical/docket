@@ -160,7 +160,7 @@ function viewOf(
 const floored = (
   cache: Cache,
   readDetails: Parameters<typeof createDetailReader>[0],
-) => createDetailReader(readDetails, () => cache.findFloor() !== undefined);
+) => createDetailReader(readDetails, () => cache.maySpend("background"));
 
 /** The cache and readings a view reads from. */
 function cacheSourceOf({ source }: TerminalView) {
@@ -1965,7 +1965,10 @@ describe("Screen", { timeout: 15_000 }, () => {
       const view = viewOf(cache);
       const screen = await show({
         ...view,
-        source: { ...view.source, details: floored(cache, readDetails) },
+        source: {
+          ...view.source,
+          details: floored(cache, readDetails),
+        },
       });
       await waitUntil(() => expect(readDetails).toHaveBeenCalledOnce());
       const [first] = readDetails.mock.calls.at(0) ?? [];
