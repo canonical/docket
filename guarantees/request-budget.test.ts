@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import findFixture from "./findFixture.js";
+import listThreads from "./listThreads.js";
 import makeHome from "./makeHome.js";
 import type { Outcome, SentRequest } from "./types.js";
 
@@ -126,14 +127,6 @@ const isCallRead = (request: SentRequest) =>
 /** Whether a request reads a thread's details, one or several at once. */
 const isDetailRead = (request: SentRequest) =>
   ["Detail", "Details"].includes(nameOperation(request) ?? "");
-
-/** The threads a request reads the details of, as `owner/name#number`. */
-const listThreads = ({ body }: SentRequest) =>
-  [
-    ...String(body.query).matchAll(
-      /\bt\d+: repository\(owner: "([^"]+)", name: "([^"]+)"\) \{ \w+\(number: (\d+)\)/g,
-    ),
-  ].map(([, owner, name, number]) => `${owner}/${name}#${number}`);
 
 /** A read of details asks for at most 14 threads, which cost a point. */
 const detailWindow = 14;

@@ -8,6 +8,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import listThreads from "./listThreads.js";
 import type { Call, Home, Outcome, SentRequest } from "./types.js";
 
 const corpusRoot = import.meta.dirname;
@@ -17,10 +18,14 @@ const standIn = resolve(corpusRoot, "standIn.ts");
 /** How long, in milliseconds, a key waits for the read it causes. */
 const readWait = 30_000;
 
-/** The lines of the request log `log` so far, the time zone's first. */
+/**
+ * The whole lines of the request log `log` so far, the time zone's first:
+ * a line still being written, after the last line break, is left out.
+ */
 const readLog = (log: string) =>
   readFileSync(log, "utf8")
     .split("\n")
+    .slice(0, -1)
     .filter((line) => line !== "");
 
 /**
@@ -41,15 +46,9 @@ async function waitForRead(
   while (Date.now() - started < readWait) {
     const read = readLog(log)
       .slice(sent)
-      .some((line) => {
-        const { body } = JSON.parse(line) as SentRequest;
-        const named = String(body.query ?? "").matchAll(
-          /repository\(owner: "([^"]+)", name: "([^"]+)"\) \{ \w+\(number: (\d+)\)/g,
-        );
-        return [...named].some(
-          ([, owner, name, number]) => `${owner}/${name}#${number}` === thread,
-        );
-      });
+      .some((line) =>
+        listThreads(JSON.parse(line) as SentRequest).includes(thread),
+      );
     if (read) return;
     await Bun.sleep(20);
   }
@@ -116,10 +115,7 @@ export default function makeHome(personalFile: string): Home {
     out: string,
     err: string,
   ): Outcome => {
-    const [ran, ...sent] = readFileSync(log, "utf8")
-      .split("\n")
-      .filter((line) => line !== "")
-      .map((line) => JSON.parse(line));
+    const [ran, ...sent] = readLog(log).map((line) => JSON.parse(line));
     return {
       code,
       out,
