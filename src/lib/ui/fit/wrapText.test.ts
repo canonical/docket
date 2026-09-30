@@ -2,6 +2,20 @@ import { describe, expect, it } from "vitest";
 import wrapText from "./wrapText.js";
 
 describe("wrapText", () => {
+  it("splits a word too wide for its line between characters, never inside one", () => {
+    const lines = wrapText("ab😀 cd", 3);
+    expect(lines).toEqual(["ab", "😀", "cd"]);
+    expect(wrapText(`Fix ${"a".repeat(37)}🚀 launch`, 38)).toEqual([
+      "Fix",
+      "a".repeat(37),
+      "🚀 launch",
+    ]);
+  });
+
+  it("gives each character a line of its own when the line is narrower than one", () => {
+    expect(wrapText("😀😀", 1)).toEqual(["😀", "😀"]);
+  });
+
   it("keeps a text that fits on one line", () => {
     expect(wrapText("Recovery: run gh auth login", 38)).toEqual([
       "Recovery: run gh auth login",
