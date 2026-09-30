@@ -2,9 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   activityGroupings,
   describeAddress as describeActivityAddress,
+  listEvents,
 } from "../../lib/activity/index.js";
 import type { CacheStatus, RepoStage } from "../../lib/cache/index.js";
-import { describeAddress, owedGroupings } from "../../lib/owed/index.js";
+import type { WindowEvent } from "../../lib/events/index.js";
+import {
+  describeAddress,
+  listWaits,
+  owedGroupings,
+} from "../../lib/owed/index.js";
 import {
   CountsLine,
   StatusLine,
@@ -15,7 +21,12 @@ import describeDetails from "../../lib/ui/component/StatusLine/describeDetails.j
 import describeStatus from "../../lib/ui/component/StatusLine/describeStatus.js";
 import { minColumns } from "../../lib/ui/constants.js";
 import { PaneHeader } from "../../lib/ui/subcomponent/index.js";
+import type { Wait } from "../../lib/waits/index.js";
+import { activityNow } from "../activity.js";
+import { alice, teamSettings, thread } from "../facts.js";
 import { longReview } from "../long.js";
+import { recordedNow } from "../recorded.js";
+import { draftClose, overReview, soonReply } from "../rows.js";
 import { draw } from "../terminal.js";
 
 const now = new Date("2026-09-28T12:00:00Z");
@@ -60,6 +71,7 @@ const messages: readonly CacheStatus[] = [
   },
   { ...idle, fullRefreshAvailableAt: new Date("2026-09-28T12:09:59Z") },
   fullRefresh,
+  { ...fullRefresh, whole: false },
 ];
 
 describe("docket's own words at the narrowest pane", () => {
@@ -129,16 +141,54 @@ describe("docket's own words at the narrowest pane", () => {
     }
   });
 
-  it("holds the counts whole with four digits in every state", async () => {
-    const summary = "9999 over · 9999 soon · 9999 on track";
-    const screen = await draw(
-      <CountsLine
-        summary={{ text: summary, kind: "words" }}
-        width={minColumns}
-      />,
-      minColumns,
-    );
-    expect(screen.lines.at(0)).toBe(summary);
+  it("holds the counts owed and activity build whole, with three digits in every state", async () => {
+    const many = (wait: Wait) => Array.from({ length: 999 }, () => wait);
+    const owed = listWaits(
+      [
+        {
+          repo: { name: "example", repo: "example-org/example-repo", tags: [] },
+          time: teamSettings.time,
+          people: teamSettings.people,
+          yours: [],
+          waits: [
+            ...many(overReview.wait),
+            ...many(soonReply.wait),
+            ...many(draftClose.wait),
+          ],
+        },
+      ],
+      recordedNow,
+    ).summary;
+    const activity = listEvents(
+      [
+        {
+          repo: { name: "example", repo: "example-org/example-repo", tags: [] },
+          people: teamSettings.people,
+          threads: [],
+          events: Array.from(
+            { length: 999 },
+            (_, number): WindowEvent => ({
+              thread: thread({ number }),
+              kind: "pushed",
+              commits: 1,
+              actor: alice,
+              at: activityNow,
+              bot: false,
+            }),
+          ),
+        },
+      ],
+      activityNow,
+    ).summary;
+    for (const summary of [owed, activity]) {
+      const screen = await draw(
+        <CountsLine summary={summary} width={minColumns} />,
+        minColumns,
+      );
+      expect(screen.lines.at(0)).toBe(summary.text);
+    }
+    expect(owed.text).toBe("999 over · 999 soon · 999 on track");
+    expect(activity.text).toBe("999 threads · 999 events");
   });
 
   it("holds each first-run stage in the 20 cells its column keeps", () => {
