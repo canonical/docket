@@ -26,6 +26,7 @@ describe("renderConfig", () => {
       "- repos (personal file): example example-org/example-repo, docs example-org/example-docs",
       "- activity (personal file): 24h, 1w",
       "- hosts (personal file): github.com",
+      "- you (personal file): teams example-org/ui",
       "- Anyone not listed in people: a bot account is bot, then a member of the organisation is internal, then anyone else is external.",
       "",
       "## example (example-org/example-repo)",
@@ -63,6 +64,7 @@ describe("renderConfig", () => {
       "  repos (built-in default): none",
       "  activity (built-in default): 24h, 48h, 72h, 1w",
       "  hosts (built-in default): github.com",
+      "  you (built-in default): teams none",
       "  Anyone not listed in people: a bot account is bot, then a member of the organisation is internal, then anyone else is external.",
       "",
     ]);
@@ -75,7 +77,13 @@ describe("renderConfig", () => {
       gh: { signedIn: true, host: "github.com", login: "alice" },
       activity: ["24h", "1w"],
       hosts: ["github.com"],
-      origins: { repos: "personal", activity: "personal", hosts: "personal" },
+      you: { teams: ["example-org/ui"] },
+      origins: {
+        repos: "personal",
+        activity: "personal",
+        hosts: "personal",
+        you: "personal",
+      },
     });
     expect(data.repositories.at(0)).toMatchObject({
       name: "example",

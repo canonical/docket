@@ -162,6 +162,7 @@ const catalogue: readonly Command[] = [
       "Which settings are in effect for each watched repository, which file set each one, how each listed person is classified, and which account gh is signed in with.",
     notes: [
       "The personal file is `docket/docket.yaml` in `$XDG_CONFIG_HOME`, or `~/.config` when it is unset.",
+      "`you: { teams: [example-org/ui] }` in the personal file names the GitHub teams you belong to, so a review asked of one of them is marked yours.",
     ],
     flags: [format],
     example: "docket config --format llm",
