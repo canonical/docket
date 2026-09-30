@@ -6,6 +6,8 @@ import {
   ActionDone,
   ActionFailed,
   Blank,
+  BudgetLow,
+  BudgetLowWithDetails,
   BudgetPaused,
   DetailsLoading,
   FullRefresh,
@@ -121,6 +123,24 @@ describe("StatusLine", () => {
       25,
     );
     expect(screen.lines.at(0)).toBe("synced 2m ago");
+  });
+
+  it("says what is left of the queries' budget on the right, dimmed, and when it resets", async () => {
+    const screen = await draw(<StatusLine {...BudgetLow.args} />, 40);
+    expect(screen.lines.at(0)).toBe(
+      `synced 2m ago${" ".repeat(2)}budget 35% · resets 14:20`,
+    );
+    expect(screen.look("budget")?.fg).toBe(tokens["color.text.muted"]);
+  });
+
+  it("gives the right side to the details count while the budget is low", async () => {
+    const screen = await draw(
+      <StatusLine {...BudgetLowWithDetails.args} />,
+      40,
+    );
+    expect(screen.lines.at(0)).toBe(
+      `synced 2m ago${" ".repeat(15)}details 0/12`,
+    );
   });
 
   it("leaves the right side empty below the budget floor", async () => {

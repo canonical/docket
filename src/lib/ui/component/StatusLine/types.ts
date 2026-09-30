@@ -1,5 +1,6 @@
 import type { AttentionState, CacheStatus } from "../../../cache/index.js";
 import type { Owner } from "../../../owed/index.js";
+import type { Budget } from "../../../provider/index.js";
 
 /**
  * What the status line says, and what kind of message it is: the kind
@@ -66,6 +67,11 @@ export interface StatusLineProps {
    * which the right side says as `details 3/12`.
    */
   details?: DetailsCount;
+  /**
+   * The queries' budget, as the mirror every docket process shares gives
+   * it, which the right side names once it runs low.
+   */
+  budget?: Budget;
   /** The instant ages and waits are measured at. */
   now: Date;
   /** The time zone a time of day is written in, such as `Europe/Paris`. */

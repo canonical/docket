@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
+import { describeBudget } from "../../../text/index.js";
 import { tokens } from "../../../tokens/index.js";
 import fitPieces from "../../fitPieces.js";
 import markPerson from "../../markPerson.js";
 import measurePieces from "../../measurePieces.js";
 import type { Piece } from "../../types.js";
-import describeDetails from "./describeDetails.js";
+import describeRight from "./describeRight.js";
 import describeStatus from "./describeStatus.js";
 import type { StatusLineProps, StatusMessage } from "./types.js";
 
@@ -46,10 +47,10 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
  * is the one shown, and the side stays blank when none does (the
  * prerequisite frames). A message too wide for the pane drops its part
  * that gives way first, a full refresh its pages, and only then is cut
- * with `…`. The right side is the details', dimmed, as
- * `describeDetails` chooses it: `details 3/12` while any asked for are
- * unread, hidden while nothing is read, and dropped when the two sides
- * would meet.
+ * with `…`. The right side is dimmed, as `describeRight` chooses it:
+ * `details 3/12` while any asked for are unread, else
+ * `budget 35% · resets 14:20` while less than 40% of the queries' budget
+ * is left, and dropped when the two sides would meet.
  *
  * `import { StatusLine } from "../lib/ui/index.js";`
  *
@@ -60,6 +61,7 @@ const StatusLine = ({
   action,
   attention,
   details,
+  budget,
   now,
   timezone,
   names,
@@ -80,7 +82,13 @@ const StatusLine = ({
       ? { ...message, text: message.shorter }
       : message;
   const runs = fitted ? fitPieces(describeRuns(fitted), width) : [];
-  const right = describeDetails(status, message, attention, details);
+  const right = describeRight(
+    status,
+    message,
+    attention,
+    details,
+    describeBudget(budget, now, timezone),
+  );
   // At least one cell apart, or the right side is left out.
   const gap = width - measurePieces(runs) - Bun.stringWidth(right);
   return (

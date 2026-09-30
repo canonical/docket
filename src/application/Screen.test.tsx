@@ -1670,6 +1670,22 @@ describe("Screen", { timeout: 15_000 }, () => {
       }
     });
 
+    it("says on the status line's right what is left of the budget the cache mirrors, once it runs low", async () => {
+      const resetAt = new Date("2026-09-28T10:20:00Z");
+      const provider = recordedProvider({
+        budget: () => ({ graphql: { limit: 5000, remaining: 1750, resetAt } }),
+      });
+      const cache = await openCache(provider);
+      await cache.refresh();
+      const screen = await show(viewOf(cache));
+      await waitUntil(async () => {
+        const drawn = await screen.redraw();
+        expect(drawn.lines.at(-2)).toBe(
+          `synced 0m ago${" ".repeat(2)}budget 35% · resets 12:20`,
+        );
+      });
+    });
+
     it("counts the details read of those asked for on the status line's right while they are read, and says nothing once all are", async () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();

@@ -1,0 +1,5 @@
+40 columns
+|synced 2m ago  budget 35% · resets 14:20
+
+runs
+1:1 "synced 2m ago  budget 35% · resets 14:20" fg #6b7089ff bg #00000000

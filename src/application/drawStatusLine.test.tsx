@@ -14,6 +14,7 @@ const synced: StatusLineState = {
   action: undefined,
   attention: "active",
   details: undefined,
+  budget: undefined,
   now: recordedNow,
   timezone: "Europe/Paris",
   watched: recordedRepos,
@@ -69,6 +70,14 @@ describe("drawStatusLine", () => {
     expect(await drawFor({ status })).toBe(
       "full refresh · docs 2/2 · pages 2/4",
     );
+  });
+
+  it("says what is left of the queries' budget once it runs low", async () => {
+    const resetAt = new Date("2026-09-28T12:20:00Z");
+    const line = await drawFor({
+      budget: { limit: 5000, remaining: 1750, resetAt },
+    });
+    expect(line).toBe(`synced 2m ago${" ".repeat(2)}budget 35% · resets 14:20`);
   });
 
   it("counts the details read of those asked for", async () => {

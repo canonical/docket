@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { AttentionState, CacheStatus } from "../lib/cache/index.js";
 import type { Repo } from "../lib/config/index.js";
+import type { Budget } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
 import {
   type ActionResult,
@@ -22,6 +23,8 @@ export interface StatusLineState {
   readonly attention: AttentionState;
   /** How many of the details asked for are read, while any are pending. */
   readonly details: DetailsCount | undefined;
+  /** The queries' budget, which the right side names once it runs low. */
+  readonly budget: Budget | undefined;
   readonly now: Date;
   /** The time zone a time of day is written in. */
   readonly timezone: string;
@@ -43,6 +46,7 @@ export default function drawStatusLine({
   action,
   attention,
   details,
+  budget,
   now,
   timezone,
   watched,
@@ -55,6 +59,7 @@ export default function drawStatusLine({
       action={action}
       attention={attention}
       details={details}
+      budget={budget}
       now={now}
       timezone={timezone}
       names={Object.fromEntries(watched.map(({ repo, name }) => [repo, name]))}
