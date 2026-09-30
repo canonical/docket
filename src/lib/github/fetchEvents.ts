@@ -233,6 +233,25 @@ function findFailure(
 }
 
 /**
+ * A thread's timeline with each merge counted once. GitHub records a
+ * merge as a merge and a close at the same instant; the merge alone
+ * counts. A close at another instant stays.
+ */
+function dropMergeCloses(
+  timeline: readonly ThreadEvent[],
+): readonly ThreadEvent[] {
+  const merges = new Set(
+    timeline
+      .filter(({ kind }) => kind === "merged")
+      .map(({ at }) => at.getTime()),
+  );
+  if (merges.size === 0) return timeline;
+  return timeline.filter(
+    (event) => event.kind !== "closed" || !merges.has(event.at.getTime()),
+  );
+}
+
+/**
  * Fetches the events on `repo`'s threads at or after `since`, oldest
  * thread first as GitHub lists them. Pushes come from the repository
  * activity feed, each counted from the pull request's commits where the
@@ -258,19 +277,10 @@ export default async function fetchEvents(
     if (at >= since) events.push({ thread, actor, at, kind: "opened" });
   };
   const addTimeline = (thread: ThreadSummary, node: IssueEventsNode) => {
-    const read = node.timelineItems.nodes
+    const timeline = node.timelineItems.nodes
       .map((item) => readItem(thread, item))
       .filter((event) => event !== undefined);
-    // GitHub records a merge as a merge and a close at the same instant;
-    // the merge alone counts. A close at another instant stays.
-    const merges = new Set(
-      read.filter(({ kind }) => kind === "merged").map(({ at }) => Number(at)),
-    );
-    for (const event of read) {
-      if (event.kind !== "closed" || !merges.has(Number(event.at))) {
-        events.push(event);
-      }
-    }
+    events.push(...dropMergeCloses(timeline));
   };
   for (const node of found.issues) {
     const thread = summarise(repo, "issue", node);
