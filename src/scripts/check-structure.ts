@@ -75,6 +75,14 @@ const propertyFolders = new Set([
   "util",
   "utils",
 ]);
+/**
+ * The fitting module, `src/lib/ui/fit/`, fits every text the terminal
+ * draws by one table of rules. Its primitives cut or wrap text without
+ * regard to what it is, so nothing outside it imports them.
+ */
+const fitting = "src/lib/ui/fit/";
+const fittingPrimitives = /(^|\/)(trimText|wrapText|fitPieces)(\.js)?$/;
+
 const maxLines = 500;
 const lengthHeader = /^\/\/ Longer than 500 lines because \S/;
 
@@ -334,6 +342,16 @@ function check(root: string): Finding[] {
       ts.ScriptTarget.Latest,
       true,
     );
+    if (!path.startsWith(fitting)) {
+      for (const { specifier } of importsOf(source)) {
+        if (fittingPrimitives.test(specifier)) {
+          report(
+            "fitting",
+            `imports ${specifier}: fit text with fitField, fitRuns, wrapRuns or endRuns from ${fitting}`,
+          );
+        }
+      }
+    }
     const lines = text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
     if (lines > maxLines && !lengthHeader.test(text)) {
       report(
@@ -511,6 +529,14 @@ const breaks: Record<string, [string, string]> = {
   "src/lib/config/schema.ts": ["length", `${long}\nexport default 1;`],
   "src/lib/config/types.ts": ["exports", "export const x = 1;"],
   "src/lib/waits/owner.ts": ["tests", "export default function owner() {}"],
+  "src/lib/ui/component/Row/Row.tsx": [
+    "fitting",
+    'import trimText from "../../fit/trimText.js";\nexport default function Row() { return trimText; }',
+  ],
+  "src/application/wrap.ts": [
+    "fitting",
+    'export { default as wrapText } from "../lib/ui/fit/wrapText.js";',
+  ],
 };
 
 /** Each file must be accepted: the allowances and the rules' scopes. */
@@ -559,6 +585,11 @@ const allowed: Record<string, string> = {
     'import provider from "../provider/index.js";',
     'import clock from "../clock/index.js";',
     "export default function snapshot(): Port { return [provider, clock]; }",
+  ].join("\n"),
+  "src/lib/ui/fit/fitField.ts": [
+    'import trimText from "./trimText.js";',
+    'import fitPieces from "./fitPieces.js";',
+    "export default function fitField() { return [trimText, fitPieces]; }",
   ].join("\n"),
   "src/lib/config/long.ts": `// Longer than 500 lines because the schema is one table\n${long}\nexport default function long() {}`,
   "src/application/main.ts": [
