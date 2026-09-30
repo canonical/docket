@@ -22,7 +22,11 @@ export type ThreadAddress = Pick<ThreadSummary, "repo" | "number" | "url">;
 export type Closer =
   | ({ readonly kind: "pullRequest" } & ThreadAddress)
   | { readonly kind: "commit"; readonly oid: string; readonly url: string }
-  | { readonly kind: "project"; readonly title: string; readonly url: string };
+  /**
+   * A project, unnamed: a provider may keep a project's name from a reader
+   * allowed to see the thread.
+   */
+  | { readonly kind: "project" };
 
 /** How and when a thread ended, and who ended it. */
 export interface Ending {

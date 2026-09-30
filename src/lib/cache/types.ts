@@ -1,4 +1,5 @@
 import type { DehydratedState } from "@tanstack/query-core";
+import type { FinishedThread } from "../endings/index.js";
 import type { ThreadEvent } from "../events/index.js";
 import type { Account } from "../people/index.js";
 import type {
@@ -33,11 +34,18 @@ export interface RepoCache {
   readonly reconciledAt: Date;
 }
 
-/** What the cache keeps of one repository's events. */
+/**
+ * What the cache keeps of one repository's events, and of the threads
+ * that finished in the same span.
+ */
 export interface EventsCache {
-  /** How far back the events reach: every event at or after it is held. */
+  /**
+   * How far back the events reach: every event, and every thread that
+   * finished, at or after it is held.
+   */
   readonly since: Date;
   readonly events: readonly ThreadEvent[];
+  readonly finished: readonly FinishedThread[];
 }
 
 /**
@@ -70,9 +78,13 @@ export interface CachedThreads {
   readonly syncedAt: Date | undefined;
 }
 
-/** The events of one repository, and when they were fetched. */
+/**
+ * The events of one repository, the threads that finished in the same
+ * span, and when they were fetched.
+ */
 export interface CachedEvents {
   readonly events: readonly ThreadEvent[];
+  readonly finished: readonly FinishedThread[];
   readonly syncedAt: Date;
 }
 
@@ -245,15 +257,15 @@ export interface Cache {
    */
   refreshIfChanged(repo: string): Promise<boolean>;
   /**
-   * The events held for `repo` at or after `since`, however old, as last
-   * loaded or fetched; nothing when those held do not reach back to
+   * The events held for `repo` at or after `since`, with the threads that
+   * finished since, however old, as last loaded or fetched; nothing when those held do not reach back to
    * `since`. Without `since`, every event held, however far back they
    * reach; nothing when none are held.
    */
   findEvents(repo: string, since?: Date): CachedEvents | undefined;
   /**
-   * The events on `repo`'s threads at or after `since`, no older than
-   * `maxAge` milliseconds. Otherwise they are fetched under the fetch
+   * The events on `repo`'s threads at or after `since`, with the threads
+   * that finished since, no older than `maxAge` milliseconds. Otherwise they are fetched under the fetch
    * lock, unless the process that held it before already did, and kept
    * in the cache file for every docket process.
    *

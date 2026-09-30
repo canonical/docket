@@ -1,5 +1,7 @@
+import type { FinishedThread } from "../endings/index.js";
 import type { ThreadEvent } from "../events/index.js";
 import type { Account } from "../people/index.js";
+import type { EventsSince } from "../provider/index.js";
 import type { ThreadKind, ThreadSummary } from "../waits/index.js";
 import { endingLabels } from "./constants.js";
 import countCommits from "./countCommits.js";
@@ -9,6 +11,8 @@ import fetchPushes from "./fetchPushes.js";
 import fragments from "./fragments.js";
 import readAccount from "./readAccount.js";
 import readCheck from "./readCheck.js";
+import type { CloseNode } from "./readEnding.js";
+import readFinished, { type FinishedNode } from "./readFinished.js";
 import readOutcome from "./readOutcome.js";
 import readStackEntry from "./readStackEntry.js";
 import splitRepo from "./splitRepo.js";
@@ -21,11 +25,15 @@ import type {
   StackEntryNode,
 } from "./types.js";
 
-const { account, check, stackEntry, pageInfo, order } = fragments;
+const { account, check, stackEntry, pageInfo, order, labels, assignees } =
+  fragments;
 const actor = `actor { ${account} } createdAt`;
+const address = "number url repository { nameWithOwner }";
 const issueItems = `__typename
   ... on IssueComment { author { ${account} } createdAt }
-  ... on ClosedEvent { ${actor} stateReason }
+  ... on ClosedEvent { ${actor} stateReason
+    closer { __typename ... on PullRequest { ${address} } ... on Commit { oid url } }
+    duplicateOf { ... on Issue { ${address} } ... on PullRequest { ${address} } } }
   ... on ReopenedEvent { ${actor} }
   ... on AssignedEvent { ${actor} assignee { ... on User { login } ... on Bot { login } } }
   ... on LabeledEvent { ${actor} label { name } }`;
@@ -36,6 +44,8 @@ const pullItems = `${issueItems}
 const issueTypes =
   "ISSUE_COMMENT, CLOSED_EVENT, REOPENED_EVENT, ASSIGNED_EVENT, LABELED_EVENT";
 const opened = `number url title createdAt updatedAt author { ${account} }`;
+/** How a thread stands, and who is on it, for the threads that ended. */
+const standing = `state closedAt ${labels} ${assignees}`;
 
 const document = `query Events($owner: String!, $name: String!, $since: DateTime!,
   $issuesAfter: String, $pullsAfter: String, $discussionsAfter: String,
@@ -46,14 +56,15 @@ const document = `query Events($owner: String!, $name: String!, $since: DateTime
       @include(if: $withIssues) {
       ${pageInfo}
       nodes {
-        ${opened}
+        ${opened} ${standing} stateReason
         timelineItems(since: $since, first: 100, itemTypes: [${issueTypes}]) { nodes { ${issueItems} } }
       }
     }
     pullRequests(first: 50, after: $pullsAfter, ${order}) @include(if: $withPulls) {
       ${pageInfo}
       nodes {
-        ${opened} headRefName isCrossRepository
+        ${opened} ${standing} mergedAt mergedBy { ${account} } isDraft
+        headRefName isCrossRepository
         ${stackEntry}
         timelineItems(since: $since, first: 100, itemTypes: [${issueTypes},
           PULL_REQUEST_REVIEW, REVIEW_REQUESTED_EVENT, MERGED_EVENT]) { nodes { ${pullItems} } }
@@ -76,10 +87,9 @@ const document = `query Events($owner: String!, $name: String!, $since: DateTime
 }`;
 
 /** An item of a thread's timeline; each kind carries some of these. */
-interface ItemNode {
+interface ItemNode extends CloseNode {
   readonly __typename: string;
   readonly author?: ActorNode;
-  readonly actor?: ActorNode;
   readonly createdAt?: string;
   readonly submittedAt?: string | null;
   readonly stateReason?: string | null;
@@ -96,7 +106,7 @@ interface OpenedNode {
   readonly author: ActorNode;
 }
 
-interface IssueEventsNode extends OpenedNode {
+interface IssueEventsNode extends OpenedNode, FinishedNode {
   readonly timelineItems: { readonly nodes: readonly ItemNode[] };
 }
 
@@ -247,8 +257,13 @@ function findFailure(
  * has no pushes in the feed, so its head commit stands in for its latest
  * push, uncounted.
  *
+ * Beside the events come the issues and pull requests merged or closed
+ * at or after `since` and still so, each with its ending: a thread
+ * reopened since and open now is left out, and one closed again comes
+ * with its latest ending.
+ *
  * Discussions give their openings and comments; GitHub records nobody
- * as closing one.
+ * as closing one, and none comes back finished.
  *
  * @note Impure: reads from GitHub.
  */
@@ -256,9 +271,10 @@ export default async function fetchEvents(
   client: Client,
   repo: string,
   since: Date,
-): Promise<ThreadEvent[]> {
+): Promise<EventsSince> {
   const found = await readThreads(client, repo, since);
   const events: ThreadEvent[] = [];
+  const finished: FinishedThread[] = [];
   const addOpening = (thread: ThreadSummary, node: OpenedNode) => {
     const at = new Date(node.createdAt);
     const actor: Account = readAccount(node.author);
@@ -270,15 +286,21 @@ export default async function fetchEvents(
       .filter((event) => event !== undefined);
     events.push(...dropMergeCloses(timeline));
   };
+  const addEnding = (thread: ThreadSummary, node: IssueEventsNode) => {
+    const ended = readFinished(thread, node, since);
+    if (ended) finished.push(ended);
+  };
   for (const node of found.issues) {
     const thread = summarise(repo, "issue", node);
     addOpening(thread, node);
     addTimeline(thread, node);
+    addEnding(thread, node);
   }
   for (const node of found.pullRequests) {
     const thread = summarise(repo, "pullRequest", node);
     addOpening(thread, node);
     addTimeline(thread, node);
+    addEnding(thread, node);
     const failure = findFailure(thread, node, since);
     if (failure) events.push(failure);
     const head = node.head.nodes.at(-1)?.commit;
@@ -312,5 +334,5 @@ export default async function fetchEvents(
       if (at >= since) events.push({ thread, actor, at, kind: "commented" });
     }
   }
-  return events;
+  return { events, finished };
 }

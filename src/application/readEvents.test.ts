@@ -32,6 +32,7 @@ describe("readEvents", () => {
     );
     expect(read).toEqual({
       events: recordedEvents.filter(({ thread }) => thread.repo === repo),
+      finished: [],
       syncedAt: recordedNow,
       warnings: [],
     });

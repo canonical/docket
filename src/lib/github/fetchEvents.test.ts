@@ -29,8 +29,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const events = () =>
+const read = () =>
   settle(fetchEvents(createClient(token, "github.com", "1.2.3"), repo, since));
+
+/** The events read. */
+const events = async () => (await read()).events;
 
 /** What an event line reads from an event: its thread, kind and actor. */
 const lines = (found: readonly ThreadEvent[]) =>
@@ -449,5 +452,21 @@ describe("fetchEvents", () => {
       [1, "opened", "dave", "08:00"],
       [1, "commented", "alice", "09:00"],
     ]);
+  });
+
+  it("gives the threads merged or closed in the window, each with its ending", async () => {
+    const merged = pull({
+      state: "MERGED",
+      mergedAt: "2026-09-22T11:00:00Z",
+      mergedBy: user("bob"),
+      labels: { nodes: [] },
+      assignees: { nodes: [] },
+    });
+    github.graphql("Events", lists([opened({ state: "OPEN" })], [merged], []));
+    github.rest(feed, { body: [] });
+    const { finished } = await read();
+    expect(
+      finished.map(({ number, ending }) => [number, ending.label]),
+    ).toEqual([[2, "merged"]]);
   });
 });

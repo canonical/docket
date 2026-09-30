@@ -289,9 +289,9 @@ export default function createCache({
       readThrough(
         () => queries.findFreshEvents(repo, since, maxAge),
         async (at) => {
-          const events = await provider.events(repo, since);
-          queries.keepEvents(repo, since, events, at);
-          return { events, syncedAt: at };
+          const read = await provider.events(repo, since);
+          queries.keepEvents(repo, since, read, at);
+          return { ...read, syncedAt: at };
         },
       ),
     readFile: (repo, path, maxAge) =>

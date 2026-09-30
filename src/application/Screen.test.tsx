@@ -259,8 +259,10 @@ async function showRefreshing(
       threads: threads().filter((thread) => thread.repo === repo),
       cursor: { since: "2026-09-28T09:59:00Z" },
     }),
-    events: async (repo) =>
-      events().filter(({ thread }) => thread.repo === repo),
+    events: async (repo) => ({
+      events: events().filter(({ thread }) => thread.repo === repo),
+      finished: [],
+    }),
   });
   const cache = await openCache(provider, recordedRepos, () => clock);
   await cache.refresh();
