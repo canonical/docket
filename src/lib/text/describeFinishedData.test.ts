@@ -48,6 +48,20 @@ describe("describeFinishedData", () => {
     });
   });
 
+  it("says when the thread's repository has an invalid file of its own", () => {
+    const rows =
+      finishedList("none", [notPlanned, completed], true).groups.at(0)?.rows ??
+      [];
+    expect(
+      rows
+        .map(describeFinishedData)
+        .map((data) => [data.reference, data.invalidRepositoryFile]),
+    ).toEqual([
+      ["docs#4", true],
+      ["example#7", false],
+    ]);
+  });
+
   it("gives what closed a thread and what it duplicates where GitHub records them, and nobody when it records no one", () => {
     const duplicate = dataOf({
       ...completed,
