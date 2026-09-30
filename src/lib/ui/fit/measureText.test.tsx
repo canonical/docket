@@ -1,12 +1,28 @@
+import {
+  OptimizedBuffer,
+  TextBuffer,
+  TextBufferView,
+  type WidthMethod,
+} from "@opentui/core";
 import { describe, expect, it } from "vitest";
-import { draw } from "../../../testing/terminal.js";
 import measureText from "./measureText.js";
 
-/** The cells OpenTUI draws `text` in, read from the renderer's cell grid. */
-async function drawCells(text: string): Promise<number> {
-  const screen = await draw(<text>{`${text}|`}</text>, 60, 1);
-  const cells = [...screen.setup.renderer.currentRenderBuffer.buffers.char];
-  return cells.indexOf("|".charCodeAt(0));
+/**
+ * The cells OpenTUI draws `text` in with `method`, as its renderer draws a
+ * text: into a cell buffer, from a text buffer, read back from the grid.
+ */
+function drawCells(text: string, method: WidthMethod): number {
+  const grid = OptimizedBuffer.create(60, 1, method);
+  const buffer = TextBuffer.create(method);
+  buffer.setText(`${text}|`);
+  const view = TextBufferView.create(buffer);
+  view.setWrapMode("none");
+  grid.drawTextBuffer(view, 0, 0);
+  const cells = [...grid.buffers.char].indexOf("|".charCodeAt(0));
+  view.destroy();
+  buffer.destroy();
+  grid.destroy();
+  return cells;
 }
 
 /**
@@ -16,6 +32,7 @@ async function drawCells(text: string): Promise<number> {
  * zero-width joiners, and Persian with its non-joiner.
  */
 const corpus = [
+  "⚠️ ✔️",
   "Fix the parser",
   "Réparer l'éditeur",
   "漢字",
@@ -34,10 +51,22 @@ const corpus = [
 
 describe("measureText", () => {
   for (const text of corpus) {
-    it(`counts ${text} in exactly the cells OpenTUI draws it in`, async () => {
-      expect(measureText(text)).toBe(await drawCells(text));
+    it(`counts ${text} as the wider of the cells OpenTUI draws it in with either width method`, () => {
+      const drawn = [drawCells(text, "wcwidth"), drawCells(text, "unicode")];
+      expect(measureText(text)).toBe(Math.max(...drawn));
     });
   }
+
+  it("counts a keycap and emoji with their variation selector as the unicode method draws them, wider than wcwidth", () => {
+    for (const text of ["⚠️", "✔️", "1️⃣"]) {
+      expect([drawCells(text, "wcwidth"), drawCells(text, "unicode")]).toEqual([
+        1, 2,
+      ]);
+      expect(measureText(text)).toBe(2);
+    }
+    expect(drawCells("👍🏽", "wcwidth")).toBe(4);
+    expect(measureText("👍🏽")).toBe(4);
+  });
 
   it("counts where Bun's measure counts fewer cells than are drawn", () => {
     expect(Bun.stringWidth("❤")).toBe(1);

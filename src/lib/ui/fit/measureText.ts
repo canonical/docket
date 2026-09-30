@@ -5,14 +5,16 @@ import measureCluster from "./measureCluster.js";
 const plain = /^[\x20-\x7e]*$/;
 
 /**
- * The display cells `text` takes as OpenTUI draws it, character by
- * character: the one measure every fitting and every layout of the
- * terminal counts with, so a line fitted to its width is drawn within it
- * and ends where it should. Bun's own measure disagrees with OpenTUI on
- * much text, such as `❤`, which it counts one cell where OpenTUI draws
- * two, or an emoji with a skin tone, two where it draws four. Not pure:
- * it measures through `measureCluster`, which keeps its answers and calls
- * OpenTUI's native library.
+ * The display cells `text` takes, character by character, each counted
+ * as the wider of OpenTUI's two width methods (`measureCluster`): the one
+ * measure every fitting and every layout of the terminal counts with, so
+ * a line fitted to its width never runs past it, whichever method the
+ * terminal draws with, and may stop a cell short. Bun's own measure
+ * counts much text narrower than OpenTUI draws it, such as `❤`, one cell
+ * where OpenTUI draws two.
+ *
+ * @note Impure: it measures through `measureCluster`, which keeps its
+ * answers and calls OpenTUI's native library.
  */
 export default function measureText(text: string): number {
   if (plain.test(text)) return text.length;
