@@ -374,6 +374,8 @@ export default function createCache({
           paused && at < paused.until
             ? paused
             : await findBudgetFloor(provider, at);
+        // A pause whose time is past no longer holds while reading resumes.
+        if (paused && at >= paused.until) publish({ paused: undefined });
         const idle = attention === "idle";
         // Waking catches up at once, whatever another pane fetched.
         const maxAge =

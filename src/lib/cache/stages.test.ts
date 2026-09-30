@@ -139,6 +139,22 @@ describe("the stages of createCache", () => {
     expect(failure?.code).toBe("CACHE_REFRESH_FAILED");
   });
 
+  it("drops a rate limit's pause once its time is past and a refresh reads again", async () => {
+    const limited = providerError("GITHUB_RATE_LIMITED");
+    const seen: unknown[] = [];
+    const snapshot = vi.fn(async () => {
+      seen.push(cache.status().paused);
+      return { threads: [], cursor: null };
+    });
+    snapshot.mockRejectedValueOnce(limited);
+    const cache = open(fakeProvider({ snapshot }));
+    await cache.refresh();
+    expect(cache.status().paused?.reason).toBe("rateLimit");
+    later(61 * minute);
+    await cache.refresh();
+    expect(seen).toEqual([undefined, undefined]);
+  });
+
   it("keeps each repository paused while the budget is low and it needs points to go on", async () => {
     const cache = open(
       fakeProvider({
