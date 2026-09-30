@@ -23,7 +23,7 @@ export default function findStageUnderWay(
 ): StageUnderWay | undefined {
   const kinds = stages.map(({ stage }) => stage.kind);
   const position = kinds.findLastIndex((kind) => kind !== "waiting");
-  const found = stages[position];
+  const found = position < 0 ? undefined : stages.at(position);
   const going = kinds.some((kind) =>
     ["checking", "reading", "checks"].includes(kind),
   );
