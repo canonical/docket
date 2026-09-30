@@ -2010,10 +2010,21 @@ describe("Screen", { timeout: 15_000 }, () => {
       const end = await press(screen, "end");
       expect(end.lines.at(1)).toBe(`List · 2 of 3 ${"─".repeat(26)}`);
       expect(end.lines.at(23)).toBe("  windows are counted in working time");
-      const paged = await press(screen, "pageup");
-      expect(paged.lines.at(23)).toMatch(/below$/);
+      const pagedUp = await press(screen, "pageup");
+      // A page back from the end is the whole help's height of key lines.
+      expect(pagedUp.lines).toEqual(opened.lines);
       const top = await press(screen, "home");
       expect(top.lines).toEqual(opened.lines);
+      const pagedDown = await press(screen, "pagedown");
+      expect([
+        pagedDown.lines.at(1),
+        pagedDown.lines.at(2),
+        pagedDown.lines.at(23),
+      ]).toEqual([
+        `List · 2 of 3 ${"─".repeat(26)}`,
+        "  ⇞ ⇟      a page up or down",
+        "  windows are counted in working time",
+      ]);
       expect((await press(screen, "escape")).lines).toEqual(list);
     });
 
