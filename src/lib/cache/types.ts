@@ -202,7 +202,7 @@ export interface Cache {
   threads(): CachedThreads;
   /**
    * Loads what other processes wrote to the cache file, keeping only data
-   * newer than what is held.
+   * newer than what is held, and the budget file, merged into the mirror.
    */
   load(): Promise<void>;
   /**
@@ -315,8 +315,9 @@ export interface Cache {
    */
   fullRefresh(): Promise<boolean>;
   /**
-   * Reloads the cache whenever another process writes it, watching the
-   * cache folder: the file itself is replaced on every write.
+   * Reloads the cache whenever another process writes it, and the budget
+   * mirror whenever any process writes the budget file, watching the cache
+   * folder: each file is replaced on every write.
    *
    * @returns Stops watching.
    */

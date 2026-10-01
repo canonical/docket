@@ -149,7 +149,7 @@ describe("answerTerminal", () => {
     expect(await cacheOf(view).readDetail(thread)).toEqual(parserFixDetail);
   });
 
-  it("writes the budget a read of details reported to the cache file, for every other process", async () => {
+  it("writes the budget a read of details reported to the budget file, for every other process", async () => {
     const heard = { graphql: { ...fullBudget, remaining: 1234 } };
     const { view } = await openOn(
       recordedProvider({ readBudgets: () => heard }),

@@ -16,7 +16,10 @@ interface BudgetKeeperOptions {
   readonly file: string;
   /** The budgets the file last gave this process, its own answers joined. */
   readonly readFigures: () => Budgets;
-  /** Whether the file holds every figure this process heard, or later ones. */
+  /**
+   * Whether this process heard nothing since it last read or wrote the
+   * file: its mirror holds every figure its answers gave.
+   */
   readonly isKept: () => boolean;
   /** Takes what the file holds once the keeping has written it. */
   readonly adopt: (kept: Budgets) => void;
@@ -50,8 +53,8 @@ export default function createBudgetKeeper({
   now,
 }: BudgetKeeperOptions): () => Promise<void> {
   const keep = async () => {
-    // With nothing heard since the file was last read or written, it holds
-    // these figures or later ones.
+    // With nothing heard since this process last read or wrote the file,
+    // there is nothing to keep.
     if (isKept()) return;
     // The lock sits beside the file, which need not exist yet: the lock
     // takes its path as it is rather than resolving it.

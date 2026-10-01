@@ -17,7 +17,7 @@ const findLater = (
 };
 
 /**
- * The budgets two sources report, such as the cache file's and this
+ * The budgets two sources report, such as the budget file's and this
  * process's own answers', as one: for each kind, the later report.
  */
 export default function mergeBudgets(one: Budgets, other: Budgets): Budgets {
