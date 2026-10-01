@@ -154,12 +154,16 @@ const endLast = (lines: readonly Fitted[], room: number): Fitted[] => [
   ),
 ];
 
+/** A run of nothing but spaces and commas, which joins two names. */
+const separator = /^[\s,]*$/;
+
 /**
  * A line that yields, in at most `lines` lines of `room` cells, ending in
- * a `…` of its own, in the text's plain colour, after the last whole name
- * and the comma after it that leave the mark room: the names past them
- * leave whole, so no name is cut inside, and the mark never passes the
- * room. With no whole name kept it gets no line.
+ * a `…` of its own, in the text's plain colour, after the comma that
+ * follows the last whole name to leave the mark room: the names past it
+ * leave whole, so no name, a person's or a team's, is cut inside or read
+ * as cut, and the mark never passes the room. With no whole name kept it
+ * gets no line.
  */
 function endWhole(
   { pieces, kind }: DetailLine,
@@ -167,22 +171,32 @@ function endWhole(
   lines: number,
 ): Fitted[] {
   const mark = { text: tokens["glyph.cut"], fg: tokens["color.text"] };
-  for (let end = pieces.length; end > 0; end -= 1) {
-    const kept = pieces.slice(0, end);
-    if (!kept.some(({ marked }) => marked)) break;
-    const last = kept.pop();
-    // A name is never the run the `…` follows, which would read as cut.
-    if (last === undefined || last.marked) continue;
-    const runs = [...kept, { ...last, text: last.text.trimEnd() }, mark];
-    const fitted = fitBlock(runs, kind, room);
-    if (fitted.length <= lines) {
-      return fitted.map((held, index) => ({
-        runs: held,
-        ended: index === fitted.length - 1,
-      }));
-    }
-  }
-  return [];
+  // The separators past the first name, each after a whole name.
+  const ends = pieces.flatMap(({ text }, index) =>
+    index > 1 && separator.test(text) ? [index] : [],
+  );
+  const fitTo = (end: number) =>
+    fitBlock(
+      [
+        ...pieces.slice(0, end),
+        ...pieces
+          .slice(end, end + 1)
+          .map((piece) => ({ ...piece, text: piece.text.trimEnd() })),
+        mark,
+      ],
+      kind,
+      room,
+    );
+  // The last end, the most names, that fits.
+  const kept =
+    ends
+      .toReversed()
+      .map(fitTo)
+      .find((fitted) => fitted.length <= lines) ?? [];
+  return kept.map((held, index) => ({
+    runs: held,
+    ended: index === kept.length - 1,
+  }));
 }
 
 /**

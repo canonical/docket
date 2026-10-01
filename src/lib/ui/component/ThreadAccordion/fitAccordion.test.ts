@@ -60,6 +60,30 @@ describe("fitAccordion", () => {
     expect(read(fitAccordion(text, 14, 2))).toEqual(["checks…"]);
   });
 
+  it("ends a line that yields after the comma past a team's whole name, never straight after the name", () => {
+    const people = {
+      ...wrapLine(""),
+      pieces: [
+        { text: "owner ", fg },
+        { text: "● alice", fg, marked: true },
+        { text: ", ", fg },
+        { text: "example-org/team", fg },
+        { text: ", ", fg },
+        { text: "● bob", fg, marked: true },
+      ],
+      yields: true,
+    };
+    const text = { body: [people, wrapLine("checks")], stack: [] };
+    expect(read(fitAccordion(text, 32, 2))).toEqual([
+      "owner ● alice,…",
+      "checks",
+    ]);
+    expect(read(fitAccordion(text, 33, 2))).toEqual([
+      "owner ● alice, example-org/team,…",
+      "checks",
+    ]);
+  });
+
   it("leaves a name too long for the lines it gets whole, ending the part before it", () => {
     const people = {
       ...wrapLine(""),
