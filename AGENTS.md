@@ -86,4 +86,4 @@
 - `src/scripts/check-identity.ts` holds the refused words, so it is the one file the identity check skips.
 - The audit and its self-test query the advisory database, and the first gitleaks run through nix downloads it, so `bun run ci` needs the network.
 - The throttling plugin spaces GraphQL requests a second apart, and the guarantees send them for real to the stand-in, so the tier takes about a minute.
-- GitHub Actions does not run for this repository, so the local `bun run ci` is the gate: paste its output into the pull request's QA section.
+- GitHub Actions runs the same gates on every pull request and on `main` (`.github/workflows/ci.yml`), on the Bun that `.bun-version` names; `bun run ci` runs them locally: paste its output into the pull request's QA section.
