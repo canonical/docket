@@ -1,7 +1,7 @@
 import { sanitize } from "../../text/index.js";
 import { graphemes, noBreakSpace } from "./constants.js";
 import measureCluster from "./measureCluster.js";
-import measureOnce from "./measureOnce.js";
+import measureUnkept from "./measureUnkept.js";
 import type { Run } from "./types.js";
 
 /** Part of a word: its text, in the look of the run it came from. */
@@ -11,11 +11,11 @@ interface Fragment<Look> {
 }
 
 /**
- * The cells of a word's fragments, measured with `measureOnce`, so a long
+ * The cells of a word's fragments, measured with `measureUnkept`, so a long
  * message's words never crowd out the texts every draw measures.
  */
 const measureFragments = <Look>(fragments: readonly Fragment<Look>[]) =>
-  fragments.reduce((sum, { text }) => sum + measureOnce(text), 0);
+  fragments.reduce((sum, { text }) => sum + measureUnkept(text), 0);
 
 /** A word, and the look of the space before it. */
 interface Word<Look> {

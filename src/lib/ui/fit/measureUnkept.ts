@@ -10,7 +10,7 @@ import measureClusters from "./measureClusters.js";
  * @note Impure: it measures through `measureClusters`, which keeps its
  * answers and calls OpenTUI's native library.
  */
-export default function measureOnce(text: string): number {
+export default function measureUnkept(text: string): number {
   if (asciiText.test(text)) return text.length;
   const clusters = [...graphemes.segment(text)].map(({ segment }) => segment);
   return measureClusters(clusters).reduce((sum, each) => sum + each, 0);

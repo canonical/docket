@@ -1,5 +1,5 @@
 import { asciiText } from "./constants.js";
-import measureOnce from "./measureOnce.js";
+import measureUnkept from "./measureUnkept.js";
 
 /**
  * The most texts whose cells are kept: enough for every title, login and
@@ -20,7 +20,7 @@ const measuredTexts = new Map<string, number>();
  * terminal draws with, and may stop short of it. Bun's own measure
  * counts much text narrower than OpenTUI draws it, such as `❤`, one cell
  * where OpenTUI draws two. Text measured once in a while is measured
- * with `measureOnce`, which keeps nothing.
+ * with `measureUnkept`, which keeps nothing.
  *
  * @note Impure: it keeps the cells of up to `textsKept` texts, and
  * measures through `measureClusters`, which keeps its answers and calls
@@ -30,7 +30,7 @@ export default function measureText(text: string): number {
   if (asciiText.test(text)) return text.length;
   const known = measuredTexts.get(text);
   if (known !== undefined) return known;
-  const cells = measureOnce(text);
+  const cells = measureUnkept(text);
   if (measuredTexts.size >= textsKept) measuredTexts.clear();
   measuredTexts.set(text, cells);
   return cells;
