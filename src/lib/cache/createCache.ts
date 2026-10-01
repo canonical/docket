@@ -312,8 +312,7 @@ export default function createCache({
         await load();
         const fetched = find();
         if (fetched) return fetched;
-        // Dated from before the fetch, so it is never taken as newer than
-        // it is.
+        // Dated from before the fetch, so never taken as newer than it is.
         const held = await fetch(now());
         await save();
         return held;
@@ -464,9 +463,10 @@ export default function createCache({
       const watcher = watchFolder(directory, (_event, name) => {
         if (name === budgetFileName) void loadBudget();
         if (name !== cacheFileName) return;
-        // The file this process wrote holds nothing it lacks.
-        void identifyFile(file).then((found) =>
-          found === written ? undefined : load(),
+        // Its own write holds nothing new; any other is loaded, or unseen.
+        void identifyFile(file).then(
+          (found) => (found === written ? undefined : load()),
+          load,
         );
       });
       return () => watcher.close();

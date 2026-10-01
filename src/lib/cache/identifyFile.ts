@@ -9,6 +9,8 @@ import { stat } from "node:fs/promises";
  *
  * @note Impure: reads the filesystem.
  * @returns Nothing when nothing is at `path`.
+ * @throws Error any other failure to look, which names nothing: a lock
+ * that cannot be looked at is not taken to be gone.
  */
 export default async function identifyFile(
   path: string,
@@ -16,7 +18,8 @@ export default async function identifyFile(
   try {
     const { dev, ino, birthtimeNs } = await stat(path, { bigint: true });
     return `${dev}:${ino}:${birthtimeNs}`;
-  } catch {
-    return undefined;
+  } catch (error) {
+    if ((error as { code?: unknown }).code === "ENOENT") return undefined;
+    throw error;
   }
 }
