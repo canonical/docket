@@ -31,7 +31,7 @@
     "@canonical/typescript-config-react": "0.40.0",
     "@types/bun": "1.4.2",
     "@types/proper-lockfile": "4.1.4",
-    "@types/react": "19.2.18",
+    "@types/react": "19.3.0",
     "@vitest/coverage-v8": "5.0.2",
     "license-checker-rseidelsohn": "5.0.1",
     "typescript": "5.9.3",
@@ -49,7 +49,7 @@
     "@tanstack/query-core": "5.104.0",
     "bottleneck": "2.19.5",
     "proper-lockfile": "4.1.2",
-    "react": "19.2.8",
+    "react": "19.3.0",
     "yaml": "2.9.1"
   }
 }
