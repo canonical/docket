@@ -271,6 +271,8 @@ describe("request-budget", () => {
             remaining: 900,
             ready: "Fix the parser",
             opens: "example-org/example-repo#12",
+            // The first key moves the selection while #12's read is under way.
+            holdsOpening: true,
             // Each move is a stop: the next key waits for the read it causes.
             keys: [100, 101, 102, 103, 104].map((number) => ({
               key: "j",

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   chmodSync,
   mkdirSync,
@@ -146,13 +147,18 @@ export default function makeHome(personalFile: string): Home {
       pause = 250,
       changed,
       opens,
+      holdsOpening,
       ...call
     }) {
+      // Made once the first key is pressed, which lets the opening read
+      // answer when the stand-in holds it.
+      const pressed = join(root, `pressed-${randomUUID()}`);
       const { log, env } = prepare(call, {
         GUARANTEES_UNTIL: until,
         TERM: "xterm-256color",
         ...(keys.length > 0 ? { GUARANTEES_KEYS: "1" } : {}),
         ...(changed ? { GUARANTEES_CHANGED: changed } : {}),
+        ...(holdsOpening ? { GUARANTEES_HOLD_FIRST_READ: pressed } : {}),
       });
       let out = "";
       const { promise: drawn, resolve: showDrawn } =
@@ -189,6 +195,8 @@ export default function makeHome(personalFile: string): Home {
           else {
             const sent = readLog(log).length;
             child.terminal?.write(key.key);
+            // The first key is pressed: the opening read may now answer.
+            if (holdsOpening && place === 0) writeFileSync(pressed, "");
             await waitForRead(log, sent, key.reads, `key ${place + 1}`);
           }
         }

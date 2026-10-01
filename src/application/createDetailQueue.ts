@@ -182,8 +182,10 @@ export default function createDetailQueue(
       ...batch.filter(({ thread }) => identifyThread(thread) === first),
       ...batch.filter(({ thread }) => identifyThread(thread) !== first),
     ];
-    const asked = ordered.map(({ thread, entry }) => ({
+    const asked = ordered.map(({ thread, version, entry }) => ({
       key: identifyThread(thread),
+      thread,
+      version,
       entry,
     }));
     sending += 1;
@@ -195,9 +197,17 @@ export default function createDetailQueue(
       const found = new Map(
         read.map(({ thread, detail }) => [identifyThread(thread), detail]),
       );
-      for (const { key, entry } of asked) {
+      for (const { key, thread, version, entry } of asked) {
         if (entries.get(key) !== entry) continue;
         if (!found.has(key)) {
+          // The selection may have moved, while the read was under way, to
+          // a thread the reader left out, as it does below the budget floor:
+          // that thread is asked for again in the next request. Any other
+          // is no longer asked for.
+          if (key !== first && selected && key === identifyThread(selected)) {
+            queued.push({ thread, version, entry });
+            continue;
+          }
           entries.delete(key);
           round?.asked.delete(key);
           continue;
@@ -224,6 +234,7 @@ export default function createDetailQueue(
       }
     }
     sending -= 1;
+    if (queued.length > 0 && timer === undefined) schedule(0);
     settleRound();
     tell();
   };

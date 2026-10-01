@@ -31,6 +31,10 @@
  * - A change: with `GUARANTEES_CHANGED`, GitHub answers from that recording
  *   once the clock first moves on through a wait of docket's, as if
  *   something changed on GitHub while docket waited.
+ * - A held read: with `GUARANTEES_HOLD_FIRST_READ`, the answer to the
+ *   first read of details waits until a file is at that path, which the
+ *   one pressing keys makes once the first key is pressed, so a key lands
+ *   while that read is under way however fast the machine.
  * - The budget: every GraphQL answer says `GUARANTEES_REMAINING` points
  *   are left of GitHub's hourly 5,000, 4,900 unless given, until an hour
  *   after `GUARANTEES_NOW`.
@@ -56,7 +60,7 @@
  * @note Impure: replaces two globals, a third under `unsanitized` or
  * `unquoted`, and appends to a file.
  */
-import { appendFileSync } from "node:fs";
+import { appendFileSync, existsSync } from "node:fs";
 import fastForward from "./fastForward.js";
 import type { RecordedAnswer, Recording, SentRequest } from "./types.js";
 
@@ -68,6 +72,7 @@ const {
   GUARANTEES_UNTIL,
   GUARANTEES_KEYS,
   GUARANTEES_CHANGED,
+  GUARANTEES_HOLD_FIRST_READ,
   GUARANTEES_REMAINING,
 } = process.env;
 if (!GUARANTEES_NOW || !GUARANTEES_RECORDING || !GUARANTEES_REQUESTS) {
@@ -192,16 +197,34 @@ const touch = GUARANTEES_UNTIL
 
 /**
  * Holds one request open for as long as an answer takes, counted in
- * `inFlight` from start to end. `onOpen` receives how many requests are
- * open, this one included, once it is.
+ * `inFlight` from start to end, and not before `until` settles. `onOpen`
+ * receives how many requests are open, this one included, once it is.
  */
-const holdOpen = async (onOpen: (open: number) => void) => {
+const holdOpen = async (
+  onOpen: (open: number) => void,
+  until: Promise<void> = Promise.resolve(),
+) => {
   inFlight += 1;
   onOpen(inFlight);
   await new Promise((resolve) => setTimeout(resolve, answerDelay));
+  await until;
   inFlight -= 1;
   answered.resolve();
   touch();
+};
+
+// Whether the first read of details has been sent, which alone is held.
+let firstReadAnswered = false;
+
+/** Whether `request` reads threads' details, one alias each. */
+const isDetailsRead = ({ body }: { body: Record<string, unknown> }) =>
+  /^\s*query\s+Details\b/.test(String(body.query ?? ""));
+
+/** Settles once a file is at `path`, looking every 10 milliseconds. */
+const waitForFile = async (path: string) => {
+  while (!existsSync(path)) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
 };
 
 /** `text` with every instant in it an hour later. */
@@ -261,6 +284,11 @@ globalThis.fetch = (async (
   // The other request is held open like any other and logged nowhere, so
   // only the count of open requests shows it.
   if (GUARANTEES_BREAK === "overlap") void holdOpen(() => {});
+  const held =
+    GUARANTEES_HOLD_FIRST_READ && !firstReadAnswered && isDetailsRead(request)
+      ? waitForFile(GUARANTEES_HOLD_FIRST_READ)
+      : undefined;
+  if (held) firstReadAnswered = true;
   await holdOpen((open) => {
     const sent: SentRequest = {
       ...request,
@@ -268,7 +296,7 @@ globalThis.fetch = (async (
       at: new FixedDate().toISOString(),
     };
     appendFileSync(log, `${JSON.stringify(sent)}\n`);
-  });
+  }, held);
   const key = findKey(request.method, new URL(request.url), request.body);
   const answer =
     key === "Details"
