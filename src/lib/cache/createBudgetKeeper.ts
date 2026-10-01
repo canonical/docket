@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { lock } from "proper-lockfile";
 import type { Budgets } from "../provider/index.js";
@@ -53,16 +53,14 @@ export default function createBudgetKeeper({
     // With nothing heard since the file was last read or written, it holds
     // these figures or later ones.
     if (isKept()) return;
-    // The lock resolves the real path of the file it locks, which
-    // therefore exists first; one that exists is left as it is.
+    // The lock sits beside the file, which need not exist yet: the lock
+    // takes its path as it is rather than resolving it.
     await mkdir(dirname(file), { recursive: true, mode: 0o700 });
-    await writeFile(file, "{}", { flag: "wx", mode: 0o600 }).catch(
-      () => undefined,
-    );
     const lockPath = `${file}.lock`;
     const forgotten = Promise.withResolvers<void>();
     const release = await lock(file, {
       ...budgetLockTiming,
+      realpath: false,
       // The library tells when another process took the lock over, which
       // then belongs to that process.
       onCompromised: () => forgotten.resolve(),
