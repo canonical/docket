@@ -1,0 +1,36 @@
+# Checks the pull request's metadata. It is apart from CI so that editing a
+# title does not run the gates again.
+name: PR lint
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate-pr-metadata:
+    name: Validate PR metadata
+    runs-on: ubuntu-latest
+    steps:
+      # A pull request lands as one commit under its title, so the title is
+      # the commit subject, and follows Conventional Commits.
+      - name: Verify conventional commit-compliant PR title
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            refactor
+            chore
+            test
+            ci
+            revert
