@@ -14,8 +14,8 @@ import readBudgetFile from "./readBudgetFile.js";
  * GitHub's window.
  *
  * A file whose reports have all reset by `at` tells nothing, and is
- * removed, so the folder holds no more than the processes of the last
- * hour. Its process may be alive and quiet, and write fresh figures just
+ * removed, so after a read the folder holds the files of the last hour's
+ * processes alone. Its process may be alive and quiet, and write fresh figures just
  * as the file is removed: those figures are then missing until a later
  * answer of that process changes them and is kept, a window left open
  * rather than guarded.
