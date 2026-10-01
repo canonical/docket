@@ -98,6 +98,26 @@ describe("fitAccordion", () => {
     expect(read(fitAccordion(cut, 9, 1))).toEqual(["exam…tory"]);
   });
 
+  it("ends a last line that only left a part out whole, which says nothing of what follows", () => {
+    const place: DetailLine = {
+      pieces: [
+        { text: "example-repo ", fg },
+        { text: "stack 7 · 1 of 1 · → ", fg },
+        { text: "main", fg },
+      ],
+      kind: "words",
+      most: 1,
+      drops: [0],
+      cuts: 2,
+    };
+    const owners = { ...wrapped("owner ● alice"), yields: true };
+    const text = { body: [owners, trimmed("checks")], stack: [place] };
+    expect(read(fitAccordion(text, 28, 2))).toEqual([
+      "checks",
+      "stack 7 · 1 of 1 · → main…",
+    ]);
+  });
+
   it("cuts a held line at its end when even its fixed words are wider than the room", () => {
     const line = {
       ...trimmed(""),

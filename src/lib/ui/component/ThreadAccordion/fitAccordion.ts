@@ -16,12 +16,13 @@ import type { DetailLine, DetailText } from "./types.js";
  * cutting any: the runs it `drops` leave, in order, while the line is too
  * wide, then the run it `cuts` is cut once, by its kind's rule for a
  * line, to the room the others leave; a single run is the one cut. The
- * other runs stay whole.
+ * other runs stay whole. `cut` says whether a run was cut: a part that
+ * leaves whole says nothing of what follows.
  */
 function giveWay(
   { pieces, kind, drops = [], cuts }: DetailLine,
   room: number,
-): Piece[] {
+): { runs: Piece[]; cut: boolean } {
   const dropped = new Set<number>();
   const remaining = () => pieces.filter((_, index) => !dropped.has(index));
   for (const index of drops) {
@@ -30,14 +31,16 @@ function giveWay(
   }
   const cutting = pieces.length === 1 ? 0 : cuts;
   const over = measurePieces(remaining()) - room;
-  return pieces.flatMap((piece, index) => {
+  const cut = over > 0 && cutting !== undefined;
+  const runs = pieces.flatMap((piece, index) => {
     if (dropped.has(index)) return [];
-    if (index !== cutting || over <= 0) return [piece];
+    if (index !== cutting || !cut) return [piece];
     const cells = measureText(piece.text) - over;
     return [
       { ...piece, text: fitField({ text: piece.text, kind }, "line", cells) },
     ];
   });
+  return { runs, cut };
 }
 
 /**
@@ -69,13 +72,10 @@ function fitLine(line: DetailLine, room: number): Fitted[] {
     return fitBlock(pieces, kind, room).map((runs) => ({ runs, ended: false }));
   }
   const runs = pending ? [...pieces, pendingMark(pieces.length > 0)] : pieces;
-  const held = fitRuns(giveWay({ ...line, pieces: runs }, room), room);
-  return [
-    {
-      runs: held,
-      ended: pending === true || measurePieces(held) < measurePieces(runs),
-    },
-  ];
+  const given = giveWay({ ...line, pieces: runs }, room);
+  const held = fitRuns(given.runs, room);
+  const cut = given.cut || measurePieces(held) < measurePieces(given.runs);
+  return [{ runs: held, ended: pending === true || cut }];
 }
 
 /**
