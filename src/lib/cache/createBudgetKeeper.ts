@@ -1,11 +1,11 @@
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
-import { lock } from "proper-lockfile";
 import type { Budgets } from "../provider/index.js";
 import { budgetLockTiming } from "./constants.js";
 import dropFarResets from "./dropFarResets.js";
 import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
+import lockBudgetFile from "./lockBudgetFile.js";
 import mergeBudgets from "./mergeBudgets.js";
 import readBudgetFile from "./readBudgetFile.js";
 import writeBudgetFile from "./writeBudgetFile.js";
@@ -14,6 +14,8 @@ import writeBudgetFile from "./writeBudgetFile.js";
 interface BudgetKeeperOptions {
   /** The budget file, beside the cache file. */
   readonly file: string;
+  /** The budget file's own lock, beside it. */
+  readonly lockPath: string;
   /** The budgets the file last gave this process, its own answers joined. */
   readonly readFigures: () => Budgets;
   /**
@@ -46,6 +48,7 @@ interface BudgetKeeperOptions {
  */
 export default function createBudgetKeeper({
   file,
+  lockPath,
   readFigures,
   isKept,
   adopt,
@@ -56,18 +59,13 @@ export default function createBudgetKeeper({
     // With nothing heard since this process last read or wrote the file,
     // there is nothing to keep.
     if (isKept()) return;
-    // The lock sits beside the file, which need not exist yet: the lock
-    // takes its path as it is rather than resolving it.
     await mkdir(dirname(file), { recursive: true, mode: 0o700 });
-    const lockPath = `${file}.lock`;
     const forgotten = Promise.withResolvers<void>();
-    const release = await lock(file, {
-      ...budgetLockTiming,
-      realpath: false,
-      // The library tells when another process took the lock over, which
-      // then belongs to that process.
-      onCompromised: () => forgotten.resolve(),
-    });
+    // The library tells when another process took the lock over, which
+    // then belongs to that process.
+    const release = await lockBudgetFile(file, lockPath, () =>
+      forgotten.resolve(),
+    );
     const own = await identifyFile(lockPath);
     let taken = false;
     try {

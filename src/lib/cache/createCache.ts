@@ -8,6 +8,7 @@ import classifyFolderFailure from "./classifyFolderFailure.js";
 import classifyRefreshFailure from "./classifyRefreshFailure.js";
 import {
   budgetFileName,
+  budgetLockName,
   cacheFileName,
   fullRefreshCooldown,
   idleInterval,
@@ -197,6 +198,7 @@ export default function createCache({
   });
   const keepInFile = createBudgetKeeper({
     file: budgetFile,
+    lockPath: join(directory, budgetLockName),
     readFigures,
     isKept: () => isSame(readFigures(), mirror),
     adopt: (kept) => {

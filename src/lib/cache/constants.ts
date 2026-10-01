@@ -50,19 +50,26 @@ export const budgetFileName = "budget.json";
  */
 export const farthestReset = 3_900_000;
 
+/** The budget file's own lock, beside it in the cache folder. */
+export const budgetLockName = "budget.json.lock";
+
 /**
- * How the budget file's own lock, `budget.json.lock`, is held and waited
- * for, in milliseconds. It is held only to read, merge and write that
- * small file. The holder touches it every `update`; a lock untouched for
- * `stale` is left by a process that died, and is taken over. A process
- * waits for it, retrying between `minTimeout` and `maxTimeout` apart, at
- * most `retries` times: about 7 seconds, past `stale`, so a lock a dead
- * process left never makes a keeping give up.
+ * How the budget file's own lock is held and waited for, in milliseconds.
+ * It is held only to read, merge and write that small file. The library
+ * touches a held lock every `update`, which it takes as at least a second;
+ * a lock untouched for `stale` is left by a process that died, and is
+ * taken over. A process waits only while another holds the lock, trying
+ * again after `firstWait`, then twice as long each time up to `longestWait`,
+ * for `wait` in all: past `stale`, so a lock a dead process left never
+ * makes a keeping give up. Any other failure to take it ends the keeping
+ * at once.
  */
 export const budgetLockTiming = {
-  stale: 2_000,
-  update: 500,
-  retries: { retries: 40, minTimeout: 20, maxTimeout: 200 },
+  stale: 3_000,
+  update: 1_000,
+  firstWait: 20,
+  longestWait: 200,
+  wait: 7_500,
 } as const;
 
 /**

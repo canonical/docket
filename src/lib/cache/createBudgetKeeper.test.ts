@@ -1,13 +1,13 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { lock } from "proper-lockfile";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fullBudget } from "../../testing/provider.js";
 import { waitUntil } from "../../testing/wait.js";
 import type { Budgets } from "../provider/index.js";
-import { budgetLockTiming, lockName } from "./constants.js";
+import { lockName } from "./constants.js";
 import createBudgetKeeper from "./createBudgetKeeper.js";
 import isSame from "./isSame.js";
 import mergeBudgets from "./mergeBudgets.js";
@@ -16,12 +16,21 @@ import withFetchLock from "./withFetchLock.js";
 import writeBudgetFile from "./writeBudgetFile.js";
 
 const clock = new Date("2026-09-28T10:00:00Z");
+// The lock is watched, not replaced, so a test hears when the keeper asks
+// for it.
+vi.mock("proper-lockfile", async (importOriginal) => {
+  const library = await importOriginal<typeof import("proper-lockfile")>();
+  return { ...library, lock: vi.fn(library.lock) };
+});
+
 let directory: string;
 let file: string;
+let lockPath: string;
 
 beforeEach(async () => {
   directory = await mkdtemp(join(tmpdir(), "docket-keeper-"));
   file = join(directory, "budget.json");
+  lockPath = join(directory, "budget.json.lock");
 });
 
 afterEach(async () => {
@@ -46,6 +55,7 @@ const createProcess = (heard: Budgets) => {
   const readFigures = () => mergeBudgets(peer.mirror, peer.heard);
   const keeper = createBudgetKeeper({
     file,
+    lockPath,
     readFigures,
     isKept: () => isSame(readFigures(), peer.mirror),
     adopt: (kept) => {
@@ -105,17 +115,17 @@ describe("createBudgetKeeper", () => {
   });
 
   it("takes over a lock a dead process left, and keeps the figures", async () => {
-    await mkdir(`${file}.lock`);
+    await mkdir(lockPath);
     await createProcess(makeBudget(900)).keeper();
     expect(await readBudgetFile(file)).toEqual(makeBudget(900));
   }, 15_000);
 
   it("writes nothing after another process took its lock over, and leaves that lock alone", async () => {
     await writeBudgetFile(file, makeBudget(1000));
-    const lockPath = `${file}.lock`;
     let takenOver = false;
     const keeper = createBudgetKeeper({
       file,
+      lockPath,
       // Between its read and its write, another process takes the lock
       // over and writes a later figure.
       readFigures: () => {
@@ -123,6 +133,9 @@ describe("createBudgetKeeper", () => {
           takenOver = true;
           rmSync(lockPath, { recursive: true });
           mkdirSync(lockPath);
+          // The other process's lock carries its own time.
+          const later = new Date(Date.now() + 2_000);
+          utimesSync(lockPath, later, later);
           writeFileSync(file, JSON.stringify(makeBudget(800)));
         }
         return makeBudget(900);
@@ -170,6 +183,7 @@ describe("createBudgetKeeper", () => {
     const readFigures = () => mergeBudgets(peer.mirror, peer.heard);
     const keeper = createBudgetKeeper({
       file,
+      lockPath,
       readFigures,
       isKept: () => isSame(readFigures(), peer.mirror),
       adopt: (kept) => {
@@ -190,32 +204,26 @@ describe("createBudgetKeeper", () => {
     expect(await readBudgetFile(file)).toEqual(makeBudget(800));
   });
 
-  it("reads and writes the file only while it holds the file's lock", async () => {
+  it("reads the file once it holds the file's lock, so a figure written before then stays", async () => {
     await writeBudgetFile(file, makeBudget(1000));
-    let holding = true;
-    const readWhileHeld: boolean[] = [];
-    const peer: { mirror: Budgets } = { mirror: {} };
-    const keeper = createBudgetKeeper({
-      file,
-      readFigures: () => {
-        readWhileHeld.push(holding);
-        return makeBudget(900);
-      },
-      isKept: () => false,
-      adopt: (kept) => {
-        peer.mirror = kept;
-      },
-      publishFloor: () => {},
-      now: () => clock,
+    const release = await lock(file, {
+      realpath: false,
+      lockfilePath: lockPath,
     });
-    const release = await lock(file, { ...budgetLockTiming, realpath: false });
+    vi.mocked(lock).mockClear();
+    const { peer, keeper } = createProcess(makeBudget(900));
     const keeping = keeper();
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    holding = false;
-    await release();
+    try {
+      // The keeper has asked for the lock, which another process holds
+      // while it writes a lower figure.
+      await waitUntil(() => expect(lock).toHaveBeenCalled());
+      await writeBudgetFile(file, makeBudget(800));
+    } finally {
+      await release();
+    }
     await keeping;
-    expect(readWhileHeld).toEqual([false]);
-    expect(peer.mirror).toEqual(makeBudget(900));
+    expect(await readBudgetFile(file)).toEqual(makeBudget(800));
+    expect(peer.mirror).toEqual(makeBudget(800));
   });
 
   it("drops a keeping that fails, lets its lock go, and keeps at the next call", async () => {
