@@ -50,10 +50,14 @@ export default async function holdLock<T>(
   // as still held; a lock gone at the first look was taken over.
   const unseen = Symbol("unseen");
   const held = await identifyFile(lockfilePath).catch(() => unseen);
-  /** Whether the lock in the folder is still the one this process took. */
+  /**
+   * Whether the lock is still the one this process took: the library has
+   * not said it was taken over, and the lock in the folder is the same.
+   */
   const isOwn = async () =>
-    held === unseen ||
-    (await identifyFile(lockfilePath).catch(() => held)) === held;
+    !lost &&
+    (held === unseen ||
+      (await identifyFile(lockfilePath).catch(() => held)) === held);
   let outcome: Held<T>["outcome"];
   try {
     outcome = { value: await task(isOwn) };

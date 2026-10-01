@@ -92,6 +92,32 @@ describe("holdLock", () => {
     expect(await readdir(directory)).toEqual(["example.lock"]);
   });
 
+  it("counts the lock taken over once the library says so, though the folder looks the same", async () => {
+    const { held, take } = createLock();
+    const result = await holdLock(take, lockfilePath, stale, async (isOwn) => {
+      held.hear();
+      return isOwn();
+    });
+    expect(result).toEqual({ lost: true, outcome: { value: false } });
+    expect(held.released).toBe(0);
+  });
+
+  it("tells the task its lock was taken over when the library said so before the first look", async () => {
+    const { held, take } = createLock();
+    const result = await holdLock(
+      async (onCompromised) => {
+        const release = await take(onCompromised);
+        onCompromised();
+        return release;
+      },
+      lockfilePath,
+      stale,
+      async (isOwn) => isOwn(),
+    );
+    expect(result).toEqual({ lost: true, outcome: { value: false } });
+    expect(held.released).toBe(0);
+  });
+
   it("lets a lock taken over go at the stale time when the library never hears, and not before", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     const { held, take } = createLock();
