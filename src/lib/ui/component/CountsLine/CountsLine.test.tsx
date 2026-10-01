@@ -33,7 +33,13 @@ describe("CountsLine", () => {
     const counts = (width: number) =>
       draw(
         <CountsLine
-          summary={{ text: "120 over · 45 soon · 300 on track", kind: "words" }}
+          summary={{
+            fields: [
+              { text: "120 over", kind: "words" },
+              { text: "45 soon", kind: "words" },
+              { text: "300 on track", kind: "words" },
+            ],
+          }}
           position={{ text: "1/120/465", kind: "figure" }}
           width={width}
         />,

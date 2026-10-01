@@ -193,8 +193,8 @@ export interface WaitList {
   /** The rows, most overdue first. */
   readonly rows: readonly WaitRow[];
   readonly counts: Counts;
-  /** `3 over · 2 soon · 6 on track`. */
-  readonly summary: Field;
+  /** `3 over`, `2 soon`, `6 on track`: the most urgent first. */
+  readonly summary: FieldList;
 }
 
 /** Everything owed shows for one address. */
@@ -202,6 +202,6 @@ export interface OwedList {
   readonly address: OwedAddress;
   readonly groups: readonly WaitGroup[];
   readonly counts: Counts;
-  /** `3 over · 2 soon · 6 on track`. */
-  readonly summary: Field;
+  /** `3 over`, `2 soon`, `6 on track`: the most urgent first. */
+  readonly summary: FieldList;
 }

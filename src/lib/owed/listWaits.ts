@@ -36,6 +36,11 @@ export default function listWaits(
     )
     .sort((a, b) => b.overdue - a.overdue);
   const counts = countStates(rows);
-  const text = `${counts.over} over · ${counts.soon} soon · ${counts.onTrack} on track`;
-  return { rows, counts, summary: { text, kind: "words" } };
+  // The parts in the order of their urgency, the most urgent first.
+  const fields = [
+    `${counts.over} over`,
+    `${counts.soon} soon`,
+    `${counts.onTrack} on track`,
+  ].map((text) => ({ text, kind: "words" as const }));
+  return { rows, counts, summary: { fields } };
 }

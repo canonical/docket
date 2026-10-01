@@ -40,7 +40,13 @@ export const NothingOwed: Story<PaneProps> = {
     ),
     counts: (
       <CountsLine
-        summary={{ text: "0 over · 0 soon · 0 on track", kind: "words" }}
+        summary={{
+          fields: [
+            { text: "0 over", kind: "words" },
+            { text: "0 soon", kind: "words" },
+            { text: "0 on track", kind: "words" },
+          ],
+        }}
         width={width}
       />
     ),
@@ -108,8 +114,10 @@ export const Long: Story<PaneProps> = {
     counts: (
       <CountsLine
         summary={{
-          text: "9999 over · 9999 soon · 9999 on track",
-          kind: "words",
+          fields: ["9999 over", "9999 soon", "9999 on track"].map((text) => ({
+            text,
+            kind: "words" as const,
+          })),
         }}
         width={width}
       />

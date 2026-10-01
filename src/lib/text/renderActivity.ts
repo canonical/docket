@@ -174,7 +174,7 @@ export default function renderActivity({
     llm ? `# ${title}` : title,
     ...renderFreshness(freshness, format),
     ...(llm && sections.length > 0 ? [quotedNote] : []),
-    list.summary.text,
+    list.summary.fields.map(({ text }) => text).join(" · "),
   ];
   return `${[lines.join("\n"), ...sections].join("\n\n")}\n`;
 }

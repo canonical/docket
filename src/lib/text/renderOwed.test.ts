@@ -207,7 +207,12 @@ describe("renderOwed", () => {
       ...recordedOwed(),
       groups: [],
       counts: { over: 0, soon: 0, onTrack: 0 },
-      summary: { text: "0 over · 0 soon · 0 on track", kind: "words" },
+      summary: {
+        fields: ["0 over", "0 soon", "0 on track"].map((text) => ({
+          text,
+          kind: "words" as const,
+        })),
+      },
     } as const;
     const text = renderOwed({
       list,

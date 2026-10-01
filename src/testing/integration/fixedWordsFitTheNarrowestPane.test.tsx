@@ -239,8 +239,15 @@ describe("docket's own words at the narrowest pane", () => {
       `999 over · 999 soon${" ".repeat(10)}999/999/999`,
       `999 threads · 999 events${" ".repeat(9)}999/999`,
     ]);
-    expect(owed.text).toBe("999 over · 999 soon · 999 on track");
-    expect(activity.text).toBe("999 threads · 999 events");
+    expect(owed.fields.map(({ text }) => text)).toEqual([
+      "999 over",
+      "999 soon",
+      "999 on track",
+    ]);
+    expect(activity.fields.map(({ text }) => text)).toEqual([
+      "999 threads",
+      "999 events",
+    ]);
   });
 
   it("holds each first-run stage in the 20 cells its column keeps", () => {
