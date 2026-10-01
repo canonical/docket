@@ -90,7 +90,7 @@ const fittingPrimitives =
  * only that measure and its tests name Bun's.
  */
 const bunMeasure = /\bBun\.stringWidth\b/;
-const measureModule = /^src\/lib\/ui\/fit\/measure(Cluster|Text)\./;
+const measureModule = /^src\/lib\/ui\/fit\/measure(Clusters?|Text)\./;
 
 const maxLines = 500;
 const lengthHeader = /^\/\/ Longer than 500 lines because \S/;
