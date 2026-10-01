@@ -1,4 +1,5 @@
 import type { ThreadGroup } from "../lib/activity/index.js";
+import type { FinishedGroup } from "../lib/finished/index.js";
 import type { WaitGroup } from "../lib/owed/index.js";
 import identifyRow from "./identifyRow.js";
 
@@ -12,11 +13,14 @@ import identifyRow from "./identifyRow.js";
  * @param place The selected row's place among the rows, in the order drawn.
  */
 export default function describePosition(
-  groups: readonly (WaitGroup | ThreadGroup)[],
+  groups: readonly (WaitGroup | ThreadGroup | FinishedGroup)[],
   place: number,
 ): string | undefined {
   const rows = groups.flatMap(
-    ({ rows }): readonly (WaitGroup | ThreadGroup)["rows"][number][] => rows,
+    ({
+      rows,
+    }): readonly (WaitGroup | ThreadGroup | FinishedGroup)["rows"][number][] =>
+      rows,
   );
   if (rows.length === 0) return undefined;
   const all = new Set(rows.map(identifyRow)).size;

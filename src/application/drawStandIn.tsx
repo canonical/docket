@@ -8,7 +8,7 @@ import describeHold from "./describeHold.js";
 import drawFirstRun, { type FirstRunProps } from "./drawFirstRun.js";
 import isEarlierRun from "./isEarlierRun.js";
 import type { TerminalMode } from "./types.js";
-import type { UseActivityResult } from "./useActivity.js";
+import type { UseWindowListResult } from "./useWindowList.js";
 
 /** What decides what stands in for the list. */
 export interface StandInProps {
@@ -30,7 +30,10 @@ export interface StandInProps {
     | undefined;
   /** Whether owed's list is drawn once nothing before it stands in. */
   readonly owedListed: boolean;
-  readonly activity: UseActivityResult;
+  /** What reading the window on screen gave, in activity or finished. */
+  readonly windowed: UseWindowListResult<unknown>;
+  /** What finished says when its window holds no thread. */
+  readonly emptyWindow?: string;
   /** The watched repositories, whose short names the first run's lines give. */
   readonly watched: FirstRunProps["watched"];
   /** The width of the pane, in display cells. */
@@ -47,9 +50,9 @@ const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
  * repository has a stage yet, or while the stages are an earlier run's,
  * which a failure no stage names shows, or else each repository's stage
  * and the progress (`drawFirstRun`); nothing owed, under the notice
- * while no team is listed; then, unless owed's list is drawn, why
- * activity's events could not be read, or that they are being read for
- * the window on screen. Nothing stands in otherwise.
+ * while no team is listed; then, unless owed's list is drawn, why the
+ * window on screen could not be read, that it is being read, or that
+ * finished's window holds no thread. Nothing stands in otherwise.
  */
 export default function drawStandIn({
   mode,
@@ -61,7 +64,8 @@ export default function drawStandIn({
   nothingOwed,
   teamless,
   owedListed,
-  activity,
+  windowed,
+  emptyWindow,
   watched,
   width,
 }: StandInProps): ReactNode {
@@ -103,8 +107,8 @@ export default function drawStandIn({
     );
   }
   if (owedListed) return undefined;
-  if (activity && "problem" in activity) {
-    const { message, recovery } = activity.problem;
+  if (windowed && "problem" in windowed) {
+    const { message, recovery } = windowed.problem;
     return (
       <Notice
         reason={dropFullStop(message)}
@@ -113,7 +117,7 @@ export default function drawStandIn({
       />
     );
   }
-  if (mode === "activity" && !activity) {
+  if (mode !== "owed" && !windowed) {
     // No list is held for the window yet: on opening, and after t.
     return (
       <box paddingLeft={standInIndent}>
@@ -121,5 +125,6 @@ export default function drawStandIn({
       </box>
     );
   }
+  if (emptyWindow) return <EmptyState message={emptyWindow} width={width} />;
   return undefined;
 }

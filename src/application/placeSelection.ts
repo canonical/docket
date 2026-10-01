@@ -1,4 +1,5 @@
 import type { ThreadRow } from "../lib/activity/index.js";
+import type { FinishedRow } from "../lib/finished/index.js";
 import type { WaitRow } from "../lib/owed/index.js";
 import identifyRow from "./identifyRow.js";
 
@@ -18,7 +19,7 @@ export interface Selection {
  * so the place decides between two rows naming the same wait.
  */
 export default function placeSelection(
-  rows: readonly (WaitRow | ThreadRow)[],
+  rows: readonly (WaitRow | ThreadRow | FinishedRow)[],
   { place, row }: Selection,
 ): number {
   const at = rows.at(place);

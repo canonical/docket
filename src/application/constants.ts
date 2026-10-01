@@ -1,3 +1,5 @@
+import type { TerminalMode } from "./types.js";
+
 /**
  * How many threads' details one read asks for at most. GitHub charges a
  * query by the lists it could return, a hundred to the point, rounded: a
@@ -38,3 +40,10 @@ export const detailStaleAfter = 30_000;
 
 /** The indent of what stands in for the list, in display cells. */
 export const standInIndent = 2;
+
+/** The modes the arrows reach, in order; neither end wraps to the other. */
+export const terminalModes: readonly TerminalMode[] = [
+  "owed",
+  "activity",
+  "finished",
+];

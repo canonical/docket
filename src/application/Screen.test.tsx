@@ -1869,7 +1869,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
     });
 
-    it("switches mode with the arrows and h and l, naming only the mode shown, and never wraps", async () => {
+    it("steps through owed, activity and finished with the arrows and h and l, naming only the mode shown, and never wraps", async () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       expect((await press(screen, "left")).lines.at(0)).toBe(
         describeHeader("owed", "one list"),
@@ -1878,7 +1878,11 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(activity.lines.at(0)).toBe(
         describeHeader("activity", "24h · by kind"),
       );
-      expect((await press(screen, "right")).lines.at(0)).toMatch(/^activity/);
+      expect((await press(screen, "right")).lines.at(0)).toBe(
+        describeHeader("finished", "24h · by kind"),
+      );
+      expect((await press(screen, "right")).lines.at(0)).toMatch(/^finished/);
+      expect((await press(screen, "h")).lines.at(0)).toMatch(/^activity/);
       expect((await press(screen, "h")).lines.at(0)).toBe(
         describeHeader("owed", "one list"),
       );
@@ -1945,7 +1949,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(activity.look(" time")?.fg).toBe(tokens["color.text.muted"]);
     });
 
-    it("shows every key with ?, grouped, and hides it again", async () => {
+    it("shows every key with ?, grouped, counting the key line the pane leaves below, and hides it again", async () => {
       const view = viewOf(await openCache(fakeProvider()));
       const screen = await show(view, 40, () => {}, 36);
       const help = await press(screen, "?");
@@ -1953,12 +1957,14 @@ describe("Screen", { timeout: 15_000 }, () => {
         "help",
         "",
         "Mode ───────────────────────────────────",
-        "  ← →  h l switch mode (owed ↔ activity)",
+        "  ← →  h l switch mode",
+        `${" ".repeat(11)}owed → activity → finished`,
         `${" ".repeat(11)}docket opens owed`,
         `  g${" ".repeat(8)}next grouping`,
-        `  t${" ".repeat(8)}next time window (activity)`,
+        `  t${" ".repeat(8)}next time window`,
         `${" ".repeat(11)}owed: most overdue first`,
         `${" ".repeat(11)}activity: newest first`,
+        `${" ".repeat(11)}finished: newest first`,
         "",
         "List ───────────────────────────────────",
         "  ↑ ↓  k j move the selection",
@@ -1982,10 +1988,8 @@ describe("Screen", { timeout: 15_000 }, () => {
         `  ?${" ".repeat(8)}show or hide help`,
         `  esc${" ".repeat(6)}close help`,
         `  R${" ".repeat(8)}full refresh`,
-        `  q${" ".repeat(8)}quit`,
         "",
-        "  windows are counted in working time",
-        "",
+        "  ↓ 1 below",
       ]);
       expect((await press(screen, "?")).lines.at(0)).toBe(
         describeHeader("owed", "one list"),
@@ -2003,11 +2007,11 @@ describe("Screen", { timeout: 15_000 }, () => {
         "",
         `Mode ${"─".repeat(35)}`,
       ]);
-      expect(opened.lines.at(23)).toBe("  ↓ 8 below");
+      expect(opened.lines.at(23)).toBe("  ↓ 9 below");
       const down = await press(screen, "j");
       expect(down.lines.slice(1, 3)).toEqual([
         `Mode · 1 of 3 ${"─".repeat(26)}`,
-        "  ← →  h l switch mode (owed ↔ activity)",
+        "  ← →  h l switch mode",
       ]);
       const end = await press(screen, "end");
       expect(end.lines.at(1)).toBe(`List · 2 of 3 ${"─".repeat(26)}`);

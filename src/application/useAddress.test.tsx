@@ -87,6 +87,52 @@ describe("useAddress", () => {
     ]);
   });
 
+  it("steps through owed, activity and finished, staying at either end", async () => {
+    const screen = await draw(<Placed {...opening} />, 60, 1);
+    const step = async (direction: -1 | 1) =>
+      (await screen.redraw(() => address?.stepMode(direction))).lines.at(0);
+    expect(await step(-1)).toBe("owed | one list | overdue first");
+    expect(await step(1)).toBe("activity | 24h · by kind | newest first");
+    expect(await step(1)).toBe("finished | 24h · by kind | newest first");
+    expect(await step(1)).toBe("finished | 24h · by kind | newest first");
+    expect(await step(-1)).toBe("activity | 24h · by kind | newest first");
+  });
+
+  it("steps finished through its own groupings and window, apart from activity's", async () => {
+    const screen = await draw(<Placed {...opening} mode="finished" />, 60, 1);
+    const press = async (key: () => void) =>
+      (await screen.redraw(key)).lines.at(0);
+    const seen = [];
+    for (let step = 0; step < 4; step += 1) {
+      seen.push(await press(() => address?.nextGrouping()));
+    }
+    expect(seen).toEqual([
+      "finished | 24h · by ending | newest first",
+      "finished | 24h · by repo | newest first",
+      "finished | 24h · one list | newest first",
+      "finished | 24h · by kind | newest first",
+    ]);
+    expect(await press(() => address?.nextWindow())).toBe(
+      "finished | 1w · by kind | newest first",
+    );
+    expect(await press(() => address?.setMode("activity"))).toBe(
+      "activity | 24h · by kind | newest first",
+    );
+  });
+
+  it("opens finished on the window and grouping the call names", async () => {
+    const screen = await draw(
+      <Placed
+        {...opening}
+        mode="finished"
+        finished={{ window: week, grouping: "ending" }}
+      />,
+      60,
+      1,
+    );
+    expect(screen.lines).toEqual(["finished | 1w · by ending | newest first"]);
+  });
+
   it("opens activity on the window and grouping the call names, naming the ungrouped list one list", async () => {
     const screen = await draw(
       <Placed

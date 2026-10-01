@@ -6,8 +6,11 @@ import type { WriteAction } from "./writeSet.js";
 
 /** What the screen's keys do. */
 export interface ScreenActions {
-  /** Shows `mode`. */
-  readonly switchMode: (mode: TerminalMode) => void;
+  /**
+   * Shows the mode before the one on screen, or after it; at either end
+   * the mode stays.
+   */
+  readonly stepMode: (direction: -1 | 1) => void;
   /** Moves the selection by `step` rows, up when it is negative. */
   readonly moveSelection: (step: number) => void;
   /**
@@ -24,9 +27,9 @@ export interface ScreenActions {
   readonly openSelected: () => void;
   /** Shows the mode's next grouping. */
   readonly nextGrouping: () => void;
-  /** Shows activity's next time window. */
+  /** Shows the mode's next time window. */
   readonly nextWindow: () => void;
-  /** Opens the editor for `action` on the selected thread, in either mode. */
+  /** Opens the editor for `action` on the selected thread, in owed or activity. */
   readonly edit: (action: WriteAction) => void;
   /** Shows the help, or hides it. */
   readonly toggleHelp: () => void;
@@ -40,7 +43,10 @@ export interface ScreenActions {
 
 /** Props for the useScreenKeys hook. */
 export interface UseScreenKeysProps {
-  /** The mode on screen: `t` acts in activity alone. */
+  /**
+   * The mode on screen: `t` acts in activity and finished, and `a` and
+   * `r` act in owed and activity, since every finished thread is closed.
+   */
   readonly mode: TerminalMode;
   /**
    * Whether the help is open, which `esc` then closes, and which turns
@@ -113,18 +119,18 @@ export default function useScreenKeys({
       commands: [
         {
           name: "mode.previous",
-          desc: "switch mode (owed ↔ activity)",
+          desc: "switch mode",
           group: "Mode",
           hint: "mode",
-          run: () => latest.current.switchMode("owed"),
+          run: () => latest.current.stepMode(-1),
         },
         {
           name: "mode.next",
-          desc: "switch mode (owed ↔ activity)",
+          desc: "switch mode",
           group: "Mode",
           hint: "mode",
-          notes: ["docket opens owed"],
-          run: () => latest.current.switchMode("activity"),
+          notes: ["owed → activity → finished", "docket opens owed"],
+          run: () => latest.current.stepMode(1),
         },
         {
           name: "selection.previous",
@@ -181,11 +187,15 @@ export default function useScreenKeys({
         },
         {
           name: "window.next",
-          desc: "next time window (activity)",
+          desc: "next time window",
           group: "Mode",
           hint: "time",
-          notes: ["owed: most overdue first", "activity: newest first"],
-          enabled: mode === "activity",
+          notes: [
+            "owed: most overdue first",
+            "activity: newest first",
+            "finished: newest first",
+          ],
+          enabled: mode !== "owed",
           run: () => latest.current.nextWindow(),
         },
         {
@@ -193,6 +203,7 @@ export default function useScreenKeys({
           desc: "assign",
           group: "Thread",
           hint: "",
+          enabled: mode !== "finished",
           run: () => latest.current.edit("assign"),
         },
         {
@@ -200,6 +211,7 @@ export default function useScreenKeys({
           desc: "request review",
           group: "Thread",
           hint: "",
+          enabled: mode !== "finished",
           run: () => latest.current.edit("review"),
         },
         {

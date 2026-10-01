@@ -24,7 +24,11 @@ export interface UseShownListResult {
  */
 export default function useShownList(mode: TerminalMode): UseShownListResult {
   const pageRows = useRef(1);
-  const tops = useRef<Record<TerminalMode, number>>({ owed: 0, activity: 0 });
+  const tops = useRef<Record<TerminalMode, number>>({
+    owed: 0,
+    activity: 0,
+    finished: 0,
+  });
   return {
     pageRows,
     list: {

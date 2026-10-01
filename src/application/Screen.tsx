@@ -7,31 +7,28 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import type { ThreadRow as ActivityThread } from "../lib/activity/index.js";
-import { describeNoTeam, type WaitRow } from "../lib/owed/index.js";
+import { describeNoTeam } from "../lib/owed/index.js";
 import {
   type ActionResult,
   CountsLine,
-  countPickerLines,
   HelpOverlay,
   KeyBar,
   minColumns,
   minLines,
-  Notice,
   Pane,
   PaneHeader,
-  PeoplePicker,
-  wrapNotice,
 } from "../lib/ui/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
-import { standInIndent } from "./constants.js";
 import describeCandidate from "./describeCandidate.js";
 import describePosition from "./describePosition.js";
+import describeRowVersion from "./describeRowVersion.js";
+import drawEditorSlot from "./drawEditorSlot.js";
 import drawStandIn from "./drawStandIn.js";
 import drawStatusLine from "./drawStatusLine.js";
+import FinishedList from "./FinishedList.js";
 import findPeople from "./findPeople.js";
 import gatherNamed from "./gatherNamed.js";
 import identifyRow from "./identifyRow.js";
@@ -39,6 +36,7 @@ import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
 import placeSelection, { type Selection } from "./placeSelection.js";
 import type {
+  ListRow,
   SelectedThread,
   TerminalMode,
   TerminalView,
@@ -48,6 +46,7 @@ import useActivity from "./useActivity.js";
 import useAddress from "./useAddress.js";
 import useAttention, { type UseAttentionProps } from "./useAttention.js";
 import useEditor from "./useEditor.js";
+import useFinished from "./useFinished.js";
 import useHeldDetails from "./useHeldDetails.js";
 import useHelp from "./useHelp.js";
 import useReadAhead from "./useReadAhead.js";
@@ -59,12 +58,8 @@ import useViewer from "./useViewer.js";
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
 
-/** A thread's last change, as GitHub records it, and its checks. */
-const describeVersion = ({ updatedAt, checks }: Thread) =>
-  `${updatedAt.getTime()}|${checks ?? ""}`;
-
-/** The thread a row names, in either mode. */
-const summarize = (row: WaitRow | ActivityThread) =>
+/** The thread a row names, in any mode. */
+const summarize = (row: ListRow) =>
   "wait" in row ? row.wait.thread : row.thread;
 
 /** Stand in for the cache's store when there is no cache: nothing changes. */
@@ -75,7 +70,7 @@ const readNothing = () => undefined;
 const unselected: Selection = { place: 0, row: "" };
 
 /**
- * The terminal interface's one screen: owed or activity, or setup while a
+ * The terminal interface's one screen: owed, activity or finished, or setup while a
  * prerequisite is missing, with the header naming the mode and its
  * address, the list region, the counts, the status and the keys, or the
  * help over all but the header. The keys are bound in one global layer,
@@ -88,6 +83,7 @@ export default function Screen({
   mode: openingMode,
   owedGrouping: openingGrouping,
   activity: openingActivity,
+  finished: openingFinished,
   now,
   openInBrowser,
   settings,
@@ -144,22 +140,24 @@ export default function Screen({
     mode: openingMode,
     owedGrouping: openingGrouping,
     activity: openingActivity,
+    finished: openingFinished,
     windows: settings.activity,
     stacks: "capabilities" in source && source.capabilities.has("stacks"),
   });
   const { mode, owedGrouping, activityGrouping, window, header } = address;
+  const { finishedGrouping, finishedWindow } = address;
   const helpState = useHelp();
   const help = helpState.open;
   // Each mode keeps its own selection, so switching back finds it where it
   // was left.
   const [selections, setSelections] = useState<
     Readonly<Record<TerminalMode, Selection>>
-  >({ owed: unselected, activity: unselected });
+  >({ owed: unselected, activity: unselected, finished: unselected });
   const [action, setAction] = useState<ActionResult>();
   // The keys read the rows drawn last, and the row selected among them,
   // so a binding never holds a list older than the one on screen.
-  const drawnRows = useRef<readonly (WaitRow | ActivityThread)[]>([]);
-  const drawnSelection = useRef<WaitRow | ActivityThread>(undefined);
+  const drawnRows = useRef<readonly ListRow[]>([]);
+  const drawnSelection = useRef<ListRow>(undefined);
   const heldThreads = cached?.threads;
   const named = useMemo(() => gatherNamed(heldThreads ?? []), [heldThreads]);
   const editor = useEditor({
@@ -185,16 +183,15 @@ export default function Screen({
     });
 
   // A row's thread as the data records it: an owed row carries its
-  // thread, and an activity row names one the cache holds while it is
-  // open.
-  const findFacts = (row: WaitRow | ActivityThread): Thread | undefined => {
+  // thread, and another row names one the cache holds while it is open.
+  const findFacts = (row: ListRow): Thread | undefined => {
     if ("wait" in row) return row.wait.thread;
     const { repo, number } = row.thread;
     return cached?.threads.find(
       (each) => each.repo === repo && each.number === number,
     );
   };
-  // The thread `a` and `r` act on, in either mode.
+  // The thread `a` and `r` act on, in owed or activity.
   const selectThread = (): SelectedThread | undefined => {
     const row = drawnSelection.current;
     if (!row) return undefined;
@@ -209,7 +206,7 @@ export default function Screen({
     tooSmall,
     setup,
     actions: {
-      switchMode: address.setMode,
+      stepMode: address.stepMode,
       // While the help shows, the movement keys scroll it instead.
       moveSelection: (step) =>
         help ? helpState.scroll(step) : moveTo((place) => place + step),
@@ -221,7 +218,7 @@ export default function Screen({
         help
           ? helpState.end(direction)
           : moveTo((_place, last) => (direction < 0 ? 0 : last)),
-      // Only a row is ever selected, in either mode, so a heading or a
+      // Only a row is ever selected, in any mode, so a heading or a
       // stack never opens.
       openSelected: () => {
         const row = drawnSelection.current;
@@ -266,15 +263,28 @@ export default function Screen({
     at,
     viewer: you.viewer,
   });
-  const room = width - standInIndent;
+  const finished = useFinished({
+    source,
+    threads,
+    syncedAt: status?.syncedAt,
+    shown: mode === "finished",
+    watched,
+    window: finishedWindow,
+    grouping: finishedGrouping,
+    now,
+    at,
+    viewer: you.viewer,
+  });
+  // Only the mode on screen reads its window, so at most one is held.
+  const windowed = activity ?? finished;
   // The header, the counts, the status and the keys take a line each, and
   // a pane shorter than they are leaves the list no line, never fewer.
   const listHeight = Math.max(0, height - 4);
   const listed = activity && "list" in activity ? activity.list : undefined;
-  const rows: readonly (WaitRow | ActivityThread)[] =
-    (owed ?? listed)?.groups.flatMap(
-      (group): readonly (WaitRow | ActivityThread)[] => group.rows,
-    ) ?? [];
+  const ended = finished && "list" in finished ? finished.list : undefined;
+  const shown = owed ?? listed ?? ended;
+  const rows: readonly ListRow[] =
+    shown?.groups.flatMap((group): readonly ListRow[] => group.rows) ?? [];
   const selectedRow = rows.at(placeSelection(rows, selections[mode]));
   useEffect(() => {
     drawnRows.current = rows;
@@ -286,13 +296,7 @@ export default function Screen({
     selected: selectedRow && summarize(selectedRow),
     attention: attentionState,
   });
-  // A row's version: its thread's last change, or, for a thread the data
-  // does not hold, which only an activity row names, its newest event.
-  const findVersion = (row: WaitRow | ActivityThread) => {
-    const facts = findFacts(row);
-    if (facts) return describeVersion(facts);
-    return `${(row as ActivityThread).events.at(0)?.event.at.getTime()}`;
-  };
+  const findVersion = (row: ListRow) => describeRowVersion(row, findFacts(row));
   const ahead = useReadAhead({
     reader: "cache" in source ? source.details : undefined,
     rows: rows.map((row) => ({
@@ -322,7 +326,7 @@ export default function Screen({
   });
   /** The details the accordion under a row is given: read ahead, or alone. */
   const readRowDetail = (
-    row: WaitRow | ActivityThread,
+    row: ListRow,
     readAlone: NonNullable<typeof readThreadDetail>,
   ) => {
     const version = findVersion(row);
@@ -335,23 +339,7 @@ export default function Screen({
     );
   };
 
-  // What stands in the accordion's place: the open editor, or why a key
-  // could not open one.
-  const { picker, refusal } = editor;
-  const refused = refusal && (
-    <Notice reason={refusal.reason} recovery={refusal.recovery} width={width} />
-  );
-  const slot = picker
-    ? {
-        node: <PeoplePicker {...picker} width={width} />,
-        lines: countPickerLines({ ...picker, width }),
-      }
-    : refusal && {
-        node: refused,
-        lines: Object.values(
-          wrapNotice(refusal.reason, refusal.recovery, room),
-        ).flat().length,
-      };
+  const { refused, slot } = drawEditorSlot(editor, width);
 
   // The list region: rows once the data is in, or what stands in for them.
   // owed opens with a notice while a watched repository lists no team.
@@ -368,7 +356,8 @@ export default function Screen({
     nothingOwed: owed?.groups.length === 0,
     teamless,
     owedListed: Boolean(owed && readThreadDetail),
-    activity,
+    windowed,
+    ...(ended?.empty && { emptyWindow: ended.empty.text }),
     watched,
     width,
   });
@@ -408,9 +397,23 @@ export default function Screen({
       />
     );
   }
-  const summary = (owed ?? listed)?.summary.text;
+  if (region === undefined && ended && threads && readThreadDetail) {
+    region = (
+      <FinishedList
+        list={ended}
+        selected={placeSelection(rows, selections.finished)}
+        readDetail={(row) => readRowDetail(row, readThreadDetail)}
+        now={at}
+        timezone={settings.time.timezone}
+        width={width}
+        height={listHeight}
+        {...shownList.list}
+      />
+    );
+  }
+  const summary = shown?.summary.text;
   const position = describePosition(
-    (owed ?? listed)?.groups ?? [],
+    shown?.groups ?? [],
     placeSelection(rows, selections[mode]),
   );
 
@@ -444,10 +447,10 @@ export default function Screen({
       status={drawStatusLine({
         problem,
         status,
-        // A failure reading activity's events, or whom gh is signed in
-        // as, leaves the rows held.
+        // A failure reading the window on screen, or whom gh is signed
+        // in as, leaves the rows held.
         failure:
-          (activity && "list" in activity ? activity.failure : undefined) ??
+          (windowed && "list" in windowed ? windowed.failure : undefined) ??
           you.failure,
         action,
         attention: attentionState,
@@ -472,7 +475,7 @@ export default function Screen({
         ) : undefined
       }
     >
-      {listed || (owed && owed.groups.length > 0) ? (
+      {listed || (shown && shown.groups.length > 0) ? (
         region
       ) : (
         <box paddingTop={1}>{region}</box>
