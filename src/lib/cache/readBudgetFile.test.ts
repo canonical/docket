@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -9,7 +9,8 @@ let file: string;
 
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "docket-budget-"));
-  file = join(root, "budget.json");
+  file = join(root, "budget", "4242.json");
+  await mkdir(join(root, "budget"));
 });
 
 afterEach(async () => {

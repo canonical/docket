@@ -23,7 +23,7 @@ import readBudgetFile from "./readBudgetFile.js";
  * a file it cannot remove is left.
  * @returns No budget while the folder holds no file.
  */
-export default async function readBudgetFolder(
+export default async function readAndPruneBudgetFolder(
   folder: string,
   at: Date,
 ): Promise<Budgets> {

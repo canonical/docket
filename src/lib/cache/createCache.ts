@@ -23,7 +23,7 @@ import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeBudgets from "./mergeBudgets.js";
 import mergeSnapshot from "./mergeSnapshot.js";
-import readBudgetFolder from "./readBudgetFolder.js";
+import readAndPruneBudgetFolder from "./readAndPruneBudgetFolder.js";
 import readCacheFile from "./readCacheFile.js";
 import refreshChecks from "./refreshChecks.js";
 import syncRepo from "./syncRepo.js";
@@ -69,8 +69,7 @@ export default function createCache({
   let fullRefreshAt: Date | undefined;
   // The file this process wrote last, as identifyFile names it.
   let written: string | undefined;
-  // The mirror of the budgets the budget folder gave, gathered over every
-  // load; this process's own answers join it on each read.
+  // The budgets the folder gave, which this process's own answers join.
   let mirror: Budgets = {};
   const readOwn = () => dropFarResets(provider.readBudgets(), now());
   const readFigures = () => mergeBudgets(mirror, readOwn());
@@ -184,7 +183,8 @@ export default function createCache({
     mirror = mergeBudgets(mirror, read);
     publishFloor();
   };
-  const loadBudget = async () => adopt(await readBudgetFolder(budgets, now()));
+  const loadBudget = async () =>
+    adopt(await readAndPruneBudgetFolder(budgets, now()));
   /** Writes the cache file, then keeps the budgets its reads heard. */
   const save = async () => {
     const contents = { state: dehydrate(client), fullRefreshAt };

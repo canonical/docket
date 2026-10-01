@@ -11,7 +11,7 @@ let file: string;
 
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), "docket-budget-"));
-  file = join(root, "docket", "budget.json");
+  file = join(root, "budget", "4242.json");
 });
 
 afterEach(async () => {
@@ -27,7 +27,7 @@ describe("writeBudgetFile", () => {
     await writeBudgetFile(file, budgets);
     expect(await readBudgetFile(file)).toEqual(budgets);
     expect((await stat(file)).mode & 0o777).toBe(0o600);
-    expect(await readdir(join(root, "docket"))).toEqual(["budget.json"]);
+    expect(await readdir(join(root, "budget"))).toEqual(["4242.json"]);
   });
 
   it("puts a new file in place of the old one, which a reader never meets half written", async () => {
@@ -41,6 +41,6 @@ describe("writeBudgetFile", () => {
     // A folder where the file goes: the rename over it fails.
     await mkdir(file, { recursive: true });
     await expect(writeBudgetFile(file, {})).rejects.toThrow();
-    expect(await readdir(join(root, "docket"))).toEqual(["budget.json"]);
+    expect(await readdir(join(root, "budget"))).toEqual(["4242.json"]);
   });
 });

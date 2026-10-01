@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { fullBudget } from "../../testing/provider.js";
-import readBudgetFolder from "./readBudgetFolder.js";
+import readAndPruneBudgetFolder from "./readAndPruneBudgetFolder.js";
 import writeBudgetFile from "./writeBudgetFile.js";
 
 let folder: string;
@@ -31,7 +31,7 @@ const budget = (remaining: number, resetAt = fullBudget.resetAt) => ({
   resetAt,
 });
 
-describe("readBudgetFolder", () => {
+describe("readAndPruneBudgetFolder", () => {
   it("takes, of every process's file, the latest report of each kind", async () => {
     const later = new Date("2026-09-28T11:30:00Z");
     await writeBudgetFile(join(folder, "1.json"), {
@@ -39,7 +39,7 @@ describe("readBudgetFolder", () => {
       rest: budget(4000, later),
     });
     await writeBudgetFile(join(folder, "2.json"), { graphql: budget(800) });
-    expect(await readBudgetFolder(folder, before)).toEqual({
+    expect(await readAndPruneBudgetFolder(folder, before)).toEqual({
       graphql: budget(800),
       rest: budget(4000, later),
     });
@@ -54,7 +54,7 @@ describe("readBudgetFolder", () => {
     await writeFile(join(folder, "2.json"), '{"graphql":{"limit":50');
     await writeFile(join(folder, "3.json.1234.tmp"), "{}");
     await writeBudgetFile(join(folder, "4.json"), { graphql: budget(900) });
-    expect(await readBudgetFolder(folder, before)).toEqual({
+    expect(await readAndPruneBudgetFolder(folder, before)).toEqual({
       graphql: budget(900),
     });
   });
@@ -63,11 +63,13 @@ describe("readBudgetFolder", () => {
     await writeBudgetFile(join(folder, "1.json"), {
       graphql: budget(0, new Date("9999-12-31T00:00:00Z")),
     });
-    expect(await readBudgetFolder(folder, before)).toEqual({});
+    expect(await readAndPruneBudgetFolder(folder, before)).toEqual({});
   });
 
   it("reads no budget while there is no folder", async () => {
-    expect(await readBudgetFolder(join(folder, "missing"), before)).toEqual({});
+    expect(
+      await readAndPruneBudgetFolder(join(folder, "missing"), before),
+    ).toEqual({});
   });
 
   it("removes a file whose reports have all reset, and never a file with a report still live", async () => {
@@ -81,7 +83,7 @@ describe("readBudgetFolder", () => {
       rest: budget(4000),
     });
     await writeBudgetFile(join(folder, "live.json"), { graphql: budget(900) });
-    await readBudgetFolder(folder, before);
+    await readAndPruneBudgetFolder(folder, before);
     expect((await readdir(folder)).sort()).toEqual(["half.json", "live.json"]);
   });
 
@@ -93,7 +95,7 @@ describe("readBudgetFolder", () => {
     await writeBudgetFile(join(folder, "live.json"), { graphql: budget(900) });
     await chmod(folder, 0o500);
     try {
-      expect(await readBudgetFolder(folder, before)).toEqual({
+      expect(await readAndPruneBudgetFolder(folder, before)).toEqual({
         graphql: budget(900),
       });
       expect((await readdir(folder)).sort()).toEqual([
