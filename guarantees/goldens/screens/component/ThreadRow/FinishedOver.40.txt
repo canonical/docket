@@ -1,0 +1,12 @@
+40 columns
+|┃ example#7 issue ○ dave         7d over
+|╹ Dark mode everywhere        unassigned
+
+runs
+1:1 "┃" fg #e27878ff bg #00000000
+1:3 "example#7 issue " fg #c6c8d1ff bg #00000000 bold
+1:19 "○ dave" fg #89b8c2ff bg #00000000 bold
+1:34 "7d over" fg #e27878ff bg #00000000 bold
+2:1 "╹" fg #e27878ff bg #00000000
+2:3 "Dark mode everywhere" fg #c6c8d1ff bg #00000000 italic
+2:23 "        unassigned" fg #c6c8d1ff bg #00000000
