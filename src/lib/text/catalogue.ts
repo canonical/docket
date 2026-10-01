@@ -126,6 +126,7 @@ const catalogue: readonly Command[] = [
       "An ending is written as GitHub writes it: merged, closed, closed as completed, closed as not planned or closed as duplicate. The counts give merged, closed for every other ending, and over for the threads that closed past their target.",
       "Windows count working time, as activity's do, and so does how long a thread was open, measured against the close target for its kind unless a label in `exempt.close` exempts it.",
       "In JSON, each thread carries its measures: time to close, and time to first reply and time to first review, which read `unsupported` because docket does not read each thread's timeline.",
+      "In a terminal, with no `--format`, `docket finished` opens the terminal interface on finished; piped or captured, or given `--format`, it prints the list.",
     ],
     flags: [
       window,

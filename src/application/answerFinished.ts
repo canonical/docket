@@ -1,8 +1,6 @@
-import { finishedGroupings } from "../lib/finished/index.js";
 import { renderFinished } from "../lib/text/index.js";
 import buildFinished from "./buildFinished.js";
-import chooseWindow from "./chooseWindow.js";
-import fail from "./fail.js";
+import chooseFinishedAddress from "./chooseFinishedAddress.js";
 import readEvents, { type ReadEvents } from "./readEvents.js";
 import readThreads from "./readThreads.js";
 import readViewer from "./readViewer.js";
@@ -23,19 +21,10 @@ export default async function answerFinished(
   session: Session,
 ): Promise<number> {
   const { context, invocation, resolved, watched } = session;
-  const window = chooseWindow(
+  const { window, grouping } = chooseFinishedAddress(
     resolved.settings.activity,
-    invocation.window,
-    "finished",
+    invocation,
   );
-  const grouping = finishedGroupings.find((entry) => entry === invocation.by);
-  if (!grouping) {
-    fail(
-      "USAGE_INVALID_VALUE",
-      `\`--by\` takes ${finishedGroupings.join(", ")}, not \`${invocation.by}\`.`,
-      "run docket finished --help",
-    );
-  }
   const read = await readThreads(session);
   const reads: ReadEvents[] = [];
   const now = context.now();

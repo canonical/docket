@@ -54,8 +54,14 @@ describe("chooseTerminalMode", () => {
         ).toBe(both ? "activity" : undefined);
       });
 
-      it("prints owed and activity as text whenever --format is given", () => {
-        for (const command of ["owed", "activity"]) {
+      it("opens finished without --format only when both are terminals", () => {
+        expect(
+          modeOf(["finished", "--by", "ending"], interactive, interactiveInput),
+        ).toBe(both ? "finished" : undefined);
+      });
+
+      it("prints owed, activity and finished as text whenever --format is given", () => {
+        for (const command of ["owed", "activity", "finished"]) {
           for (const format of ["plain", "llm", "json"]) {
             expect(
               modeOf(

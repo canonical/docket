@@ -31,7 +31,7 @@ afterEach(() => rm(root, { recursive: true, force: true }));
  */
 async function openOn(
   given: Provider | Problem,
-  activity?: TerminalView["activity"],
+  addresses: Pick<TerminalView, "activity" | "finished"> = {},
 ) {
   const connection =
     "code" in given
@@ -69,7 +69,7 @@ async function openOn(
     undefined,
     recordedSettings,
     connection,
-    activity,
+    addresses,
   );
   return { code, view: views.at(0) };
 }
@@ -182,15 +182,24 @@ describe("answerTerminal", () => {
       window: { amount: 72, unit: "h" },
       grouping: "repo",
     } as const;
-    const { view } = await openOn(recordedProvider(), activity);
+    const { view } = await openOn(recordedProvider(), { activity });
     expect(view?.activity).toEqual(activity);
     const problem = {
       code: "GH_NOT_INSTALLED",
       message: "docket needs the GitHub CLI (gh).",
       recovery: "install it",
     } as const;
-    const refused = await openOn(problem, activity);
+    const refused = await openOn(problem, { activity });
     expect(refused.view?.activity).toEqual(activity);
+  });
+
+  it("hands the interface the window and grouping finished opens on", async () => {
+    const finished = {
+      window: { amount: 1, unit: "w" },
+      grouping: "ending",
+    } as const;
+    const { view } = await openOn(recordedProvider(), { finished });
+    expect(view?.finished).toEqual(finished);
   });
 
   it("opens on why gh gave no token", async () => {

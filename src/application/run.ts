@@ -16,6 +16,7 @@ import answerShow from "./answerShow.js";
 import answerTerminal from "./answerTerminal.js";
 import answerWrite from "./answerWrite.js";
 import chooseActivityAddress from "./chooseActivityAddress.js";
+import chooseFinishedAddress from "./chooseFinishedAddress.js";
 import chooseOwedGrouping from "./chooseOwedGrouping.js";
 import chooseTerminalMode from "./chooseTerminalMode.js";
 import describeFailure from "./describeFailure.js";
@@ -108,11 +109,13 @@ export default async function run(context: Context): Promise<number> {
     const mode = chooseTerminalMode(context, invocation);
     if (mode) {
       // The interface opens where the call would print, and a window or
-      // grouping activity lacks stops the call before it opens.
-      const activity =
+      // grouping the mode lacks stops the call before it opens.
+      const addresses =
         mode === "activity"
-          ? chooseActivityAddress(settings.activity, invocation)
-          : undefined;
+          ? { activity: chooseActivityAddress(settings.activity, invocation) }
+          : mode === "finished"
+            ? { finished: chooseFinishedAddress(settings.activity, invocation) }
+            : {};
       return await answerTerminal(
         context,
         mode,
@@ -121,7 +124,7 @@ export default async function run(context: Context): Promise<number> {
         personal.outcome?.layer,
         settings,
         connection,
-        activity,
+        addresses,
       );
     }
     if ("code" in connection) return stop([connection]);
