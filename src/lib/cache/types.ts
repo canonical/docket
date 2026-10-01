@@ -186,6 +186,11 @@ export interface CacheOptions {
   readonly directory: string;
   /** The current time, read whenever an age is measured. */
   readonly now: () => Date;
+  /**
+   * Names this process's file in the budget folder: its process id unless
+   * given, as a test gives one to each cache it opens as a process.
+   */
+  readonly processId?: string;
 }
 
 /**
@@ -202,7 +207,7 @@ export interface Cache {
   threads(): CachedThreads;
   /**
    * Loads what other processes wrote to the cache file, keeping only data
-   * newer than what is held, and the budget file, merged into the mirror.
+   * newer than what is held, and the budget folder, merged into the mirror.
    */
   load(): Promise<void>;
   /**
@@ -316,8 +321,9 @@ export interface Cache {
   fullRefresh(): Promise<boolean>;
   /**
    * Reloads the cache whenever another process writes it, and the budget
-   * mirror whenever any process writes the budget file, watching the cache
-   * folder: each file is replaced on every write.
+   * mirror whenever another process writes its budget file, watching the
+   * cache folder and the budget folder: each file is replaced on every
+   * write.
    *
    * @returns Stops watching.
    */
@@ -338,8 +344,8 @@ export interface Cache {
   ): () => void;
   /**
    * The mirror of the provider's budgets: for each kind, the latest
-   * report any docket process heard, as the budget file last gave it, or
-   * this process's own answers heard since, whichever is later.
+   * report any docket process heard, as the budget folder gave it, or
+   * this process's own answers, whichever is later.
    */
   readBudgets(): Budgets;
   /**
@@ -357,18 +363,14 @@ export interface Cache {
    */
   maySpend(): boolean;
   /**
-   * Merges the budgets this process heard into the budget file,
-   * `budget.json` beside the cache file, under that file's own lock and
-   * never the fetch lock, so every docket process judges the floor on
-   * them: after a read of details, and after each save of the cache. Of
-   * each kind the later report stays, so an older figure never overwrites
-   * a newer one. It gives the status the floor at once, returns at once
-   * when this process heard nothing since it last read or wrote the file,
-   * and a call made while one runs joins it. It never fails: a keeping
-   * that cannot read, lock or write the file is dropped. This process's
-   * next keeping, if it keeps again, carries the figures; a one-off call's
-   * are lost, at no cost, since the next answer kept reports the budget
-   * again.
+   * Writes the budgets this process heard to its own file in the budget
+   * folder, `budget/<process id>.json` beside the cache file, so every
+   * docket process judges the floor on them: after a read of details, and
+   * after each save of the cache. Only this process writes that file,
+   * always whole, and no lock is taken. It gives the status the floor at
+   * once, and writes only when what it heard changed since its last write;
+   * the file outlives the process until its reports reset. It never fails: a write that
+   * fails is dropped, and the next keeping writes again.
    */
   keepBudget(): Promise<void>;
   /** The cache's state: the same value on every call until it changes. */

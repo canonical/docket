@@ -39,8 +39,11 @@ export const lockTiming = {
   },
 } as const;
 
-/** The file, in the cache folder, that mirrors GitHub's budgets. */
-export const budgetFileName = "budget.json";
+/**
+ * The folder, in the cache folder, of GitHub's budgets as each docket
+ * process heard them: one file a process, named for its process id.
+ */
+export const budgetFolderName = "budget";
 
 /**
  * How far ahead of now, in milliseconds, a budget's reset may lie: GitHub
@@ -50,28 +53,6 @@ export const budgetFileName = "budget.json";
  * dropped.
  */
 export const farthestReset = 10_800_000;
-
-/** The budget file's own lock, beside it in the cache folder. */
-export const budgetLockName = "budget.json.lock";
-
-/**
- * How the budget file's own lock is held and waited for, in milliseconds.
- * It is held only to read, merge and write that small file. The library
- * touches a held lock every `update`, which it takes as at least a second;
- * a lock untouched for `stale` is left by a process that died, and is
- * taken over. A process waits only while another holds the lock, trying
- * again after `firstWait`, then twice as long each time up to `longestWait`,
- * for `wait` in all: past `stale`, so a lock a dead process left never
- * makes a keeping give up. Any other failure to take it ends the keeping
- * at once.
- */
-export const budgetLockTiming = {
-  stale: 3_000,
-  update: 1_000,
-  firstWait: 20,
-  longestWait: 200,
-  wait: 7_500,
-} as const;
 
 /**
  * How long, in milliseconds, cached data serves a reader that names no

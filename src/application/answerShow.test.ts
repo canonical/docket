@@ -113,7 +113,7 @@ describe("answerShow", () => {
     expect(await answering).toBe(0);
   });
 
-  it("writes the budget the details' answer reported to the budget file, for later calls", async () => {
+  it("writes the budget the details' answer reported to its budget file, for later calls", async () => {
     const heard = { graphql: { ...fullBudget, remaining: 1234 } };
     const provider = recordedProvider({ readBudgets: () => heard });
     const { session } = openSession(home, ["show", "example#12"], provider);

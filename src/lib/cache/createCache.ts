@@ -7,8 +7,7 @@ import applyChecks from "./applyChecks.js";
 import classifyFolderFailure from "./classifyFolderFailure.js";
 import classifyRefreshFailure from "./classifyRefreshFailure.js";
 import {
-  budgetFileName,
-  budgetLockName,
+  budgetFolderName,
   cacheFileName,
   fullRefreshCooldown,
   idleInterval,
@@ -24,7 +23,7 @@ import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeBudgets from "./mergeBudgets.js";
 import mergeSnapshot from "./mergeSnapshot.js";
-import readBudgetFile from "./readBudgetFile.js";
+import readBudgetFolder from "./readBudgetFolder.js";
 import readCacheFile from "./readCacheFile.js";
 import refreshChecks from "./refreshChecks.js";
 import syncRepo from "./syncRepo.js";
@@ -55,6 +54,7 @@ export default function createCache({
   repos,
   directory,
   now,
+  processId = String(process.pid),
 }: CacheOptions): Cache {
   // A query no one observes is dropped after its garbage-collection time,
   // with a timer that would keep a text command running for minutes; the
@@ -63,16 +63,17 @@ export default function createCache({
     defaultOptions: { queries: { gcTime: Number.POSITIVE_INFINITY } },
   });
   const file = join(directory, cacheFileName);
-  const budgetFile = join(directory, budgetFileName);
+  const budgetFolder = join(directory, budgetFolderName);
+  const ownBudget = `${processId}.json`;
   const listeners = new Set<() => void>();
   let fullRefreshAt: Date | undefined;
   // The file this process wrote last, as identifyFile names it.
   let written: string | undefined;
-  // The mirror of the budgets as the budget file last gave it or this
-  // process last kept it; this process's own answers join it on each read.
+  // The mirror of the budgets the budget folder gave, gathered over every
+  // load; this process's own answers join it on each read.
   let mirror: Budgets = {};
-  const readFigures = () =>
-    mergeBudgets(mirror, dropFarResets(provider.readBudgets(), now()));
+  const readOwn = () => dropFarResets(provider.readBudgets(), now());
+  const readFigures = () => mergeBudgets(mirror, readOwn());
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
@@ -175,10 +176,9 @@ export default function createCache({
     }
     publish();
   };
-  /** Reads budget.json into the mirror, says its floor: first in a load. */
+  /** Reads the budget folder into the mirror, says its floor: first in a load. */
   const loadBudget = async () => {
-    const read = dropFarResets(await readBudgetFile(budgetFile), now());
-    mirror = mergeBudgets(mirror, read);
+    mirror = mergeBudgets(mirror, await readBudgetFolder(budgetFolder, now()));
     publishFloor();
   };
   /** Writes the cache file, then keeps the budgets its reads heard. */
@@ -198,15 +198,9 @@ export default function createCache({
     publish: (change) => publish(change, false),
   });
   const keepInFile = createBudgetKeeper({
-    file: budgetFile,
-    lockfilePath: join(directory, budgetLockName),
-    readFigures,
-    isKept: () => isSame(readFigures(), mirror),
-    adopt: (kept) => {
-      mirror = kept;
-    },
+    file: join(budgetFolder, ownBudget),
+    readOwn,
     publishFloor,
-    now,
   });
 
   /**
@@ -459,9 +453,12 @@ export default function createCache({
       return discarded;
     },
     watch() {
-      mkdirSync(directory, { recursive: true, mode: 0o700 });
+      mkdirSync(budgetFolder, { recursive: true, mode: 0o700 });
+      // Another process's budget file; this one's holds nothing it lacks.
+      const budgets = watchFolder(budgetFolder, (_event, name) => {
+        if (name?.endsWith(".json") && name !== ownBudget) void loadBudget();
+      });
       const watcher = watchFolder(directory, (_event, name) => {
-        if (name === budgetFileName) void loadBudget();
         if (name !== cacheFileName) return;
         // Its own write holds nothing new; any other is loaded, or unseen.
         void identifyFile(file).then(
@@ -469,7 +466,10 @@ export default function createCache({
           load,
         );
       });
-      return () => watcher.close();
+      return () => {
+        watcher.close();
+        budgets.close();
+      };
     },
     patchAssignees({ repo, number }, assignees) {
       const held = entry(repo);

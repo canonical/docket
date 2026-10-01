@@ -22,7 +22,7 @@ function parseBudget(value: unknown): Budget | undefined {
 }
 
 /**
- * Reads the budgets the budget file mirrors, each kind that is whole.
+ * Reads the budgets a process's budget file holds, each kind that is whole.
  *
  * @note Impure: reads the filesystem.
  * @returns No budget when there is no file yet, or it cannot be read or

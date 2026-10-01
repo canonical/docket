@@ -73,8 +73,8 @@ export default async function answerTerminal(
         return await provider.threadDetails(threads);
       } finally {
         // The read spent points outside any refresh, so its figures go to
-        // the budget file for every other process; the next keeping
-        // carries them when this one cannot.
+        // this process's budget file for every other process; the next
+        // keeping writes them when this one cannot.
         void cache.keepBudget();
       }
     },
