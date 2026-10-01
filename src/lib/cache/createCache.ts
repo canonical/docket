@@ -54,7 +54,6 @@ export default function createCache({
   repos,
   directory,
   now,
-  processId = String(process.pid),
 }: CacheOptions): Cache {
   // A query no one observes is dropped after its garbage-collection time,
   // with a timer that would keep a text command running for minutes; the
@@ -64,7 +63,7 @@ export default function createCache({
   });
   const file = join(directory, cacheFileName);
   const budgetFolder = join(directory, budgetFolderName);
-  const ownBudget = `${processId}.json`;
+  const ownBudget = `${process.pid}.json`;
   const listeners = new Set<() => void>();
   let fullRefreshAt: Date | undefined;
   // The file this process wrote last, as identifyFile names it.

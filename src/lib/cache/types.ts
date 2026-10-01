@@ -186,11 +186,6 @@ export interface CacheOptions {
   readonly directory: string;
   /** The current time, read whenever an age is measured. */
   readonly now: () => Date;
-  /**
-   * Names this process's file in the budget folder: its process id unless
-   * given, as a test gives one to each cache it opens as a process.
-   */
-  readonly processId?: string;
 }
 
 /**
