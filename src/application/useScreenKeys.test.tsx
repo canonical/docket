@@ -143,7 +143,7 @@ describe("useScreenKeys", () => {
     ]);
   });
 
-  it("moves to the next time window in activity alone, and opens an editor in either mode, while the help lists every key in both modes", async () => {
+  it("moves to the next time window in activity, not in owed, and opens an editor in both, while the help lists every key in both", async () => {
     const { ran, change, screen } = await bind();
     const owed = await press(screen, "t");
     await screen.redraw(() => change({ mode: "activity" }));

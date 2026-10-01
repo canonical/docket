@@ -15,7 +15,7 @@ export interface KeyCommand {
   readonly keys: readonly string[];
   /** The other keys of the same commands: `h`, `l`. */
   readonly alternates: readonly string[];
-  /** What the keys do: `switch mode (owed ↔ activity)`. */
+  /** What the keys do: `switch mode`. */
   readonly label: string;
   /**
    * The short label in the key bar, such as `mode`: empty for a key shown

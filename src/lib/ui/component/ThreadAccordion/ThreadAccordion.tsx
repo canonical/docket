@@ -222,23 +222,22 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
 }
 
 /**
- * The detail that opens under the selected row. Only one is open at a
- * time, and the selected row stays anchored above it. It is as tall as
- * its content, at most eight lines, and wrapped to the pane beside the
- * item's margin, whose bar runs down from the row and ends on its last
- * line, or, under a finished thread, runs on to its ending. Its lines come from the snapshot at once, so the list makes room
- * for them before any read; a line the details complete ends in a dimmed
- * `…` and grows in place when they arrive, and nothing blanks or changes
- * height meanwhile. It reads its details from GitHub, so a slow read
- * never holds up moving the selection, and a failed one adds its reason
- * as one line under what the snapshot showed. While reading is paused
- * it shows what the snapshot holds, as it does while a read is under way,
- * and for a thread the snapshot holds nothing of, `paused · resumes 13:00`,
- * dimmed. Details that make it taller than the snapshot's lines, such as
- * a closed thread's close body or a failed read's line, are told through
- * `onLines`, so the list can make room. The thread's content wears no
- * state mark: docket's own words about it are dimmed, and each login
- * carries its group's mark and hue.
+ * The detail that opens under the selected row. Only one is open at a time, and
+ * the selected row stays anchored above it. It is as tall as its content, at
+ * most eight lines, and wrapped to the pane beside the item's margin, whose bar
+ * runs down from the row and ends on its last line, or, under a finished
+ * thread, runs on to its ending. Its lines come from the snapshot at once, so
+ * the list makes room for them before any read; a line the details complete
+ * ends in a dimmed `…` and grows in place when they arrive, and nothing blanks
+ * or changes height meanwhile. It reads its details from GitHub, so a slow read
+ * never holds up moving the selection, and a failed one adds its reason as one
+ * line under what the snapshot showed. While reading is paused it shows what
+ * the snapshot holds, as it does while a read is under way, and for a thread
+ * the snapshot holds nothing of, `paused · resumes 13:00`, dimmed. Details that
+ * make it taller than the snapshot's lines, such as a closed thread's close
+ * body or a failed read's line, are told through `onLines`, so the list can
+ * make room. The thread's content wears no state mark: docket's own words about
+ * it are dimmed, and each login carries its group's mark and hue.
  *
  * `import { ThreadAccordion } from "../lib/ui/index.js";`
  *

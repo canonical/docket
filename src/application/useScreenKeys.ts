@@ -62,7 +62,7 @@ export interface UseScreenKeysProps {
    */
   readonly tooSmall: boolean;
   /**
-   * Whether the screen is setup, which stands in for either mode while a
+   * Whether the screen is setup, which stands in for any mode while a
    * prerequisite is missing, such as gh: it lists nothing and is never
    * reached or left with a key, so only the help's keys, the movement keys
    * while the help shows, and `q` act, and the key bar names `q`.
