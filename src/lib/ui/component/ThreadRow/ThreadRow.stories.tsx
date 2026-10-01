@@ -1,4 +1,5 @@
 import { findActivityRow } from "../../../../testing/activity.js";
+import { findFinishedRow } from "../../../../testing/finished.js";
 import { longReview } from "../../../../testing/long.js";
 import {
   botReview,
@@ -78,6 +79,21 @@ export const ActivityTwoOwners: Story<ThreadRowProps> = {
 /** In activity: an issue in a repository whose own file is invalid. */
 export const ActivityInvalidFile: Story<ThreadRowProps> = {
   args: { row: findActivityRow(4), width: 40 },
+};
+
+/** A finished pull request in a stack that ended within its target: the time it was open, the bar green. */
+export const FinishedWithin: Story<ThreadRowProps> = {
+  args: { row: findFinishedRow("example#2"), width: 40 },
+};
+
+/** A finished issue that ended past its target: how far past, in the error colour, the bar heavy. */
+export const FinishedOver: Story<ThreadRowProps> = {
+  args: { row: findFinishedRow("example#7"), width: 40 },
+};
+
+/** A finished draft a label exempts: no verdict and no bar, the ending's age bare. */
+export const FinishedExempt: Story<ThreadRowProps> = {
+  args: { row: findFinishedRow("example#9"), width: 40 },
 };
 
 /**

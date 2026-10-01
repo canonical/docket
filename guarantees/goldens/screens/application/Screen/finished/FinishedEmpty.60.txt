@@ -1,0 +1,43 @@
+60 columns, 24 lines
+|finished                         1w · by kind · newest first
+|
+|  nothing merged or closed in 1w
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|0 over · 0 merged · 0 closed
+|synced 2m ago
+|←→ mode ↑↓ sel ⏎ open g grp t time ?
+
+runs
+1:1 "finished                         1w · by kind · " fg #c6c8d1ff bg #161821ff
+1:49 "newest first" fg #6b7089ff bg #161821ff
+3:1 "  nothing merged or closed in 1w" fg #c6c8d1ff bg #161821ff
+22:1 "0 over · 0 merged · 0 closed" fg #c6c8d1ff bg #161821ff
+23:1 "synced 2m ago" fg #6b7089ff bg #161821ff
+24:1 "←→" fg #c6c8d1ff bg #161821ff
+24:3 " mode" fg #6b7089ff bg #161821ff
+24:8 " ↑↓" fg #c6c8d1ff bg #161821ff
+24:11 " sel" fg #6b7089ff bg #161821ff
+24:15 " ⏎" fg #c6c8d1ff bg #161821ff
+24:17 " open" fg #6b7089ff bg #161821ff
+24:22 " g" fg #c6c8d1ff bg #161821ff
+24:24 " grp" fg #6b7089ff bg #161821ff
+24:28 " t" fg #c6c8d1ff bg #161821ff
+24:30 " time" fg #6b7089ff bg #161821ff
+24:35 " ?" fg #c6c8d1ff bg #161821ff

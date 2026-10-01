@@ -24,6 +24,16 @@ const gutter = " ".repeat(indent - marginCells);
 const wordsCells = 4;
 
 /**
+ * Whether a bot made the event or ended the thread, whose line is then
+ * context, dimmed; failed checks are a line crossed, whoever ran them, so
+ * they never are.
+ */
+const isQuiet = (line: EventLineProps["line"]) =>
+  line.event
+    ? line.event.bot && line.event.kind !== "checksFailed"
+    : line.actor?.group === "bot";
+
+/**
  * What was done, in `room` cells, split about what it acted on: the
  * words before it, the target, and any words after it, the bracket
  * closing failed checks' names. The words give way first, cut at their
@@ -68,8 +78,8 @@ function describeAction(
  * mark with it; what they did gives way as `describeAction` cuts it.
  */
 function describeWhat(line: EventLineProps["line"], room: number): Piece[] {
-  const { event, actor } = line;
-  if (event.kind === "checksFailed") {
+  const { actor } = line;
+  if (line.event?.kind === "checksFailed") {
     const failed = `${tokens["glyph.failed"]} `;
     const error = tokens["color.text.error"];
     return [
@@ -77,7 +87,9 @@ function describeWhat(line: EventLineProps["line"], room: number): Piece[] {
       ...describeAction(line, room - measureText(failed), error),
     ];
   }
-  const tone = event.bot ? tokens["color.text.muted"] : tokens["color.text"];
+  const tone = isQuiet(line)
+    ? tokens["color.text.muted"]
+    : tokens["color.text"];
   const who = actor ? [markPerson(actor, loginCells)] : [];
   // A space between the actor and what they did.
   const what = describeAction(
@@ -93,23 +105,27 @@ function describeWhat(line: EventLineProps["line"], room: number): Piece[] {
 }
 
 /**
- * One event in activity, nested under its thread: who did what, and how
- * long ago at the right edge. The thread's margin runs beside it: no
- * clock runs in activity, so the bar's column is blank, and the stack
- * mark goes on under a stacked pull request. The line stays one line,
- * and the event gives way before the age does: the actor's login at 12
- * cells, then the words of what was done, then what it acted on. A bot's
- * age is dimmed with its event, failed checks aside; every other age is
- * plain.
+ * One event in activity, nested under its thread, or a finished thread's
+ * ending, its one event: who did what, and how long ago at the right
+ * edge. The thread's margin runs beside it: no clock runs in activity, so
+ * the bar's column is blank, while in finished the verdict's bar runs
+ * down to the ending and ends there; the stack mark goes on under a
+ * stacked pull request. The line stays one line, and the event gives way
+ * before the age does: the actor's login at 12 cells, then the words of
+ * what was done, then what it acted on. A bot's age is dimmed with its
+ * event, failed checks aside; every other age is plain.
  *
  * `import { EventLine } from "../lib/ui/index.js";`
  *
  * @implements apps_docket.component.event_line
  */
-const EventLine = ({ line, stacked, width }: EventLineProps): ReactNode => {
-  // Failed checks are a line crossed, whoever ran them, so only a bot's
-  // other events are dimmed as context.
-  const quiet = line.event.bot && line.event.kind !== "checksFailed";
+const EventLine = ({
+  line,
+  state,
+  stacked,
+  width,
+}: EventLineProps): ReactNode => {
+  const quiet = isQuiet(line);
   const age: Piece = {
     text: line.age.text,
     fg: quiet ? tokens["color.text.muted"] : tokens["color.text"],
@@ -119,7 +135,7 @@ const EventLine = ({ line, stacked, width }: EventLineProps): ReactNode => {
   const gap = " ".repeat(Math.max(1, room + 1 - measurePieces(what)));
   return (
     <box flexDirection="row" flexShrink={0}>
-      <Margin stacked={stacked} lines={1} ends />
+      <Margin state={state} stacked={stacked} lines={1} ends />
       <text>
         {gutter}
         {[...what, { text: gap, fg: tokens["color.text"] }, age].map(

@@ -5,9 +5,10 @@
  */
 
 import type { Repo, Settings } from "../lib/config/index.js";
-import type { FinishedThread } from "../lib/endings/index.js";
+import { type FinishedThread, timeEndings } from "../lib/endings/index.js";
 import {
   type FinishedGrouping,
+  type FinishedRow,
   groupEndings,
   listEndings,
   type RepoEndings,
@@ -119,7 +120,11 @@ export function repoEndings(
     repo,
     people: finishedSettings.people,
     settings: finishedSettings,
-    finished: finished.filter((thread) => thread.repo === repo.repo),
+    finished: timeEndings(
+      finished.filter((thread) => thread.repo === repo.repo),
+      { amount: 1, unit: "w" },
+      finishedSettings,
+    ),
     ...(invalid && repo.name === "docs" ? { invalidFile: true } : {}),
   }));
 }
@@ -167,3 +172,12 @@ export const duplicatesAndQuiet: readonly FinishedThread[] = [11, 12, 13].map(
             },
     }),
 );
+
+/** The row of finished's list, by kind, whose reference is `reference`. */
+export function findFinishedRow(reference: string): FinishedRow {
+  const row = finishedList()
+    .groups.flatMap(({ rows }) => rows)
+    .find((each) => each.reference.text === reference);
+  if (!row) throw new Error(`${reference} is not listed`);
+  return row;
+}

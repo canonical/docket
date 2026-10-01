@@ -4,6 +4,7 @@ import { at, finishedThread } from "../testing/facts.js";
 import {
   recordedFinished,
   recordedNow,
+  recordedSettings,
   recordedThreads,
   recordedWatched,
 } from "../testing/recorded.js";
@@ -22,6 +23,13 @@ const timed = new Map(
     ),
   ]),
 );
+
+/** `thread`, measured as it is when read, inside the window until `until`. */
+const timeUntil = (thread: (typeof recordedFinished)[number], until: Date) => {
+  const [ending] = timeEndings([thread], window, recordedSettings);
+  if (!ending) throw new Error("one ending is timed");
+  return { ...ending, until };
+};
 
 const references = (list: ReturnType<typeof buildFinished>) =>
   list.groups.flatMap(({ rows }) =>
@@ -88,7 +96,7 @@ describe("buildFinished", () => {
     const [thread] = recordedFinished;
     if (!thread) throw new Error("the recording holds a finished thread");
     const list = buildFinished(
-      new Map([[thread.repo, [{ thread, until: recordedNow }]]]),
+      new Map([[thread.repo, [timeUntil(thread, recordedNow)]]]),
       recordedThreads,
       recordedWatched(),
       window,
@@ -124,7 +132,9 @@ describe("buildFinished", () => {
     });
     const until = at("2026-10-05T00:00Z");
     const list = buildFinished(
-      new Map([[repo, [wrote, merged].map((thread) => ({ thread, until }))]]),
+      new Map([
+        [repo, [wrote, merged].map((thread) => timeUntil(thread, until))],
+      ]),
       [],
       recordedWatched(),
       { amount: 1, unit: "w" },
@@ -173,8 +183,8 @@ describe("buildFinished", () => {
         [
           repo,
           [
-            { thread: before, until: at("2026-09-08T00:00Z") },
-            { thread: inside, until: at("2026-10-05T00:00Z") },
+            timeUntil(before, at("2026-09-08T00:00Z")),
+            timeUntil(inside, at("2026-10-05T00:00Z")),
           ],
         ],
       ]),

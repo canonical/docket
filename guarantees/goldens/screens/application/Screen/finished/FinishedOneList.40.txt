@@ -1,0 +1,115 @@
+40 columns, 24 lines
+|finished    1w · one list · newest first
+|│┆example#1200 PR ● bob          open 3d
+|│┆Focus ring: token names          ● bob
+|╵┆  ◉ alice merged                    6h
+|│ docs#102 issue ○ dave          open 2d
+|│ Table: sticky header scrolls…  ◉ alice
+|╵   ◉ alice closed as completed       1d
+|┃┆example#1180 PR ● bob          4d over
+|┃┆Chip: token migration            ● bob
+|┃┆open 9d · target 5d
+|┃┆labels kind=feat
+|┃┆example stack 11 · 3 of 3 · → main
+|┃┆below #1179 merged
+|╹┆  ● bob merged                      2d
+|┃ docs#77 issue ◐ carol         10d over
+|┃ Tokens page: contrast       unassigned
+|╹   ● bob closed as not planned       2d
+|│ example#1244 PR ■ example-sync open 2d
+|│ Update dependency example-lib …  ● bob
+|╵   ● bob merged                      3d
+|  ↓ 2 below
+|3 over · 4 merged · 3 closed         3/7
+|synced 2m ago
+|←→ mode ↑↓ sel ⏎ open g grp t time ?
+
+runs
+1:1 "finished    1w · one list · " fg #c6c8d1ff bg #161821ff
+1:29 "newest first" fg #6b7089ff bg #161821ff
+2:1 "│" fg #b4be82ff bg #161821ff
+2:2 "┆" fg #6b7089ff bg #161821ff
+2:3 "example#1200 PR " fg #c6c8d1ff bg #161821ff bold
+2:19 "● bob" fg #84a0c6ff bg #161821ff bold
+2:24 "          open 3d" fg #c6c8d1ff bg #161821ff bold
+3:1 "│" fg #b4be82ff bg #161821ff
+3:2 "┆" fg #6b7089ff bg #161821ff
+3:3 "Focus ring: token names" fg #c6c8d1ff bg #161821ff italic
+3:36 "● bob" fg #84a0c6ff bg #161821ff
+4:1 "╵" fg #b4be82ff bg #161821ff
+4:2 "┆" fg #6b7089ff bg #161821ff
+4:5 "◉ alice" fg #84a0c6ff bg #161821ff
+4:12 " merged                    6h" fg #c6c8d1ff bg #161821ff
+5:1 "│" fg #b4be82ff bg #161821ff
+5:3 "docs#102 issue " fg #c6c8d1ff bg #161821ff bold
+5:18 "○ dave" fg #89b8c2ff bg #161821ff bold
+5:24 "          open 2d" fg #c6c8d1ff bg #161821ff bold
+6:1 "│" fg #b4be82ff bg #161821ff
+6:3 "Table: sticky header scrolls…" fg #c6c8d1ff bg #161821ff italic
+6:34 "◉ alice" fg #84a0c6ff bg #161821ff
+7:1 "╵" fg #b4be82ff bg #161821ff
+7:5 "◉ alice" fg #84a0c6ff bg #161821ff
+7:12 " closed as completed       1d" fg #c6c8d1ff bg #161821ff
+8:1 "┃" fg #e27878ff bg #2e3244ff
+8:2 "┆" fg #6b7089ff bg #2e3244ff
+8:3 "example#1180 PR " fg #c6c8d1ff bg #2e3244ff bold
+8:19 "● bob" fg #84a0c6ff bg #2e3244ff bold
+8:24 "          " fg #c6c8d1ff bg #2e3244ff bold
+8:34 "4d over" fg #e27878ff bg #2e3244ff bold
+9:1 "┃" fg #e27878ff bg #2e3244ff
+9:2 "┆" fg #6b7089ff bg #2e3244ff
+9:3 "Chip: token migration" fg #c6c8d1ff bg #2e3244ff italic
+9:24 "            " fg #c6c8d1ff bg #2e3244ff
+9:36 "● bob" fg #84a0c6ff bg #2e3244ff
+10:1 "┃" fg #e27878ff bg #2e3244ff
+10:2 "┆" fg #6b7089ff bg #2e3244ff
+10:3 "open 9d · target 5d" fg #c6c8d1ff bg #2e3244ff
+10:22 "                   " fg #ffffffff bg #2e3244ff
+11:1 "┃" fg #e27878ff bg #2e3244ff
+11:2 "┆" fg #6b7089ff bg #2e3244ff
+11:3 "labels kind=feat" fg #c6c8d1ff bg #2e3244ff
+11:19 "                      " fg #ffffffff bg #2e3244ff
+12:1 "┃" fg #e27878ff bg #2e3244ff
+12:2 "┆example stack 11 · 3 of 3 · → main" fg #6b7089ff bg #2e3244ff
+12:37 "    " fg #ffffffff bg #2e3244ff
+13:1 "┃" fg #e27878ff bg #2e3244ff
+13:2 "┆below #1179 merged" fg #6b7089ff bg #2e3244ff
+13:21 "                    " fg #ffffffff bg #2e3244ff
+14:1 "╹" fg #e27878ff bg #161821ff
+14:2 "┆" fg #6b7089ff bg #161821ff
+14:5 "● bob" fg #84a0c6ff bg #161821ff
+14:10 " merged                      2d" fg #c6c8d1ff bg #161821ff
+15:1 "┃" fg #e27878ff bg #161821ff
+15:3 "docs#77 issue " fg #c6c8d1ff bg #161821ff bold
+15:17 "◐ carol" fg #a093c7ff bg #161821ff bold
+15:33 "10d over" fg #e27878ff bg #161821ff bold
+16:1 "┃" fg #e27878ff bg #161821ff
+16:3 "Tokens page: contrast" fg #c6c8d1ff bg #161821ff italic
+16:24 "       unassigned" fg #c6c8d1ff bg #161821ff
+17:1 "╹" fg #e27878ff bg #161821ff
+17:5 "● bob" fg #84a0c6ff bg #161821ff
+17:10 " closed as not planned       2d" fg #c6c8d1ff bg #161821ff
+18:1 "│" fg #b4be82ff bg #161821ff
+18:3 "example#1244 PR " fg #c6c8d1ff bg #161821ff bold
+18:19 "■ example-sync" fg #6b7089ff bg #161821ff bold
+18:33 " open 2d" fg #c6c8d1ff bg #161821ff bold
+19:1 "│" fg #b4be82ff bg #161821ff
+19:3 "Update dependency example-lib …" fg #c6c8d1ff bg #161821ff italic
+19:36 "● bob" fg #84a0c6ff bg #161821ff
+20:1 "╵" fg #b4be82ff bg #161821ff
+20:5 "● bob" fg #84a0c6ff bg #161821ff
+20:10 " merged                      3d" fg #c6c8d1ff bg #161821ff
+21:1 "  ↓ 2 below" fg #6b7089ff bg #161821ff
+22:1 "3 over · 4 merged · 3 closed         3/7" fg #c6c8d1ff bg #161821ff
+23:1 "synced 2m ago" fg #6b7089ff bg #161821ff
+24:1 "←→" fg #c6c8d1ff bg #161821ff
+24:3 " mode" fg #6b7089ff bg #161821ff
+24:8 " ↑↓" fg #c6c8d1ff bg #161821ff
+24:11 " sel" fg #6b7089ff bg #161821ff
+24:15 " ⏎" fg #c6c8d1ff bg #161821ff
+24:17 " open" fg #6b7089ff bg #161821ff
+24:22 " g" fg #c6c8d1ff bg #161821ff
+24:24 " grp" fg #6b7089ff bg #161821ff
+24:28 " t" fg #c6c8d1ff bg #161821ff
+24:30 " time" fg #6b7089ff bg #161821ff
+24:35 " ?" fg #c6c8d1ff bg #161821ff

@@ -23,7 +23,7 @@ const listing: StandInProps = {
   nothingOwed: false,
   teamless: undefined,
   owedListed: true,
-  activity: undefined,
+  windowed: undefined,
   watched: recordedRepos,
   width: 40,
 };
@@ -174,7 +174,7 @@ describe("drawStandIn", () => {
     const screen = await drawFor({
       mode: "activity",
       owedListed: false,
-      activity: {
+      windowed: {
         problem: {
           code: "UNEXPECTED_FAILURE",
           message: "docket failed.",
@@ -202,7 +202,7 @@ describe("drawStandIn", () => {
         recovery: "report it",
       },
     };
-    expect(drawStandIn({ ...listing, activity })).toBeUndefined();
+    expect(drawStandIn({ ...listing, windowed: activity })).toBeUndefined();
   });
 
   it("stands in for nothing while activity's list is held", () => {
@@ -212,8 +212,23 @@ describe("drawStandIn", () => {
         ...listing,
         mode: "activity",
         owedListed: false,
-        activity,
+        windowed: activity,
       }),
     ).toBeUndefined();
+  });
+
+  it("says finished's window holds no thread once it is read", async () => {
+    const screen = await drawFor({
+      mode: "finished",
+      owedListed: false,
+      windowed: { list: undefined },
+      emptyWindow: { text: "nothing merged or closed in 24h", kind: "words" },
+    });
+    expect(screen.lines.at(0)).toBe("  nothing merged or closed in 24h");
+  });
+
+  it("says finished's window is being read while no list is held for it", async () => {
+    const screen = await drawFor({ mode: "finished", owedListed: false });
+    expect(screen.lines.at(0)).toBe("  refresh in progress…");
   });
 });

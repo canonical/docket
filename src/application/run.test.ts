@@ -139,6 +139,32 @@ describe("run", () => {
       expect(views).toHaveLength(3);
     });
 
+    it("opens finished at the window and grouping --window and --by name for docket finished in a terminal, and refuses one finished lacks before opening", async () => {
+      const views: TerminalView[] = [];
+      const openTerminal = async (view: TerminalView) => {
+        views.push(view);
+        return 0;
+      };
+      const terminal = { interactive: true, openTerminal };
+      const opened = await home.call(
+        ["finished", "--window", "1w", "--by", "ending"],
+        terminal,
+      );
+      expect([opened.code, opened.out, opened.err]).toEqual([0, "", ""]);
+      expect(views.map(({ mode, finished }) => [mode, finished])).toEqual([
+        ["finished", { window: { amount: 1, unit: "w" }, grouping: "ending" }],
+      ]);
+      const refused = await home.call(["finished", "--by", "owner"], terminal);
+      expect(refused.code).toBe(2);
+      expect(refused.err).toMatch(/USAGE_INVALID_VALUE/);
+      const piped = await home.call(["finished"], {
+        interactive: true,
+        interactiveInput: false,
+      });
+      expect(piped.out).toMatch(/^finished · /);
+      expect(views).toHaveLength(1);
+    });
+
     it("prints plain text to a terminal it cannot read keys from, and whatever --format names", async () => {
       const plain = await home.call(["owed", "--by", "owner"], {
         interactive: true,

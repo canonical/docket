@@ -363,11 +363,12 @@ export interface Cache {
    * resets. It writes nothing. docket's own background spending asks it
    * before each request: the refresh cycle, reading details ahead of the
    * selection, the watch of the selected thread's repository, and reading
-   * activity's events again at a sync.
+   * activity's events, or finished's threads with them, again at a sync.
    * What the user or an agent asks for directly never asks, and still
    * spends from the reserve: the selected thread's details, a full
    * refresh, `show`, the read after a write, the read of the viewer on
-   * opening, the first read of an activity window, and every text command.
+   * opening, the first read of an activity or finished window, and every
+   * text command.
    */
   maySpend(): boolean;
   /**

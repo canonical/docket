@@ -13,12 +13,50 @@ import {
   BotAuthor,
   BotAuthorSelected,
   DraftClose,
+  FinishedExempt,
+  FinishedOver,
+  FinishedWithin,
   OverReviewSelected,
   SharedClose,
   SoonReply,
 } from "./ThreadRow.stories.js";
 
 describe("ThreadRow", () => {
+  describe("in finished", () => {
+    it("gives a thread that ended within its target the time it was open, plain, beside a light green bar", async () => {
+      const screen = await draw(<ThreadRow {...FinishedWithin.args} />, 40);
+      expect(screen.lines.slice(0, 3)).toEqual([
+        "│┆example#2 PR ◉ alice           open 2d",
+        "╵┆Example change                 ◉ alice",
+        "",
+      ]);
+      expect(screen.look("│")?.fg).toBe(tokens["color.text.success"]);
+      expect(screen.look("open 2d")).toMatchObject({
+        fg: tokens["color.text"],
+        bold: true,
+      });
+    });
+
+    it("gives a thread that ended past its target how far past in the error colour, beside a heavy red bar", async () => {
+      const screen = await draw(<ThreadRow {...FinishedOver.args} />, 40);
+      expect(screen.lines.slice(0, 2)).toEqual([
+        "┃ example#7 issue ○ dave         7d over",
+        "╹ Dark mode everywhere        unassigned",
+      ]);
+      expect(screen.look("┃")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("7d over")?.fg).toBe(tokens["color.text.error"]);
+    });
+
+    it("leaves the bar's column blank on a thread a label exempts, its ending's age plain", async () => {
+      const screen = await draw(<ThreadRow {...FinishedExempt.args} />, 40);
+      expect(screen.lines.slice(0, 2)).toEqual([
+        "  example#9 PR ■ example-sync         2d",
+        "  Update dependency …  draft  unassigned",
+      ]);
+      expect(screen.look("2d")?.fg).toBe(tokens["color.text"]);
+    });
+  });
+
   describe("at 40 columns", () => {
     it("heads the row with the reference, both kinds, the author and the distance, the owner right-aligned below", async () => {
       const screen = await draw(<ThreadRow {...OverReviewSelected.args} />, 40);

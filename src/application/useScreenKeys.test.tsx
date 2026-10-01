@@ -16,7 +16,7 @@ function noting(ran: string[], label?: string): ScreenActions {
     (...args: unknown[]) =>
       ran.push([label, name, ...args].filter(Boolean).join(" "));
   return {
-    switchMode: note("switchMode"),
+    stepMode: note("stepMode"),
     moveSelection: note("moveSelection"),
     movePage: note("movePage"),
     moveToEnd: note("moveToEnd"),
@@ -121,10 +121,10 @@ describe("useScreenKeys", () => {
       ...["a", "r", "?", "R", "q"],
     );
     expect(ran).toEqual([
-      "switchMode owed",
-      "switchMode owed",
-      "switchMode activity",
-      "switchMode activity",
+      "stepMode -1",
+      "stepMode -1",
+      "stepMode 1",
+      "stepMode 1",
       "moveSelection -1",
       "moveSelection -1",
       "moveSelection 1",
@@ -143,7 +143,7 @@ describe("useScreenKeys", () => {
     ]);
   });
 
-  it("moves to the next time window in activity alone, and opens an editor in either mode, while the help lists every key in both modes", async () => {
+  it("moves to the next time window in activity, not in owed, and opens an editor there, while the help lists every key in both", async () => {
     const { ran, change, screen } = await bind();
     const owed = await press(screen, "t");
     await screen.redraw(() => change({ mode: "activity" }));
@@ -159,6 +159,13 @@ describe("useScreenKeys", () => {
         "← → g t ↑ ↓ ⇞ ⇟ home end ⏎ a r ? esc R q",
       ],
     ]);
+  });
+
+  it("moves to the next time window in finished, and opens no editor there, every finished thread being closed", async () => {
+    const { ran, screen } = await bind({ mode: "finished" });
+    const finished = await press(screen, "t", "a", "r");
+    expect(ran).toEqual(["nextWindow"]);
+    expect(finished.lines.at(0)).toBe("← → ↑ ↓ ⇞ ⇟ home end ⏎ g t ? R q");
   });
 
   it("runs the actions the screen gave last, though nothing else changed", async () => {

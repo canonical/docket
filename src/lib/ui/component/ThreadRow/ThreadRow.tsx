@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { Verdict } from "../../../endings/index.js";
 import type { WaitState } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
@@ -18,13 +19,24 @@ import type { ThreadRowProps } from "./types.js";
 
 /**
  * The colour of the distance: the error and warning colours when the wait
- * is over its target or due soon, as the bar has, and plain text on track.
+ * is over its target or due soon, as the bar has, and plain text on track;
+ * in finished, the error colour beside `over` past the target, and plain
+ * text within it, where the bar alone is green.
  */
-const distanceColours: Readonly<Record<WaitState, string>> = {
+const distanceColours: Readonly<Record<WaitState | Verdict, string>> = {
   over: tokens["color.text.error"],
   soon: tokens["color.text.warning"],
   onTrack: tokens["color.text"],
+  within: tokens["color.text"],
 };
+
+/**
+ * What the bar and the distance show: the running wait's state in owed,
+ * the verdict in finished, and nothing in activity or on a thread a label
+ * exempts.
+ */
+const readState = (row: ThreadRowProps["row"]) =>
+  "state" in row ? row.state : "verdict" in row ? row.verdict : undefined;
 
 /**
  * Below this many cells of login the author leaves the first line: `d…`
@@ -65,7 +77,7 @@ function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
       ? [space(1), markPerson(row.author, Math.min(loginCells, room))]
       : [];
   const left = [{ text: words, fg: text }, ...author];
-  const state = "state" in row ? row.state : undefined;
+  const state = readState(row);
   return [
     ...left,
     space(inner - measurePieces(left) - measureText(figure)),
@@ -90,22 +102,23 @@ const drawLine = (pieces: readonly Piece[], width: number) => (
 );
 
 /**
- * One thread in the list, two lines tall. The first line, the row's head
- * and the only bold text on the screen, carries the reference, the kind
- * of thread, the kind of wait, the author and the distance; the second
- * the title in italic, then at the right `draft`, any field in trouble
- * and the owner. Position carries each person's role: the person waiting
- * at the left of the first line, the person who owes at the right of the
- * second, each behind their group's mark. The same row serves both modes:
- * in owed the figure is the distance to target, coloured with the state
- * the bar marks; in activity the kind of wait is left out, the figure is
- * the age of the newest event, in the plain text colour, and the bar's
- * column is blank. When two or more people own the thread, a third line
- * lists every one of them, right-aligned, so the row's height says how
- * many own it. The selected row's title wraps in full rather than being
- * trimmed, with the group at its right on the title's last line when it
- * fits there. Selection is the only background, and it covers every line
- * of the selected row.
+ * One thread in the list, two lines tall. The first line, the row's head and
+ * the only bold text on the screen, carries the reference, the kind of thread,
+ * the kind of wait, the author and the distance; the second the title in
+ * italic, then at the right `draft`, any field in trouble and the owner.
+ * Position carries each person's role: the person waiting at the left of the
+ * first line, the person who owes at the right of the second, each behind their
+ * group's mark. The same row serves every mode: in owed the figure is the
+ * distance to target, coloured with the state the bar marks; in activity the
+ * kind of wait is left out, the figure is the age of the newest event, in the
+ * plain text colour, and the bar's column is blank; in finished the figure is
+ * the verdict, `4d over` in the error colour past the target or `open 3d`
+ * within it, and the bar gives it in its weight and hue. When two or more
+ * people own the thread, a third line lists every one of them, right-aligned,
+ * so the row's height says how many own it. The selected row's title wraps in
+ * full rather than being trimmed, with the group at its right on the title's
+ * last line when it fits there. Selection is the only background, and it covers
+ * every line of the selected row.
  *
  * `import { ThreadRow } from "../lib/ui/index.js";`
  *
@@ -129,7 +142,7 @@ const ThreadRow = ({
       }
     >
       <Margin
-        state={"state" in row ? row.state : undefined}
+        state={readState(row)}
         stacked={row.stacked}
         lines={1 + titles.length + owners.length}
         ends={!continued}

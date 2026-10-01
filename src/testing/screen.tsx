@@ -11,6 +11,7 @@ import Screen from "../application/Screen.js";
 import type { TerminalView } from "../application/types.js";
 import writeFromTerminal from "../application/writeFromTerminal.js";
 import type { CacheStatus } from "../lib/cache/index.js";
+import type { FinishedThread } from "../lib/endings/index.js";
 import type { Provider, ThreadDetail } from "../lib/provider/index.js";
 import type { Thread, ThreadSummary } from "../lib/waits/index.js";
 import { holdCache, settleStatus } from "./cache.js";
@@ -42,8 +43,9 @@ export interface ScreenFrameProps extends TerminalView {
 }
 
 /**
- * `source`, and a `settle` that waits until every read of whom an editor
- * offers, and every write one has begun, has its answer.
+ * `source`, and a `settle` that waits until every read of a window's
+ * events, every read of whom an editor offers, and every write one has
+ * begun, has its answer.
  */
 function watchSource(source: TerminalView["source"]) {
   const pending = new Set<Promise<unknown>>();
@@ -61,6 +63,7 @@ function watchSource(source: TerminalView["source"]) {
   if (!("cache" in source)) return { source, settle };
   const watched: Connected = {
     ...source,
+    readEvents: (repo, since) => watch(source.readEvents(repo, since)),
     readCandidates: (action, thread) =>
       watch(source.readCandidates(action, thread)),
     write: (request) => watch(source.write(request)),
@@ -178,9 +181,10 @@ export function standInGitHub(): Provider {
 }
 
 /**
- * The recording's source, with the cache's `status` and `threads`, the
- * accordion's details read by `read`, details read ahead by `details`,
- * and the editors reading and writing `github`, when each is given.
+ * The recording's source, with the cache's `status`, `threads` and
+ * `finished` threads, the accordion's details read by `read`, details
+ * read ahead by `details`, and the editors reading and writing `github`,
+ * when each is given.
  */
 export function connectRecording({
   status = settled,
@@ -188,18 +192,21 @@ export function connectRecording({
   read = readDetail(threads),
   details,
   github,
+  finished = [],
 }: {
   readonly status?: CacheStatus;
   readonly threads?: readonly Thread[];
   readonly read?: (thread: ThreadSummary) => Promise<ThreadDetail>;
   readonly details?: DetailReader;
   readonly github?: Provider;
+  readonly finished?: readonly FinishedThread[];
 } = {}): Connected {
   const cache = holdCache(
     { threads, syncedAt: status.syncedAt },
     status,
     recordedEvents,
     github,
+    finished,
   );
   return {
     cache,

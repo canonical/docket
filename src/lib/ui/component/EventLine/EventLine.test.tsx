@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
+import { findEventLine } from "../../../../testing/activity.js";
+import { findFinishedRow } from "../../../../testing/finished.js";
 import { draw } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import EventLine from "./EventLine.js";
-import { Bot, ChecksFailed, Long, Pushed } from "./EventLine.stories.js";
+import {
+  Bot,
+  ChecksFailed,
+  EndingOver,
+  EndingWithin,
+  Long,
+  Pushed,
+} from "./EventLine.stories.js";
+import type { EventLineProps } from "./types.js";
 
 describe("EventLine", () => {
   it("says who did what under its thread, the actor behind their mark, the stack mark running on beside it, with the age at the right edge at 40 columns", async () => {
@@ -39,6 +49,45 @@ describe("EventLine", () => {
     expect(screen.look("■ example-sync")?.fg).toBe(tokens["color.text.muted"]);
     expect(screen.look(" opened")?.fg).toBe(tokens["color.text.muted"]);
     expect(screen.look("3h")?.fg).toBe(tokens["color.text.muted"]);
+  });
+
+  it("ends a finished thread's heavy red bar on its ending, past its target", async () => {
+    const screen = await draw(<EventLine {...EndingOver.args} />, 40);
+    expect(screen.lines.at(0)).toBe("╹   ◉ alice closed as not planned     2d");
+    expect(screen.look("╹")?.fg).toBe(tokens["color.text.error"]);
+    expect(screen.look(" closed as not planned")?.fg).toBe(
+      tokens["color.text"],
+    );
+  });
+
+  it("ends a finished thread's light green bar on its ending, within its target, beside the stack mark", async () => {
+    const screen = await draw(<EventLine {...EndingWithin.args} />, 40);
+    expect(screen.lines.at(0)).toBe("╵┆  ● bob merged                     20h");
+    expect(screen.look("╵")?.fg).toBe(tokens["color.text.success"]);
+  });
+
+  it("dims an ending a bot made, as activity dims a bot's event", async () => {
+    const bot = {
+      ...findFinishedRow("example#2").ending,
+      actor: { text: "example-sync", kind: "person", group: "bot" },
+    } as const;
+    const screen = await draw(
+      <EventLine line={bot} state="within" stacked width={40} />,
+      40,
+    );
+    expect(screen.look(" merged")?.fg).toBe(tokens["color.text.muted"]);
+    expect(screen.look("20h")?.fg).toBe(tokens["color.text.muted"]);
+  });
+
+  it("takes a verdict for a finished thread's ending alone, never an activity event", async () => {
+    // @ts-expect-error an activity event carries no verdict.
+    const props: EventLineProps = {
+      line: findEventLine(12, 1),
+      stacked: true,
+      width: 40,
+      state: "over",
+    };
+    expect(props.state).toBe("over");
   });
 
   it("keeps the actor, its login cut at 12 cells, then cuts the words before the target, then the target", async () => {
@@ -151,8 +200,8 @@ describe("EventLine", () => {
   });
 
   it("draws what happened alone when no actor is named", async () => {
-    const { actor: _, ...line } = Pushed.args.line;
-    const screen = await draw(<EventLine {...Pushed.args} line={line} />, 40);
+    const { actor: _, ...line } = findEventLine(12, 1);
+    const screen = await draw(<EventLine line={line} stacked width={40} />, 40);
     expect(screen.lines.at(0)).toBe(` ┆  pushed 2 commits${" ".repeat(17)}25m`);
   });
 

@@ -10,6 +10,7 @@ import type {
   CachedThreads,
   CacheStatus,
 } from "../lib/cache/index.js";
+import type { FinishedThread } from "../lib/endings/index.js";
 import type { ThreadEvent } from "../lib/events/index.js";
 import type { Provider } from "../lib/provider/index.js";
 import type { Thread } from "../lib/waits/index.js";
@@ -28,8 +29,9 @@ export function settleStatus(now: Date): CacheStatus {
 }
 
 /**
- * A cache holding `threads` with `status`, and `events` for each
- * repository they name, as synced at the status's `syncedAt`. An
+ * A cache holding `threads` with `status`, and `events` and the
+ * `finished` threads for each repository they name, as synced at the
+ * status's `syncedAt`. An
  * assignment patched in shows on its thread until it is taken back, and
  * refreshing a repository, which a write does once GitHub answers, reads
  * its threads again from `github`'s snapshot when `github` is given.
@@ -39,13 +41,16 @@ export function holdCache(
   status: CacheStatus,
   events: readonly ThreadEvent[] = [],
   github?: Pick<Provider, "snapshot">,
+  finished: readonly FinishedThread[] = [],
 ): Cache {
   const syncedAt = status.syncedAt ?? new Date(0);
   const findHeldEvents = (repo: string, since = new Date(0)): CachedEvents => ({
     events: events.filter(
       (event) => event.thread.repo === repo && event.at >= since,
     ),
-    finished: [],
+    finished: finished.filter(
+      (thread) => thread.repo === repo && thread.ending.at >= since,
+    ),
     syncedAt,
   });
   let held = threads;

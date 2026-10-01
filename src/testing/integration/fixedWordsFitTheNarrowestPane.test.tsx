@@ -4,12 +4,19 @@ import useAddress, {
 } from "../../application/useAddress.js";
 import { activityGroupings, listEvents } from "../../lib/activity/index.js";
 import type { CacheStatus, RepoStage } from "../../lib/cache/index.js";
+import { timeEndings } from "../../lib/endings/index.js";
 import type { WindowEvent } from "../../lib/events/index.js";
+import {
+  finishedGroupings,
+  groupEndings,
+  listEndings,
+} from "../../lib/finished/index.js";
 import { createProvider } from "../../lib/github/index.js";
 import { listWaits, owedGroupings } from "../../lib/owed/index.js";
 import { describeBudget, type Problem } from "../../lib/text/index.js";
 import {
   CountsLine,
+  EmptyState,
   StatusLine,
   ThreadRow,
 } from "../../lib/ui/component/index.js";
@@ -21,7 +28,7 @@ import { measureText } from "../../lib/ui/fit/index.js";
 import { PaneHeader } from "../../lib/ui/subcomponent/index.js";
 import type { Wait } from "../../lib/waits/index.js";
 import { activityNow } from "../activity.js";
-import { alice, teamSettings, thread } from "../facts.js";
+import { alice, at, finishedThread, teamSettings, thread } from "../facts.js";
 import { longReview } from "../long.js";
 import { recordedNow, recordedSettings } from "../recorded.js";
 import { draftClose, overReview, soonReply } from "../rows.js";
@@ -169,6 +176,17 @@ describe("docket's own words at the narrowest pane", () => {
           }),
         ),
       ),
+      ...finishedGroupings.flatMap((grouping) =>
+        (["h", "d", "w"] as const).map(
+          (unit): UseAddressProps => ({
+            mode: "finished",
+            owedGrouping: "none",
+            finished: { grouping, window: { amount: 999, unit } },
+            windows: [{ amount: 999, unit }],
+            stacks: true,
+          }),
+        ),
+      ),
     ];
     /** The header the terminal draws for where it opens. */
     const Header = (props: UseAddressProps) => {
@@ -187,7 +205,7 @@ describe("docket's own words at the narrowest pane", () => {
       const line = (await draw(<Header {...props} />, minColumns)).lines.at(0);
       lines.push(line);
       expect(line).toMatch(
-        /^(owed|activity) +(one list|by \w+|\d+[hdw] · (one list|by \w+))( · (overdue|newest) first)?$/,
+        /^(owed|activity|finished) +(one list|by \w+|\d+[hdw] · (one list|by \w+))( · (overdue|newest) first)?$/,
       );
     }
     expect(lines).toContain(`owed${" ".repeat(12)}one list · overdue first`);
@@ -260,6 +278,78 @@ describe("docket's own words at the narrowest pane", () => {
       "999 threads",
       "999 events",
     ]);
+  });
+
+  it("holds the counts finished builds, three digits in each and in the position, leaving parts out whole, and its empty window's note", async () => {
+    const week = { amount: 999, unit: "w" } as const;
+    // 999 pull requests merged past their target, and 999 issues closed
+    // within theirs.
+    const merged = Array.from({ length: 999 }, (_, number) =>
+      finishedThread({ number, createdAt: at("2026-09-14T10:00+02:00") }),
+    );
+    const closed = merged.map((thread) => ({
+      ...thread,
+      kind: "issue" as const,
+      ending: { ...thread.ending, outcome: "closed" as const, label: "closed" },
+    }));
+    const { summary } = listEndings(
+      [
+        {
+          repo: { name: "example", repo: "example-org/example-repo", tags: [] },
+          people: teamSettings.people,
+          settings: teamSettings,
+          finished: timeEndings(
+            [...merged, ...closed],
+            { amount: 1, unit: "w" },
+            teamSettings,
+          ),
+        },
+      ],
+      recordedNow,
+    );
+    expect(summary.fields.map(({ text }) => text)).toEqual([
+      "999 over",
+      "999 merged",
+      "999 closed",
+    ]);
+    const lines: (string | undefined)[] = [];
+    for (const place of ["999/999/999", "999/999"]) {
+      const screen = await draw(
+        <CountsLine
+          summary={summary}
+          position={{ text: place, kind: "figure" }}
+          width={minColumns}
+        />,
+        minColumns,
+      );
+      lines.push(screen.lines.at(0));
+    }
+    expect(lines).toEqual([
+      `999 over · 999 merged${" ".repeat(8)}999/999/999`,
+      `999 over · 999 merged${" ".repeat(12)}999/999`,
+    ]);
+    // Narrower than the pane allows, the next part leaves: `merged`
+    // before `over`, which stays last.
+    const narrow = await draw(
+      <CountsLine
+        summary={summary}
+        position={{ text: "999/999/999", kind: "figure" }}
+        width={30}
+      />,
+      30,
+    );
+    expect(narrow.lines.at(0)).toBe(`999 over${" ".repeat(11)}999/999/999`);
+    const empty = groupEndings(
+      listEndings([], recordedNow),
+      { mode: "finished", window: week, grouping: "kind" },
+      [],
+    ).empty;
+    if (!empty) throw new Error("an empty window says so");
+    const note = await draw(
+      <EmptyState message={empty} width={minColumns} />,
+      minColumns,
+    );
+    expect(note.lines.at(0)).toBe("  nothing merged or closed in 999w");
   });
 
   it("holds each first-run stage in the 20 cells its column keeps", () => {

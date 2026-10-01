@@ -53,7 +53,7 @@ describe("renderFinished", () => {
     expect(lines("plain", "standard", "ending")).toEqual([
       "finished · 1w · by ending",
       "synced 2m ago",
-      "1 merged · 3 closed · 1 over",
+      "1 over · 1 merged · 3 closed",
       "",
       "closed as completed",
       "docs#4 · issue · open 4d",
@@ -95,7 +95,7 @@ describe("renderFinished", () => {
     expect(lines("plain", "summary")).toEqual([
       "finished · 1w · by kind",
       "synced 2m ago",
-      "1 merged · 3 closed · 1 over",
+      "1 over · 1 merged · 3 closed",
       "",
     ]);
   });

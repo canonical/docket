@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { finishedNow, repoEndings } from "../../testing/finished.js";
+import { completed, finishedNow, repoEndings } from "../../testing/finished.js";
 import listEndings from "./listEndings.js";
 
 describe("listEndings", () => {
@@ -15,10 +15,11 @@ describe("listEndings", () => {
 
   it("says what it counts, and how each measure stands across the list", () => {
     const list = listEndings(repoEndings(), finishedNow);
-    expect(list.summary).toEqual({
-      text: "1 merged · 3 closed · 1 over",
-      kind: "words",
-    });
+    expect(list.summary.fields.map(({ text }) => text)).toEqual([
+      "1 over",
+      "1 merged",
+      "3 closed",
+    ]);
     expect(list.measures).toEqual({
       close: { state: "measured", of: 3, pending: 0 },
       firstResponse: { state: "unsupported", of: 0, pending: 0 },
@@ -39,6 +40,54 @@ describe("listEndings", () => {
       ["example#7", undefined],
       ["example#9", undefined],
     ]);
+  });
+
+  it("names the pull request that closed an issue by its short name when its repository is watched, and whole otherwise", () => {
+    const elsewhere = {
+      ...completed,
+      ending: {
+        ...completed.ending,
+        closer: {
+          kind: "pullRequest" as const,
+          repo: "example-org/example-site",
+          number: 5,
+          url: "https://github.com/example-org/example-site/pull/5",
+        },
+      },
+    };
+    const closers = (threads: (typeof completed)[]) =>
+      listEndings(repoEndings(threads), finishedNow).rows.map(
+        ({ closer }) => closer,
+      );
+    expect(closers([completed])).toEqual([
+      { text: "example#2", kind: "identifier" },
+    ]);
+    expect(closers([elsewhere])).toEqual([
+      { text: "example-org/example-site#5", kind: "identifier" },
+    ]);
+  });
+
+  it("names no closer for an ending the provider records none for", () => {
+    const [, merged] = listEndings(repoEndings(), finishedNow).rows;
+    expect(merged).not.toHaveProperty("closer");
+  });
+
+  it("names no closer for an issue a commit or a project closed, only a pull request", () => {
+    const closedBy = (closer: (typeof completed)["ending"]["closer"]) => ({
+      ...completed,
+      ending: { ...completed.ending, closer },
+    });
+    const commit = {
+      kind: "commit",
+      oid: "abc123",
+      url: "https://example.com/c",
+    } as const;
+    const project = { kind: "project" } as const;
+    const { rows } = listEndings(
+      repoEndings([closedBy(commit), closedBy(project)]),
+      finishedNow,
+    );
+    expect(rows.map((row) => row.closer)).toEqual([undefined, undefined]);
   });
 
   it("marks the viewer as you", () => {

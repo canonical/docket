@@ -1,4 +1,7 @@
-import type { ActivityAddress } from "../lib/activity/index.js";
+import type {
+  ActivityAddress,
+  ThreadRow as ActivityThread,
+} from "../lib/activity/index.js";
 import type { Cache, CachedEvents } from "../lib/cache/index.js";
 import type {
   PersonalFile,
@@ -6,7 +9,8 @@ import type {
   Resolved,
   Settings,
 } from "../lib/config/index.js";
-import type { OwedGrouping } from "../lib/owed/index.js";
+import type { FinishedAddress, FinishedRow } from "../lib/finished/index.js";
+import type { OwedGrouping, WaitRow } from "../lib/owed/index.js";
 import type { Author } from "../lib/people/index.js";
 import type {
   Capability,
@@ -112,8 +116,11 @@ export interface Session {
   ) => Freshness;
 }
 
-/** The two modes of the terminal interface. */
-export type TerminalMode = "owed" | "activity";
+/** A row of any mode's list: owed's wait, or activity's or finished's thread. */
+export type ListRow = WaitRow | ActivityThread | FinishedRow;
+
+/** The modes of the terminal interface, in the order the arrows reach them. */
+export type TerminalMode = "owed" | "activity" | "finished";
 
 /** What the terminal interface shows, and where its data comes from. */
 export interface TerminalView {
@@ -131,13 +138,18 @@ export interface TerminalView {
    * list `t` steps through.
    */
   readonly activity?: Pick<ActivityAddress, "window" | "grouping">;
+  /**
+   * The window and grouping finished opens on, as `activity` names
+   * activity's for `docket finished`: the first of each when absent.
+   */
+  readonly finished?: Pick<FinishedAddress, "window" | "grouping">;
   /** The current time, read whenever an age is measured. */
   readonly now: () => Date;
   /** Opens a thread's page in the browser, and rejects when it cannot. */
   readonly openInBrowser: (url: string) => Promise<void>;
   /**
-   * The settings that hold across repositories: the activity windows
-   * and the time zone times are written in.
+   * The settings that hold across repositories: the windows activity and
+   * finished step through, and the time zone times are written in.
    */
   readonly settings: Settings;
   /**

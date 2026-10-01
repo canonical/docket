@@ -7,6 +7,7 @@ import {
   OnTrackThreeLines,
   OverInStack,
   SoonOpen,
+  WithinInStack,
 } from "./Margin.stories.js";
 
 describe("Margin", () => {
@@ -28,6 +29,13 @@ describe("Margin", () => {
     const screen = await draw(<Margin {...OnTrackThreeLines.args} />, 40);
     expect(screen.lines.slice(0, 4)).toEqual(["│┆", "│┆", "╵┆", ""]);
     expect(screen.look("│")?.fg).toBe(tokens["color.border"]);
+  });
+
+  it("draws a light bar in the success colour for a finished thread that ended within its target", async () => {
+    const screen = await draw(<Margin {...WithinInStack.args} />, 40);
+    expect(screen.lines.slice(0, 4)).toEqual(["│┆", "│┆", "╵┆", ""]);
+    expect(screen.look("│")?.fg).toBe(tokens["color.text.success"]);
+    expect(screen.look("╵")?.fg).toBe(tokens["color.text.success"]);
   });
 
   it("leaves the bar's column blank when no clock runs, keeping the stack mark", async () => {

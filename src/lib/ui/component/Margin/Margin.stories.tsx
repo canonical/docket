@@ -24,6 +24,11 @@ export const OnTrackThreeLines: Story<MarginProps> = {
   args: { state: "onTrack", stacked: true, lines: 3, ends: true },
 };
 
+/** A finished pull request in a stack that ended within its target, its ending following its row. */
+export const WithinInStack: Story<MarginProps> = {
+  args: { state: "within", stacked: true, lines: 3, ends: true },
+};
+
 /** A pull request in a stack, in activity, where no clock runs. */
 export const NoClock: Story<MarginProps> = {
   args: { stacked: true, lines: 2, ends: true },

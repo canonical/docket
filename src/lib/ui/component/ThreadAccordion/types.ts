@@ -1,4 +1,5 @@
 import type { People } from "../../../config/index.js";
+import type { FinishedRow } from "../../../finished/index.js";
 import type {
   Field,
   FieldKind,
@@ -100,33 +101,14 @@ export interface RestingThread {
   readonly invalidFile?: Field;
 }
 
-/** Props for the ThreadAccordion component. */
-export interface ThreadAccordionProps {
-  /**
-   * The selected row's running wait, whose kind decides the body, or the
-   * thread at rest, which takes the close body.
-   * Maps to DSL role: reply body, review body, close body (cardinality: 1)
-   */
-  row: WaitRow | RestingThread;
-  /**
-   * The thread's details as the provider reads them: until they arrive the
-   * accordion shows what the snapshot holds, and the reason if they fail.
-   * While reading is paused, what the snapshot holds, or when reading
-   * resumes.
-   * Maps to DSL role: loading line, loaded body, failed line (cardinality: 1)
-   */
-  detail: Promise<ShownDetail>;
+/** The props every row's accordion takes. */
+interface AccordionProps {
   /**
    * The kind of the running wait of each thread in the list, by
    * reference, such as `review` for `example#13`, which names the
    * neighbours of a pull request in its stack.
    */
   waiting: Readonly<Record<string, string>>;
-  /**
-   * Whether the list runs a clock, as owed does, so the item's state bar
-   * runs down beside the accordion; in activity its column is blank.
-   */
-  clock: boolean;
   /** The instant ages are measured at. */
   now: Date;
   /** The time zone a time of day is written in, such as `Europe/Paris`. */
@@ -139,3 +121,51 @@ export interface ThreadAccordionProps {
    */
   onLines?: (lines: number) => void;
 }
+
+/**
+ * Props for the ThreadAccordion component: owed's wait or a thread at
+ * rest, whose lines wait on its details, or a finished thread, whose
+ * lines come with the list.
+ */
+export type ThreadAccordionProps = AccordionProps &
+  (
+    | {
+        /**
+         * The selected row's running wait, whose kind decides the body,
+         * or the thread at rest, which takes the close body.
+         * Maps to DSL role: reply body, review body, close body (cardinality: 1)
+         */
+        row: WaitRow | RestingThread;
+        /**
+         * The thread's details as the provider reads them: until they
+         * arrive the accordion shows what the snapshot holds, and the
+         * reason if they fail. While reading is paused, what the
+         * snapshot holds, or when reading resumes.
+         * Maps to DSL role: loading line, loaded body, failed line (cardinality: 1)
+         */
+        detail: Promise<ShownDetail>;
+        /**
+         * Whether the list runs a clock, as owed does, so the wait's
+         * state bar runs down beside the accordion; in activity its
+         * column is blank.
+         */
+        clock: boolean;
+      }
+    | {
+        /**
+         * A finished thread, which takes the finished body, its bar its
+         * verdict.
+         * Maps to DSL role: finished body (cardinality: 1)
+         */
+        row: FinishedRow;
+        /**
+         * The details its stack's neighbours wait on, for a pull request
+         * in a stack; absent otherwise, when the accordion shows what the
+         * list gives and reads nothing.
+         * Maps to DSL role: loaded body, failed line (cardinality: 0..1)
+         */
+        detail?: Promise<ShownDetail>;
+        /** A finished thread's bar is its verdict, so it takes no clock. */
+        clock?: never;
+      }
+  );

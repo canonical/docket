@@ -38,9 +38,7 @@ export default function buildFinished(
     const { settings, repositoryErrors } = repo.resolved;
     const own = threads.filter((thread) => thread.repo === repo.repo);
     const held = endings.get(repo.repo) ?? [];
-    const finished = held
-      .filter(({ until }) => until >= now)
-      .map(({ thread }) => thread);
+    const finished = held.filter(({ until }) => until >= now);
     return {
       repo,
       people: gatherPeople(

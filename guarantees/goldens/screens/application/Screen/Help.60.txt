@@ -2,12 +2,14 @@
 |help
 |
 |Mode ───────────────────────────────────────────────────────
-|  ← →  h l switch mode (owed ↔ activity)
+|  ← →  h l switch mode
+|           owed → activity → finished
 |           docket opens owed
 |  g        next grouping
-|  t        next time window (activity)
+|  t        next time window
 |           owed: most overdue first
 |           activity: newest first
+|           finished: newest first
 |
 |List ───────────────────────────────────────────────────────
 |  ↑ ↓  k j move the selection
@@ -31,37 +33,37 @@
 |  ?        show or hide help
 |  esc      close help
 |  R        full refresh
-|  q        quit
 |
-|  windows are counted in working time
+|  ↓ 1 below
 
 runs
 1:1 "help                                                        " fg #c6c8d1ff bg #161821ff
 3:1 "Mode ───────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
-4:1 "  ← →  h l switch mode (owed ↔ activity)" fg #c6c8d1ff bg #161821ff
-5:1 "           docket opens owed" fg #c6c8d1ff bg #161821ff
-6:1 "  g        next grouping" fg #c6c8d1ff bg #161821ff
-7:1 "  t        next time window (activity)" fg #c6c8d1ff bg #161821ff
-8:1 "           owed: most overdue first" fg #c6c8d1ff bg #161821ff
-9:1 "           activity: newest first" fg #c6c8d1ff bg #161821ff
-11:1 "List ───────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
-12:1 "  ↑ ↓  k j move the selection" fg #c6c8d1ff bg #161821ff
-13:1 "           (opens the accordion)" fg #c6c8d1ff bg #161821ff
-14:1 "  ⇞ ⇟      a page up or down" fg #c6c8d1ff bg #161821ff
-15:1 "  home end the first or last thread" fg #c6c8d1ff bg #161821ff
-17:1 "Thread ─────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
-18:1 "  ⏎        open in the browser" fg #c6c8d1ff bg #161821ff
-19:1 "  a        assign" fg #c6c8d1ff bg #161821ff
-20:1 "  r        request review" fg #c6c8d1ff bg #161821ff
-22:1 "Editor ─────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
-23:1 "  type     filter" fg #c6c8d1ff bg #161821ff
-24:1 "  ↑ ↓      move" fg #c6c8d1ff bg #161821ff
-25:1 "  ␣        toggle" fg #c6c8d1ff bg #161821ff
-26:1 "  ⏎        apply" fg #c6c8d1ff bg #161821ff
-27:1 "  esc      cancel" fg #c6c8d1ff bg #161821ff
-29:1 "App ────────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
-30:1 "  ?        show or hide help" fg #c6c8d1ff bg #161821ff
-31:1 "  esc      close help" fg #c6c8d1ff bg #161821ff
-32:1 "  R        full refresh" fg #c6c8d1ff bg #161821ff
-33:1 "  q        quit" fg #c6c8d1ff bg #161821ff
-35:1 "  windows are counted in working time" fg #c6c8d1ff bg #161821ff
+4:1 "  ← →  h l switch mode" fg #c6c8d1ff bg #161821ff
+5:1 "           owed → activity → finished" fg #c6c8d1ff bg #161821ff
+6:1 "           docket opens owed" fg #c6c8d1ff bg #161821ff
+7:1 "  g        next grouping" fg #c6c8d1ff bg #161821ff
+8:1 "  t        next time window" fg #c6c8d1ff bg #161821ff
+9:1 "           owed: most overdue first" fg #c6c8d1ff bg #161821ff
+10:1 "           activity: newest first" fg #c6c8d1ff bg #161821ff
+11:1 "           finished: newest first" fg #c6c8d1ff bg #161821ff
+13:1 "List ───────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
+14:1 "  ↑ ↓  k j move the selection" fg #c6c8d1ff bg #161821ff
+15:1 "           (opens the accordion)" fg #c6c8d1ff bg #161821ff
+16:1 "  ⇞ ⇟      a page up or down" fg #c6c8d1ff bg #161821ff
+17:1 "  home end the first or last thread" fg #c6c8d1ff bg #161821ff
+19:1 "Thread ─────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
+20:1 "  ⏎        open in the browser" fg #c6c8d1ff bg #161821ff
+21:1 "  a        assign" fg #c6c8d1ff bg #161821ff
+22:1 "  r        request review" fg #c6c8d1ff bg #161821ff
+24:1 "Editor ─────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
+25:1 "  type     filter" fg #c6c8d1ff bg #161821ff
+26:1 "  ↑ ↓      move" fg #c6c8d1ff bg #161821ff
+27:1 "  ␣        toggle" fg #c6c8d1ff bg #161821ff
+28:1 "  ⏎        apply" fg #c6c8d1ff bg #161821ff
+29:1 "  esc      cancel" fg #c6c8d1ff bg #161821ff
+31:1 "App ────────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
+32:1 "  ?        show or hide help" fg #c6c8d1ff bg #161821ff
+33:1 "  esc      close help" fg #c6c8d1ff bg #161821ff
+34:1 "  R        full refresh" fg #c6c8d1ff bg #161821ff
+36:1 "  ↓ 1 below" fg #6b7089ff bg #161821ff

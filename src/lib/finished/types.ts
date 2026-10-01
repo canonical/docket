@@ -4,6 +4,7 @@ import type {
   Aggregate,
   Coverage,
   FinishedThread,
+  MeasuredEnding,
   MeasureKind,
   Measures,
   Verdict,
@@ -32,7 +33,8 @@ export interface RepoEndings {
   readonly people: People;
   /** The settings in effect for the repository, which measure its threads. */
   readonly settings: Settings;
-  readonly finished: readonly FinishedThread[];
+  /** The threads that finished, each with what its ending measures. */
+  readonly finished: readonly MeasuredEnding[];
   /**
    * Whether the repository's own file is invalid, so its settings are the
    * built-in defaults.
@@ -57,6 +59,8 @@ export interface FinishedRow {
   readonly thread: FinishedThread;
   /** The short name of the thread's repository. */
   readonly repo: string;
+  /** Whether the pull request sits in a stack, shown by the margin's mark. */
+  readonly stacked: boolean;
   /** `example#12`. */
   readonly reference: Field;
   /** `issue` or `PR`. */
@@ -78,6 +82,12 @@ export interface FinishedRow {
   readonly draft?: Field;
   /** The row's one event line. */
   readonly ending: EndingLine;
+  /**
+   * The pull request that closed it, where the provider records one:
+   * `example#1200`, by the short name of a watched repository, else by
+   * its `owner/name`.
+   */
+  readonly closer?: Field;
   /** How long the thread was open, in working time: `open 9d`. */
   readonly open: Field;
   /** Time to close's target, `target 5d`; absent when a label exempts the thread. */
@@ -125,8 +135,8 @@ export interface EndingList {
   readonly counts: FinishedCounts;
   /** How each measure stands across the rows. */
   readonly measures: { readonly [Kind in MeasureKind]: Coverage };
-  /** `4 merged · 3 closed · 3 over`. */
-  readonly summary: Field;
+  /** `3 over · 4 merged · 3 closed`, each part a field, most urgent first. */
+  readonly summary: FieldList;
 }
 
 /** A section of the list; without a heading when the list is not grouped. */

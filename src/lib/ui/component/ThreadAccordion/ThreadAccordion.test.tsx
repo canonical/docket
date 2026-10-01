@@ -10,8 +10,10 @@ import {
   longReviewDetail,
   longSharedReview,
 } from "../../../../testing/long.js";
+import { recordedNow } from "../../../../testing/recorded.js";
 import { measureRow, overReview, soonReply } from "../../../../testing/rows.js";
 import { drawSuspending, type Screen } from "../../../../testing/terminal.js";
+import type { FinishedRow } from "../../../finished/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import { tokens } from "../../../tokens/index.js";
 import ThreadAccordion from "./ThreadAccordion.js";
@@ -26,10 +28,23 @@ import {
   RestingLoading,
   Review,
 } from "./ThreadAccordion.stories.js";
-import type { ThreadAccordionProps } from "./types.js";
+import type { ShownDetail, ThreadAccordionProps } from "./types.js";
 
 /** The accordion's text on each line, beside the item's two-cell margin. */
 const readText = (screen: Screen) => screen.lines.map((line) => line.slice(2));
+
+/** The accordion under finished's `row`, as finished's list gives it. */
+const _underFinished = (
+  row: FinishedRow,
+  detail?: Promise<ShownDetail>,
+): ThreadAccordionProps => ({
+  row,
+  waiting: {},
+  now: recordedNow,
+  timezone: "Europe/Paris",
+  width: 40,
+  ...(detail && { detail }),
+});
 
 /** Draws the accordion, and lets details already read arrive. */
 const open = (props: ThreadAccordionProps, width = props.width) =>

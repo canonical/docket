@@ -7,11 +7,24 @@ import {
   mergedChange,
   notPlanned,
 } from "../../testing/finished.js";
+import { type FinishedThread, timeEndings } from "../endings/index.js";
 import buildRow from "./buildRow.js";
 
 const { people } = finishedSettings;
-const build = (thread = mergedChange, viewer?: string) =>
-  buildRow(thread, "example", people, finishedSettings, finishedNow, viewer);
+/** Measures `thread`'s ending, as it is when read, and builds its row. */
+function build(thread: FinishedThread = mergedChange, viewer?: string) {
+  const window = { amount: 1, unit: "w" } as const;
+  const [ending] = timeEndings([thread], window, finishedSettings);
+  if (!ending) throw new Error("one ending is measured");
+  return buildRow(
+    ending,
+    "example",
+    people,
+    finishedSettings,
+    finishedNow,
+    viewer,
+  );
+}
 const text = (field: { text: string } | undefined) => field?.text;
 
 describe("buildRow", () => {
@@ -75,6 +88,11 @@ describe("buildRow", () => {
       "bob",
     ]);
     expect(build(mergedChange, "alice").owner).toMatchObject({ group: "you" });
+  });
+
+  it("marks a pull request in a stack, and nothing else", () => {
+    expect(build(mergedChange).stacked).toBe(true);
+    expect(build(notPlanned).stacked).toBe(false);
   });
 
   it("writes an ending nobody is recorded for in the provider's words alone", () => {

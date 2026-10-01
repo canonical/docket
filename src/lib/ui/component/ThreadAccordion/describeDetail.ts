@@ -1,4 +1,5 @@
 import { describeAge, describeClock } from "../../../activity/index.js";
+import type { FinishedRow } from "../../../finished/index.js";
 import {
   describePerson,
   type Owner,
@@ -82,7 +83,10 @@ const listPeople = (owners: readonly Owner[]): Piece[] =>
  */
 const decodeLabel = (label: string) => label.replace(/^([^:=]+):\s*/, "$1=");
 
-const listOwners = ({ owner, owners }: WaitRow): Owner[] =>
+const listOwners = ({
+  owner,
+  owners,
+}: Pick<WaitRow, "owner" | "owners">): Owner[] =>
   owners ? [...owners.fields] : owner ? [owner] : [];
 
 /**
@@ -93,7 +97,9 @@ const listOwners = ({ owner, owners }: WaitRow): Owner[] =>
  * `organisation/team`, never earns the line, cut or not: on a stacked
  * review the line would push the checks out.
  */
-function describeCutOwners(row: WaitRow): DetailLine[] {
+function describeCutOwners(
+  row: Pick<WaitRow, "owner" | "owners">,
+): DetailLine[] {
   const owners = listOwners(row);
   const cut = owners.some(
     ({ text }) => !text.includes("/") && measureText(text) > loginCells,
@@ -303,6 +309,36 @@ function describeRest(
 }
 
 /**
+ * A finished thread, from the list alone: what line 1 does not say of its
+ * time to close, `open 9d · target 5d` past the target and `target 30d`
+ * within it, and nothing where a label exempts it; the pull request that
+ * closed it, `closed in example#1200`, docket's words dimmed and whole and
+ * the reference cut if it must be; its labels; and its owners, whole, when
+ * the row cuts a person's login.
+ */
+function describeFinished(row: FinishedRow): DetailLine[] {
+  const { target, over, open, closer } = row;
+  const measure =
+    target && (over ? `${open.text} · ${target.text}` : target.text);
+  const labels = row.thread.labels.map(decodeLabel).join(" · ") || "none";
+  return [
+    ...(measure ? [describeWrappingLine(plain(measure))] : []),
+    ...(closer
+      ? [
+          {
+            pieces: [muted("closed in "), plain(closer.text)],
+            kind: "identifier",
+            most: 1,
+            cuts: 1,
+          } as const,
+        ]
+      : []),
+    describeWrappingLine(plain(`labels ${labels}`)),
+    ...describeCutOwners(row),
+  ];
+}
+
+/**
  * The two dimmed lines that end a stacked pull request's accordion. The
  * place line names the stack and the place in it, from the snapshot, on
  * one line: docket's words and the place stay whole, the repository's
@@ -376,10 +412,12 @@ function describeStack(
  * nothing, says `loading…` until its details give the close body.
  * Details marked `partial`, what the snapshot holds while reading is
  * paused, complete no line, and give a thread no wait runs on its close
- * body. Text is given whole: the accordion fits it to its lines.
+ * body. A finished thread's lines all come with the list, so nothing
+ * reads `loading…`, and only its stack's neighbours wait on the details.
+ * Text is given whole: the accordion fits it to its lines.
  */
 export default function describeDetail(
-  row: WaitRow | RestingThread,
+  row: WaitRow | RestingThread | FinishedRow,
   detail: Exclude<ShownDetail, { readonly resumes: Date }> | undefined,
   reading: Reading,
 ): DetailText {
@@ -390,6 +428,12 @@ export default function describeDetail(
   const trouble = row.invalidFile
     ? [describeWrappingLine(failed(row.invalidFile.text))]
     : [];
+  if ("ending" in row) {
+    return {
+      body: [...trouble, ...describeFinished(row)],
+      stack: describeStack(row.repo, row.thread, read, reading),
+    };
+  }
   if (!("wait" in row)) {
     if (!detail) {
       return {

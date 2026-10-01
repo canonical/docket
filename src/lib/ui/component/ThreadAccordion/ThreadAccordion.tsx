@@ -6,6 +6,7 @@ import {
   useLayoutEffect,
 } from "react";
 import { describeClock } from "../../../activity/index.js";
+import type { Verdict } from "../../../endings/index.js";
 import type { WaitRow } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
@@ -18,23 +19,41 @@ import describeDetail, { type Reading } from "./describeDetail.js";
 import fitAccordion from "./fitAccordion.js";
 import type { ShownDetail, ThreadAccordionProps } from "./types.js";
 
-/** What the item's margin shows beside the accordion: the row's state and stack. */
+/**
+ * What the item's margin shows beside the accordion: the row's state and
+ * stack, and whether the item ends with it, where the bar then stops.
+ */
 interface Stroke {
-  readonly state?: WaitRow["state"];
+  readonly state?: WaitRow["state"] | Verdict;
   readonly stacked: boolean;
+  readonly ends: boolean;
 }
 
 /**
  * The margin the item's bar and stack mark run down, from the row above:
- * the bar only where the list runs a clock.
+ * the bar only where the list runs a clock. A finished thread's ending
+ * follows its accordion, so its bar runs on past the accordion's last line.
  */
-const findStroke = (
+function findStroke(
   row: ThreadAccordionProps["row"],
-  clock: boolean,
-): Stroke =>
-  "wait" in row
-    ? { ...(clock ? { state: row.state } : {}), stacked: row.stacked }
-    : { stacked: row.thread.stack !== undefined };
+  clock: boolean | undefined,
+): Stroke {
+  if ("wait" in row) {
+    return {
+      ...(clock ? { state: row.state } : {}),
+      stacked: row.stacked,
+      ends: true,
+    };
+  }
+  if ("ending" in row) {
+    return {
+      ...(row.verdict ? { state: row.verdict } : {}),
+      stacked: row.stacked,
+      ends: false,
+    };
+  }
+  return { stacked: row.thread.stack !== undefined, ends: true };
+}
 
 /**
  * Draws the lines given with the item's margin beside them, the bar
@@ -60,7 +79,7 @@ const Lines = ({
       flexShrink={0}
       backgroundColor={tokens["color.background.selected"]}
     >
-      <Margin {...stroke} lines={lines.length} ends />
+      <Margin {...stroke} lines={lines.length} />
       <box flexDirection="column">
         {lines.map((line, place) => (
           // The accordion's lines never reorder, so their place is their key.
@@ -83,7 +102,9 @@ const Lines = ({
 /**
  * The details, once they have arrived, filling the snapshot's lines in
  * place, or, while reading is paused, what the snapshot holds or when
- * reading resumes.
+ * reading resumes. A finished thread's lines come with the list, so while
+ * reading is paused it draws them as it does while a read is under way,
+ * the stack's neighbours ending in a dimmed `…`.
  */
 const Loaded = ({
   detail,
@@ -101,7 +122,11 @@ const Loaded = ({
   readonly onLines: ThreadAccordionProps["onLines"];
 }): ReactNode => {
   const shown = use(detail);
-  if ("resumes" in shown) {
+  // A pause leaves a finished thread with what the list gives, drawn as
+  // while a read is under way; only a thread with nothing held says when
+  // reading resumes.
+  const read = "resumes" in shown ? undefined : shown;
+  if ("resumes" in shown && !("ending" in row)) {
     const paused = `paused · resumes ${describeClock(shown.resumes, reading.timezone)}`;
     return (
       <Lines
@@ -120,7 +145,7 @@ const Loaded = ({
   }
   return (
     <Lines
-      lines={fitAccordion(describeDetail(row, shown, reading), room)}
+      lines={fitAccordion(describeDetail(row, read, reading), room)}
       stroke={stroke}
       onLines={onLines}
     />
@@ -203,8 +228,10 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
         : reasons),
       ...steps,
     ];
+    // A thread the snapshot holds, owed's wait or a finished one, keeps
+    // its lines above the reason.
     const shown =
-      "wait" in snapshot
+      "wait" in snapshot || "ending" in snapshot
         ? fitAccordion(
             describeDetail(snapshot, undefined, reading),
             room,
@@ -218,23 +245,23 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
 }
 
 /**
- * The detail that opens under the selected row. Only one is open at a
- * time, and the selected row stays anchored above it. It is as tall as
- * its content, at most eight lines, and wrapped to the pane beside the
- * item's margin, whose bar runs down from the row and ends on its last
- * line. Its lines come from the snapshot at once, so the list makes room
- * for them before any read; a line the details complete ends in a dimmed
- * `…` and grows in place when they arrive, and nothing blanks or changes
- * height meanwhile. It reads its details from GitHub, so a slow read
- * never holds up moving the selection, and a failed one adds its reason
- * and its `Recovery:` line, each wrapped, under what the snapshot showed. While reading is paused
- * it shows what the snapshot holds, as it does while a read is under way,
- * and for a thread the snapshot holds nothing of, `paused · resumes 13:00`,
- * dimmed. Details that make it taller than the snapshot's lines, such as
- * a closed thread's close body or a failed read's lines, are told through
- * `onLines`, so the list can make room. The thread's content wears no
- * state mark: docket's own words about it are dimmed, and each login
- * carries its group's mark and hue.
+ * The detail that opens under the selected row. Only one is open at a time, and
+ * the selected row stays anchored above it. It is as tall as its content, at
+ * most eight lines, and wrapped to the pane beside the item's margin, whose bar
+ * runs down from the row and ends on its last line, or, under a finished
+ * thread, runs on to its ending. Its lines come from the snapshot at once, so
+ * the list makes room for them before any read; a line the details complete
+ * ends in a dimmed `…` and grows in place when they arrive, and nothing blanks
+ * or changes height meanwhile. It reads its details from GitHub, so a slow read
+ * never holds up moving the selection, and a failed one adds its reason and its
+ * `Recovery:` line, each wrapped, under what the snapshot showed. While reading
+ * is paused it shows what the snapshot holds, as it does while a read is under
+ * way, and for a thread the snapshot holds nothing of, `paused · resumes
+ * 13:00`, dimmed. Details that make it taller than the snapshot's lines, such
+ * as a closed thread's close body or a failed read's lines, are told through
+ * `onLines`, so the list can make room. The thread's content wears no state
+ * mark: docket's own words about it are dimmed, and each login carries its
+ * group's mark and hue.
  *
  * `import { ThreadAccordion } from "../lib/ui/index.js";`
  *
@@ -253,6 +280,15 @@ const ThreadAccordion = ({
   const reading = { now, timezone, waiting };
   const room = width - marginCells;
   const stroke = findStroke(row, clock);
+  if (!detail) {
+    return (
+      <Lines
+        lines={fitAccordion(describeDetail(row, undefined, reading), room)}
+        stroke={stroke}
+        onLines={onLines}
+      />
+    );
+  }
   return (
     <Boundary
       detail={detail}
