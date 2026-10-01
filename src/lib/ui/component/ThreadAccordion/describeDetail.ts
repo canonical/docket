@@ -318,7 +318,7 @@ function describeStack(
     cuts: 2,
   };
   if (size < 2) return [place];
-  if (!detail) return [place, trimmed(muted(tokens["glyph.cut"]))];
+  if (!detail) return [place, pendingLine()];
   const describeNeighbour = (side: string, at: number) => {
     const member = detail.stack?.find((each) => each.position === at);
     if (!member) return [];

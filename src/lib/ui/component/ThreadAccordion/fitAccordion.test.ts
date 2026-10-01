@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { recordedNow } from "../../../../testing/recorded.js";
+import { overReview } from "../../../../testing/rows.js";
 import { tokens } from "../../../tokens/index.js";
+import describeDetail from "./describeDetail.js";
 import fitAccordion from "./fitAccordion.js";
 import type { DetailLine } from "./types.js";
 
@@ -271,6 +274,15 @@ describe("fitAccordion", () => {
     };
     expect(read(fitAccordion(text, 5, 2))).toEqual(["a b c"]);
     expect(read(fitAccordion(text, 10, 2))).toEqual(["a b c", "since then"]);
+  });
+
+  it("keeps the one dimmed … of a stack's neighbours still to come when the accordion's last line ends", () => {
+    const reading = { now: recordedNow, timezone: "Europe/Paris", waiting: {} };
+    const { stack } = describeDetail(overReview, undefined, reading);
+    expect(read(fitAccordion({ body: [owners], stack }, 40, 2))).toEqual([
+      "example stack 3 · 2 of 3 · → main",
+      "…",
+    ]);
   });
 
   it("holds at most eight lines unless told otherwise", () => {
