@@ -34,14 +34,17 @@ interface BudgetKeeperOptions {
 /**
  * The keeping of the budgets a process heard in the budget file, so every
  * docket process judges the floor on them. The status says the floor at
- * once. When the file lacks any of the figures, they are merged into it
- * under the file's own lock, which is held only to read, merge and write
- * it: of each kind the later report stays, so an older figure never
- * overwrites a newer one, and the fetch lock plays no part. One keeping
- * runs at a time: a call made while one runs joins it, and it runs once
- * more for the figures heard meanwhile. It never fails: a keeping that
- * cannot read, lock or write the file is dropped, its lock let go, and the
- * next keeping carries the figures.
+ * once. When this process heard anything since it last read or wrote the
+ * file, the figures are merged into it under the file's own lock, which is
+ * held only to read, merge and write it: of each kind the later report
+ * stays, so an older figure never overwrites a newer one, and the fetch
+ * lock plays no part. The lock is checked to be still this keeping's before
+ * the write, and again before it is let go: a takeover before the write
+ * means no write, and a lock taken over is never removed. One keeping runs
+ * at a time: a call made while one runs joins it, and it runs once more for
+ * the figures heard meanwhile. It never fails: a keeping that cannot read,
+ * lock or write the file is dropped and its lock let go; the process's
+ * next keeping, if it keeps again, carries the figures.
  *
  * @note Impure: writes the status, and reads, locks and writes the budget
  * file.

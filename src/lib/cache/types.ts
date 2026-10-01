@@ -365,8 +365,10 @@ export interface Cache {
    * a newer one. It gives the status the floor at once, returns at once
    * when this process heard nothing since it last read or wrote the file,
    * and a call made while one runs joins it. It never fails: a keeping
-   * that cannot read, lock or write the file is dropped, and the next
-   * keeping carries the figures.
+   * that cannot read, lock or write the file is dropped. This process's
+   * next keeping, if it keeps again, carries the figures; a one-off call's
+   * are lost, at no cost, since the next answer kept reports the budget
+   * again.
    */
   keepBudget(): Promise<void>;
   /** The cache's state: the same value on every call until it changes. */
