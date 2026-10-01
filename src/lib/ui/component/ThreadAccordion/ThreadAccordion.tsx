@@ -99,8 +99,8 @@ const Lines = ({
  * The details, once they have arrived, filling the snapshot's lines in
  * place, or, while reading is paused, what the snapshot holds or when
  * reading resumes. A finished thread's lines come with the list, so while
- * reading is paused it keeps them, and only the stack's neighbours, the
- * one line that waits on the details, say when reading resumes.
+ * reading is paused it draws them as it does while a read is under way,
+ * the stack's neighbours ending in a dimmed `…`.
  */
 const Loaded = ({
   detail,
@@ -121,16 +121,9 @@ const Loaded = ({
   if ("resumes" in shown) {
     const paused = `paused · resumes ${describeClock(shown.resumes, reading.timezone)}`;
     if ("ending" in row) {
-      const { body, stack } = describeDetail(row, undefined, reading);
-      const waiting = {
-        pieces: [{ text: paused, fg: tokens["color.text.muted"] }],
-        fit: "trimmed",
-      } as const;
-      // The stack's place comes with the list; its neighbours wait.
-      const lines = stack.map((line, place) => (place === 0 ? line : waiting));
       return (
         <Lines
-          lines={fitAccordion({ body, stack: lines }, room)}
+          lines={fitAccordion(describeDetail(row, undefined, reading), room)}
           stroke={stroke}
           onLines={onLines}
         />

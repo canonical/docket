@@ -134,7 +134,8 @@ export const FinishedStackLoading = {
 
 /**
  * Reading is paused for a finished pull request in a stack: every line
- * from the list, and its stack's neighbours saying when reading resumes.
+ * from the list, its stack's neighbours ending in a dimmed `…` as while
+ * they are read.
  */
 export const FinishedPaused = {
   args: {

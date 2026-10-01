@@ -2,7 +2,7 @@
 |│┆target 5d
 |│┆labels none
 |│┆example stack 3 · 1 of 2 · → main
-|│┆paused · resumes 15:00
+|│┆…
 
 runs
 1:1 "│" fg #b4be82ff bg #2e3244ff
@@ -17,5 +17,5 @@ runs
 3:2 "┆example stack 3 · 1 of 2 · → main" fg #6b7089ff bg #2e3244ff
 3:36 "     " fg #ffffffff bg #2e3244ff
 4:1 "│" fg #b4be82ff bg #2e3244ff
-4:2 "┆paused · resumes 15:00" fg #6b7089ff bg #2e3244ff
-4:25 "                " fg #ffffffff bg #2e3244ff
+4:2 "┆…" fg #6b7089ff bg #2e3244ff
+4:4 "                                     " fg #ffffffff bg #2e3244ff
