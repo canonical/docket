@@ -1,7 +1,7 @@
 60 columns
-| ┆  ○ example-con… labelled priority: need…he-maintainers 3h
+| ┆  ○ example-con… lab… priority: needs-…-the-maintainers 3h
 
 runs
 1:2 "┆" fg #6b7089ff bg #00000000
 1:5 "○ example-con…" fg #89b8c2ff bg #00000000
-1:19 " labelled priority: need…he-maintainers 3h" fg #c6c8d1ff bg #00000000
+1:19 " lab… priority: needs-…-the-maintainers 3h" fg #c6c8d1ff bg #00000000

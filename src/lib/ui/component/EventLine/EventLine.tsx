@@ -22,16 +22,12 @@ const gutter = " ".repeat(indent - marginCells);
 /** The fewest cells the words before a target keep once they are cut. */
 const wordsCells = 4;
 
-/** The cells a target keeps, cut, before the words before it give way. */
-const targetCells = 12;
-
 /**
  * What was done, in `room` cells, split about what it acted on: the
  * words before it, the target, and any words after it, the bracket
- * closing failed checks' names. The target stays whole where it can, and
- * is cut, by its kind's rule for an event, down to 12 cells while the
- * words stay whole; past that the words are cut, at their end, down to
- * four cells, and the target takes the rest.
+ * closing failed checks' names. The words give way first, cut at their
+ * end down to four cells, so the target stays whole where it can; past
+ * that the target is cut, by its kind's rule for an event, to the rest.
  */
 function describeAction(
   { action, target }: EventLineProps["line"],
@@ -40,7 +36,8 @@ function describeAction(
 ): Piece[] {
   if (!target) return [{ text: fitField(action, "event", room), fg }];
   const at = action.text.lastIndexOf(target.text);
-  const words = action.text.slice(0, at).trimEnd();
+  // The space and any bracket before the target go with it.
+  const words = action.text.slice(0, at).replace(/[\s(]+$/, "");
   const space = action.text.slice(words.length, at);
   const after = action.text.slice(at + target.text.length);
   // A person the event acted on is drawn behind their mark and a space.
@@ -50,15 +47,10 @@ function describeAction(
       ? markPerson(target, cells - mark)
       : { text: fitField(target, "event", cells), fg };
   const tail = mark + measureText(target.text) + measureText(after);
-  const targetRoom =
-    room - measureText(words) - measureText(space) - measureText(after);
-  const wordsRoom =
-    targetRoom >= Math.min(tail - measureText(after), targetCells)
-      ? measureText(words)
-      : Math.max(
-          Math.min(measureText(words), wordsCells),
-          room - measureText(space) - tail,
-        );
+  const wordsRoom = Math.max(
+    Math.min(measureText(words), wordsCells),
+    room - measureText(space) - tail,
+  );
   const before = `${fitField({ text: words, kind: "words" }, "line", wordsRoom)}${space}`;
   const cells = room - measureText(before) - measureText(after);
   return [
@@ -106,8 +98,9 @@ function describeWhat(line: EventLineProps["line"], room: number): Piece[] {
  * clock runs in activity, so the bar's column is blank, and the stack
  * mark goes on under a stacked pull request. The line stays one line,
  * and the event gives way before the age does: the actor's login at 12
- * cells, then the words of what was done, then what it acted on. A bot's age is
- * dimmed with its event, failed checks aside; every other age is plain.
+ * cells, then the words of what was done, then what it acted on. A bot's
+ * age is dimmed with its event, failed checks aside; every other age is
+ * plain.
  *
  * `import { EventLine } from "../lib/ui/index.js";`
  *

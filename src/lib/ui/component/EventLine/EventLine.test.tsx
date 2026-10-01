@@ -41,13 +41,20 @@ describe("EventLine", () => {
     expect(screen.look("3h")?.fg).toBe(tokens["color.text.muted"]);
   });
 
-  it("keeps the actor, its login cut at 12 cells, and cuts what was done, the words before the target once the target is down to 12 cells", async () => {
-    const screen = await draw(<EventLine {...Long.args} />, 40);
-    expect(screen.lines.at(0)).toBe(" ┆  ○ example-con… lab… priori…ainers 3h");
-    const wide = await draw(<EventLine {...Long.args} width={80} />, 80);
-    expect(wide.lines.at(0)).toBe(
-      ` ┆  ○ example-con… labelled priority: needs-a-decision-from-the-maintainers${" ".repeat(3)}3h`,
+  it("keeps the actor, its login cut at 12 cells, then cuts the words before the target, then the target", async () => {
+    const at = async (width: number) =>
+      (await draw(<EventLine {...Long.args} width={width} />, width)).lines.at(
+        0,
+      );
+    const actor = " ┆  ○ example-con…";
+    const target = "priority: needs-a-decision-from-the-maintainers";
+    expect(await at(78)).toBe(`${actor} labelled ${target} 3h`);
+    expect(await at(77)).toBe(`${actor} labell… ${target} 3h`);
+    expect(await at(74)).toBe(`${actor} lab… ${target} 3h`);
+    expect(await at(73)).toBe(
+      `${actor} lab… priority: needs-a-deci…on-from-the-maintainers 3h`,
     );
+    expect(await at(40)).toBe(`${actor} lab… priori…ainers 3h`);
   });
 
   it("draws a person the event assigned behind their mark, in their group's hue", async () => {
@@ -65,7 +72,7 @@ describe("EventLine", () => {
     expect(screen.look("● bob")?.fg).toBe(tokens["color.text.team"]);
   });
 
-  it("cuts a failed check's names inside their brackets, keeping the brackets", async () => {
+  it("cuts the words of failed checks before their names, keeping the brackets", async () => {
     const line = {
       ...ChecksFailed.args.line,
       action: {
@@ -81,7 +88,7 @@ describe("EventLine", () => {
       <EventLine {...ChecksFailed.args} line={line} />,
       40,
     );
-    expect(screen.lines.at(0)).toBe(" ┆  ✗ checks failed (lint t…t tests) 20m");
+    expect(screen.lines.at(0)).toBe(" ┆  ✗ che… (lint the wh… unit tests) 20m");
   });
 
   it("draws what happened alone when no actor is named", async () => {
