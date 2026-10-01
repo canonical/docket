@@ -1,3 +1,4 @@
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -88,6 +89,32 @@ describe("createBudgetKeeper", () => {
     await createProcess(makeBudget(900)).keeper();
     expect(await readBudgetFile(file)).toEqual(makeBudget(900));
   }, 15_000);
+
+  it("writes nothing after another process took its lock over, and leaves that lock alone", async () => {
+    await writeBudgetFile(file, makeBudget(1000));
+    const lockPath = `${file}.lock`;
+    let takenOver = false;
+    const keeper = createBudgetKeeper({
+      file,
+      // Between its read and its write, another process takes the lock
+      // over and writes a later figure.
+      readFigures: () => {
+        if (!takenOver) {
+          takenOver = true;
+          rmSync(lockPath, { recursive: true });
+          mkdirSync(lockPath);
+          writeFileSync(file, JSON.stringify(makeBudget(800)));
+        }
+        return makeBudget(900);
+      },
+      isKept: () => false,
+      adopt: () => {},
+      publishFloor: () => {},
+    });
+    await keeper();
+    expect(await readBudgetFile(file)).toEqual(makeBudget(800));
+    expect(await readdir(directory)).toContain("budget.json.lock");
+  });
 
   it("leaves the lowest figure of the window when processes keep falling figures together", async () => {
     const figures = [950, 900, 850, 800, 750, 700];

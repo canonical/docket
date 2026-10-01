@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import { lock } from "proper-lockfile";
 import type { Budgets } from "../provider/index.js";
 import { budgetLockTiming } from "./constants.js";
+import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeBudgets from "./mergeBudgets.js";
 import readBudgetFile from "./readBudgetFile.js";
@@ -54,14 +55,37 @@ export default function createBudgetKeeper({
     await writeFile(file, "{}", { flag: "wx", mode: 0o600 }).catch(
       () => undefined,
     );
-    const release = await lock(file, budgetLockTiming);
+    const lockPath = `${file}.lock`;
+    const forgotten = Promise.withResolvers<void>();
+    const release = await lock(file, {
+      ...budgetLockTiming,
+      // The library tells when another process took the lock over, which
+      // then belongs to that process.
+      onCompromised: () => forgotten.resolve(),
+    });
+    const own = await identifyFile(lockPath);
+    let taken = false;
     try {
       const held = await readBudgetFile(file);
       const kept = mergeBudgets(held, readFigures());
+      // Another process that took the lock over may have written a later
+      // figure since the read, which nothing here overwrites.
+      taken = (await identifyFile(lockPath)) !== own;
+      if (taken) return;
       if (!isSame(kept, held)) await writeBudgetFile(file, kept);
       adopt(kept);
     } finally {
-      await release();
+      // A lock taken over is let go only once the library has heard so,
+      // or its release would remove the lock of the process that took it.
+      if (taken) {
+        await Promise.race([
+          forgotten.promise,
+          new Promise((resolve) =>
+            setTimeout(resolve, budgetLockTiming.stale).unref(),
+          ),
+        ]);
+      }
+      await release().catch(() => undefined);
     }
   };
   // The keeping under way, which a call made meanwhile joins, and whether
