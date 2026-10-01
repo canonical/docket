@@ -128,9 +128,9 @@ describe("ThreadAccordion", () => {
       const finished: ThreadAccordionProps = {
         ...base,
         row: findFinishedRow("example#7"),
-        clock: false,
+        clock: true,
       };
-      expect(finished.clock).toBe(false);
+      expect(finished.clock).toBe(true);
     });
 
     it("draws what the list gives at once when given no details to wait on", async () => {
