@@ -5,6 +5,8 @@ import measureClusters from "./measureClusters.js";
 describe("measureClusters", () => {
   it("counts a printable ASCII character one cell and a line break none", () => {
     expect(measureClusters(["a", "\n", "\r\n"])).toEqual([1, 0, 0]);
+    // A break measured beside other characters leaves their answers theirs.
+    expect(measureClusters(["\n", "鑫", "\u2028", "❣"])).toEqual([0, 2, 0, 2]);
   });
 
   it("measures the characters it has not measured together, in one emptied pass of each width method", () => {

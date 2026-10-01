@@ -90,6 +90,11 @@ describe("fitAccordion", () => {
     expect(read(fitAccordion(text, 7, 1))).toEqual(["stack…"]);
   });
 
+  it("gives a line that yields none of the lines when the others need more than there are", () => {
+    const text = { body: [owners, wrapped("checks one two three")], stack: [] };
+    expect(read(fitAccordion(text, 7, 2))).toEqual(["checks", "one tw…"]);
+  });
+
   it("never gives an optional line the lines of one that yields", () => {
     const text = {
       body: [owners, wrapped("checks ok"), wrapped("since x y", true)],

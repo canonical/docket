@@ -73,6 +73,38 @@ describe("EventLine", () => {
     expect(screen.lines.at(0)).toContain(" labelled priority:");
   });
 
+  it("counts the bracket closing failed checks' names when it cuts the words before them", async () => {
+    const { line } = ChecksFailed.args;
+    const name = "build-the-documentation-site";
+    const failed = {
+      ...line,
+      action: { ...line.action, text: `checks failed (${name})` },
+      target: line.target && { ...line.target, text: name },
+    };
+    const at = async (width: number) =>
+      (
+        await draw(
+          <EventLine {...ChecksFailed.args} line={failed} width={width} />,
+          width,
+        )
+      ).lines.at(0);
+    expect(await at(54)).toBe(` ┆  ✗ checks failed (${name}) 20m`);
+    expect(await at(53)).toBe(` ┆  ✗ checks fail… (${name}) 20m`);
+  });
+
+  it("splits what was done about the last place the target is named, though the words name it too", async () => {
+    const line = {
+      ...Pushed.args.line,
+      action: { text: "labelled led", kind: "words" as const },
+      target: { text: "led", kind: "words" as const },
+    };
+    const screen = await draw(
+      <EventLine {...Pushed.args} line={line} width={26} />,
+      26,
+    );
+    expect(screen.lines.at(0)).toBe(" ┆  ● alice label… led 25m");
+  });
+
   it("names the person an event assigned plainly, after the actor's mark", async () => {
     const line = {
       ...Pushed.args.line,
