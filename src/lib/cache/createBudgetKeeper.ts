@@ -21,8 +21,10 @@ interface BudgetKeeperOptions {
  * only when what this process heard differs from what it last wrote, one
  * write after another, so a later write never lands before an earlier
  * one. The file outlives the process, so a later call judges the floor on
- * it, until its reports reset. Keeping never fails: a write that fails is
- * dropped, and the next keeping writes again.
+ * it, until its reports reset and a reader removes it. A reader may remove
+ * it just as this process writes fresh figures, which are then missing
+ * until a later answer changes them and is kept. Keeping never fails: a
+ * write that fails is dropped, and the next keeping writes again.
  *
  * @note Impure: writes the status, and writes this process's budget file.
  */

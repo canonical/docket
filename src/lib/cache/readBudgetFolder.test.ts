@@ -1,4 +1,11 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  readdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -61,5 +68,40 @@ describe("readBudgetFolder", () => {
 
   it("reads no budget while there is no folder", async () => {
     expect(await readBudgetFolder(join(folder, "missing"), before)).toEqual({});
+  });
+
+  it("removes a file whose reports have all reset, and never a file with a report still live", async () => {
+    const passed = new Date("2026-09-28T09:00:00Z");
+    await writeBudgetFile(join(folder, "spent.json"), {
+      graphql: budget(100, passed),
+      rest: budget(100, passed),
+    });
+    await writeBudgetFile(join(folder, "half.json"), {
+      graphql: budget(100, passed),
+      rest: budget(4000),
+    });
+    await writeBudgetFile(join(folder, "live.json"), { graphql: budget(900) });
+    await readBudgetFolder(folder, before);
+    expect((await readdir(folder)).sort()).toEqual(["half.json", "live.json"]);
+  });
+
+  it("reads the others when a file whose reports have all reset cannot be removed", async () => {
+    const passed = new Date("2026-09-28T09:00:00Z");
+    await writeBudgetFile(join(folder, "spent.json"), {
+      graphql: budget(100, passed),
+    });
+    await writeBudgetFile(join(folder, "live.json"), { graphql: budget(900) });
+    await chmod(folder, 0o500);
+    try {
+      expect(await readBudgetFolder(folder, before)).toEqual({
+        graphql: budget(900),
+      });
+      expect((await readdir(folder)).sort()).toEqual([
+        "live.json",
+        "spent.json",
+      ]);
+    } finally {
+      await chmod(folder, 0o700);
+    }
   });
 });
