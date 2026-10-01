@@ -18,7 +18,7 @@ export interface UseShownListResult {
 /**
  * Keeps what each mode's list reported after its last draw: how many rows
  * it shows, which is how far a page moves the selection, and where it was
- * scrolled. The help and a pane too narrow take the list's place, so the
+ * scrolled. The help and a pane too small take the list's place, so the
  * list is drawn anew once they leave, and it opens where it was rather
  * than at the top, as each mode keeps its own selection.
  */

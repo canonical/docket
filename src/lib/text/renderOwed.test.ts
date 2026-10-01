@@ -45,6 +45,20 @@ describe("renderOwed", () => {
     ]);
   });
 
+  it("heads the kinds of thread in capitals, issues first, with the title unchanged", () => {
+    for (const format of ["llm", "plain"] as const) {
+      const lines = render(format, "standard", "kind");
+      expect(lines.at(0)).toMatch(/^#? ?owed · by kind$/);
+      expect(
+        lines.filter((line) => /ISSUES|PULL REQUESTS|DISCUSSIONS/.test(line)),
+      ).toEqual(
+        format === "llm"
+          ? ["## ISSUES", "## PULL REQUESTS"]
+          : ["ISSUES", "PULL REQUESTS"],
+      );
+    }
+  });
+
   it("gives a person each wait on three lines, the reference line first", () => {
     expect(render("plain")).toEqual([
       "owed",
@@ -176,6 +190,7 @@ describe("renderOwed", () => {
       { owner: "bob" },
       { owner: null },
     ]);
+    expect(data("kind")).toEqual([{ kind: "issue" }, { kind: "pullRequest" }]);
     expect(data("repo")).toEqual([{ repo: "example" }, { repo: "docs" }]);
     expect(data("stack")).toEqual([
       { stack: { repo: "example", number: 3, size: 3, base: "main" } },

@@ -44,16 +44,24 @@ export interface UseScreenKeysProps {
   readonly mode: TerminalMode;
   /**
    * Whether the help is open, which `esc` then closes, and which turns
-   * every key but the help's and `q` off.
+   * every key but the help's, the movement keys, which scroll it, and `q`
+   * off.
    */
   readonly help: boolean;
   /** Whether an editor is open, which turns every key but the help's off. */
   readonly editorOpen: boolean;
   /**
-   * Whether the pane is too narrow to draw the screen, which turns every
-   * key but `q` off.
+   * Whether the pane is too narrow or too short to draw the screen, which
+   * turns every key but `q` off.
    */
-  readonly narrow: boolean;
+  readonly tooSmall: boolean;
+  /**
+   * Whether the screen is setup, which stands in for either mode while a
+   * prerequisite is missing, such as gh: it lists nothing and is never
+   * reached or left with a key, so only the help's keys, the movement keys
+   * while the help shows, and `q` act, and the key bar names `q`.
+   */
+  readonly setup: boolean;
   /** What each key does, as the frame on show gives it. */
   readonly actions: ScreenActions;
 }
@@ -62,12 +70,25 @@ export interface UseScreenKeysProps {
 export interface UseScreenKeysResult {
   /** The commands a key runs now, which the key bar names. */
   readonly active: UseCommandsResult;
-  /** Every command bound, in the help's order of groups. */
+  /**
+   * Every command bound, in the help's order of groups, which the help
+   * lists; on setup, only those that act there.
+   */
   readonly bound: UseCommandsResult;
 }
 
 /** The help's groups, in the order keys act: from the mode down to the app. */
 const helpGroups = ["Mode", "List", "Thread", "Editor", "App"];
+
+/** What the keys that act on setup do: the help's and quitting. */
+const labels = {
+  toggleHelp: "show or hide help",
+  closeHelp: "close help",
+  quit: "quit",
+} as const;
+
+/** The labels of the commands that act on setup, the only ones its help lists. */
+const setupLabels: readonly string[] = Object.values(labels);
 
 /**
  * The screen's global layer of keys, and the commands the key bar and the
@@ -78,7 +99,8 @@ export default function useScreenKeys({
   mode,
   help,
   editorOpen,
-  narrow,
+  tooSmall,
+  setup,
   actions,
 }: UseScreenKeysProps): UseScreenKeysResult {
   // The keys run closures made when their layer was bound, so they read
@@ -182,14 +204,14 @@ export default function useScreenKeys({
         },
         {
           name: "help.toggle",
-          desc: "show or hide help",
+          desc: labels.toggleHelp,
           group: "App",
           hint: "",
           run: () => latest.current.toggleHelp(),
         },
         {
           name: "help.close",
-          desc: "close help",
+          desc: labels.closeHelp,
           group: "App",
           hint: "",
           // Off while the help is closed, so `esc` reaches an open
@@ -205,20 +227,27 @@ export default function useScreenKeys({
         },
         {
           name: "app.quit",
-          desc: "quit",
+          desc: labels.quit,
           group: "App",
+          // With no list to act on, quitting is the one way on.
+          ...(setup && { hint: "quit" }),
           run: () => latest.current.quit(),
         },
       ].map((command) => {
         // No key acts on what the screen does not show: below the narrowest
-        // pane only quitting runs, and while the help shows only its own
-        // keys and quitting. An open editor takes the typing, so no key but
-        // the help's runs.
+        // or the shortest pane only quitting runs, and while the help shows
+        // only its own keys, the movement keys, which scroll it, and
+        // quitting. An open editor takes the typing, so no key but the
+        // help's runs, and the movement keys once the help covers it. On
+        // setup, which lists nothing and whose help always fits, only the
+        // help's keys and quitting run.
         const quits = command.name === "app.quit";
-        const runs = narrow
+        const moves = command.name.startsWith("selection.");
+        const runs = tooSmall
           ? quits
           : command.name.startsWith("help.") ||
-            (!editorOpen && (!help || quits));
+            (help && moves && !setup) ||
+            (!editorOpen && (quits || (!setup && !help)));
         return runs ? command : { ...command, enabled: false };
       }),
       bindings: [
@@ -245,11 +274,13 @@ export default function useScreenKeys({
         { key: "q", cmd: "app.quit" },
       ],
     }),
-    [mode, help, editorOpen, narrow],
+    [mode, help, editorOpen, tooSmall, setup],
   );
   const active = useCommands({ visibility: "active" });
-  const bound = useCommands({ visibility: "registered" }).toSorted(
-    (a, b) => helpGroups.indexOf(a.group) - helpGroups.indexOf(b.group),
-  );
+  const bound = useCommands({ visibility: "registered" })
+    .filter(({ label }) => !setup || setupLabels.includes(label))
+    .toSorted(
+      (a, b) => helpGroups.indexOf(a.group) - helpGroups.indexOf(b.group),
+    );
   return { active, bound };
 }

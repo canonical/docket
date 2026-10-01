@@ -1,5 +1,5 @@
 40 columns
-|owed                             by repo
+|owed             by repo · overdue first
 |example ────────────────────────────────
 |┃┆example#12 PR reply ○ dave     4d over
 |┃┆Fix the parser       ✗ checks  ◉ alice
@@ -32,12 +32,13 @@
 |
 |
 |
-|2 over · 1 soon · 3 on track
+|2 over · 1 soon · 3 on track       1/5/6
 |synced 2m ago
 |←→ mode ↑↓ sel ⏎ open g grp a r ?
 
 runs
-1:1 "owed                             by repo" fg #c6c8d1ff bg #161821ff
+1:1 "owed             by repo · " fg #c6c8d1ff bg #161821ff
+1:28 "overdue first" fg #6b7089ff bg #161821ff
 2:1 "example ────────────────────────────────" fg #c6c8d1ff bg #161821ff
 3:1 "┃" fg #e27878ff bg #2e3244ff
 3:2 "┆" fg #6b7089ff bg #2e3244ff
@@ -119,7 +120,7 @@ runs
 22:27 "◉ alice" fg #84a0c6ff bg #161821ff
 22:34 ", " fg #c6c8d1ff bg #161821ff
 22:36 "● bob" fg #84a0c6ff bg #161821ff
-34:1 "2 over · 1 soon · 3 on track" fg #c6c8d1ff bg #161821ff
+34:1 "2 over · 1 soon · 3 on track       1/5/6" fg #c6c8d1ff bg #161821ff
 35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
 36:1 "←→" fg #c6c8d1ff bg #161821ff
 36:3 " mode" fg #6b7089ff bg #161821ff

@@ -44,7 +44,8 @@ function probe(start: Partial<State> = {}) {
       mode: "owed",
       help: false,
       editorOpen: false,
-      narrow: false,
+      tooSmall: false,
+      setup: false,
       actions: noting(ran),
       ...start,
     });
@@ -175,7 +176,7 @@ describe("useScreenKeys", () => {
     expect(ran).toEqual(["closeHelp"]);
   });
 
-  it("runs only the help's keys and q while the help shows, and every key again once it closes", async () => {
+  it("runs only the help's keys, the movement keys, which scroll it, and q while the help shows, and every key again once it closes", async () => {
     const { ran, change, screen } = await bind({
       mode: "activity",
       help: true,
@@ -186,20 +187,58 @@ describe("useScreenKeys", () => {
       ...["pageup", "pagedown", "home", "end", "return", "a", "r", "g", "t"],
       ...["R", "q", "?", "escape"],
     );
-    expect(ran).toEqual(["quit", "toggleHelp", "closeHelp"]);
+    expect(ran).toEqual([
+      "moveSelection -1",
+      "moveSelection -1",
+      "moveSelection 1",
+      "moveSelection 1",
+      "movePage -1",
+      "movePage 1",
+      "moveToEnd -1",
+      "moveToEnd 1",
+      "quit",
+      "toggleHelp",
+      "closeHelp",
+    ]);
     await screen.redraw(() => change({ help: false }));
     await press(screen, "j", "t");
-    expect(ran.slice(3)).toEqual(["moveSelection 1", "nextWindow"]);
+    expect(ran.slice(11)).toEqual(["moveSelection 1", "nextWindow"]);
   });
 
-  it("runs only the help's keys while an editor is open", async () => {
+  it("runs only the help's keys, and the movement keys once the help covers it, while an editor is open", async () => {
     const { ran, screen } = await bind({ editorOpen: true, help: true });
     const drawn = await press(
       screen,
       ...["j", "pagedown", "home", "a", "q", "R", "?", "escape"],
     );
-    expect(ran).toEqual(["toggleHelp", "closeHelp"]);
-    expect(drawn.lines.at(0)).toBe("? esc");
+    expect(ran).toEqual([
+      "moveSelection 1",
+      "movePage 1",
+      "moveToEnd -1",
+      "toggleHelp",
+      "closeHelp",
+    ]);
+    expect(drawn.lines.at(0)).toBe("↑ ↓ ⇞ ⇟ home end ? esc");
+  });
+
+  it("runs only the help's keys and q on setup, whether or not the help shows, and names q in the key bar", async () => {
+    const { ran, change, screen } = await bind({ setup: true });
+    const drawn = await press(
+      screen,
+      ...["left", "h", "right", "l", "up", "k", "down", "j"],
+      ...["pageup", "pagedown", "home", "end", "return", "a", "r", "g", "t"],
+      ...["R", "q"],
+    );
+    expect(ran).toEqual(["quit"]);
+    expect(drawn.lines.at(0)).toBe("? q");
+    await screen.redraw(() => change({ help: true }));
+    await press(screen, "j", "pagedown", "end", "g", "?");
+    expect(ran.slice(1)).toEqual(["toggleHelp"]);
+  });
+
+  it("lists in the help on setup only the keys that act there", async () => {
+    const { screen } = await bind({ setup: true });
+    expect(screen.lines.slice(1, 3)).toEqual(["? esc q", "App"]);
   });
 
   it.each([
@@ -208,11 +247,11 @@ describe("useScreenKeys", () => {
     { shown: "an editor open", help: false, editorOpen: true },
     { shown: "the help open over an editor", help: true, editorOpen: true },
   ])(
-    "runs only q while the pane is too narrow, and every key again once it widens, with $shown",
+    "runs only q while the pane is too small, and every key again once it is not, with $shown",
     async ({ help, editorOpen }) => {
       const { ran, change, screen } = await bind({
         mode: "activity",
-        narrow: true,
+        tooSmall: true,
         help,
         editorOpen,
       });
@@ -225,7 +264,7 @@ describe("useScreenKeys", () => {
       expect(ran).toEqual(["quit"]);
       expect(drawn.lines.at(0)).toBe("q");
       await screen.redraw(() =>
-        change({ narrow: false, help: false, editorOpen: false }),
+        change({ tooSmall: false, help: false, editorOpen: false }),
       );
       await press(screen, "j", "t");
       expect(ran.slice(1)).toEqual(["moveSelection 1", "nextWindow"]);

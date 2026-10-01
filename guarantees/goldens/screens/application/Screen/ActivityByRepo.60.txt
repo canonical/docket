@@ -1,5 +1,5 @@
 60 columns
-|activity                                       72h · by repo
+|activity                        72h · by repo · newest first
 |example ────────────────────────────────────────────────────
 | ┆example#12 PR ○ dave                                   25m
 | ┆Fix the parser                                     ◉ alice
@@ -32,12 +32,13 @@
 |
 |
 |
-|2 threads · 4 events
+|2 threads · 4 events                                   1/1/2
 |synced 2m ago
 |←→ mode ↑↓ sel ⏎ open g grp t time a r ?
 
 runs
-1:1 "activity                                       72h · by repo" fg #c6c8d1ff bg #161821ff
+1:1 "activity                        72h · by repo · " fg #c6c8d1ff bg #161821ff
+1:49 "newest first" fg #6b7089ff bg #161821ff
 2:1 "example ────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
 3:1 " " fg #ffffffff bg #2e3244ff
 3:2 "┆" fg #6b7089ff bg #2e3244ff
@@ -86,7 +87,7 @@ runs
 16:56 "● bob" fg #84a0c6ff bg #161821ff
 17:5 "■ example-sync labelled kind=docs" fg #6b7089ff bg #161821ff
 17:58 "16h" fg #6b7089ff bg #161821ff
-34:1 "2 threads · 4 events" fg #c6c8d1ff bg #161821ff
+34:1 "2 threads · 4 events                                   1/1/2" fg #c6c8d1ff bg #161821ff
 35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
 36:1 "←→" fg #c6c8d1ff bg #161821ff
 36:3 " mode" fg #6b7089ff bg #161821ff

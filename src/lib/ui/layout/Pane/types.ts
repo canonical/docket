@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 export interface PaneProps {
   /** The width of the terminal, in display cells. */
   width: number;
+  /** The height of the terminal, in lines. */
+  height: number;
   /**
    * The first line: where you are.
    * Maps to DSL role: pane-header (cardinality: 1)

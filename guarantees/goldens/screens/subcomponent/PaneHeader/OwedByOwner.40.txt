@@ -1,5 +1,6 @@
 40 columns
-|owed                            by owner
+|owed            by owner · overdue first
 
 runs
-1:1 "owed                            by owner" fg #c6c8d1ff bg #00000000
+1:1 "owed            by owner · " fg #c6c8d1ff bg #00000000
+1:28 "overdue first" fg #6b7089ff bg #00000000

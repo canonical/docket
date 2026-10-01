@@ -1,5 +1,5 @@
 import type { People } from "../../../config/index.js";
-import type { Owner, WaitRow } from "../../../owed/index.js";
+import type { Owner, Person, WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import type { ThreadSummary } from "../../../waits/index.js";
 import type { Piece } from "../../types.js";
@@ -49,6 +49,12 @@ export interface RestingThread {
    * its assignees that are not bots stand in.
    */
   readonly owners?: readonly Owner[];
+  /**
+   * Who opened the thread, when it was open at the last refresh: its last
+   * actor, at its opening, while nobody has written on it. A closed
+   * thread's last activity is its close, so it names no opener.
+   */
+  readonly author?: Person;
   /**
    * Each login's group in the thread's repository, which names its
    * assignees and whoever wrote last once the details give them.

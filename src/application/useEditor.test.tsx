@@ -144,7 +144,10 @@ async function settle(
 const isAnswered = (drawn: Drawn) => drawn.lines.at(-2) !== "synced 0m ago";
 
 /** Whether the screen is back on owed, the editor closed. */
-const isEditorClosed = (drawn: Drawn) => drawn.lines.at(0) === "owed";
+/** owed's header, which an open editor's title takes the place of. */
+const owedHeader = `owed${" ".repeat(12)}one list · overdue first`;
+
+const isEditorClosed = (drawn: Drawn) => drawn.lines.at(0) === owedHeader;
 
 /** The lines of the list region: under the header, above the counts. */
 const readRegion = (screen: Drawn) => screen.lines.slice(1, -3);
@@ -213,8 +216,8 @@ describe("useEditor", { timeout: 15_000 }, () => {
         `╹┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
         "┃ example#15 issue reply ◐ carol 4h left",
         `╹ Crash on start${" ".repeat(14)}unassigned`,
-        "",
-        "2 over · 1 soon · 3 on track",
+        "  ↓ 3 below",
+        `2 over · 1 soon · 3 on track${" ".repeat(9)}1/6`,
         "synced 0m ago",
         "type filter ↑↓ ␣ tick ⏎ apply esc ?",
       ]);
@@ -300,7 +303,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         expect.objectContaining({ number: 12 }),
         ["alice", "carol"],
       );
-      expect(applied.lines.at(0)).toBe("owed");
+      expect(applied.lines.at(0)).toBe(owedHeader);
       expect(applied.lines.at(2)).toBe(
         `┃┆Fix the parser${" ".repeat(16)}✗ checks`,
       );
@@ -353,7 +356,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         isEditorClosed,
       );
       expect(setAssignees).not.toHaveBeenCalled();
-      expect(closed.lines.at(0)).toBe("owed");
+      expect(closed.lines.at(0)).toBe(owedHeader);
       expect(closed.lines.at(-2)).toBe("synced 0m ago");
     });
 
@@ -497,7 +500,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         await press(await showRecorded(provider), "a"),
       );
       const cancelled = await press(opened, "down", "space", "escape");
-      expect(cancelled.lines.at(0)).toBe("owed");
+      expect(cancelled.lines.at(0)).toBe(owedHeader);
       expect(cancelled.lines.at(-1)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
       expect(setAssignees).not.toHaveBeenCalled();
       const moved = await press(cancelled, "j");
@@ -524,7 +527,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         "  ☑ ◐ carol",
       ]);
       const cancelled = await press(ticked, "escape");
-      expect(cancelled.lines.at(0)).toBe("owed");
+      expect(cancelled.lines.at(0)).toBe(owedHeader);
     });
 
     it("acts on none of its keys while the help covers it, and applies once the help closes", async () => {
@@ -569,7 +572,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       ]);
       expect(setAssignees).not.toHaveBeenCalled();
       const cancelled = await press(back, "escape");
-      expect(cancelled.lines.at(0)).toBe("owed");
+      expect(cancelled.lines.at(0)).toBe(owedHeader);
       expect(setAssignees).not.toHaveBeenCalled();
     });
 
@@ -624,7 +627,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         "escape",
       );
       resolve();
-      expect((await settle(cancelled)).lines.at(0)).toBe("owed");
+      expect((await settle(cancelled)).lines.at(0)).toBe(owedHeader);
     });
 
     it("reports a refusal that arrives after its editor closed only on the status line", async () => {
@@ -636,7 +639,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const closed = await press(opened, "space", "return", "escape");
       reject(providerError("GITHUB_REQUEST_FAILED"));
       const after = await settle(closed, isAnswered);
-      expect(after.lines.at(0)).toBe("owed");
+      expect(after.lines.at(0)).toBe(owedHeader);
       expect(after.lines.at(-2)).toBe("✗ assign refused");
     });
 
@@ -700,7 +703,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       closed = true;
       await cache.refreshRepo("example-org/example-repo");
       const after = await settle(opened, isEditorClosed);
-      expect(after.lines.at(0)).toBe("owed");
+      expect(after.lines.at(0)).toBe(owedHeader);
       expect(after.lines.at(1)).toBe(
         "┃ example#15 issue reply ◐ carol 4h left",
       );

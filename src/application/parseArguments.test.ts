@@ -96,9 +96,9 @@ describe("parseArguments", () => {
       "docket config takes no flag `--by`.",
     ],
     [
-      ["owed", "--by", "kind"],
+      ["owed", "--by", "ending"],
       "USAGE_INVALID_VALUE",
-      "`--by` takes none, owner, repo, stack, not `kind`.",
+      "`--by` takes none, owner, kind, repo, stack, not `ending`.",
     ],
     [
       ["owed", "--max-age", "5m"],

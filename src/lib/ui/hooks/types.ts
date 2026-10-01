@@ -3,6 +3,8 @@
  * rules ask.
  */
 
+import type { ListBlock, ListPlacement } from "../types.js";
+
 /**
  * The keys of one line of the help, and of one hint in the key bar: one
  * command, or neighbouring commands that share a label, such as the two
@@ -39,12 +41,12 @@ export interface UseCommandsProps {
 export type UseCommandsResult = readonly KeyCommand[];
 
 /** Props for the useListScroll hook. */
-export interface UseListScrollProps<Block extends { readonly lines: number }> {
+export interface UseListScrollProps {
   /**
-   * The list's blocks, in order: a heading, or a row with what opens under
-   * it. Each gives the lines it takes.
+   * The list's blocks, in order: a heading, or a row with what opens
+   * under it. Each gives what it is and the lines it takes.
    */
-  readonly blocks: readonly Block[];
+  readonly blocks: readonly ListBlock[];
   /**
    * The first block that must be whole in view: the selected row, or the
    * heading above it when the row is the first of its group.
@@ -56,21 +58,20 @@ export interface UseListScrollProps<Block extends { readonly lines: number }> {
   readonly room: number;
   /**
    * The first block shown when the list is drawn anew, such as where it
-   * was scrolled before the help or a pane too narrow took its place; the
+   * was scrolled before the help or a pane too small took its place; the
    * top of the list when absent.
    */
   readonly first?: number;
 }
 
 /** Result of the useListScroll hook: what the list draws, and from where. */
-export interface UseListScrollResult<Block> {
+export interface UseListScrollResult extends Omit<ListPlacement, "shown"> {
   /**
    * The blocks to draw, in order: whole blocks only, as many as fit the
-   * room, and always the first, whatever its height.
+   * room between the pinned heading and the sign of the rows cut off, and
+   * always the first, whatever its height.
    */
-  readonly shown: readonly Block[];
-  /** The place of the first block drawn, which `first` takes back. */
-  readonly first: number;
+  readonly shown: readonly ListBlock[];
 }
 
 /**

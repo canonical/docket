@@ -1,4 +1,9 @@
-export { invalidFileMark, owedGroupings, threadWords } from "./constants.js";
+export {
+  invalidFileMark,
+  kindSections,
+  owedGroupings,
+  threadWords,
+} from "./constants.js";
 export { default as describeAddress } from "./describeAddress.js";
 export { default as describeNoTeam } from "./describeNoTeam.js";
 export type { OwnerFields } from "./describeOwners.js";

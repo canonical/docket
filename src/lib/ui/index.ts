@@ -32,7 +32,7 @@ export {
   type WrappedNotice,
   wrapNotice,
 } from "./component/index.js";
-export { minColumns } from "./constants.js";
+export { minColumns, minLines } from "./constants.js";
 export { default as countPages } from "./countPages.js";
 export { default as createKeymap } from "./createKeymap.js";
 export {
@@ -40,13 +40,15 @@ export {
   type UseCommandsProps,
   type UseCommandsResult,
   type UseDrawnLinesResult,
-  type UseListScrollProps,
-  type UseListScrollResult,
   useCommands,
   useDrawnLines,
-  useListScroll,
 } from "./hooks/index.js";
-export { Pane, type PaneProps } from "./layout/index.js";
+export {
+  Pane,
+  type PaneProps,
+  ScrolledList,
+  type ScrolledListProps,
+} from "./layout/index.js";
 export {
   countPickerLines,
   PeoplePicker,
@@ -57,3 +59,4 @@ export {
   PaneHeader,
   type PaneHeaderProps,
 } from "./subcomponent/index.js";
+export type { ListBlock } from "./types.js";
