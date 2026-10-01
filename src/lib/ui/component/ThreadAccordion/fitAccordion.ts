@@ -43,9 +43,8 @@ function giveWay(
   const { pieces, kind, cuts } = line;
   const dropped = dropWhole(line, room);
   const cutting = pieces.length === 1 ? 0 : cuts;
-  const over =
-    measurePieces(pieces.filter((_, index) => !dropped.has(index))) - room;
   const whole = pieces.filter((_, index) => !dropped.has(index));
+  const over = measurePieces(whole) - room;
   const runs = pieces.flatMap((piece, index) => {
     if (dropped.has(index)) return [];
     if (index !== cutting || over <= 0) return [piece];
@@ -58,13 +57,13 @@ function giveWay(
 }
 
 /**
- * Whether fitting cut the last of `held` at its end, so the line ends in
+ * Whether fitting cut the last of `fitted` at its end, so the line ends in
  * `…`: that run is narrower than it was `whole` and ends in the mark. A
  * run cut in its middle, or runs left out whole, end in no `…`.
  */
-function endsInCut(held: readonly Piece[], whole: readonly Piece[]): boolean {
-  const at = held.length - 1;
-  const last = held.slice(at);
+function endsInCut(fitted: readonly Piece[], whole: readonly Piece[]): boolean {
+  const at = fitted.length - 1;
+  const last = fitted.slice(at);
   return (
     last.some(({ text }) => text.endsWith(tokens["glyph.cut"])) &&
     measurePieces(last) < measurePieces(whole.slice(at, at + 1))
@@ -80,7 +79,7 @@ function endsInCut(held: readonly Piece[], whole: readonly Piece[]): boolean {
 interface Fitted {
   readonly runs: readonly Piece[];
   readonly ended: boolean;
-  readonly held?: DetailLine;
+  readonly line?: DetailLine;
 }
 
 /**
@@ -88,12 +87,12 @@ interface Fitted {
  * it fits any room: the runs it `drops` leave whole first, and the run it
  * `cuts` is cut once by its kind's rule, so the mark follows a whole part
  * or a branch cut in its middle and docket's own words are never cut for
- * it. When that fitting cuts the line at its end, the line as `held` is
+ * it. When that fitting cuts the line at its end, the line as `fitted` is
  * cut at its end for the mark instead.
  */
 function endHeld(
   line: DetailLine,
-  held: readonly Piece[],
+  fitted: readonly Piece[],
   room: number,
 ): Piece[] {
   const mark = tokens["glyph.cut"];
@@ -101,7 +100,7 @@ function endHeld(
   const runs = fitRuns(given.runs, room - measureText(mark));
   const last = runs.at(-1);
   if (last === undefined || endsInCut(runs, given.whole)) {
-    return endRuns(held, room);
+    return endRuns(fitted, room);
   }
   return [
     ...runs.slice(0, -1),
@@ -131,9 +130,9 @@ function fitLine(line: DetailLine, room: number): Fitted[] {
     ? [...pieces, createPendingMark(pieces.length > 0)]
     : pieces;
   const given = giveWay({ ...line, pieces: runs }, room);
-  const held = fitRuns(given.runs, room);
-  const ended = pending === true || endsInCut(held, given.whole);
-  return [{ runs: held, ended, held: line }];
+  const fitted = fitRuns(given.runs, room);
+  const ended = pending === true || endsInCut(fitted, given.whole);
+  return [{ runs: fitted, ended, line }];
 }
 
 /**
@@ -142,13 +141,13 @@ function fitLine(line: DetailLine, room: number): Fitted[] {
  */
 const endLast = (lines: readonly Fitted[], room: number): Fitted[] => [
   ...lines.slice(0, -1),
-  ...lines.slice(-1).map((line) =>
-    line.ended
-      ? line
+  ...lines.slice(-1).map((fitted) =>
+    fitted.ended
+      ? fitted
       : {
-          runs: line.held
-            ? endHeld(line.held, line.runs, room)
-            : endRuns(line.runs, room),
+          runs: fitted.line
+            ? endHeld(fitted.line, fitted.runs, room)
+            : endRuns(fitted.runs, room),
           ended: true,
         },
   ),
@@ -190,20 +189,20 @@ function endWhole(
   // Fewer names never take more lines, so halving finds the last end that
   // fits in as few fittings as there are halvings.
   let kept: Piece[][] = [];
-  let low = 0;
-  let high = ends.length;
-  while (low < high) {
-    const middle = Math.floor((low + high) / 2);
-    const fitted = fitTo(Number(ends.at(middle)));
-    if (fitted.length <= lines) {
-      kept = fitted;
-      low = middle + 1;
-    } else {
-      high = middle;
+  let left = ends;
+  while (left.length > 0) {
+    const middle = Math.floor(left.length / 2);
+    // The one end in the middle of those left, read without an index
+    // that could miss.
+    for (const end of left.slice(middle, middle + 1)) {
+      const fitted = fitTo(end);
+      if (fitted.length <= lines) kept = fitted;
+      left =
+        fitted.length <= lines ? left.slice(middle + 1) : left.slice(0, middle);
     }
   }
-  return kept.map((held, index) => ({
-    runs: held,
+  return kept.map((runs, index) => ({
+    runs,
     ended: index === kept.length - 1,
   }));
 }
