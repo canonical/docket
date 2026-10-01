@@ -4,7 +4,7 @@ import {
   TextBufferView,
   type WidthMethod,
 } from "@opentui/core";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import measureText from "./measureText.js";
 
 /**
@@ -73,6 +73,18 @@ describe("measureText", () => {
     expect(measureText("❤")).toBe(2);
     expect(measureText("👍🏽")).toBe(4);
     expect(Bun.stringWidth("👍🏽")).toBe(2);
+  });
+
+  it("splits a text into characters once, while it keeps it, and forgets every text past 4096", () => {
+    const segment = vi.spyOn(Intl.Segmenter.prototype, "segment");
+    expect(measureText("Réparer ❤ une fois")).toBe(19);
+    expect(measureText("Réparer ❤ une fois")).toBe(19);
+    expect(segment).toHaveBeenCalledTimes(1);
+    for (let each = 0; each < 4096; each += 1) measureText(`❤${each}`);
+    segment.mockClear();
+    expect(measureText("Réparer ❤ une fois")).toBe(19);
+    expect(segment).toHaveBeenCalledTimes(1);
+    segment.mockRestore();
   });
 
   it("counts nothing for no text, and a half of a broken pair as one cell", () => {
