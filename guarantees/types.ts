@@ -101,12 +101,6 @@ export interface Opening extends Call {
    */
   readonly opens?: string;
   /**
-   * Whether the stand-in holds the answer to the interface's first read of
-   * details until the first key is pressed, so that key lands while the
-   * read is under way.
-   */
-  readonly holdsOpening?: boolean;
-  /**
    * The recording module GitHub answers from once the clock first moves
    * on through a wait of docket's, as if something changed on GitHub
    * meanwhile.
