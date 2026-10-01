@@ -114,7 +114,6 @@ export default function FinishedList({
                 row={row}
                 {...(row.stacked && { detail: readDetail(row) })}
                 waiting={waiting}
-                clock
                 now={now}
                 timezone={timezone}
                 width={width}

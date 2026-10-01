@@ -33,6 +33,9 @@ const reading = {
   width: 40,
 };
 
+/** What a finished thread's accordion reads with: its bar is its verdict, so no clock. */
+const { clock: _, ...underFinished } = reading;
+
 /** A review on a stacked pull request: who asked, what changed, the checks, the stack. */
 export const Review = {
   args: {
@@ -112,12 +115,12 @@ export const PausedUnheld = {
  * of its time to close, then its labels, the bar running on to its ending.
  */
 export const FinishedOver = {
-  args: { ...reading, row: findFinishedRow("example#7") },
+  args: { ...underFinished, row: findFinishedRow("example#7") },
 } satisfies Story<ThreadAccordionProps>;
 
 /** A finished issue that a pull request closed, within its target: the target, then what closed it. */
 export const FinishedClosedIn = {
-  args: { ...reading, row: findFinishedRow("docs#4") },
+  args: { ...underFinished, row: findFinishedRow("docs#4") },
 } satisfies Story<ThreadAccordionProps>;
 
 /**
@@ -126,7 +129,7 @@ export const FinishedClosedIn = {
  */
 export const FinishedStackLoading = {
   args: {
-    ...reading,
+    ...underFinished,
     row: findFinishedRow("example#2"),
     detail: pendingDetail,
   },
@@ -139,7 +142,7 @@ export const FinishedStackLoading = {
  */
 export const FinishedPaused = {
   args: {
-    ...reading,
+    ...underFinished,
     row: findFinishedRow("example#2"),
     detail: Promise.resolve({ resumes: new Date("2026-09-28T13:00:00Z") }),
   },

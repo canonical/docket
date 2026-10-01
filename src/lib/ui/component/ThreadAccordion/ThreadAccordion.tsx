@@ -33,7 +33,10 @@ interface Stroke {
  * the bar only where the list runs a clock. A finished thread's ending
  * follows its accordion, so its bar runs on past the accordion's last line.
  */
-function findStroke(row: ThreadAccordionProps["row"], clock: boolean): Stroke {
+function findStroke(
+  row: ThreadAccordionProps["row"],
+  clock: boolean | undefined,
+): Stroke {
   if ("wait" in row) {
     return {
       ...(clock ? { state: row.state } : {}),

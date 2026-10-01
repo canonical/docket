@@ -129,7 +129,7 @@ export type ThreadAccordionProps = AccordionProps &
          * Maps to DSL role: loaded body, failed line (cardinality: 0..1)
          */
         detail?: Promise<ShownDetail>;
-        /** A finished thread's bar is its verdict, so the item has one. */
-        clock: true;
+        /** A finished thread's bar is its verdict, so it takes no clock. */
+        clock?: never;
       }
   );

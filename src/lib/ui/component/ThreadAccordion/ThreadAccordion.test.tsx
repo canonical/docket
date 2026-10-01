@@ -40,7 +40,6 @@ const underFinished = (
 ): ThreadAccordionProps => ({
   row,
   waiting: {},
-  clock: true,
   now: recordedNow,
   timezone: "Europe/Paris",
   width: 40,
@@ -123,7 +122,7 @@ describe("ThreadAccordion", () => {
         clock: true,
       };
       expect(owed.row).toBe(overReview);
-      // @ts-expect-error a finished thread's bar is its verdict, so it has one.
+      // @ts-expect-error a finished thread's bar is its verdict, so it takes no clock.
       const finished: ThreadAccordionProps = {
         ...base,
         row: findFinishedRow("example#7"),
