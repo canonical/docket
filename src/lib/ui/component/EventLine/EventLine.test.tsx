@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { findEventLine } from "../../../../testing/activity.js";
+import { findFinishedRow } from "../../../../testing/finished.js";
 import { draw } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import EventLine from "./EventLine.js";
@@ -9,6 +11,7 @@ import {
   EndingWithin,
   Pushed,
 } from "./EventLine.stories.js";
+import type { EventLineProps } from "./types.js";
 
 describe("EventLine", () => {
   it("says who did what under its thread, the actor behind their mark, the stack mark running on beside it, with the age at the right edge at 40 columns", async () => {
@@ -63,22 +66,32 @@ describe("EventLine", () => {
   });
 
   it("dims an ending a bot made, as activity dims a bot's event", async () => {
-    const { line } = EndingWithin.args;
     const bot = {
-      ...line,
+      ...findFinishedRow("example#2").ending,
       actor: { text: "example-sync", fit: "trimmed", group: "bot" },
     } as const;
     const screen = await draw(
-      <EventLine {...EndingWithin.args} line={bot} />,
+      <EventLine line={bot} state="within" stacked width={40} />,
       40,
     );
     expect(screen.look(" merged")?.fg).toBe(tokens["color.text.muted"]);
     expect(screen.look("20h")?.fg).toBe(tokens["color.text.muted"]);
   });
 
+  it("takes a verdict for a finished thread's ending alone, never an activity event", async () => {
+    // @ts-expect-error an activity event carries no verdict.
+    const props: EventLineProps = {
+      line: findEventLine(12, 1),
+      stacked: true,
+      width: 40,
+      state: "over",
+    };
+    expect(props.state).toBe("over");
+  });
+
   it("draws what happened alone when no actor is named", async () => {
-    const { actor: _, ...line } = Pushed.args.line;
-    const screen = await draw(<EventLine {...Pushed.args} line={line} />, 40);
+    const { actor: _, ...line } = findEventLine(12, 1);
+    const screen = await draw(<EventLine line={line} stacked width={40} />, 40);
     expect(screen.lines.at(0)).toBe(` ┆  pushed 2 commits${" ".repeat(17)}25m`);
   });
 

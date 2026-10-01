@@ -20,7 +20,7 @@ const gutter = " ".repeat(indent - marginCells);
  * they never are.
  */
 const isQuiet = (line: EventLineProps["line"]) =>
-  "event" in line
+  line.event
     ? line.event.bot && line.event.kind !== "checksFailed"
     : line.actor?.group === "bot";
 
@@ -31,7 +31,7 @@ const isQuiet = (line: EventLineProps["line"]) =>
  */
 function describeWhat(line: EventLineProps["line"]): Piece[] {
   const { actor, action } = line;
-  if ("event" in line && line.event.kind === "checksFailed") {
+  if (line.event?.kind === "checksFailed") {
     return [
       {
         text: `${tokens["glyph.failed"]} ${action.text}`,

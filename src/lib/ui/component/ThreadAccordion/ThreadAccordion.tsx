@@ -43,7 +43,7 @@ function findStroke(row: ThreadAccordionProps["row"], clock: boolean): Stroke {
   }
   if ("ending" in row) {
     return {
-      ...(clock && row.verdict ? { state: row.verdict } : {}),
+      ...(row.verdict ? { state: row.verdict } : {}),
       stacked: row.stacked,
       ends: false,
     };
