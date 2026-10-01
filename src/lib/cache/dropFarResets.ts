@@ -1,4 +1,4 @@
-import type { Budgets } from "../provider/index.js";
+import type { Budget, Budgets } from "../provider/index.js";
 import { farthestReset } from "./constants.js";
 
 /**
@@ -9,7 +9,7 @@ import { farthestReset } from "./constants.js";
 export default function dropFarResets(budgets: Budgets, at: Date): Budgets {
   const latest = at.getTime() + farthestReset;
   const { graphql, rest } = budgets;
-  const isNear = (budget: Budgets["graphql"]) =>
+  const isNear = (budget: Budget | undefined) =>
     budget !== undefined && budget.resetAt.getTime() <= latest;
   return {
     ...(isNear(graphql) && { graphql }),

@@ -299,6 +299,25 @@ describe("the budget mirror of createCache", () => {
     expect(pane.readBudgets()).toEqual({ graphql: makeBudget(900) });
   });
 
+  it("judges the floor on its own answer while its clock runs two hours behind GitHub's, and drops one that resets later still", async () => {
+    const { provider, answers } = makeHearingProvider();
+    const cache = open(provider);
+    const behind = new Date(clock.getTime() + 2.5 * 3_600_000);
+    answers.heard = {
+      graphql: { ...fullBudget, remaining: 900, resetAt: behind },
+    };
+    expect(cache.maySpend()).toBe(false);
+    answers.heard = {
+      graphql: {
+        ...fullBudget,
+        remaining: 900,
+        resetAt: new Date("9999-12-31T00:00:00Z"),
+      },
+    };
+    expect(cache.readBudgets()).toEqual({});
+    expect(cache.maySpend()).toBe(true);
+  });
+
   it("judges no floor on a report in the budget file that resets past GitHub's window", async () => {
     await writeBudgetFile(join(directory, budgetFileName), {
       graphql: {

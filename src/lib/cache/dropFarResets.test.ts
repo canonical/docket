@@ -9,9 +9,9 @@ const resetting = (resetAt: string) => ({
 });
 
 describe("dropFarResets", () => {
-  it("keeps each report that resets within the hour and five minutes", () => {
+  it("keeps each report that resets within three hours, a clock far behind GitHub's allowed for", () => {
     const budgets = {
-      graphql: resetting("2026-09-28T11:05:00Z"),
+      graphql: resetting("2026-09-28T13:00:00Z"),
       rest: resetting("2026-09-28T10:30:00Z"),
     };
     expect(dropFarResets(budgets, at)).toEqual(budgets);
@@ -24,7 +24,7 @@ describe("dropFarResets", () => {
       rest: near,
     });
     expect(
-      dropFarResets({ rest: resetting("2026-09-28T11:05:01Z") }, at),
+      dropFarResets({ rest: resetting("2026-09-28T13:00:01Z") }, at),
     ).toEqual({});
     expect(dropFarResets({}, at)).toEqual({});
   });

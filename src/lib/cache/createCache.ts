@@ -71,7 +71,8 @@ export default function createCache({
   // The mirror of the budgets as the budget file last gave it or this
   // process last kept it; this process's own answers join it on each read.
   let mirror: Budgets = {};
-  const readFigures = () => mergeBudgets(mirror, provider.readBudgets());
+  const readFigures = () =>
+    mergeBudgets(mirror, dropFarResets(provider.readBudgets(), now()));
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));

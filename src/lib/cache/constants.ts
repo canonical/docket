@@ -44,11 +44,12 @@ export const budgetFileName = "budget.json";
 
 /**
  * How far ahead of now, in milliseconds, a budget's reset may lie: GitHub
- * resets each budget within the hour, and five minutes more allow for a
- * clock that runs behind. A report that resets later is no report of
- * GitHub's, and is dropped.
+ * resets each budget within the hour, and two hours more allow for a
+ * clock far behind GitHub's. A report that resets later, whether a
+ * process's own answer or what it reads, is no report of GitHub's, and is
+ * dropped.
  */
-export const farthestReset = 3_900_000;
+export const farthestReset = 10_800_000;
 
 /** The budget file's own lock, beside it in the cache folder. */
 export const budgetLockName = "budget.json.lock";
