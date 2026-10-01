@@ -71,7 +71,7 @@
 
 ## Boundaries
 
-- `package.json`'s `version` is the only place the version is written. The program reads it from `package.json` at run time.
+- `package.json`'s `version` is the only place the version is written. The program reads it from `package.json` at run time. A release publishes that version to npm: run the Release workflow (`.github/workflows/release.yml`) from `main` once the pull request that sets it has merged.
 - Security reports go through GitHub's private vulnerability reporting, as `SECURITY.md` says, never through a public issue.
 
 ## Gotchas
