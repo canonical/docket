@@ -46,10 +46,13 @@ export default async function holdLock<T>(
     lost = true;
     forgotten.resolve();
   });
-  const held = await identifyFile(lockfilePath).catch(() => undefined);
+  // A first look that fails leaves nothing to compare, and the lock counts
+  // as still held; a lock gone at the first look was taken over.
+  const unseen = Symbol("unseen");
+  const held = await identifyFile(lockfilePath).catch(() => unseen);
   /** Whether the lock in the folder is still the one this process took. */
   const isOwn = async () =>
-    held === undefined ||
+    held === unseen ||
     (await identifyFile(lockfilePath).catch(() => held)) === held;
   let outcome: Held<T>["outcome"];
   try {
