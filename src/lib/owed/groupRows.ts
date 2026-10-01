@@ -1,6 +1,7 @@
 import type { Repo } from "../config/index.js";
 import { collectStacks } from "../stacks/index.js";
 import { kindSections } from "./constants.js";
+import nameHeading from "./nameHeading.js";
 import type {
   FieldKind,
   Heading,
@@ -15,7 +16,7 @@ type Section = readonly [
   heading: string,
   rows: readonly WaitRow[],
   kind: FieldKind,
-  stack?: StackHeading["stack"],
+  stack?: StackHeading,
 ];
 
 /**
@@ -71,14 +72,12 @@ function sectionStacks(rows: readonly WaitRow[], order: string[]): Section[] {
       order.indexOf(a.repo) - order.indexOf(b.repo) || a.number - b.number,
   );
   const sections = stacks.map(({ repo, number, size, base, members }) => {
-    const prs = size === 1 ? "1 PR" : `${size} PRs`;
-    const place = `stack ${number} · ${prs} → `;
-    const heading = `${repo} ${place}${base}`;
+    const stack: StackHeading = { kind: "stack", repo, number, size, base };
     return [
-      heading,
+      nameHeading(stack),
       members.map(({ row }) => row),
       "identifier",
-      { repo, place, base },
+      stack,
     ] as const;
   });
   return [
@@ -93,10 +92,10 @@ function describeHeading(
   members: readonly WaitRow[],
   text: string,
   kind: FieldKind,
-  stack: StackHeading["stack"] | undefined,
+  stack: StackHeading | undefined,
 ): Heading {
   if (grouping === "owner") return findOwner(members, text);
-  return stack ? { text, kind: "identifier", stack } : { text, kind };
+  return stack ?? { text, kind };
 }
 
 /**

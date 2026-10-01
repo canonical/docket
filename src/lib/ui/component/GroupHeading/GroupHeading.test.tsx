@@ -31,9 +31,9 @@ describe("GroupHeading", () => {
     expect(screen.lines.at(0)).toBe(`NOT IN A STACK ${"─".repeat(45)}`);
   });
 
-  it("cuts a name wider than the pane with an ellipsis, a stack's in its middle to keep its base, leaving room for the rule", async () => {
+  it("cuts a name wider than the pane with an ellipsis, a stack's at its end once its parts have given way, leaving room for the rule", async () => {
     const stack = await draw(<GroupHeading {...Stack.args} width={16} />, 16);
-    expect(stack.lines.slice(0, 2)).toEqual(["exampl… → main ─", ""]);
+    expect(stack.lines.slice(0, 2)).toEqual(["stack 3 · 3 P… ─", ""]);
     const owner = await draw(<GroupHeading {...Owner.args} width={8} />, 8);
     expect(owner.lines.at(0)).toBe("◉ ali… ─");
   });
@@ -48,7 +48,7 @@ describe("GroupHeading", () => {
     });
   });
 
-  it("cuts a stack's name in its middle before the count, below the narrowest pane, leaving room for the rule", async () => {
+  it("cuts a stack's name at its end before the count, below the narrowest pane, leaving room for the rule", async () => {
     const screen = await draw(
       <GroupHeading
         {...Stack.args}
@@ -57,6 +57,6 @@ describe("GroupHeading", () => {
       />,
       24,
     );
-    expect(screen.lines.at(0)).toBe("exampl…→ main · 2 of 3 ─");
+    expect(screen.lines.at(0)).toBe("stack 3 · 3 … · 2 of 3 ─");
   });
 });

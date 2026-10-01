@@ -3,58 +3,13 @@ import { accordionMaxLines } from "../../constants.js";
 import {
   endRuns,
   fitBlock,
-  fitField,
   fitRuns,
+  giveWay,
   measurePieces,
   measureText,
 } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type { DetailLine, DetailText } from "./types.js";
-
-/**
- * Which of a held line's runs leave whole, in the order it `drops` them,
- * while the others are wider than `room`.
- */
-function dropWhole(
-  { pieces, drops = [] }: DetailLine,
-  room: number,
-): ReadonlySet<number> {
-  const dropped = new Set<number>();
-  for (const index of drops) {
-    const remaining = pieces.filter((_, each) => !dropped.has(each));
-    if (measurePieces(remaining) <= room) break;
-    dropped.add(index);
-  }
-  return dropped;
-}
-
-/**
- * A held line's runs fitted to `room` by dropping whole parts before
- * cutting any: the runs it `drops` leave, in order, while the line is too
- * wide, then the run it `cuts` is cut once, by its kind's rule for a
- * line, to the room the others leave; a single run is the one cut. The
- * other runs stay whole. `whole` gives the runs kept as they were before
- * the cut, run for run.
- */
-function giveWay(
-  line: DetailLine,
-  room: number,
-): { runs: Piece[]; whole: Piece[] } {
-  const { pieces, kind, cuts } = line;
-  const dropped = dropWhole(line, room);
-  const cutting = pieces.length === 1 ? 0 : cuts;
-  const whole = pieces.filter((_, index) => !dropped.has(index));
-  const over = measurePieces(whole) - room;
-  const runs = pieces.flatMap((piece, index) => {
-    if (dropped.has(index)) return [];
-    if (index !== cutting || over <= 0) return [piece];
-    const cells = measureText(piece.text) - over;
-    return [
-      { ...piece, text: fitField({ text: piece.text, kind }, "line", cells) },
-    ];
-  });
-  return { runs, whole };
-}
 
 /**
  * Whether fitting cut the last of `fitted` at its end, so the line ends in

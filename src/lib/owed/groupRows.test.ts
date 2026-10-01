@@ -5,6 +5,7 @@ import type { StackEntry } from "../stacks/index.js";
 import type { Wait } from "../waits/index.js";
 import buildRow from "./buildRow.js";
 import groupRows from "./groupRows.js";
+import nameHeading from "./nameHeading.js";
 
 const now = at("2026-09-23T10:00+02:00");
 const repos: Repo[] = [
@@ -22,7 +23,7 @@ const entry = (number: number, position: number, size = 5): StackEntry => ({
 const pull = (number: number, stack?: StackEntry, repo = repos[0]?.repo) =>
   thread({ kind: "pullRequest", number, stack, repo });
 const headings = (groups: ReturnType<typeof groupRows>) =>
-  groups.map(({ heading }) => heading?.text);
+  groups.map(({ heading }) => heading && nameHeading(heading));
 const references = (groups: ReturnType<typeof groupRows>) =>
   groups.map(({ rows }) => rows.map(({ reference }) => reference.text));
 
@@ -123,13 +124,11 @@ describe("groupRows", () => {
       expect(groupRows(rows, "stack", repos)).toEqual([
         {
           heading: {
-            text: "example stack 12 · 5 PRs → main",
-            kind: "identifier",
-            stack: {
-              repo: "example",
-              place: "stack 12 · 5 PRs → ",
-              base: "main",
-            },
+            kind: "stack",
+            repo: "example",
+            number: 12,
+            size: 5,
+            base: "main",
           },
           rows: [rows[1], rows[0]],
         },
