@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { findActivityRow } from "../testing/activity.js";
 import { findFinishedRow } from "../testing/finished.js";
 import { parserFix } from "../testing/recorded.js";
+import { overReview } from "../testing/rows.js";
 import describeRowVersion from "./describeRowVersion.js";
 
 describe("describeRowVersion", () => {
@@ -9,6 +10,13 @@ describe("describeRowVersion", () => {
     const row = findFinishedRow("example#7");
     expect(describeRowVersion(row, parserFix)).toBe(
       `${parserFix.updatedAt.getTime()}|failing`,
+    );
+  });
+
+  it("gives owed's wait the last change of the thread it carries", () => {
+    const { updatedAt, checks } = overReview.wait.thread;
+    expect(describeRowVersion(overReview, undefined)).toBe(
+      `${updatedAt.getTime()}|${checks ?? ""}`,
     );
   });
 

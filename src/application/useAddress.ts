@@ -125,7 +125,9 @@ export default function useAddress({
     stepMode: (direction) =>
       setMode((current) => {
         const place = terminalModes.indexOf(current) + direction;
-        return terminalModes[place] ?? current;
+        // Neither end wraps, so a step past either stays where it is.
+        if (place < 0 || place >= terminalModes.length) return current;
+        return terminalModes.at(place) ?? current;
       }),
     owedGrouping,
     activityGrouping,
