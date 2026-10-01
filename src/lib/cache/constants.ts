@@ -55,6 +55,13 @@ export const budgetFolderName = "budget";
 export const farthestReset = 10_800_000;
 
 /**
+ * How old, in milliseconds, a temporary file in the budget folder is once
+ * its process can no longer be writing it: an hour, against a write that
+ * takes milliseconds.
+ */
+export const leftoverAge = 3_600_000;
+
+/**
  * How long, in milliseconds, cached data serves a reader that names no
  * maximum age, so an agent asking in a loop causes at most one refresh
  * every five minutes.

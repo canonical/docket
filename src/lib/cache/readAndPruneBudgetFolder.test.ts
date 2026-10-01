@@ -4,12 +4,15 @@ import {
   mkdtemp,
   readdir,
   rm,
+  symlink,
+  utimes,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { fullBudget } from "../../testing/provider.js";
+import { leftoverAge } from "./constants.js";
 import readAndPruneBudgetFolder from "./readAndPruneBudgetFolder.js";
 import writeBudgetFile from "./writeBudgetFile.js";
 
@@ -105,5 +108,22 @@ describe("readAndPruneBudgetFolder", () => {
     } finally {
       await chmod(folder, 0o700);
     }
+  });
+
+  it("removes a temporary file older than an hour, which no process is writing, and keeps a younger one", async () => {
+    const old = join(folder, "1.json.0001.tmp");
+    const young = join(folder, "2.json.0002.tmp");
+    await writeFile(old, "{}");
+    await writeFile(young, "{}");
+    const leftAt = new Date(before.getTime() - leftoverAge);
+    await utimes(old, leftAt, leftAt);
+    await utimes(young, before, before);
+    // One that cannot be looked at is left.
+    await symlink(join(folder, "gone"), join(folder, "3.json.0003.tmp"));
+    await readAndPruneBudgetFolder(folder, before);
+    expect((await readdir(folder)).sort()).toEqual([
+      "2.json.0002.tmp",
+      "3.json.0003.tmp",
+    ]);
   });
 });

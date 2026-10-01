@@ -1,6 +1,7 @@
-import { readdir, rm } from "node:fs/promises";
+import { readdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import type { Budgets } from "../provider/index.js";
+import { leftoverAge } from "./constants.js";
 import dropFarResets from "./dropFarResets.js";
 import hasAllReset from "./hasAllReset.js";
 import mergeBudgets from "./mergeBudgets.js";
@@ -19,6 +20,9 @@ import readBudgetFile from "./readBudgetFile.js";
  * answer of that process changes them and is kept, a window left open
  * rather than guarded.
  *
+ * A temporary file older than `leftoverAge` was left by a process that
+ * ended between a write and its rename, and is removed too.
+ *
  * @note Impure: reads the filesystem, and removes files that tell nothing;
  * a file it cannot remove is left.
  * @returns No budget while the folder holds no file.
@@ -33,13 +37,21 @@ export default async function readAndPruneBudgetFolder(
     .map((name) => join(folder, name));
   const read = await Promise.all(files.map(readBudgetFile));
   const isSpent = (budgets: Budgets) => hasAllReset(budgets, at);
-  await Promise.all(
-    files.map((file, index) =>
-      isSpent(read[index] ?? {})
-        ? rm(file, { force: true }).catch(() => undefined)
-        : undefined,
+  const remove = (file: string) =>
+    rm(file, { force: true }).catch(() => undefined);
+  const isLeftOver = async (file: string) =>
+    (await stat(file)).mtime.getTime() <= at.getTime() - leftoverAge;
+  const temporaries = names
+    .filter((name) => name.endsWith(".tmp"))
+    .map((name) => join(folder, name));
+  await Promise.all([
+    ...files.map((file, index) =>
+      isSpent(read[index] ?? {}) ? remove(file) : undefined,
     ),
-  );
+    ...temporaries.map(async (file) =>
+      (await isLeftOver(file).catch(() => false)) ? remove(file) : undefined,
+    ),
+  ]);
   return read
     .filter((budgets) => !isSpent(budgets))
     .map((budgets) => dropFarResets(budgets, at))
