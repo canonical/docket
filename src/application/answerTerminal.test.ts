@@ -155,13 +155,14 @@ describe("answerTerminal", () => {
       recordedProvider({ readBudgets: () => heard }),
     );
     await cacheOf(view).readDetail(parserFix);
-    const other = createCache({
-      provider: fakeProvider({ readBudgets: () => ({}) }),
-      repos: [parserFix.repo],
-      directory: root,
-      now: () => recordedNow,
-    });
+    // Each try is a later process, which reads the budget folder anew.
     await waitUntil(async () => {
+      const other = createCache({
+        provider: fakeProvider({ readBudgets: () => ({}) }),
+        repos: [parserFix.repo],
+        directory: root,
+        now: () => recordedNow,
+      });
       await other.load();
       expect(other.readBudgets()).toEqual(heard);
     });

@@ -63,7 +63,7 @@ export default function createCache({
     defaultOptions: { queries: { gcTime: Number.POSITIVE_INFINITY } },
   });
   const file = join(directory, cacheFileName);
-  const budgetFolder = join(directory, budgetFolderName);
+  const budgets = join(directory, budgetFolderName);
   const ownBudget = `${process.pid}.json`;
   const listeners = new Set<() => void>();
   let fullRefreshAt: Date | undefined;
@@ -165,9 +165,12 @@ export default function createCache({
     }
   };
 
+  // Budgets are read at the first load alone; a pane's watch keeps them.
+  let budgetsLoaded: Promise<void> | undefined;
   const load = async () => {
     const contents = await readCacheFile(file);
-    await loadBudget();
+    budgetsLoaded ??= loadBudget();
+    await budgetsLoaded;
     if (contents) {
       hydrate(client, contents.state);
       // Every write happens under the lock after a load, and carries the
@@ -181,8 +184,7 @@ export default function createCache({
     mirror = mergeBudgets(mirror, read);
     publishFloor();
   };
-  const loadBudget = async () =>
-    adopt(await readBudgetFolder(budgetFolder, now()));
+  const loadBudget = async () => adopt(await readBudgetFolder(budgets, now()));
   /** Writes the cache file, then keeps the budgets its reads heard. */
   const save = async () => {
     const contents = { state: dehydrate(client), fullRefreshAt };
@@ -200,7 +202,7 @@ export default function createCache({
     publish: (change) => publish(change, false),
   });
   const keepInFile = createBudgetKeeper({
-    file: join(budgetFolder, ownBudget),
+    file: join(budgets, ownBudget),
     readOwn,
     publishFloor,
   });
@@ -455,7 +457,8 @@ export default function createCache({
       return discarded;
     },
     watch() {
-      const unwatch = watchBudgetFolder(budgetFolder, ownBudget, now, adopt);
+      const unwatch = watchBudgetFolder(budgets, ownBudget, now, adopt);
+      void loadBudget(); // The files written before the watch began.
       const watcher = watchFolder(directory, (_event, name) => {
         if (name !== cacheFileName) return;
         // The file this process wrote holds nothing it lacks.

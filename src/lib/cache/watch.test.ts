@@ -188,4 +188,28 @@ describe("the writes and the watch of createCache", () => {
     expect(files.readdir).not.toHaveBeenCalled();
     stop();
   });
+
+  it("reads the budget folder at its first load alone, and as its watch starts, never at another process's write of the cache", async () => {
+    const folderReads = () =>
+      vi
+        .mocked(files.readdir)
+        .mock.calls.filter(([path]) => String(path).endsWith(budgetFolderName))
+        .length;
+    const pane = open(counting());
+    await pane.load();
+    await pane.load();
+    expect(folderReads()).toBe(1);
+    const stop = pane.watch();
+    await waitUntil(() => {
+      expect(folderReads()).toBe(2);
+    });
+    // The other process reads the folder at its own first load.
+    await open(counting()).read(5 * minute);
+    await waitUntil(() => {
+      expect(pane.threads().threads).toHaveLength(3);
+    });
+    await identified();
+    expect(folderReads()).toBe(3);
+    stop();
+  });
 });
