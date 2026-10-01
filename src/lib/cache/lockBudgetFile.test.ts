@@ -15,12 +15,12 @@ vi.mock("proper-lockfile", async (importOriginal) => {
 
 let directory: string;
 let file: string;
-let lockPath: string;
+let lockfilePath: string;
 
 beforeEach(async () => {
   directory = await mkdtemp(join(tmpdir(), "docket-budget-lock-"));
   file = join(directory, "budget.json");
-  lockPath = join(directory, "budget.json.lock");
+  lockfilePath = join(directory, "budget.json.lock");
   vi.mocked(lock).mockClear();
 });
 
@@ -35,12 +35,12 @@ const holdLock = () =>
     stale: budgetLockTiming.stale,
     update: budgetLockTiming.update,
     realpath: false,
-    lockfilePath: lockPath,
+    lockfilePath,
   });
 
 describe("lockBudgetFile", () => {
   it("takes the lock beside a file that need not exist, and lets it go", async () => {
-    const release = await lockBudgetFile(file, lockPath, () => {});
+    const release = await lockBudgetFile(file, lockfilePath, () => {});
     expect(await readdir(directory)).toEqual(["budget.json.lock"]);
     await release();
     expect(await readdir(directory)).toEqual([]);
@@ -49,7 +49,7 @@ describe("lockBudgetFile", () => {
   it("tries again while another process holds the lock, and takes it once let go", async () => {
     const releaseOther = await holdLock();
     vi.mocked(lock).mockClear();
-    const taking = lockBudgetFile(file, lockPath, () => {});
+    const taking = lockBudgetFile(file, lockfilePath, () => {});
     await waitUntil(() =>
       expect(vi.mocked(lock).mock.calls.length).toBeGreaterThan(1),
     );
@@ -61,7 +61,7 @@ describe("lockBudgetFile", () => {
   it("fails at once on any failure but a lock held, such as a folder it cannot write", async () => {
     await chmod(directory, 0o500);
     await expect(
-      lockBudgetFile(file, lockPath, () => {}),
+      lockBudgetFile(file, lockfilePath, () => {}),
     ).rejects.toMatchObject({ code: "EACCES" });
     expect(lock).toHaveBeenCalledOnce();
   });
@@ -70,7 +70,7 @@ describe("lockBudgetFile", () => {
     const releaseOther = await holdLock();
     try {
       await expect(
-        lockBudgetFile(file, lockPath, () => {}),
+        lockBudgetFile(file, lockfilePath, () => {}),
       ).rejects.toMatchObject({ code: "ELOCKED" });
     } finally {
       await releaseOther();
