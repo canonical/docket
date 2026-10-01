@@ -75,16 +75,24 @@ describe("measureText", () => {
     expect(Bun.stringWidth("👍🏽")).toBe(2);
   });
 
-  it("splits a text into characters once, while it keeps it, and forgets every text past 4096", () => {
-    const segment = vi.spyOn(Intl.Segmenter.prototype, "segment");
-    expect(measureText("Réparer ❤ une fois")).toBe(19);
-    expect(measureText("Réparer ❤ une fois")).toBe(19);
-    expect(segment).toHaveBeenCalledTimes(1);
-    for (let each = 0; each < 4096; each += 1) measureText(`❤${each}`);
-    segment.mockClear();
-    expect(measureText("Réparer ❤ une fois")).toBe(19);
-    expect(segment).toHaveBeenCalledTimes(1);
-    segment.mockRestore();
+  it("measures a text once while it is among the 4096 measured last, and again once it is not", () => {
+    const text = "Réparer ❤ une fois";
+    const measuredAgain = () => {
+      const segment = vi.spyOn(Intl.Segmenter.prototype, "segment");
+      expect(measureText(text)).toBe(19);
+      const again = segment.mock.calls.length > 0;
+      segment.mockRestore();
+      return again;
+    };
+    const measureOthers = (count: number, name: string) => {
+      for (let each = 0; each < count; each += 1)
+        measureText(`❤${name}${each}`);
+    };
+    measureText(text);
+    measureOthers(4095, "a");
+    expect(measuredAgain()).toBe(false);
+    measureOthers(4096, "b");
+    expect(measuredAgain()).toBe(true);
   });
 
   it("counts nothing for no text, and a half of a broken pair as one cell", () => {
