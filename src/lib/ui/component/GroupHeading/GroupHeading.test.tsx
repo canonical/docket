@@ -23,6 +23,15 @@ describe("GroupHeading", () => {
     expect(screen.look("◉ alice")?.fg).toBe(tokens["color.text.team"]);
   });
 
+  it("keeps a stack's repository name while it fits exactly, and leaves it whole one cell narrower", async () => {
+    const at = async (width: number) =>
+      (
+        await draw(<GroupHeading {...Stack.args} width={width} />, width)
+      ).lines.at(0);
+    expect(await at(32)).toBe("example stack 3 · 3 PRs → main ─");
+    expect(await at(31)).toBe(`stack 3 · 3 PRs → main ${"─".repeat(8)}`);
+  });
+
   it("draws the rule to the edge of a wider pane", async () => {
     const screen = await draw(
       <GroupHeading {...NotInAStack.args} width={60} />,

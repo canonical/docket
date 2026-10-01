@@ -48,6 +48,8 @@ describe("CountsLine", () => {
     expect((await counts(40)).lines.at(0)).toBe(
       `120 over · 45 soon${" ".repeat(13)}1/120/465`,
     );
+    // Exactly the room the two parts and the position need keeps both.
+    expect((await counts(28)).lines.at(0)).toBe("120 over · 45 soon 1/120/465");
     expect((await counts(27)).lines.at(0)).toBe(
       `120 over${" ".repeat(10)}1/120/465`,
     );
