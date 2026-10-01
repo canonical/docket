@@ -262,7 +262,7 @@ describe("ThreadAccordion", () => {
         "unit tests on every platform,",
         "build the documentation site)",
         "stack 7 · 2 of 3 · → release/…ong-name",
-        "below #12344 merged, above #12346 ope…",
+        "below #12344 merged,…",
       ]);
       const wide = await open(Long.args, 60);
       expect(readText(wide).at(0)).toBe(
@@ -284,7 +284,7 @@ describe("ThreadAccordion", () => {
         "✗ checks: 1 of 4 failed",
         "(lint the whole repository)",
         "stack 7 · 2 of 3 · → release/…ong-name",
-        "below #12344 merged, above #12346 ope…",
+        "below #12344 merged,…",
         "",
       ]);
       expect(screen.lines.at(5)?.startsWith("╹")).toBe(true);

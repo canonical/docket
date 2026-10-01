@@ -6,7 +6,7 @@
 |┃┆unit tests on every platform,
 |┃┆build the documentation site)
 |┃┆stack 7 · 2 of 3 · → release/…ong-name
-|╹┆below #12344 merged, above #12346 ope…
+|╹┆below #12344 merged,…
 
 runs
 1:1 "┃" fg #e27878ff bg #2e3244ff
@@ -37,4 +37,5 @@ runs
 7:1 "┃" fg #e27878ff bg #2e3244ff
 7:2 "┆stack 7 · 2 of 3 · → release/…ong-name" fg #6b7089ff bg #2e3244ff
 8:1 "╹" fg #e27878ff bg #2e3244ff
-8:2 "┆below #12344 merged, above #12346 ope…" fg #6b7089ff bg #2e3244ff
+8:2 "┆below #12344 merged,…" fg #6b7089ff bg #2e3244ff
+8:24 "                 " fg #ffffffff bg #2e3244ff

@@ -124,6 +124,23 @@ describe("fitAccordion", () => {
     expect(read(fitAccordion(cut, 9, 1))).toEqual(["exam…tory"]);
   });
 
+  it("ends a last line after a whole part, its parts that leave whole making the mark room, and cuts it only when none can", () => {
+    const neighbours: DetailLine = {
+      ...trimmed(""),
+      pieces: [
+        { text: "below #1 merged,", fg },
+        { text: " above #2 open", fg },
+      ],
+      drops: [1],
+    };
+    const text = { body: [neighbours, wrapped("more")], stack: [] };
+    expect(read(fitAccordion(text, 40, 1))).toEqual([
+      "below #1 merged, above #2 open…",
+    ]);
+    expect(read(fitAccordion(text, 30, 1))).toEqual(["below #1 merged,…"]);
+    expect(read(fitAccordion(text, 16, 1))).toEqual(["below #1 merged…"]);
+  });
+
   it("ends a last line that only left a part out whole, which says nothing of what follows", () => {
     const place: DetailLine = {
       pieces: [

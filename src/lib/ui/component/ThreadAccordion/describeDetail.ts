@@ -332,8 +332,14 @@ function describeStack(
     ...describeNeighbour("below", position - 1),
     ...describeNeighbour("above", position + 1),
   ];
-  if (neighbours.length === 0) return [place];
-  return [place, trimmed(muted(neighbours.join(", ")))];
+  const [first, second] = neighbours;
+  if (first === undefined) return [place];
+  // The neighbour above leaves whole, so its state is never cut, and the
+  // comma before it stays to say more followed.
+  const parts = second
+    ? [muted(`${first},`), muted(` ${second}`)]
+    : [muted(first)];
+  return [place, { ...trimmed(...parts), drops: [1] }];
 }
 
 /**
