@@ -82,24 +82,27 @@ describe("measureText", () => {
       vi.resetModules();
       const measure = (await import("./measureText.js")).default;
       const block = (await import("./fitBlock.js")).default;
-      /** Whether measuring the title splits it into characters. */
-      const measuresTitle = () => {
+      /** Whether measuring `text` splits it into characters. */
+      const splits = (text: string) => {
         const segment = vi.spyOn(Intl.Segmenter.prototype, "segment");
-        expect(measure(title)).toBe(19);
-        const split = segment.mock.calls.some(([text]) => text === title);
+        measure(text);
+        const split = segment.mock.calls.some(([each]) => each === text);
         segment.mockRestore();
         return split;
       };
+      const measuresTitle = () => splits(title);
       const field = (await import("./fitField.js")).default;
-      return { measure, block, field, measuresTitle };
+      return { measure, block, field, splits, measuresTitle };
     };
 
     it("measures a text once until 4096 texts are kept, then forgets them all", async () => {
-      const { measure, measuresTitle } = await load();
+      const { measure, splits, measuresTitle } = await load();
       measure(title);
       for (let each = 1; each < 4096; each += 1) measure(`❤${each}`);
       expect(measuresTitle()).toBe(false);
       measure("❤ one more");
+      // The last kept is forgotten with the first.
+      expect(splits("❤4095")).toBe(true);
       expect(measuresTitle()).toBe(true);
     });
 

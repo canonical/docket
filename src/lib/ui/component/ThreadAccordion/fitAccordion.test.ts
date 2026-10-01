@@ -236,6 +236,25 @@ describe("fitAccordion", () => {
     ]);
   });
 
+  it("ends a last line whose own text ends in …, which no fitting cut", () => {
+    const place: DetailLine = {
+      pieces: [
+        { text: "example-repo ", fg },
+        { text: "stack 7 · 1 of 1 · → ", fg },
+        { text: "wip…", fg },
+      ],
+      kind: "identifier",
+      most: 1,
+      drops: [0],
+      cuts: 2,
+    };
+    const owners = { ...describeWrappingLine("owner ● alice"), yields: true };
+    const text = { body: [owners, describeHeldLine("checks")], stack: [place] };
+    expect(read(fitAccordion(text, 37, 2)).at(1)).toBe(
+      "stack 7 · 1 of 1 · → wip……",
+    );
+  });
+
   it("ends a last stack line whose base is cut, or fills the room exactly, after the base cut once in its middle", () => {
     const place = (base: string): DetailLine => ({
       pieces: [
