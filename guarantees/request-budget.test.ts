@@ -280,6 +280,10 @@ describe("request-budget", () => {
           }),
         );
     });
+    // The homes go only once every pane opened has ended, whichever ran.
+    afterAll(async () => {
+      await Promise.allSettled([idleDay, scrolled, changed, floored]);
+    });
     /** The requests an idle day sent once the pane was idle. */
     const sentIdle = async () => {
       const { requests } = await idleDay;

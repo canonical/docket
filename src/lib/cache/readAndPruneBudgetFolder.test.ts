@@ -55,11 +55,21 @@ describe("readAndPruneBudgetFolder", () => {
       rest: budget(100, passed),
     });
     await writeFile(join(folder, "2.json"), '{"graphql":{"limit":50');
-    await writeFile(join(folder, "3.json.1234.tmp"), "{}");
+    // A report in a file not named as a budget file, which would win.
+    await writeFile(
+      join(folder, "3.json.1234.tmp"),
+      JSON.stringify({ graphql: budget(100) }),
+    );
     await writeBudgetFile(join(folder, "4.json"), { graphql: budget(900) });
     expect(await readAndPruneBudgetFolder(folder, before)).toEqual({
       graphql: budget(900),
     });
+    // A torn file holds no report, so nothing says it has reset.
+    expect((await readdir(folder)).sort()).toEqual([
+      "2.json",
+      "3.json.1234.tmp",
+      "4.json",
+    ]);
   });
 
   it("drops a report that resets past GitHub's window", async () => {
