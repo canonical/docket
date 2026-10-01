@@ -75,24 +75,43 @@ describe("measureText", () => {
     expect(Bun.stringWidth("👍🏽")).toBe(2);
   });
 
-  it("measures a text once while it is among the 4096 measured last, and once more when it is not", () => {
-    const text = "Réparer ❤ une fois";
-    const measuresIt = () => {
-      const segment = vi.spyOn(Intl.Segmenter.prototype, "segment");
-      expect(measureText(text)).toBe(19);
-      const measured = segment.mock.calls.length > 0;
-      segment.mockRestore();
-      return measured;
+  describe("its kept texts", () => {
+    const title = "Réparer ❤ une fois";
+    /** A fresh measure, keeping no text yet, and the fitting that uses it. */
+    const load = async () => {
+      vi.resetModules();
+      const measure = (await import("./measureText.js")).default;
+      const block = (await import("./fitBlock.js")).default;
+      /** Whether measuring the title splits it into characters. */
+      const measuresTitle = () => {
+        const segment = vi.spyOn(Intl.Segmenter.prototype, "segment");
+        expect(measure(title)).toBe(19);
+        const split = segment.mock.calls.some(([text]) => text === title);
+        segment.mockRestore();
+        return split;
+      };
+      return { measure, block, measuresTitle };
     };
-    const measureOthers = (count: number, name: string) => {
-      for (let each = 0; each < count; each += 1)
-        measureText(`❤${name}${each}`);
-    };
-    measureText(text);
-    measureOthers(4095, "a");
-    expect(measuresIt()).toBe(false);
-    measureOthers(4096, "b");
-    expect(measuresIt()).toBe(true);
+
+    it("measures a text once until 4096 texts are kept, then forgets them all", async () => {
+      const { measure, measuresTitle } = await load();
+      measure(title);
+      for (let each = 1; each < 4096; each += 1) measure(`❤${each}`);
+      expect(measuresTitle()).toBe(false);
+      measure("❤ one more");
+      expect(measuresTitle()).toBe(true);
+    });
+
+    it("keeps a title across draws of a wrapped message longer than it keeps", async () => {
+      const { measure, block, measuresTitle } = await load();
+      const message = Array.from({ length: 4500 }, (_, each) => `été${each}`);
+      const runs = [{ text: message.join(" "), fg: "#ffffff" }];
+      measure(title);
+      block(runs, "quote", 37);
+      expect(measuresTitle()).toBe(false);
+      block(runs, "quote", 37);
+      expect(measuresTitle()).toBe(false);
+    });
   });
 
   it("counts nothing for no text, and a half of a broken pair as one cell", () => {
