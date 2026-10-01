@@ -1,7 +1,9 @@
+import { execFile } from "node:child_process";
 import * as folders from "node:fs";
 import * as files from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { thread } from "../../testing/facts.js";
 import {
@@ -189,7 +191,7 @@ describe("the writes and the watch of createCache", () => {
     stop();
   });
 
-  it("reads the budget folder at its first load alone, and as its watch starts, never at another process's write of the cache", async () => {
+  it("reads the budget folder at each load until its watch starts, and then only as it starts, never at another process's write of the cache", async () => {
     const folderReads = () =>
       vi
         .mocked(files.readdir)
@@ -198,18 +200,22 @@ describe("the writes and the watch of createCache", () => {
     const pane = open(counting());
     await pane.load();
     await pane.load();
-    expect(folderReads()).toBe(1);
+    expect(folderReads()).toBe(2);
     const stop = pane.watch();
     await waitUntil(() => {
-      expect(folderReads()).toBe(2);
+      expect(folderReads()).toBe(3);
     });
-    // The other process reads the folder at its own first load.
-    await open(counting()).read(5 * minute);
+    // Another process, whose reads of the folder are its own.
+    const run = promisify(execFile);
+    const log = join(root, "fetches.log");
+    await run(process.execPath, ["src/testing/cacheReader.ts", directory, log]);
     await waitUntil(() => {
-      expect(pane.threads().threads).toHaveLength(3);
+      expect(pane.threads().threads).not.toHaveLength(0);
     });
     await identified();
     expect(folderReads()).toBe(3);
     stop();
+    await pane.load();
+    expect(folderReads()).toBe(4);
   });
 });

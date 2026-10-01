@@ -164,12 +164,11 @@ export default function createCache({
     }
   };
 
-  // Budgets are read at the first load alone; a pane's watch keeps them.
-  let budgetsLoaded: Promise<void> | undefined;
+  // Each load reads the budgets until a watch keeps them, from its start.
+  let unwatch: (() => void) | undefined;
   const load = async () => {
     const contents = await readCacheFile(file);
-    budgetsLoaded ??= loadBudget();
-    await budgetsLoaded;
+    if (!unwatch) await loadBudget();
     if (contents) {
       hydrate(client, contents.state);
       // Every write happens under the lock after a load, and carries the
@@ -457,7 +456,7 @@ export default function createCache({
       return discarded;
     },
     watch() {
-      const unwatch = watchBudgetFolder(budgets, ownBudget, now, adopt);
+      unwatch = watchBudgetFolder(budgets, ownBudget, now, adopt);
       void loadBudget(); // The files written before the watch began.
       const watcher = watchFolder(directory, (_event, name) => {
         if (name !== cacheFileName) return;
@@ -468,7 +467,8 @@ export default function createCache({
       });
       return () => {
         watcher.close();
-        unwatch();
+        unwatch?.();
+        unwatch = undefined;
       };
     },
     patchAssignees({ repo, number }, assignees) {

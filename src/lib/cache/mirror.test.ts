@@ -440,4 +440,22 @@ describe("the budget mirror of createCache", () => {
     await later.load();
     expect(later.readBudgets()).toEqual({ graphql: makeBudget(2000) });
   });
+
+  it("judges on a lower figure another process wrote while it waited for the fetch lock", async () => {
+    const cache = open(makeHearingProvider().provider);
+    await cache.load();
+    const held = Promise.withResolvers<void>();
+    const holding = withFetchLock(directory, () => held.promise);
+    await waitUntil(async () => {
+      expect(await readdir(directory)).toContain(lockName);
+    });
+    const reading = cache.read(0);
+    await writeBudgetFile(otherFile(otherProcess), {
+      graphql: makeBudget(900),
+    });
+    held.resolve();
+    await Promise.all([holding, reading]);
+    expect(cache.readBudgets()).toEqual({ graphql: makeBudget(900) });
+    expect(cache.maySpend()).toBe(false);
+  });
 });

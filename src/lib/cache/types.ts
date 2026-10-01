@@ -202,8 +202,8 @@ export interface Cache {
   threads(): CachedThreads;
   /**
    * Loads what other processes wrote to the cache file, keeping only data
-   * newer than what is held, and, at the first load alone, the budget
-   * folder, merged into the mirror.
+   * newer than what is held, and, until a watch starts, the budget folder,
+   * merged into the mirror.
    */
   load(): Promise<void>;
   /**
