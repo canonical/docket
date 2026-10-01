@@ -75,14 +75,14 @@ describe("measureText", () => {
     expect(Bun.stringWidth("👍🏽")).toBe(2);
   });
 
-  it("measures a text once while it is among the 4096 measured last, and again once it is not", () => {
+  it("measures a text once while it is among the 4096 measured last, and once more when it is not", () => {
     const text = "Réparer ❤ une fois";
-    const measuredAgain = () => {
+    const measuresIt = () => {
       const segment = vi.spyOn(Intl.Segmenter.prototype, "segment");
       expect(measureText(text)).toBe(19);
-      const again = segment.mock.calls.length > 0;
+      const measured = segment.mock.calls.length > 0;
       segment.mockRestore();
-      return again;
+      return measured;
     };
     const measureOthers = (count: number, name: string) => {
       for (let each = 0; each < count; each += 1)
@@ -90,9 +90,9 @@ describe("measureText", () => {
     };
     measureText(text);
     measureOthers(4095, "a");
-    expect(measuredAgain()).toBe(false);
+    expect(measuresIt()).toBe(false);
     measureOthers(4096, "b");
-    expect(measuredAgain()).toBe(true);
+    expect(measuresIt()).toBe(true);
   });
 
   it("counts nothing for no text, and a half of a broken pair as one cell", () => {
