@@ -23,8 +23,9 @@ export interface FinishedListProps {
   /** The place of the selected thread among the threads, in the order drawn. */
   readonly selected: number;
   /**
-   * Reads the details of the selected thread for its accordion, which
-   * only a stacked pull request's neighbours wait on.
+   * Reads the details of the selected thread for its accordion, called
+   * only for a pull request in a stack, whose neighbours wait on them; any
+   * other finished thread's accordion comes whole from the list.
    */
   readonly readDetail: (row: FinishedRow) => Promise<ShownDetail>;
   /** The instant ages are measured at. */
@@ -111,7 +112,7 @@ export default function FinishedList({
             {chosen && (
               <ThreadAccordion
                 row={row}
-                detail={readDetail(row)}
+                {...(row.stacked && { detail: readDetail(row) })}
                 waiting={waiting}
                 clock
                 now={now}

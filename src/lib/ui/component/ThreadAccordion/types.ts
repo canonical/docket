@@ -78,10 +78,11 @@ export interface ThreadAccordionProps {
    * The thread's details as the provider reads them: until they arrive the
    * accordion shows what the snapshot holds, and the reason if they fail.
    * While reading is paused, what the snapshot holds, or when reading
-   * resumes.
-   * Maps to DSL role: loading line, loaded body, failed line (cardinality: 1)
+   * resumes. Absent for a finished thread none of whose lines wait on
+   * the details, which then shows what the list gives and reads nothing.
+   * Maps to DSL role: loading line, loaded body, failed line (cardinality: 0..1)
    */
-  detail: Promise<ShownDetail>;
+  detail?: Promise<ShownDetail>;
   /**
    * The kind of the running wait of each thread in the list, by
    * reference, such as `review` for `example#13`, which names the

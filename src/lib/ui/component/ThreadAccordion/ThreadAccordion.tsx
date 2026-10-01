@@ -239,6 +239,15 @@ const ThreadAccordion = ({
   const reading = { now, timezone, waiting };
   const room = width - marginCells;
   const stroke = findStroke(row, clock);
+  if (!detail) {
+    return (
+      <Lines
+        lines={fitAccordion(describeDetail(row, undefined, reading), room)}
+        stroke={stroke}
+        onLines={onLines}
+      />
+    );
+  }
   return (
     <Boundary
       detail={detail}

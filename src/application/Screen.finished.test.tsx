@@ -9,6 +9,7 @@ import {
 } from "../testing/screen.js";
 import { drawSuspending, type Screen } from "../testing/terminal.js";
 import { waitUntil } from "../testing/wait.js";
+import createDetailReader from "./createDetailReader.js";
 import type { TerminalView } from "./types.js";
 
 const week = { amount: 1, unit: "w" } as const;
@@ -127,6 +128,39 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
     expect(moved.lines.at(21)).toBe("4 merged · 3 closed · 3 over         3/7");
     const last = await press(screen, "end", "j");
     expect(last.lines.at(21)).toBe("4 merged · 3 closed · 3 over         7/7");
+  });
+
+  it("reads no thread's details over a window of threads in no stack, whichever is selected", async () => {
+    const unstacked = weekEndings.filter(({ stack }) => stack === undefined);
+    const read = vi.fn(readWeekDetail);
+    const readAhead = vi.fn(async (threads: readonly { number: number }[]) =>
+      Promise.all(threads.map((thread) => readWeekDetail(thread as never))),
+    );
+    const source = connectRecording({
+      finished: unstacked,
+      read,
+      details: createDetailReader(readAhead),
+    });
+    const screen = await show(viewWeek({ source }));
+    await press(screen, "j", "j", "j", "j");
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await screen.redraw();
+    expect(read).not.toHaveBeenCalled();
+    expect(readAhead).not.toHaveBeenCalled();
+  });
+
+  it("reads a stacked pull request's details, which name its stack's neighbours", async () => {
+    const read = vi.fn(readWeekDetail);
+    const source = connectRecording({ finished: weekEndings, read });
+    const screen = await show(
+      viewWeek({ source, finished: { window: week, grouping: "none" } }),
+    );
+    await waitUntil(async () => {
+      expect((await screen.redraw()).lines).toContain(
+        "│┆example stack 12 · 1 of 5 · → main",
+      );
+    });
+    expect(read.mock.calls.map(([thread]) => thread.number)).toEqual([1200]);
   });
 
   it("opens the selected thread's page with ⏎, and opens no editor with a or r", async () => {

@@ -297,13 +297,18 @@ export default function Screen({
     attention: attentionState,
   });
   const findVersion = (row: ListRow) => describeRowVersion(row, findFacts(row));
+  // A finished thread's accordion comes whole from the list, but for a
+  // stacked pull request's neighbours, so only those are read ahead, and
+  // only while one is selected.
+  const detailed = rows.filter((row) => !("ending" in row) || row.stacked);
+  const chosen = selectedRow ? detailed.indexOf(selectedRow) : -1;
   const ahead = useReadAhead({
     reader: "cache" in source ? source.details : undefined,
-    rows: rows.map((row) => ({
+    rows: detailed.map((row) => ({
       thread: summarize(row),
       version: findVersion(row),
     })),
-    selected: placeSelection(rows, selections[mode]),
+    selected: chosen < 0 ? detailed.length : chosen,
     attention: attentionState,
     paused: status?.paused !== undefined,
     now,

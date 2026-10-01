@@ -85,6 +85,16 @@ describe("ThreadAccordion", () => {
       expect(readText(screen).at(3)).toBe("above #3 merged");
     });
 
+    it("draws what the list gives at once when given no details to wait on", async () => {
+      const { detail: _, ...given } = FinishedClosedIn.args;
+      const screen = await open(given);
+      expect(readText(screen).slice(0, 3)).toEqual([
+        "target 30d",
+        "closed in example#2",
+        "labels none",
+      ]);
+    });
+
     it("has no time line where a label exempts the thread, and leaves the bar's column blank", async () => {
       const exempt = findFinishedRow("example#9");
       const screen = await open({ ...FinishedOver.args, row: exempt });
