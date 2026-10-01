@@ -2,15 +2,9 @@ import { readdirSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import identifyFile from "./identifyFile.js";
 import writeWhole from "./writeWhole.js";
-
-// Each look at a file, so a test can make one fail.
-vi.mock("./identifyFile.js", async (original) => {
-  const actual = await original<typeof import("./identifyFile.js")>();
-  return { default: vi.fn(actual.default) };
-});
 
 let root: string;
 let file: string;
@@ -44,16 +38,6 @@ describe("writeWhole", () => {
       true,
     );
     expect(await readFile(file, "utf8")).toBe("[]");
-  });
-
-  it("writes the file, naming nothing, when the file written cannot be looked at", async () => {
-    vi.mocked(identifyFile).mockRejectedValueOnce(
-      Object.assign(new Error("I/O error"), { code: "EIO" }),
-    );
-    const claim = vi.fn();
-    await writeWhole(file, "{}", claim);
-    expect(claim).toHaveBeenCalledWith(undefined);
-    expect(await readFile(file, "utf8")).toBe("{}");
   });
 
   it("leaves the file as it was, and no temporary file, when the rename fails", async () => {

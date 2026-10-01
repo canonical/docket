@@ -47,7 +47,6 @@ beforeEach(async () => {
 
 afterEach(async () => {
   vi.clearAllMocks();
-  vi.mocked(identifyFile).mockReset();
   await files.rm(root, { recursive: true, force: true });
 });
 
@@ -151,29 +150,6 @@ describe("the writes and the watch of createCache", () => {
     await identified();
     expect(writes()).toBe(2);
     expect(reads()).toBe(read + 1);
-    stop();
-  });
-
-  it("reloads a write it cannot tell from its own, as when the file cannot be looked at", async () => {
-    const pane = open(counting());
-    const stop = pane.watch();
-    const actual =
-      await vi.importActual<typeof import("./identifyFile.js")>(
-        "./identifyFile.js",
-      );
-    // The cache file, once written, cannot be looked at.
-    let failed = false;
-    vi.mocked(identifyFile).mockImplementation(async (path) => {
-      if (failed || !path.endsWith("snapshots.json")) {
-        return actual.default(path);
-      }
-      failed = true;
-      throw Object.assign(new Error("I/O error"), { code: "EIO" });
-    });
-    await open(counting()).read(5 * minute);
-    await waitUntil(() => {
-      expect(pane.threads().threads).toHaveLength(3);
-    });
     stop();
   });
 

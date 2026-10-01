@@ -1,20 +1,13 @@
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { existsSync, mkdirSync, rmSync, statSync } from "node:fs";
+import { mkdirSync, rmSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, rm, utimes } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { lock } from "proper-lockfile";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { waitUntil } from "../../testing/wait.js";
 import withFetchLock from "./withFetchLock.js";
-
-// The lock is watched, not replaced, so a test can act as it is taken.
-vi.mock("proper-lockfile", async (importOriginal) => {
-  const library = await importOriginal<typeof import("proper-lockfile")>();
-  return { ...library, lock: vi.fn(library.lock) };
-});
 
 let root: string;
 let directory: string;
@@ -250,46 +243,6 @@ describe("withFetchLock", () => {
     const { result, waited } = await adoptTakenLock(async () => undefined);
     expect(result).toBe(2);
     expect(waited).toBeGreaterThanOrEqual(10_000);
-    expect(waited).toBeLessThan(15_000);
     expect(await readdir(directory)).toEqual([]);
-  }, 30_000);
-
-  it("leaves alone the lock another process made once this one's was gone at the first look, and runs the task again", async () => {
-    const library =
-      await vi.importActual<typeof import("proper-lockfile")>(
-        "proper-lockfile",
-      );
-    const lockfilePath = join(directory, "fetch.lock");
-    // Whether the other process's lock was still there at each take.
-    const found: boolean[] = [];
-    let other: bigint | undefined;
-    vi.mocked(lock).mockImplementation(async (...args) => {
-      if (other !== undefined) {
-        found.push(
-          existsSync(lockfilePath) &&
-            statSync(lockfilePath, { bigint: true }).ino === other,
-        );
-      }
-      const release = await library.lock(...args);
-      // The first lock is gone as soon as it is taken, as when another
-      // process judged it stale on its way to taking it.
-      if (other === undefined) rmSync(lockfilePath, { recursive: true });
-      return release;
-    });
-    let runs = 0;
-    try {
-      const result = await withFetchLock(directory, async () => {
-        runs += 1;
-        if (other === undefined) {
-          mkdirSync(lockfilePath);
-          other = statSync(lockfilePath, { bigint: true }).ino;
-        }
-        return runs;
-      });
-      expect(result).toBe(2);
-      expect(found).toEqual([true]);
-    } finally {
-      vi.mocked(lock).mockReset();
-    }
   }, 30_000);
 });

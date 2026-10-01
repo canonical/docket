@@ -176,7 +176,7 @@ export default function createCache({
     }
     publish();
   };
-  /** Reads the budget folder into the mirror, says its floor: first in a load. */
+  /** Reads the budget folder into the mirror, and says the floor. */
   const loadBudget = async () => {
     mirror = mergeBudgets(mirror, await readBudgetFolder(budgetFolder, now()));
     publishFloor();
@@ -460,10 +460,9 @@ export default function createCache({
       });
       const watcher = watchFolder(directory, (_event, name) => {
         if (name !== cacheFileName) return;
-        // Its own write holds nothing new; any other is loaded, or unseen.
-        void identifyFile(file).then(
-          (found) => (found === written ? undefined : load()),
-          load,
+        // The file this process wrote holds nothing it lacks.
+        void identifyFile(file).then((found) =>
+          found === written ? undefined : load(),
         );
       });
       return () => {

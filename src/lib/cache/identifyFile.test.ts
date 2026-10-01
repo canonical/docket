@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, rmdir, utimes, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, rmdir, utimes } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -35,13 +35,5 @@ describe("identifyFile", () => {
 
   it("names nothing where nothing is", async () => {
     expect(await identifyFile(join(root, "missing"))).toBeUndefined();
-  });
-
-  it("fails, naming nothing, when what is at the path cannot be looked at", async () => {
-    const file = join(root, "file");
-    await writeFile(file, "");
-    await expect(identifyFile(join(file, "inside"))).rejects.toMatchObject({
-      code: "ENOTDIR",
-    });
   });
 });

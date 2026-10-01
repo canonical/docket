@@ -12,8 +12,6 @@ import identifyFile from "./identifyFile.js";
  * `claim`, when given, hears what names the file written, as
  * `identifyFile` names it, before the file takes its place: a watcher can
  * hear of the change and identify the file before this function returns.
- * A file that cannot be looked at is named by nothing, and still written:
- * the watcher then loads it as another process's.
  *
  * @note Impure: writes the filesystem.
  */
@@ -26,7 +24,7 @@ export default async function writeWhole(
   const temporary = `${file}.${randomUUID()}.tmp`;
   try {
     await writeFile(temporary, text, { mode: 0o600 });
-    claim?.(await identifyFile(temporary).catch(() => undefined));
+    claim?.(await identifyFile(temporary));
     await rename(temporary, file);
   } catch (error) {
     await rm(temporary, { force: true });
