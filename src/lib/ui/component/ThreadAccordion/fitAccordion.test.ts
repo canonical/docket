@@ -90,6 +90,22 @@ describe("fitAccordion", () => {
     expect(read(fitAccordion(cut, 9, 1))).toEqual(["exam…tory"]);
   });
 
+  it("cuts a held line at its end when even its fixed words are wider than the room", () => {
+    const line = {
+      ...trimmed(""),
+      kind: "identifier" as const,
+      pieces: [
+        { text: "stack 123 · 10 of 12 · → ", fg },
+        { text: "main", fg },
+      ],
+      drops: [],
+      cuts: 1,
+    };
+    expect(read(fitAccordion({ body: [line], stack: [] }, 10))).toEqual([
+      "stack 123…",
+    ]);
+  });
+
   it("ends a last line cut at the limit with …, whatever its text holds", () => {
     const text = {
       body: [wrapped("Rebased on main… could someone look")],
