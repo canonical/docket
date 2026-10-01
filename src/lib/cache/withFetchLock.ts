@@ -46,16 +46,15 @@ export default async function withFetchLock<T>(
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const lockfilePath = join(directory, lockName);
   for (;;) {
-    const { lost, outcome } = await holdLock(
+    const { lost, value } = await holdLock(
       (onCompromised) =>
         lock(directory, { ...lockTiming, lockfilePath, onCompromised }).catch(
           describeWait,
         ),
       lockfilePath,
       lockTiming.stale,
-      () => task(),
+      task,
     );
-    if ("error" in outcome) throw outcome.error;
-    if (!lost) return outcome.value;
+    if (!lost) return value;
   }
 }

@@ -57,18 +57,19 @@ describe("holdLock", () => {
     const result = await holdLock(take, lockfilePath, stale, async (isOwn) =>
       isOwn(),
     );
-    expect(result).toEqual({ lost: false, outcome: { value: true } });
+    expect(result).toEqual({ lost: false, value: true });
     expect(held.released).toBe(1);
     expect(await readdir(directory)).toEqual([]);
   });
 
-  it("gives back the task's failure, and lets the lock go", async () => {
+  it("fails with the task's failure once it lets the lock go", async () => {
     const { held, take } = createLock();
     const failure = new Error("failed");
-    const result = await holdLock(take, lockfilePath, stale, async () => {
-      throw failure;
-    });
-    expect(result).toEqual({ lost: false, outcome: { error: failure } });
+    await expect(
+      holdLock(take, lockfilePath, stale, async () => {
+        throw failure;
+      }),
+    ).rejects.toBe(failure);
     expect(held.released).toBe(1);
   });
 
@@ -85,8 +86,9 @@ describe("holdLock", () => {
     });
     await waitUntil(() => expect(vi.getTimerCount()).toBe(1));
     held.hear();
-    expect(await holding).toEqual({ lost: true, outcome: { value: false } });
-    expect(ended).toBe(true);
+    // It ends with no time passing, well before the stale time.
+    await waitUntil(() => expect(ended).toBe(true));
+    expect(await holding).toEqual({ lost: true, value: false });
     expect(held.released).toBe(0);
     expect(vi.getTimerCount()).toBe(0);
     expect(await readdir(directory)).toEqual(["example.lock"]);
@@ -98,7 +100,7 @@ describe("holdLock", () => {
       held.hear();
       return isOwn();
     });
-    expect(result).toEqual({ lost: true, outcome: { value: false } });
+    expect(result).toEqual({ lost: true, value: false });
     expect(held.released).toBe(0);
   });
 
@@ -114,7 +116,7 @@ describe("holdLock", () => {
       stale,
       async (isOwn) => isOwn(),
     );
-    expect(result).toEqual({ lost: true, outcome: { value: false } });
+    expect(result).toEqual({ lost: true, value: false });
     expect(held.released).toBe(0);
   });
 
@@ -143,7 +145,7 @@ describe("holdLock", () => {
       vi.mocked(identifyFile).mockRejectedValueOnce(failure);
       return isOwn();
     });
-    expect(result).toEqual({ lost: false, outcome: { value: true } });
+    expect(result).toEqual({ lost: false, value: true });
     expect(held.released).toBe(1);
   });
 
@@ -154,7 +156,7 @@ describe("holdLock", () => {
     const result = await holdLock(take, lockfilePath, stale, async (isOwn) =>
       isOwn(),
     );
-    expect(result).toEqual({ lost: false, outcome: { value: true } });
+    expect(result).toEqual({ lost: false, value: true });
     expect(held.released).toBe(1);
   });
 });

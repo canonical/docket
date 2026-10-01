@@ -232,6 +232,42 @@ describe("createBudgetKeeper", () => {
     }
   });
 
+  it("ends at the budget lock's stale time when the library never hears of a takeover, and not before", async () => {
+    const library =
+      await vi.importActual<typeof import("proper-lockfile")>(
+        "proper-lockfile",
+      );
+    // The library is never heard from.
+    vi.mocked(lock).mockImplementationOnce((path, options) =>
+      library.lock(path, { ...options, onCompromised: () => {} }),
+    );
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const keeper = createBudgetKeeper({
+        file,
+        lockfilePath,
+        readFigures: () => makeBudget(900),
+        isKept: () => false,
+        adopt: takeLockOver,
+        publishFloor: () => {},
+        now: () => clock,
+      });
+      let ended = false;
+      const keeping = keeper().then(() => {
+        ended = true;
+      });
+      // The library's touch of the lock, and the wait for it to hear.
+      await waitUntil(() => expect(vi.getTimerCount()).toBe(2));
+      await vi.advanceTimersByTimeAsync(budgetLockTiming.stale - 1);
+      expect(ended).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await waitUntil(() => expect(ended).toBe(true));
+      await keeping;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("leaves the lowest figure of the window when processes keep falling figures together", async () => {
     const figures = [950, 900, 850, 800, 750, 700];
     await Promise.all(

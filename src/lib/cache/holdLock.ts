@@ -1,10 +1,10 @@
 import identifyFile from "./identifyFile.js";
 
-/** What holding a lock gave: whether it was lost, and the task's outcome. */
-export interface Held<T> {
+/** What holding a lock gave: whether it was lost, and the task's value. */
+interface Held<T> {
   /** True when another process took the lock over while the task ran. */
   readonly lost: boolean;
-  readonly outcome: { readonly value: T } | { readonly error: unknown };
+  readonly value: T;
 }
 
 /**
@@ -33,6 +33,7 @@ export interface Held<T> {
  * @note Impure: takes, looks at and lets go of the lock in the filesystem.
  * @param take Takes the lock, telling its argument when the library hears
  * that another process took it over, and gives back how to let it go.
+ * @throws the task's failure, once the lock is let go or left.
  */
 export default async function holdLock<T>(
   take: (onCompromised: () => void) => Promise<() => Promise<void>>,
@@ -58,7 +59,7 @@ export default async function holdLock<T>(
     !lost &&
     (held === unseen ||
       (await identifyFile(lockfilePath).catch(() => held)) === held);
-  let outcome: Held<T>["outcome"];
+  let outcome: { readonly value: T } | { readonly error: unknown };
   try {
     outcome = { value: await task(isOwn) };
   } catch (error) {
@@ -76,5 +77,6 @@ export default async function holdLock<T>(
     clearTimeout(timer);
     if (kept) await release();
   } else await release();
-  return { lost, outcome };
+  if ("error" in outcome) throw outcome.error;
+  return { lost, value: outcome.value };
 }

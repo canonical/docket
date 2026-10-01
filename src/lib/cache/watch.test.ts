@@ -47,6 +47,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   vi.clearAllMocks();
+  vi.mocked(identifyFile).mockReset();
   await files.rm(root, { recursive: true, force: true });
 });
 

@@ -67,8 +67,7 @@ export default function createBudgetKeeper({
     // there is nothing to keep.
     if (isKept()) return;
     await mkdir(dirname(file), { recursive: true, mode: 0o700 });
-    // The lock is held and let go as every docket lock is.
-    const { outcome } = await holdLock(
+    await holdLock(
       (onCompromised) => lockBudgetFile(file, lockfilePath, onCompromised),
       lockfilePath,
       budgetLockTiming.stale,
@@ -85,7 +84,6 @@ export default function createBudgetKeeper({
         adopt(kept);
       },
     );
-    if ("error" in outcome) throw outcome.error;
   };
   // The keeping under way, which a call made meanwhile joins, and whether
   // one did, which keeps the figures heard since once it ends.

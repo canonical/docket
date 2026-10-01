@@ -250,6 +250,7 @@ describe("withFetchLock", () => {
     const { result, waited } = await adoptTakenLock(async () => undefined);
     expect(result).toBe(2);
     expect(waited).toBeGreaterThanOrEqual(10_000);
+    expect(waited).toBeLessThan(15_000);
     expect(await readdir(directory)).toEqual([]);
   }, 30_000);
 
