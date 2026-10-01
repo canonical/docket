@@ -1,5 +1,8 @@
 import {
   describeAddress,
+  describeStackPlace,
+  type Heading,
+  nameHeading,
   type OwedGrouping,
   type OwedList,
   type WaitGroup,
@@ -27,16 +30,20 @@ export interface OwedAnswer {
  * data: the owner's login, or the branch a stack is merged onto, which
  * ends a stack's heading.
  */
-function quoteHeading(group: WaitGroup, grouping: OwedGrouping, text: string) {
+function quoteHeading(
+  group: WaitGroup,
+  grouping: OwedGrouping,
+  heading: Heading,
+) {
+  if (heading.kind === "stack") {
+    const place = `${heading.repo} ${describeStackPlace(heading)}`;
+    return `${sanitize(place)}${quote(heading.base)}`;
+  }
   const first = group.rows.at(0);
   if (grouping === "owner" && first && first.wait.owners.length > 0) {
-    return quote(text);
+    return quote(heading.text);
   }
-  const base = first?.stacked ? first.wait.thread.stack?.base : undefined;
-  if (grouping === "stack" && base && text.endsWith(base)) {
-    return `${sanitize(text.slice(0, -base.length))}${quote(base)}`;
-  }
-  return sanitize(text);
+  return sanitize(heading.text);
 }
 
 /**
@@ -48,7 +55,12 @@ function describeGroupData(group: WaitGroup, grouping: OwedGrouping) {
   const [first] = group.rows;
   if (grouping === "owner") {
     // The heading of an owner's section is the owner's login.
-    return { owner: first?.wait.owners.length ? group.heading?.text : null };
+    return {
+      owner:
+        first?.wait.owners.length && group.heading
+          ? nameHeading(group.heading)
+          : null,
+    };
   }
   if (grouping === "kind") return { kind: first?.wait.thread.kind };
   if (grouping === "repo") return { repo: first?.repo };
@@ -113,8 +125,8 @@ export default function renderOwed({
     const heading =
       group.heading &&
       (llm
-        ? quoteHeading(group, list.address.grouping, group.heading.text)
-        : sanitize(group.heading.text));
+        ? quoteHeading(group, list.address.grouping, group.heading)
+        : sanitize(nameHeading(group.heading)));
     const rows = group.rows.flatMap((row) =>
       renderWaitRow(row, format, timezone, detail),
     );
@@ -125,7 +137,7 @@ export default function renderOwed({
     llm ? `# ${title}` : title,
     ...renderFreshness(freshness, format),
     ...(llm && sections.length > 0 ? [quotedNote] : []),
-    list.summary.text,
+    list.summary.fields.map(({ text }) => text).join(" · "),
     ...(empty ? ["nothing owed"] : []),
   ];
   return `${[lines.join("\n"), ...sections].join("\n\n")}\n`;

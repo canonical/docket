@@ -15,7 +15,7 @@ const ignoreTyping = () => {};
 /** A login or team the picker offers, with its group. */
 const person = (text: string, group: PersonGroup) => ({
   text,
-  fit: "trimmed" as const,
+  kind: "person" as const,
   group,
 });
 
@@ -101,6 +101,32 @@ export const Scrolled: Story<PeoplePickerProps> = {
       ticked: place === 0,
     })),
     cursor: 6,
+    width: 40,
+  },
+};
+
+/** Requesting review from a login and a team longer than the pane. */
+export const Long: Story<PeoplePickerProps> = {
+  args: {
+    filter: "",
+    onFilter: ignoreTyping,
+    options: [
+      {
+        owner: person(
+          "example-contributor-with-a-long-login-past-the-pane",
+          "outside",
+        ),
+        ticked: true,
+      },
+      {
+        owner: person(
+          "example-org/a-team-with-a-very-long-name-past-the-pane",
+          "internal",
+        ),
+        ticked: false,
+      },
+    ],
+    cursor: 1,
     width: 40,
   },
 };

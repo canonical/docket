@@ -1,3 +1,4 @@
+import { longAuthor, parserTeam } from "../../../../testing/long.js";
 import type { Meta, Story } from "../../../../testing/stories.js";
 import { GroupHeading } from "../../component/index.js";
 import type { ListBlock } from "../../types.js";
@@ -16,8 +17,8 @@ const width = 40;
 /** A group's heading as a block of the list. */
 const makeHeading = (text: string, group?: "team"): ListBlock => {
   const named = group
-    ? { text, fit: "trimmed" as const, group }
-    : { text, fit: "trimmed" as const };
+    ? { text, kind: "person" as const, group }
+    : { text, kind: "words" as const };
   return {
     key: text,
     kind: "heading",
@@ -64,4 +65,23 @@ export const Top: Story<ScrolledListProps> = {
  */
 export const Pinned: Story<ScrolledListProps> = {
   args: { ...Top.args, from: 3, to: 3, first: 2 },
+};
+
+/**
+ * The long-named contributor's section scrolled to their third row: the
+ * pinned heading cuts the login before its place, and the team's row
+ * under the pane is counted.
+ */
+export const Long: Story<ScrolledListProps> = {
+  args: {
+    ...Pinned.args,
+    blocks: [
+      makeHeading(longAuthor.login, "team"),
+      makeRow("first of theirs"),
+      makeRow("second of theirs"),
+      makeRow("third of theirs"),
+      makeHeading(parserTeam),
+      makeRow("first of the team's"),
+    ],
+  },
 };

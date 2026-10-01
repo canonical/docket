@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
-import type { OwedList as List, WaitRow } from "../lib/owed/index.js";
+import {
+  type OwedList as List,
+  nameHeading,
+  type WaitRow,
+} from "../lib/owed/index.js";
 import {
   countAccordionLines,
   countRowLines,
@@ -88,7 +92,7 @@ export default function OwedList({
     if (heading) {
       const node = <GroupHeading heading={heading} width={width} />;
       blocks.push({
-        key: heading.text,
+        key: nameHeading(heading),
         kind: "heading",
         lines: 1,
         node,
@@ -102,7 +106,7 @@ export default function OwedList({
         from = heading && row === rows.at(0) ? to - 1 : to;
       }
       blocks.push({
-        key: `${heading?.text ?? ""} ${identifyRow(row)}`,
+        key: `${heading ? nameHeading(heading) : ""} ${identifyRow(row)}`,
         kind: "row",
         lines:
           countRowLines(row, width, open && !editor) +

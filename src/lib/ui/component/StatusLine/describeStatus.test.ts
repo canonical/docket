@@ -98,6 +98,7 @@ describe("describeStatus", () => {
       kind: "progress",
       text: "full refresh · example 1/2 · pages 5/9",
       shorter: "full refresh · example 1/2",
+      name: "example",
     });
   });
 
@@ -132,6 +133,7 @@ describe("describeStatus", () => {
       kind: "progress",
       text: "full refresh · example 1/2 · pages 5/9",
       shorter: "full refresh · example 1/2",
+      name: "example",
     });
   });
 
@@ -197,6 +199,7 @@ describe("describeStatus", () => {
     expect(describeAt(statusOf(Refreshing))).toEqual({
       kind: "refreshing",
       text: "refreshing · docs 2/3",
+      name: "docs",
     });
   });
 

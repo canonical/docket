@@ -1,6 +1,6 @@
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import markPerson from "../../markPerson.js";
+import { markPerson, measureText } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import type { ThreadRowProps } from "./types.js";
@@ -25,7 +25,7 @@ export default function listOwnerLines(
   let used = 0;
   for (const owner of row.owners.fields) {
     const marked = markPerson(owner, loginCells);
-    const cells = Bun.stringWidth(marked.text);
+    const cells = measureText(marked.text);
     if (line.length > 0 && used + 2 + cells <= room) {
       line.push(comma, marked);
       used += 2 + cells;

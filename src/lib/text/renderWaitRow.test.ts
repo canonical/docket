@@ -32,7 +32,7 @@ describe("renderWaitRow", () => {
   it("marks a draft", () => {
     const draft = {
       ...first,
-      draft: { text: "draft", fit: "trimmed" },
+      draft: { text: "draft", kind: "words" },
     } as const;
     expect(renderWaitRow(draft, "plain", "UTC", "standard").at(2)).toBe(
       "  alice · draft · checks failing · example stack 3, 2 of 3",
@@ -42,7 +42,7 @@ describe("renderWaitRow", () => {
   it("marks a row of a repository whose own file is invalid, for a person and an agent", () => {
     const marked = {
       ...soon,
-      invalidFile: { text: "invalid repository file", fit: "trimmed" },
+      invalidFile: { text: "invalid repository file", kind: "words" },
     } as const;
     expect(renderWaitRow(marked, "plain", "UTC", "standard").at(2)).toBe(
       "  unassigned · invalid repository file",

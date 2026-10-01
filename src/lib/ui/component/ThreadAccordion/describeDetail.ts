@@ -9,7 +9,7 @@ import { tokens } from "../../../tokens/index.js";
 import type { Message, Thread, ThreadSummary } from "../../../waits/index.js";
 import { loginCells } from "../../constants.js";
 import describeClock from "../../describeClock.js";
-import markPerson from "../../markPerson.js";
+import { markPerson, measureText, noBreakSpace } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type {
   DetailLine,
@@ -38,17 +38,29 @@ const failed = (text: string): Piece => ({
   fg: tokens["color.text.error"],
 });
 
-/** The dimmed `…` that ends a line still waiting for the details. */
-const pending = muted(` ${tokens["glyph.cut"]}`);
-
-const trimmed = (...pieces: Piece[]): DetailLine => ({
+/** Describes docket's words on a line held to one, which the details complete in place. */
+const describeHeldLine = (...pieces: Piece[]): DetailLine => ({
   pieces,
-  fit: "trimmed",
+  kind: "words",
+  most: 1,
 });
 
-const wrapped = (piece: Piece): DetailLine => ({
-  pieces: [piece],
-  fit: "wrapped",
+/**
+ * Describes docket's words on a line held to one that the details
+ * complete: it ends in a dimmed `…` until they arrive, which fitting draws.
+ */
+const describeHeldPendingLine = (...pieces: Piece[]): DetailLine => ({
+  ...describeHeldLine(...pieces),
+  pending: true,
+});
+
+/**
+ * Describes docket's words on a line that wraps, between people and at
+ * spaces, naming each person whole.
+ */
+const describeWrappingLine = (...pieces: Piece[]): DetailLine => ({
+  pieces,
+  kind: "words",
 });
 
 const count = (amount: number, one: string, many: string) =>
@@ -61,7 +73,7 @@ const nameReviewer = (reviewer: Reviewer) =>
 const listPeople = (owners: readonly Owner[]): Piece[] =>
   owners.flatMap((owner, place) => [
     ...(place === 0 ? [] : [plain(", ")]),
-    markPerson(owner, Number.POSITIVE_INFINITY),
+    markPerson(owner),
   ]);
 
 /**
@@ -75,18 +87,26 @@ const listOwners = ({ owner, owners }: WaitRow): Owner[] =>
   owners ? [...owners.fields] : owner ? [owner] : [];
 
 /**
- * The owners, whole, when the row cuts a person's login: only the close
- * body names them otherwise. It comes first, so no message pushes it out
- * of the accordion. A team's name, `organisation/team`, never earns the
- * line, cut or not: on a stacked review the line would push the checks
- * out, and nearly every team's name is longer than a login's room.
+ * The owners, each whole, wrapped between them, when the row cuts a
+ * person's login: only the close body names them otherwise. It comes
+ * first, and takes only the lines the others leave, so it never pushes
+ * a review's checks out of the accordion. A team's name,
+ * `organisation/team`, never earns the line, cut or not: on a stacked
+ * review the line would push the checks out.
  */
 function describeCutOwners(row: WaitRow): DetailLine[] {
   const owners = listOwners(row);
   const cut = owners.some(
-    ({ text }) => !text.includes("/") && Bun.stringWidth(text) > loginCells,
+    ({ text }) => !text.includes("/") && measureText(text) > loginCells,
   );
-  return cut ? [trimmed(plain("owner "), ...listPeople(owners))] : [];
+  return cut
+    ? [
+        {
+          ...describeWrappingLine(plain("owner "), ...listPeople(owners)),
+          yields: true,
+        },
+      ]
+    : [];
 }
 
 /**
@@ -124,31 +144,40 @@ function describeReply(row: WaitRow, { now, timezone }: Reading) {
   const since = `waiting since ${day} ${describeClock(started, timezone)} · target ${target.amount}${target.unit}`;
   return [
     ...describeCutOwners(row),
-    trimmed(
-      markPerson(row.author, Number.POSITIVE_INFINITY),
+    describeWrappingLine(
+      markPerson(row.author),
       muted(` · ${describeAge(awaited.at, now)} ago`),
     ),
-    ...(awaited.text ? [wrapped(plain(awaited.text))] : []),
-    { ...wrapped(muted(since)), optional: true },
+    ...(awaited.text
+      ? [{ pieces: [plain(awaited.text)], kind: "quote" as const }]
+      : []),
+    { ...describeWrappingLine(muted(since)), optional: true },
   ];
 }
 
-/** The checks on the head commit, a failure in the error colour. */
+/**
+ * The checks on the head commit, a failure in the error colour. The
+ * failing checks' names wrap between names, each kept whole.
+ */
 function describeChecks({ checks }: ThreadDetail): DetailLine {
   const total = checks.length;
   const failing = checks.filter((check) => check.state === "failing");
   const running = checks.filter((check) => check.state === "running");
-  if (total === 0) return trimmed(plain("no checks"));
+  if (total === 0) return describeHeldLine(plain("no checks"));
   if (failing.length > 0) {
-    const names = failing.map(({ name }) => name).join(", ");
-    return trimmed(
+    const names = failing
+      .map(({ name }) => name.replaceAll(" ", noBreakSpace))
+      .join(", ");
+    return describeWrappingLine(
       failed(`checks: ${failing.length} of ${total} failed (${names})`),
     );
   }
   if (running.length > 0) {
-    return trimmed(plain(`checks running ${running.length} of ${total}`));
+    return describeHeldLine(
+      plain(`checks running ${running.length} of ${total}`),
+    );
   }
-  return trimmed(plain(`checks passed ${total} of ${total}`));
+  return describeHeldLine(plain(`checks passed ${total} of ${total}`));
 }
 
 /**
@@ -158,10 +187,10 @@ function describeChecks({ checks }: ThreadDetail): DetailLine {
  * `…`, so the line grows in place when the read lands.
  */
 function describeSnapshotChecks({ checks }: Thread): DetailLine {
-  if (checks === undefined) return trimmed(plain("no checks"));
-  if (checks === "failing") return trimmed(failed("checks:"), pending);
+  if (checks === undefined) return describeHeldLine(plain("no checks"));
+  if (checks === "failing") return describeHeldPendingLine(failed("checks:"));
   const state = checks === "running" ? "checks running" : "checks passed";
-  return trimmed(plain(state), pending);
+  return describeHeldPendingLine(plain(state));
 }
 
 /**
@@ -190,17 +219,25 @@ function describeReview(
           ` · ${count(detail.files.length, "file", "files")} · +${detail.files.reduce((sum, file) => sum + file.additions, 0)} −${detail.files.reduce((sum, file) => sum + file.deletions, 0)}`,
         ),
       ]
-    : [plain(" ·"), pending];
+    : [plain(" ·")];
   return [
     ...describeCutOwners(row),
     row.requester
-      ? trimmed(
+      ? describeWrappingLine(
           muted("asked by "),
-          markPerson(row.requester, Number.POSITIVE_INFINITY),
+          markPerson(row.requester),
           muted(age),
         )
-      : trimmed(muted(`asked${age}`)),
-    trimmed(plain(count(pushes, "push since", "pushes since")), ...changes),
+      : describeHeldLine(muted(`asked${age}`)),
+    detail
+      ? describeHeldLine(
+          plain(count(pushes, "push since", "pushes since")),
+          ...changes,
+        )
+      : describeHeldPendingLine(
+          plain(count(pushes, "push since", "pushes since")),
+          ...changes,
+        ),
     detail ? describeChecks(detail) : describeSnapshotChecks(thread),
   ];
 }
@@ -217,17 +254,17 @@ function describeClose(row: WaitRow, { now }: Reading) {
   const quiet = thread.comments.length === 0 && thread.reviews.length === 0;
   const last = quiet ? thread.createdAt : thread.updatedAt;
   return [
-    trimmed(
+    describeWrappingLine(
       plain(`age ${describeAge(thread.createdAt, now)} · owner `),
       // A row always names an owner, `unassigned` when nobody owns it.
       ...listPeople(listOwners(row)),
     ),
-    trimmed(
+    describeWrappingLine(
       plain(`last activity ${describeAge(last, now)} ago`),
       plain(" · "),
-      markPerson(row.lastActor, Number.POSITIVE_INFINITY),
+      markPerson(row.lastActor),
     ),
-    wrapped(plain(`labels ${labels}`)),
+    describeWrappingLine(plain(`labels ${labels}`)),
   ];
 }
 
@@ -254,25 +291,26 @@ function describeRest(
   const named = owners ?? assigned;
   const labels = detail.labels.map(decodeLabel).join(" · ") || "none";
   return [
-    trimmed(
+    describeWrappingLine(
       plain(`age ${describeAge(detail.createdAt, now)} · owner `),
       ...(named.length > 0 ? listPeople(named) : [plain("unassigned")]),
     ),
-    trimmed(
+    describeWrappingLine(
       plain(`last activity ${describeAge(last, now)} ago`),
-      ...(actor
-        ? [plain(" · "), markPerson(actor, Number.POSITIVE_INFINITY)]
-        : []),
+      ...(actor ? [plain(" · "), markPerson(actor)] : []),
     ),
-    wrapped(plain(`labels ${labels}`)),
+    describeWrappingLine(plain(`labels ${labels}`)),
   ];
 }
 
 /**
- * The two dimmed lines that end a stacked pull request's accordion: which
- * stack and which place, from the snapshot, then its neighbours below and
- * above, each with its state, or the kind of its running wait while it is
- * open, which waits on the details.
+ * The two dimmed lines that end a stacked pull request's accordion. The
+ * place line names the stack and the place in it, from the snapshot, on
+ * one line: docket's words and the place stay whole, the repository's
+ * short name leaves first, then the base branch is cut once in its
+ * middle. The neighbours line names the pull requests below and above,
+ * each with its state, or the kind of its running wait while it is open,
+ * which waits on the details.
  */
 function describeStack(
   repo: string,
@@ -282,11 +320,23 @@ function describeStack(
 ): DetailLine[] {
   if (!stack) return [];
   const { number, position, size, base } = stack;
-  const place = trimmed(
-    muted(`${repo} stack ${number} · ${position} of ${size} · → ${base}`),
-  );
+  const separator = ` ${tokens["glyph.separator"]} `;
+  // One line, where docket's words and the place stay whole: the
+  // repository's short name, which line 1's reference already names,
+  // leaves first, then the base branch is cut once in its middle.
+  const place: DetailLine = {
+    pieces: [
+      muted(`${repo} `),
+      muted(`stack ${number}${separator}${position} of ${size}${separator}→ `),
+      muted(base),
+    ],
+    kind: "identifier",
+    most: 1,
+    drops: [0],
+    cuts: 2,
+  };
   if (size < 2) return [place];
-  if (!detail) return [place, trimmed(muted(tokens["glyph.cut"]))];
+  if (!detail) return [place, describeHeldPendingLine()];
   const describeNeighbour = (side: string, at: number) => {
     const member = detail.stack?.find((each) => each.position === at);
     if (!member) return [];
@@ -300,12 +350,20 @@ function describeStack(
     ...describeNeighbour("below", position - 1),
     ...describeNeighbour("above", position + 1),
   ];
-  if (neighbours.length === 0) return [place];
-  return [place, trimmed(muted(neighbours.join(", ")))];
+  const [first, second] = neighbours;
+  if (first === undefined) return [place];
+  // The neighbour above leaves whole, so its state is never cut, and the
+  // comma before it stays to say more followed.
+  const parts = second
+    ? [muted(`${first},`), muted(` ${second}`)]
+    : [muted(first)];
+  return [place, { ...describeHeldLine(...parts), drops: [1] }];
 }
 
 /**
- * Describes what the accordion shows for a row, from the snapshot alone
+ * Describes what the accordion shows for a row, from the snapshot alone,
+ * first `✗ invalid repository file` in a repository whose own file is
+ * invalid, as its row writes `✗ file`,
  * while `detail` is absent and with the details once they arrive. A reply
  * shows who wrote the message awaiting it and when, the message in full,
  * then when the reply began and its target; a review shows who asked and
@@ -328,12 +386,20 @@ export default function describeDetail(
 ): DetailText {
   // What the snapshot holds while reading is paused completes no line.
   const read = detail?.partial ? undefined : detail;
+  // A repository's invalid file, which a row calls `✗ file`, named in
+  // full, first.
+  const trouble = row.invalidFile
+    ? [describeWrappingLine(failed(row.invalidFile.text))]
+    : [];
   if (!("wait" in row)) {
     if (!detail) {
-      return { body: [trimmed(muted("loading…"))], stack: [] };
+      return {
+        body: [...trouble, describeHeldLine(muted("loading…"))],
+        stack: [],
+      };
     }
     return {
-      body: describeRest(row, detail, reading),
+      body: [...trouble, ...describeRest(row, detail, reading)],
       stack: describeStack(row.repo, row.thread, read, reading),
     };
   }
@@ -344,7 +410,7 @@ export default function describeDetail(
         ? describeReview(row, read, reading)
         : describeClose(row, reading);
   return {
-    body,
+    body: [...trouble, ...body],
     stack: describeStack(row.repo, row.wait.thread, read, reading),
   };
 }

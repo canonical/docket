@@ -30,6 +30,13 @@ describe("findThreadState", () => {
     });
   });
 
+  it("rests a thread in a repository whose own file is invalid with that mark", () => {
+    const row = findActivityRow(4);
+    expect(findThreadState(row, [], people)).toMatchObject({
+      invalidFile: { text: "invalid repository file" },
+    });
+  });
+
   it("rests a thread whose row names no owner with no owners, and a closed one, which has no facts, with no opener", () => {
     const { owner: _, author: __, ...row } = findActivityRow(12);
     expect(findThreadState(row, [], people)).toEqual({

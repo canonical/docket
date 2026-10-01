@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { draw } from "../../../testing/terminal.js";
+import { nameHeading } from "../../owed/index.js";
 import type { ListBlock, ListBlockKind } from "../types.js";
 import useListScroll from "./useListScroll.js";
 
@@ -39,13 +40,13 @@ function Listed({
           kind: "heading",
           lines,
           node: null,
-          heading: { text: key, fit: "trimmed" },
+          heading: { text: key, kind: "words" },
         }
       : { key, kind: "row", lines, node: null };
   });
   const { shown, pinned, below } = useListScroll({ blocks, ...place });
   const pin = pinned
-    ? [`[${pinned.heading.text} ${pinned.place} of ${pinned.size}]`]
+    ? [`[${nameHeading(pinned.heading)} ${pinned.place} of ${pinned.size}]`]
     : [];
   const sign = below > 0 ? [`↓${below}`] : [];
   return (

@@ -105,7 +105,9 @@ async function probe(
     const { summary, groups } = result.list;
     const age = groups.at(0)?.rows.at(0)?.distance.text ?? "-";
     const failed = result.failure ? ` · ${result.failure.code}` : "";
-    return <text>{`${summary.text} · ${age}${failed}`}</text>;
+    return (
+      <text>{`${summary.fields.map(({ text }) => text).join(" · ")} · ${age}${failed}`}</text>
+    );
   }
   const screen = await draw(<Probe />, 60, 1);
   return {

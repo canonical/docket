@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
 import type { RepoStage } from "../../../cache/index.js";
 import { tokens } from "../../../tokens/index.js";
-import fitPieces from "../../fitPieces.js";
-import trimText from "../../trimText.js";
+import { fitField, fitRuns, measureText } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
-import wrapText from "../../wrapText.js";
 import describeStage from "./describeStage.js";
 import type { RefreshStagesProps } from "./types.js";
 
@@ -14,16 +12,25 @@ import type { RefreshStagesProps } from "./types.js";
  */
 function fitStage(stage: RepoStage, room: number): Piece[][] {
   const pieces = describeStage(stage);
-  if (stage.kind !== "failed") return [fitPieces(pieces, room)];
+  if (stage.kind !== "failed") return [fitRuns(pieces, room)];
   return pieces.flatMap((piece) =>
-    wrapText(piece.text, room).map((text) => [{ ...piece, text }]),
+    fitField({ text: piece.text, kind: "reason" }, "block", room).map(
+      (text) => [{ ...piece, text }],
+    ),
   );
 }
 
 /**
+ * The cells the stage's column keeps whatever the names beside it:
+ * `checking for changes`, the widest stage on one line.
+ */
+const stageCells = 20;
+
+/**
  * One line for each watched repository while nothing is shown, as on the
  * first run: its short name, padded to the longest name and one cell
- * more, then its stage (`checking for changes`, `reading page 2/3`,
+ * more, a name that would leave the stage fewer than 20 cells cut in its
+ * middle, then its stage (`checking for changes`, `reading page 2/3`,
  * `reading checks`, `✓ 89 threads`, `waiting`, `paused: budget low`,
  * `paused: rate limit`, `✗ failed: …`).
  *
@@ -36,11 +43,14 @@ const RefreshStages = ({
 }: RefreshStagesProps): ReactNode => {
   const shown = stages.map(({ repo, stage }) => ({
     repo,
-    name: trimText(names[repo] ?? repo, width),
+    name: fitField(
+      { text: names[repo] ?? repo, kind: "identifier" },
+      "line",
+      width - stageCells - 1,
+    ),
     stage,
   }));
-  const column =
-    Math.max(...shown.map(({ name }) => Bun.stringWidth(name))) + 1;
+  const column = Math.max(...shown.map(({ name }) => measureText(name))) + 1;
   const room = Math.max(1, width - column);
   return (
     <box flexDirection="column">
@@ -51,7 +61,7 @@ const RefreshStages = ({
           <text key={`${repo}:${place}`}>
             <span fg={tokens["color.text"]}>
               {place === 0
-                ? `${name}${" ".repeat(column - Bun.stringWidth(name))}`
+                ? `${name}${" ".repeat(column - measureText(name))}`
                 : " ".repeat(column)}
             </span>
             {runs.map(({ text, fg }, run) => (

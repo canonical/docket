@@ -18,7 +18,7 @@ export default function describeAddress(address: {
   const text =
     address.grouping === "none" ? window : `${window} · by ${address.grouping}`;
   return {
-    title: { text: address.mode, fit: "trimmed" },
-    address: { text, fit: "trimmed" },
+    title: { text: address.mode, kind: "words" },
+    address: { text, kind: "words" },
   };
 }

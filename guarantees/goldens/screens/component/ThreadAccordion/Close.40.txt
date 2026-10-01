@@ -1,5 +1,6 @@
 40 columns
-|┃ age 6d · owner ● alice, ● bob, ◐ caro…
+|┃ age 6d · owner ● alice, ● bob,
+|┃ ◐ carol-at-example-org
 |┃ last activity 3h ago · ● bob
 |┃ labels priority=high · kind=bug ·
 |╹ area/icons
@@ -11,18 +12,22 @@ runs
 1:18 "● alice" fg #84a0c6ff bg #2e3244ff
 1:25 ", " fg #c6c8d1ff bg #2e3244ff
 1:27 "● bob" fg #84a0c6ff bg #2e3244ff
-1:32 ", " fg #c6c8d1ff bg #2e3244ff
-1:34 "◐ caro…" fg #a093c7ff bg #2e3244ff
+1:32 "," fg #c6c8d1ff bg #2e3244ff
+1:33 "        " fg #ffffffff bg #2e3244ff
 2:1 "┃" fg #e27878ff bg #2e3244ff
 2:2 " " fg #6b7089ff bg #2e3244ff
-2:3 "last activity 3h ago · " fg #c6c8d1ff bg #2e3244ff
-2:26 "● bob" fg #84a0c6ff bg #2e3244ff
-2:31 "          " fg #ffffffff bg #2e3244ff
+2:3 "◐ carol-at-example-org" fg #a093c7ff bg #2e3244ff
+2:25 "                " fg #ffffffff bg #2e3244ff
 3:1 "┃" fg #e27878ff bg #2e3244ff
 3:2 " " fg #6b7089ff bg #2e3244ff
-3:3 "labels priority=high · kind=bug ·" fg #c6c8d1ff bg #2e3244ff
-3:36 "     " fg #ffffffff bg #2e3244ff
-4:1 "╹" fg #e27878ff bg #2e3244ff
+3:3 "last activity 3h ago · " fg #c6c8d1ff bg #2e3244ff
+3:26 "● bob" fg #84a0c6ff bg #2e3244ff
+3:31 "          " fg #ffffffff bg #2e3244ff
+4:1 "┃" fg #e27878ff bg #2e3244ff
 4:2 " " fg #6b7089ff bg #2e3244ff
-4:3 "area/icons" fg #c6c8d1ff bg #2e3244ff
-4:13 "                            " fg #ffffffff bg #2e3244ff
+4:3 "labels priority=high · kind=bug ·" fg #c6c8d1ff bg #2e3244ff
+4:36 "     " fg #ffffffff bg #2e3244ff
+5:1 "╹" fg #e27878ff bg #2e3244ff
+5:2 " " fg #6b7089ff bg #2e3244ff
+5:3 "area/icons" fg #c6c8d1ff bg #2e3244ff
+5:13 "                            " fg #ffffffff bg #2e3244ff

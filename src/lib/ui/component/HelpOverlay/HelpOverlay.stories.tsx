@@ -1,4 +1,4 @@
-import { everyCommand } from "../../../../testing/commands.js";
+import { everyCommand, longCommands } from "../../../../testing/commands.js";
 import type { Meta, Story } from "../../../../testing/stories.js";
 import HelpOverlay from "./HelpOverlay.js";
 import type { HelpOverlayProps } from "./types.js";
@@ -14,7 +14,17 @@ export default meta;
 export const Keys: Story<HelpOverlayProps> = {
   args: {
     commands: everyCommand,
-    note: "windows are counted in working time",
+    note: { text: "windows are counted in working time", kind: "words" },
+    width: 40,
+    height: 36,
+  },
+};
+
+/** Every key, the thread's included, as many as the help lists. */
+export const Long: Story<HelpOverlayProps> = {
+  args: {
+    commands: longCommands,
+    note: { text: "windows are counted in working time", kind: "words" },
     width: 40,
     height: 36,
   },

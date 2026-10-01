@@ -186,32 +186,42 @@ describe("ThreadRow", () => {
       );
     });
 
-    it("marks a row whose repository file is invalid, as a field in trouble", async () => {
+    it("marks a row whose repository file is invalid as a field in trouble, ✗ file", async () => {
       const row = measureRow({}, true);
       const screen = await draw(<ThreadRow row={row} width={60} />, 60);
       expect(screen.lines.at(1)).toBe(
-        `╹ Example thread${" ".repeat(7)}✗ invalid repository file  unassigned`,
+        `╹ Example thread${" ".repeat(26)}✗ file  unassigned`,
       );
-      expect(screen.look("✗ invalid")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("✗ file")?.fg).toBe(tokens["color.text.error"]);
     });
   });
 
   describe("narrower than its text", () => {
-    it("cuts the title first, then the reference and kinds before the distance", async () => {
+    it("keeps the owner at the end of line 2 when the title holds characters drawn wider than Bun counts them", async () => {
+      const row = measureRow({
+        thread: thread({ title: `${"❤".repeat(12)} 👍🏽 Fix the parser` }),
+        owners: ["bob"],
+      });
+      const screen = await draw(<ThreadRow row={row} width={40} />, 40);
+      expect(screen.lines.at(1)).toBe("╹ ❤❤❤❤❤❤❤❤❤❤❤❤ 👍🏽 Fi…  bob");
+      expect(screen.lines.at(2)).toBe("");
+    });
+
+    it("cuts the title first, then the reference in its middle, keeping its number, the kinds and the distance", async () => {
       const screen = await draw(
         <ThreadRow {...OverReviewSelected.args} width={24} />,
         24,
       );
       expect(screen.lines.slice(0, 2)).toEqual([
-        "┃┆example#12 PR… 1d over",
+        "┃┆e…12 PR review 1d over",
         "┃┆Fix the parser",
       ]);
     });
 
-    it("cuts the right group too when even it does not fit", async () => {
+    it("shortens the invalid file's words once the title is down to its floor, and keeps the owner", async () => {
       const row = measureRow({ owners: ["alice"] }, true);
       const screen = await draw(<ThreadRow row={row} width={24} />, 24);
-      expect(screen.lines.at(1)).toBe("╹   ✗ invalid repositor…");
+      expect(screen.lines.at(1)).toBe("╹ Exampl…  ✗ file  alice");
     });
   });
 
@@ -256,21 +266,21 @@ describe("ThreadRow", () => {
       ]);
     });
 
-    it("marks a repository's invalid file with ✗ in the error colour", async () => {
+    it("marks a repository's invalid file with ✗ in the error colour, shortened so the title keeps 8 cells", async () => {
       const screen = await draw(
         <ThreadRow {...ActivityInvalidFile.args} />,
         40,
       );
       expect(screen.lines.at(1)).toBe(
-        "  Whe…  ✗ invalid repository file  ● bob",
+        "  Where do tokens live?    ✗ file  ● bob",
       );
-      expect(screen.look("✗ invalid")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("✗ file")?.fg).toBe(tokens["color.text.error"]);
     });
 
     it("caps a long login at 12 cells", async () => {
       const row = {
         ...ActivityStacked.args.row,
-        owner: { text: "example-maintainer", fit: "trimmed" as const },
+        owner: { text: "example-maintainer", kind: "person" as const },
       };
       const screen = await draw(<ThreadRow row={row} width={40} />, 40);
       expect(screen.lines.at(1)).toBe(

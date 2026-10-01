@@ -23,10 +23,11 @@ export interface PaneProps {
    */
   counts?: ReactNode;
   /**
-   * docket's own state.
-   * Maps to DSL role: status_line (cardinality: 1)
+   * docket's own state. Absent on a screen that has none, setup, which
+   * has no counts either: the list region then takes both their lines.
+   * Maps to DSL role: status_line (cardinality: 0..1)
    */
-  status: ReactNode;
+  status?: ReactNode;
   /**
    * The reminder of the main keys.
    * Maps to DSL role: key_bar (cardinality: 1)

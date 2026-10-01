@@ -23,6 +23,15 @@ describe("GroupHeading", () => {
     expect(screen.look("◉ alice")?.fg).toBe(tokens["color.text.team"]);
   });
 
+  it("keeps a stack's repository name while it fits exactly, and leaves it whole one cell narrower", async () => {
+    const at = async (width: number) =>
+      (
+        await draw(<GroupHeading {...Stack.args} width={width} />, width)
+      ).lines.at(0);
+    expect(await at(32)).toBe("example stack 3 · 3 PRs → main ─");
+    expect(await at(31)).toBe(`stack 3 · 3 PRs → main ${"─".repeat(8)}`);
+  });
+
   it("draws the rule to the edge of a wider pane", async () => {
     const screen = await draw(
       <GroupHeading {...NotInAStack.args} width={60} />,
@@ -31,9 +40,9 @@ describe("GroupHeading", () => {
     expect(screen.lines.at(0)).toBe(`NOT IN A STACK ${"─".repeat(45)}`);
   });
 
-  it("cuts a name wider than the pane with an ellipsis, leaving room for the rule", async () => {
+  it("cuts a name wider than the pane with an ellipsis, a stack's at its end once its parts have given way, leaving room for the rule", async () => {
     const stack = await draw(<GroupHeading {...Stack.args} width={16} />, 16);
-    expect(stack.lines.slice(0, 2)).toEqual(["example stack… ─", ""]);
+    expect(stack.lines.slice(0, 2)).toEqual(["stack 3 · 3 P… ─", ""]);
     const owner = await draw(<GroupHeading {...Owner.args} width={8} />, 8);
     expect(owner.lines.at(0)).toBe("◉ ali… ─");
   });
@@ -48,11 +57,15 @@ describe("GroupHeading", () => {
     });
   });
 
-  it("cuts the name before the count, leaving room for the rule", async () => {
+  it("cuts a stack's name at its end before the count, below the narrowest pane, leaving room for the rule", async () => {
     const screen = await draw(
-      <GroupHeading {...Stack.args} count="2 of 3" width={24} />,
+      <GroupHeading
+        {...Stack.args}
+        count={{ text: "2 of 3", kind: "figure" }}
+        width={24}
+      />,
       24,
     );
-    expect(screen.lines.at(0)).toBe("example stac… · 2 of 3 ─");
+    expect(screen.lines.at(0)).toBe("stack 3 · 3 … · 2 of 3 ─");
   });
 });

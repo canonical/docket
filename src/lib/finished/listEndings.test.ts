@@ -17,7 +17,7 @@ describe("listEndings", () => {
     const list = listEndings(repoEndings(), finishedNow);
     expect(list.summary).toEqual({
       text: "1 merged · 3 closed · 1 over",
-      fit: "trimmed",
+      kind: "words",
     });
     expect(list.measures).toEqual({
       close: { state: "measured", of: 3, pending: 0 },

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import describeTeam from "./describeTeam.js";
 
 const reviewers = { team: "example-org/reviewers", members: ["alice", "Bob"] };
-const text = { text: "example-org/reviewers", fit: "trimmed" };
+const text = { text: "example-org/reviewers", kind: "person" };
 const yours = { ...text, group: "you" };
 
 describe("describeTeam", () => {

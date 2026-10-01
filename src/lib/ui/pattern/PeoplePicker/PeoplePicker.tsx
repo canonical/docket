@@ -1,23 +1,13 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { Notice } from "../../component/index.js";
-import fitPieces from "../../fitPieces.js";
-import markPerson from "../../markPerson.js";
-import { pickerIndent as indent, shownOptions } from "./constants.js";
+import { pickerIndent as indent } from "./constants.js";
+import describeOption from "./describeOption.js";
+import listShownOptions from "./listShownOptions.js";
 import type { PeoplePickerProps } from "./types.js";
 
 /** What opens the filter line, before the typed text. */
 const prompt = "filter: ";
-
-/**
- * The first option drawn: the cursor sits in the middle of the options
- * drawn where it can, and the last ones fill the lines at the end.
- */
-const findFirstShown = (cursor: number, count: number) =>
-  Math.max(
-    0,
-    Math.min(cursor - Math.floor(shownOptions / 2), count - shownOptions),
-  );
 
 /**
  * The editor for the two writes docket makes: assign (`a`) and request
@@ -39,8 +29,9 @@ const PeoplePicker = ({
   width,
 }: PeoplePickerProps): ReactNode => {
   const room = width - indent;
-  const first = options ? findFirstShown(cursor, options.length) : 0;
-  const shown = options?.slice(first, first + shownOptions);
+  const { first, shown } = options
+    ? listShownOptions(options, cursor)
+    : { first: 0, shown: undefined };
   return (
     <box flexDirection="column" flexShrink={0}>
       <box flexDirection="row" paddingLeft={indent} height={1}>
@@ -69,24 +60,21 @@ const PeoplePicker = ({
                 : undefined
             }
           >
-            <text>
-              {fitPieces(
-                [
-                  {
-                    text: `${tokens[ticked ? "glyph.ticked" : "glyph.unticked"]} `,
-                    fg: tokens["color.text"],
-                  },
-                  markPerson(owner, Number.POSITIVE_INFINITY),
-                ],
-                room,
-              ).map(({ text, fg }, run) => (
-                // A line's runs never reorder, so their place is their key.
+            <box flexDirection="column">
+              {describeOption({ owner, ticked }, room).map((line, row) => (
+                // An option's lines never reorder, so their place is their key.
                 // biome-ignore lint/suspicious/noArrayIndexKey: see above.
-                <span key={run} fg={fg}>
-                  {text}
-                </span>
+                <text key={row}>
+                  {line.map(({ text, fg }, run) => (
+                    // A line's runs never reorder, so their place is their key.
+                    // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+                    <span key={run} fg={fg}>
+                      {text}
+                    </span>
+                  ))}
+                </text>
               ))}
-            </text>
+            </box>
           </box>
         ))
       ) : (

@@ -141,12 +141,77 @@ describe("HelpOverlay", () => {
     ]);
   });
 
-  it("cuts a label that crosses a narrow pane with an ellipsis", async () => {
+  it("wraps a label that crosses a narrow pane in its column, and each note under it", async () => {
     const screen = await draw(
       <HelpOverlay {...Keys.args} width={24} height={20} />,
       24,
       20,
     );
-    expect(screen.lines.at(2)).toBe("  ← →  h l switch mode …");
+    expect(screen.lines.slice(2, 6)).toEqual([
+      "  ← →  h l switch mode",
+      "           (owed ↔",
+      "           activity)",
+      "           docket opens",
+    ]);
+  });
+
+  describe("on a narrow pane, where labels and the closing note wrap", () => {
+    const at = async (height: number, first = 0) =>
+      (
+        await draw(
+          <HelpOverlay
+            {...Keys.args}
+            width={24}
+            height={height}
+            first={first}
+          />,
+          24,
+          height,
+        )
+      ).lines;
+
+    it("opens with whole key lines only, counting every key line under the pane", async () => {
+      expect(await at(12)).toEqual([
+        "",
+        heading("Mode", 24),
+        "  ← →  h l switch mode",
+        "           (owed ↔",
+        "           activity)",
+        "           docket opens",
+        "           owed",
+        "  g        next grouping",
+        "",
+        "",
+        "",
+        "  ↓ 5 below",
+      ]);
+    });
+
+    it("shows both lines of the closing note at its end", async () => {
+      expect(await at(8, 99)).toEqual([
+        `App · 1 of 3 ${"─".repeat(11)}`,
+        "  ?        show or hide",
+        "           help",
+        "  R        full refresh",
+        "  q        quit",
+        "",
+        "  windows are counted in",
+        "  working time",
+      ]);
+    });
+
+    it("counts the last key line rather than cut its wrapped note", async () => {
+      expect((await at(29)).slice(-4)).toEqual([
+        "  R        full refresh",
+        "",
+        "",
+        "  ↓ 1 below",
+      ]);
+      expect((await at(30)).slice(-3)).toEqual([
+        "",
+        "  windows are counted in",
+        "  working time",
+      ]);
+    });
   });
 });

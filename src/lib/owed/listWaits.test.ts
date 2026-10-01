@@ -60,10 +60,11 @@ describe("listWaits", () => {
       now,
     );
     expect(list.counts).toEqual({ over: 1, soon: 1, onTrack: 0 });
-    expect(list.summary).toEqual({
-      text: "1 over · 1 soon · 0 on track",
-      fit: "trimmed",
-    });
+    expect(list.summary.fields.map(({ text }) => text)).toEqual([
+      "1 over",
+      "1 soon",
+      "0 on track",
+    ]);
   });
 
   it("gives no row when nothing is owed", () => {
@@ -72,7 +73,9 @@ describe("listWaits", () => {
       now,
     );
     expect(list.rows).toEqual([]);
-    expect(list.summary.text).toBe("0 over · 0 soon · 0 on track");
+    expect(list.summary.fields.map(({ text }) => text).join(" · ")).toBe(
+      "0 over · 0 soon · 0 on track",
+    );
   });
 });
 
@@ -158,13 +161,17 @@ describe("listWaits, against targets written in days", () => {
       },
     });
     expect(states(owed)).toEqual(expected);
-    expect(owed.summary.text).toBe("3 over · 2 soon · 6 on track");
+    expect(owed.summary.fields.map(({ text }) => text).join(" · ")).toBe(
+      "3 over · 2 soon · 6 on track",
+    );
   });
 
   it("reproduces the screen's states under the built-in targets", () => {
     const owed = list(builtInSettings.targets);
     expect(states(owed)).toEqual(expected);
-    expect(owed.summary.text).toBe("3 over · 2 soon · 6 on track");
+    expect(owed.summary.fields.map(({ text }) => text).join(" · ")).toBe(
+      "3 over · 2 soon · 6 on track",
+    );
   });
 
   it("marks every row of a repository whose own file is invalid, and no other", () => {
@@ -190,7 +197,7 @@ describe("listWaits, against targets written in days", () => {
     );
     expect(rows.map((row) => [row.repo, row.invalidFile])).toEqual(
       expect.arrayContaining([
-        ["example", { text: "invalid repository file", fit: "trimmed" }],
+        ["example", { text: "invalid repository file", kind: "words" }],
         ["docs", undefined],
       ]),
     );

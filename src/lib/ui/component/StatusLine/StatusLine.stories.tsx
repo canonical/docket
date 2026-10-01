@@ -156,8 +156,8 @@ export const ActionDone: Story<StatusLineProps> = {
       failed: false,
       text: "assigned",
       people: [
-        { text: "alice", fit: "trimmed", group: "you" },
-        { text: "erin", fit: "trimmed", group: "internal" },
+        { text: "alice", kind: "person", group: "you" },
+        { text: "erin", kind: "person", group: "internal" },
       ],
       at: new Date("2026-09-28T11:59:59Z"),
     },
@@ -225,5 +225,27 @@ export const Waking: Story<StatusLineProps> = {
     },
     attention: "waking",
     details: { read: 0, asked: 12 },
+  },
+};
+
+/** A review requested of more people than the line holds, with long names. */
+export const Long: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: settled,
+    action: {
+      failed: false,
+      text: "review requested",
+      people: [
+        { text: "example-org/parser-team", kind: "person", group: "you" },
+        {
+          text: "example-contributor-with-a-long-login",
+          kind: "person",
+          group: "outside",
+        },
+        { text: "erin", kind: "person", group: "internal" },
+      ],
+      at: new Date("2026-09-28T11:59:59Z"),
+    },
   },
 };

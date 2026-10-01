@@ -1,17 +1,51 @@
 import type { People } from "../../../config/index.js";
-import type { Owner, Person, WaitRow } from "../../../owed/index.js";
+import type {
+  Field,
+  FieldKind,
+  Owner,
+  Person,
+  WaitRow,
+} from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import type { ThreadSummary } from "../../../waits/index.js";
 import type { Piece } from "../../types.js";
 
 /**
  * One line of what the accordion shows, before it is fitted to the pane:
- * its runs, each in its own colour, and whether it wraps over as many
- * lines as it needs, as a message does, or is trimmed to one.
+ * its runs, each in its own colour, and the kind of text it is, which the
+ * fitting table fits it by in a block, as it does every field.
  */
 export interface DetailLine {
   readonly pieces: readonly Piece[];
-  readonly fit: "trimmed" | "wrapped";
+  readonly kind: FieldKind;
+  /**
+   * The most lines it takes, where its kind would wrap it over more: one
+   * for a line the details complete in place, which must not change
+   * height while they load. Held to one line, it is fitted by its kind's
+   * rule for a line.
+   */
+  readonly most?: 1;
+  /**
+   * The runs that leave the line whole, in order, while the line, held to
+   * one, does not fit, before any is cut: a stack's repository name.
+   */
+  readonly drops?: readonly number[];
+  /**
+   * The one run then cut, once, by its kind's rule for a line, to the room
+   * the others leave: a stack's base branch. Every other run, docket's own
+   * words such as `stack 7 · 2 of 3 · →`, stays whole.
+   */
+  readonly cuts?: number;
+  /**
+   * Whether the line takes only the lines left once every other line has
+   * its own, as the owners line does before a review's checks.
+   */
+  readonly yields?: boolean;
+  /**
+   * Whether the details complete it: it ends in a dimmed `…` until they
+   * arrive, which fitting draws, and is never ended with a second one.
+   */
+  readonly pending?: boolean;
   /** Shown only when it fits whole, such as when a reply began. */
   readonly optional?: boolean;
 }
@@ -62,6 +96,8 @@ export interface RestingThread {
   readonly people: People;
   /** The login gh is signed in with, when it is known: `you` among them. */
   readonly viewer?: string;
+  /** `invalid repository file`, when the repository's own file is invalid. */
+  readonly invalidFile?: Field;
 }
 
 /** Props for the ThreadAccordion component. */

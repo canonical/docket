@@ -67,7 +67,16 @@ export default function groupEndings(
     .map(([text, members]) =>
       text === undefined
         ? { rows: members }
-        : { heading: { text, fit: "trimmed" }, rows: members },
+        : {
+            heading: {
+              text,
+              kind:
+                address.grouping === "repo"
+                  ? ("identifier" as const)
+                  : ("words" as const),
+            },
+            rows: members,
+          },
     );
   const { amount, unit } = address.window;
   return {
@@ -78,7 +87,7 @@ export default function groupEndings(
       ? {
           empty: {
             text: `nothing merged or closed in ${amount}${unit}`,
-            fit: "trimmed",
+            kind: "words",
           },
         }
       : {}),

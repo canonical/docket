@@ -7,8 +7,9 @@ import type { RestingThread } from "../lib/ui/index.js";
  * What activity's accordion shows for a thread: its most pressing running
  * wait, whose body tells the thread's current state as owed measures it;
  * or, when no wait runs on it, the thread at rest, with the close body,
- * the owners its row names, whoever opened it when it is open, and the
- * people who name its assignees and whoever wrote last.
+ * the owners its row names, whoever opened it when it is open, the
+ * people who name its assignees and whoever wrote last, and whether its
+ * repository's own file is invalid.
  *
  * @param waits owed's rows, most pressing first.
  * @param people Each login's group in the thread's repository.
@@ -33,5 +34,6 @@ export default function findThreadState(
     ...(row.author === undefined ? {} : { author: row.author }),
     people,
     ...(viewer === undefined ? {} : { viewer }),
+    ...(row.invalidFile ? { invalidFile: row.invalidFile } : {}),
   };
 }

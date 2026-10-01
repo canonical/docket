@@ -2,10 +2,13 @@ import type { ReactNode } from "react";
 import type { WaitState } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
-import fitPieces from "../../fitPieces.js";
-import markPerson from "../../markPerson.js";
-import measurePieces from "../../measurePieces.js";
-import trimText from "../../trimText.js";
+import {
+  fitField,
+  fitRuns,
+  markPerson,
+  measurePieces,
+  measureText,
+} from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import { Margin } from "../Margin/index.js";
@@ -36,22 +39,27 @@ const space = (count: number): Piece => ({
 
 /**
  * The row's head, all of it bold: the reference and the kinds, then the
- * author, then the distance at the right edge. The reference, the kinds
- * and the distance always show whole at the pane's width; the author is
- * the one field that gives way, its login cut first and its mark never,
- * and once fewer than four cells of login would remain it leaves the line.
+ * author, then the distance at the right edge. The kinds and the distance
+ * always show whole; the reference too, unless its repository's short
+ * name leaves them no room, when it is cut in its middle and keeps its
+ * number. The author gives way first, its login cut before its mark, and
+ * once fewer than four cells of login would remain it leaves the line.
  */
 function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
   const text = tokens["color.text"];
-  const figure = row.distance.text;
-  const kinds =
-    "wait" in row ? [row.threadKind.text, row.kind.text] : [row.kind.text];
-  const words = trimText(
-    [row.reference.text, ...kinds].join(" "),
-    inner - Bun.stringWidth(figure) - 1,
+  const figure = fitField(row.distance, "line", inner);
+  const kinds = ("wait" in row ? [row.threadKind, row.kind] : [row.kind])
+    .map((field) => fitField(field, "line", inner))
+    .join(" ");
+  // A space after the reference, and one before the distance.
+  const reference = fitField(
+    row.reference,
+    "line",
+    inner - measureText(kinds) - measureText(figure) - 2,
   );
+  const words = `${reference} ${kinds}`;
   // The mark and the space after it take two cells beside the login.
-  const room = inner - Bun.stringWidth(words) - Bun.stringWidth(figure) - 4;
+  const room = inner - measureText(words) - measureText(figure) - 4;
   const author =
     row.author && room >= authorMinCells
       ? [space(1), markPerson(row.author, Math.min(loginCells, room))]
@@ -60,7 +68,7 @@ function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
   const state = "state" in row ? row.state : undefined;
   return [
     ...left,
-    space(inner - measurePieces(left) - Bun.stringWidth(figure)),
+    space(inner - measurePieces(left) - measureText(figure)),
     { text: figure, fg: state ? distanceColours[state] : text },
   ].map((piece) => ({
     ...piece,
@@ -71,7 +79,7 @@ function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
 /** Draws the runs of one line, fitted to `width`. */
 const drawLine = (pieces: readonly Piece[], width: number) => (
   <text>
-    {fitPieces(pieces, width).map(({ text, fg, attributes }, index) => (
+    {fitRuns(pieces, width).map(({ text, fg, attributes }, index) => (
       // A line's runs never reorder, so their place is their key.
       // biome-ignore lint/suspicious/noArrayIndexKey: see above.
       <span key={index} fg={fg} attributes={attributes}>

@@ -5,6 +5,7 @@ import type { StackEntry } from "../stacks/index.js";
 import type { Wait } from "../waits/index.js";
 import buildRow from "./buildRow.js";
 import groupRows from "./groupRows.js";
+import nameHeading from "./nameHeading.js";
 
 const now = at("2026-09-23T10:00+02:00");
 const repos: Repo[] = [
@@ -22,7 +23,7 @@ const entry = (number: number, position: number, size = 5): StackEntry => ({
 const pull = (number: number, stack?: StackEntry, repo = repos[0]?.repo) =>
   thread({ kind: "pullRequest", number, stack, repo });
 const headings = (groups: ReturnType<typeof groupRows>) =>
-  groups.map(({ heading }) => heading?.text);
+  groups.map(({ heading }) => heading && nameHeading(heading));
 const references = (groups: ReturnType<typeof groupRows>) =>
   groups.map(({ rows }) => rows.map(({ reference }) => reference.text));
 
@@ -57,8 +58,8 @@ describe("groupRows", () => {
       const first = row({ owners: ["bob", "alice"] });
       const second = row({ owners: ["alice"] });
       expect(groupRows([first, second], "owner", repos)).toEqual([
-        { heading: { text: "alice", fit: "trimmed" }, rows: [first, second] },
-        { heading: { text: "bob", fit: "trimmed" }, rows: [first] },
+        { heading: { text: "alice", kind: "person" }, rows: [first, second] },
+        { heading: { text: "bob", kind: "person" }, rows: [first] },
       ]);
     });
 
@@ -69,8 +70,8 @@ describe("groupRows", () => {
       });
       const groups = groupRows([assigned, row({ owners: [] })], "owner", repos);
       expect(groups.map(({ heading }) => heading)).toEqual([
-        { text: "alice", fit: "trimmed", group: "team" },
-        { text: "unassigned", fit: "trimmed" },
+        { text: "alice", kind: "person", group: "team" },
+        { text: "unassigned", kind: "words" },
       ]);
     });
   });
@@ -122,7 +123,13 @@ describe("groupRows", () => {
       ];
       expect(groupRows(rows, "stack", repos)).toEqual([
         {
-          heading: { text: "example stack 12 · 5 PRs → main", fit: "trimmed" },
+          heading: {
+            kind: "stack",
+            repo: "example",
+            number: 12,
+            size: 5,
+            base: "main",
+          },
           rows: [rows[1], rows[0]],
         },
       ]);
@@ -169,7 +176,7 @@ describe("groupRows, owners written in two cases", () => {
   it("gathers one owner written two ways in one section, headed as first written", () => {
     const rows = [row({ owners: ["Alice"] }), row({ owners: ["alice"] })];
     expect(groupRows(rows, "owner", repos)).toEqual([
-      { heading: { text: "Alice", fit: "trimmed" }, rows },
+      { heading: { text: "Alice", kind: "person" }, rows },
     ]);
   });
 });

@@ -30,7 +30,7 @@ export default function listEndings(
         return invalidFile
           ? {
               ...row,
-              invalidFile: { text: invalidFileMark, fit: "trimmed" as const },
+              invalidFile: { text: invalidFileMark, kind: "words" as const },
             }
           : row;
       }),
@@ -50,5 +50,5 @@ export default function listEndings(
     firstReview: cover("firstReview"),
   };
   const text = `${counts.merged} merged · ${counts.closed} closed · ${counts.over.value} over`;
-  return { rows, counts, measures, summary: { text, fit: "trimmed" } };
+  return { rows, counts, measures, summary: { text, kind: "words" } };
 }

@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
+import { fitField, measureText } from "../../fit/index.js";
 import type { KeyCommand } from "../../hooks/index.js";
 import { ScrolledList } from "../../layout/ScrolledList/index.js";
-import trimText from "../../trimText.js";
 import type { ListBlock } from "../../types.js";
 import { GroupHeading } from "../GroupHeading/index.js";
 import type { HelpOverlayProps } from "./types.js";
@@ -28,13 +28,14 @@ const writeKeys = ({ keys, alternates }: KeyCommand) =>
 
 /**
  * Every key, grouped by the object it acts on, filling the pane under a
- * header that reads `help`. `?` shows and hides it. Its lines scroll as a
- * list's do, drawn through the same scrolled list: a group's heading, with
- * the blank line above it, is a heading, and a key's line, with its notes,
- * a row, the last carrying the closing note. So a pane too short for
- * the help pins the heading of the keys under its first line and counts
- * the key lines under it, `↓ 8 below`, and the movement keys scroll it
- * from `first`.
+ * header that reads `help`. `?` shows and hides it. A label too long for
+ * its column wraps in it, under its first line, and so does each note.
+ * Its lines scroll as a list's do, drawn through the same scrolled list:
+ * a group's heading, with the blank line above it, is a heading, and a
+ * key's line, with its wrapped lines and notes, a row, the last carrying
+ * the closing note. So a pane too short for the help pins the heading of
+ * the keys under its first line and counts the key lines under it,
+ * `↓ 8 below`, and the movement keys scroll it from `first`.
  *
  * `import { HelpOverlay } from "../lib/ui/index.js";`
  *
@@ -53,7 +54,7 @@ const HelpOverlay = ({
   const groups = groupCommands(commands);
   const last = groups.at(-1)?.[1].at(-1);
   const blocks: ListBlock[] = groups.flatMap(([group, lines]): ListBlock[] => {
-    const heading = { text: group, fit: "trimmed" } as const;
+    const heading = { text: group, kind: "words" } as const;
     return [
       {
         key: group,
@@ -67,34 +68,60 @@ const HelpOverlay = ({
         ),
       },
       ...lines.map((line): ListBlock => {
-        const keys = trimText(writeKeys(line), width - indent);
-        const gap = " ".repeat(Math.max(1, keyColumn - Bun.stringWidth(keys)));
-        const room = width - indent - Bun.stringWidth(keys) - gap.length;
+        const keys = fitField(
+          { text: writeKeys(line), kind: "words" },
+          "line",
+          width - indent,
+        );
+        const gap = " ".repeat(Math.max(1, keyColumn - measureText(keys)));
+        const column = indent + measureText(keys) + gap.length;
+        // The label wraps in its own column, and each note under it.
+        const [label, ...rest] = fitField(
+          { text: line.label, kind: "words" },
+          "block",
+          width - column,
+        );
+        const under = [
+          ...rest.map((text) => `${" ".repeat(column)}${text}`),
+          ...line.notes.flatMap((each) =>
+            fitField(
+              { text: each, kind: "words" },
+              "block",
+              width - notePad.length,
+            ).map((text) => `${notePad}${text}`),
+          ),
+        ];
         // The closing note rides with the last key line, so it is never
         // cut off without that line being counted below.
-        const closing = line === last ? note : undefined;
+        const closing =
+          line === last && note
+            ? fitField(note, "block", width - indent).map(
+                (text) => `${pad}${text}`,
+              )
+            : [];
         return {
           key: `${group} ${line.label}`,
           kind: "row",
-          lines: 1 + line.notes.length + (closing === undefined ? 0 : 2),
+          lines:
+            1 + under.length + (closing.length > 0 ? 1 + closing.length : 0),
           node: (
             <>
               <text fg={tokens["color.text"]}>
                 {pad}
                 {keys}
                 {gap}
-                {trimText(line.label, room)}
+                {label}
               </text>
-              {line.notes.map((each) => (
-                <text key={each} fg={tokens["color.text"]}>
-                  {notePad}
-                  {trimText(each, width - notePad.length)}
+              {under.map((text, place) => (
+                // A label's lines never reorder, so their place is their key.
+                // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+                <text key={place} fg={tokens["color.text"]}>
+                  {text}
                 </text>
               ))}
-              {closing !== undefined && (
+              {closing.length > 0 && (
                 <text marginTop={1} fg={tokens["color.text"]}>
-                  {pad}
-                  {trimText(closing, width - indent)}
+                  {closing.join("\n")}
                 </text>
               )}
             </>

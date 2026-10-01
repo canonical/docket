@@ -57,27 +57,28 @@ export default function buildRow(
   const owners = thread.assignees
     .filter((account) => classify(account, people) !== "bot")
     .map((account) => describePerson(account, people, viewer));
-  const markTrimmed = (text: string) => ({ text, fit: "trimmed" as const });
+  const markWords = (text: string) => ({ text, kind: "words" as const });
+  const markFigure = (text: string) => ({ text, kind: "figure" as const });
   return {
     thread,
     repo,
-    reference: markTrimmed(`${repo}#${thread.number}`),
-    kind: markTrimmed(threadWords[thread.kind]),
-    distance: markTrimmed(measured ? (over ?? open) : age),
-    title: markTrimmed(thread.title),
+    reference: { text: `${repo}#${thread.number}`, kind: "identifier" },
+    kind: markWords(threadWords[thread.kind]),
+    distance: markFigure(measured ? (over ?? open) : age),
+    title: { text: thread.title, kind: "title" },
     author: describePerson(thread.author, people, viewer),
     ...describeOwners(owners),
-    ...(thread.draft ? { draft: markTrimmed("draft") } : {}),
+    ...(thread.draft ? { draft: markWords("draft") } : {}),
     ending: {
-      text: markTrimmed(actor ? `${actor.text} ${ending.label}` : ending.label),
+      text: markWords(actor ? `${actor.text} ${ending.label}` : ending.label),
       ...(actor ? { actor } : {}),
-      action: markTrimmed(ending.label),
-      age: markTrimmed(age),
+      action: markWords(ending.label),
+      age: markFigure(age),
     },
-    open: markTrimmed(open),
+    open: markFigure(open),
     ...(measured
       ? {
-          target: markTrimmed(
+          target: markWords(
             `target ${measured.target.amount}${measured.target.unit}`,
           ),
           targetHours:
@@ -85,7 +86,7 @@ export default function buildRow(
           verdict: measured.verdict,
         }
       : {}),
-    ...(over ? { over: markTrimmed(over) } : {}),
+    ...(over ? { over: markFigure(over) } : {}),
     measures,
   };
 }

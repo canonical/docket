@@ -33,7 +33,7 @@ describe("describeWaitData", () => {
   it("says when the wait's repository has an invalid file of its own", () => {
     const marked = {
       ...soon,
-      invalidFile: { text: "invalid repository file", fit: "trimmed" },
+      invalidFile: { text: "invalid repository file", kind: "words" },
     } as const;
     expect(describeWaitData(marked, "standard").invalidRepositoryFile).toBe(
       true,

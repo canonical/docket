@@ -408,7 +408,7 @@ export default function Screen({
       />
     );
   }
-  const summary = (owed ?? listed)?.summary.text;
+  const summary = (owed ?? listed)?.summary;
   const position = describePosition(
     (owed ?? listed)?.groups ?? [],
     placeSelection(rows, selections[mode]),
@@ -420,13 +420,20 @@ export default function Screen({
       height={height}
       header={
         help || setup ? (
-          <PaneHeader title={help ? "help" : "setup"} width={width} />
+          <PaneHeader
+            title={{ text: help ? "help" : "setup", kind: "words" }}
+            width={width}
+          />
         ) : (
           <PaneHeader
-            title={editor.title ?? header.title}
+            title={
+              editor.title
+                ? { text: editor.title, kind: "identifier" }
+                : { text: header.title, kind: "words" }
+            }
             {...(!editor.title && {
-              address: header.address,
-              sort: header.sort,
+              address: { text: header.address, kind: "words" },
+              sort: { text: header.sort, kind: "words" },
             })}
             width={width}
           />
@@ -436,34 +443,45 @@ export default function Screen({
         summary === undefined ? undefined : (
           <CountsLine
             summary={summary}
-            {...(position && { position })}
+            {...(position && { position: { text: position, kind: "figure" } })}
             width={width}
           />
         )
       }
-      status={drawStatusLine({
-        problem,
-        status,
-        // A failure reading activity's events, or whom gh is signed in
-        // as, leaves the rows held.
-        failure:
-          (activity && "list" in activity ? activity.failure : undefined) ??
-          you.failure,
-        action,
-        attention: attentionState,
-        detailsPaused: "cache" in source && source.details?.isCapped(at),
-        details: ahead.progress,
-        now: at,
-        timezone: settings.time.timezone,
-        watched,
-        width,
-      })}
+      // Setup has no state of its own, so its notice takes the lines.
+      status={
+        setup
+          ? undefined
+          : drawStatusLine({
+              problem,
+              status,
+              // A failure reading activity's events, or whom gh is signed in
+              // as, leaves the rows held.
+              failure:
+                (activity && "list" in activity
+                  ? activity.failure
+                  : undefined) ?? you.failure,
+              action,
+              attention: attentionState,
+              detailsPaused: "cache" in source && source.details?.isCapped(at),
+              details: ahead.progress,
+              now: at,
+              timezone: settings.time.timezone,
+              watched,
+              width,
+            })
+      }
       keys={<KeyBar commands={active} width={width} />}
       help={
         help ? (
           <HelpOverlay
             commands={bound}
-            {...(!setup && { note: "windows are counted in working time" })}
+            {...(!setup && {
+              note: {
+                text: "windows are counted in working time",
+                kind: "words",
+              },
+            })}
             width={width}
             height={Math.max(0, height - 1)}
             first={helpState.first}

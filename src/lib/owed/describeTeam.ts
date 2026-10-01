@@ -23,6 +23,6 @@ export default function describeTeam(
     yours.some((listed) => listed.toLowerCase() === name) ||
     members.some((login) => login.toLowerCase() === you);
   return mine
-    ? { text: team, fit: "trimmed", group: "you" }
-    : { text: team, fit: "trimmed" };
+    ? { text: team, kind: "person", group: "you" }
+    : { text: team, kind: "person" };
 }

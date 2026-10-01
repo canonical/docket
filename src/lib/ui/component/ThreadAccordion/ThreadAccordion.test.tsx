@@ -6,6 +6,10 @@ import {
   sharedCloseDetail,
 } from "../../../../testing/details.js";
 import { thread } from "../../../../testing/facts.js";
+import {
+  longReviewDetail,
+  longSharedReview,
+} from "../../../../testing/long.js";
 import { measureRow, overReview, soonReply } from "../../../../testing/rows.js";
 import { drawSuspending, type Screen } from "../../../../testing/terminal.js";
 import type { ThreadDetail } from "../../../provider/index.js";
@@ -15,6 +19,7 @@ import {
   Close,
   Failed,
   Loading,
+  Long,
   Paused,
   PausedUnheld,
   Reply,
@@ -149,29 +154,34 @@ describe("ThreadAccordion", () => {
       );
     });
 
-    it("gives the reason in the error colour on one line under what the snapshot showed, when reading fails", async () => {
+    it("gives the reason in the error colour, then its recovery, each wrapped and first to take the eight lines, under what the snapshot showed, when reading fails", async () => {
       const screen = await open(Failed.args);
-      expect(readText(screen).slice(0, 7)).toEqual([
-        "asked by ● alice 3d ago",
-        "1 push since · …",
-        "✗ checks: …",
+      expect(readText(screen).slice(0, 9)).toEqual([
+        "asked by ● alice 3d ago…",
         "example stack 3 · 2 of 3 · → main",
         "…",
-        "✗ failed: GitHub timed out",
+        "✗ failed: GitHub gave no answer within",
+        "30 seconds",
+        "Recovery: check the network connection",
+        "and https://www.githubstatus.com, then",
+        "refresh",
         "",
       ]);
       expect(screen.look("✗ failed")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("30 seconds")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("Recovery:")?.fg).toBe(tokens["color.text"]);
     });
 
-    it("gives the reason alone for a thread the snapshot holds nothing of, cut to one line", async () => {
+    it("gives the reason alone, wrapped, for a thread the snapshot holds nothing of, and no recovery when the failure gives none", async () => {
       const screen = await open({
         ...RestingLoading.args,
         detail: failDetail(
           new Error("GitHub gave no answer within 10 seconds."),
         ),
       });
-      expect(readText(screen).slice(0, 2)).toEqual([
-        "✗ failed: GitHub gave no answer withi…",
+      expect(readText(screen).slice(0, 3)).toEqual([
+        "✗ failed: GitHub gave no answer within",
+        "10 seconds",
         "",
       ]);
     });
@@ -203,6 +213,137 @@ describe("ThreadAccordion", () => {
   });
 
   describe("fitting eight lines", () => {
+    it("keeps a failed read's recovery whole, cutting its long reason with …", async () => {
+      const failure = Object.assign(
+        new Error(
+          `GitHub answered with an error: ${"the connection was reset ".repeat(12)}`,
+        ),
+        {
+          recovery:
+            "check the network connection and https://www.githubstatus.com, then refresh",
+        },
+      );
+      const screen = await open({
+        ...RestingLoading.args,
+        detail: failDetail(failure),
+      });
+      const lines = readText(screen);
+      expect(lines.slice(4, 9)).toEqual([
+        expect.stringMatching(/…$/),
+        "Recovery: check the network connection",
+        "and https://www.githubstatus.com, then",
+        "refresh",
+        "",
+      ]);
+    });
+
+    it("never passes eight lines when a stacked pull request's read fails with a long reason", async () => {
+      const failure = Object.assign(
+        new Error(
+          `GitHub answered with an error: ${"the connection was reset ".repeat(6)}`,
+        ),
+        { recovery: "check the network connection, then refresh" },
+      );
+      const screen = await open(
+        { ...Long.args, detail: failDetail(failure) },
+        40,
+      );
+      expect(readText(screen).indexOf("")).toBeLessThanOrEqual(8);
+      expect(screen.lines.at(7)).toMatch(/^╹/);
+    });
+
+    it("gives the owners line only the lines a review's checks leave, ending it after a whole name, or the accordion's last line, in …", async () => {
+      const narrow = await open(Long.args);
+      expect(readText(narrow).slice(0, 8)).toEqual([
+        "asked by ● alice 6d ago",
+        "0 pushes since · 1 file · +40 −12",
+        "✗ checks: 3 of 4 failed",
+        "(lint the whole repository,",
+        "unit tests on every platform,",
+        "build the documentation site)",
+        "stack 7 · 2 of 3 · → release/…ong-name",
+        "below #12344 merged,…",
+      ]);
+      const wide = await open(Long.args, 60);
+      expect(readText(wide).at(0)).toBe(
+        "owner ○ example-contributor-with-a-long-login,…",
+      );
+    });
+
+    it("gives the owners line no line when the lines it gets end inside its one name, the accordion's last line ending in …", async () => {
+      const [failing, ...rest] = longReviewDetail.checks;
+      const checks = [
+        ...(failing ? [failing] : []),
+        ...rest.map((check) => ({ ...check, state: "passing" as const })),
+      ];
+      const detail = Promise.resolve({ ...longReviewDetail, checks });
+      const screen = await open({ ...Long.args, detail }, 40);
+      expect(readText(screen).slice(0, 7)).toEqual([
+        "asked by ● alice 6d ago",
+        "0 pushes since · 1 file · +40 −12",
+        "✗ checks: 1 of 4 failed",
+        "(lint the whole repository)",
+        "stack 7 · 2 of 3 · → release/…ong-name",
+        "below #12344 merged,…",
+        "",
+      ]);
+      expect(screen.lines.at(5)).toMatch(/^╹/);
+    });
+
+    it("keeps docket's words of a stack's place whole, the repository's short name leaving whole before the base branch is cut once in its middle", async () => {
+      const onStack = (stack: {
+        number: number;
+        position: number;
+        size: number;
+        base: string;
+      }) => ({
+        ...Long.args,
+        row: {
+          ...longSharedReview,
+          wait: {
+            ...longSharedReview.wait,
+            thread: { ...longSharedReview.wait.thread, stack },
+          },
+        },
+      });
+      const placeLine = (screen: Screen) =>
+        readText(screen).find((line) => /stack \d+ ·/.test(line));
+      const base = "release/example-branch-with-a-long-name";
+      const wide = onStack({ number: 123, position: 10, size: 12, base });
+      expect(placeLine(await open(wide, 40))).toBe(
+        "stack 123 · 10 of 12 · → relea…g-name…",
+      );
+      expect(placeLine(await open(wide, 60))).toBe(
+        "stack 123 · 10 of 12 · → release/example-…with-a-long-name",
+      );
+      // A stack of one ends on its place, so the owners' leaving is marked.
+      const one = onStack({ number: 7, position: 1, size: 1, base });
+      expect(placeLine(await open(one, 40))).toBe(
+        "stack 7 · 1 of 1 · → release…ong-name…",
+      );
+      const short = onStack({ number: 7, position: 2, size: 3, base: "main" });
+      expect(placeLine(await open(short, 40))).toBe(
+        "stack 7 · 2 of 3 · → main",
+      );
+      expect(placeLine(await open(short, 80))).toBe(
+        "example-repository-with-a-long-name stack 7 · 2 of 3 · → main",
+      );
+    });
+
+    it("wraps the failing checks between their names, keeping each whole", async () => {
+      const detail = { ...overReviewDetail, checks: longReviewDetail.checks };
+      const screen = await open({
+        ...Review.args,
+        detail: Promise.resolve(detail),
+      });
+      expect(readText(screen).slice(2, 6)).toEqual([
+        "✗ checks: 3 of 4 failed",
+        "(lint the whole repository,",
+        "unit tests on every platform,",
+        "build the documentation site)",
+      ]);
+    });
+
     it("cuts a message past the eighth line, only the last line ending in …, and leaves out when the reply began", async () => {
       const long = measureRow({
         ...soonReply.wait,
@@ -239,7 +380,9 @@ describe("ThreadAccordion", () => {
       return <ThreadAccordion {...Failed.args} detail={detail} />;
     };
     const screen = await drawSuspending(<Harness />, 40, 10);
-    expect(readText(screen).at(5)).toBe("✗ failed: GitHub timed out");
+    expect(readText(screen).at(3)).toBe(
+      "✗ failed: GitHub gave no answer within",
+    );
     const again = await screen.redraw(() =>
       show(Promise.resolve(overReviewDetail)),
     );
