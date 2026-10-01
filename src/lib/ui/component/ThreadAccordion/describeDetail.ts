@@ -38,9 +38,6 @@ const failed = (text: string): Piece => ({
   fg: tokens["color.text.error"],
 });
 
-/** The dimmed `…` that ends a line still waiting for the details. */
-const pending = muted(` ${tokens["glyph.cut"]}`);
-
 /** docket's words on a line held to one, which the details complete in place. */
 const trimmed = (...pieces: Piece[]): DetailLine => ({
   pieces,
@@ -49,12 +46,12 @@ const trimmed = (...pieces: Piece[]): DetailLine => ({
 });
 
 /**
- * docket's words on a line held to one that ends in the dimmed `…` until
- * the details complete it, which marks it as already ending in a cut.
+ * docket's words on a line held to one that the details complete: it
+ * ends in a dimmed `…` until they arrive, which fitting draws.
  */
-const waiting = (...pieces: Piece[]): DetailLine => ({
-  ...trimmed(...pieces, pending),
-  waiting: true,
+const pendingLine = (...pieces: Piece[]): DetailLine => ({
+  ...trimmed(...pieces),
+  pending: true,
 });
 
 /**
@@ -184,9 +181,9 @@ function describeChecks({ checks }: ThreadDetail): DetailLine {
  */
 function describeSnapshotChecks({ checks }: Thread): DetailLine {
   if (checks === undefined) return trimmed(plain("no checks"));
-  if (checks === "failing") return waiting(failed("checks:"));
+  if (checks === "failing") return pendingLine(failed("checks:"));
   const state = checks === "running" ? "checks running" : "checks passed";
-  return waiting(plain(state));
+  return pendingLine(plain(state));
 }
 
 /**
@@ -223,7 +220,10 @@ function describeReview(
       : trimmed(muted(`asked${age}`)),
     detail
       ? trimmed(plain(count(pushes, "push since", "pushes since")), ...changes)
-      : waiting(plain(count(pushes, "push since", "pushes since")), ...changes),
+      : pendingLine(
+          plain(count(pushes, "push since", "pushes since")),
+          ...changes,
+        ),
     detail ? describeChecks(detail) : describeSnapshotChecks(thread),
   ];
 }

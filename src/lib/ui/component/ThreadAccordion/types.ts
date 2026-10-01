@@ -36,10 +36,10 @@ export interface DetailLine {
    */
   readonly yields?: boolean;
   /**
-   * Whether it ends in the dimmed `…` of a line the details complete, so
-   * it is never ended with a second one.
+   * Whether the details complete it: it ends in a dimmed `…` until they
+   * arrive, which fitting draws, and is never ended with a second one.
    */
-  readonly waiting?: boolean;
+  readonly pending?: boolean;
   /** Shown only when it fits whole, such as when a reply began. */
   readonly optional?: boolean;
 }

@@ -41,35 +41,54 @@ function giveWay(
 }
 
 /**
- * The lines fitting cut, or that end in the dimmed `…` of details still
- * to come: each already says more follows, by the cut that made it.
+ * A line as fitted: its runs, and whether it already ends in a `…`, the
+ * dimmed one of details still to come or the one of a cut fitting made,
+ * so it is not ended with a second.
  */
-const ended = new WeakSet<readonly Piece[]>();
+interface Fitted {
+  readonly runs: readonly Piece[];
+  readonly ended: boolean;
+}
+
+/** The dimmed `…` that ends a line still waiting for the details. */
+const pendingMark = (after: boolean): Piece => ({
+  text: after ? ` ${tokens["glyph.cut"]}` : tokens["glyph.cut"],
+  fg: tokens["color.text.muted"],
+});
 
 /**
  * One line's runs as they fill the room, by the rule the fitting table
  * gives its kind: wrapped in a block, or kept whole on one. A line held
  * to one gives way by its runs that may (`giveWay`), and any line still
- * too wide is cut at its end.
+ * too wide is cut at its end; a line waiting on the details ends in the
+ * dimmed `…`.
  */
-function fitLine(line: DetailLine, room: number): Piece[][] {
-  const { pieces, kind, most, waiting } = line;
-  if (most !== 1) return fitBlock(pieces, kind, room);
-  const held = fitRuns(giveWay(line, room), room);
-  if (waiting || measurePieces(held) < measurePieces(pieces)) ended.add(held);
-  return [held];
+function fitLine(line: DetailLine, room: number): Fitted[] {
+  const { pieces, kind, most, pending } = line;
+  if (most !== 1) {
+    return fitBlock(pieces, kind, room).map((runs) => ({ runs, ended: false }));
+  }
+  const runs = pending ? [...pieces, pendingMark(pieces.length > 0)] : pieces;
+  const held = fitRuns(giveWay({ ...line, pieces: runs }, room), room);
+  return [
+    {
+      runs: held,
+      ended: pending === true || measurePieces(held) < measurePieces(runs),
+    },
+  ];
 }
 
 /**
  * `lines` with the last of them ending in `…`, to say more follows,
- * unless fitting already cut it, or it waits on the details: such a line
- * keeps the one `…` it has, whatever its text holds.
+ * unless it already ends in one.
  */
-const endLast = (lines: readonly Piece[][], room: number): Piece[][] => [
+const endLast = (lines: readonly Fitted[], room: number): Fitted[] => [
   ...lines.slice(0, -1),
   ...lines
     .slice(-1)
-    .map((line) => (ended.has(line) ? line : endRuns(line, room))),
+    .map((line) =>
+      line.ended ? line : { runs: endRuns(line.runs, room), ended: true },
+    ),
 ];
 
 /**
@@ -77,8 +96,8 @@ const endLast = (lines: readonly Piece[][], room: number): Piece[][] => [
  * the runs that leave it the cell: the runs past them, a name or the
  * comma after one, leave whole, so no name is cut inside.
  */
-function endWhole(line: readonly Piece[], room: number): Piece[] {
-  const kept = [...line];
+function endWhole(line: Fitted, room: number): Fitted {
+  const kept = [...line.runs];
   // A name is never the run the `…` follows, which would read as cut.
   while (
     kept.length > 1 &&
@@ -86,7 +105,10 @@ function endWhole(line: readonly Piece[], room: number): Piece[] {
   ) {
     kept.pop();
   }
-  return [...kept, { text: tokens["glyph.cut"], fg: tokens["color.text"] }];
+  return {
+    runs: [...kept, { text: tokens["glyph.cut"], fg: tokens["color.text"] }],
+    ended: true,
+  };
 }
 
 /**
@@ -104,6 +126,15 @@ export default function fitAccordion(
   room: number,
   lines = accordionMaxLines,
 ): Piece[][] {
+  return fitLines({ body, stack }, room, lines).map(({ runs }) => [...runs]);
+}
+
+/** `fitAccordion`'s lines, each with whether it already ends in `…`. */
+function fitLines(
+  { body, stack }: DetailText,
+  room: number,
+  lines: number,
+): Fitted[] {
   const bottom = stack.flatMap((line) => fitLine(line, room));
   const fits = Math.max(0, lines);
   // The stack lines alone can fill the lines: they keep as many as fit.
@@ -116,7 +147,7 @@ export default function fitAccordion(
     lined
       .filter(({ line }) => !line.yields && !line.optional)
       .reduce((sum, { fitted }) => sum + fitted.length, 0);
-  const drawn: Piece[][] = [];
+  const drawn: Fitted[] = [];
   // Whether a line that yields was left out, or cut, so the accordion's
   // last line says more follows.
   let yielded = false;

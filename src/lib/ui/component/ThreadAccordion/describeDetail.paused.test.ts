@@ -33,14 +33,15 @@ const reading = {
   waiting: { "example#13": "close" },
 };
 
-/** Each line's text, its runs joined, a no-break space read as the space it shows. */
+/** Each line's text as drawn whole, a no-break space read as a space. */
 const texts = (lines: readonly DetailLine[]) =>
-  lines.map(({ pieces }) =>
-    pieces
-      .map(({ text }) => text)
-      .join("")
-      .replaceAll("\u00a0", " "),
-  );
+  lines.map(({ pieces, pending }) => {
+    const text = pieces.map((piece) => piece.text).join("");
+    return `${text}${pending ? `${text && " "}…` : ""}`.replaceAll(
+      "\u00a0",
+      " ",
+    );
+  });
 
 describe("describeDetail, while reading is paused", () => {
   it("gives a reply, a review and a close as the snapshot gives them while the details are read", () => {

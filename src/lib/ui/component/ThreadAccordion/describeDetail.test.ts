@@ -35,14 +35,15 @@ const reading = {
   waiting: { "example#13": "close" },
 };
 
-/** Each line's text, its runs joined, a no-break space read as the space it shows. */
+/** Each line's text as drawn whole, a no-break space read as a space. */
 const texts = (lines: readonly DetailLine[]) =>
-  lines.map(({ pieces }) =>
-    pieces
-      .map(({ text }) => text)
-      .join("")
-      .replaceAll("\u00a0", " "),
-  );
+  lines.map(({ pieces, pending }) => {
+    const text = pieces.map((piece) => piece.text).join("");
+    return `${text}${pending ? `${text && " "}…` : ""}`.replaceAll(
+      "\u00a0",
+      " ",
+    );
+  });
 
 /** The colour of the run of `line` that reads `text`. */
 const colourOf = (line: DetailLine | undefined, text: string) =>
@@ -139,7 +140,6 @@ describe("describeDetail", () => {
       ]);
       expect(colourOf(body[0], "asked by ")).toBe(tokens["color.text.muted"]);
       expect(colourOf(body[0], "● alice")).toBe(tokens["color.text.team"]);
-      expect(colourOf(body[1], " …")).toBe(tokens["color.text.muted"]);
       expect(colourOf(body[2], "✗ checks:")).toBe(tokens["color.text.error"]);
     });
 

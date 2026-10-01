@@ -74,12 +74,20 @@ describe("fitAccordion", () => {
     ]);
   });
 
-  it("does not end again a last line fitting cut, or one waiting on the details", () => {
+  it("ends a line waiting on the details in a dimmed …, and never ends a last line twice", () => {
     const text = {
-      body: [{ ...trimmed("push since …"), waiting: true }, wrapped("more")],
+      body: [{ ...trimmed("push since"), pending: true }, wrapped("more")],
       stack: [],
     };
     expect(read(fitAccordion(text, 20, 1))).toEqual(["push since …"]);
+    expect(fitAccordion(text, 20, 1)[0]?.at(-1)?.fg).toBe(
+      tokens["color.text.muted"],
+    );
+    const bare = {
+      body: [],
+      stack: [{ ...trimmed(""), pieces: [], pending: true }],
+    };
+    expect(read(fitAccordion(bare, 20, 1))).toEqual(["…"]);
     const cut = {
       body: [
         { ...trimmed("example-repository"), kind: "identifier" as const },
