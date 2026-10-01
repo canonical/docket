@@ -40,13 +40,7 @@ function describeAction(
   const words = action.text.slice(0, at).replace(/[\s(]+$/, "");
   const space = action.text.slice(words.length, at);
   const after = action.text.slice(at + target.text.length);
-  // A person the event acted on is drawn behind their mark and a space.
-  const mark = "group" in target ? 2 : 0;
-  const fitTarget = (cells: number): Piece =>
-    "group" in target
-      ? markPerson(target, cells - mark)
-      : { text: fitField(target, "event", cells), fg };
-  const tail = mark + measureText(target.text) + measureText(after);
+  const tail = measureText(target.text) + measureText(after);
   const wordsRoom = Math.max(
     Math.min(measureText(words), wordsCells),
     room - measureText(space) - tail,
@@ -55,7 +49,7 @@ function describeAction(
   const cells = room - measureText(before) - measureText(after);
   return [
     { text: before, fg },
-    fitTarget(cells),
+    { text: fitField(target, "event", cells), fg },
     ...(after ? [{ text: after, fg }] : []),
   ];
 }
