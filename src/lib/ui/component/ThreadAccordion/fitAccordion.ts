@@ -11,43 +11,33 @@ import {
 import type { Piece } from "../../types.js";
 import type { DetailLine, DetailText } from "./types.js";
 
-/** The cells a run that gives way keeps while another can give way after it: half the narrowest room. */
-const givingFloor = 16;
-
-/** The fewest cells a cut run shows: fewer, and it leaves the line. */
-const leastCut = 4;
-
 /**
- * A held line's runs cut to `room`: the runs that give way, in order,
- * each cut once in the way its kind is cut on a line, all but the last
- * keeping 16 cells at least, and the last leaving the line when it
- * must; a single run gives way alone. The other runs stay whole.
+ * A held line's runs fitted to `room` by dropping whole parts before
+ * cutting any: the runs it `drops` leave, in order, while the line is too
+ * wide, then the run it `cuts` is cut once, by its kind's rule for a
+ * line, to the room the others leave; a single run is the one cut. The
+ * other runs stay whole.
  */
 function giveWay(
-  { pieces, kind, gives = [] }: DetailLine,
+  { pieces, kind, drops = [], cuts }: DetailLine,
   room: number,
 ): Piece[] {
-  const order = pieces.length === 1 ? [0] : gives;
-  const plan = pieces
-    .map((piece, index) => ({ piece, step: order.indexOf(index) }))
-    .filter(({ step }) => step >= 0)
-    .sort((a, b) => a.step - b.step);
-  let over = measurePieces(pieces) - room;
-  const kept = new Map<Piece, string>();
-  for (const { piece, step } of plan) {
-    if (over <= 0) break;
-    const cells = measureText(piece.text);
-    const floor = step === order.length - 1 ? 0 : Math.min(cells, givingFloor);
-    // A run left with fewer cells than a cut can say anything in leaves.
-    const left = Math.max(floor, cells - over);
-    const keep = left < leastCut ? 0 : left;
-    kept.set(piece, fitField({ text: piece.text, kind }, "line", keep));
-    over -= cells - keep;
+  const dropped = new Set<number>();
+  const remaining = () => pieces.filter((_, index) => !dropped.has(index));
+  for (const index of drops) {
+    if (measurePieces(remaining()) <= room) break;
+    dropped.add(index);
   }
-  return pieces.map((piece) => ({
-    ...piece,
-    text: kept.get(piece) ?? piece.text,
-  }));
+  const cutting = pieces.length === 1 ? 0 : cuts;
+  const over = measurePieces(remaining()) - room;
+  return pieces.flatMap((piece, index) => {
+    if (dropped.has(index)) return [];
+    if (index !== cutting || over <= 0) return [piece];
+    const cells = measureText(piece.text) - over;
+    return [
+      { ...piece, text: fitField({ text: piece.text, kind }, "line", cells) },
+    ];
+  });
 }
 
 /**

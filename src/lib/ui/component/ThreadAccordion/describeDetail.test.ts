@@ -410,13 +410,9 @@ describe("describeDetail", () => {
       ]);
     });
 
-    it("holds its place to one line, where the base branch gives way first, then the repository's short name", () => {
+    it("holds its place to one line, where the repository's short name leaves first and the base branch is the one run cut", () => {
       const [place] = describeDetail(overReview, undefined, reading).stack;
-      expect(place).toMatchObject({
-        kind: "identifier",
-        most: 1,
-        gives: [2, 0],
-      });
+      expect([place?.most, place?.drops, place?.cuts]).toEqual([1, [0], 2]);
       expect(place?.pieces.map(({ text }) => text)).toEqual([
         "example ",
         "stack 3 · 2 of 3 · → ",

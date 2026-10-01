@@ -272,33 +272,38 @@ describe("ThreadAccordion", () => {
       expect(wide.look(", example-or…")?.fg).toBe(tokens["color.text"]);
     });
 
-    it("keeps docket's words of a stack's place whole, the base branch giving way first from its middle, then the repository's short name", async () => {
-      const narrow = await open(Long.args);
-      expect(readText(narrow).at(6)).toBe(
-        "stack 7 · 2 of 3 · → release…ong-name",
-      );
-      const wide = await open(Long.args, 60);
-      expect(readText(wide).at(6)).toBe(
-        "example-re…long-name stack 7 · 2 of 3 · → release…ong-name",
-      );
-      const screen = await open(
-        {
-          ...Long.args,
-          row: {
-            ...longSharedReview,
-            wait: {
-              ...longSharedReview.wait,
-              thread: {
-                ...longSharedReview.wait.thread,
-                stack: { number: 7, position: 2, size: 3, base: "main" },
-              },
-            },
+    it("keeps docket's words of a stack's place whole, the repository's short name leaving whole before the base branch is cut once in its middle", async () => {
+      const onStack = (stack: {
+        number: number;
+        position: number;
+        size: number;
+        base: string;
+      }) => ({
+        ...Long.args,
+        row: {
+          ...longSharedReview,
+          wait: {
+            ...longSharedReview.wait,
+            thread: { ...longSharedReview.wait.thread, stack },
           },
         },
-        40,
+      });
+      const placeLine = (screen: Screen) =>
+        readText(screen).find((line) => /stack \d+ ·/.test(line));
+      const base = "release/example-branch-with-a-long-name";
+      const wide = onStack({ number: 123, position: 10, size: 12, base });
+      expect(placeLine(await open(wide, 40))).toBe(
+        "stack 123 · 10 of 12 · → releas…g-name",
       );
-      expect(readText(screen).at(6)).toBe(
-        "exampl…-name stack 7 · 2 of 3 · → main",
+      expect(placeLine(await open(wide, 60))).toBe(
+        "stack 123 · 10 of 12 · → release/example-…with-a-long-name",
+      );
+      const short = onStack({ number: 7, position: 2, size: 3, base: "main" });
+      expect(placeLine(await open(short, 40))).toBe(
+        "stack 7 · 2 of 3 · → main",
+      );
+      expect(placeLine(await open(short, 80))).toBe(
+        "example-repository-with-a-long-name stack 7 · 2 of 3 · → main",
       );
     });
 
