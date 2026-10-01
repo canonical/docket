@@ -30,9 +30,9 @@ export default function listEndings(
   const names = new Map(repos.map(({ repo }) => [repo.repo, repo.name]));
   const rows = repos
     .flatMap(({ repo, people, settings, finished, invalidFile }) =>
-      finished.map((thread): FinishedRow => {
-        const row = buildRow(thread, repo.name, people, settings, now, viewer);
-        const { closer } = thread.ending;
+      finished.map((ending): FinishedRow => {
+        const row = buildRow(ending, repo.name, people, settings, now, viewer);
+        const { closer } = ending.thread.ending;
         return {
           ...row,
           ...(closer?.kind === "pullRequest"

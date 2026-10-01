@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { useState } from "react";
+import { describe, expect, it, vi } from "vitest";
+import { measureWorkingTime } from "../lib/clock/index.js";
 import { readWeekDetail, weekEndings } from "../testing/endings.js";
 import {
   recordedNow,
@@ -8,6 +10,13 @@ import {
 import { connectRecording } from "../testing/screen.js";
 import { draw } from "../testing/terminal.js";
 import useFinished, { type UseFinishedProps } from "./useFinished.js";
+
+// The working clock is watched, not replaced, to count how often a list
+// built at each instant counts working time.
+vi.mock("../lib/clock/index.js", async (importOriginal) => {
+  const clock = await importOriginal<typeof import("../lib/clock/index.js")>();
+  return { ...clock, measureWorkingTime: vi.fn(clock.measureWorkingTime) };
+});
 
 const week = { amount: 1, unit: "w" } as const;
 
@@ -24,9 +33,13 @@ const props: UseFinishedProps = {
   viewer: "alice",
 };
 
+let moveTo: (at: Date) => void = () => {};
+
 /** Draws the list's headings and summary on one line, or `reading`. */
 function Probe(probed: UseFinishedProps) {
-  const result = useFinished(probed);
+  const [at, setAt] = useState(probed.at);
+  moveTo = setAt;
+  const result = useFinished({ ...probed, at });
   if (!result || !("list" in result)) return <text>reading</text>;
   const { groups, summary } = result.list;
   const headings = groups.map(({ heading }) => heading?.text).join(", ");
@@ -48,5 +61,17 @@ describe("useFinished", () => {
     expect((await screen.redraw()).lines.at(0)).toBe(
       "closed as completed, closed as not planned, merged · 2 merged · 2 closed · 2 over",
     );
+  });
+
+  it("measures each thread's time open once for each read, however often the list is built again", async () => {
+    const screen = await draw(<Probe {...props} />, 120, 1);
+    await screen.redraw();
+    const measured = vi.mocked(measureWorkingTime).mock.calls.length;
+    expect(measured).toBeGreaterThan(0);
+    for (const minutes of [1, 2, 3]) {
+      const later = new Date(recordedNow.getTime() + minutes * 60_000);
+      await screen.redraw(() => moveTo(later));
+    }
+    expect(vi.mocked(measureWorkingTime).mock.calls).toHaveLength(measured);
   });
 });

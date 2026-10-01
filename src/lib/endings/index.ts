@@ -8,6 +8,7 @@ export type {
   Ending,
   FinishedThread,
   Measure,
+  MeasuredEnding,
   MeasureKind,
   MeasureState,
   Measures,

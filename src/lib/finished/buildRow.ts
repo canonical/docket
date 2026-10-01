@@ -1,11 +1,7 @@
 import { describeAge } from "../activity/index.js";
-import {
-  hourMilliseconds,
-  measureDuration,
-  measureWorkingTime,
-} from "../clock/index.js";
+import { hourMilliseconds, measureDuration } from "../clock/index.js";
 import type { People, Settings } from "../config/index.js";
-import { type FinishedThread, measureFinished } from "../endings/index.js";
+import type { MeasuredEnding } from "../endings/index.js";
 import {
   describeOwners,
   describePerson,
@@ -22,7 +18,9 @@ import type { FinishedRow } from "./types.js";
  * an age, and a figure with `open` or `over` is working time, as owed
  * writes it. Line 1 gives the verdict as a duration, `4d over` past the
  * target or `open 3d` within it; a thread a label exempts has no
- * verdict, so line 1 gives the ending's age, as activity does.
+ * verdict, so line 1 gives the ending's age, as activity does. The
+ * measures come with the ending, counted once when it was read, so a row
+ * built at each instant counts no working time.
  *
  * @param repo The short name of the thread's repository.
  * @param settings The settings in effect for the thread's repository.
@@ -30,7 +28,7 @@ import type { FinishedRow } from "./types.js";
  * marks the viewer among the author, the owners and the ender.
  */
 export default function buildRow(
-  thread: FinishedThread,
+  { thread, measures, openTime }: MeasuredEnding,
   repo: string,
   people: People,
   settings: Settings,
@@ -38,20 +36,14 @@ export default function buildRow(
   viewer?: string,
 ): FinishedRow {
   const { ending } = thread;
-  const measures = measureFinished(thread, settings);
   const { close } = measures;
   const { time } = settings;
   const measured = close.state === "measured" ? close : undefined;
-  // A measured close has counted the time open already; only a thread it
-  // does not apply to is counted here.
-  const worked =
-    measured?.workingTime ??
-    measureWorkingTime(thread.createdAt, ending.at, time);
-  const open = `open ${describeWorkingTime(worked)}`;
+  const open = `open ${describeWorkingTime(openTime)}`;
   const age = describeAge(ending.at, now);
   const over =
     measured?.verdict === "over"
-      ? `${describeWorkingTime(worked - measureDuration(measured.target, time))} over`
+      ? `${describeWorkingTime(openTime - measureDuration(measured.target, time))} over`
       : undefined;
   const actor = ending.by && describePerson(ending.by, people, viewer);
   const owners = thread.assignees

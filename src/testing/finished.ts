@@ -5,7 +5,7 @@
  */
 
 import type { Repo, Settings } from "../lib/config/index.js";
-import type { FinishedThread } from "../lib/endings/index.js";
+import { type FinishedThread, timeEndings } from "../lib/endings/index.js";
 import {
   type FinishedGrouping,
   type FinishedRow,
@@ -120,7 +120,11 @@ export function repoEndings(
     repo,
     people: finishedSettings.people,
     settings: finishedSettings,
-    finished: finished.filter((thread) => thread.repo === repo.repo),
+    finished: timeEndings(
+      finished.filter((thread) => thread.repo === repo.repo),
+      { amount: 1, unit: "w" },
+      finishedSettings,
+    ),
     ...(invalid && repo.name === "docs" ? { invalidFile: true } : {}),
   }));
 }

@@ -125,9 +125,19 @@ export interface Coverage {
   readonly pending: number;
 }
 
-/** A finished thread and the last instant its ending is inside a window. */
-export interface TimedEnding {
+/**
+ * A finished thread with what its ending measures, which no instant
+ * changes, so a list built at any later instant counts no working time.
+ */
+export interface MeasuredEnding {
   readonly thread: FinishedThread;
+  readonly measures: Measures;
+  /** How long it was open, from its opening to its ending, in working milliseconds. */
+  readonly openTime: number;
+}
+
+/** A measured ending and the last instant it is inside a window. */
+export interface TimedEnding extends MeasuredEnding {
   /** Adding the window to the ending: it is inside the window until then. */
   readonly until: Date;
 }

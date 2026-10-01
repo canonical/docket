@@ -4,6 +4,7 @@ import type {
   Aggregate,
   Coverage,
   FinishedThread,
+  MeasuredEnding,
   MeasureKind,
   Measures,
   Verdict,
@@ -32,7 +33,8 @@ export interface RepoEndings {
   readonly people: People;
   /** The settings in effect for the repository, which measure its threads. */
   readonly settings: Settings;
-  readonly finished: readonly FinishedThread[];
+  /** The threads that finished, each with what its ending measures. */
+  readonly finished: readonly MeasuredEnding[];
   /**
    * Whether the repository's own file is invalid, so its settings are the
    * built-in defaults.
