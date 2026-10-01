@@ -392,6 +392,10 @@ describe("describeDetail", () => {
       expect(
         texts(describeDetail(resting, sharedCloseDetail, reading).body).at(0),
       ).toBe("✗ invalid repository file");
+      expect(texts(describeDetail(resting, undefined, reading).body)).toEqual([
+        "✗ invalid repository file",
+        "loading…",
+      ]);
     });
   });
 

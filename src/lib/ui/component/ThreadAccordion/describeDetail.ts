@@ -369,7 +369,7 @@ export default function describeDetail(
     : [];
   if (!("wait" in row)) {
     if (!detail) {
-      return { body: [trimmed(muted("loading…"))], stack: [] };
+      return { body: [...trouble, trimmed(muted("loading…"))], stack: [] };
     }
     return {
       body: [...trouble, ...describeRest(row, detail, reading)],
