@@ -77,6 +77,11 @@ describe("buildRow", () => {
     expect(build(mergedChange, "alice").owner).toMatchObject({ group: "you" });
   });
 
+  it("marks a pull request in a stack, and nothing else", () => {
+    expect(build(mergedChange).stacked).toBe(true);
+    expect(build(notPlanned).stacked).toBe(false);
+  });
+
   it("writes an ending nobody is recorded for in the provider's words alone", () => {
     const { by: _by, ...ending } = completed.ending;
     const row = build({ ...completed, ending });

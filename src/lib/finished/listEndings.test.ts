@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { finishedNow, repoEndings } from "../../testing/finished.js";
+import { completed, finishedNow, repoEndings } from "../../testing/finished.js";
 import listEndings from "./listEndings.js";
 
 describe("listEndings", () => {
@@ -39,6 +39,36 @@ describe("listEndings", () => {
       ["example#7", undefined],
       ["example#9", undefined],
     ]);
+  });
+
+  it("names the pull request that closed an issue by its short name when its repository is watched, and whole otherwise", () => {
+    const elsewhere = {
+      ...completed,
+      ending: {
+        ...completed.ending,
+        closer: {
+          kind: "pullRequest" as const,
+          repo: "example-org/example-site",
+          number: 5,
+          url: "https://github.com/example-org/example-site/pull/5",
+        },
+      },
+    };
+    const closers = (threads: (typeof completed)[]) =>
+      listEndings(repoEndings(threads), finishedNow).rows.map(
+        ({ closer }) => closer,
+      );
+    expect(closers([completed])).toEqual([
+      { text: "example#2", fit: "trimmed" },
+    ]);
+    expect(closers([elsewhere])).toEqual([
+      { text: "example-org/example-site#5", fit: "trimmed" },
+    ]);
+  });
+
+  it("names no closer for an ending the provider records none for", () => {
+    const [, merged] = listEndings(repoEndings(), finishedNow).rows;
+    expect(merged).not.toHaveProperty("closer");
   });
 
   it("marks the viewer as you", () => {

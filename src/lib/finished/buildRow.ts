@@ -61,6 +61,7 @@ export default function buildRow(
   return {
     thread,
     repo,
+    stacked: thread.stack !== undefined,
     reference: markTrimmed(`${repo}#${thread.number}`),
     kind: markTrimmed(threadWords[thread.kind]),
     distance: markTrimmed(measured ? (over ?? open) : age),

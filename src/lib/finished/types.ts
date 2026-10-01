@@ -57,6 +57,8 @@ export interface FinishedRow {
   readonly thread: FinishedThread;
   /** The short name of the thread's repository. */
   readonly repo: string;
+  /** Whether the pull request sits in a stack, shown by the margin's mark. */
+  readonly stacked: boolean;
   /** `example#12`. */
   readonly reference: Field;
   /** `issue` or `PR`. */
@@ -78,6 +80,12 @@ export interface FinishedRow {
   readonly draft?: Field;
   /** The row's one event line. */
   readonly ending: EndingLine;
+  /**
+   * The pull request that closed it, where the provider records one:
+   * `example#1200`, by the short name of a watched repository, else by
+   * its `owner/name`.
+   */
+  readonly closer?: Field;
   /** How long the thread was open, in working time: `open 9d`. */
   readonly open: Field;
   /** Time to close's target, `target 5d`; absent when a label exempts the thread. */
