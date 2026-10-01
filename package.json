@@ -10,7 +10,7 @@
     "bun": ">=1.4.2"
   },
   "scripts": {
-    "build": "tsc --noEmit -p tsconfig.build.json && bun build --compile --target=bun-linux-x64 --outfile dist/docket src/application/main.ts",
+    "build": "tsc --noEmit -p tsconfig.build.json",
     "check": "biome check && tsc --noEmit",
     "test": "bunx --bun vitest run",
     "test:coverage": "bunx --bun vitest run --coverage",
