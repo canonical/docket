@@ -123,13 +123,37 @@ describe("fitAccordion", () => {
     };
     expect(read(fitAccordion(bare, 20, 1))).toEqual(["…"]);
     const cut = {
+      body: [trimmed("example-words"), wrapped("more")],
+      stack: [],
+    };
+    expect(read(fitAccordion(cut, 9, 1))).toEqual(["example-…"]);
+  });
+
+  it("ends a last line cut in its middle, or only left short of runs whole, after what it keeps", () => {
+    const middle = {
       body: [
         { ...trimmed("example-repository"), kind: "identifier" as const },
         wrapped("more"),
       ],
       stack: [],
     };
-    expect(read(fitAccordion(cut, 9, 1))).toEqual(["exam…tory"]);
+    expect(read(fitAccordion(middle, 9, 1))).toEqual(["exa…tory…"]);
+    const runs = {
+      body: [
+        {
+          ...trimmed("0 pushes since"),
+          pieces: ["0 pushes since", " · ", "1 file"].map((text) => ({
+            text,
+            fg,
+          })),
+        },
+        wrapped("more"),
+      ],
+      stack: [],
+    };
+    expect(read(fitAccordion(runs, 14, 1))).toEqual(["0 pushes sinc…"]);
+    expect(read(fitAccordion(runs, 17, 1))).toEqual(["0 pushes since…"]);
+    expect(read(fitAccordion(middle, 1, 1))).toEqual(["…"]);
   });
 
   it("ends a last line after a whole part, its parts that leave whole making the mark room, and cuts it only when none can", () => {
@@ -166,6 +190,48 @@ describe("fitAccordion", () => {
     expect(read(fitAccordion(text, 28, 2))).toEqual([
       "checks",
       "stack 7 · 1 of 1 · → main…",
+    ]);
+  });
+
+  it("ends a last stack line whose base is cut, or fills the room exactly, after the base cut once in its middle", () => {
+    const place = (base: string): DetailLine => ({
+      pieces: [
+        { text: "example-repo ", fg },
+        { text: "stack 7 · 2 of 3 · → ", fg },
+        { text: base, fg },
+      ],
+      kind: "identifier",
+      most: 1,
+      drops: [0],
+      cuts: 2,
+    });
+    const owners = { ...wrapped("owner ● alice"), yields: true };
+    const last = (base: string, room: number) =>
+      read(
+        fitAccordion(
+          { body: [owners, trimmed("checks")], stack: [place(base)] },
+          room,
+          2,
+        ),
+      ).at(1);
+    expect(last("release/abcdefghi", 38)).toBe(
+      "stack 7 · 2 of 3 · → release…bcdefghi…",
+    );
+    expect(last("release/example-branch", 30)).toBe(
+      "stack 7 · 2 of 3 · → rel…anch…",
+    );
+    const neighbours = {
+      ...trimmed(""),
+      pieces: [
+        { text: "below #1 merged,", fg },
+        { text: " above #2 open", fg },
+      ],
+      drops: [1],
+    };
+    const kept = { body: [neighbours, trimmed("more")], stack: [] };
+    expect(read(fitAccordion(kept, 30, 2))).toEqual([
+      "below #1 merged, above #2 open",
+      "more",
     ]);
   });
 

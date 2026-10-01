@@ -33,61 +33,80 @@ function dropWhole(
  * cutting any: the runs it `drops` leave, in order, while the line is too
  * wide, then the run it `cuts` is cut once, by its kind's rule for a
  * line, to the room the others leave; a single run is the one cut. The
- * other runs stay whole. `cut` says whether a run was cut: a part that
- * leaves whole says nothing of what follows.
+ * other runs stay whole. `whole` gives the runs kept as they were before
+ * the cut, run for run.
  */
 function giveWay(
   line: DetailLine,
   room: number,
-): { runs: Piece[]; cut: boolean } {
+): { runs: Piece[]; whole: Piece[] } {
   const { pieces, kind, cuts } = line;
   const dropped = dropWhole(line, room);
   const cutting = pieces.length === 1 ? 0 : cuts;
   const over =
     measurePieces(pieces.filter((_, index) => !dropped.has(index))) - room;
-  const cut = over > 0 && cutting !== undefined;
+  const whole = pieces.filter((_, index) => !dropped.has(index));
   const runs = pieces.flatMap((piece, index) => {
     if (dropped.has(index)) return [];
-    if (index !== cutting || !cut) return [piece];
+    if (index !== cutting || over <= 0) return [piece];
     const cells = measureText(piece.text) - over;
     return [
       { ...piece, text: fitField({ text: piece.text, kind }, "line", cells) },
     ];
   });
-  return { runs, cut };
+  return { runs, whole };
+}
+
+/**
+ * Whether fitting cut the last of `held` at its end, so the line ends in
+ * `…`: that run is narrower than it was `whole` and ends in the mark. A
+ * run cut in its middle, or runs left out whole, end in no `…`.
+ */
+function endsInCut(held: readonly Piece[], whole: readonly Piece[]): boolean {
+  const at = held.length - 1;
+  const last = held.slice(at);
+  return (
+    last.some(({ text }) => text.endsWith(tokens["glyph.cut"])) &&
+    measurePieces(last) < measurePieces(whole.slice(at, at + 1))
+  );
 }
 
 /**
  * A line as fitted: its runs, and whether it already ends in a `…`, the
- * dimmed one of details still to come or the one of a cut fitting made,
- * so it is not ended with a second; a held line with parts that leave
- * whole also gives how it ends in `…` when it is the last.
+ * dimmed one of details still to come or the one of a cut fitting made
+ * at its end, so it is not ended with a second; a line held to one also
+ * keeps what it holds, to end it in `…` when it is the last.
  */
 interface Fitted {
   readonly runs: readonly Piece[];
   readonly ended: boolean;
-  readonly closing?: readonly Piece[];
+  readonly held?: DetailLine;
 }
 
 /**
- * A held line ending in `…` after a whole part, the runs it `drops`
- * leaving whole, in order, until the mark has its cell, so docket's own
- * words are never cut for it; when they cannot make it room, its runs as
- * `held` are cut at their end.
+ * A held line ending in `…`, fitted to the room the mark leaves it as
+ * it fits any room: the runs it `drops` leave whole first, and the run it
+ * `cuts` is cut once by its kind's rule, so the mark follows a whole part
+ * or a branch cut in its middle and docket's own words are never cut for
+ * it. When that fitting cuts the line at its end, the line as `held` is
+ * cut at its end for the mark instead.
  */
 function endHeld(
   line: DetailLine,
   held: readonly Piece[],
   room: number,
 ): Piece[] {
-  const dropped = dropWhole(line, room - 1);
-  const kept = line.pieces.filter((_, index) => !dropped.has(index));
-  const last = kept.pop();
-  if (last === undefined || measurePieces([...kept, last]) >= room) {
+  const mark = tokens["glyph.cut"];
+  const given = giveWay(line, room - measureText(mark));
+  const runs = fitRuns(given.runs, room - measureText(mark));
+  const last = runs.at(-1);
+  if (last === undefined || endsInCut(runs, given.whole)) {
     return endRuns(held, room);
   }
-  const text = `${last.text.trimEnd()}${tokens["glyph.cut"]}`;
-  return fitRuns([...kept, { ...last, text }], room);
+  return [
+    ...runs.slice(0, -1),
+    { ...last, text: `${last.text.trimEnd()}${mark}` },
+  ];
 }
 
 /** The dimmed `…` that ends a line still waiting for the details. */
@@ -111,10 +130,8 @@ function fitLine(line: DetailLine, room: number): Fitted[] {
   const runs = pending ? [...pieces, pendingMark(pieces.length > 0)] : pieces;
   const given = giveWay({ ...line, pieces: runs }, room);
   const held = fitRuns(given.runs, room);
-  const cut = given.cut || measurePieces(held) < measurePieces(given.runs);
-  const ended = pending === true || cut;
-  if (ended || line.drops === undefined) return [{ runs: held, ended }];
-  return [{ runs: held, ended, closing: endHeld(line, held, room) }];
+  const ended = pending === true || endsInCut(held, given.whole);
+  return [{ runs: held, ended, held: line }];
 }
 
 /**
@@ -123,13 +140,16 @@ function fitLine(line: DetailLine, room: number): Fitted[] {
  */
 const endLast = (lines: readonly Fitted[], room: number): Fitted[] => [
   ...lines.slice(0, -1),
-  ...lines
-    .slice(-1)
-    .map((line) =>
-      line.ended
-        ? line
-        : { runs: line.closing ?? endRuns(line.runs, room), ended: true },
-    ),
+  ...lines.slice(-1).map((line) =>
+    line.ended
+      ? line
+      : {
+          runs: line.held
+            ? endHeld(line.held, line.runs, room)
+            : endRuns(line.runs, room),
+          ended: true,
+        },
+  ),
 ];
 
 /**

@@ -311,10 +311,15 @@ describe("ThreadAccordion", () => {
       const base = "release/example-branch-with-a-long-name";
       const wide = onStack({ number: 123, position: 10, size: 12, base });
       expect(placeLine(await open(wide, 40))).toBe(
-        "stack 123 · 10 of 12 · → releas…g-name",
+        "stack 123 · 10 of 12 · → relea…g-name…",
       );
       expect(placeLine(await open(wide, 60))).toBe(
         "stack 123 · 10 of 12 · → release/example-…with-a-long-name",
+      );
+      // A stack of one ends on its place, so the owners' leaving is marked.
+      const one = onStack({ number: 7, position: 1, size: 1, base });
+      expect(placeLine(await open(one, 40))).toBe(
+        "stack 7 · 1 of 1 · → release…ong-name…",
       );
       const short = onStack({ number: 7, position: 2, size: 3, base: "main" });
       expect(placeLine(await open(short, 40))).toBe(
