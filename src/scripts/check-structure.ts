@@ -587,6 +587,10 @@ const breaks: Record<string, [string, string]> = {
     "fitting",
     "export default function measureCluster(text: string) { return Bun.stringWidth(text); }",
   ],
+  "src/lib/ui/fit/measureText.ts": [
+    "fitting",
+    "export default function measureText(text: string) { return Bun.stringWidth(text); }",
+  ],
   "src/lib/ui/component/Name/Name.tsx": [
     "fitting",
     'import cutMiddle from "../../fit/cutMiddle.js";\nexport default function Name() { return cutMiddle; }',
