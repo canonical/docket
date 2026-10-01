@@ -31,14 +31,17 @@
  *
  * The invoker's verdict is read from its own report line, not from how
  * it exited: a register that does not parse exits non-zero too, without
- * the entry ever running. Whatever a proof moves is put back on every
- * path.
+ * the entry ever running. The output is read without its colour codes:
+ * vitest colours what it prints wherever it detects colour, as on a CI
+ * runner, and a code between `×` and a test's name hides the name.
+ * Whatever a proof moves is put back on every path.
  *
  * @note Impure: moves a file in `goldens/` and back, and starts the
  * invoker.
  */
 import { renameSync } from "node:fs";
 import { join } from "node:path";
+import { stripVTControlCharacters } from "node:util";
 
 const corpusRoot = import.meta.dirname;
 /** Moves the saved output at `goldens/<name>` aside, and returns what puts it back. */
@@ -148,13 +151,12 @@ const checkProof = async (proof: Proof): Promise<boolean> => {
       child.exited,
     ]);
     process.stderr.write(out + err);
+    const printed = stripVTControlCharacters(`${out}${err}`);
     const reported = new RegExp(
       `^\\s*BAD\\s+${proof.entry}\\s+\\d+ passed, (\\d+) failed`,
       "m",
-    ).exec(err);
-    return (
-      Number(reported?.at(1) ?? 0) > 0 && `${out}${err}`.includes(proof.failure)
-    );
+    ).exec(stripVTControlCharacters(err));
+    return Number(reported?.at(1) ?? 0) > 0 && printed.includes(proof.failure);
   } finally {
     mend?.();
   }

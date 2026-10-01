@@ -31,5 +31,5 @@ export default async function main(): Promise<void> {
   });
 }
 
-// The executable runs this module as its entry, so the call is the program.
+// Bun runs this module as docket's entry, so the call is the program.
 await main();

@@ -6,7 +6,7 @@
  * `--self-test` installs a copyleft dependency into a scratch project and
  * exits 0 only when the check rejects it.
  *
- * Only production dependencies are bundled into the executable, which ships
+ * Only production dependencies are installed with docket, which ships
  * under MIT. Development tools never ship, so their licences bind nothing
  * here.
  */
