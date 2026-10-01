@@ -1,3 +1,4 @@
+import type { Field } from "../../../owed/index.js";
 import type { KeyCommand } from "../../hooks/index.js";
 
 /** Props for the HelpOverlay component. */
@@ -13,7 +14,7 @@ export interface HelpOverlayProps {
    * time`. Absent where no window applies, as on setup.
    * Maps to DSL role: closing note (cardinality: 0..1)
    */
-  note?: string;
+  note?: Field;
   /** The width of the pane, in display cells. */
   width: number;
   /** The lines the help has: the pane's, but for the header's. */

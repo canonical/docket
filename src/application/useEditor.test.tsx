@@ -747,7 +747,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         { team: "example-org/reviewers" },
       ]);
       expect(applied.lines.at(-2)).toBe(
-        "✓ requested review from ● bob, ◐ exampl…",
+        "✓ requested review from ● bob, ◐ review…",
       );
     });
 
@@ -841,7 +841,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const editor = useEditor({
         source,
         findTeam: () => [],
-        describeCandidate: (name) => ({ text: name, fit: "trimmed" }),
+        describeCandidate: (name) => ({ text: name, kind: "person" }),
         now: () => recordedNow,
         onResult: () => {},
         covered: false,

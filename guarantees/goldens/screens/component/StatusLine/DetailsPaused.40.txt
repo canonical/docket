@@ -1,5 +1,0 @@
-40 columns
-|synced 2m ago             details paused
-
-runs
-1:1 "synced 2m ago             details paused" fg #6b7089ff bg #00000000

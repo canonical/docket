@@ -37,3 +37,9 @@ export const details: readonly Detail[] = ["summary", "standard", "detailed"];
 
 /** The level of detail when `--detail` is not given. */
 export const defaultDetail: Detail = "standard";
+
+/**
+ * The share of the queries' hourly budget below which both faces say how
+ * much is left and when it resets: above it the budget needs no mention.
+ */
+export const budgetShownBelow = 0.4;

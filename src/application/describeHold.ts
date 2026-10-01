@@ -1,5 +1,5 @@
+import { describeClock } from "../lib/activity/index.js";
 import type { CacheStatus } from "../lib/cache/index.js";
-import { describeClock } from "../lib/ui/index.js";
 
 /** Why the list waits, and what to do about it. */
 export interface Hold {

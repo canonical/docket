@@ -9,7 +9,11 @@ import {
   createCache,
 } from "../lib/cache/index.js";
 import { addWorkingTime } from "../lib/clock/index.js";
-import { everyCapability, providerError } from "../testing/provider.js";
+import {
+  everyCapability,
+  fullBudget,
+  providerError,
+} from "../testing/provider.js";
 import {
   parserFixDetail,
   recordedNow,
@@ -42,11 +46,11 @@ const [day, twoDays] = recordedSettings.activity;
 const later = new Date(recordedNow.getTime() + 3_600_000);
 
 /** A cache of the recording in a folder of its own. */
-async function openCache() {
+async function openCache(provider = recordedProvider()) {
   const directory = await mkdtemp(join(tmpdir(), "docket-activity-"));
   folders.push(directory);
   return createCache({
-    provider: recordedProvider(),
+    provider,
     repos: recordedRepos.map(({ repo }) => repo),
     directory,
     now: () => recordedNow,
@@ -72,8 +76,9 @@ const throughCache =
 async function probe(
   makeReader: (cache: Cache) => Reader,
   overrides: Partial<UseActivityProps> = {},
+  provider = recordedProvider(),
 ) {
-  const cache = await openCache();
+  const cache = await openCache(provider);
   const source: TerminalView["source"] = {
     cache,
     capabilities: everyCapability,
@@ -105,7 +110,9 @@ async function probe(
     const { summary, groups } = result.list;
     const age = groups.at(0)?.rows.at(0)?.distance.text ?? "-";
     const failed = result.failure ? ` · ${result.failure.code}` : "";
-    return <text>{`${summary.text} · ${age}${failed}`}</text>;
+    return (
+      <text>{`${summary.fields.map(({ text }) => text).join(" · ")} · ${age}${failed}`}</text>
+    );
   }
   const screen = await draw(<Probe />, 60, 1);
   return {
@@ -180,6 +187,30 @@ describe("useActivity", () => {
     await waitUntil(async () =>
       expect(await read()).toBe("0 threads · 0 events · -"),
     );
+  });
+
+  it("reads nothing again at a sync below the budget floor, answering from the events the cache holds", async () => {
+    let reads = 0;
+    const resetAt = new Date(recordedNow.getTime() + 3_600_000);
+    const floored = recordedProvider({
+      readBudgets: () => ({
+        graphql: { ...fullBudget, remaining: 100, resetAt },
+      }),
+    });
+    const { change, read } = await probe(
+      (cache) => (repo, since) => {
+        reads += 1;
+        return throughCache(cache)(repo, since);
+      },
+      {},
+      floored,
+    );
+    await waitUntil(async () => expect(await read()).toMatch(/^2 threads/));
+    expect(reads).toBe(2);
+    await change({ syncedAt: later });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(await read()).toBe("2 threads · 3 events · 25m");
+    expect(reads).toBe(2);
   });
 
   it("drops a reading the screen moved on from before it ended", async () => {

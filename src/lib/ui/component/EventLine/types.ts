@@ -34,7 +34,10 @@ export type EventLineProps = LineProps &
          * it, how, and its age.
          * Maps to DSL roles: who did what, age (cardinality: 1, 1)
          */
-        line: EndingLine & { readonly event?: never };
+        line: EndingLine & {
+          readonly event?: never;
+          readonly target?: never;
+        };
         /**
          * The verdict of the finished thread the line ends, whose bar
          * runs down to it and ends there; absent where a label exempts

@@ -17,6 +17,7 @@ const freshness: Freshness = {
   syncedAt: new Date(finishedNow.getTime() - 120_000),
   timezone: "Europe/Paris",
   warnings: [],
+  budget: {},
 };
 
 const render = (
@@ -184,7 +185,7 @@ describe("renderFinished", () => {
       ...list,
       groups: list.groups.map((group) => ({
         ...group,
-        heading: { text: "docs\u0007", fit: "trimmed" as const },
+        heading: { text: "docs\u0007", kind: "identifier" as const },
       })),
     };
     for (const format of ["plain", "llm"] as const) {

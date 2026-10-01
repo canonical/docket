@@ -6,7 +6,7 @@ const makeRows = (count: number): ListBlockKind[] => Array(count).fill("row");
 
 /** The heading of the block at `place`, named for it. */
 const nameHeading = (place: number) =>
-  ({ text: `heading ${place}`, fit: "trimmed" }) as const;
+  ({ text: `heading ${place}`, kind: "words" }) as const;
 
 /** Blocks of `kinds`, each as many lines as `heights` gives it. */
 const makeBlocks = (

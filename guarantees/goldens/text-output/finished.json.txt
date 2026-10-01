@@ -7,7 +7,15 @@ exit 0
   "data": {
     "syncedAt": "2026-09-28T10:00:00.000Z",
     "ageSeconds": 0,
-    "warnings": []
+    "warnings": [],
+    "budget": {
+      "graphql": {
+        "remaining": 4900,
+        "limit": 5000,
+        "resetAt": "2026-09-28T11:00:00.000Z"
+      },
+      "rest": null
+    }
   },
   "counts": {
     "merged": 1,

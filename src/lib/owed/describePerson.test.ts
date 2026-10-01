@@ -16,7 +16,7 @@ describe("describePerson", () => {
   it("names a login whole, with the group the settings give it, external read as outside", () => {
     expect(describePerson(alice, people, undefined)).toEqual({
       text: "alice",
-      fit: "trimmed",
+      kind: "person",
       group: "team",
     });
     expect(

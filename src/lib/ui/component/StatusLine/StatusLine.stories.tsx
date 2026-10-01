@@ -48,6 +48,9 @@ const refused: ProviderError = Object.assign(
   { code: "GITHUB_REQUEST_FAILED", recovery: "refresh" } as const,
 );
 
+/** The live budget figures for 35% left of the budget, which resets at 14:20. */
+const live = "budget 35% · resets 14:20";
+
 const base = {
   now,
   timezone: "UTC",
@@ -156,8 +159,8 @@ export const ActionDone: Story<StatusLineProps> = {
       failed: false,
       text: "assigned",
       people: [
-        { text: "alice", fit: "trimmed", group: "you" },
-        { text: "erin", fit: "trimmed", group: "internal" },
+        { text: "alice", kind: "person", group: "you" },
+        { text: "erin", kind: "person", group: "internal" },
       ],
       at: new Date("2026-09-28T11:59:59Z"),
     },
@@ -173,23 +176,33 @@ export const Idle: Story<StatusLineProps> = {
   },
 };
 
-/** Reading details spent the hour's budget: only the selected thread's are read. */
-export const DetailsPaused: Story<StatusLineProps> = {
-  args: { ...base, status: settled, detailsPaused: true },
-};
-
 /**
- * Below the budget floor: neither the list nor the details spend a point,
- * and the right side stays empty, since the details' own budget is not
- * what stopped them.
+ * Below the budget floor: the list spends no point, nothing is read ahead,
+ * and the left side says until when, so the right side stays empty.
  */
 export const BudgetPaused: Story<StatusLineProps> = {
   args: {
     ...base,
+    liveBudget: "budget 18% · resets 13:00",
     status: {
       ...settled,
       paused: { until: new Date("2026-09-28T13:00:00Z"), reason: "budget" },
     },
+  },
+};
+
+/** Less than 40% of the queries' budget left: how much, and when it resets, dimmed. */
+export const LiveBudget: Story<StatusLineProps> = {
+  args: { ...base, status: settled, liveBudget: live },
+};
+
+/** The budget live while details are read: the count takes the right side. */
+export const LiveBudgetWithDetails: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: settled,
+    liveBudget: live,
+    details: { read: 0, asked: 12 },
   },
 };
 
@@ -225,5 +238,27 @@ export const Waking: Story<StatusLineProps> = {
     },
     attention: "waking",
     details: { read: 0, asked: 12 },
+  },
+};
+
+/** A review requested of more people than the line holds, with long names. */
+export const Long: Story<StatusLineProps> = {
+  args: {
+    ...base,
+    status: settled,
+    action: {
+      failed: false,
+      text: "review requested",
+      people: [
+        { text: "example-org/parser-team", kind: "person", group: "you" },
+        {
+          text: "example-contributor-with-a-long-login",
+          kind: "person",
+          group: "outside",
+        },
+        { text: "erin", kind: "person", group: "internal" },
+      ],
+      at: new Date("2026-09-28T11:59:59Z"),
+    },
   },
 };

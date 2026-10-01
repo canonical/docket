@@ -147,7 +147,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
     const source = connectRecording({
       finished: weekEndings,
       read,
-      details: createDetailReader(readAhead),
+      details: createDetailReader(readAhead, () => true),
     });
     const screen = await show(viewWeek({ source }));
     await press(screen, "j", "j");

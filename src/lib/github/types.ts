@@ -1,4 +1,4 @@
-import type { Budget } from "../provider/index.js";
+import type { Budgets } from "../provider/index.js";
 
 /** A REST answer: its status, its body and its headers. */
 export interface RestResponse<T> {
@@ -47,8 +47,11 @@ export interface Client {
     route: string,
     parameters?: Record<string, unknown>,
   ): AsyncIterable<readonly T[]>;
-  /** The rate budget the latest GraphQL answer reported, if any has. */
-  lastBudget(): Budget | undefined;
+  /**
+   * The budgets the latest answer of each kind reported, whatever its
+   * status, read from its headers and, for GraphQL, its rate figures.
+   */
+  readBudgets(): Budgets;
 }
 
 /** An account as GraphQL gives it; `null` when the account was deleted. */

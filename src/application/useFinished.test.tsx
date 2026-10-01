@@ -43,7 +43,8 @@ function Probe(probed: UseFinishedProps) {
   if (!result || !("list" in result)) return <text>reading</text>;
   const { groups, summary } = result.list;
   const headings = groups.map(({ heading }) => heading?.text).join(", ");
-  return <text>{`${headings} · ${summary.text}`}</text>;
+  const counts = summary.fields.map(({ text }) => text).join(" · ");
+  return <text>{`${headings} · ${counts}`}</text>;
 }
 
 describe("useFinished", () => {

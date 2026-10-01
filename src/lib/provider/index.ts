@@ -1,6 +1,7 @@
 export type {
   Assignable,
   Budget,
+  Budgets,
   Capability,
   ChangeProbe,
   CheckDetail,

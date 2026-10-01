@@ -1,8 +1,7 @@
-import { describeAge } from "../../../activity/index.js";
+import { describeAge, describeClock } from "../../../activity/index.js";
 import type { AttentionState, CacheStatus } from "../../../cache/index.js";
 import { tokens } from "../../../tokens/index.js";
 import countPages from "../../countPages.js";
-import describeClock from "../../describeClock.js";
 import findStageUnderWay from "../../findStageUnderWay.js";
 import type { ActionResult, StatusMessage } from "./types.js";
 
@@ -81,15 +80,17 @@ export default function describeStatus(
     // The pages count across the repositories begun, as the progress
     // line does, once a first page says how many there are.
     const { fetched, total } = countPages(status.stages);
-    const shorter = `full refresh${separator}${names[repo] ?? repo} ${position}/${count}`;
-    if (total === 0) return { kind: "progress", text: shorter };
+    const name = names[repo] ?? repo;
+    const shorter = `full refresh${separator}${name} ${position}/${count}`;
+    if (total === 0) return { kind: "progress", text: shorter, name };
     const text = `${shorter}${separator}pages ${fetched}/${total}`;
-    return { kind: "progress", text, shorter };
+    return { kind: "progress", text, shorter, name };
   }
   if (status.refreshing && underWay) {
     const { repo, position, count } = underWay;
-    const text = `refreshing${separator}${names[repo] ?? repo} ${position}/${count}`;
-    return { kind: "refreshing", text };
+    const name = names[repo] ?? repo;
+    const text = `refreshing${separator}${name} ${position}/${count}`;
+    return { kind: "refreshing", text, name };
   }
   const wait = (status.fullRefreshAvailableAt?.getTime() ?? 0) - now.getTime();
   if (wait > 0) {

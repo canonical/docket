@@ -29,10 +29,10 @@ const listing: StandInProps = {
 };
 
 /** Draws what stands in for `props`, which must be something. */
-async function drawFor(props: Partial<StandInProps>) {
+async function drawFor(props: Partial<StandInProps>, height = 6) {
   const node = drawStandIn({ ...listing, ...props });
   expect(node).toBeDefined();
-  return draw(node, 40, 6);
+  return draw(node, 40, height);
 }
 
 describe("drawStandIn", () => {
@@ -161,10 +161,11 @@ describe("drawStandIn", () => {
   });
 
   it("keeps the notice above nothing owed while no team is listed", async () => {
-    const screen = await drawFor({
-      nothingOwed: true,
-      teamless: describeNoTeam([new Map()]),
-    });
+    // The notice keeps all its lines, so the room holds them both.
+    const screen = await drawFor(
+      { nothingOwed: true, teamless: describeNoTeam([new Map()]) },
+      12,
+    );
     expect(screen.lines.at(0)).toMatch(/^ {2}✗ no team in docket\.yaml/);
     expect(screen.lines).toContain("  nothing owed");
   });
@@ -221,7 +222,7 @@ describe("drawStandIn", () => {
       mode: "finished",
       owedListed: false,
       windowed: { list: undefined },
-      emptyWindow: "nothing merged or closed in 24h",
+      emptyWindow: { text: "nothing merged or closed in 24h", kind: "words" },
     });
     expect(screen.lines.at(0)).toBe("  nothing merged or closed in 24h");
   });

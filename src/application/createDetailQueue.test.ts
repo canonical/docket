@@ -30,8 +30,7 @@ const reading = () => ({
       })),
   ),
 });
-const open = (reader = reading()) =>
-  createDetailQueue(reader, () => new Date());
+const open = (reader = reading()) => createDetailQueue(reader);
 
 describe("createDetailQueue", () => {
   it("reads alone a thread asked for with nothing pending, once for its version", async () => {
@@ -97,9 +96,9 @@ describe("createDetailQueue", () => {
     await vi.advanceTimersByTimeAsync(200);
     expect(reader.read).toHaveBeenCalledOnce();
     expect(reader.read.mock.calls.at(0)?.[0]).toEqual([four, three]);
-    expect(queue.isDue(one, "v", new Date())).toBe(true);
-    expect(queue.isDue(two, "v", new Date())).toBe(true);
-    expect(queue.isDue(four, "v", new Date())).toBe(false);
+    expect(queue.isDue(one, "v")).toBe(true);
+    expect(queue.isDue(two, "v")).toBe(true);
+    expect(queue.isDue(four, "v")).toBe(false);
   });
 
   it("lets a thread fall due again whatever version its dropped asks were at", async () => {
@@ -110,7 +109,7 @@ describe("createDetailQueue", () => {
     queue.request([{ thread: two, version: "v" }], two, 200);
     await vi.advanceTimersByTimeAsync(200);
     expect(reader.read.mock.calls.at(0)?.[0]).toEqual([two]);
-    expect(queue.isDue(one, "v2", new Date())).toBe(true);
+    expect(queue.isDue(one, "v2")).toBe(true);
   });
 
   it("keeps a read given out when the selection moves on", async () => {
@@ -134,31 +133,133 @@ describe("createDetailQueue", () => {
     expect(reader.read).toHaveBeenCalledOnce();
   });
 
-  it("counts each arrival, telling its listeners, and says details are due once 30 seconds old or for another version", async () => {
+  it("reads the thread the selection moves to while a read that leaves it out is under way", async () => {
+    const answers: (() => void)[] = [];
+    const asked: number[][] = [];
+    // Below the budget floor the reader keeps only the selected thread.
+    const reader = {
+      read: vi.fn(
+        async (
+          threads: readonly (typeof one)[],
+          selected?: typeof one,
+        ): Promise<DetailReading> => {
+          const kept = threads.filter(
+            (each) => each.number === selected?.number,
+          );
+          asked.push(kept.map((each) => each.number));
+          await new Promise<void>((resolve) => answers.push(resolve));
+          return kept.map((each) => ({
+            thread: each,
+            detail: parserFixDetail,
+          }));
+        },
+      ),
+    };
+    const queue = open(reader);
+    const window = [
+      { thread: one, version: "v" },
+      { thread: two, version: "v" },
+    ];
+    queue.request(window, one, 0);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(asked).toEqual([[1]]);
+    // The selection moves while #1's answer is awaited.
+    queue.request(window, two, 0);
+    const shown = queue.read(two, "v");
+    answers.shift()?.();
+    await vi.advanceTimersByTimeAsync(0);
+    answers.shift()?.();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(asked).toEqual([[1], [2]]);
+    await expect(shown).resolves.toBe(parserFixDetail);
+  });
+
+  it("sends nothing more once stopped, though a read under way left out the thread selected since", async () => {
+    const answers: (() => void)[] = [];
+    const asked: number[][] = [];
+    // Below the budget floor the reader keeps only the selected thread.
+    const reader = {
+      read: vi.fn(
+        async (
+          threads: readonly (typeof one)[],
+          selected?: typeof one,
+        ): Promise<DetailReading> => {
+          const kept = threads.filter(
+            (each) => each.number === selected?.number,
+          );
+          asked.push(kept.map((each) => each.number));
+          await new Promise<void>((resolve) => answers.push(resolve));
+          return kept.map((each) => ({
+            thread: each,
+            detail: parserFixDetail,
+          }));
+        },
+      ),
+    };
+    const queue = open(reader);
+    const window = [
+      { thread: one, version: "v" },
+      { thread: two, version: "v" },
+    ];
+    queue.request(window, one, 0);
+    await vi.advanceTimersByTimeAsync(0);
+    queue.request(window, two, 0);
+    queue.stop();
+    answers.shift()?.();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(asked).toEqual([[1]]);
+  });
+
+  it("forgets the details that arrived and the reads that failed, reads the window asked for last again at once, and keeps a read under way", async () => {
+    const reader = reading();
+    const queue = open(reader);
+    queue.request(
+      [
+        { thread: one, version: "v" },
+        { thread: three, version: "v" },
+      ],
+      one,
+      0,
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    const pending = queue.read(two, "v");
+    queue.forget();
+    await vi.advanceTimersByTimeAsync(0);
+    const asked = reader.read.mock.calls.map(([threads]) =>
+      threads.map(({ number }) => number).sort(),
+    );
+    expect(asked).toEqual([
+      [1, 3],
+      [1, 2, 3],
+    ]);
+    expect(await pending).toBe(parserFixDetail);
+  });
+
+  it("counts each arrival, telling its listeners, and says details are due only for another version, however old", async () => {
     const queue = open();
     const listener = vi.fn();
     queue.subscribe(listener);
-    expect(queue.isDue(one, "v", new Date())).toBe(true);
+    expect(queue.isDue(one, "v")).toBe(true);
     queue.request([{ thread: one, version: "v" }], one, 0);
-    expect(queue.isDue(one, "v", new Date())).toBe(false);
+    expect(queue.isDue(one, "v")).toBe(false);
     await vi.advanceTimersByTimeAsync(0);
     expect(queue.countArrivals(one)).toBe(1);
     expect(queue.countArrivals(two)).toBe(0);
     expect(listener).toHaveBeenCalledTimes(2);
-    expect(queue.isDue(one, "v", new Date())).toBe(false);
-    expect(queue.isDue(one, "w", new Date())).toBe(true);
-    await vi.advanceTimersByTimeAsync(30_000);
-    expect(queue.isDue(one, "v", new Date())).toBe(true);
+    expect(queue.isDue(one, "v")).toBe(false);
+    expect(queue.isDue(one, "w")).toBe(true);
+    await vi.advanceTimersByTimeAsync(24 * 3_600_000);
+    expect(queue.isDue(one, "v")).toBe(false);
   });
 
-  it("asks again for a thread the budget left out, and fails every read of a request that fails, so each is read again", async () => {
+  it("asks again for a thread the reader left out, and fails every read of a request that fails, so each is read again", async () => {
     const reader = {
       read: vi.fn(async (): Promise<DetailReading> => []),
     };
     const queue = open(reader);
     queue.request([{ thread: two, version: "v" }], undefined, 0);
     await vi.advanceTimersByTimeAsync(0);
-    expect(queue.isDue(two, "v", new Date())).toBe(true);
+    expect(queue.isDue(two, "v")).toBe(true);
     reader.read.mockRejectedValueOnce(new Error("offline"));
     const failed = queue.read(one, "v");
     await vi.advanceTimersByTimeAsync(0);
@@ -184,8 +285,8 @@ describe("createDetailQueue", () => {
       await vi.advanceTimersByTimeAsync(200);
     }
     expect(reader.read).toHaveBeenCalledTimes(2);
-    expect(queue.isDue(three, "w", new Date())).toBe(true);
-    expect(queue.isDue(one, "w", new Date())).toBe(true);
+    expect(queue.isDue(three, "w")).toBe(true);
+    expect(queue.isDue(one, "w")).toBe(true);
     const again = queue.read(one, "v");
     await vi.advanceTimersByTimeAsync(0);
     expect(await again).toBe(parserFixDetail);
@@ -270,188 +371,5 @@ describe("createDetailQueue", () => {
     queue.stop();
     await vi.advanceTimersByTimeAsync(1_000);
     expect(reader.read).not.toHaveBeenCalled();
-  });
-});
-
-/** A reader whose every request waits until the test answers it. */
-const waiting = () => {
-  const answers: (() => void)[] = [];
-  const reader = {
-    read: vi.fn(
-      (threads: readonly (typeof one)[]): Promise<DetailReading> =>
-        new Promise((resolve) =>
-          answers.push(() =>
-            resolve(
-              threads.map((each) => ({
-                thread: each,
-                detail: each.number === 3 ? undefined : parserFixDetail,
-              })),
-            ),
-          ),
-        ),
-    ),
-  };
-  return { reader, answer: () => answers.shift()?.() };
-};
-const wanted = (...threads: (typeof one)[]) =>
-  threads.map((each) => ({ thread: each, version: "v" }));
-
-describe("createDetailQueue's count of details", () => {
-  it("counts the threads asked for with nothing pending, and those answered, found or not, until nothing is pending", async () => {
-    const { reader, answer } = waiting();
-    const queue = open(reader);
-    expect(queue.countDetails()).toBeUndefined();
-    queue.request(wanted(one, two, three), one, 0);
-    expect(queue.countDetails()).toEqual({ read: 0, asked: 3 });
-    await vi.advanceTimersByTimeAsync(0);
-    queue.read(four, "v");
-    expect(queue.countDetails()).toEqual({ read: 0, asked: 4 });
-    answer();
-    await vi.advanceTimersByTimeAsync(0);
-    expect(queue.countDetails()).toEqual({ read: 3, asked: 4 });
-    answer();
-    await vi.advanceTimersByTimeAsync(0);
-    expect(queue.countDetails()).toBeUndefined();
-  });
-
-  it("counts the selected thread alone when only its details are read again", async () => {
-    const { reader, answer } = waiting();
-    const queue = open(reader);
-    queue.request(wanted(one, two), one, 0);
-    await vi.advanceTimersByTimeAsync(0);
-    answer();
-    await vi.advanceTimersByTimeAsync(0);
-    queue.read(one, "w");
-    expect(queue.countDetails()).toEqual({ read: 0, asked: 1 });
-  });
-
-  it("no longer counts a thread that gives way to a later window, or that a request leaves out", async () => {
-    const reader = { read: vi.fn(async (): Promise<DetailReading> => []) };
-    const queue = open(reader);
-    queue.request(wanted(one, two), one, 200);
-    queue.request(wanted(two), two, 200);
-    expect(queue.countDetails()).toEqual({ read: 0, asked: 1 });
-    queue.read(three, "v");
-    await vi.advanceTimersByTimeAsync(200);
-    expect(queue.countDetails()).toBeUndefined();
-  });
-
-  it("ends the count when the window asks for nothing more, with nothing sent", () => {
-    const queue = open();
-    queue.request(wanted(one), one, 200);
-    queue.request([], undefined, 200);
-    expect(queue.countDetails()).toBeUndefined();
-  });
-
-  it("counts nothing while paused, and takes the count up again once it is not", async () => {
-    const queue = open();
-    queue.request(wanted(one, two), one, 200);
-    queue.pause(true);
-    expect(queue.countDetails()).toBeUndefined();
-    queue.pause(false);
-    expect(queue.countDetails()).toEqual({ read: 0, asked: 2 });
-    await vi.advanceTimersByTimeAsync(0);
-    expect(queue.countDetails()).toBeUndefined();
-  });
-
-  it("tells its listeners when the count opens, moves and ends, and not when it stays", async () => {
-    const { reader, answer } = waiting();
-    const queue = open(reader);
-    const listener = vi.fn();
-    queue.subscribe(listener);
-    queue.request(wanted(one), one, 0);
-    queue.request(wanted(one), one, 0);
-    expect(listener).toHaveBeenCalledOnce();
-    await vi.advanceTimersByTimeAsync(0);
-    answer();
-    await vi.advanceTimersByTimeAsync(0);
-    expect(listener).toHaveBeenCalledTimes(2);
-    queue.pause(true);
-    queue.pause(true);
-    expect(listener).toHaveBeenCalledTimes(2);
-  });
-
-  it("counts nothing once stopped", () => {
-    const queue = open();
-    queue.request(wanted(one), one, 200);
-    queue.stop();
-    expect(queue.countDetails()).toBeUndefined();
-  });
-});
-
-/**
- * A reader whose every request waits until the test settles it, the
- * oldest first: with the details found for the threads `settle` keeps,
- * or failing with `reason`.
- */
-const holdReadings = () => {
-  const pending: {
-    readonly threads: readonly (typeof one)[];
-    readonly resolve: (reading: DetailReading) => void;
-    readonly reject: (reason: unknown) => void;
-  }[] = [];
-  const reader = {
-    read: vi.fn(
-      (threads: readonly (typeof one)[]) =>
-        new Promise<DetailReading>((resolve, reject) =>
-          pending.push({ threads, resolve, reject }),
-        ),
-    ),
-  };
-  const next = () => {
-    const first = pending.shift();
-    if (!first) throw new Error("no request is pending");
-    return first;
-  };
-  return {
-    reader,
-    answer: (keep: (thread: typeof one) => boolean) => {
-      const { threads, resolve } = next();
-      resolve(
-        threads
-          .filter(keep)
-          .map((each) => ({ thread: each, detail: parserFixDetail })),
-      );
-    },
-    fail: (reason: unknown) => next().reject(reason),
-  };
-};
-
-/** Two requests under way: `one` and `two` read ahead, then `four` alone. */
-async function overlap(reader: ReturnType<typeof holdReadings>["reader"]) {
-  const queue = open(reader);
-  queue.request(wanted(one, two), one, 0);
-  await vi.advanceTimersByTimeAsync(0);
-  void queue.read(four, "v").catch(() => {});
-  await vi.advanceTimersByTimeAsync(0);
-  expect(reader.read).toHaveBeenCalledTimes(2);
-  return queue;
-}
-
-describe("createDetailQueue's count of details while requests overlap", () => {
-  it("stops counting as asked a thread the reader left out", async () => {
-    const { reader, answer } = holdReadings();
-    const queue = await overlap(reader);
-    answer((each) => each.number === 1);
-    await vi.advanceTimersByTimeAsync(0);
-    expect(queue.countDetails()).toEqual({ read: 1, asked: 2 });
-  });
-
-  it("counts as answered each thread of a request that failed", async () => {
-    const { reader, fail } = holdReadings();
-    const queue = await overlap(reader);
-    fail(new Error("offline"));
-    await vi.advanceTimersByTimeAsync(0);
-    expect(queue.countDetails()).toEqual({ read: 2, asked: 3 });
-  });
-
-  it("counts again as unread a thread asked for at a new version after its answer", async () => {
-    const { reader, answer } = holdReadings();
-    const queue = await overlap(reader);
-    answer(() => true);
-    await vi.advanceTimersByTimeAsync(0);
-    expect(queue.countDetails()).toEqual({ read: 2, asked: 3 });
-    void queue.read(one, "w");
-    expect(queue.countDetails()).toEqual({ read: 1, asked: 3 });
   });
 });

@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import type { AttentionState, CacheStatus } from "../lib/cache/index.js";
 import type { Repo } from "../lib/config/index.js";
+import type { Budget } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
+import { describeBudget } from "../lib/text/index.js";
 import {
   type ActionResult,
   type DetailsCount,
@@ -20,10 +22,13 @@ export interface StatusLineState {
   readonly failure: CacheStatus["failure"];
   readonly action: ActionResult | undefined;
   readonly attention: AttentionState;
-  /** Whether reading details spent the hour's budget for them. */
-  readonly detailsPaused: boolean | undefined;
   /** How many of the details asked for are read, while any are pending. */
   readonly details: DetailsCount | undefined;
+  /**
+   * The queries' budget, whose live figures the right side says once less
+   * than 40% of it is left.
+   */
+  readonly budget: Budget | undefined;
   readonly now: Date;
   /** The time zone a time of day is written in. */
   readonly timezone: string;
@@ -44,8 +49,8 @@ export default function drawStatusLine({
   failure,
   action,
   attention,
-  detailsPaused,
   details,
+  budget,
   now,
   timezone,
   watched,
@@ -57,8 +62,8 @@ export default function drawStatusLine({
       status={problem ? undefined : shown}
       action={action}
       attention={attention}
-      detailsPaused={detailsPaused}
       details={details}
+      liveBudget={describeBudget(budget, now, timezone)}
       now={now}
       timezone={timezone}
       names={Object.fromEntries(watched.map(({ repo, name }) => [repo, name]))}

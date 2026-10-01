@@ -60,7 +60,7 @@ describe("RefreshStages", () => {
     );
   });
 
-  it("trims every stage but a failure to one line, whatever the width of the names", async () => {
+  it("cuts a long name in its middle, so the stage keeps 20 cells on its one line", async () => {
     const screen = await draw(
       <RefreshStages
         stages={[
@@ -71,7 +71,7 @@ describe("RefreshStages", () => {
           },
         ]}
         names={{
-          "example-org/example-repo": "design-system-docs",
+          "example-org/example-repo": "example-design-system-docs",
           "example-org/example-docs": "docs",
         }}
         width={38}
@@ -79,8 +79,8 @@ describe("RefreshStages", () => {
       40,
     );
     expect(screen.lines.slice(0, 3)).toEqual([
-      "design-system-docs checking for chang…",
-      "docs               paused: rate limit",
+      "example-…tem-docs checking for changes",
+      "docs              paused: rate limit",
       "",
     ]);
   });

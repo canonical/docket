@@ -79,7 +79,11 @@ export const FirstRunFailed: Story<ScreenFrameProps> = {
 };
 
 /** A reader of details ahead that never hears back, so every one stays unread. */
-const unanswered = () => createDetailReader(() => new Promise(() => {}));
+const unanswered = () =>
+  createDetailReader(
+    () => new Promise(() => {}),
+    () => true,
+  );
 
 /** The details near the selection being read: none of them yet. */
 export const DetailsLoading: Story<ScreenFrameProps> = {

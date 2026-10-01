@@ -15,6 +15,11 @@ import {
 
 const repo = "example-org/example-repo";
 const docs = "example-org/example-docs";
+/**
+ * When GitHub last recorded a change to dave's pull request, and to those
+ * like it.
+ */
+const lastChange = "2026-09-28T09:35:00Z";
 
 /**
  * Two watched repositories on the Monday 28 September 2026: a pull
@@ -23,14 +28,19 @@ const docs = "example-org/example-docs";
  * bob opened and alice merged on Sunday; an issue carol opened on Friday;
  * a documentation issue alice opened and a bot labelled; and two
  * documentation issues closed since, one as completed by bob, closed by
- * the merged pull request, and one as not planned by alice. `words` gives the text written on GitHub, and `tag` the
- * entity tag the check for changes answers with, and `crowd` how many more
- * pull requests like dave's wait on bob's review.
+ * the merged pull request, and one as not planned by alice. `words` gives
+ * the text written on GitHub, and `tag` the entity tag the check for
+ * changes answers with, `crowd` how many more pull requests like dave's
+ * wait on bob's review, `changedAt` when GitHub last recorded a change to
+ * dave's, and `changedCrowd` the numbers of those like it that changed
+ * then too.
  */
 export default function recordTeam(
   words: Words,
   tag = "first",
   crowd = 0,
+  changedAt = lastChange,
+  changedCrowd: readonly number[] = [],
 ): Recording {
   const parserFix = {
     ...buildIssueNode({
@@ -38,7 +48,7 @@ export default function recordTeam(
       url: `https://github.com/${repo}/pull/12`,
       title: words.title,
       createdAt: "2026-09-21T08:00:00Z",
-      updatedAt: "2026-09-28T09:35:00Z",
+      updatedAt: changedAt,
       author: "dave",
       assignees: ["alice"],
       labels: [words.label],
@@ -104,8 +114,6 @@ export default function recordTeam(
   });
   const recording: Recording = {
     Viewer: viewer,
-    // The rate figures alone, which every answer carries.
-    Budget: { data: {} },
     [`File ${repo}`]: noFile,
     [`File ${docs}`]: noFile,
     [`GET /repos/${repo}/issues`]: buildProbe(`${tag}-example`),
@@ -355,6 +363,7 @@ export default function recordTeam(
     return {
       ...parserFix,
       number,
+      updatedAt: changedCrowd.includes(number) ? changedAt : lastChange,
       url: `https://github.com/${repo}/pull/${number}`,
       title: `${words.title} ${number}`,
     };

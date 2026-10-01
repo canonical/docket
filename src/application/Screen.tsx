@@ -24,7 +24,6 @@ import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
 import describeCandidate from "./describeCandidate.js";
 import describePosition from "./describePosition.js";
-import describeRowVersion from "./describeRowVersion.js";
 import drawEditorSlot from "./drawEditorSlot.js";
 import drawStandIn from "./drawStandIn.js";
 import drawStatusLine from "./drawStatusLine.js";
@@ -47,9 +46,8 @@ import useAddress from "./useAddress.js";
 import useAttention, { type UseAttentionProps } from "./useAttention.js";
 import useEditor from "./useEditor.js";
 import useFinished from "./useFinished.js";
-import useHeldDetails from "./useHeldDetails.js";
 import useHelp from "./useHelp.js";
-import useReadAhead from "./useReadAhead.js";
+import useRowDetails from "./useRowDetails.js";
 import useScreenKeys from "./useScreenKeys.js";
 import useSelectedWatch from "./useSelectedWatch.js";
 import useShownList from "./useShownList.js";
@@ -218,8 +216,8 @@ export default function Screen({
         help
           ? helpState.end(direction)
           : moveTo((_place, last) => (direction < 0 ? 0 : last)),
-      // Only a row is ever selected, in any mode, so a heading or a
-      // stack never opens.
+      // Only a row is ever selected, in any mode, so a heading or a stack
+      // never opens.
       openSelected: () => {
         const row = drawnSelection.current;
         if (!row) return;
@@ -237,7 +235,11 @@ export default function Screen({
       edit: (action) => editor.start(action, selectThread()),
       toggleHelp: helpState.toggle,
       closeHelp: helpState.close,
-      refresh: () => void cache?.fullRefresh(),
+      // A full refresh that threw the data away reads the details again.
+      refresh: () =>
+        void cache
+          ?.fullRefresh()
+          .then((discarded) => discarded && ahead.drop()),
       quit: onQuit,
     },
   });
@@ -296,53 +298,16 @@ export default function Screen({
     selected: selectedRow && summarize(selectedRow),
     attention: attentionState,
   });
-  const findVersion = (row: ListRow) => describeRowVersion(row, findFacts(row));
-  // A finished thread's accordion comes whole from the list, but for a
-  // stacked pull request's neighbours, so only those are read ahead, and
-  // only while one is selected.
-  const detailed = rows.filter((row) => !("ending" in row) || row.stacked);
-  const chosen = selectedRow ? detailed.indexOf(selectedRow) : -1;
-  const ahead = useReadAhead({
+  const ahead = useRowDetails({
     reader: "cache" in source ? source.details : undefined,
-    rows: detailed.map((row) => ({
-      thread: summarize(row),
-      version: findVersion(row),
-    })),
-    selected: chosen < 0 ? detailed.length : chosen,
+    rows,
+    selected: selectedRow,
+    drawnSelected: () => drawnSelection.current,
+    held: cached?.threads ?? [],
+    findFacts,
     attention: attentionState,
-    paused: status?.paused !== undefined,
-    now,
+    status,
   });
-  // A thread's details are read once for each change GitHub records on it,
-  // and once for each change the list's roll-up of its checks shows, since
-  // checks finish without GitHub recording a change to the thread. Any
-  // other copy of the data a refresh brings reads nothing. A thread the
-  // data does not hold, such as a closed one in activity, has no record of
-  // its last change, and is read once for each newest event its row shows.
-  // The details of a thread that left both the data and the list on screen
-  // are let go.
-  const readHeld = useHeldDetails({
-    kept: [...(cached?.threads ?? []), ...rows.map(summarize)],
-    selected: () => {
-      const row = drawnSelection.current;
-      return row && summarize(row);
-    },
-    resumes: status?.paused?.until,
-  });
-  /** The details the accordion under a row is given: read ahead, or alone. */
-  const readRowDetail = (
-    row: ListRow,
-    readAlone: NonNullable<typeof readThreadDetail>,
-  ) => {
-    const version = findVersion(row);
-    const thread = summarize(row);
-    return readHeld(
-      (each) => (ahead.read ?? readAlone)(each, version),
-      thread,
-      ahead.version(thread, version),
-      findFacts(row),
-    );
-  };
 
   const { refused, slot } = drawEditorSlot(editor, width);
 
@@ -362,7 +327,7 @@ export default function Screen({
     teamless,
     owedListed: Boolean(owed && readThreadDetail),
     windowed,
-    ...(ended?.empty && { emptyWindow: ended.empty.text }),
+    ...(ended?.empty && { emptyWindow: ended.empty }),
     watched,
     width,
   });
@@ -371,7 +336,7 @@ export default function Screen({
       <OwedList
         list={owed}
         selected={placeSelection(rows, selections.owed)}
-        readDetail={(row) => readRowDetail(row, readThreadDetail)}
+        readDetail={(row) => ahead.readRowDetail(row, readThreadDetail)}
         now={at}
         timezone={settings.time.timezone}
         width={width}
@@ -387,7 +352,7 @@ export default function Screen({
       <ActivityList
         list={listed}
         selected={placeSelection(rows, selections.activity)}
-        readDetail={(row) => readRowDetail(row, readThreadDetail)}
+        readDetail={(row) => ahead.readRowDetail(row, readThreadDetail)}
         measureWaits={(row) =>
           buildThreadWaits(row.thread, threads, watched, at, you.viewer)
         }
@@ -407,7 +372,7 @@ export default function Screen({
       <FinishedList
         list={ended}
         selected={placeSelection(rows, selections.finished)}
-        readDetail={(row) => readRowDetail(row, readThreadDetail)}
+        readDetail={(row) => ahead.readRowDetail(row, readThreadDetail)}
         now={at}
         timezone={settings.time.timezone}
         width={width}
@@ -416,7 +381,7 @@ export default function Screen({
       />
     );
   }
-  const summary = shown?.summary.text;
+  const summary = shown?.summary;
   const position = describePosition(
     shown?.groups ?? [],
     placeSelection(rows, selections[mode]),
@@ -428,13 +393,20 @@ export default function Screen({
       height={height}
       header={
         help || setup ? (
-          <PaneHeader title={help ? "help" : "setup"} width={width} />
+          <PaneHeader
+            title={{ text: help ? "help" : "setup", kind: "words" }}
+            width={width}
+          />
         ) : (
           <PaneHeader
-            title={editor.title ?? header.title}
+            title={
+              editor.title
+                ? { text: editor.title, kind: "identifier" }
+                : { text: header.title, kind: "words" }
+            }
             {...(!editor.title && {
-              address: header.address,
-              sort: header.sort,
+              address: { text: header.address, kind: "words" },
+              sort: { text: header.sort, kind: "words" },
             })}
             width={width}
           />
@@ -444,34 +416,45 @@ export default function Screen({
         summary === undefined ? undefined : (
           <CountsLine
             summary={summary}
-            {...(position && { position })}
+            {...(position && { position: { text: position, kind: "figure" } })}
             width={width}
           />
         )
       }
-      status={drawStatusLine({
-        problem,
-        status,
-        // A failure reading the window on screen, or whom gh is signed
-        // in as, leaves the rows held.
-        failure:
-          (windowed && "list" in windowed ? windowed.failure : undefined) ??
-          you.failure,
-        action,
-        attention: attentionState,
-        detailsPaused: "cache" in source && source.details?.isCapped(at),
-        details: ahead.progress,
-        now: at,
-        timezone: settings.time.timezone,
-        watched,
-        width,
-      })}
+      // Setup has no state of its own, so its notice takes the lines.
+      status={
+        setup
+          ? undefined
+          : drawStatusLine({
+              problem,
+              status,
+              // A failure reading the window on screen, or whom gh is
+              // signed in as, leaves the rows held.
+              failure:
+                (windowed && "list" in windowed
+                  ? windowed.failure
+                  : undefined) ?? you.failure,
+              action,
+              attention: attentionState,
+              details: ahead.progress,
+              budget: cache?.readBudgets().graphql,
+              now: at,
+              timezone: settings.time.timezone,
+              watched,
+              width,
+            })
+      }
       keys={<KeyBar commands={active} width={width} />}
       help={
         help ? (
           <HelpOverlay
             commands={bound}
-            {...(!setup && { note: "windows are counted in working time" })}
+            {...(!setup && {
+              note: {
+                text: "windows are counted in working time",
+                kind: "words",
+              },
+            })}
             width={width}
             height={Math.max(0, height - 1)}
             first={helpState.first}

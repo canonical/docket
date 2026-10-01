@@ -1,5 +1,6 @@
 import { findActivityRow } from "../../../../testing/activity.js";
 import { findFinishedRow } from "../../../../testing/finished.js";
+import { longReview } from "../../../../testing/long.js";
 import {
   botReview,
   crowdedReply,
@@ -93,4 +94,13 @@ export const FinishedOver: Story<ThreadRowProps> = {
 /** A finished draft a label exempts: no verdict and no bar, the ending's age bare. */
 export const FinishedExempt: Story<ThreadRowProps> = {
   args: { row: findFinishedRow("example#9"), width: 40 },
+};
+
+/**
+ * A review the parser team owes on a draft pull request, its checks
+ * failing, in a repository with a long short name whose own file is
+ * invalid: more than the row holds on either line.
+ */
+export const Long: Story<ThreadRowProps> = {
+  args: { row: longReview, width: 40 },
 };

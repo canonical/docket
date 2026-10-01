@@ -60,7 +60,7 @@ describe("groupEndings", () => {
     expect(empty.groups).toEqual([]);
     expect(empty.empty).toEqual({
       text: "nothing merged or closed in 1w",
-      fit: "trimmed",
+      kind: "words",
     });
   });
 

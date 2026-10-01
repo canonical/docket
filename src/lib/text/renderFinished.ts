@@ -167,7 +167,7 @@ export default function renderFinished({
   const { counts } = list;
   const summary = llm
     ? `${counts.merged} merged · ${counts.closed} closed · ${counts.over.value} over target`
-    : list.summary.text;
+    : list.summary.fields.map(({ text }) => text).join(" · ");
   const lines = [
     llm ? `# ${title}` : title,
     ...renderFreshness(freshness, format),

@@ -15,10 +15,11 @@ describe("listEndings", () => {
 
   it("says what it counts, and how each measure stands across the list", () => {
     const list = listEndings(repoEndings(), finishedNow);
-    expect(list.summary).toEqual({
-      text: "1 merged · 3 closed · 1 over",
-      fit: "trimmed",
-    });
+    expect(list.summary.fields.map(({ text }) => text)).toEqual([
+      "1 merged",
+      "3 closed",
+      "1 over",
+    ]);
     expect(list.measures).toEqual({
       close: { state: "measured", of: 3, pending: 0 },
       firstResponse: { state: "unsupported", of: 0, pending: 0 },
@@ -59,10 +60,10 @@ describe("listEndings", () => {
         ({ closer }) => closer,
       );
     expect(closers([completed])).toEqual([
-      { text: "example#2", fit: "trimmed" },
+      { text: "example#2", kind: "identifier" },
     ]);
     expect(closers([elsewhere])).toEqual([
-      { text: "example-org/example-site#5", fit: "trimmed" },
+      { text: "example-org/example-site#5", kind: "identifier" },
     ]);
   });
 

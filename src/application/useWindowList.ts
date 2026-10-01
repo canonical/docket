@@ -77,7 +77,9 @@ const isFailure = (error: unknown): error is Failure => isNamedError(error);
  * finished's threads, and builds its list from it at every instant the
  * screen is drawn at. The window is read whenever it, the watched
  * repositories or the cache's last sync change; a list already shown for
- * the window stays while it is. When GitHub or the cache fails for a
+ * the window stays while it is. Below the budget floor, what the cache
+ * holds for the window answers however old, and only a window it holds
+ * nothing of is read. When GitHub or the cache fails for a
  * repository, what the cache holds for it answers, however old and
  * however far back it reaches, and the failure goes with the list for
  * the status line to name. A repository with nothing held has nothing,
@@ -110,6 +112,11 @@ export default function useWindowList<Timed, List>({
     let failure: Failure | undefined;
     let missing = 0;
     const readHeld: ReadHeld = async (repo, since) => {
+      // Below the budget floor, reading again what the cache holds is
+      // docket's own spending, which waits for the reset; a window it
+      // holds nothing of is the user's own request, and is read.
+      const kept = cache.findEvents(repo, since);
+      if (kept && !cache.maySpend()) return kept;
       try {
         return await readEvents(repo, since);
       } catch (error) {

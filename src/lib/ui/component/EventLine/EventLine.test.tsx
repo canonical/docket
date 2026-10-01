@@ -9,6 +9,7 @@ import {
   ChecksFailed,
   EndingOver,
   EndingWithin,
+  Long,
   Pushed,
 } from "./EventLine.stories.js";
 import type { EventLineProps } from "./types.js";
@@ -68,7 +69,7 @@ describe("EventLine", () => {
   it("dims an ending a bot made, as activity dims a bot's event", async () => {
     const bot = {
       ...findFinishedRow("example#2").ending,
-      actor: { text: "example-sync", fit: "trimmed", group: "bot" },
+      actor: { text: "example-sync", kind: "person", group: "bot" },
     } as const;
     const screen = await draw(
       <EventLine line={bot} state="within" stacked width={40} />,
@@ -89,14 +90,123 @@ describe("EventLine", () => {
     expect(props.state).toBe("over");
   });
 
+  it("keeps the actor, its login cut at 12 cells, then cuts the words before the target, then the target", async () => {
+    const at = async (width: number) =>
+      (await draw(<EventLine {...Long.args} width={width} />, width)).lines.at(
+        0,
+      );
+    const actor = " ┆  ○ example-con…";
+    const target = "priority: needs-a-decision-from-the-maintainers";
+    expect(await at(78)).toBe(`${actor} labelled ${target} 3h`);
+    expect(await at(77)).toBe(`${actor} labell… ${target} 3h`);
+    expect(await at(74)).toBe(`${actor} lab… ${target} 3h`);
+    expect(await at(73)).toBe(
+      `${actor} lab… priority: needs-a-deci…on-from-the-maintainers 3h`,
+    );
+    expect(await at(40)).toBe(`${actor} lab… priori…ainers 3h`);
+  });
+
+  it("measures what was done as it is drawn, without the format characters it holds", async () => {
+    const { line } = Long.args;
+    const hide = (text: string) =>
+      text.replace("priority", "\u202e\u2066prio\u2069rity");
+    const hidden = {
+      ...line,
+      action: { ...line.action, text: hide(line.action.text) },
+      target: line.target && { ...line.target, text: hide(line.target.text) },
+    };
+    const screen = await draw(
+      <EventLine {...Long.args} line={hidden} width={78} />,
+      78,
+    );
+    expect(screen.lines.at(0)).toContain(" labelled priority:");
+  });
+
+  it("counts the bracket closing failed checks' names when it cuts the words before them", async () => {
+    const { line } = ChecksFailed.args;
+    const name = "build-the-documentation-site";
+    const failed = {
+      ...line,
+      action: { ...line.action, text: `checks failed (${name})` },
+      target: line.target && { ...line.target, text: name },
+    };
+    const at = async (width: number) =>
+      (
+        await draw(
+          <EventLine {...ChecksFailed.args} line={failed} width={width} />,
+          width,
+        )
+      ).lines.at(0);
+    expect(await at(54)).toBe(` ┆  ✗ checks failed (${name}) 20m`);
+    expect(await at(53)).toBe(` ┆  ✗ checks fail… (${name}) 20m`);
+  });
+
+  it("keeps the bracket closing failed checks' names whole, though a name ends in an escape", async () => {
+    const { line } = ChecksFailed.args;
+    const names = "lint, unit\u001b";
+    const failed = {
+      ...line,
+      action: { ...line.action, text: `checks failed (${names})` },
+      target: line.target && { ...line.target, text: names },
+    };
+    const screen = await draw(
+      <EventLine {...ChecksFailed.args} line={failed} />,
+      40,
+    );
+    expect(screen.lines.at(0)).toContain("✗ checks failed (lint, unit) ");
+  });
+
+  it("splits what was done about the last place the target is named, though the words name it too", async () => {
+    const line = {
+      ...Pushed.args.line,
+      action: { text: "labelled led", kind: "words" as const },
+      target: { text: "led", kind: "words" as const },
+    };
+    const screen = await draw(
+      <EventLine {...Pushed.args} line={line} width={26} />,
+      26,
+    );
+    expect(screen.lines.at(0)).toBe(" ┆  ● alice label… led 25m");
+  });
+
+  it("names the person an event assigned plainly, after the actor's mark", async () => {
+    const line = {
+      ...Pushed.args.line,
+      action: { text: "assigned bob", kind: "words" as const },
+      target: { text: "bob", kind: "person" as const },
+    };
+    const screen = await draw(<EventLine {...Pushed.args} line={line} />, 40);
+    expect(screen.lines.at(0)).toMatch(/^ ┆ {2}● alice assigned bob +25m$/);
+    expect(screen.look("bob")?.fg).toBe(tokens["color.text"]);
+  });
+
+  it("cuts the words of failed checks before their names, keeping the brackets", async () => {
+    const line = {
+      ...ChecksFailed.args.line,
+      action: {
+        text: "checks failed (lint the whole repository, unit tests)",
+        kind: "words" as const,
+      },
+      target: {
+        text: "lint the whole repository, unit tests",
+        kind: "identifier" as const,
+      },
+    };
+    const screen = await draw(
+      <EventLine {...ChecksFailed.args} line={line} />,
+      40,
+    );
+    expect(screen.lines.at(0)).toBe(" ┆  ✗ che… (lint the wh… unit tests) 20m");
+  });
+
   it("draws what happened alone when no actor is named", async () => {
     const { actor: _, ...line } = findEventLine(12, 1);
     const screen = await draw(<EventLine line={line} stacked width={40} />, 40);
     expect(screen.lines.at(0)).toBe(` ┆  pushed 2 commits${" ".repeat(17)}25m`);
   });
 
-  it("cuts the event with an ellipsis before the age gives way", async () => {
+  it("keeps the actor and cuts what was done in its middle, before the age gives way", async () => {
     const screen = await draw(<EventLine {...Pushed.args} width={20} />, 20);
-    expect(screen.lines.at(0)).toBe(" ┆  ● alice pus… 25m");
+    expect(screen.lines.at(0)).toBe(" ┆  ● alice p…ts 25m");
   });
 });

@@ -1,0 +1,13 @@
+60 columns
+|  filter:
+|  ☑ ○ example-contributor-with-a-long-login-past-the-pane
+|  ☐ ◐ example-org/a-team-with-a-very-long-name-past-the-pane
+
+runs
+1:3 "filter: " fg #c6c8d1ff bg #00000000
+1:11 "                                                  " fg #ffffffff bg #161821ff
+2:3 "☑ " fg #c6c8d1ff bg #00000000
+2:5 "○ example-contributor-with-a-long-login-past-the-pane" fg #89b8c2ff bg #00000000
+3:1 "  " fg #ffffffff bg #2e3244ff
+3:3 "☐ " fg #c6c8d1ff bg #2e3244ff
+3:5 "◐ example-org/a-team-with-a-very-long-name-past-the-pane" fg #a093c7ff bg #2e3244ff

@@ -91,7 +91,7 @@ export function holdCache(
     readViewer: async () => ({ login: "alice", syncedAt }),
     refresh: async () => {},
     refreshIfChanged: async () => false,
-    fullRefresh: async () => {},
+    fullRefresh: async () => false,
     watch: () => () => {},
     patchAssignees: ({ repo, number }, assignees) => {
       const id = `${repo}#${number}`;
@@ -103,6 +103,10 @@ export function holdCache(
         publish();
       };
     },
+    readBudgets: () => ({}),
+    // The floor the status holds, as a cache judging it would publish it.
+    maySpend: () => status.paused?.reason !== "budget",
+    keepBudget: async () => {},
     status: () => status,
     subscribe: (listener) => {
       listeners.add(listener);

@@ -34,10 +34,10 @@ describe("buildRow", () => {
       [row.reference, row.kind, row.distance, row.title].map(text),
     ).toEqual(["example#2", "PR", "open 2d", "Example change"]);
     expect(row.ending).toEqual({
-      text: { text: "bob merged", fit: "trimmed" },
-      actor: { text: "bob", fit: "trimmed", group: "team" },
-      action: { text: "merged", fit: "trimmed" },
-      age: { text: "20h", fit: "trimmed" },
+      text: { text: "bob merged", kind: "words" },
+      actor: { text: "bob", kind: "person", group: "team" },
+      action: { text: "merged", kind: "words" },
+      age: { text: "20h", kind: "figure" },
     });
     expect([row.open, row.target, row.over].map(text)).toEqual([
       "open 2d",
@@ -75,12 +75,12 @@ describe("buildRow", () => {
   it("names the author, the owners but bots, and the viewer as you", () => {
     expect(build(closedBump).owner).toEqual({
       text: "unassigned",
-      fit: "trimmed",
+      kind: "words",
     });
     const row = build(completed, "alice");
     expect(row.author).toEqual({
       text: "carol",
-      fit: "trimmed",
+      kind: "person",
       group: "internal",
     });
     expect(row.owners?.fields.map(({ text }) => text)).toEqual([

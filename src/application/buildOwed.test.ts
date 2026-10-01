@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { nameHeading } from "../lib/owed/index.js";
 import { carol, thread } from "../testing/facts.js";
 import {
   recordedNow,
@@ -48,8 +49,8 @@ describe("buildOwed", () => {
     expect(rows.map(({ kind }) => kind.text)).toEqual(["reply", "close"]);
     for (const { author, owner } of rows) {
       expect([author, owner]).toEqual([
-        { text: "carol", fit: "trimmed", group: "internal" },
-        { text: "carol", fit: "trimmed", group: "internal" },
+        { text: "carol", kind: "person", group: "internal" },
+        { text: "carol", kind: "person", group: "internal" },
       ]);
     }
   });
@@ -111,7 +112,7 @@ describe("buildOwed", () => {
     });
     const byOwner = (watched: typeof yours) =>
       buildOwed([asked], watched, "owner", recordedNow, "alice").groups.find(
-        ({ heading }) => heading?.text === "example-org/ui",
+        ({ heading }) => heading && nameHeading(heading) === "example-org/ui",
       );
     const mine = byOwner(yours);
     expect(mine?.heading).toMatchObject({ group: "you" });

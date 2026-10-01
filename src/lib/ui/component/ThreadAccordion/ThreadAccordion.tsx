@@ -5,15 +5,16 @@ import {
   use,
   useLayoutEffect,
 } from "react";
+import { describeClock } from "../../../activity/index.js";
 import type { Verdict } from "../../../endings/index.js";
 import type { WaitRow } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
-import describeClock from "../../describeClock.js";
-import trimText from "../../trimText.js";
+import { endRuns, fitField } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import { Margin } from "../Margin/index.js";
+import { wrapNotice } from "../Notice/index.js";
 import describeDetail, { type Reading } from "./describeDetail.js";
 import fitAccordion from "./fitAccordion.js";
 import type { ShownDetail, ThreadAccordionProps } from "./types.js";
@@ -130,7 +131,12 @@ const Loaded = ({
     return (
       <Lines
         lines={[
-          [{ text: trimText(paused, room), fg: tokens["color.text.muted"] }],
+          [
+            {
+              text: fitField({ text: paused, kind: "words" }, "line", room),
+              fg: tokens["color.text.muted"],
+            },
+          ],
         ]}
         stroke={stroke}
         onLines={onLines}
@@ -163,10 +169,11 @@ interface BoundaryState {
 }
 
 /**
- * Adds the reason under what the snapshot shows when reading the details
+ * Adds the reason, and the recovery step when the failure gives one,
+ * each wrapped, under what the snapshot shows when reading the details
  * fails, and forgets the failure once the accordion is given other
  * details, so a later read of the same thread gets its own chance. A
- * thread the snapshot holds nothing of shows the reason alone.
+ * thread the snapshot holds nothing of shows them alone.
  */
 class Boundary extends Component<BoundaryProps, BoundaryState> {
   override state: BoundaryState = { detail: this.props.detail };
@@ -192,10 +199,35 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
       failure instanceof Error
         ? failure.message.replace(/\.$/, "")
         : String(failure);
-    const failed: Piece = {
-      text: trimText(`${tokens["glyph.failed"]} failed: ${reason}`, room),
-      fg: tokens["color.text.error"],
-    };
+    const recovery =
+      failure instanceof Error && "recovery" in failure
+        ? failure.recovery
+        : undefined;
+    const notice = wrapNotice(
+      `failed: ${reason}`,
+      typeof recovery === "string" ? recovery : "",
+      room,
+    );
+    // The recovery, the step to take, takes its lines first, then the
+    // reason, whose last line kept ends in … when it runs out; what the
+    // snapshot shows fills the lines they leave.
+    const steps = (typeof recovery === "string" ? notice.recovery : [])
+      .slice(0, accordionMaxLines)
+      .map((text) => [{ text, fg: tokens["color.text"] }]);
+    const reasons = notice.reason.map((text) => [
+      { text, fg: tokens["color.text.error"] },
+    ]);
+    const left = accordionMaxLines - steps.length;
+    const failed = [
+      ...(reasons.length > left
+        ? reasons
+            .slice(0, left)
+            .map((line, place) =>
+              place === left - 1 ? endRuns(line, room) : line,
+            )
+        : reasons),
+      ...steps,
+    ];
     // A thread the snapshot holds, owed's wait or a finished one, keeps
     // its lines above the reason.
     const shown =
@@ -203,11 +235,11 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
         ? fitAccordion(
             describeDetail(snapshot, undefined, reading),
             room,
-            accordionMaxLines - 1,
+            accordionMaxLines - failed.length,
           )
         : [];
     return (
-      <Lines lines={[...shown, [failed]]} stroke={stroke} onLines={onLines} />
+      <Lines lines={[...shown, ...failed]} stroke={stroke} onLines={onLines} />
     );
   }
 }
@@ -221,14 +253,15 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
  * the list makes room for them before any read; a line the details complete
  * ends in a dimmed `…` and grows in place when they arrive, and nothing blanks
  * or changes height meanwhile. It reads its details from GitHub, so a slow read
- * never holds up moving the selection, and a failed one adds its reason as one
- * line under what the snapshot showed. While reading is paused it shows what
- * the snapshot holds, as it does while a read is under way, and for a thread
- * the snapshot holds nothing of, `paused · resumes 13:00`, dimmed. Details that
- * make it taller than the snapshot's lines, such as a closed thread's close
- * body or a failed read's line, are told through `onLines`, so the list can
- * make room. The thread's content wears no state mark: docket's own words about
- * it are dimmed, and each login carries its group's mark and hue.
+ * never holds up moving the selection, and a failed one adds its reason and its
+ * `Recovery:` line, each wrapped, under what the snapshot showed. While reading
+ * is paused it shows what the snapshot holds, as it does while a read is under
+ * way, and for a thread the snapshot holds nothing of, `paused · resumes
+ * 13:00`, dimmed. Details that make it taller than the snapshot's lines, such
+ * as a closed thread's close body or a failed read's lines, are told through
+ * `onLines`, so the list can make room. The thread's content wears no state
+ * mark: docket's own words about it are dimmed, and each login carries its
+ * group's mark and hue.
  *
  * `import { ThreadAccordion } from "../lib/ui/index.js";`
  *

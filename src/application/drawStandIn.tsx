@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { CacheStatus } from "../lib/cache/index.js";
+import type { Field } from "../lib/owed/index.js";
 import type { Problem } from "../lib/text/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import { EmptyState, Notice } from "../lib/ui/index.js";
@@ -33,7 +34,7 @@ export interface StandInProps {
   /** What reading the window on screen gave, in activity or finished. */
   readonly windowed: UseWindowListResult<unknown>;
   /** What finished says when its window holds no thread. */
-  readonly emptyWindow?: string;
+  readonly emptyWindow?: Field;
   /** The watched repositories, whose short names the first run's lines give. */
   readonly watched: FirstRunProps["watched"];
   /** The width of the pane, in display cells. */
@@ -102,7 +103,10 @@ export default function drawStandIn({
     return (
       <box flexDirection="column">
         {teamless && <Notice {...teamless} width={width} />}
-        <EmptyState message="nothing owed" width={width} />
+        <EmptyState
+          message={{ text: "nothing owed", kind: "words" }}
+          width={width}
+        />
       </box>
     );
   }

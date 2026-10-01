@@ -145,7 +145,7 @@ describe("useHeldDetails", () => {
         threads.map((each) => ({ thread: each, detail: parserFixDetail })),
       ),
     };
-    const queue = createDetailQueue(reader, () => new Date());
+    const queue = createDetailQueue(reader);
     const read = (thread: ThreadSummary) => queue.read(thread, "1");
     const { give, change } = await probe({
       kept: [crash],

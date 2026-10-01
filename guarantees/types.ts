@@ -16,7 +16,7 @@ export interface RecordedAnswer {
  * The answers GitHub gives, keyed by request: `GET /repos/org/repo/issues`
  * for REST, and for GraphQL the operation and repository, such as
  * `Snapshot org/repo`, followed by `#12` when the request names a thread,
- * or the operation alone, such as `Viewer` or `Budget`, when it names no
+ * or the operation alone, such as `Viewer`, when it names no
  * repository.
  */
 export type Recording = Readonly<Record<string, RecordedAnswer>>;
@@ -55,6 +55,26 @@ export interface Call {
   readonly recording: string;
   /** The machine's time zone, which no output may depend on. */
   readonly machineZone?: string;
+  /**
+   * How many of GitHub's hourly 5,000 points every GraphQL answer says
+   * are left, 4,900 unless given.
+   */
+  readonly remaining?: number;
+}
+
+/** A minute passing while keys are pressed, as a person pausing. */
+export interface Pause {
+  readonly pause: "minute";
+}
+
+/**
+ * A key whose effect is a read of details that names `reads`, a thread as
+ * `owner/name#number`: the next key, or the end of the keys, waits until
+ * docket has sent it, so each move is a stop however slow the machine.
+ */
+export interface ReadingKey {
+  readonly key: string;
+  readonly reads: string;
 }
 
 /** How the terminal interface is opened, and what a person does in it. */
@@ -67,11 +87,25 @@ export interface Opening extends Call {
   /**
    * The keys pressed once the interface has drawn `ready`, one at a time,
    * each `pause` milliseconds of real time after the last, 250 unless
-   * given: the stand-in's clock stands still until the last is pressed.
+   * given: the stand-in's clock stands still until the last is pressed,
+   * but for each `Pause` among them, which moves it on by a minute. A
+   * `ReadingKey` holds the next key until the read it causes is sent.
    */
-  readonly keys?: readonly string[];
+  readonly keys?: readonly (string | Pause | ReadingKey)[];
   readonly ready?: string;
   readonly pause?: number;
+  /**
+   * A thread whose details the interface reads as it opens, as
+   * `owner/name#number`: the first key waits until docket has sent that
+   * read.
+   */
+  readonly opens?: string;
+  /**
+   * The recording module GitHub answers from once the clock first moves
+   * on through a wait of docket's, as if something changed on GitHub
+   * meanwhile.
+   */
+  readonly changed?: string;
 }
 
 /** A temporary home, and docket run in it. */

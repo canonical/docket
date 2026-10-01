@@ -10,7 +10,8 @@ const indent = 2;
  * A reason and what to do about it. It stands in for the list when a
  * prerequisite is not met (`✗ docket needs the GitHub CLI (gh)`, `✗ gh is
  * not signed in to github.com`) and sits inside an editor when GitHub
- * refused a change.
+ * refused a change. The reason and the recovery each keep rows of their
+ * own, never drawn over each other.
  *
  * `import { Notice } from "../lib/ui/index.js";`
  *
@@ -20,8 +21,13 @@ const Notice = ({ reason, recovery, width }: NoticeProps): ReactNode => {
   const lines = wrapNotice(reason, recovery, width - indent);
   return (
     <box flexDirection="column" paddingLeft={indent}>
-      <text fg={tokens["color.text.error"]}>{lines.reason.join("\n")}</text>
-      <text fg={tokens["color.text"]}>{lines.recovery.join("\n")}</text>
+      {/* Each keeps its own rows, never drawn over the other. */}
+      <text flexShrink={0} fg={tokens["color.text.error"]}>
+        {lines.reason.join("\n")}
+      </text>
+      <text flexShrink={0} fg={tokens["color.text"]}>
+        {lines.recovery.join("\n")}
+      </text>
     </box>
   );
 };

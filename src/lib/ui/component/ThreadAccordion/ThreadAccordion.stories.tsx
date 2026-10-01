@@ -5,9 +5,14 @@ import {
   pendingDetail,
   sharedCloseDetail,
   soonReplyDetail,
+  timedOut,
 } from "../../../../testing/details.js";
 import { teamSettings } from "../../../../testing/facts.js";
 import { findFinishedRow } from "../../../../testing/finished.js";
+import {
+  longReviewDetail,
+  longSharedReview,
+} from "../../../../testing/long.js";
 import { recordedNow } from "../../../../testing/recorded.js";
 import {
   overReview,
@@ -135,11 +140,26 @@ export const FinishedStackLoading = {
   },
 } satisfies Story<ThreadAccordionProps>;
 
-/** Reading the details failed: the reason under what the snapshot showed. */
+/**
+ * Reading the details failed: the reason and its recovery, wrapped, under
+ * what the snapshot showed.
+ */
 export const Failed = {
   args: {
     ...reading,
     row: overReview,
-    detail: failDetail(new Error("GitHub timed out.")),
+    detail: failDetail(timedOut),
+  },
+} satisfies Story<ThreadAccordionProps>;
+
+/**
+ * The long review, owned by a long login and a team, its checks with long
+ * names failing, on a long base branch: more than eight lines hold.
+ */
+export const Long = {
+  args: {
+    ...reading,
+    row: longSharedReview,
+    detail: Promise.resolve(longReviewDetail),
   },
 } satisfies Story<ThreadAccordionProps>;

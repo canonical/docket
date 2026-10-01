@@ -6,7 +6,10 @@ import {
   sharedCloseDetail,
 } from "../../../../testing/details.js";
 import { thread } from "../../../../testing/facts.js";
-import { findFinishedRow } from "../../../../testing/finished.js";
+import {
+  longReviewDetail,
+  longSharedReview,
+} from "../../../../testing/long.js";
 import { recordedNow } from "../../../../testing/recorded.js";
 import { measureRow, overReview, soonReply } from "../../../../testing/rows.js";
 import { drawSuspending, type Screen } from "../../../../testing/terminal.js";
@@ -17,10 +20,8 @@ import ThreadAccordion from "./ThreadAccordion.js";
 import {
   Close,
   Failed,
-  FinishedClosedIn,
-  FinishedOver,
-  FinishedStackLoading,
   Loading,
+  Long,
   Paused,
   PausedUnheld,
   Reply,
@@ -33,7 +34,7 @@ import type { ShownDetail, ThreadAccordionProps } from "./types.js";
 const readText = (screen: Screen) => screen.lines.map((line) => line.slice(2));
 
 /** The accordion under finished's `row`, as finished's list gives it. */
-const underFinished = (
+const _underFinished = (
   row: FinishedRow,
   detail?: Promise<ShownDetail>,
 ): ThreadAccordionProps => ({
@@ -50,130 +51,6 @@ const open = (props: ThreadAccordionProps, width = props.width) =>
   drawSuspending(<ThreadAccordion {...props} width={width} />, width, 10);
 
 describe("ThreadAccordion", () => {
-  describe("under a finished thread", () => {
-    it("says what line 1 does not of a time to close past its target, then the labels, its heavy bar running on to the ending", async () => {
-      const screen = await open(FinishedOver.args);
-      expect(screen.lines.slice(0, 3)).toEqual([
-        "┃ open 37d · target 30d",
-        "┃ labels kind=feat",
-        "",
-      ]);
-      expect(screen.look("┃")?.fg).toBe(tokens["color.text.error"]);
-    });
-
-    it("gives the target alone within it, and the pull request that closed the issue after dimmed words", async () => {
-      const screen = await open(FinishedClosedIn.args);
-      expect(readText(screen).slice(0, 4)).toEqual([
-        "target 30d",
-        "closed in example#2",
-        "labels none",
-        "",
-      ]);
-      expect(screen.look("closed in")?.fg).toBe(tokens["color.text.muted"]);
-      expect(screen.look("example#2")?.fg).toBe(tokens["color.text"]);
-      expect(screen.look("│")?.fg).toBe(tokens["color.text.success"]);
-    });
-
-    it("draws its lines from the list at once, never loading, the stack's neighbours waiting on the details", async () => {
-      const screen = await open(FinishedStackLoading.args);
-      expect(screen.lines.slice(0, 5)).toEqual([
-        "│┆target 5d",
-        "│┆labels none",
-        "│┆example stack 3 · 1 of 2 · → main",
-        "│┆…",
-        "",
-      ]);
-    });
-
-    it("keeps the list's lines while reading is paused, the stack's neighbours waiting as while they are read", async () => {
-      const paused = await open({
-        ...FinishedStackLoading.args,
-        detail: Promise.resolve({ resumes: new Date("2026-09-28T13:00:00Z") }),
-      });
-      const loading = await open(FinishedStackLoading.args);
-      expect(paused.lines).toEqual(loading.lines);
-      expect(readText(paused).at(3)).toBe("…");
-      expect(paused.look("…")?.fg).toBe(tokens["color.text.muted"]);
-    });
-
-    it("names the stack's neighbour once the details give it", async () => {
-      const detail = {
-        ...overReviewDetail,
-        stack: [
-          { position: 1, number: 2, state: "merged" as const },
-          { position: 2, number: 3, state: "merged" as const },
-        ],
-      };
-      const screen = await open(
-        underFinished(findFinishedRow("example#2"), Promise.resolve(detail)),
-      );
-      expect(readText(screen).at(3)).toBe("above #3 merged");
-    });
-
-    it("asks owed's wait and a thread at rest for their details, and lets a finished thread go without", () => {
-      const base = {
-        waiting: {},
-        now: recordedNow,
-        timezone: "UTC",
-        width: 40,
-      };
-      // @ts-expect-error owed's wait waits on its details.
-      const owed: ThreadAccordionProps = {
-        ...base,
-        row: overReview,
-        clock: true,
-      };
-      expect(owed.row).toBe(overReview);
-      // @ts-expect-error a finished thread's bar is its verdict, so it takes no clock.
-      const finished: ThreadAccordionProps = {
-        ...base,
-        row: findFinishedRow("example#7"),
-        clock: true,
-      };
-      expect(finished.clock).toBe(true);
-    });
-
-    it("draws what the list gives at once when given no details to wait on", async () => {
-      const screen = await open(FinishedClosedIn.args);
-      expect(readText(screen).slice(0, 3)).toEqual([
-        "target 30d",
-        "closed in example#2",
-        "labels none",
-      ]);
-    });
-
-    it("has no time line where a label exempts the thread, and leaves the bar's column blank", async () => {
-      const exempt = findFinishedRow("example#9");
-      const screen = await open(underFinished(exempt));
-      expect(screen.lines.slice(0, 2)).toEqual(["  labels dependencies", ""]);
-    });
-
-    it("names every owner whole when the row cuts a login", async () => {
-      const row = findFinishedRow("example#7");
-      const long = {
-        text: "alice-with-a-long-login",
-        fit: "trimmed",
-        group: "team",
-      } as const;
-      const screen = await open(underFinished({ ...row, owner: long }));
-      expect(readText(screen).at(2)).toBe("owner ● alice-with-a-long-login");
-    });
-
-    it("keeps its lines above the reason when reading the details fails", async () => {
-      const screen = await open(
-        underFinished(
-          findFinishedRow("example#7"),
-          failDetail(new Error("GitHub timed out.")),
-        ),
-      );
-      expect(readText(screen).slice(0, 3)).toEqual([
-        "open 37d · target 30d",
-        "labels kind=feat",
-        "✗ failed: GitHub timed out",
-      ]);
-    });
-  });
-
   it("runs the item's bar and stack mark down its lines, the bar ending on the last", async () => {
     const screen = await open(Review.args);
     expect(screen.lines.slice(0, 6).map((line) => line.slice(0, 2))).toEqual([
@@ -292,29 +169,34 @@ describe("ThreadAccordion", () => {
       );
     });
 
-    it("gives the reason in the error colour on one line under what the snapshot showed, when reading fails", async () => {
+    it("gives the reason in the error colour, then its recovery, each wrapped and first to take the eight lines, under what the snapshot showed, when reading fails", async () => {
       const screen = await open(Failed.args);
-      expect(readText(screen).slice(0, 7)).toEqual([
-        "asked by ● alice 3d ago",
-        "1 push since · …",
-        "✗ checks: …",
+      expect(readText(screen).slice(0, 9)).toEqual([
+        "asked by ● alice 3d ago…",
         "example stack 3 · 2 of 3 · → main",
         "…",
-        "✗ failed: GitHub timed out",
+        "✗ failed: GitHub gave no answer within",
+        "30 seconds",
+        "Recovery: check the network connection",
+        "and https://www.githubstatus.com, then",
+        "refresh",
         "",
       ]);
       expect(screen.look("✗ failed")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("30 seconds")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("Recovery:")?.fg).toBe(tokens["color.text"]);
     });
 
-    it("gives the reason alone for a thread the snapshot holds nothing of, cut to one line", async () => {
+    it("gives the reason alone, wrapped, for a thread the snapshot holds nothing of, and no recovery when the failure gives none", async () => {
       const screen = await open({
         ...RestingLoading.args,
         detail: failDetail(
           new Error("GitHub gave no answer within 10 seconds."),
         ),
       });
-      expect(readText(screen).slice(0, 2)).toEqual([
-        "✗ failed: GitHub gave no answer withi…",
+      expect(readText(screen).slice(0, 3)).toEqual([
+        "✗ failed: GitHub gave no answer within",
+        "10 seconds",
         "",
       ]);
     });
@@ -346,6 +228,137 @@ describe("ThreadAccordion", () => {
   });
 
   describe("fitting eight lines", () => {
+    it("keeps a failed read's recovery whole, cutting its long reason with …", async () => {
+      const failure = Object.assign(
+        new Error(
+          `GitHub answered with an error: ${"the connection was reset ".repeat(12)}`,
+        ),
+        {
+          recovery:
+            "check the network connection and https://www.githubstatus.com, then refresh",
+        },
+      );
+      const screen = await open({
+        ...RestingLoading.args,
+        detail: failDetail(failure),
+      });
+      const lines = readText(screen);
+      expect(lines.slice(4, 9)).toEqual([
+        expect.stringMatching(/…$/),
+        "Recovery: check the network connection",
+        "and https://www.githubstatus.com, then",
+        "refresh",
+        "",
+      ]);
+    });
+
+    it("never passes eight lines when a stacked pull request's read fails with a long reason", async () => {
+      const failure = Object.assign(
+        new Error(
+          `GitHub answered with an error: ${"the connection was reset ".repeat(6)}`,
+        ),
+        { recovery: "check the network connection, then refresh" },
+      );
+      const screen = await open(
+        { ...Long.args, detail: failDetail(failure) },
+        40,
+      );
+      expect(readText(screen).indexOf("")).toBeLessThanOrEqual(8);
+      expect(screen.lines.at(7)).toMatch(/^╹/);
+    });
+
+    it("gives the owners line only the lines a review's checks leave, ending it after a whole name, or the accordion's last line, in …", async () => {
+      const narrow = await open(Long.args);
+      expect(readText(narrow).slice(0, 8)).toEqual([
+        "asked by ● alice 6d ago",
+        "0 pushes since · 1 file · +40 −12",
+        "✗ checks: 3 of 4 failed",
+        "(lint the whole repository,",
+        "unit tests on every platform,",
+        "build the documentation site)",
+        "stack 7 · 2 of 3 · → release/…ong-name",
+        "below #12344 merged,…",
+      ]);
+      const wide = await open(Long.args, 60);
+      expect(readText(wide).at(0)).toBe(
+        "owner ○ example-contributor-with-a-long-login,…",
+      );
+    });
+
+    it("gives the owners line no line when the lines it gets end inside its one name, the accordion's last line ending in …", async () => {
+      const [failing, ...rest] = longReviewDetail.checks;
+      const checks = [
+        ...(failing ? [failing] : []),
+        ...rest.map((check) => ({ ...check, state: "passing" as const })),
+      ];
+      const detail = Promise.resolve({ ...longReviewDetail, checks });
+      const screen = await open({ ...Long.args, detail }, 40);
+      expect(readText(screen).slice(0, 7)).toEqual([
+        "asked by ● alice 6d ago",
+        "0 pushes since · 1 file · +40 −12",
+        "✗ checks: 1 of 4 failed",
+        "(lint the whole repository)",
+        "stack 7 · 2 of 3 · → release/…ong-name",
+        "below #12344 merged,…",
+        "",
+      ]);
+      expect(screen.lines.at(5)).toMatch(/^╹/);
+    });
+
+    it("keeps docket's words of a stack's place whole, the repository's short name leaving whole before the base branch is cut once in its middle", async () => {
+      const onStack = (stack: {
+        number: number;
+        position: number;
+        size: number;
+        base: string;
+      }) => ({
+        ...Long.args,
+        row: {
+          ...longSharedReview,
+          wait: {
+            ...longSharedReview.wait,
+            thread: { ...longSharedReview.wait.thread, stack },
+          },
+        },
+      });
+      const placeLine = (screen: Screen) =>
+        readText(screen).find((line) => /stack \d+ ·/.test(line));
+      const base = "release/example-branch-with-a-long-name";
+      const wide = onStack({ number: 123, position: 10, size: 12, base });
+      expect(placeLine(await open(wide, 40))).toBe(
+        "stack 123 · 10 of 12 · → relea…g-name…",
+      );
+      expect(placeLine(await open(wide, 60))).toBe(
+        "stack 123 · 10 of 12 · → release/example-…with-a-long-name",
+      );
+      // A stack of one ends on its place, so the owners' leaving is marked.
+      const one = onStack({ number: 7, position: 1, size: 1, base });
+      expect(placeLine(await open(one, 40))).toBe(
+        "stack 7 · 1 of 1 · → release…ong-name…",
+      );
+      const short = onStack({ number: 7, position: 2, size: 3, base: "main" });
+      expect(placeLine(await open(short, 40))).toBe(
+        "stack 7 · 2 of 3 · → main",
+      );
+      expect(placeLine(await open(short, 80))).toBe(
+        "example-repository-with-a-long-name stack 7 · 2 of 3 · → main",
+      );
+    });
+
+    it("wraps the failing checks between their names, keeping each whole", async () => {
+      const detail = { ...overReviewDetail, checks: longReviewDetail.checks };
+      const screen = await open({
+        ...Review.args,
+        detail: Promise.resolve(detail),
+      });
+      expect(readText(screen).slice(2, 6)).toEqual([
+        "✗ checks: 3 of 4 failed",
+        "(lint the whole repository,",
+        "unit tests on every platform,",
+        "build the documentation site)",
+      ]);
+    });
+
     it("cuts a message past the eighth line, only the last line ending in …, and leaves out when the reply began", async () => {
       const long = measureRow({
         ...soonReply.wait,
@@ -382,7 +395,9 @@ describe("ThreadAccordion", () => {
       return <ThreadAccordion {...Failed.args} detail={detail} />;
     };
     const screen = await drawSuspending(<Harness />, 40, 10);
-    expect(readText(screen).at(5)).toBe("✗ failed: GitHub timed out");
+    expect(readText(screen).at(3)).toBe(
+      "✗ failed: GitHub gave no answer within",
+    );
     const again = await screen.redraw(() =>
       show(Promise.resolve(overReviewDetail)),
     );

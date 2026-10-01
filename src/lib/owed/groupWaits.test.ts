@@ -3,6 +3,7 @@ import { at, teamSettings, thread, wait } from "../../testing/facts.js";
 import type { Repo } from "../config/index.js";
 import groupWaits from "./groupWaits.js";
 import listWaits from "./listWaits.js";
+import nameHeading from "./nameHeading.js";
 
 const now = at("2026-09-23T10:00+02:00");
 const { time, people } = teamSettings;
@@ -27,10 +28,9 @@ const list = listWaits(
 describe("groupWaits", () => {
   it("splits the sorted rows into the sections of the address's grouping", () => {
     const owed = groupWaits(list, { mode: "owed", grouping: "repo" }, repos);
-    expect(owed.groups.map(({ heading }) => heading?.text)).toEqual([
-      "example",
-      "docs",
-    ]);
+    expect(
+      owed.groups.map(({ heading }) => heading && nameHeading(heading)),
+    ).toEqual(["example", "docs"]);
   });
 
   it("keeps the address, the counts and the summary of the list", () => {

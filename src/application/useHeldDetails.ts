@@ -14,9 +14,9 @@ export interface UseHeldDetailsProps {
   /** The thread selected on the frame drawn last, if any. */
   readonly selected: () => ThreadSummary | undefined;
   /**
-   * When reading resumes, while it is paused, below the budget floor or
-   * under the rate limit, when no read may spend a point: the details held
-   * are given whatever their version, and nothing is read.
+   * When reading resumes, while the rate limit pauses it, when GitHub
+   * refuses every request: the details held are given whatever their
+   * version, and nothing is read.
    */
   readonly resumes?: Date;
 }

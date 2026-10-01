@@ -51,7 +51,7 @@ export default function listEvents(
           row: invalidFile
             ? {
                 ...row,
-                invalidFile: { text: invalidFileMark, fit: "trimmed" as const },
+                invalidFile: { text: invalidFileMark, kind: "words" as const },
               }
             : row,
         };
@@ -60,10 +60,12 @@ export default function listEvents(
     .sort((a, b) => newestFirst(a.newest, b.newest))
     .map(({ row }) => row);
   const events = rows.reduce((total, row) => total + row.events.length, 0);
-  const text = `${count(rows.length, "thread")} · ${count(events, "event")}`;
+  const fields = [count(rows.length, "thread"), count(events, "event")].map(
+    (text) => ({ text, kind: "words" as const }),
+  );
   return {
     rows,
     counts: { threads: rows.length, events },
-    summary: { text, fit: "trimmed" },
+    summary: { fields },
   };
 }

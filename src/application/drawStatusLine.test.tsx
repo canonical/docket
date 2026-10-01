@@ -13,8 +13,8 @@ const synced: StatusLineState = {
   failure: undefined,
   action: undefined,
   attention: "active",
-  detailsPaused: false,
   details: undefined,
+  budget: undefined,
   now: recordedNow,
   timezone: "Europe/Paris",
   watched: recordedRepos,
@@ -72,13 +72,16 @@ describe("drawStatusLine", () => {
     );
   });
 
+  it("says what is left of the queries' budget once less than 40% of it is left", async () => {
+    const resetAt = new Date("2026-09-28T12:20:00Z");
+    const line = await drawFor({
+      budget: { limit: 5000, remaining: 1750, resetAt },
+    });
+    expect(line).toBe(`synced 2m ago${" ".repeat(2)}budget 35% · resets 14:20`);
+  });
+
   it("counts the details read of those asked for", async () => {
     const line = await drawFor({ details: { read: 2, asked: 3 } });
     expect(line).toBe(`synced 2m ago${" ".repeat(16)}details 2/3`);
-  });
-
-  it("says the details are paused once their budget is spent", async () => {
-    const line = await drawFor({ detailsPaused: true });
-    expect(line).toBe(`synced 2m ago${" ".repeat(13)}details paused`);
   });
 });

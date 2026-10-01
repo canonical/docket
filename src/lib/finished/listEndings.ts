@@ -39,12 +39,12 @@ export default function listEndings(
             ? {
                 closer: {
                   text: `${names.get(closer.repo) ?? closer.repo}#${closer.number}`,
-                  fit: "trimmed",
+                  kind: "identifier",
                 },
               }
             : {}),
           ...(invalidFile
-            ? { invalidFile: { text: invalidFileMark, fit: "trimmed" } }
+            ? { invalidFile: { text: invalidFileMark, kind: "words" } }
             : {}),
         };
       }),
@@ -63,6 +63,12 @@ export default function listEndings(
     firstResponse: cover("firstResponse"),
     firstReview: cover("firstReview"),
   };
-  const text = `${counts.merged} merged · ${counts.closed} closed · ${counts.over.value} over`;
-  return { rows, counts, measures, summary: { text, fit: "trimmed" } };
+  // The parts in the order they are read; a face too narrow for all of
+  // them leaves out the last whole.
+  const fields = [
+    `${counts.merged} merged`,
+    `${counts.closed} closed`,
+    `${counts.over.value} over`,
+  ].map((text) => ({ text, kind: "words" as const }));
+  return { rows, counts, measures, summary: { fields } };
 }

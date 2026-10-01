@@ -3,24 +3,36 @@ import type { People, Repo } from "../config/index.js";
 import type { Wait } from "../waits/index.js";
 
 /**
- * How a face fits a field to the pane: trimmed text takes one line and is
- * cut with `…`, wrapped text flows over as many lines as it needs.
+ * What a field's text is, which decides how a face fits it to a slot too
+ * narrow for it: an `identifier`, such as `example#12` or a branch, whose
+ * end carries its meaning; a `person`, a login or a team's name; a
+ * thread's `title`; a `quote` of what someone wrote on GitHub; docket's
+ * own `words`, such as `review` or `unassigned`; a failure's `reason` and
+ * its `recovery`; and a `figure`, such as `1d over` or `25m`.
  */
-export type Fit = "trimmed" | "wrapped";
+export type FieldKind =
+  | "identifier"
+  | "person"
+  | "title"
+  | "quote"
+  | "words"
+  | "reason"
+  | "recovery"
+  | "figure";
 
 /**
- * One piece of text a face draws, whole. The view model never cuts text
- * and caps no field, because only a face knows its width and measures
- * display cells: a face that trims decides how much room each slot gets.
+ * One piece of text a face draws, whole, with the kind of text it is. The
+ * view model never cuts text and caps no field, because only a face knows
+ * its width and measures display cells: a face fits each field to its
+ * slot by the field's kind.
  */
 export interface Field {
   readonly text: string;
-  readonly fit: Fit;
+  readonly kind: FieldKind;
 }
 
-/** Fields that share a line and wrap between each other. */
+/** Fields that share a line, which a face wraps between each other. */
 export interface FieldList<F extends Field = Field> {
-  readonly fit: "wrapped";
   readonly fields: readonly F[];
 }
 
@@ -35,6 +47,7 @@ export type PersonGroup = "you" | "team" | "internal" | "outside" | "bot";
 
 /** A login a list names, or a team the viewer belongs to, with its group. */
 export interface Person extends Field {
+  readonly kind: "person";
   readonly group: PersonGroup;
 }
 
@@ -43,6 +56,28 @@ export interface Person extends Field {
  * such as `unassigned` or a GitHub team the viewer is not known to be in.
  */
 export type Owner = Person | Field;
+
+/**
+ * A stack's section heading, as its parts: `nameHeading` words it,
+ * `example stack 3 · 3 PRs → main`, and a face fits it as it fits a
+ * stack's place: the repository's short name leaves whole first, then the
+ * base branch is cut once in its middle, and `stack 3 · 3 PRs →` stays
+ * whole.
+ */
+export interface StackHeading {
+  readonly kind: "stack";
+  /** The repository's short name: `example`. */
+  readonly repo: string;
+  /** The stack's number, its first pull request's: `3`. */
+  readonly number: number;
+  /** How many pull requests the stack holds, open or not. */
+  readonly size: number;
+  /** The branch the stack's first pull request merges into: `main`. */
+  readonly base: string;
+}
+
+/** A section's heading: an owner, a stack, or docket's own name for it. */
+export type Heading = Owner | StackHeading;
 
 /**
  * A pane's header: the mode as its title, and where the reader is inside
@@ -142,7 +177,7 @@ export interface WaitRow {
  * An owner's section is headed by the owner, a person with their group.
  */
 export interface WaitGroup {
-  readonly heading?: Owner;
+  readonly heading?: Heading;
   readonly rows: readonly WaitRow[];
 }
 
@@ -158,8 +193,8 @@ export interface WaitList {
   /** The rows, most overdue first. */
   readonly rows: readonly WaitRow[];
   readonly counts: Counts;
-  /** `3 over · 2 soon · 6 on track`. */
-  readonly summary: Field;
+  /** `3 over`, `2 soon`, `6 on track`: the most urgent first. */
+  readonly summary: FieldList;
 }
 
 /** Everything owed shows for one address. */
@@ -167,6 +202,6 @@ export interface OwedList {
   readonly address: OwedAddress;
   readonly groups: readonly WaitGroup[];
   readonly counts: Counts;
-  /** `3 over · 2 soon · 6 on track`. */
-  readonly summary: Field;
+  /** `3 over`, `2 soon`, `6 on track`: the most urgent first. */
+  readonly summary: FieldList;
 }
