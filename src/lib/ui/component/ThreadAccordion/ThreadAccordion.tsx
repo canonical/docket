@@ -5,6 +5,7 @@ import {
   use,
   useLayoutEffect,
 } from "react";
+import type { Verdict } from "../../../endings/index.js";
 import type { WaitRow } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
@@ -17,23 +18,38 @@ import describeDetail, { type Reading } from "./describeDetail.js";
 import fitAccordion from "./fitAccordion.js";
 import type { ShownDetail, ThreadAccordionProps } from "./types.js";
 
-/** What the item's margin shows beside the accordion: the row's state and stack. */
+/**
+ * What the item's margin shows beside the accordion: the row's state and
+ * stack, and whether the item ends with it, where the bar then stops.
+ */
 interface Stroke {
-  readonly state?: WaitRow["state"];
+  readonly state?: WaitRow["state"] | Verdict;
   readonly stacked: boolean;
+  readonly ends: boolean;
 }
 
 /**
  * The margin the item's bar and stack mark run down, from the row above:
- * the bar only where the list runs a clock.
+ * the bar only where the list runs a clock. A finished thread's ending
+ * follows its accordion, so its bar runs on past the accordion's last line.
  */
-const findStroke = (
-  row: ThreadAccordionProps["row"],
-  clock: boolean,
-): Stroke =>
-  "wait" in row
-    ? { ...(clock ? { state: row.state } : {}), stacked: row.stacked }
-    : { stacked: row.thread.stack !== undefined };
+function findStroke(row: ThreadAccordionProps["row"], clock: boolean): Stroke {
+  if ("wait" in row) {
+    return {
+      ...(clock ? { state: row.state } : {}),
+      stacked: row.stacked,
+      ends: true,
+    };
+  }
+  if ("ending" in row) {
+    return {
+      ...(clock && row.verdict ? { state: row.verdict } : {}),
+      stacked: row.stacked,
+      ends: false,
+    };
+  }
+  return { stacked: row.thread.stack !== undefined, ends: true };
+}
 
 /**
  * Draws the lines given with the item's margin beside them, the bar
@@ -59,7 +75,7 @@ const Lines = ({
       flexShrink={0}
       backgroundColor={tokens["color.background.selected"]}
     >
-      <Margin {...stroke} lines={lines.length} ends />
+      <Margin {...stroke} lines={lines.length} />
       <box flexDirection="column">
         {lines.map((line, place) => (
           // The accordion's lines never reorder, so their place is their key.
@@ -171,8 +187,10 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
       text: trimText(`${tokens["glyph.failed"]} failed: ${reason}`, room),
       fg: tokens["color.text.error"],
     };
+    // A thread the snapshot holds, owed's wait or a finished one, keeps
+    // its lines above the reason.
     const shown =
-      "wait" in snapshot
+      "wait" in snapshot || "ending" in snapshot
         ? fitAccordion(
             describeDetail(snapshot, undefined, reading),
             room,
@@ -190,7 +208,7 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
  * time, and the selected row stays anchored above it. It is as tall as
  * its content, at most eight lines, and wrapped to the pane beside the
  * item's margin, whose bar runs down from the row and ends on its last
- * line. Its lines come from the snapshot at once, so the list makes room
+ * line, or, under a finished thread, runs on to its ending. Its lines come from the snapshot at once, so the list makes room
  * for them before any read; a line the details complete ends in a dimmed
  * `…` and grows in place when they arrive, and nothing blanks or changes
  * height meanwhile. It reads its details from GitHub, so a slow read

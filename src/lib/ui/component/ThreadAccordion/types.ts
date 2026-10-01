@@ -1,4 +1,5 @@
 import type { People } from "../../../config/index.js";
+import type { FinishedRow } from "../../../finished/index.js";
 import type { Owner, Person, WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import type { ThreadSummary } from "../../../waits/index.js";
@@ -67,11 +68,12 @@ export interface RestingThread {
 /** Props for the ThreadAccordion component. */
 export interface ThreadAccordionProps {
   /**
-   * The selected row's running wait, whose kind decides the body, or the
-   * thread at rest, which takes the close body.
-   * Maps to DSL role: reply body, review body, close body (cardinality: 1)
+   * The selected row's running wait, whose kind decides the body, the
+   * thread at rest, which takes the close body, or a finished thread,
+   * which takes the finished body.
+   * Maps to DSL role: reply body, review body, close body, finished body (cardinality: 1)
    */
-  row: WaitRow | RestingThread;
+  row: WaitRow | RestingThread | FinishedRow;
   /**
    * The thread's details as the provider reads them: until they arrive the
    * accordion shows what the snapshot holds, and the reason if they fail.
@@ -87,8 +89,9 @@ export interface ThreadAccordionProps {
    */
   waiting: Readonly<Record<string, string>>;
   /**
-   * Whether the list runs a clock, as owed does, so the item's state bar
-   * runs down beside the accordion; in activity its column is blank.
+   * Whether the list runs a clock, as owed and finished do, so the item's
+   * state bar runs down beside the accordion; in activity its column is
+   * blank.
    */
   clock: boolean;
   /** The instant ages are measured at. */

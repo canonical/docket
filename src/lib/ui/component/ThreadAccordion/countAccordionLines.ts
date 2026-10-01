@@ -1,3 +1,4 @@
+import type { FinishedRow } from "../../../finished/index.js";
 import type { WaitRow } from "../../../owed/index.js";
 import { marginCells } from "../Margin/constants.js";
 import describeDetail, { type Reading } from "./describeDetail.js";
@@ -14,7 +15,7 @@ import type { RestingThread } from "./types.js";
  * from what the accordion draws.
  */
 export default function countAccordionLines(
-  row: WaitRow | RestingThread,
+  row: WaitRow | RestingThread | FinishedRow,
   reading: Reading,
   width: number,
 ): number {

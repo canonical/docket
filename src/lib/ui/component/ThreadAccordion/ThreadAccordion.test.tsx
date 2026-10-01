@@ -6,6 +6,7 @@ import {
   sharedCloseDetail,
 } from "../../../../testing/details.js";
 import { thread } from "../../../../testing/facts.js";
+import { findFinishedRow } from "../../../../testing/finished.js";
 import { measureRow, overReview, soonReply } from "../../../../testing/rows.js";
 import { drawSuspending, type Screen } from "../../../../testing/terminal.js";
 import type { ThreadDetail } from "../../../provider/index.js";
@@ -14,6 +15,9 @@ import ThreadAccordion from "./ThreadAccordion.js";
 import {
   Close,
   Failed,
+  FinishedClosedIn,
+  FinishedOver,
+  FinishedStackLoading,
   Loading,
   Paused,
   PausedUnheld,
@@ -31,6 +35,89 @@ const open = (props: ThreadAccordionProps, width = props.width) =>
   drawSuspending(<ThreadAccordion {...props} width={width} />, width, 10);
 
 describe("ThreadAccordion", () => {
+  describe("under a finished thread", () => {
+    it("says what line 1 does not of a time to close past its target, then the labels, its heavy bar running on to the ending", async () => {
+      const screen = await open(FinishedOver.args);
+      expect(screen.lines.slice(0, 3)).toEqual([
+        "┃ open 37d · target 30d",
+        "┃ labels kind=feat",
+        "",
+      ]);
+      expect(screen.look("┃")?.fg).toBe(tokens["color.text.error"]);
+    });
+
+    it("gives the target alone within it, and the pull request that closed the issue after dimmed words", async () => {
+      const screen = await open(FinishedClosedIn.args);
+      expect(readText(screen).slice(0, 4)).toEqual([
+        "target 30d",
+        "closed in example#2",
+        "labels none",
+        "",
+      ]);
+      expect(screen.look("closed in")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("example#2")?.fg).toBe(tokens["color.text"]);
+      expect(screen.look("│")?.fg).toBe(tokens["color.text.success"]);
+    });
+
+    it("draws its lines from the list at once, never loading, the stack's neighbours waiting on the details", async () => {
+      const screen = await open(FinishedStackLoading.args);
+      expect(screen.lines.slice(0, 5)).toEqual([
+        "│┆target 5d",
+        "│┆labels none",
+        "│┆example stack 3 · 1 of 2 · → main",
+        "│┆…",
+        "",
+      ]);
+    });
+
+    it("names the stack's neighbour once the details give it", async () => {
+      const detail = {
+        ...overReviewDetail,
+        stack: [
+          { position: 1, number: 2, state: "merged" as const },
+          { position: 2, number: 3, state: "merged" as const },
+        ],
+      };
+      const screen = await open({
+        ...FinishedStackLoading.args,
+        detail: Promise.resolve(detail),
+      });
+      expect(readText(screen).at(3)).toBe("above #3 merged");
+    });
+
+    it("has no time line where a label exempts the thread, and leaves the bar's column blank", async () => {
+      const exempt = findFinishedRow("example#9");
+      const screen = await open({ ...FinishedOver.args, row: exempt });
+      expect(screen.lines.slice(0, 2)).toEqual(["  labels dependencies", ""]);
+    });
+
+    it("names every owner whole when the row cuts a login", async () => {
+      const row = findFinishedRow("example#7");
+      const long = {
+        text: "alice-with-a-long-login",
+        fit: "trimmed",
+        group: "team",
+      } as const;
+      const screen = await open({
+        ...FinishedOver.args,
+        row: { ...row, owner: long },
+      });
+      expect(readText(screen).at(2)).toBe("owner ● alice-with-a-long-login");
+    });
+
+    it("keeps its lines above the reason when reading the details fails", async () => {
+      const screen = await open({
+        ...FinishedOver.args,
+        detail: failDetail(new Error("GitHub timed out.")),
+      });
+      expect(readText(screen).slice(0, 3)).toEqual([
+        "open 37d · target 30d",
+        "labels kind=feat",
+        "✗ failed: GitHub timed out",
+      ]);
+    });
+  });
+
   it("runs the item's bar and stack mark down its lines, the bar ending on the last", async () => {
     const screen = await open(Review.args);
     expect(screen.lines.slice(0, 6).map((line) => line.slice(0, 2))).toEqual([

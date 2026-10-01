@@ -7,6 +7,7 @@ import {
   soonReplyDetail,
 } from "../../../../testing/details.js";
 import { teamSettings } from "../../../../testing/facts.js";
+import { findFinishedRow } from "../../../../testing/finished.js";
 import { recordedNow } from "../../../../testing/recorded.js";
 import {
   overReview,
@@ -103,6 +104,39 @@ export const PausedUnheld: Story<ThreadAccordionProps> = {
     ...reading,
     row: overReview,
     detail: Promise.resolve({ resumes: new Date("2026-09-28T13:00:00Z") }),
+  },
+};
+
+/**
+ * A finished issue that ended past its target: what line 1 does not say
+ * of its time to close, then its labels, the bar running on to its ending.
+ */
+export const FinishedOver: Story<ThreadAccordionProps> = {
+  args: {
+    ...reading,
+    row: findFinishedRow("example#7"),
+    detail: Promise.resolve(overReviewDetail),
+  },
+};
+
+/** A finished issue that a pull request closed, within its target: the target, then what closed it. */
+export const FinishedClosedIn: Story<ThreadAccordionProps> = {
+  args: {
+    ...reading,
+    row: findFinishedRow("docs#4"),
+    detail: Promise.resolve(overReviewDetail),
+  },
+};
+
+/**
+ * A finished pull request in a stack while its details are read: every
+ * line from the list at once, the stack's neighbours ending in a dimmed `…`.
+ */
+export const FinishedStackLoading: Story<ThreadAccordionProps> = {
+  args: {
+    ...reading,
+    row: findFinishedRow("example#2"),
+    detail: pendingDetail,
   },
 };
 
