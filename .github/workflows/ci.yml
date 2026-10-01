@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, ci/release-workflows]
+    branches: [main]
   # The release workflow runs these same gates before it publishes.
   workflow_call:
 
