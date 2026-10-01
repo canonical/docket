@@ -17,6 +17,7 @@ import {
   Failed,
   FinishedClosedIn,
   FinishedOver,
+  FinishedPaused,
   FinishedStackLoading,
   Loading,
   Paused,
@@ -68,6 +69,18 @@ describe("ThreadAccordion", () => {
         "│┆…",
         "",
       ]);
+    });
+
+    it("keeps the list's lines while reading is paused, the stack's neighbours alone saying when it resumes", async () => {
+      const screen = await open(FinishedPaused.args);
+      expect(readText(screen).slice(0, 5)).toEqual([
+        "target 5d",
+        "labels none",
+        "example stack 3 · 1 of 2 · → main",
+        "paused · resumes 15:00",
+        "",
+      ]);
+      expect(screen.look("paused")?.fg).toBe(tokens["color.text.muted"]);
     });
 
     it("names the stack's neighbour once the details give it", async () => {

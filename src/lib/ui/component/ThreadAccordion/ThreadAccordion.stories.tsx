@@ -140,6 +140,18 @@ export const FinishedStackLoading: Story<ThreadAccordionProps> = {
   },
 };
 
+/**
+ * Reading is paused for a finished pull request in a stack: every line
+ * from the list, and its stack's neighbours saying when reading resumes.
+ */
+export const FinishedPaused: Story<ThreadAccordionProps> = {
+  args: {
+    ...reading,
+    row: findFinishedRow("example#2"),
+    detail: Promise.resolve({ resumes: new Date("2026-09-28T13:00:00Z") }),
+  },
+};
+
 /** Reading the details failed: the reason under what the snapshot showed. */
 export const Failed: Story<ThreadAccordionProps> = {
   args: {
