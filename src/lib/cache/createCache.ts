@@ -1,4 +1,4 @@
-import { mkdirSync, watch as watchFolder } from "node:fs";
+import { watch as watchFolder } from "node:fs";
 import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { Account } from "../people/index.js";
@@ -34,6 +34,7 @@ import type {
   CacheStatus,
   RepoCache,
 } from "./types.js";
+import watchBudgetFolder from "./watchBudgetFolder.js";
 import withFetchLock from "./withFetchLock.js";
 import writeCacheFile from "./writeCacheFile.js";
 
@@ -175,11 +176,13 @@ export default function createCache({
     }
     publish();
   };
-  /** Reads the budget folder into the mirror, and says the floor. */
-  const loadBudget = async () => {
-    mirror = mergeBudgets(mirror, await readBudgetFolder(budgetFolder, now()));
+  /** Merges budgets read into the mirror, once read, and says the floor. */
+  const adopt = (read: Budgets) => {
+    mirror = mergeBudgets(mirror, read);
     publishFloor();
   };
+  const loadBudget = async () =>
+    adopt(await readBudgetFolder(budgetFolder, now()));
   /** Writes the cache file, then keeps the budgets its reads heard. */
   const save = async () => {
     const contents = { state: dehydrate(client), fullRefreshAt };
@@ -452,11 +455,7 @@ export default function createCache({
       return discarded;
     },
     watch() {
-      mkdirSync(budgetFolder, { recursive: true, mode: 0o700 });
-      // Another process's budget file; this one's holds nothing it lacks.
-      const budgets = watchFolder(budgetFolder, (_event, name) => {
-        if (name?.endsWith(".json") && name !== ownBudget) void loadBudget();
-      });
+      const unwatch = watchBudgetFolder(budgetFolder, ownBudget, now, adopt);
       const watcher = watchFolder(directory, (_event, name) => {
         if (name !== cacheFileName) return;
         // The file this process wrote holds nothing it lacks.
@@ -466,7 +465,7 @@ export default function createCache({
       });
       return () => {
         watcher.close();
-        budgets.close();
+        unwatch();
       };
     },
     patchAssignees({ repo, number }, assignees) {

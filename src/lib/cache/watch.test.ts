@@ -4,11 +4,17 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { thread } from "../../testing/facts.js";
-import { fakeProvider, providerError } from "../../testing/provider.js";
+import {
+  fakeProvider,
+  fullBudget,
+  providerError,
+} from "../../testing/provider.js";
 import { waitUntil } from "../../testing/wait.js";
 import type { Provider } from "../provider/index.js";
+import { budgetFolderName } from "./constants.js";
 import createCache from "./createCache.js";
 import identifyFile from "./identifyFile.js";
+import writeBudgetFile from "./writeBudgetFile.js";
 
 // The filesystem, counted: every write and read of the cache file.
 vi.mock("node:fs/promises", async (original) => {
@@ -17,6 +23,7 @@ vi.mock("node:fs/promises", async (original) => {
     ...actual,
     rename: vi.fn(actual.rename),
     readFile: vi.fn(actual.readFile),
+    readdir: vi.fn(actual.readdir),
   };
 });
 // The watch, which a test can replace with events it sends itself.
@@ -47,6 +54,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   vi.clearAllMocks();
+  vi.mocked(folders.watch).mockReset();
   await files.rm(root, { recursive: true, force: true });
 });
 
@@ -121,10 +129,14 @@ describe("the writes and the watch of createCache", () => {
 
   it("reads back none of its own writes, however soon it hears of them", async () => {
     let hear: (event: string, name: string) => void = () => undefined;
-    vi.mocked(folders.watch).mockImplementationOnce(((
-      _folder: string,
+    // The cache folder's watch alone is replaced.
+    const watchActual = await vi.importActual<typeof folders>("node:fs");
+    vi.mocked(folders.watch).mockImplementation(((
+      folder: string,
       listener: typeof hear,
     ) => {
+      if (folder !== directory)
+        return watchActual.watch(folder, listener as never);
       hear = listener;
       return { close: () => undefined };
     }) as unknown as typeof folders.watch);
@@ -160,5 +172,20 @@ describe("the writes and the watch of createCache", () => {
     pane.subscribe(heard);
     await pane.load();
     expect(heard).not.toHaveBeenCalled();
+  });
+
+  it("reads only the budget file another process writes, never the whole folder, while it watches", async () => {
+    const pane = open(counting());
+    await pane.load();
+    const stop = pane.watch();
+    vi.mocked(files.readdir).mockClear();
+    const budget = { graphql: { ...fullBudget, remaining: 900 } };
+    const other = `${process.pid + 1}.json`;
+    await writeBudgetFile(join(directory, budgetFolderName, other), budget);
+    await waitUntil(() => {
+      expect(pane.readBudgets()).toEqual(budget);
+    });
+    expect(files.readdir).not.toHaveBeenCalled();
+    stop();
   });
 });

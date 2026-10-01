@@ -1,7 +1,8 @@
 import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
-import type { Budget, Budgets } from "../provider/index.js";
+import type { Budgets } from "../provider/index.js";
 import dropFarResets from "./dropFarResets.js";
+import hasAllReset from "./hasAllReset.js";
 import mergeBudgets from "./mergeBudgets.js";
 import readBudgetFile from "./readBudgetFile.js";
 
@@ -31,10 +32,7 @@ export default async function readBudgetFolder(
     .filter((name) => name.endsWith(".json"))
     .map((name) => join(folder, name));
   const read = await Promise.all(files.map(readBudgetFile));
-  const hasReset = (budget: Budget | undefined) =>
-    budget === undefined || budget.resetAt <= at;
-  const isSpent = ({ graphql, rest }: Budgets) =>
-    (graphql ?? rest) !== undefined && hasReset(graphql) && hasReset(rest);
+  const isSpent = (budgets: Budgets) => hasAllReset(budgets, at);
   await Promise.all(
     files.map((file, index) =>
       isSpent(read[index] ?? {})
