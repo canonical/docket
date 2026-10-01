@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { ThreadSummary } from "../lib/waits/index.js";
 import { readWeekDetail, weekEndings } from "../testing/endings.js";
 import { providerError } from "../testing/provider.js";
 import {
@@ -24,12 +25,12 @@ function viewWeek(view: Partial<TerminalView> = {}): ScreenFrameProps {
   };
 }
 
-/** Draws the screen on `view`, 24 lines tall, once its window is read. */
-async function show(view: ScreenFrameProps, width = 40) {
-  const screen = await drawSuspending(<ScreenFrame {...view} />, width, 24);
+/** Draws the screen on `view`, `height` lines tall, once its window is read. */
+async function show(view: ScreenFrameProps, width = 40, height = 24) {
+  const screen = await drawSuspending(<ScreenFrame {...view} />, width, height);
   return waitUntil(async () => {
     const drawn = await screen.redraw();
-    expect(drawn.lines.at(21)).toMatch(/merged/);
+    expect(drawn.lines.at(height - 3)).toMatch(/merged/);
     return drawn;
   });
 }
@@ -130,23 +131,41 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
     expect(last.lines.at(21)).toBe("4 merged · 3 closed · 3 over         7/7");
   });
 
-  it("reads no thread's details over a window of threads in no stack, whichever is selected", async () => {
-    const unstacked = weekEndings.filter(({ stack }) => stack === undefined);
-    const read = vi.fn(readWeekDetail);
-    const readAhead = vi.fn(async (threads: readonly { number: number }[]) =>
-      Promise.all(threads.map((thread) => readWeekDetail(thread as never))),
-    );
+  it("reads no details while a thread in no stack is selected, and only stacked pull requests' once one is", async () => {
+    // Each read notes whether the selection had reached a stacked pull
+    // request, so a read made earlier shows without waiting on a timer.
+    let reached = false;
+    const asked: [boolean, number[]][] = [];
+    const readAhead = vi.fn(async (threads: readonly ThreadSummary[]) => {
+      asked.push([reached, threads.map(({ number }) => number)]);
+      return Promise.all(threads.map(readWeekDetail));
+    });
+    const read = vi.fn(async (thread: ThreadSummary) => {
+      asked.push([reached, [thread.number]]);
+      return readWeekDetail(thread);
+    });
     const source = connectRecording({
-      finished: unstacked,
+      finished: weekEndings,
       read,
       details: createDetailReader(readAhead),
     });
     const screen = await show(viewWeek({ source }));
-    await press(screen, "j", "j", "j", "j");
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    await screen.redraw();
-    expect(read).not.toHaveBeenCalled();
-    expect(readAhead).not.toHaveBeenCalled();
+    await press(screen, "j", "j");
+    reached = true;
+    const stacked = await press(screen, "j");
+    expect(stacked.lines).toContain("│┆example#1200 PR ● bob          open 3d");
+    const numbers = () => asked.flatMap(([, each]) => each);
+    await waitUntil(() => expect(numbers()).toContain(1200));
+    expect(asked.every(([after]) => after)).toBe(true);
+    expect(numbers().every((each) => [1200, 1180].includes(each))).toBe(true);
+  });
+
+  it("keeps a group's heading above its first thread, selected below the top, rather than pinning it", async () => {
+    const screen = await show(viewWeek(), 40, 14);
+    const up = await press(screen, "end", "k", "k", "k");
+    const row = up.lines.indexOf("│┆example#1200 PR ● bob          open 3d");
+    expect(row).toBeGreaterThan(1);
+    expect(up.lines.at(row - 1)).toBe(`PULL REQUESTS ${"─".repeat(26)}`);
   });
 
   it("reads a stacked pull request's details, which name its stack's neighbours", async () => {

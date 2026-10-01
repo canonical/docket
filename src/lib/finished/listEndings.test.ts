@@ -71,6 +71,24 @@ describe("listEndings", () => {
     expect(merged).not.toHaveProperty("closer");
   });
 
+  it("names no closer for an issue a commit or a project closed, only a pull request", () => {
+    const closedBy = (closer: (typeof completed)["ending"]["closer"]) => ({
+      ...completed,
+      ending: { ...completed.ending, closer },
+    });
+    const commit = {
+      kind: "commit",
+      oid: "abc123",
+      url: "https://example.com/c",
+    } as const;
+    const project = { kind: "project" } as const;
+    const { rows } = listEndings(
+      repoEndings([closedBy(commit), closedBy(project)]),
+      finishedNow,
+    );
+    expect(rows.map((row) => row.closer)).toEqual([undefined, undefined]);
+  });
+
   it("marks the viewer as you", () => {
     const [row] = listEndings(repoEndings(), finishedNow, "bob").rows;
     expect(row?.ending.actor?.group).toBe("you");
