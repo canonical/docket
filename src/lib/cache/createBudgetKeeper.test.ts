@@ -150,6 +150,27 @@ describe("createBudgetKeeper", () => {
     expect(await readdir(directory)).toContain("budget.json.lock");
   });
 
+  it("leaves alone a lock another process took over after its write", async () => {
+    const keeper = createBudgetKeeper({
+      file,
+      lockPath,
+      readFigures: () => makeBudget(900),
+      isKept: () => false,
+      // Once the figures are written, another process takes the lock over.
+      adopt: () => {
+        rmSync(lockPath, { recursive: true });
+        mkdirSync(lockPath);
+        const later = new Date(Date.now() + 2_000);
+        utimesSync(lockPath, later, later);
+      },
+      publishFloor: () => {},
+      now: () => clock,
+    });
+    await keeper();
+    expect(await readBudgetFile(file)).toEqual(makeBudget(900));
+    expect(await readdir(directory)).toContain("budget.json.lock");
+  });
+
   it("leaves the lowest figure of the window when processes keep falling figures together", async () => {
     const figures = [950, 900, 850, 800, 750, 700];
     await Promise.all(

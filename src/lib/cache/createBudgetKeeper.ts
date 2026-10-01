@@ -80,15 +80,20 @@ export default function createBudgetKeeper({
       if (!isSame(kept, read)) await writeBudgetFile(file, kept);
       adopt(kept);
     } finally {
-      // A lock taken over is let go only once the library has heard so,
-      // or its release would remove the lock of the process that took it.
+      // The lock may also have been taken over since the check before the
+      // write. A lock taken over is let go only once the library has heard
+      // so, or its release would remove the lock of the process that took
+      // it.
+      taken ||= (await identifyFile(lockPath)) !== own;
       if (taken) {
+        let timer: ReturnType<typeof setTimeout> | undefined;
         await Promise.race([
           forgotten.promise,
-          new Promise((resolve) =>
-            setTimeout(resolve, budgetLockTiming.stale).unref(),
-          ),
+          new Promise((resolve) => {
+            timer = setTimeout(resolve, budgetLockTiming.stale);
+          }),
         ]);
+        clearTimeout(timer);
       }
       await release().catch(() => undefined);
     }
