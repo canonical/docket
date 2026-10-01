@@ -132,7 +132,10 @@ export interface Coverage {
 export interface MeasuredEnding {
   readonly thread: FinishedThread;
   readonly measures: Measures;
-  /** How long it was open, from its opening to its ending, in working milliseconds. */
+  /**
+   * How long it was open, from its opening to its ending, in working
+   * milliseconds.
+   */
   readonly openTime: number;
 }
 
