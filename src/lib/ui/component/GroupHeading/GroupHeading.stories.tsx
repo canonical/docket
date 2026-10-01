@@ -49,3 +49,15 @@ export const LongTeam: Story<GroupHeadingProps> = {
     width: 40,
   },
 };
+
+/**
+ * bob's section pinned above its rows while they scroll, the first row
+ * shown the third of his five.
+ */
+export const Pinned: Story<GroupHeadingProps> = {
+  args: {
+    heading: { text: "bob", kind: "person", group: "team" },
+    count: "3 of 5",
+    width: 40,
+  },
+};

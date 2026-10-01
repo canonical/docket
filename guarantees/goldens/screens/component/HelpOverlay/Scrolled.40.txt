@@ -1,0 +1,18 @@
+40 columns, 8 lines
+|List · 1 of 1 ──────────────────────────
+|  ↑ ↓  k j move the selection
+|           (opens the accordion)
+|
+|App ────────────────────────────────────
+|  ?        show or hide help
+|  R        full refresh
+|  ↓ 1 below
+
+runs
+1:1 "List · 1 of 1 ──────────────────────────" fg #c6c8d1ff bg #00000000
+2:1 "  ↑ ↓  k j move the selection" fg #c6c8d1ff bg #00000000
+3:1 "           (opens the accordion)" fg #c6c8d1ff bg #00000000
+5:1 "App ────────────────────────────────────" fg #c6c8d1ff bg #00000000
+6:1 "  ?        show or hide help" fg #c6c8d1ff bg #00000000
+7:1 "  R        full refresh" fg #c6c8d1ff bg #00000000
+8:1 "  ↓ 1 below" fg #6b7089ff bg #00000000

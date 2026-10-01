@@ -13,6 +13,14 @@ export const accordionMaxLines = 8;
 export const loginCells = 12;
 
 /**
+ * The shortest terminal docket draws its screen in, in lines: the header,
+ * the counts, the status and the keys take four, which leaves the list
+ * four. Below it, the pane shows only a line saying so, and no key but
+ * `q` acts.
+ */
+export const minLines = 8;
+
+/**
  * The narrowest terminal docket draws its screen in, in display cells.
  * Every line of the screen is designed to fit it; below it, the pane
  * shows only a line saying so, and no key but `q` acts.

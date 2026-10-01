@@ -65,7 +65,7 @@ describe("OwedList", () => {
       "│ Where do tokens live?",
       `╵${" ".repeat(25)}● alice, ● bob`,
       "● bob ──────────────────────────────────",
-      "",
+      "  ↓ 4 below",
     ]);
     expect(screen.look("● alice")).toMatchObject({
       fg: tokens["color.text.team"],
@@ -105,13 +105,14 @@ describe("OwedList", () => {
     );
   });
 
-  it("scrolls so the selected row and its details are whole in view", async () => {
+  it("scrolls so the selected row and its details are in view, cut above the sign of the rows below", async () => {
     const screen = await drawList("owner", 4, 40, 8);
-    expect(screen.lines.slice(0, 2)).toEqual([
+    expect(screen.lines.slice(0, 3)).toEqual([
+      `● bob · 2 of 2 ${"─".repeat(25)}`,
       `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
       `│┆Fix the parser${" ".repeat(9)}✗ checks  ● bob`,
     ]);
-    expect(screen.lines.at(7)).toBe("unassigned ─────────────────────────────");
+    expect(screen.lines.at(7)).toBe("  ↓ 2 below");
   });
 
   it("draws an editor in the details' place under the selected row, which gives up its background, and keeps it in view", async () => {
@@ -127,12 +128,12 @@ describe("OwedList", () => {
     };
     const screen = await drawList("owner", 4, 40, 6, editor);
     expect(screen.lines).toEqual([
+      `● bob · 2 of 2 ${"─".repeat(25)}`,
       `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
       `╵┆Fix the parser${" ".repeat(9)}✗ checks  ● bob`,
       "  filter:",
       "  ☑ alice",
-      "  ☐ bob",
-      "unassigned ─────────────────────────────",
+      "  ↓ 2 below",
     ]);
     expect(screen.look("example#12 PR review")?.bg).not.toBe(
       tokens["color.background.selected"],

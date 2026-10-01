@@ -1,5 +1,5 @@
 import type { Repo } from "../config/index.js";
-import { kindSections } from "./constants.js";
+import { kindSections } from "../owed/index.js";
 import type { ActivityGrouping, ThreadGroup, ThreadRow } from "./types.js";
 
 /**

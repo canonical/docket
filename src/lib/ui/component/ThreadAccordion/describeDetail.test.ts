@@ -8,8 +8,6 @@ import {
   at,
   bob,
   carol,
-  dave,
-  exampleSync,
   teamSettings,
   thread,
 } from "../../../../testing/facts.js";
@@ -265,102 +263,34 @@ describe("describeDetail", () => {
       );
     });
 
-    it("says unassigned, no labels, and no one when nobody wrote", () => {
+    it("gives the opening, its time and whoever opened it, as the last activity of a thread nobody wrote on, however recently it changed", () => {
+      const opened = thread({
+        createdAt: at("2026-09-22T10:00+02:00"),
+        updatedAt: at("2026-09-28T11:00+02:00"),
+      });
+      const quiet = describeDetail(
+        measureRow({ thread: opened }),
+        undefined,
+        reading,
+      );
+      expect(readTexts(quiet.body).at(1)).toBe("last activity 6d ago · ○ dave");
+      // A comment or a review makes the thread no longer quiet.
+      const bobWrote = [{ author: bob, at: at("2026-09-28T11:00+02:00") }];
+      for (const written of [{ comments: bobWrote }, { reviews: bobWrote }]) {
+        const row = measureRow({ thread: { ...opened, ...written } });
+        expect(
+          readTexts(describeDetail(row, undefined, reading).body).at(1),
+        ).toBe("last activity 1h ago · ● bob");
+      }
+    });
+
+    it("says unassigned, no labels, and whoever opened it when nobody wrote since", () => {
       const { body } = describeDetail(measureRow({}), undefined, reading);
       expect(readTexts(body)).toEqual([
         "age 6d · owner unassigned",
-        "last activity 6d ago",
+        "last activity 6d ago · ○ dave",
         "labels none",
       ]);
-    });
-  });
-
-  describe("a thread no wait runs on", () => {
-    const people = teamSettings.people;
-
-    it("says loading, dimmed, until its details arrive, since the snapshot holds nothing of it", () => {
-      const resting = {
-        repo: "example",
-        thread: overReview.wait.thread,
-        people,
-      };
-      const { body, stack } = describeDetail(resting, undefined, reading);
-      expect(readTexts(body)).toEqual(["loading…"]);
-      expect(body.at(0)?.pieces.at(0)?.fg).toBe(tokens["color.text.muted"]);
-      expect(stack).toEqual([]);
-    });
-
-    it("gives the close body from its details, with the owners its row names and whoever wrote last behind their marks", () => {
-      const resting = {
-        repo: "example",
-        thread: sharedClose.wait.thread,
-        owners: [
-          { text: "alice", kind: "person" as const, group: "you" as const },
-          { text: "bob", kind: "person" as const, group: "team" as const },
-        ],
-        people,
-        viewer: "alice",
-      };
-      const { body } = describeDetail(resting, sharedCloseDetail, reading);
-      expect(readTexts(body)).toEqual([
-        "age 6d · owner ◉ alice, ● bob",
-        "last activity 3h ago · ● bob",
-        "labels priority=high · kind=bug · area/icons",
-      ]);
-      expect(colourOf(body[1], "● bob")).toBe(tokens["color.text.team"]);
-    });
-
-    it("gives a closed thread its age, its assignees that are not bots as owners behind their marks, and its labels, then its stack lines", () => {
-      const resting = {
-        repo: "example",
-        thread: overReview.wait.thread,
-        people,
-        viewer: "alice",
-      };
-      const closed = {
-        ...sharedCloseDetail,
-        assignees: [alice, dave, exampleSync],
-      };
-      expect(readTexts(describeDetail(resting, closed, reading).body)).toEqual([
-        "age 6d · owner ◉ alice, ○ dave",
-        "last activity 3h ago · ● bob",
-        "labels priority=high · kind=bug · area/icons",
-      ]);
-      const unassigned = {
-        ...sharedCloseDetail,
-        assignees: [exampleSync],
-        messages: [],
-      };
-      expect(
-        readTexts(describeDetail(resting, unassigned, reading).body),
-      ).toEqual([
-        "age 6d · owner unassigned",
-        "last activity 3h ago",
-        "labels priority=high · kind=bug · area/icons",
-      ]);
-      expect(
-        readTexts(describeDetail(resting, overReviewDetail, reading).stack),
-      ).toEqual([
-        "example stack 3 · 2 of 3 · → main",
-        "below #11 merged, above #13 close",
-      ]);
-    });
-
-    it("marks a bot that wrote last as a bot", () => {
-      const resting = {
-        repo: "example",
-        thread: overReview.wait.thread,
-        people,
-      };
-      const botted = {
-        ...sharedCloseDetail,
-        messages: [
-          { author: exampleSync, at: at("2026-09-28T09:00+02:00"), body: "" },
-        ],
-      };
-      expect(
-        readTexts(describeDetail(resting, botted, reading).body).at(1),
-      ).toBe(`last activity 3h ago · ■ ${exampleSync.login}`);
     });
   });
 

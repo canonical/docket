@@ -78,9 +78,9 @@ export default function buildRow(
     ...(asked?.requester
       ? { requester: describePerson(asked.requester, people, viewer) }
       : {}),
-    ...(latest
-      ? { lastActor: describePerson(latest.author, people, viewer) }
-      : {}),
+    // A thread nobody has written on since it opened was last acted on
+    // by whoever opened it.
+    lastActor: describePerson(latest?.author ?? thread.author, people, viewer),
     ...(thread.draft ? { draft: { text: "draft", kind: "words" } } : {}),
     ...describeOwners(owners),
   };

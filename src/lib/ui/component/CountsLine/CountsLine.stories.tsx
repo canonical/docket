@@ -9,10 +9,11 @@ const meta: Meta<CountsLineProps> = {
 
 export default meta;
 
-/** owed counts the waits in each state. */
+/** owed counts the waits in each state; the selection is the third of four of alice's. */
 export const Owed: Story<CountsLineProps> = {
   args: {
     summary: { text: "3 over · 2 soon · 6 on track", kind: "words" },
+    position: { text: "3/4/11", kind: "figure" },
     width: 40,
   },
 };
@@ -21,6 +22,15 @@ export const Owed: Story<CountsLineProps> = {
 export const Activity: Story<CountsLineProps> = {
   args: {
     summary: { text: "9 threads · 23 events", kind: "words" },
+    position: { text: "1/9", kind: "figure" },
+    width: 40,
+  },
+};
+
+/** Nothing listed: the counts alone, at zero. */
+export const NothingOwed: Story<CountsLineProps> = {
+  args: {
+    summary: { text: "0 over · 0 soon · 0 on track", kind: "words" },
     width: 40,
   },
 };

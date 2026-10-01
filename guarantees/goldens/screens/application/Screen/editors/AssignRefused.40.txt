@@ -32,7 +32,7 @@
 |
 |
 |
-|2 over · 1 soon · 3 on track
+|2 over · 1 soon · 3 on track         1/6
 |✗ assign refused
 |type filter ↑↓ ␣ tick ⏎ apply esc ?
 
@@ -108,7 +108,7 @@ runs
 24:1 "╵" fg #818596ff bg #161821ff
 24:3 "Crash on start" fg #c6c8d1ff bg #161821ff italic
 24:17 "              unassigned" fg #c6c8d1ff bg #161821ff
-34:1 "2 over · 1 soon · 3 on track" fg #c6c8d1ff bg #161821ff
+34:1 "2 over · 1 soon · 3 on track         1/6" fg #c6c8d1ff bg #161821ff
 35:1 "✗ assign refused" fg #e27878ff bg #161821ff
 36:1 "type" fg #c6c8d1ff bg #161821ff
 36:5 " filter" fg #6b7089ff bg #161821ff

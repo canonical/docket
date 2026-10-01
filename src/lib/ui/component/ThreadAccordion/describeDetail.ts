@@ -244,11 +244,15 @@ function describeReview(
 
 /**
  * The thread's age and owners, its last activity and who made it, and its
- * labels, as the snapshot holds them.
+ * labels, as the snapshot holds them. On a thread nobody has written on,
+ * the last activity is its opening, by whoever opened it, so the time is
+ * the opening's too.
  */
 function describeClose(row: WaitRow, { now }: Reading) {
   const { thread } = row.wait;
   const labels = thread.labels.map(decodeLabel).join(" · ") || "none";
+  const quiet = thread.comments.length === 0 && thread.reviews.length === 0;
+  const last = quiet ? thread.createdAt : thread.updatedAt;
   return [
     describeWrappingLine(
       plain(`age ${describeAge(thread.createdAt, now)} · owner `),
@@ -256,8 +260,9 @@ function describeClose(row: WaitRow, { now }: Reading) {
       ...listPeople(listOwners(row)),
     ),
     describeWrappingLine(
-      plain(`last activity ${describeAge(thread.updatedAt, now)} ago`),
-      ...(row.lastActor ? [plain(" · "), markPerson(row.lastActor)] : []),
+      plain(`last activity ${describeAge(last, now)} ago`),
+      plain(" · "),
+      markPerson(row.lastActor),
     ),
     describeWrappingLine(plain(`labels ${labels}`)),
   ];
@@ -267,15 +272,19 @@ function describeClose(row: WaitRow, { now }: Reading) {
  * A thread no wait runs on, as its details give it: its age and owners,
  * its last activity and its labels. The owners are the row's when it
  * names them; a thread whose row names none, such as a closed one, takes
- * its assignees that are not bots. Each person, the one who wrote last
- * included, carries their group's mark, from the repository's people.
+ * its assignees that are not bots. The last activity names whoever wrote
+ * last, or, on an open thread nobody has written on, whoever opened it,
+ * at its opening. Each person carries their group's mark, from the
+ * repository's people.
  */
 function describeRest(
-  { owners, people, viewer }: RestingThread,
+  { owners, author, people, viewer }: RestingThread,
   detail: ThreadDetail,
   { now }: Reading,
 ) {
   const latest = detail.messages.at(-1);
+  const actor = latest ? describePerson(latest.author, people, viewer) : author;
+  const last = latest || !author ? detail.updatedAt : detail.createdAt;
   const assigned = detail.assignees
     .filter(({ type }) => type !== "bot")
     .map((account) => describePerson(account, people, viewer));
@@ -287,13 +296,8 @@ function describeRest(
       ...(named.length > 0 ? listPeople(named) : [plain("unassigned")]),
     ),
     describeWrappingLine(
-      plain(`last activity ${describeAge(detail.updatedAt, now)} ago`),
-      ...(latest
-        ? [
-            plain(" · "),
-            markPerson(describePerson(latest.author, people, viewer)),
-          ]
-        : []),
+      plain(`last activity ${describeAge(last, now)} ago`),
+      ...(actor ? [plain(" · "), markPerson(actor)] : []),
     ),
     describeWrappingLine(plain(`labels ${labels}`)),
   ];

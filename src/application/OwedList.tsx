@@ -1,15 +1,16 @@
-import { type ReactNode, useEffect } from "react";
+import type { ReactNode } from "react";
 import type { OwedList as List, WaitRow } from "../lib/owed/index.js";
 import {
   countAccordionLines,
   countRowLines,
   GroupHeading,
+  type ListBlock,
   Notice,
+  ScrolledList,
   type ShownDetail,
   ThreadAccordion,
   ThreadRow,
   useDrawnLines,
-  useListScroll,
   wrapNotice,
 } from "../lib/ui/index.js";
 import identifyRow from "./identifyRow.js";
@@ -50,18 +51,9 @@ export interface OwedListProps {
   readonly onShownRows: (rows: number, first: number) => void;
   /**
    * The place of the first block shown when the list is drawn anew, such
-   * as after the help or a pane too narrow took its place.
+   * as after the help or a pane too small took its place.
    */
   readonly firstShown?: number;
-}
-
-/** One heading, or one row with the accordion when it is selected. */
-interface Block {
-  readonly key: string;
-  /** Whether the block holds a row, rather than a heading. */
-  readonly row: boolean;
-  readonly lines: number;
-  readonly node: ReactNode;
 }
 
 /**
@@ -70,7 +62,8 @@ interface Block {
  * rows move the selection, so a heading is never selected. The list
  * scrolls as little as it must to keep the selected row and its accordion
  * whole in view, with its group's heading when it is the group's first
- * row; the notice stays put.
+ * row, and the heading of the group under its first line pinned there;
+ * the notice stays put.
  */
 export default function OwedList({
   list,
@@ -87,14 +80,20 @@ export default function OwedList({
 }: OwedListProps): ReactNode {
   const waiting = listWaiting(list.groups.flatMap((group) => group.rows));
   const drawn = useDrawnLines();
-  const blocks: Block[] = [];
+  const blocks: ListBlock[] = [];
   let place = 0;
   let from = 0;
   let to = 0;
   for (const { heading, rows } of list.groups) {
     if (heading) {
       const node = <GroupHeading heading={heading} width={width} />;
-      blocks.push({ key: heading.text, row: false, lines: 1, node });
+      blocks.push({
+        key: heading.text,
+        kind: "heading",
+        lines: 1,
+        node,
+        heading,
+      });
     }
     for (const row of rows) {
       const open = place === selected;
@@ -104,7 +103,7 @@ export default function OwedList({
       }
       blocks.push({
         key: `${heading?.text ?? ""} ${identifyRow(row)}`,
-        row: true,
+        kind: "row",
         lines:
           countRowLines(row, width, open && !editor) +
           (open
@@ -147,17 +146,6 @@ export default function OwedList({
         wrapNotice(notice.reason, notice.recovery, width - 2),
       ).flat().length
     : 0;
-  const { shown, first } = useListScroll({
-    blocks,
-    from,
-    to,
-    room: height - noticeLines,
-    first: firstShown,
-  });
-  const shownRows = shown.filter(({ row }) => row).length;
-  useEffect(() => {
-    onShownRows(shownRows, first);
-  });
   // The notice and the rows each have a box of their own lines, so a
   // selected row taller than the room left is cut at the bottom, and a
   // box never gives up lines to the other, which would draw the notice's
@@ -176,17 +164,16 @@ export default function OwedList({
           </box>
         </box>
       )}
-      <box
-        flexDirection="column"
-        flexShrink={0}
-        height={Math.max(height - noticeLines, 0)}
-        overflow="hidden"
-      >
-        {shown.map(({ key, node }) => (
-          <box key={key} flexDirection="column" flexShrink={0}>
-            {node}
-          </box>
-        ))}
+      <box flexShrink={0}>
+        <ScrolledList
+          blocks={blocks}
+          from={from}
+          to={to}
+          height={Math.max(height - noticeLines, 0)}
+          first={firstShown}
+          onShown={onShownRows}
+          width={width}
+        />
       </box>
     </box>
   );

@@ -14,12 +14,13 @@ describe("findThreadState", () => {
     );
   });
 
-  it("rests a thread no wait runs on, with the owners its row names, the repository's people and the viewer", () => {
+  it("rests a thread no wait runs on, with the owners its row names, its opener, the repository's people and the viewer", () => {
     const row = findActivityRow(15);
     expect(findThreadState(row, [overReview], people, "alice")).toEqual({
       repo: "example",
       thread: row.thread,
       owners: row.owners?.fields,
+      author: row.author,
       people,
       viewer: "alice",
     });
@@ -36,8 +37,8 @@ describe("findThreadState", () => {
     });
   });
 
-  it("rests a thread whose row names no owner with no owners", () => {
-    const { owner: _, ...row } = findActivityRow(12);
+  it("rests a thread whose row names no owner with no owners, and a closed one, which has no facts, with no opener", () => {
+    const { owner: _, author: __, ...row } = findActivityRow(12);
     expect(findThreadState(row, [], people)).toEqual({
       repo: "example",
       thread: row.thread,

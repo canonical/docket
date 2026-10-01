@@ -52,6 +52,7 @@ describe("buildRow", () => {
       distance: { text: "14h over", kind: "figure" },
       title: { text: "Example title", kind: "title" },
       author: person("dave", "outside"),
+      lastActor: person("dave", "outside"),
       owner: { text: "alice", kind: "person" },
     });
   });
@@ -162,6 +163,9 @@ describe("buildRow", () => {
     expect(build(wait({ thread: answered })).lastActor).toEqual(
       person("carol", "internal"),
     );
-    expect(build(wait()).lastActor).toBeUndefined();
+    const quiet = thread({ author: carol, comments: [], reviews: [] });
+    expect(build(wait({ thread: quiet })).lastActor).toEqual(
+      person("carol", "internal"),
+    );
   });
 });

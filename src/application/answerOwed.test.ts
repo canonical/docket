@@ -53,7 +53,7 @@ describe("answerOwed", () => {
     const invocation = { ...session.invocation, by: "label" };
     await expect(answerOwed({ ...session, invocation })).rejects.toMatchObject({
       code: "USAGE_INVALID_VALUE",
-      message: "`--by` takes none, owner, repo, stack, not `label`.",
+      message: "`--by` takes none, owner, kind, repo, stack, not `label`.",
     });
     expect(out()).toBe("");
   });

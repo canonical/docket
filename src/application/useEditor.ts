@@ -31,7 +31,7 @@ export interface UseEditorProps {
   /** Shows the result of applying, or of a refused key, on the status line. */
   readonly onResult: (result: ActionResult) => void;
   /**
-   * True while the help covers the editor, or the pane is too narrow to
+   * True while the help covers the editor, or the pane is too small to
    * draw it, which turns its keys off, so none acts on what is out of
    * sight.
    */
@@ -334,7 +334,7 @@ export default function useEditor({
         },
         // On exactly while an editor is open and in sight, never by the
         // focus: the filter is drawn anew after the help, or after a pane
-        // too narrow for it, and the keys outlast it.
+        // too small for it, and the keys outlast it.
       ].map((command) => ({ ...command, enabled: open && !covered })),
       bindings: [
         { key: "up", cmd: "editor.previous" },

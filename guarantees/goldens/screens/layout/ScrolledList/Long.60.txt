@@ -1,0 +1,16 @@
+60 columns
+|● example-contributor-with-a-long-login · 2 of 3 ───────────
+|│ second of theirs
+|╵ a thread
+|│ third of theirs
+|╵ a thread
+|  ↓ 1 below
+
+runs
+1:1 "● example-contributor-with-a-long-login" fg #84a0c6ff bg #00000000
+1:40 " · 2 of 3 ───────────" fg #c6c8d1ff bg #00000000
+2:1 "│ second of theirs                                          " fg #ffffffff bg #00000000
+3:1 "╵ a thread                                                  " fg #ffffffff bg #00000000
+4:1 "│ third of theirs                                           " fg #ffffffff bg #00000000
+5:1 "╵ a thread                                                  " fg #ffffffff bg #00000000
+6:1 "  ↓ 1 below" fg #6b7089ff bg #00000000

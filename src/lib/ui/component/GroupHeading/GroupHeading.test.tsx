@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { draw } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import GroupHeading from "./GroupHeading.js";
-import { NotInAStack, Owner, Stack } from "./GroupHeading.stories.js";
+import { NotInAStack, Owner, Pinned, Stack } from "./GroupHeading.stories.js";
 
 describe("GroupHeading", () => {
   it("names a stack, then a rule to the pane's edge, neither of them bold, at 40 columns", async () => {
@@ -36,5 +36,23 @@ describe("GroupHeading", () => {
     expect(stack.lines.slice(0, 2)).toEqual(["exampl… → main ─", ""]);
     const owner = await draw(<GroupHeading {...Owner.args} width={8} />, 8);
     expect(owner.lines.at(0)).toBe("◉ ali… ─");
+  });
+
+  it("gives the pinned group's count after the name, plain, then the rule", async () => {
+    const screen = await draw(<GroupHeading {...Pinned.args} />, 40);
+    expect(screen.lines.at(0)).toBe(`● bob · 3 of 5 ${"─".repeat(25)}`);
+    expect(screen.look("● bob")?.fg).toBe(tokens["color.text.team"]);
+    expect(screen.look(" · 3 of 5")).toMatchObject({
+      fg: tokens["color.text"],
+      bold: false,
+    });
+  });
+
+  it("cuts the name by its kind's rule before the count, leaving room for the rule", async () => {
+    const screen = await draw(
+      <GroupHeading {...Stack.args} count="2 of 3" width={24} />,
+      24,
+    );
+    expect(screen.lines.at(0)).toBe("exampl…→ main · 2 of 3 ─");
   });
 });
