@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { sanitize } from "../../../text/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
 import {
@@ -28,6 +29,7 @@ const wordsCells = 4;
  * closing failed checks' names. The words give way first, cut at their
  * end down to four cells, so the target stays whole where it can; past
  * that the target is cut, by its kind's rule for an event, to the rest.
+ * Each is measured as drawn, past `sanitize`.
  */
 function describeAction(
   { action, target }: EventLineProps["line"],
@@ -35,12 +37,14 @@ function describeAction(
   fg: string,
 ): Piece[] {
   if (!target) return [{ text: fitField(action, "event", room), fg }];
-  const at = action.text.lastIndexOf(target.text);
+  const text = sanitize(action.text);
+  const aim = sanitize(target.text);
+  const at = text.lastIndexOf(aim);
   // The space and any bracket before the target go with it.
-  const words = action.text.slice(0, at).replace(/[\s(]+$/, "");
-  const space = action.text.slice(words.length, at);
-  const after = action.text.slice(at + target.text.length);
-  const tail = measureText(target.text) + measureText(after);
+  const words = text.slice(0, at).replace(/[\s(]+$/, "");
+  const space = text.slice(words.length, at);
+  const after = text.slice(at + aim.length);
+  const tail = measureText(aim) + measureText(after);
   const wordsRoom = Math.max(
     Math.min(measureText(words), wordsCells),
     room - measureText(space) - tail,
@@ -49,7 +53,7 @@ function describeAction(
   const cells = room - measureText(before) - measureText(after);
   return [
     { text: before, fg },
-    { text: fitField(target, "event", cells), fg },
+    { text: fitField({ ...target, text: aim }, "event", cells), fg },
     ...(after ? [{ text: after, fg }] : []),
   ];
 }

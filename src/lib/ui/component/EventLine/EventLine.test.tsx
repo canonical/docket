@@ -57,6 +57,22 @@ describe("EventLine", () => {
     expect(await at(40)).toBe(`${actor} lab… priori…ainers 3h`);
   });
 
+  it("measures what was done as it is drawn, without the format characters it holds", async () => {
+    const { line } = Long.args;
+    const hide = (text: string) =>
+      text.replace("priority", "\u202e\u2066prio\u2069rity");
+    const hidden = {
+      ...line,
+      action: { ...line.action, text: hide(line.action.text) },
+      target: line.target && { ...line.target, text: hide(line.target.text) },
+    };
+    const screen = await draw(
+      <EventLine {...Long.args} line={hidden} width={78} />,
+      78,
+    );
+    expect(screen.lines.at(0)).toContain(" labelled priority:");
+  });
+
   it("names the person an event assigned plainly, after the actor's mark", async () => {
     const line = {
       ...Pushed.args.line,
