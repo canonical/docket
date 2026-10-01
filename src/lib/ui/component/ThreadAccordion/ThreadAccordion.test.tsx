@@ -249,7 +249,7 @@ describe("ThreadAccordion", () => {
         40,
       );
       expect(readText(screen).indexOf("")).toBeLessThanOrEqual(8);
-      expect(screen.lines.at(7)?.startsWith("╹")).toBe(true);
+      expect(screen.lines.at(7)).toMatch(/^╹/);
     });
 
     it("gives the owners line only the lines a review's checks leave, ending it after a whole name, or the accordion's last line, in …", async () => {
@@ -287,7 +287,7 @@ describe("ThreadAccordion", () => {
         "below #12344 merged,…",
         "",
       ]);
-      expect(screen.lines.at(5)?.startsWith("╹")).toBe(true);
+      expect(screen.lines.at(5)).toMatch(/^╹/);
     });
 
     it("keeps docket's words of a stack's place whole, the repository's short name leaving whole before the base branch is cut once in its middle", async () => {

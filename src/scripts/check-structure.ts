@@ -90,7 +90,7 @@ const fittingPrimitives =
  * only that measure's tests name Bun's, to show where the two disagree.
  */
 const bunMeasure = /\bBun\.stringWidth\b/;
-const measureModule = /^src\/lib\/ui\/fit\/measureText\.test\./;
+const bunMeasureTests = /^src\/lib\/ui\/fit\/measureText\.test\./;
 
 const maxLines = 500;
 const lengthHeader = /^\/\/ Longer than 500 lines because \S/;
@@ -353,7 +353,7 @@ function check(root: string): Finding[] {
     );
     if (
       path.startsWith("src/lib/ui/") &&
-      !measureModule.test(path) &&
+      !bunMeasureTests.test(path) &&
       bunMeasure.test(text)
     ) {
       report(

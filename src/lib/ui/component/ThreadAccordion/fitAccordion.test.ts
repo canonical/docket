@@ -117,7 +117,7 @@ describe("fitAccordion", () => {
       stack: [],
     };
     expect(read(fitAccordion(text, 20, 1))).toEqual(["push since …"]);
-    expect(fitAccordion(text, 20, 1)[0]?.at(-1)?.fg).toBe(
+    expect(fitAccordion(text, 20, 1).at(0)?.at(-1)?.fg).toBe(
       tokens["color.text.muted"],
     );
     const bare = {
