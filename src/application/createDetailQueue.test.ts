@@ -174,6 +174,42 @@ describe("createDetailQueue", () => {
     await expect(shown).resolves.toBe(parserFixDetail);
   });
 
+  it("sends nothing more once stopped, though a read under way left out the thread selected since", async () => {
+    const answers: (() => void)[] = [];
+    const asked: number[][] = [];
+    // Below the budget floor the reader keeps only the selected thread.
+    const reader = {
+      read: vi.fn(
+        async (
+          threads: readonly (typeof one)[],
+          selected?: typeof one,
+        ): Promise<DetailReading> => {
+          const kept = threads.filter(
+            (each) => each.number === selected?.number,
+          );
+          asked.push(kept.map((each) => each.number));
+          await new Promise<void>((resolve) => answers.push(resolve));
+          return kept.map((each) => ({
+            thread: each,
+            detail: parserFixDetail,
+          }));
+        },
+      ),
+    };
+    const queue = open(reader);
+    const window = [
+      { thread: one, version: "v" },
+      { thread: two, version: "v" },
+    ];
+    queue.request(window, one, 0);
+    await vi.advanceTimersByTimeAsync(0);
+    queue.request(window, two, 0);
+    queue.stop();
+    answers.shift()?.();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(asked).toEqual([[1]]);
+  });
+
   it("forgets the details that arrived and the reads that failed, reads the window asked for last again at once, and keeps a read under way", async () => {
     const reader = reading();
     const queue = open(reader);

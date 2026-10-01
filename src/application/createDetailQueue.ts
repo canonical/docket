@@ -120,6 +120,8 @@ export default function createDetailQueue(
   let lastWindow: readonly WantedDetail[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
   let paused = false;
+  // Once stopped, as when the pane closes, nothing more is sent.
+  let stopped = false;
   // The threads asked for since nothing was pending, and those answered.
   let round:
     | { readonly asked: Set<string>; readonly answered: Set<string> }
@@ -243,7 +245,7 @@ export default function createDetailQueue(
   const schedule = (delay: number) => {
     clearTimeout(timer);
     timer = undefined;
-    if (paused) return;
+    if (paused || stopped) return;
     timer = setTimeout(() => void flush(), delay);
   };
 
@@ -306,6 +308,7 @@ export default function createDetailQueue(
       queue.request(lastWindow, selected, 0);
     },
     stop() {
+      stopped = true;
       clearTimeout(timer);
       queued = [];
       round = undefined;
