@@ -7,12 +7,12 @@ import fitAccordion from "./fitAccordion.js";
 import type { DetailLine } from "./types.js";
 
 const fg = tokens["color.text"];
-const holdLine = (text: string): DetailLine => ({
+const describeHeldLine = (text: string): DetailLine => ({
   pieces: [{ text, fg }],
   kind: "words",
   most: 1,
 });
-const wrapLine = (text: string, optional?: true): DetailLine => ({
+const describeWrappingLine = (text: string, optional?: true): DetailLine => ({
   pieces: [{ text, fg }],
   kind: "words",
   ...(optional ? { optional } : {}),
@@ -23,12 +23,15 @@ const read = (lines: ReturnType<typeof fitAccordion>) =>
   lines.map((line) => line.map(({ text }) => text).join(""));
 
 describe("fitAccordion", () => {
-  const owners: DetailLine = { ...wrapLine("owner a b c"), yields: true };
+  const owners: DetailLine = {
+    ...describeWrappingLine("owner a b c"),
+    yields: true,
+  };
 
   it("gives a line that yields no line when the others need them all, the accordion's last line ending in …", () => {
     const text = {
-      body: [owners, wrapLine("checks one two three")],
-      stack: [holdLine("stack")],
+      body: [owners, describeWrappingLine("checks one two three")],
+      stack: [describeHeldLine("stack")],
     };
     expect(read(fitAccordion(text, 7, 4))).toEqual([
       "checks",
@@ -40,7 +43,7 @@ describe("fitAccordion", () => {
 
   it("ends a line that yields, when it runs out, with … after a whole name, never inside one", () => {
     const people = {
-      ...wrapLine(""),
+      ...describeWrappingLine(""),
       pieces: [
         { text: "owner ", fg },
         { text: "● alice", fg, marked: true },
@@ -51,7 +54,7 @@ describe("fitAccordion", () => {
       ],
       yields: true,
     };
-    const text = { body: [people, wrapLine("checks")], stack: [] };
+    const text = { body: [people, describeWrappingLine("checks")], stack: [] };
     expect(read(fitAccordion(text, 20, 2))).toEqual([
       "owner ● alice,…",
       "checks",
@@ -62,7 +65,7 @@ describe("fitAccordion", () => {
 
   it("ends a line that yields after the comma past a team's whole name, never straight after the name", () => {
     const people = {
-      ...wrapLine(""),
+      ...describeWrappingLine(""),
       pieces: [
         { text: "owner ", fg },
         { text: "● alice", fg, marked: true },
@@ -73,7 +76,7 @@ describe("fitAccordion", () => {
       ],
       yields: true,
     };
-    const text = { body: [people, wrapLine("checks")], stack: [] };
+    const text = { body: [people, describeWrappingLine("checks")], stack: [] };
     expect(read(fitAccordion(text, 32, 2))).toEqual([
       "owner ● alice,…",
       "checks",
@@ -86,7 +89,7 @@ describe("fitAccordion", () => {
 
   it("leaves a name too long for the lines it gets whole, ending the part before it", () => {
     const people = {
-      ...wrapLine(""),
+      ...describeWrappingLine(""),
       pieces: [
         { text: "owner ", fg },
         { text: "● alice", fg, marked: true },
@@ -97,7 +100,7 @@ describe("fitAccordion", () => {
       ],
       yields: true,
     };
-    const text = { body: [people, wrapLine("checks")], stack: [] };
+    const text = { body: [people, describeWrappingLine("checks")], stack: [] };
     expect(read(fitAccordion(text, 37, 3))).toEqual([
       "owner ● alice,…",
       "checks",
@@ -110,13 +113,13 @@ describe("fitAccordion", () => {
   });
 
   it("ends the accordion's last line with … when a line that yields has no line left at all", () => {
-    const text = { body: [owners], stack: [holdLine("stack")] };
+    const text = { body: [owners], stack: [describeHeldLine("stack")] };
     expect(read(fitAccordion(text, 7, 1))).toEqual(["stack…"]);
   });
 
   it("gives a line that yields none of the lines when the others need more than there are", () => {
     const text = {
-      body: [owners, wrapLine("checks one two three")],
+      body: [owners, describeWrappingLine("checks one two three")],
       stack: [],
     };
     expect(read(fitAccordion(text, 7, 2))).toEqual(["checks", "one tw…"]);
@@ -124,7 +127,11 @@ describe("fitAccordion", () => {
 
   it("never gives an optional line the lines of one that yields", () => {
     const text = {
-      body: [owners, wrapLine("checks ok"), wrapLine("since x y", true)],
+      body: [
+        owners,
+        describeWrappingLine("checks ok"),
+        describeWrappingLine("since x y", true),
+      ],
       stack: [],
     };
     expect(read(fitAccordion(text, 7, 4))).toEqual([
@@ -137,7 +144,10 @@ describe("fitAccordion", () => {
 
   it("ends a line waiting on the details in a dimmed …, and never ends a last line twice", () => {
     const text = {
-      body: [{ ...holdLine("push since"), pending: true }, wrapLine("more")],
+      body: [
+        { ...describeHeldLine("push since"), pending: true },
+        describeWrappingLine("more"),
+      ],
       stack: [],
     };
     expect(read(fitAccordion(text, 20, 1))).toEqual(["push since …"]);
@@ -146,11 +156,11 @@ describe("fitAccordion", () => {
     );
     const bare = {
       body: [],
-      stack: [{ ...holdLine(""), pieces: [], pending: true }],
+      stack: [{ ...describeHeldLine(""), pieces: [], pending: true }],
     };
     expect(read(fitAccordion(bare, 20, 1))).toEqual(["…"]);
     const cut = {
-      body: [holdLine("example-words"), wrapLine("more")],
+      body: [describeHeldLine("example-words"), describeWrappingLine("more")],
       stack: [],
     };
     expect(read(fitAccordion(cut, 9, 1))).toEqual(["example-…"]);
@@ -159,8 +169,11 @@ describe("fitAccordion", () => {
   it("ends a last line cut in its middle, or only left short of runs whole, after what it keeps", () => {
     const middle = {
       body: [
-        { ...holdLine("example-repository"), kind: "identifier" as const },
-        wrapLine("more"),
+        {
+          ...describeHeldLine("example-repository"),
+          kind: "identifier" as const,
+        },
+        describeWrappingLine("more"),
       ],
       stack: [],
     };
@@ -168,13 +181,13 @@ describe("fitAccordion", () => {
     const runs = {
       body: [
         {
-          ...holdLine("0 pushes since"),
+          ...describeHeldLine("0 pushes since"),
           pieces: ["0 pushes since", " · ", "1 file"].map((text) => ({
             text,
             fg,
           })),
         },
-        wrapLine("more"),
+        describeWrappingLine("more"),
       ],
       stack: [],
     };
@@ -185,14 +198,17 @@ describe("fitAccordion", () => {
 
   it("ends a last line after a whole part, its parts that leave whole making the mark room, and cuts it only when none can", () => {
     const neighbours: DetailLine = {
-      ...holdLine(""),
+      ...describeHeldLine(""),
       pieces: [
         { text: "below #1 merged,", fg },
         { text: " above #2 open", fg },
       ],
       drops: [1],
     };
-    const text = { body: [neighbours, wrapLine("more")], stack: [] };
+    const text = {
+      body: [neighbours, describeWrappingLine("more")],
+      stack: [],
+    };
     expect(read(fitAccordion(text, 40, 1))).toEqual([
       "below #1 merged, above #2 open…",
     ]);
@@ -212,8 +228,8 @@ describe("fitAccordion", () => {
       drops: [0],
       cuts: 2,
     };
-    const owners = { ...wrapLine("owner ● alice"), yields: true };
-    const text = { body: [owners, holdLine("checks")], stack: [place] };
+    const owners = { ...describeWrappingLine("owner ● alice"), yields: true };
+    const text = { body: [owners, describeHeldLine("checks")], stack: [place] };
     expect(read(fitAccordion(text, 28, 2))).toEqual([
       "checks",
       "stack 7 · 1 of 1 · → main…",
@@ -232,11 +248,11 @@ describe("fitAccordion", () => {
       drops: [0],
       cuts: 2,
     });
-    const owners = { ...wrapLine("owner ● alice"), yields: true };
+    const owners = { ...describeWrappingLine("owner ● alice"), yields: true };
     const last = (base: string, room: number) =>
       read(
         fitAccordion(
-          { body: [owners, holdLine("checks")], stack: [place(base)] },
+          { body: [owners, describeHeldLine("checks")], stack: [place(base)] },
           room,
           2,
         ),
@@ -248,14 +264,14 @@ describe("fitAccordion", () => {
       "stack 7 · 2 of 3 · → rel…anch…",
     );
     const neighbours = {
-      ...holdLine(""),
+      ...describeHeldLine(""),
       pieces: [
         { text: "below #1 merged,", fg },
         { text: " above #2 open", fg },
       ],
       drops: [1],
     };
-    const kept = { body: [neighbours, holdLine("more")], stack: [] };
+    const kept = { body: [neighbours, describeHeldLine("more")], stack: [] };
     expect(read(fitAccordion(kept, 30, 2))).toEqual([
       "below #1 merged, above #2 open",
       "more",
@@ -264,7 +280,7 @@ describe("fitAccordion", () => {
 
   it("cuts a held line at its end when even its fixed words are wider than the room", () => {
     const line = {
-      ...holdLine(""),
+      ...describeHeldLine(""),
       kind: "identifier" as const,
       pieces: [
         { text: "stack 123 · 10 of 12 · → ", fg },
@@ -280,7 +296,7 @@ describe("fitAccordion", () => {
 
   it("ends a last line cut at the limit with …, whatever its text holds", () => {
     const text = {
-      body: [wrapLine("Rebased on main… could someone look")],
+      body: [describeWrappingLine("Rebased on main… could someone look")],
       stack: [],
     };
     expect(read(fitAccordion(text, 20, 1))).toEqual(["Rebased on main……"]);
@@ -289,7 +305,7 @@ describe("fitAccordion", () => {
   it("fits each line by its kind's rule: words wrap, a figure stays on one line, and a line held to one is cut by its kind's rule for a line", () => {
     const text = {
       body: [
-        wrapLine("one two three"),
+        describeWrappingLine("one two three"),
         { pieces: [{ text: "12345 67890", fg }], kind: "figure" as const },
         {
           pieces: [{ text: "example stack 3 → main", fg }],
@@ -309,8 +325,8 @@ describe("fitAccordion", () => {
 
   it("never draws more lines than it is given, the stack's lines cut with … when they alone pass them", () => {
     const text = {
-      body: [wrapLine("body")],
-      stack: [wrapLine("a b c d e f g h i j")],
+      body: [describeWrappingLine("body")],
+      stack: [describeWrappingLine("a b c d e f g h i j")],
     };
     expect(read(fitAccordion(text, 1, 8))).toEqual([
       "a",
@@ -328,15 +344,18 @@ describe("fitAccordion", () => {
 
   it("ends the stack's last line with … when the stack leaves the body no line", () => {
     const text = {
-      body: [wrapLine("body")],
-      stack: [holdLine("stack"), holdLine("above")],
+      body: [describeWrappingLine("body")],
+      stack: [describeHeldLine("stack"), describeHeldLine("above")],
     };
     expect(read(fitAccordion(text, 10, 2))).toEqual(["stack", "above…"]);
   });
 
   it("wraps a wrapped line over as many lines as it needs and trims a trimmed one to one", () => {
     const text = {
-      body: [holdLine("one two three"), wrapLine("one two three")],
+      body: [
+        describeHeldLine("one two three"),
+        describeWrappingLine("one two three"),
+      ],
       stack: [],
     };
     expect(read(fitAccordion(text, 8))).toEqual([
@@ -348,8 +367,8 @@ describe("fitAccordion", () => {
 
   it("keeps the stack lines whole at the end, cutting the body before them with …", () => {
     const text = {
-      body: [wrapLine("a b c d e f g h")],
-      stack: [holdLine("stack"), holdLine("neighbours")],
+      body: [describeWrappingLine("a b c d e f g h")],
+      stack: [describeHeldLine("stack"), describeHeldLine("neighbours")],
     };
     expect(read(fitAccordion(text, 10, 4))).toEqual([
       "a b c d e",
@@ -367,7 +386,10 @@ describe("fitAccordion", () => {
 
   it("shows an optional line only when it fits whole", () => {
     const text = {
-      body: [wrapLine("a b c"), wrapLine("since then", true)],
+      body: [
+        describeWrappingLine("a b c"),
+        describeWrappingLine("since then", true),
+      ],
       stack: [],
     };
     expect(read(fitAccordion(text, 5, 2))).toEqual(["a b c"]);
@@ -384,7 +406,10 @@ describe("fitAccordion", () => {
   });
 
   it("holds at most eight lines unless told otherwise", () => {
-    const text = { body: [wrapLine("a b c d e f g h i j")], stack: [] };
+    const text = {
+      body: [describeWrappingLine("a b c d e f g h i j")],
+      stack: [],
+    };
     expect(fitAccordion(text, 1)).toHaveLength(8);
   });
 });
