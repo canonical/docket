@@ -1,0 +1,15 @@
+name: Setup environment
+description: Installs the Bun that .bun-version names, then the dependencies bun.lock records
+runs:
+  using: composite
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      with:
+        # Bun is pinned once, in .bun-version, which Renovate reads, so a bump
+        # moves every job together.
+        bun-version-file: .bun-version
+
+    - name: Install dependencies
+      shell: bash
+      run: bun install --frozen-lockfile

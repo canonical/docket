@@ -1,0 +1,94 @@
+# Publishes the version package.json holds to npm, then tags it and makes
+# its GitHub release. A release is cut by hand: run this workflow from main
+# once a pull request that sets the new version has merged.
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One release at a time; a second one waits rather than cancelling the first
+# halfway through a publish.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate the ref
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release from main only
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "A release runs from main only, not from ${GITHUB_REF}."
+          exit 1
+
+  gate:
+    name: Gate
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish to npm
+    needs: gate
+    runs-on: ubuntu-latest
+    # npm's trusted publisher names this environment, so only a job in it can
+    # publish; its protection rules decide who may run one.
+    environment: release
+    # OIDC trusted publishing: GitHub mints a short-lived token that npm
+    # exchanges for the right to publish, so no npm token is stored.
+    # contents: write lets the job tag the release and create it on GitHub.
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Trusted publishing needs npm 11.5.1 or later, which Node 24 carries.
+      - name: Setup Node, pointed at the npm registry
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Read the version
+        id: version
+        run: echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+
+      # A pre-release goes to a dist-tag named by its identifier
+      # (1.2.0-beta.1 to "beta"), so it never becomes npm's latest.
+      - name: Publish
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE="${VERSION#*-}"
+            DIST_TAG="${PRERELEASE%%.*}"
+          else
+            DIST_TAG="latest"
+          fi
+          echo "Publishing $VERSION to dist-tag '$DIST_TAG'"
+          npm publish --provenance --access public --tag "$DIST_TAG"
+
+      # The tag is made from the commit the gate passed on. A re-run after a
+      # successful publish fails at the publish above, since npm never takes
+      # a version twice: then create the release by hand.
+      - name: Tag and create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          PRERELEASE=()
+          if [[ "$VERSION" == *-* ]]; then PRERELEASE=(--prerelease); fi
+          gh release create "v$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --generate-notes \
+            "${PRERELEASE[@]}"
