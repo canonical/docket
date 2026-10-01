@@ -1,3 +1,4 @@
+import type { Outcome } from "../endings/index.js";
 import type { Capability } from "../provider/index.js";
 
 /**
@@ -47,3 +48,14 @@ export const requestTimeout = 30_000;
  * rule checks too.
  */
 export const mergeCloseMargin = 3_000;
+
+/** Each outcome in GitHub's words, as its pages write an ending. */
+export const endingLabels: Readonly<Record<Outcome, string>> = {
+  merged: "merged",
+  closed: "closed",
+  completed: "closed as completed",
+  notPlanned: "closed as not planned",
+  // GitHub writes "closed this as a duplicate of"; the label drops the
+  // article to read as the other two reasons do.
+  duplicate: "closed as duplicate",
+};

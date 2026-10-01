@@ -203,3 +203,62 @@ export interface DiscussionNode extends WrittenNode {
     })[];
   };
 }
+
+/** A thread GraphQL names by its number, address and repository. */
+export interface AddressNode {
+  readonly number: number;
+  readonly url: string;
+  readonly repository: { readonly nameWithOwner: string };
+}
+
+/** What closed a thread, as a `ClosedEvent`'s `closer` gives it. */
+export type CloserNode =
+  | ({ readonly __typename: "PullRequest" } & AddressNode)
+  | {
+      readonly __typename: "Commit";
+      readonly oid: string;
+      readonly url: string;
+    }
+  // GitHub names a project only to a token that may read projects, which
+  // gh's is not by default, so a project is known by its type alone.
+  | { readonly __typename: "ProjectV2" }
+  | null;
+
+/** A thread's latest close, as its timeline gives it. */
+export interface CloseNode {
+  readonly actor?: ActorNode;
+  readonly closer?: CloserNode;
+  /**
+   * The issue or pull request it duplicates; `null` when there is none,
+   * or when the reader may not see it.
+   */
+  readonly duplicateOf?: AddressNode | null;
+}
+
+/** What an issue or a pull request gives of how it stands. */
+export interface StateNode {
+  /** `OPEN`, `CLOSED`, or `MERGED` for a pull request. */
+  readonly state?: string;
+  /** Why an issue closed; absent on a pull request. */
+  readonly stateReason?: string | null;
+  readonly closedAt?: string | null;
+  readonly mergedAt?: string | null;
+  readonly mergedBy?: ActorNode;
+}
+
+/**
+ * What the events query gives of an issue or a pull request that may
+ * have ended.
+ */
+export interface FinishedNode extends StateNode, WrittenNode {
+  readonly createdAt: string;
+  /** Whether a pull request is a draft; absent on an issue. */
+  readonly isDraft?: boolean;
+  readonly labels: { readonly nodes: readonly { readonly name: string }[] };
+  readonly assignees: {
+    readonly nodes: readonly NonNullable<ActorNode>[];
+  };
+  readonly timelineItems: {
+    readonly nodes: readonly ({ readonly __typename: string } & CloseNode)[];
+  };
+}

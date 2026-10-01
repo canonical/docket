@@ -6,19 +6,20 @@ import makeHome from "./makeHome.js";
 
 /**
  * Text written on GitHub reaches docket's output, and anyone on GitHub
- * can write it. A title, a comment, a label, a check name and a branch
- * name carrying terminal control sequences or format characters, such
- * as a bidirectional override, are printed without them, in
- * every format, on standard output and standard error, and every string
- * a program reads back from `json` output is free of them, a pull
- * request's base branch included. In `llm` output, which an agent reads,
- * titles, labels, check names and branches appear in double quotes and
- * comments as `>` lines, so a comment addressed to the agent stays data.
+ * can write it. A title, of an open thread or a merged one, a comment, a
+ * label, a check name and a branch name carrying terminal control
+ * sequences or format characters, such as a bidirectional override, are
+ * printed without them, in every format, on standard output and standard
+ * error, and every string a program reads back from `json` output is free
+ * of them, a pull request's base branch included. In `llm` output, which
+ * an agent reads, titles, labels, check names and branches appear in
+ * double quotes and comments as `>` lines, so a comment addressed to the
+ * agent stays data.
  */
 const home = makeHome(readFileSync(findFixture("example.yaml"), "utf8"));
 afterAll(() => home.remove());
 
-const commands = [["owed"], ["activity"], ["show", "example#12"]];
+const commands = [["owed"], ["activity"], ["finished"], ["show", "example#12"]];
 const formats = ["plain", "llm", "json"];
 
 // Each call is made once, and every assertion about it reads the same
@@ -107,16 +108,24 @@ describe("hostile-text", () => {
     expect(out).toContain("onto main");
   });
 
+  // Each title as it reads once its sequences are gone, by its first words.
+  const titles = new Map([
+    ["Fix the parser", '"Fix the parser in red"'],
+    ["Tidy the changelog", '"Tidy the changelog"'],
+  ]);
+
   it("quotes every title in llm output", async () => {
     for (const command of commands) {
       const { out } = await call([...command, "--format", "llm"]);
       const titled = out
         .split("\n")
-        .filter((line) => line.includes("Fix the parser"));
+        .flatMap((line) =>
+          [...titles]
+            .filter(([start]) => line.includes(start))
+            .map(([, quoted]) => [line, quoted] as const),
+        );
       expect(titled.length).toBeGreaterThan(0);
-      for (const line of titled) {
-        expect(line).toContain('"Fix the parser in red"');
-      }
+      for (const [line, quoted] of titled) expect(line).toContain(quoted);
     }
   });
 

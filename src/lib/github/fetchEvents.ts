@@ -1,29 +1,40 @@
+import type { FinishedThread } from "../endings/index.js";
 import type { ThreadEvent } from "../events/index.js";
 import type { Account } from "../people/index.js";
+import type { EventsSince } from "../provider/index.js";
 import type { ThreadKind, ThreadSummary } from "../waits/index.js";
-import { mergeCloseMargin } from "./constants.js";
+import { endingLabels } from "./constants.js";
 import countCommits from "./countCommits.js";
+import dropMergeCloses from "./dropMergeCloses.js";
 import fetchLists from "./fetchLists.js";
 import fetchPushes from "./fetchPushes.js";
 import fragments from "./fragments.js";
 import readAccount from "./readAccount.js";
 import readCheck from "./readCheck.js";
+import readFinished from "./readFinished.js";
+import readOutcome from "./readOutcome.js";
 import readStackEntry from "./readStackEntry.js";
 import splitRepo from "./splitRepo.js";
 import type {
   ActorNode,
   CheckNode,
   Client,
+  CloseNode,
   FeedPush,
+  FinishedNode,
   HeadCommitNode,
   StackEntryNode,
 } from "./types.js";
 
-const { account, check, stackEntry, pageInfo, order } = fragments;
+const { account, check, stackEntry, pageInfo, order, labels, assignees } =
+  fragments;
 const actor = `actor { ${account} } createdAt`;
+const address = "number url repository { nameWithOwner }";
 const issueItems = `__typename
   ... on IssueComment { author { ${account} } createdAt }
-  ... on ClosedEvent { ${actor} }
+  ... on ClosedEvent { ${actor} stateReason
+    closer { __typename ... on PullRequest { ${address} } ... on Commit { oid url } }
+    duplicateOf { ... on Issue { ${address} } ... on PullRequest { ${address} } } }
   ... on ReopenedEvent { ${actor} }
   ... on AssignedEvent { ${actor} assignee { ... on User { login } ... on Bot { login } } }
   ... on LabeledEvent { ${actor} label { name } }`;
@@ -34,6 +45,11 @@ const pullItems = `${issueItems}
 const issueTypes =
   "ISSUE_COMMENT, CLOSED_EVENT, REOPENED_EVENT, ASSIGNED_EVENT, LABELED_EVENT";
 const opened = `number url title createdAt updatedAt author { ${account} }`;
+/**
+ * How a thread stands, who is on it, and its author's tie to the
+ * repository, for the threads that ended.
+ */
+const standing = `authorAssociation state closedAt ${labels} ${assignees}`;
 
 const document = `query Events($owner: String!, $name: String!, $since: DateTime!,
   $issuesAfter: String, $pullsAfter: String, $discussionsAfter: String,
@@ -44,14 +60,15 @@ const document = `query Events($owner: String!, $name: String!, $since: DateTime
       @include(if: $withIssues) {
       ${pageInfo}
       nodes {
-        ${opened}
+        ${opened} ${standing} stateReason
         timelineItems(since: $since, first: 100, itemTypes: [${issueTypes}]) { nodes { ${issueItems} } }
       }
     }
     pullRequests(first: 50, after: $pullsAfter, ${order}) @include(if: $withPulls) {
       ${pageInfo}
       nodes {
-        ${opened} headRefName isCrossRepository
+        ${opened} ${standing} mergedAt mergedBy { ${account} } isDraft
+        headRefName isCrossRepository
         ${stackEntry}
         timelineItems(since: $since, first: 100, itemTypes: [${issueTypes},
           PULL_REQUEST_REVIEW, REVIEW_REQUESTED_EVENT, MERGED_EVENT]) { nodes { ${pullItems} } }
@@ -74,12 +91,12 @@ const document = `query Events($owner: String!, $name: String!, $since: DateTime
 }`;
 
 /** An item of a thread's timeline; each kind carries some of these. */
-interface ItemNode {
+interface ItemNode extends CloseNode {
   readonly __typename: string;
   readonly author?: ActorNode;
-  readonly actor?: ActorNode;
   readonly createdAt?: string;
   readonly submittedAt?: string | null;
+  readonly stateReason?: string | null;
   readonly assignee?: { readonly login?: string } | null;
   readonly label?: { readonly name: string } | null;
 }
@@ -93,7 +110,7 @@ interface OpenedNode {
   readonly author: ActorNode;
 }
 
-interface IssueEventsNode extends OpenedNode {
+interface IssueEventsNode extends OpenedNode, FinishedNode {
   readonly timelineItems: { readonly nodes: readonly ItemNode[] };
 }
 
@@ -153,8 +170,11 @@ function readItem(
       return item.submittedAt ? { ...facts, kind: "reviewed" } : undefined;
     case "ReviewRequestedEvent":
       return { ...facts, kind: "reviewRequested" };
-    case "ClosedEvent":
-      return { ...facts, kind: "closed" };
+    case "ClosedEvent": {
+      const outcome = readOutcome(thread.kind, item.stateReason);
+      const ending = { outcome, label: endingLabels[outcome] };
+      return { ...facts, kind: "closed", ending };
+    }
     case "MergedEvent":
       return { ...facts, kind: "merged" };
     case "ReopenedEvent":
@@ -234,52 +254,6 @@ function findFailure(
 }
 
 /**
- * The close GitHub records with `merge`: the close nearest it in
- * `timeline`, within `mergeCloseMargin` and with no reopen between them.
- * A pull request that has none gives undefined.
- */
-function findMergeClose(
-  timeline: readonly ThreadEvent[],
-  merge: ThreadEvent,
-): ThreadEvent | undefined {
-  const gap = (event: ThreadEvent) =>
-    Math.abs(event.at.getTime() - merge.at.getTime());
-  const nearest = (side: readonly ThreadEvent[]) => {
-    const reopen = side.findIndex(({ kind }) => kind === "reopened");
-    return side
-      .slice(0, reopen < 0 ? side.length : reopen)
-      .find(
-        (event) => event.kind === "closed" && gap(event) <= mergeCloseMargin,
-      );
-  };
-  const index = timeline.indexOf(merge);
-  return [
-    nearest(timeline.slice(index + 1)),
-    nearest(timeline.slice(0, index).reverse()),
-  ]
-    .filter((close) => close !== undefined)
-    .sort((a, b) => gap(a) - gap(b))
-    .at(0);
-}
-
-/**
- * A thread's timeline with each merge counted once. GitHub records a
- * merge as a merge and a close, dated separately, so the two can be a
- * second apart; the merge alone counts. A close of a pull request never
- * merged, and a close before a reopen, stay.
- */
-function dropMergeCloses(
-  timeline: readonly ThreadEvent[],
-): readonly ThreadEvent[] {
-  const merges = timeline.filter(({ kind }) => kind === "merged");
-  if (merges.length === 0) return timeline;
-  const closes = new Set(
-    merges.map((merge) => findMergeClose(timeline, merge)),
-  );
-  return timeline.filter((event) => !closes.has(event));
-}
-
-/**
  * Fetches the events on `repo`'s threads at or after `since`, oldest
  * thread first as GitHub lists them. Pushes come from the repository
  * activity feed, each counted from the pull request's commits where the
@@ -287,8 +261,13 @@ function dropMergeCloses(
  * has no pushes in the feed, so its head commit stands in for its latest
  * push, uncounted.
  *
+ * Beside the events come the issues and pull requests merged or closed
+ * at or after `since` and still so, each with its ending: a thread
+ * reopened since and open now is left out, and one closed again comes
+ * with its latest ending.
+ *
  * Discussions give their openings and comments; GitHub records nobody
- * as closing one.
+ * as closing one, and none comes back finished.
  *
  * @note Impure: reads from GitHub.
  */
@@ -296,9 +275,10 @@ export default async function fetchEvents(
   client: Client,
   repo: string,
   since: Date,
-): Promise<ThreadEvent[]> {
+): Promise<EventsSince> {
   const found = await readThreads(client, repo, since);
   const events: ThreadEvent[] = [];
+  const finished: FinishedThread[] = [];
   const addOpening = (thread: ThreadSummary, node: OpenedNode) => {
     const at = new Date(node.createdAt);
     const actor: Account = readAccount(node.author);
@@ -310,15 +290,21 @@ export default async function fetchEvents(
       .filter((event) => event !== undefined);
     events.push(...dropMergeCloses(timeline));
   };
+  const addEnding = (thread: ThreadSummary, node: IssueEventsNode) => {
+    const ended = readFinished(thread, node, since);
+    if (ended) finished.push(ended);
+  };
   for (const node of found.issues) {
     const thread = summarise(repo, "issue", node);
     addOpening(thread, node);
     addTimeline(thread, node);
+    addEnding(thread, node);
   }
   for (const node of found.pullRequests) {
     const thread = summarise(repo, "pullRequest", node);
     addOpening(thread, node);
     addTimeline(thread, node);
+    addEnding(thread, node);
     const failure = findFailure(thread, node, since);
     if (failure) events.push(failure);
     const head = node.head.nodes.at(-1)?.commit;
@@ -352,5 +338,5 @@ export default async function fetchEvents(
       if (at >= since) events.push({ thread, actor, at, kind: "commented" });
     }
   }
-  return events;
+  return { events, finished };
 }

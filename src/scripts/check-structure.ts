@@ -27,8 +27,16 @@ import ts from "typescript";
 type Finding = { file: string; rule: string; message: string };
 type Reach = "values" | "types";
 
-const model = ["clock", "config", "people", "waits", "events", "stacks"];
-const viewModels = ["owed", "activity"];
+const model = [
+  "clock",
+  "config",
+  "people",
+  "waits",
+  "events",
+  "stacks",
+  "endings",
+];
+const viewModels = ["owed", "activity", "finished"];
 const surfaces = ["text", "tokens", "ui"];
 
 /**
@@ -51,6 +59,9 @@ grant(viewModels, model, "values");
 // Both lists name their fields and their owners alike, so activity takes
 // owed's field types and owner naming rather than keeping a copy.
 grant(["activity"], ["owed"], "values");
+// finished's rows are activity's rows with the ending as their event, so
+// it takes both lists' field types, owner naming and ages.
+grant(["finished"], ["owed", "activity"], "values");
 grant(["provider"], model, "types");
 grant(["github", "cache"], [...model, "provider"], "values");
 grant(surfaces, [...viewModels, "tokens"], "values");
@@ -495,6 +506,10 @@ const breaks: Record<string, [string, string]> = {
     "dependencies",
     'import rows from "../activity/index.js";\nexport default function order() { return rows; }',
   ],
+  "src/lib/activity/ending.ts": [
+    "dependencies",
+    'import { listEndings } from "../finished/index.js";\nexport default function ending() { return listEndings; }',
+  ],
   "src/lib/clock/tick.ts": [
     "dependencies",
     'import rows from "../owed/index.js";\nexport default function tick() { return rows; }',
@@ -626,6 +641,11 @@ const allowed: Record<string, string> = {
   "src/lib/activity/rows.ts": [
     'import { describeOwners } from "../owed/index.js";',
     "export default function rows() { return describeOwners; }",
+  ].join("\n"),
+  "src/lib/finished/rows.ts": [
+    'import { describeAge } from "../activity/index.js";',
+    'import { describeOwners } from "../owed/index.js";',
+    "export default function rows() { return [describeAge, describeOwners]; }",
   ].join("\n"),
   "src/lib/owed/rows.test.ts":
     'import alice from "../../testing/alice.js";\nalice;',

@@ -8,6 +8,7 @@ describe("catalogue", () => {
     expect(catalogue.map(({ name }) => name)).toEqual([
       "owed",
       "activity",
+      "finished",
       "show",
       "assign",
       "review",
@@ -55,6 +56,19 @@ describe("catalogue", () => {
       choices: activityGroupings,
       default: activityGroupings.at(0),
     });
+  });
+
+  it("says what each level of detail adds to finished, which has no waits", () => {
+    const finished = catalogue.find(({ name }) => name === "finished");
+    const detail = finished?.flags.find(({ name }) => name === "detail");
+    expect(detail).toMatchObject({
+      choices: ["summary", "standard", "detailed"],
+      default: "standard",
+    });
+    expect(detail?.description).toContain(
+      "detailed adds when each thread ended, as a date and time",
+    );
+    expect(detail?.description).not.toMatch(/wait|message|check/);
   });
 
   it("gives --confirm only to the two writes", () => {

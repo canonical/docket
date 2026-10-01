@@ -2,9 +2,12 @@ exit 0
 --- out
 activity · 72h · by kind
 synced 0m ago
-4 threads · 7 events
+6 threads · 10 events
 
 ISSUES
+docs#3 · issue · 1h
+  Broken link in the footer
+  bob closed as completed · 1h ago
 docs#4 · issue · 16h
   Where do tokens live?
   alice, bob
@@ -13,6 +16,10 @@ example#15 · issue · 2d
   Crash on start
   unassigned
   carol opened · 2d ago
+docs#5 · issue · 3d
+  Dark mode for the docs
+  alice closed as not planned · 3d ago
+  dave opened · 4d ago
 
 PULL REQUESTS
 example#12 · PR · 25m

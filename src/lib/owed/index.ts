@@ -11,6 +11,7 @@ export { default as describeOwners } from "./describeOwners.js";
 export { default as describePerson } from "./describePerson.js";
 export { default as describeStackPlace } from "./describeStackPlace.js";
 export { default as describeTeam } from "./describeTeam.js";
+export { default as describeWorkingTime } from "./describeWorkingTime.js";
 export { default as gatherPeople } from "./gatherPeople.js";
 export { default as groupWaits } from "./groupWaits.js";
 export { default as listWaits } from "./listWaits.js";

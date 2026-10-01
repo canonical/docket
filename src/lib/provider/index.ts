@@ -7,6 +7,7 @@ export type {
   CheckRefresh,
   Cursor,
   DetailMessage,
+  EventsSince,
   FileChange,
   PageProgress,
   Provider,

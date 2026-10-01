@@ -2,7 +2,6 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ThreadEvent } from "../lib/events/index.js";
 import { type Home, makeHome } from "../testing/docket.js";
 import { alice, bob, exampleSync } from "../testing/facts.js";
 import { providerError } from "../testing/provider.js";
@@ -441,25 +440,28 @@ describe("run", () => {
               : [],
           cursor: null,
         }),
-        events: async (repo): Promise<ThreadEvent[]> =>
-          repo === parserFix.repo
-            ? [
-                {
-                  kind: "labelled",
-                  thread: parserFix,
-                  actor: { ...bob, login: hostile("bob") },
-                  label: hostile("kind=bug"),
-                  at: recordedNow,
-                },
-                {
-                  kind: "checksFailed",
-                  thread: parserFix,
-                  actor: exampleSync,
-                  checks: [hostile("lint")],
-                  at: recordedNow,
-                },
-              ]
-            : [],
+        events: async (repo) => ({
+          finished: [],
+          events:
+            repo === parserFix.repo
+              ? [
+                  {
+                    kind: "labelled",
+                    thread: parserFix,
+                    actor: { ...bob, login: hostile("bob") },
+                    label: hostile("kind=bug"),
+                    at: recordedNow,
+                  },
+                  {
+                    kind: "checksFailed",
+                    thread: parserFix,
+                    actor: exampleSync,
+                    checks: [hostile("lint")],
+                    at: recordedNow,
+                  },
+                ]
+              : [],
+        }),
         threadDetail: async () => ({
           ...parserFixDetail,
           checks: [{ name: hostile("lint"), state: "failing" }],

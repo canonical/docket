@@ -17,6 +17,7 @@ import {
   resolveSettings,
   type Settings,
 } from "../lib/config/index.js";
+import type { FinishedThread } from "../lib/endings/index.js";
 import { type ThreadEvent, timeEvents } from "../lib/events/index.js";
 import { groupWaits, listWaits, type OwedGrouping } from "../lib/owed/index.js";
 import type { Provider, ThreadDetail } from "../lib/provider/index.js";
@@ -135,6 +136,50 @@ export const recordedThreads: readonly Thread[] = [
   tokensGuide,
 ];
 
+/**
+ * What finished over the last days: a pull request bob opened and alice
+ * merged on Sunday, and a documentation issue carol opened in August
+ * that bob closed as completed this morning.
+ */
+export const recordedFinished: readonly FinishedThread[] = [
+  {
+    repo: "example-org/example-repo",
+    number: 14,
+    url: "https://github.com/example-org/example-repo/pull/14",
+    kind: "pullRequest",
+    title: "Tidy the changelog",
+    author: bob,
+    createdAt: at("2026-09-20T10:00+02:00"),
+    draft: false,
+    labels: [],
+    assignees: [bob],
+    ending: {
+      outcome: "merged",
+      label: "merged",
+      at: at("2026-09-27T15:00+02:00"),
+      by: alice,
+    },
+  },
+  {
+    repo: "example-org/example-docs",
+    number: 3,
+    url: "https://github.com/example-org/example-docs/issues/3",
+    kind: "issue",
+    title: "Broken link in the footer",
+    author: carol,
+    createdAt: at("2026-08-10T10:00+02:00"),
+    draft: false,
+    labels: ["kind=bug"],
+    assignees: [bob],
+    ending: {
+      outcome: "completed",
+      label: "closed as completed",
+      at: at("2026-09-28T10:30+02:00"),
+      by: bob,
+    },
+  },
+];
+
 /** What happened on the threads over the last days. */
 export const recordedEvents: readonly ThreadEvent[] = [
   {
@@ -213,8 +258,10 @@ export function recordedProvider(overrides: Partial<Provider> = {}): Provider {
       threads: recordedThreads.filter((thread) => thread.repo === repo),
       cursor: { since: "2026-09-28T09:59:00Z" },
     }),
-    events: async (repo) =>
-      recordedEvents.filter(({ thread }) => thread.repo === repo),
+    events: async (repo) => ({
+      events: recordedEvents.filter(({ thread }) => thread.repo === repo),
+      finished: recordedFinished.filter((thread) => thread.repo === repo),
+    }),
     threadDetail: async () => parserFixDetail,
     threadDetails: async (threads) => threads.map(() => parserFixDetail),
     assignableUsers: async () => [alice, bob, carol, dave],
