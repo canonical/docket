@@ -28,6 +28,9 @@ export const fitRules: Readonly<Record<FieldKind, FitRule>> = {
   figure: { line: "whole", event: "whole", block: "whole" },
 };
 
+/** One printable ASCII character, which takes one cell. */
+export const ascii = /^[\x20-\x7e]$/;
+
 /** Splits text into what a reader sees as one character each. */
 export const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
 

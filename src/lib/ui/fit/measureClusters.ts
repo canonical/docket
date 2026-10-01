@@ -1,4 +1,5 @@
 import { TextBuffer, TextBufferView, type WidthMethod } from "@opentui/core";
+import { ascii } from "./constants.js";
 
 /** OpenTUI's own text buffer and a view over it, which measure as it draws. */
 interface Measuring {
@@ -23,9 +24,6 @@ let measuring: readonly Measuring[] | undefined;
 
 /** The cells of each character measured so far, which every draw reads. */
 const measured = new Map<string, number>();
-
-/** One printable ASCII character, which takes one cell. */
-const ascii = /^[\x20-\x7e]$/;
 
 /** A line break, which takes no cell and would split a batch's lines. */
 const lineBreak = /[\n\r]|\p{Zl}|\p{Zp}/u;
