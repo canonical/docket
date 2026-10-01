@@ -10,7 +10,7 @@ import {
 } from "../../testing/provider.js";
 import { waitUntil } from "../../testing/wait.js";
 import type { Budgets, Provider } from "../provider/index.js";
-import { budgetFileName, cacheFileName, lockName } from "./constants.js";
+import { budgetFileName, lockName } from "./constants.js";
 import createCache from "./createCache.js";
 import identifyFile from "./identifyFile.js";
 import withFetchLock from "./withFetchLock.js";
@@ -54,7 +54,7 @@ const open = (provider: Provider, repos = [repo]) =>
   createCache({ provider, repos, directory, now: () => clock });
 
 describe("the budget mirror of createCache", () => {
-  it("gives every process the budgets any process heard, through the cache file", async () => {
+  it("gives every process the budgets any process heard, through the budget file", async () => {
     const { provider, answers } = makeHearingProvider();
     answers.heard = { graphql: makeBudget(900), rest: makeBudget(4000) };
     await open(provider).refresh();
@@ -134,7 +134,7 @@ describe("the budget mirror of createCache", () => {
     }
   });
 
-  it("says the pause as it keeps the budget, before it tries the lock another process holds", async () => {
+  it("says the pause as it keeps the budget, while another process holds the fetch lock", async () => {
     const { provider, answers } = makeHearingProvider();
     const cache = open(provider);
     await cache.refresh();
@@ -237,8 +237,9 @@ describe("the budget mirror of createCache", () => {
     const cache = open(provider);
     answers.heard = { graphql: makeBudget(2000) };
     await cache.keepBudget();
-    const file = join(directory, cacheFileName);
+    const file = join(directory, budgetFileName);
     const written = await identifyFile(file);
+    expect(written).toBeDefined();
     const same = makeHearingProvider();
     same.answers.heard = { graphql: makeBudget(2000) };
     await open(same.provider).keepBudget();
@@ -248,7 +249,7 @@ describe("the budget mirror of createCache", () => {
     expect(other.readBudgets()).toEqual({ graphql: makeBudget(2000) });
   });
 
-  it("keeps a figure heard while another process holds the fetch lock and writes nothing", async () => {
+  it("keeps a figure heard while another process holds the fetch lock", async () => {
     const held = Promise.withResolvers<void>();
     const holding = withFetchLock(directory, () => held.promise);
     try {
@@ -265,6 +266,37 @@ describe("the budget mirror of createCache", () => {
     const other = open(makeHearingProvider().provider);
     await other.load();
     expect(other.readBudgets()).toEqual({ graphql: makeBudget(900) });
+  });
+
+  it("takes another process's figures as it writes them into the budget file, while it watches", async () => {
+    const pane = open(makeHearingProvider().provider);
+    await pane.load();
+    const stop = pane.watch();
+    try {
+      const { provider, answers } = makeHearingProvider();
+      answers.heard = { graphql: makeBudget(900) };
+      await open(provider).keepBudget();
+      await waitUntil(() => {
+        expect(pane.readBudgets()).toEqual({ graphql: makeBudget(900) });
+        expect(pane.status().paused).toEqual({
+          until: fullBudget.resetAt,
+          reason: "budget",
+        });
+      });
+    } finally {
+      stop();
+    }
+  });
+
+  it("keeps the figures it holds when the budget file goes missing", async () => {
+    const { provider, answers } = makeHearingProvider();
+    answers.heard = { graphql: makeBudget(900) };
+    await open(provider).keepBudget();
+    const pane = open(makeHearingProvider().provider);
+    await pane.load();
+    await rm(join(directory, budgetFileName));
+    await pane.load();
+    expect(pane.readBudgets()).toEqual({ graphql: makeBudget(900) });
   });
 
   it("judges no floor on a report in the budget file that resets past GitHub's window", async () => {

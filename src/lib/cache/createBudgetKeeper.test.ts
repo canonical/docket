@@ -2,11 +2,12 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { lock } from "proper-lockfile";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { fullBudget } from "../../testing/provider.js";
 import { waitUntil } from "../../testing/wait.js";
 import type { Budgets } from "../provider/index.js";
-import { lockName } from "./constants.js";
+import { budgetLockTiming, lockName } from "./constants.js";
 import createBudgetKeeper from "./createBudgetKeeper.js";
 import isSame from "./isSame.js";
 import mergeBudgets from "./mergeBudgets.js";
@@ -37,41 +38,45 @@ const makeBudget = (remaining: number) => ({
  */
 const createProcess = (heard: Budgets) => {
   const told: string[] = [];
-  const process = { mirror: {} as Budgets, heard, told };
-  const readFigures = () => mergeBudgets(process.mirror, process.heard);
+  const peer: { mirror: Budgets; heard: Budgets; told: string[] } = {
+    mirror: {},
+    heard,
+    told,
+  };
+  const readFigures = () => mergeBudgets(peer.mirror, peer.heard);
   const keeper = createBudgetKeeper({
     file,
     readFigures,
-    isKept: () => isSame(readFigures(), process.mirror),
+    isKept: () => isSame(readFigures(), peer.mirror),
     adopt: (kept) => {
-      process.mirror = kept;
+      peer.mirror = kept;
     },
     publishFloor: () => told.push("floor"),
     now: () => clock,
   });
-  return { process, keeper };
+  return { peer, keeper };
 };
 
 describe("createBudgetKeeper", () => {
   it("says the floor, and touches no file when it heard nothing the file lacks", async () => {
-    const { process, keeper } = createProcess({});
+    const { peer, keeper } = createProcess({});
     await keeper();
-    expect(process.told).toEqual(["floor"]);
+    expect(peer.told).toEqual(["floor"]);
     expect(await readdir(directory)).toEqual([]);
   });
 
   it("merges what it heard into the file, keeping a later report the file holds", async () => {
     await writeBudgetFile(file, makeBudget(800));
-    const { process, keeper } = createProcess(makeBudget(900));
+    const { peer, keeper } = createProcess(makeBudget(900));
     await keeper();
     expect(await readBudgetFile(file)).toEqual(makeBudget(800));
-    expect(process.mirror).toEqual(makeBudget(800));
+    expect(peer.mirror).toEqual(makeBudget(800));
     const lower = createProcess(makeBudget(700));
     await lower.keeper();
     expect(await readBudgetFile(file)).toEqual(makeBudget(700));
   });
 
-  it("keeps the figures while another process holds the fetch lock, and writes nothing to it", async () => {
+  it("keeps the figures while another process holds the fetch lock", async () => {
     const held = Promise.withResolvers<void>();
     const holding = withFetchLock(directory, () => held.promise);
     try {
@@ -93,10 +98,10 @@ describe("createBudgetKeeper", () => {
       resetAt: new Date("9999-12-31T00:00:00Z"),
     };
     await writeBudgetFile(file, { graphql: far });
-    const { process, keeper } = createProcess(makeBudget(3500));
+    const { peer, keeper } = createProcess(makeBudget(3500));
     await keeper();
     expect(await readBudgetFile(file)).toEqual(makeBudget(3500));
-    expect(process.mirror).toEqual(makeBudget(3500));
+    expect(peer.mirror).toEqual(makeBudget(3500));
   });
 
   it("takes over a lock a dead process left, and keeps the figures", async () => {
@@ -140,14 +145,14 @@ describe("createBudgetKeeper", () => {
     expect(await readBudgetFile(file)).toEqual(makeBudget(700));
   });
 
-  it("runs one keeping at a time, which a call made meanwhile joins, saying the floor, and runs once more", async () => {
-    const { process, keeper } = createProcess(makeBudget(900));
+  it("runs one keeping at a time, which a call made meanwhile joins, saying the floor", async () => {
+    const { peer, keeper } = createProcess(makeBudget(900));
     const first = keeper();
-    process.heard = makeBudget(800);
+    peer.heard = makeBudget(800);
     const second = keeper();
     expect(second).toBe(first);
     // The call that joined says the floor its own figures reach.
-    expect(process.told).toEqual(["floor", "floor"]);
+    expect(peer.told).toEqual(["floor", "floor"]);
     await first;
     expect(await readBudgetFile(file)).toEqual(makeBudget(800));
     const third = keeper();
@@ -155,9 +160,67 @@ describe("createBudgetKeeper", () => {
     await third;
   });
 
+  it("keeps the figures heard while a keeping runs in a second run, once the first has read its own", async () => {
+    let adopted = 0;
+    let joined: Promise<void> | undefined;
+    const peer: { mirror: Budgets; heard: Budgets } = {
+      mirror: {},
+      heard: makeBudget(900),
+    };
+    const readFigures = () => mergeBudgets(peer.mirror, peer.heard);
+    const keeper = createBudgetKeeper({
+      file,
+      readFigures,
+      isKept: () => isSame(readFigures(), peer.mirror),
+      adopt: (kept) => {
+        peer.mirror = kept;
+        adopted += 1;
+        // A figure heard after the first run read its own joins it.
+        if (adopted === 1) {
+          peer.heard = makeBudget(800);
+          joined = keeper();
+        }
+      },
+      publishFloor: () => {},
+      now: () => clock,
+    });
+    await keeper();
+    await joined;
+    expect(adopted).toBe(2);
+    expect(await readBudgetFile(file)).toEqual(makeBudget(800));
+  });
+
+  it("reads and writes the file only while it holds the file's lock", async () => {
+    await writeBudgetFile(file, makeBudget(1000));
+    let holding = true;
+    const readWhileHeld: boolean[] = [];
+    const peer: { mirror: Budgets } = { mirror: {} };
+    const keeper = createBudgetKeeper({
+      file,
+      readFigures: () => {
+        readWhileHeld.push(holding);
+        return makeBudget(900);
+      },
+      isKept: () => false,
+      adopt: (kept) => {
+        peer.mirror = kept;
+      },
+      publishFloor: () => {},
+      now: () => clock,
+    });
+    const release = await lock(file, { ...budgetLockTiming, realpath: false });
+    const keeping = keeper();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    holding = false;
+    await release();
+    await keeping;
+    expect(readWhileHeld).toEqual([false]);
+    expect(peer.mirror).toEqual(makeBudget(900));
+  });
+
   it("drops a keeping that fails, lets its lock go, and keeps at the next call", async () => {
     await mkdir(join(file, "inside"), { recursive: true });
-    const { process, keeper } = createProcess(makeBudget(900));
+    const { peer, keeper } = createProcess(makeBudget(900));
     const first = keeper();
     const second = keeper();
     await expect(first).resolves.toBeUndefined();
@@ -166,6 +229,6 @@ describe("createBudgetKeeper", () => {
     await createProcess(makeBudget(800)).keeper();
     expect(await readBudgetFile(file)).toEqual(makeBudget(800));
     await keeper();
-    expect(process.mirror).toEqual(makeBudget(800));
+    expect(peer.mirror).toEqual(makeBudget(800));
   });
 });
