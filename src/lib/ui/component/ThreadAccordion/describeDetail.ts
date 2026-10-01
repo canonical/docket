@@ -49,6 +49,15 @@ const trimmed = (...pieces: Piece[]): DetailLine => ({
 });
 
 /**
+ * docket's words on a line held to one that ends in the dimmed `…` until
+ * the details complete it, which marks it as already ending in a cut.
+ */
+const waiting = (...pieces: Piece[]): DetailLine => ({
+  ...trimmed(...pieces, pending),
+  waiting: true,
+});
+
+/**
  * docket's words on a line that wraps, between people and at spaces,
  * naming each person whole.
  */
@@ -175,9 +184,9 @@ function describeChecks({ checks }: ThreadDetail): DetailLine {
  */
 function describeSnapshotChecks({ checks }: Thread): DetailLine {
   if (checks === undefined) return trimmed(plain("no checks"));
-  if (checks === "failing") return trimmed(failed("checks:"), pending);
+  if (checks === "failing") return waiting(failed("checks:"));
   const state = checks === "running" ? "checks running" : "checks passed";
-  return trimmed(plain(state), pending);
+  return waiting(plain(state));
 }
 
 /**
@@ -206,13 +215,15 @@ function describeReview(
           ` · ${count(detail.files.length, "file", "files")} · +${detail.files.reduce((sum, file) => sum + file.additions, 0)} −${detail.files.reduce((sum, file) => sum + file.deletions, 0)}`,
         ),
       ]
-    : [plain(" ·"), pending];
+    : [plain(" ·")];
   return [
     ...describeCutOwners(row),
     row.requester
       ? wrapped(muted("asked by "), markPerson(row.requester), muted(age))
       : trimmed(muted(`asked${age}`)),
-    trimmed(plain(count(pushes, "push since", "pushes since")), ...changes),
+    detail
+      ? trimmed(plain(count(pushes, "push since", "pushes since")), ...changes)
+      : waiting(plain(count(pushes, "push since", "pushes since")), ...changes),
     detail ? describeChecks(detail) : describeSnapshotChecks(thread),
   ];
 }

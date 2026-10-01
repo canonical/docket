@@ -74,17 +74,28 @@ describe("fitAccordion", () => {
     ]);
   });
 
-  it("does not cut again a last line that already ends in … or was cut in its middle", () => {
+  it("does not end again a last line fitting cut, or one waiting on the details", () => {
     const text = {
-      body: [trimmed("push since …"), wrapped("more")],
+      body: [{ ...trimmed("push since …"), waiting: true }, wrapped("more")],
       stack: [],
     };
     expect(read(fitAccordion(text, 20, 1))).toEqual(["push since …"]);
     const cut = {
-      body: [trimmed("repo…name"), wrapped("more")],
+      body: [
+        { ...trimmed("example-repository"), kind: "identifier" as const },
+        wrapped("more"),
+      ],
       stack: [],
     };
-    expect(read(fitAccordion(cut, 9, 1))).toEqual(["repo…name"]);
+    expect(read(fitAccordion(cut, 9, 1))).toEqual(["exam…tory"]);
+  });
+
+  it("ends a last line cut at the limit with …, whatever its text holds", () => {
+    const text = {
+      body: [wrapped("Rebased on main… could someone look")],
+      stack: [],
+    };
+    expect(read(fitAccordion(text, 20, 1))).toEqual(["Rebased on main……"]);
   });
 
   it("fits each line by its kind's rule: words wrap, a figure stays on one line, and a line held to one is cut by its kind's rule for a line", () => {

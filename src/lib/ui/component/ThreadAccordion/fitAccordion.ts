@@ -41,31 +41,35 @@ function giveWay(
 }
 
 /**
+ * The lines fitting cut, or that end in the dimmed `…` of details still
+ * to come: each already says more follows, by the cut that made it.
+ */
+const ended = new WeakSet<readonly Piece[]>();
+
+/**
  * One line's runs as they fill the room, by the rule the fitting table
  * gives its kind: wrapped in a block, or kept whole on one. A line held
  * to one gives way by its runs that may (`giveWay`), and any line still
  * too wide is cut at its end.
  */
 function fitLine(line: DetailLine, room: number): Piece[][] {
-  const { pieces, kind, most } = line;
-  if (most === 1) return [fitRuns(giveWay(line, room), room)];
-  return fitBlock(pieces, kind, room);
+  const { pieces, kind, most, waiting } = line;
+  if (most !== 1) return fitBlock(pieces, kind, room);
+  const held = fitRuns(giveWay(line, room), room);
+  if (waiting || measurePieces(held) < measurePieces(pieces)) ended.add(held);
+  return [held];
 }
 
 /**
  * `lines` with the last of them ending in `…`, to say more follows,
- * unless it already holds one: a line cut in its middle, or one still
- * waiting for the details, keeps the one `…` it has.
+ * unless fitting already cut it, or it waits on the details: such a line
+ * keeps the one `…` it has, whatever its text holds.
  */
 const endLast = (lines: readonly Piece[][], room: number): Piece[][] => [
   ...lines.slice(0, -1),
   ...lines
     .slice(-1)
-    .map((line) =>
-      line.some(({ text }) => text.includes(tokens["glyph.cut"]))
-        ? line
-        : endRuns(line, room),
-    ),
+    .map((line) => (ended.has(line) ? line : endRuns(line, room))),
 ];
 
 /**
