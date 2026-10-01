@@ -1,4 +1,5 @@
 export { default as findWaits } from "./findWaits.js";
+export { default as isExempt } from "./isExempt.js";
 export type {
   Checks,
   Message,

@@ -5,6 +5,7 @@ import {
   feedEntry,
   page,
   repository,
+  selectNodeFields,
   settle,
   token,
   user,
@@ -29,8 +30,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const events = () =>
+const read = () =>
   settle(fetchEvents(createClient(token, "github.com", "1.2.3"), repo, since));
+
+/** The events read. */
+const events = async () => (await read()).events;
 
 /** What an event line reads from an event: its thread, kind and actor. */
 const lines = (found: readonly ThreadEvent[]) =>
@@ -41,7 +45,10 @@ const lines = (found: readonly ThreadEvent[]) =>
       kind,
       actor.type === "bot" ? `${actor.login} (bot)` : actor.login,
       at.toISOString().slice(11, 16),
-      ...Object.values(detail),
+      // A close names its ending by the words shown for it.
+      ...Object.values(detail).map((value) =>
+        typeof value === "object" && "label" in value ? value.label : value,
+      ),
     ];
   });
 
@@ -118,7 +125,10 @@ describe("fetchEvents", () => {
                   label: { name: "kind=bug" },
                 }),
                 item("LabeledEvent", "2026-09-22T09:21:00Z", { label: null }),
-                item("ClosedEvent", "2026-09-22T10:00:00Z", { actor: null }),
+                item("ClosedEvent", "2026-09-22T10:00:00Z", {
+                  actor: null,
+                  stateReason: "NOT_PLANNED",
+                }),
                 item("ReopenedEvent", "2026-09-22T11:00:00Z"),
               ],
             },
@@ -135,7 +145,7 @@ describe("fetchEvents", () => {
       [1, "commented", "bob", "09:00"],
       [1, "assigned", "alice", "09:10", "bob"],
       [1, "labelled", "alice", "09:20", "kind=bug"],
-      [1, "closed", "ghost", "10:00"],
+      [1, "closed", "ghost", "10:00", "closed as not planned"],
       [1, "reopened", "alice", "11:00"],
     ]);
     expect(github.sent.at(0)?.body?.variables).toMatchObject({
@@ -205,67 +215,20 @@ describe("fetchEvents", () => {
   };
 
   /** The events read, openings aside. */
-  const endings = async () =>
+  const listEventsButOpenings = async () =>
     lines((await events()).filter(({ kind }) => kind !== "opened"));
 
-  it("counts a merge once, whichever second GitHub dates its close at", async () => {
+  it("counts a merge once, leaving out the close GitHub records with it", async () => {
     answer(
-      [
-        item("MergedEvent", "2026-09-22T11:00:00Z"),
-        item("ClosedEvent", "2026-09-22T11:00:00Z"),
-      ],
-      [
-        item("ClosedEvent", "2026-09-22T11:00:00Z"),
-        item("MergedEvent", "2026-09-22T11:00:01Z"),
-      ],
       [
         item("MergedEvent", "2026-09-22T11:00:00Z"),
         item("ClosedEvent", "2026-09-22T11:00:01Z", { actor: user("bob") }),
       ],
-    );
-    expect(await endings()).toEqual([
-      [2, "merged", "alice", "11:00"],
-      [3, "merged", "alice", "11:00"],
-      [4, "merged", "alice", "11:00"],
-    ]);
-  });
-
-  it("keeps a close that is not the merge's", async () => {
-    answer(
-      [
-        item("ClosedEvent", "2026-09-22T11:00:38Z", { actor: user("bob") }),
-        item("ReopenedEvent", "2026-09-22T11:00:39Z"),
-        item("MergedEvent", "2026-09-22T11:00:40Z"),
-        item("ClosedEvent", "2026-09-22T11:00:41Z"),
-      ],
       [item("ClosedEvent", "2026-09-22T11:00:00Z")],
-      [
-        item("ClosedEvent", "2026-09-22T10:59:58Z", { actor: user("bob") }),
-        item("MergedEvent", "2026-09-22T11:00:00Z"),
-        item("ClosedEvent", "2026-09-22T11:00:01Z"),
-      ],
-      [
-        item("MergedEvent", "2026-09-22T11:00:00Z"),
-        item("ClosedEvent", "2026-09-22T11:00:10Z", { actor: user("bob") }),
-      ],
-      [
-        item("ClosedEvent", "2026-09-22T11:00:39Z", { actor: user("bob") }),
-        item("ReopenedEvent", "2026-09-22T11:00:39Z"),
-        item("MergedEvent", "2026-09-22T11:00:40Z"),
-      ],
     );
-    expect(await endings()).toEqual([
-      [2, "closed", "bob", "11:00"],
-      [2, "reopened", "alice", "11:00"],
+    expect(await listEventsButOpenings()).toEqual([
       [2, "merged", "alice", "11:00"],
-      [3, "closed", "alice", "11:00"],
-      [4, "closed", "bob", "10:59"],
-      [4, "merged", "alice", "11:00"],
-      [5, "merged", "alice", "11:00"],
-      [5, "closed", "bob", "11:00"],
-      [6, "closed", "bob", "11:00"],
-      [6, "reopened", "alice", "11:00"],
-      [6, "merged", "alice", "11:00"],
+      [3, "closed", "alice", "11:00", "closed"],
     ]);
   });
 
@@ -490,5 +453,46 @@ describe("fetchEvents", () => {
       [1, "opened", "dave", "08:00"],
       [1, "commented", "alice", "09:00"],
     ]);
+  });
+
+  it("gives the threads merged or closed in the window, each with its ending", async () => {
+    const merged = pull({
+      state: "MERGED",
+      mergedAt: "2026-09-22T11:00:00Z",
+      mergedBy: user("bob"),
+      labels: { nodes: [] },
+      assignees: { nodes: [] },
+    });
+    github.graphql("Events", lists([opened({ state: "OPEN" })], [merged], []));
+    github.rest(feed, { body: [] });
+    const { finished } = await read();
+    expect(
+      finished.map(({ number, ending }) => [number, ending.label]),
+    ).toEqual([[2, "merged"]]);
+  });
+
+  it("asks GitHub how each thread stands, who wrote it, and how and by whom it ended", async () => {
+    github.graphql("Events", lists([], [], []));
+    github.rest(feed, { body: [] });
+    await read();
+    const query = String(github.sent.at(0)?.body?.query);
+    const both = ["authorAssociation", "state", "closedAt", "labels(first:"];
+    const asked = (list: string, fields: string[]) =>
+      expect(selectNodeFields(query, list)).toEqual(
+        expect.arrayContaining([...both, "assignees(first:", ...fields]),
+      );
+    asked("issues", ["stateReason"]);
+    asked("pullRequests", ["mergedAt", "mergedBy", "isDraft"]);
+    // A close's own fields, what each selects left out.
+    let close = query
+      .split("... on ClosedEvent {")
+      .at(1)
+      ?.split("... on Reopened")
+      .at(0);
+    while (close && /\{[^{}]*\}/.test(close))
+      close = close.replace(/\{[^{}]*\}/g, "");
+    expect(close?.split(/[\s}]+/)).toEqual(
+      expect.arrayContaining(["stateReason", "closer", "duplicateOf"]),
+    );
   });
 });

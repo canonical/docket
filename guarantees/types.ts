@@ -89,6 +89,8 @@ export interface Home {
 /** The text written on GitHub that a recording carries. */
 export interface Words {
   readonly title: string;
+  /** The title of the pull request merged on the Sunday. */
+  readonly mergedTitle: string;
   readonly comment: string;
   readonly label: string;
   readonly check: string;

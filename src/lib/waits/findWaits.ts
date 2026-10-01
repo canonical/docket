@@ -7,6 +7,7 @@ import type { Settings } from "../config/index.js";
 import { type Author, classify } from "../people/index.js";
 import findResponseStart from "./findResponseStart.js";
 import findReviewStarts from "./findReviewStarts.js";
+import isExempt from "./isExempt.js";
 import type { Thread, Wait, WaitKind } from "./types.js";
 
 /**
@@ -59,9 +60,7 @@ export default function findWaits(thread: Thread, settings: Settings): Wait[] {
   for (const { reviewer, started } of findReviewStarts(thread, people)) {
     waits.push(measure("review", started, targets.nextMove.review, [reviewer]));
   }
-  // GitHub treats label names that differ only in case as the same label.
-  const exempted = new Set(exempt.close.map((label) => label.toLowerCase()));
-  if (!thread.labels.some((label) => exempted.has(label.toLowerCase()))) {
+  if (!isExempt(thread.labels, exempt)) {
     waits.push(
       measure("close", thread.createdAt, targets.close[thread.kind], assignees),
     );

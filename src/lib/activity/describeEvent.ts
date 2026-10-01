@@ -2,7 +2,8 @@ import type { ThreadEvent } from "../events/index.js";
 
 /**
  * Writes who did what, such as `alice pushed 2 commits` or `alice assigned
- * bob`. Failed checks name the checks rather than who ran them, as in
+ * bob`. A close reads in the provider's words, such as `alice closed as
+ * completed`. Failed checks name the checks rather than who ran them, as in
  * `checks failed (lint)`.
  *
  * @param mark Writes each part that was written on GitHub (a login, a
@@ -26,6 +27,8 @@ export default function describeEvent(
       return `checks failed (${event.checks.map(mark).join(", ")})`;
     case "reviewRequested":
       return `${actor} requested review`;
+    case "closed":
+      return `${actor} ${event.ending.label}`;
     default:
       return `${actor} ${event.kind}`;
   }

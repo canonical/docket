@@ -176,7 +176,7 @@ describe("useActivity", () => {
     wait = promise;
     await change({ window: twoDays });
     expect(await read()).toBe("reading");
-    resolve({ events: [], syncedAt: recordedNow });
+    resolve({ events: [], finished: [], syncedAt: recordedNow });
     await waitUntil(async () =>
       expect(await read()).toBe("0 threads · 0 events · -"),
     );
@@ -189,12 +189,12 @@ describe("useActivity", () => {
       .fn<Reader>()
       .mockReturnValueOnce(first.promise)
       .mockReturnValueOnce(second.promise)
-      .mockResolvedValue({ events: [], syncedAt: recordedNow });
+      .mockResolvedValue({ events: [], finished: [], syncedAt: recordedNow });
     const { change, read } = await probe(() => reader, {
       watched: recordedWatched().slice(0, 1),
     });
     await change({ window: twoDays });
-    first.resolve({ events: [], syncedAt: recordedNow });
+    first.resolve({ events: [], finished: [], syncedAt: recordedNow });
     expect(await read()).toBe("reading");
     await change({ window: day });
     second.reject(new Error("GitHub gave no answer"));

@@ -4,14 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { alice, thread } from "../../testing/facts.js";
+import { alice, bob, finishedThread, thread } from "../../testing/facts.js";
 import {
   everyCapability,
   fakeProvider,
   providerError,
 } from "../../testing/provider.js";
-import type { ThreadEvent } from "../events/index.js";
-import type { Provider } from "../provider/index.js";
+import type { EventsSince, Provider } from "../provider/index.js";
 import createCache from "./createCache.js";
 
 const repo = "example-org/example-repo";
@@ -241,18 +240,32 @@ describe("createCache", () => {
 
 describe("createCache, for events", () => {
   const since = new Date("2026-09-20T10:00:00Z");
-  /** A provider with one comment on the repository, a day before the clock. */
+  const merged = finishedThread({
+    ending: {
+      outcome: "merged",
+      label: "merged",
+      at: new Date("2026-09-27T12:00:00Z"),
+      by: bob,
+    },
+  });
+  /**
+   * A provider with one comment on the repository, a day before the
+   * clock, and one pull request merged since.
+   */
   const withEvents = (overrides: Partial<Provider> = {}) =>
     fakeProvider({
       events: vi.fn(
-        async (): Promise<readonly ThreadEvent[]> => [
-          {
-            kind: "commented",
-            thread: thread(),
-            actor: alice,
-            at: new Date("2026-09-27T10:00:00Z"),
-          },
-        ],
+        async (): Promise<EventsSince> => ({
+          events: [
+            {
+              kind: "commented",
+              thread: thread(),
+              actor: alice,
+              at: new Date("2026-09-27T10:00:00Z"),
+            },
+          ],
+          finished: [merged],
+        }),
       ),
       ...overrides,
     });
@@ -262,6 +275,7 @@ describe("createCache, for events", () => {
     const first = await open(provider).readEvents(repo, since, 5 * minute);
     expect(first.syncedAt).toEqual(clock);
     expect(first.events.map(({ kind }) => kind)).toEqual(["commented"]);
+    expect(first.finished).toEqual([merged]);
     clock = new Date(clock.getTime() + 4 * minute);
     // Another process, reading the file this one wrote.
     const again = await open(provider).readEvents(

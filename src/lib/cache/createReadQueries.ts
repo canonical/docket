@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/query-core";
-import type { ThreadEvent } from "../events/index.js";
+import type { EventsSince } from "../provider/index.js";
 import type {
   CachedEvents,
   CachedFile,
@@ -28,8 +28,8 @@ export default function createReadQueries(
     now().getTime() - syncedAt.getTime() < maxAge;
 
   /**
-   * The events held for `repo` from `since` on, when they reach back to it;
-   * without `since`, every event held.
+   * The events held for `repo` from `since` on, and the threads that
+   * finished since, when they reach back to it; without `since`, all held.
    */
   const findEvents = (repo: string, since?: Date): CachedEvents | undefined => {
     const state = client.getQueryState<EventsCache>(eventsKey(repo));
@@ -39,6 +39,7 @@ export default function createReadQueries(
     if (held.since > from) return undefined;
     return {
       events: held.events.filter(({ at }) => at >= from),
+      finished: held.finished.filter(({ ending }) => ending.at >= from),
       syncedAt: new Date(state.dataUpdatedAt),
     };
   };
@@ -72,14 +73,12 @@ export default function createReadQueries(
         ? { login: state.data, syncedAt }
         : undefined;
     },
-    /** Keeps the events on `repo`'s threads from `since` on, fetched `at`. */
-    keepEvents(
-      repo: string,
-      since: Date,
-      events: readonly ThreadEvent[],
-      at: Date,
-    ) {
-      const value: EventsCache = { since, events };
+    /**
+     * Keeps the events on `repo`'s threads from `since` on, and the
+     * threads that finished since, fetched `at`.
+     */
+    keepEvents(repo: string, since: Date, read: EventsSince, at: Date) {
+      const value: EventsCache = { since, ...read };
       client.setQueryData(eventsKey(repo), value, { updatedAt: at.getTime() });
     },
     /** Keeps the file at `path` on `repo`, or its absence, fetched `at`. */

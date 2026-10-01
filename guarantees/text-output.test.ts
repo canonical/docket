@@ -5,9 +5,9 @@ import findFixture from "./findFixture.js";
 import makeHome from "./makeHome.js";
 
 /**
- * What `owed` and `activity` print, in each format, from the team's
- * recording at Monday 28 September 2026, 12:00 in Paris. A person reads
- * `plain`, an agent reads `llm`, and a program parses `json`, so a
+ * What `owed`, `activity` and `finished` print, in each format, from the
+ * team's recording at Monday 28 September 2026, 12:00 in Paris. A person
+ * reads `plain`, an agent reads `llm`, and a program parses `json`, so a
  * change to any of them is a change a reader meets, and it shows here as
  * a diff to accept or refuse.
  */
@@ -23,7 +23,7 @@ const call = async (args: readonly string[]) => {
 };
 
 describe("text-output", () => {
-  for (const command of ["owed", "activity"]) {
+  for (const command of ["owed", "activity", "finished"]) {
     for (const format of ["plain", "llm", "json"]) {
       it(`prints ${command} in ${format} as saved`, async () => {
         expectGolden(
