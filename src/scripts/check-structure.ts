@@ -377,7 +377,7 @@ function check(root: string): Finding[] {
         if (fittingPrimitives.test(specifier)) {
           report(
             "fitting",
-            `imports ${specifier}: fit text with fitField, fitRuns, wrapRuns, endRuns or markPerson from ${fitting}`,
+            `imports ${specifier}: fit text with fitField, fitRuns, fitBlock, endRuns or markPerson from ${fitting}`,
           );
         }
       }
