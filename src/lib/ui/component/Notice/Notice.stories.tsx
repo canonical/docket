@@ -35,3 +35,14 @@ export const UnexpectedFailure: Story<NoticeProps> = {
     width: 40,
   },
 };
+
+/** GitHub refused a change with a reason longer than the pane. */
+export const Long: Story<NoticeProps> = {
+  args: {
+    reason:
+      "GitHub refused the request: Reviews may only be requested from collaborators of example-org/example-repository-with-a-long-name.",
+    recovery:
+      "change what GitHub's reason names, then close the editor with esc, refresh with R, then open it again with r",
+    width: 40,
+  },
+};

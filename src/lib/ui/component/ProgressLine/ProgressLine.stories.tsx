@@ -13,3 +13,8 @@ export default meta;
 export const Halfway: Story<ProgressLineProps> = {
   args: { fetched: 50, total: 89, width: 38 },
 };
+
+/** Four digits of pages on each side of the slash. */
+export const Long: Story<ProgressLineProps> = {
+  args: { fetched: 1234, total: 9999, width: 38 },
+};

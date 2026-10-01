@@ -19,7 +19,7 @@ describe("describeCandidate", () => {
   it("gives a login the group its repository's settings give it, and you to the viewer", () => {
     expect(describeCandidate("bob", discussed, watched, "alice")).toEqual({
       text: "bob",
-      fit: "trimmed",
+      kind: "person",
       group: "team",
     });
     expect(
@@ -72,7 +72,7 @@ describe("describeCandidate", () => {
         "alice",
         gatherNamed([requested]),
       ),
-    ).toEqual({ text: "example-org/UI", fit: "trimmed", group: "you" });
+    ).toEqual({ text: "example-org/UI", kind: "person", group: "you" });
     expect(
       groupOf(
         describeCandidate(
@@ -91,7 +91,7 @@ describe("describeCandidate", () => {
       describeCandidate("example-org/reviewers", discussed, watched, "alice"),
     ).toEqual({
       text: "example-org/reviewers",
-      fit: "trimmed",
+      kind: "person",
       group: "internal",
     });
   });
@@ -105,7 +105,7 @@ describe("describeCandidate", () => {
       describeCandidate("Example-Org/Reviewers", discussed, yours, "alice"),
     ).toEqual({
       text: "Example-Org/Reviewers",
-      fit: "trimmed",
+      kind: "person",
       group: "you",
     });
     expect(

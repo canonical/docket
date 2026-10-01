@@ -28,3 +28,8 @@ export const OnTrackThreeLines: Story<MarginProps> = {
 export const NoClock: Story<MarginProps> = {
   args: { stacked: true, lines: 2, ends: true },
 };
+
+/** A selected row and its accordion at their tallest: twelve lines of bar. */
+export const Long: Story<MarginProps> = {
+  args: { state: "over", stacked: true, lines: 12, ends: true },
+};

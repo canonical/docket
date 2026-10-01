@@ -8,7 +8,7 @@ export interface OwnerFields {
   readonly owners?: FieldList<Owner>;
 }
 
-const unassigned: Field = { text: "unassigned", fit: "trimmed" };
+const unassigned: Field = { text: "unassigned", kind: "words" };
 
 /**
  * Names a row's owners. One owner, or none, fits on the second line.
@@ -19,6 +19,6 @@ const unassigned: Field = { text: "unassigned", fit: "trimmed" };
  */
 export default function describeOwners(owners: readonly Owner[]): OwnerFields {
   const [only] = owners;
-  if (owners.length > 1) return { owners: { fit: "wrapped", fields: owners } };
+  if (owners.length > 1) return { owners: { fields: owners } };
   return { owner: only ?? unassigned };
 }

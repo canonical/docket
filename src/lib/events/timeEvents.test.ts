@@ -121,7 +121,11 @@ describe("timeEvents", () => {
       { ...commented, kind: "pushed", commits: 2 },
       { ...commented, kind: "assigned", assignee: "bob" },
       { ...commented, kind: "labelled", label: "kind=bug" },
-      { ...commented, kind: "closed" },
+      {
+        ...commented,
+        kind: "closed",
+        ending: { outcome: "completed", label: "closed as completed" },
+      },
       { ...commented, kind: "merged" },
       { ...commented, kind: "reopened" },
     ];

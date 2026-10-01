@@ -105,7 +105,7 @@ describe("buildActivity", () => {
     );
     expect(list.groups.at(0)?.rows.at(0)?.owner).toEqual({
       text: "carol",
-      fit: "trimmed",
+      kind: "person",
       group: "internal",
     });
   });
@@ -120,7 +120,9 @@ describe("buildActivity", () => {
       recordedNow,
     );
     expect(list.groups).toEqual([]);
-    expect(list.summary.text).toBe("0 threads · 0 events");
+    expect(list.summary.fields.map(({ text }) => text).join(" · ")).toBe(
+      "0 threads · 0 events",
+    );
   });
 
   it("keeps an event while it is inside the window on its repository's clock", () => {

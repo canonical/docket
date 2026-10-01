@@ -1,18 +1,17 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import trimText from "../../trimText.js";
+import { fitField, measureText } from "../../fit/index.js";
 import type { PaneHeaderProps } from "./types.js";
-
-/** What joins the address and the sort. */
-const joint = " · ";
 
 /**
  * The first line of the pane. It says where you are: the current mode's
  * name on the left and that mode's own address on the right, read like
  * the text address, then its fixed sort, dimmed, as context. It never
- * names the other mode; there is no tab strip. When the line is too
- * short for them all, the sort gives way first, then the address is cut,
- * and the mode's name stays.
+ * names the other mode; there is no tab strip. The mode's name never
+ * gives way; the sort and the address's parts, `24h · by kind`, are
+ * docket's words and are never cut: when they do not all fit, the sort
+ * leaves first, then the address's parts leave whole, the first part
+ * first, as the window leaves before the grouping.
  *
  * `import { PaneHeader } from "../lib/ui/index.js";`
  *
@@ -20,34 +19,43 @@ const joint = " · ";
  */
 const PaneHeader = ({
   title,
-  address = "",
-  sort = "",
+  address,
+  sort,
   width,
 }: PaneHeaderProps): ReactNode => {
-  const left = trimText(title, width);
-  const room = width - Bun.stringWidth(left) - 1;
-  const sorted = `${joint}${sort}`;
+  const left = fitField(title, "line", width);
+  const separator = ` ${tokens["glyph.separator"]} `;
+  const parts = address
+    ? address.text
+        .split(separator)
+        .map((text) => fitField({ ...address, text }, "line", width))
+    : [];
+  const sorted = sort ? fitField(sort, "line", width) : "";
+  // A space at least between the mode and the address.
+  const room = width - measureText(left) - 1;
   const fits =
-    sort !== "" && Bun.stringWidth(address) + Bun.stringWidth(sorted) <= room;
-  const right = trimText(address, room);
-  const gap = Math.max(
-    0,
-    width -
-      Bun.stringWidth(left) -
-      Bun.stringWidth(right) -
-      (fits ? Bun.stringWidth(sorted) : 0),
-  );
+    sorted !== "" && measureText([...parts, sorted].join(separator)) <= room;
+  while (parts.length > 0 && measureText(parts.join(separator)) > room) {
+    parts.shift();
+  }
+  const shown = [
+    ...parts.map((text) => ({ text, fg: tokens["color.text"] })),
+    ...(fits ? [{ text: sorted, fg: tokens["color.text.muted"] }] : []),
+  ];
+  const right = shown.map(({ text }) => text).join(separator);
+  const gap = Math.max(0, width - measureText(left) - measureText(right));
   return (
     <text fg={tokens["color.text"]}>
       {left}
       {" ".repeat(gap)}
-      {right}
-      {fits && (
-        <>
-          {joint}
-          <span fg={tokens["color.text.muted"]}>{sort}</span>
-        </>
-      )}
+      {shown.map(({ text, fg }, place) => (
+        // The parts never reorder, so their place is their key.
+        // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+        <span key={place}>
+          {place > 0 && separator}
+          <span fg={fg}>{text}</span>
+        </span>
+      ))}
     </text>
   );
 };

@@ -1,0 +1,25 @@
+exit 0
+--- out
+finished · 72h · by kind
+synced 0m ago
+1 merged · 2 closed · 1 over
+
+ISSUES
+docs#3 · issue · 5d over
+  Broken link in the footer
+  bob
+  bob closed as completed · 1h ago
+  open 35d · target 30d
+docs#5 · issue · open 1d
+  Dark mode for the docs
+  unassigned
+  alice closed as not planned · 3d ago
+  target 30d
+
+PULL REQUESTS
+example#14 · PR · open 5d
+  Tidy the changelog
+  bob
+  alice merged · 21h ago
+  target 5d
+--- err

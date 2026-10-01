@@ -117,7 +117,8 @@ const readRecordedDetails = (threads: readonly ThreadSummary[]) =>
 const describeHeader = (mode: TerminalMode, address: string, width = 40) => {
   const sort = mode === "owed" ? "overdue first" : "newest first";
   const right = `${address} · ${sort}`;
-  const gap = width - mode.length - Bun.stringWidth(right);
+  // Every character of the header takes one cell.
+  const gap = width - mode.length - right.length;
   return `${mode}${" ".repeat(gap)}${right}`;
 };
 
@@ -265,8 +266,10 @@ async function showRefreshing(
       threads: threads().filter((thread) => thread.repo === repo),
       cursor: { since: "2026-09-28T09:59:00Z" },
     }),
-    events: async (repo) =>
-      events().filter(({ thread }) => thread.repo === repo),
+    events: async (repo) => ({
+      events: events().filter(({ thread }) => thread.repo === repo),
+      finished: [],
+    }),
   });
   const cache = await openCache(provider, recordedRepos, () => clock);
   await cache.refresh();
@@ -461,6 +464,19 @@ describe("Screen", { timeout: 15_000 }, () => {
       ]);
       const keyed = await press(screen, "right", "g", "j");
       expect(keyed.lines).toEqual(screen.lines);
+      // On the shortest pane setup's notice takes the lines the counts and
+      // the status have elsewhere, so its recovery shows whole.
+      const short = await (await show(view, 40, onQuit, 8)).redraw();
+      expect(short.lines).toEqual([
+        "setup",
+        "",
+        "  ✗ docket needs the GitHub CLI (gh)",
+        "  Recovery: install it from",
+        "  https://cli.github.com, then run",
+        "  gh auth login",
+        "",
+        "? q quit",
+      ]);
       const help = await press(screen, "?");
       expect(help.lines.slice(0, 9)).toEqual([
         "help",
@@ -831,6 +847,19 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
       expect((await press(screen, "k")).lines.slice(1, 3)).toEqual(
         first.lines.slice(1, 3),
+      );
+    });
+
+    it("pins a stack's heading whole but for its parts that give way, keeping stack 3 and the place", async () => {
+      const screen = await showRecorded();
+      let stacked = await press(screen, "j");
+      for (let step = 0; step < 6; step += 1) {
+        if (stacked.lines.at(0)?.includes("by stack")) break;
+        stacked = await press(stacked, "g");
+      }
+      // The repository's short name leaves whole before the base is cut.
+      expect(stacked.lines.at(1)).toBe(
+        `stack 3 · 3 PRs → main · 2 of 3 ${"─".repeat(8)}`,
       );
     });
 
@@ -1360,7 +1389,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  age 27d · owner ◉ alice, ● bob",
         "  last activity 27d ago · ◉ alice",
         "  labels none",
-        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
+        `${" ".repeat(4)}■ example-sync labell… kind=docs 16h`,
         "PULL REQUESTS ──────────────────────────",
         "",
         "",
@@ -1473,7 +1502,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  ☑ ● bob",
         "  ☐ ◐ carol",
         "  ☐ ○ dave",
-        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
+        `${" ".repeat(4)}■ example-sync labell… kind=docs 16h`,
         "PULL REQUESTS ──────────────────────────",
         "  ↓ 1 below",
         `2 threads · 3 events${" ".repeat(15)}1/1/2`,
@@ -1520,7 +1549,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  review can be requested on it",
         "  Recovery: select a pull request, then",
         "  press r",
-        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
+        `${" ".repeat(4)}■ example-sync labell… kind=docs 16h`,
         "PULL REQUESTS ──────────────────────────",
         "",
         "  ↓ 1 below",
@@ -1552,7 +1581,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  refresh",
         "  Recovery: open it with ⏎ and change it",
         "  on GitHub",
-        `${" ".repeat(4)}■ example-sync labelled kind=do… 16h`,
+        `${" ".repeat(4)}■ example-sync labell… kind=docs 16h`,
         "PULL REQUESTS ──────────────────────────",
         "",
         "",

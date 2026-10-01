@@ -45,6 +45,7 @@ export function holdCache(
     events: events.filter(
       (event) => event.thread.repo === repo && event.at >= since,
     ),
+    finished: [],
     syncedAt,
   });
   let held = threads;

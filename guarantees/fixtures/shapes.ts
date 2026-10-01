@@ -109,3 +109,19 @@ export const buildSnapshot = (
     },
   },
 });
+
+/**
+ * How an issue or pull request stands, as the events query gives it: its
+ * state, when it closed, and its labels and assignees.
+ */
+export const buildStanding = (
+  state: string,
+  closedAt: string | null = null,
+  labels: readonly string[] = [],
+  assignees: readonly string[] = [],
+) => ({
+  state,
+  closedAt,
+  labels: { nodes: labels.map((name) => ({ name })) },
+  assignees: { nodes: assignees.map(buildUser) },
+});

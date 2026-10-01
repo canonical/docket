@@ -1,5 +1,6 @@
 import {
   activityCommands,
+  longCommands,
   owedCommands,
 } from "../../../../testing/commands.js";
 import type { Meta, Story } from "../../../../testing/stories.js";
@@ -21,4 +22,12 @@ export const Owed: Story<KeyBarProps> = {
 /** The keys of activity, with the time window. */
 export const Activity: Story<KeyBarProps> = {
   args: { commands: activityCommands, width: 40 },
+};
+
+/**
+ * More keys than 40 columns hold: activity's, with the thread's keys and
+ * the full refresh's.
+ */
+export const Long: Story<KeyBarProps> = {
+  args: { commands: longCommands, width: 40 },
 };

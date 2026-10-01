@@ -1,3 +1,5 @@
+import type { Field, FieldList } from "../../../owed/index.js";
+
 /** Props for the CountsLine component. */
 export interface CountsLineProps {
   /**
@@ -5,14 +7,14 @@ export interface CountsLineProps {
    * owed, `9 threads · 23 events` in activity.
    * Maps to DSL role: owed summary, activity summary (cardinality: 1)
    */
-  summary: string;
+  summary: FieldList;
   /**
    * Where the selection is, right-aligned: `3/12`, or `1/4/12` with
    * groups, the first of its group's four, of twelve in all. Absent when
    * nothing is listed.
    * Maps to DSL role: position (cardinality: 0..1)
    */
-  position?: string;
+  position?: Field;
   /** The width of the pane, in display cells. */
   width: number;
 }

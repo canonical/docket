@@ -221,8 +221,7 @@ export default function Screen({
         help
           ? helpState.end(direction)
           : moveTo((_place, last) => (direction < 0 ? 0 : last)),
-      // Only a row is ever selected, in either mode, so a heading or a
-      // stack never opens.
+      // Only a row is ever selected, so a heading or a stack never opens.
       openSelected: () => {
         const row = drawnSelection.current;
         if (!row) return;
@@ -240,12 +239,11 @@ export default function Screen({
       edit: (action) => editor.start(action, selectThread()),
       toggleHelp: helpState.toggle,
       closeHelp: helpState.close,
-      // A full refresh reads everything again, the details held included,
-      // once it has thrown the data away.
+      // A full refresh that threw the data away reads the details again.
       refresh: () =>
-        void cache?.fullRefresh().then((discarded) => {
-          if (discarded) ahead.drop();
-        }),
+        void cache
+          ?.fullRefresh()
+          .then((discarded) => discarded && ahead.drop()),
       quit: onQuit,
     },
   });
@@ -308,14 +306,11 @@ export default function Screen({
     attention: attentionState,
     paused: status?.paused?.reason,
   });
-  // A thread's details are read once for each change GitHub records on it,
-  // and once for each change the list's roll-up of its checks shows, since
-  // checks finish without GitHub recording a change to the thread. Any
-  // other copy of the data a refresh brings reads nothing. A thread the
-  // data does not hold, such as a closed one in activity, has no record of
-  // its last change, and is read once for each newest event its row shows.
-  // The details of a thread that left both the data and the list on screen
-  // are let go.
+  // A thread's details are read once for each change GitHub records on it
+  // or the list's roll-up of its checks shows, as checks finish without a
+  // change to the thread; no other copy of the data reads anything. A
+  // thread the data does not hold is read once for each newest event its
+  // row shows, and one gone from the data and the list is let go.
   const readHeld = useHeldDetails({
     kept: [...(cached?.threads ?? []), ...rows.map(summarize)],
     selected: () => {
@@ -413,7 +408,7 @@ export default function Screen({
       />
     );
   }
-  const summary = (owed ?? listed)?.summary.text;
+  const summary = (owed ?? listed)?.summary;
   const position = describePosition(
     (owed ?? listed)?.groups ?? [],
     placeSelection(rows, selections[mode]),
@@ -425,13 +420,20 @@ export default function Screen({
       height={height}
       header={
         help || setup ? (
-          <PaneHeader title={help ? "help" : "setup"} width={width} />
+          <PaneHeader
+            title={{ text: help ? "help" : "setup", kind: "words" }}
+            width={width}
+          />
         ) : (
           <PaneHeader
-            title={editor.title ?? header.title}
+            title={
+              editor.title
+                ? { text: editor.title, kind: "identifier" }
+                : { text: header.title, kind: "words" }
+            }
             {...(!editor.title && {
-              address: header.address,
-              sort: header.sort,
+              address: { text: header.address, kind: "words" },
+              sort: { text: header.sort, kind: "words" },
             })}
             width={width}
           />
@@ -441,35 +443,45 @@ export default function Screen({
         summary === undefined ? undefined : (
           <CountsLine
             summary={summary}
-            {...(position && { position })}
+            {...(position && { position: { text: position, kind: "figure" } })}
             width={width}
           />
         )
       }
-      status={drawStatusLine({
-        problem,
-        status,
-        // A failure reading activity's events, or whom gh is signed in
-        // as, leaves the rows held.
-        failure:
-          (activity && "list" in activity ? activity.failure : undefined) ??
-          you.failure,
-        action,
-        attention: attentionState,
-        details: ahead.progress,
-        budget:
-          "cache" in source ? source.cache.readBudgets().graphql : undefined,
-        now: at,
-        timezone: settings.time.timezone,
-        watched,
-        width,
-      })}
+      // Setup has no state of its own, so its notice takes the lines.
+      status={
+        setup
+          ? undefined
+          : drawStatusLine({
+              problem,
+              status,
+              // A failure reading activity's events, or whom gh is signed in
+              // as, leaves the rows held.
+              failure:
+                (activity && "list" in activity
+                  ? activity.failure
+                  : undefined) ?? you.failure,
+              action,
+              attention: attentionState,
+              details: ahead.progress,
+              budget: cache?.readBudgets().graphql,
+              now: at,
+              timezone: settings.time.timezone,
+              watched,
+              width,
+            })
+      }
       keys={<KeyBar commands={active} width={width} />}
       help={
         help ? (
           <HelpOverlay
             commands={bound}
-            {...(!setup && { note: "windows are counted in working time" })}
+            {...(!setup && {
+              note: {
+                text: "windows are counted in working time",
+                kind: "words",
+              },
+            })}
             width={width}
             height={Math.max(0, height - 1)}
             first={helpState.first}

@@ -20,6 +20,12 @@ export interface StatusMessage {
    * whole words don't fit: a full refresh without its pages.
    */
   readonly shorter?: string;
+  /**
+   * The repository's short name the words name, which gives way next,
+   * from its middle, so the place after it stays: `refreshing · desi…docs
+   * 2/3`.
+   */
+  readonly name?: string;
   /** The people the message names, drawn after its words behind their marks. */
   readonly people?: readonly Owner[];
 }

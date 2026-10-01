@@ -9,16 +9,20 @@ export { default as describeNoTeam } from "./describeNoTeam.js";
 export type { OwnerFields } from "./describeOwners.js";
 export { default as describeOwners } from "./describeOwners.js";
 export { default as describePerson } from "./describePerson.js";
+export { default as describeStackPlace } from "./describeStackPlace.js";
 export { default as describeTeam } from "./describeTeam.js";
+export { default as describeWorkingTime } from "./describeWorkingTime.js";
 export { default as gatherPeople } from "./gatherPeople.js";
 export { default as groupWaits } from "./groupWaits.js";
 export { default as listWaits } from "./listWaits.js";
+export { default as nameHeading } from "./nameHeading.js";
 export type {
   Counts,
   Field,
+  FieldKind,
   FieldList,
-  Fit,
   Header,
+  Heading,
   OwedAddress,
   OwedGrouping,
   OwedList,
@@ -26,6 +30,7 @@ export type {
   Person,
   PersonGroup,
   RepoWaits,
+  StackHeading,
   WaitGroup,
   WaitList,
   WaitRow,

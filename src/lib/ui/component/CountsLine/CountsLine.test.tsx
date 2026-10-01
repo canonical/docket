@@ -29,13 +29,35 @@ describe("CountsLine", () => {
     expect(screen.lines.at(0)).toBe("0 over · 0 soon · 0 on track");
   });
 
-  it("cuts the counts with an ellipsis first, keeping the position's cells", async () => {
-    const screen = await draw(<CountsLine {...Owed.args} width={20} />, 20);
-    expect(screen.lines.at(0)).toBe("3 over · 2 s… 3/4/11");
+  it("leaves the counts out whole from the least urgent, never cutting a word, keeping the position's cells", async () => {
+    const counts = (width: number) =>
+      draw(
+        <CountsLine
+          summary={{
+            fields: [
+              { text: "120 over", kind: "words" },
+              { text: "45 soon", kind: "words" },
+              { text: "300 on track", kind: "words" },
+            ],
+          }}
+          position={{ text: "1/120/465", kind: "figure" }}
+          width={width}
+        />,
+        width,
+      );
+    expect((await counts(40)).lines.at(0)).toBe(
+      `120 over · 45 soon${" ".repeat(13)}1/120/465`,
+    );
+    // Exactly the room the two parts and the position need keeps both.
+    expect((await counts(28)).lines.at(0)).toBe("120 over · 45 soon 1/120/465");
+    expect((await counts(27)).lines.at(0)).toBe(
+      `120 over${" ".repeat(10)}1/120/465`,
+    );
+    expect((await counts(17)).lines.at(0)).toBe(`${" ".repeat(8)}1/120/465`);
     const alone = await draw(
       <CountsLine {...NothingOwed.args} width={12} />,
       12,
     );
-    expect(alone.lines.at(0)).toBe("0 over · 0 …");
+    expect(alone.lines.at(0)).toBe("0 over");
   });
 });

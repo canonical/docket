@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
+import { measureText } from "../../fit/index.js";
 import type { ProgressLineProps } from "./types.js";
 
 /** The cells the bar takes when the line has room for them. */
@@ -23,7 +24,7 @@ const ProgressLine = ({
   const fraction = `${fetched}/${total} pages`;
   const cells = Math.max(
     0,
-    Math.min(barCells, width - Bun.stringWidth(fraction) - 1),
+    Math.min(barCells, width - measureText(fraction) - 1),
   );
   const filled = Math.min(cells, Math.floor((cells * fetched) / total));
   return (

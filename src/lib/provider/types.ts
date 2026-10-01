@@ -1,3 +1,4 @@
+import type { FinishedThread } from "../endings/index.js";
 import type { ThreadEvent } from "../events/index.js";
 import type { Account, Author } from "../people/index.js";
 import type {
@@ -40,6 +41,13 @@ export interface Cursor {
    * updated at or after it are fetched.
    */
   readonly since: string;
+}
+
+/** What a repository recorded at or after an instant. */
+export interface EventsSince {
+  readonly events: readonly ThreadEvent[];
+  /** Every thread merged or closed since, and still so. */
+  readonly finished: readonly FinishedThread[];
 }
 
 /** The threads of one repository that changed since a cursor. */
@@ -233,8 +241,12 @@ export interface Provider {
   refreshVolatile(
     threads: readonly ThreadSummary[],
   ): Promise<readonly CheckRefresh[]>;
-  /** The events on `repo`'s threads at or after `since`, for activity. */
-  events(repo: string, since: Date): Promise<readonly ThreadEvent[]>;
+  /**
+   * The events on `repo`'s threads at or after `since`, for activity,
+   * and the threads merged or closed since then and still so, each with
+   * its ending, for finished.
+   */
+  events(repo: string, since: Date): Promise<EventsSince>;
   threadDetail(thread: ThreadSummary): Promise<ThreadDetail>;
   /**
    * The details of every thread given, in the order given, read in one

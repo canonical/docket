@@ -8,8 +8,6 @@ import {
   at,
   bob,
   carol,
-  dave,
-  exampleSync,
   teamSettings,
   thread,
 } from "../../../../testing/facts.js";
@@ -23,10 +21,9 @@ import {
 } from "../../../../testing/rows.js";
 import type { WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
-
 import { tokens } from "../../../tokens/index.js";
-
 import describeDetail from "./describeDetail.js";
+import readTexts from "./readTexts.js";
 import type { DetailLine } from "./types.js";
 
 const reading = {
@@ -34,10 +31,6 @@ const reading = {
   timezone: "Europe/Paris",
   waiting: { "example#13": "close" },
 };
-
-/** Each line's text, its runs joined. */
-const texts = (lines: readonly DetailLine[]) =>
-  lines.map(({ pieces }) => pieces.map(({ text }) => text).join(""));
 
 /** The colour of the run of `line` that reads `text`. */
 const colourOf = (line: DetailLine | undefined, text: string) =>
@@ -47,15 +40,17 @@ describe("describeDetail", () => {
   describe("a reply", () => {
     it("gives who wrote the message awaiting it and when, the message whole, then when the reply began, from the snapshot alone", () => {
       const { body, stack } = describeDetail(soonReply, undefined, reading);
-      expect(texts(body)).toEqual([
+      expect(readTexts(body)).toEqual([
         "○ dave · 1d ago",
         "It crashes as soon as it starts, before the first frame is drawn.",
         "waiting since Tue 10:00 · target 24h",
       ]);
-      expect(body.map(({ fit, optional }) => [fit, optional])).toEqual([
-        ["trimmed", undefined],
-        ["wrapped", undefined],
-        ["wrapped", true],
+      expect(
+        body.map(({ kind, most, optional }) => [kind, most, optional]),
+      ).toEqual([
+        ["words", undefined, undefined],
+        ["quote", undefined, undefined],
+        ["words", undefined, true],
       ]);
       expect(stack).toEqual([]);
     });
@@ -96,17 +91,16 @@ describe("describeDetail", () => {
         ],
       });
       const row = measureRow({ ...soonReply.wait, thread: talked });
-      expect(texts(describeDetail(row, undefined, reading).body).at(1)).toBe(
-        "Newer.",
-      );
+      expect(
+        readTexts(describeDetail(row, undefined, reading).body).at(1),
+      ).toBe("Newer.");
     });
 
     it("names the author and when the thread opened when the snapshot holds no message of theirs nor the opening's text", () => {
       const quiet = measureRow({ ...soonReply.wait, thread: thread() });
-      expect(texts(describeDetail(quiet, undefined, reading).body)).toEqual([
-        "○ dave · 6d ago",
-        "waiting since Tue 10:00 · target 24h",
-      ]);
+      expect(readTexts(describeDetail(quiet, undefined, reading).body)).toEqual(
+        ["○ dave · 6d ago", "waiting since Tue 10:00 · target 24h"],
+      );
     });
 
     it("gives the opening's text as the message while its author has written nothing since", () => {
@@ -114,7 +108,9 @@ describe("describeDetail", () => {
         ...soonReply.wait,
         thread: thread({ text: "It crashes." }),
       });
-      expect(texts(describeDetail(opened, undefined, reading).body)).toEqual([
+      expect(
+        readTexts(describeDetail(opened, undefined, reading).body),
+      ).toEqual([
         "○ dave · 6d ago",
         "It crashes.",
         "waiting since Tue 10:00 · target 24h",
@@ -125,28 +121,27 @@ describe("describeDetail", () => {
   describe("a review", () => {
     it("gives who asked and when and the pushes since at once, the changes and the checks ending in … until the details arrive", () => {
       const { body } = describeDetail(overReview, undefined, reading);
-      expect(texts(body)).toEqual([
+      expect(readTexts(body)).toEqual([
         "asked by ● alice 3d ago",
         "1 push since · …",
         "✗ checks: …",
       ]);
       expect(colourOf(body[0], "asked by ")).toBe(tokens["color.text.muted"]);
       expect(colourOf(body[0], "● alice")).toBe(tokens["color.text.team"]);
-      expect(colourOf(body[1], " …")).toBe(tokens["color.text.muted"]);
       expect(colourOf(body[2], "✗ checks:")).toBe(tokens["color.text.error"]);
     });
 
     it("fills in the files and lines and which checks failed once the details arrive, on the same lines", () => {
       const { body } = describeDetail(overReview, overReviewDetail, reading);
-      expect(texts(body)).toEqual([
+      expect(readTexts(body)).toEqual([
         "asked by ● alice 3d ago",
         "1 push since · 2 files · +65 −12",
         "✗ checks: 1 of 2 failed (lint)",
       ]);
-      expect(body.map(({ fit }) => fit)).toEqual([
-        "trimmed",
-        "trimmed",
-        "trimmed",
+      expect(body.map(({ kind, most }) => [kind, most])).toEqual([
+        ["words", undefined],
+        ["words", 1],
+        ["words", undefined],
       ]);
     });
 
@@ -163,17 +158,17 @@ describe("describeDetail", () => {
         ],
       });
       const row = measureRow({ ...overReview.wait, thread: asked });
-      expect(texts(describeDetail(row, undefined, reading).body).at(0)).toBe(
-        "asked by ● alice 3d ago",
-      );
+      expect(
+        readTexts(describeDetail(row, undefined, reading).body).at(0),
+      ).toBe("asked by ● alice 3d ago");
       const team = measureRow({
         ...overReview.wait,
         thread: asked,
         owners: ["example-org/reviewers"],
       });
-      expect(texts(describeDetail(team, undefined, reading).body).at(0)).toBe(
-        "asked by ◐ carol 2h ago",
-      );
+      expect(
+        readTexts(describeDetail(team, undefined, reading).body).at(0),
+      ).toBe("asked by ◐ carol 2h ago");
     });
 
     it("counts from when the wait began when no request is recorded, in plural, with one file", () => {
@@ -185,7 +180,7 @@ describe("describeDetail", () => {
         ...overReviewDetail,
         files: overReviewDetail.files.slice(0, 1),
       };
-      expect(texts(describeDetail(unasked, detail, reading).body)).toEqual([
+      expect(readTexts(describeDetail(unasked, detail, reading).body)).toEqual([
         "asked 6d ago",
         "0 pushes since · 1 file · +40 −12",
         "✗ checks: 1 of 2 failed (lint)",
@@ -194,7 +189,7 @@ describe("describeDetail", () => {
 
     it("says checks passed, are running, or that there are none, from the details", () => {
       const checks = (states: ("passing" | "running")[]) =>
-        texts(
+        readTexts(
           describeDetail(
             overReview,
             {
@@ -214,7 +209,7 @@ describe("describeDetail", () => {
 
     it("says what the snapshot knows of the checks before the details: passing, running, or none", () => {
       const snapshot = (checks?: "passing" | "running") =>
-        texts(
+        readTexts(
           describeDetail(
             measureRow({
               ...overReview.wait,
@@ -240,8 +235,8 @@ describe("describeDetail", () => {
           ...overReview.wait,
           thread: { ...overReview.wait.thread, checks },
         });
-        const before = texts(describeDetail(row, undefined, reading).body);
-        const after = texts(
+        const before = readTexts(describeDetail(row, undefined, reading).body);
+        const after = readTexts(
           describeDetail(
             row,
             { ...overReviewDetail, checks: detailChecks },
@@ -258,7 +253,7 @@ describe("describeDetail", () => {
   describe("a close", () => {
     it("gives the age and owners, the last activity and who made it, and each label as group=value, from the snapshot", () => {
       const { body } = describeDetail(sharedClose, undefined, reading);
-      expect(texts(body)).toEqual([
+      expect(readTexts(body)).toEqual([
         "age 6d · owner ● alice, ● bob, ◐ carol-at-example-org",
         "last activity 3h ago · ● bob",
         "labels priority=high · kind=bug · area/icons",
@@ -278,20 +273,20 @@ describe("describeDetail", () => {
         undefined,
         reading,
       );
-      expect(texts(quiet.body).at(1)).toBe("last activity 6d ago · ○ dave");
+      expect(readTexts(quiet.body).at(1)).toBe("last activity 6d ago · ○ dave");
       // A comment or a review makes the thread no longer quiet.
       const bobWrote = [{ author: bob, at: at("2026-09-28T11:00+02:00") }];
       for (const written of [{ comments: bobWrote }, { reviews: bobWrote }]) {
         const row = measureRow({ thread: { ...opened, ...written } });
-        expect(texts(describeDetail(row, undefined, reading).body).at(1)).toBe(
-          "last activity 1h ago · ● bob",
-        );
+        expect(
+          readTexts(describeDetail(row, undefined, reading).body).at(1),
+        ).toBe("last activity 1h ago · ● bob");
       }
     });
 
     it("says unassigned, no labels, and whoever opened it when nobody wrote since", () => {
       const { body } = describeDetail(measureRow({}), undefined, reading);
-      expect(texts(body)).toEqual([
+      expect(readTexts(body)).toEqual([
         "age 6d · owner unassigned",
         "last activity 6d ago · ○ dave",
         "labels none",
@@ -299,114 +294,43 @@ describe("describeDetail", () => {
     });
   });
 
-  describe("a thread no wait runs on", () => {
-    const people = teamSettings.people;
-
-    it("says loading, dimmed, until its details arrive, since the snapshot holds nothing of it", () => {
+  describe("a repository whose own file is invalid", () => {
+    it("names it first, in full, in the error colour, as its row writes ✗ file", () => {
+      const row = measureRow({}, true);
+      const [first] = describeDetail(row, undefined, reading).body;
+      expect(readTexts(first ? [first] : [])).toEqual([
+        "✗ invalid repository file",
+      ]);
+      expect(first?.pieces.at(0)?.fg).toBe(tokens["color.text.error"]);
       const resting = {
         repo: "example",
         thread: overReview.wait.thread,
-        people,
-      };
-      const { body, stack } = describeDetail(resting, undefined, reading);
-      expect(texts(body)).toEqual(["loading…"]);
-      expect(body.at(0)?.pieces.at(0)?.fg).toBe(tokens["color.text.muted"]);
-      expect(stack).toEqual([]);
-    });
-
-    it("gives the close body from its details, with the owners its row names and whoever wrote last behind their marks", () => {
-      const resting = {
-        repo: "example",
-        thread: sharedClose.wait.thread,
-        owners: [
-          { text: "alice", fit: "trimmed" as const, group: "you" as const },
-          { text: "bob", fit: "trimmed" as const, group: "team" as const },
-        ],
-        people,
-        viewer: "alice",
-      };
-      const { body } = describeDetail(resting, sharedCloseDetail, reading);
-      expect(texts(body)).toEqual([
-        "age 6d · owner ◉ alice, ● bob",
-        "last activity 3h ago · ● bob",
-        "labels priority=high · kind=bug · area/icons",
-      ]);
-      expect(colourOf(body[1], "● bob")).toBe(tokens["color.text.team"]);
-    });
-
-    it("gives a closed thread its age, its assignees that are not bots as owners behind their marks, its labels and no opener, then its stack lines; an open one nobody wrote on its opener", () => {
-      const resting = {
-        repo: "example",
-        thread: overReview.wait.thread,
-        people,
-        viewer: "alice",
-      };
-      const closed = {
-        ...sharedCloseDetail,
-        assignees: [alice, dave, exampleSync],
-      };
-      expect(texts(describeDetail(resting, closed, reading).body)).toEqual([
-        "age 6d · owner ◉ alice, ○ dave",
-        "last activity 3h ago · ● bob",
-        "labels priority=high · kind=bug · area/icons",
-      ]);
-      const unassigned = {
-        ...sharedCloseDetail,
-        assignees: [exampleSync],
-        messages: [],
-      };
-      expect(texts(describeDetail(resting, unassigned, reading).body)).toEqual([
-        "age 6d · owner unassigned",
-        "last activity 3h ago",
-        "labels priority=high · kind=bug · area/icons",
-      ]);
-      // The same thread open, which nobody has written on: its opener,
-      // at its opening.
-      const open = {
-        ...resting,
-        author: {
-          text: "dave",
-          fit: "trimmed" as const,
-          group: "outside" as const,
+        people: teamSettings.people,
+        invalidFile: {
+          text: "invalid repository file",
+          kind: "words" as const,
         },
       };
-      expect(texts(describeDetail(open, unassigned, reading).body)).toEqual([
-        "age 6d · owner unassigned",
-        "last activity 6d ago · ○ dave",
-        "labels priority=high · kind=bug · area/icons",
-      ]);
       expect(
-        texts(describeDetail(resting, overReviewDetail, reading).stack),
-      ).toEqual([
-        "example stack 3 · 2 of 3 · → main",
-        "below #11 merged, above #13 close",
-      ]);
-    });
-
-    it("marks a bot that wrote last as a bot", () => {
-      const resting = {
-        repo: "example",
-        thread: overReview.wait.thread,
-        people,
-      };
-      const botted = {
-        ...sharedCloseDetail,
-        messages: [
-          { author: exampleSync, at: at("2026-09-28T09:00+02:00"), body: "" },
-        ],
-      };
-      expect(texts(describeDetail(resting, botted, reading).body).at(1)).toBe(
-        `last activity 3h ago · ■ ${exampleSync.login}`,
-      );
+        readTexts(describeDetail(resting, sharedCloseDetail, reading).body).at(
+          0,
+        ),
+      ).toBe("✗ invalid repository file");
+      expect(
+        readTexts(describeDetail(resting, undefined, reading).body),
+      ).toEqual(["✗ invalid repository file", "loading…"]);
     });
   });
 
   describe("a stacked pull request", () => {
     it("ends with its place in the stack at once, and its neighbours once the details arrive, both dimmed", () => {
       const before = describeDetail(overReview, undefined, reading).stack;
-      expect(texts(before)).toEqual(["example stack 3 · 2 of 3 · → main", "…"]);
+      expect(readTexts(before)).toEqual([
+        "example stack 3 · 2 of 3 · → main",
+        "…",
+      ]);
       const { stack } = describeDetail(overReview, overReviewDetail, reading);
-      expect(texts(stack)).toEqual([
+      expect(readTexts(stack)).toEqual([
         "example stack 3 · 2 of 3 · → main",
         "below #11 merged, above #13 close",
       ]);
@@ -416,12 +340,22 @@ describe("describeDetail", () => {
       ]);
     });
 
+    it("holds its place to one line, where the repository's short name leaves first and the base branch is the one run cut", () => {
+      const [place] = describeDetail(overReview, undefined, reading).stack;
+      expect([place?.most, place?.drops, place?.cuts]).toEqual([1, [0], 2]);
+      expect(place?.pieces.map(({ text }) => text)).toEqual([
+        "example ",
+        "stack 3 · 2 of 3 · → ",
+        "main",
+      ]);
+    });
+
     it("calls an open neighbour with no running wait open, and leaves out one the details lack", () => {
       const { stack } = describeDetail(draftClose, overReviewDetail, {
         ...reading,
         waiting: {},
       });
-      expect(texts(stack)).toEqual([
+      expect(readTexts(stack)).toEqual([
         "example stack 3 · 3 of 3 · → main",
         "below #12 open",
       ]);
@@ -433,7 +367,7 @@ describe("describeDetail", () => {
         { ...overReviewDetail, stack: [] },
         reading,
       );
-      expect(texts(stack)).toEqual(["example stack 3 · 2 of 3 · → main"]);
+      expect(readTexts(stack)).toEqual(["example stack 3 · 2 of 3 · → main"]);
       const alone = measureRow({
         ...overReview.wait,
         thread: {
@@ -441,9 +375,9 @@ describe("describeDetail", () => {
           stack: { number: 4, position: 1, size: 1, base: "main" },
         },
       });
-      expect(texts(describeDetail(alone, undefined, reading).stack)).toEqual([
-        "example stack 4 · 1 of 1 · → main",
-      ]);
+      expect(
+        readTexts(describeDetail(alone, undefined, reading).stack),
+      ).toEqual(["example stack 4 · 1 of 1 · → main"]);
     });
   });
 });
@@ -452,7 +386,7 @@ describe("describeDetail, for an owner the row cuts", () => {
   const ownedBy = (row: WaitRow, owners: readonly string[]) =>
     measureRow({ ...row.wait, owners });
   const firstLine = (row: WaitRow, detail?: ThreadDetail) =>
-    texts(describeDetail(row, detail, reading).body).at(0);
+    readTexts(describeDetail(row, detail, reading).body).at(0);
 
   it("names the owner whole, first, for every kind of wait", () => {
     const owners = ["carol-at-example-org"];

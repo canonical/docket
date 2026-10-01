@@ -25,7 +25,7 @@ const build = (wait: Wait) =>
   );
 const person = (text: string, group: string) => ({
   text,
-  fit: "trimmed",
+  kind: "person",
   group,
 });
 const stack = { number: 12, position: 2, size: 5, base: "main" };
@@ -46,14 +46,14 @@ describe("buildRow", () => {
       overdue: 14 / 24,
       targetHours: 24,
       stacked: false,
-      reference: { text: "example#88", fit: "trimmed" },
-      threadKind: { text: "issue", fit: "trimmed" },
-      kind: { text: "reply", fit: "trimmed" },
-      distance: { text: "14h over", fit: "trimmed" },
-      title: { text: "Example title", fit: "trimmed" },
+      reference: { text: "example#88", kind: "identifier" },
+      threadKind: { text: "issue", kind: "words" },
+      kind: { text: "reply", kind: "words" },
+      distance: { text: "14h over", kind: "figure" },
+      title: { text: "Example title", kind: "title" },
       author: person("dave", "outside"),
       lastActor: person("dave", "outside"),
-      owner: { text: "alice", fit: "trimmed" },
+      owner: { text: "alice", kind: "person" },
     });
   });
 
@@ -92,7 +92,7 @@ describe("buildRow", () => {
     );
     expect(toTeam.owner).toEqual({
       text: "example-org/reviewers",
-      fit: "trimmed",
+      kind: "person",
     });
     expect(toTeam.author).toEqual(person("dave", "outside"));
     const toLeads = build(
@@ -112,7 +112,7 @@ describe("buildRow", () => {
     const draft = thread({ kind: "pullRequest", draft: true, stack });
     const row = build(wait({ thread: draft }));
     expect(row.stacked).toBe(true);
-    expect(row.draft).toEqual({ text: "draft", fit: "trimmed" });
+    expect(row.draft).toEqual({ text: "draft", kind: "words" });
   });
 
   it("gives two owners a line of their own and leaves the owner off the second line", () => {

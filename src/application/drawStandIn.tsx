@@ -98,7 +98,10 @@ export default function drawStandIn({
     return (
       <box flexDirection="column">
         {teamless && <Notice {...teamless} width={width} />}
-        <EmptyState message="nothing owed" width={width} />
+        <EmptyState
+          message={{ text: "nothing owed", kind: "words" }}
+          width={width}
+        />
       </box>
     );
   }

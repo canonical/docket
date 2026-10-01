@@ -129,8 +129,8 @@ describe("renderActivity", () => {
     const [row] = list.groups.at(0)?.rows ?? [];
     if (!row) throw new Error("the recording has events");
     const rows = [
-      { ...row, owner: { text: "unassigned", fit: "trimmed" } },
-      { ...row, owner: undefined, draft: { text: "draft", fit: "trimmed" } },
+      { ...row, owner: { text: "unassigned", kind: "words" } },
+      { ...row, owner: undefined, draft: { text: "draft", kind: "words" } },
       { ...row, owner: undefined, thread: { ...row.thread, stack: undefined } },
     ] as const;
     const answer = (format: Format) =>
@@ -158,7 +158,7 @@ describe("renderActivity", () => {
     if (!row) throw new Error("the recording has events");
     const marked = {
       ...row,
-      invalidFile: { text: "invalid repository file", fit: "trimmed" },
+      invalidFile: { text: "invalid repository file", kind: "words" },
     } as const;
     const answer = (format: Format) =>
       renderActivity({
@@ -183,7 +183,7 @@ describe("renderActivity", () => {
     if (!line) throw new Error("the row has events");
     const hostile = {
       ...row,
-      title: { text: "Fix\u001b]52;c;eA==\u0007 it", fit: "trimmed" },
+      title: { text: "Fix\u001b]52;c;eA==\u0007 it", kind: "title" },
       events: [
         {
           ...line,
@@ -193,7 +193,7 @@ describe("renderActivity", () => {
             actor: { ...line.event.actor, login: "alice" },
             label: "\u001b[31mred",
           },
-          text: { text: "alice labelled \u001b[31mred", fit: "trimmed" },
+          text: { text: "alice labelled \u001b[31mred", kind: "words" },
         },
       ],
     } as const;

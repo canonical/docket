@@ -43,7 +43,7 @@ export default function buildRow(
     const found = owned.find(
       (each) => ("team" in each ? each.team : each.login).toLowerCase() === key,
     );
-    if (!found) return { text: login, fit: "trimmed" };
+    if (!found) return { text: login, kind: "person" };
     return "team" in found
       ? describeTeam(found, viewer, yours)
       : describePerson(found, people, viewer);
@@ -69,11 +69,11 @@ export default function buildRow(
     overdue,
     targetHours: measureDuration(wait.target, time) / hourMilliseconds,
     stacked: thread.stack !== undefined,
-    reference: { text: `${repo}#${thread.number}`, fit: "trimmed" },
-    threadKind: { text: threadWords[thread.kind], fit: "trimmed" },
-    kind: { text: waitWords[wait.kind], fit: "trimmed" },
-    distance: { text, fit: "trimmed" },
-    title: { text: thread.title, fit: "trimmed" },
+    reference: { text: `${repo}#${thread.number}`, kind: "identifier" },
+    threadKind: { text: threadWords[thread.kind], kind: "words" },
+    kind: { text: waitWords[wait.kind], kind: "words" },
+    distance: { text, kind: "figure" },
+    title: { text: thread.title, kind: "title" },
     author: describePerson(wait.author, people, viewer),
     ...(asked?.requester
       ? { requester: describePerson(asked.requester, people, viewer) }
@@ -81,7 +81,7 @@ export default function buildRow(
     // A thread nobody has written on since it opened was last acted on
     // by whoever opened it.
     lastActor: describePerson(latest?.author ?? thread.author, people, viewer),
-    ...(thread.draft ? { draft: { text: "draft", fit: "trimmed" } } : {}),
+    ...(thread.draft ? { draft: { text: "draft", kind: "words" } } : {}),
     ...describeOwners(owners),
   };
 }

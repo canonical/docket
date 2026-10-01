@@ -10,7 +10,7 @@ import type { RestingThread } from "./types.js";
  * the list makes room for it at once. The details fill the snapshot's
  * lines in place; a thread the snapshot holds nothing of takes its one
  * `loading…` line until they arrive. What the details add beyond these,
- * a closed thread's close body or a failed read's line, the list learns
+ * a closed thread's close body or a failed read's lines, the list learns
  * from what the accordion draws.
  */
 export default function countAccordionLines(

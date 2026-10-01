@@ -85,10 +85,10 @@ describe("listEvents", () => {
       now,
     );
     expect(list.counts).toEqual({ threads: 2, events: 3 });
-    expect(list.summary).toEqual({
-      text: "2 threads · 3 events",
-      fit: "trimmed",
-    });
+    expect(list.summary.fields.map(({ text }) => text)).toEqual([
+      "2 threads",
+      "3 events",
+    ]);
   });
 
   it("writes one thread and one event in the singular", () => {
@@ -97,7 +97,9 @@ describe("listEvents", () => {
       [{ repo: example, people, threads: [], events }],
       now,
     );
-    expect(list.summary.text).toBe("1 thread · 1 event");
+    expect(list.summary.fields.map(({ text }) => text).join(" · ")).toBe(
+      "1 thread · 1 event",
+    );
   });
 
   it("gives no row when nothing happened", () => {
@@ -106,7 +108,9 @@ describe("listEvents", () => {
       now,
     );
     expect(list.rows).toEqual([]);
-    expect(list.summary.text).toBe("0 threads · 0 events");
+    expect(list.summary.fields.map(({ text }) => text).join(" · ")).toBe(
+      "0 threads · 0 events",
+    );
   });
 
   it("marks every row of a repository whose own file is invalid, and no other", () => {
@@ -129,7 +133,7 @@ describe("listEvents", () => {
       now,
     );
     expect(list.rows.map((row) => [row.repo, row.invalidFile])).toEqual([
-      ["example", { text: "invalid repository file", fit: "trimmed" }],
+      ["example", { text: "invalid repository file", kind: "words" }],
       ["docs", undefined],
     ]);
   });

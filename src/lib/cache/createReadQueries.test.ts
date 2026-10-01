@@ -1,6 +1,6 @@
 import { QueryClient } from "@tanstack/query-core";
 import { beforeEach, describe, expect, it } from "vitest";
-import { alice, thread } from "../../testing/facts.js";
+import { alice, finishedThread, thread } from "../../testing/facts.js";
 import type { ThreadEvent } from "../events/index.js";
 import createReadQueries from "./createReadQueries.js";
 
@@ -14,6 +14,11 @@ const comment = (at: string): ThreadEvent => ({
   actor: alice,
   at: new Date(at),
 });
+
+const merged = (at: string) =>
+  finishedThread({
+    ending: { outcome: "merged", label: "merged", at: new Date(at) },
+  });
 
 let clock: Date;
 let queries: ReturnType<typeof createReadQueries>;
@@ -30,17 +35,28 @@ describe("createReadQueries", () => {
     expect(queries.findFreshViewer(minute)).toBeUndefined();
   });
 
-  it("gives the events from the time asked on, and none from before what it holds", () => {
+  it("gives the events and the threads that finished from the time asked on, and none from before what it holds", () => {
     const since = new Date("2026-09-20T00:00:00Z");
     queries.keepEvents(
       repo,
       since,
-      [comment("2026-09-21T00:00:00Z"), comment("2026-09-27T00:00:00Z")],
+      {
+        events: [
+          comment("2026-09-21T00:00:00Z"),
+          comment("2026-09-27T00:00:00Z"),
+        ],
+        finished: [
+          merged("2026-09-21T00:00:00Z"),
+          merged("2026-09-27T00:00:00Z"),
+        ],
+      },
       fetchedAt,
     );
     expect(queries.findEvents(repo)?.events).toHaveLength(2);
+    expect(queries.findEvents(repo)?.finished).toHaveLength(2);
     expect(queries.findEvents(repo, new Date("2026-09-25T00:00:00Z"))).toEqual({
       events: [comment("2026-09-27T00:00:00Z")],
+      finished: [merged("2026-09-27T00:00:00Z")],
       syncedAt: fetchedAt,
     });
     expect(
@@ -50,13 +66,14 @@ describe("createReadQueries", () => {
 
   it("gives each held read only while it is younger than the maximum age", () => {
     const since = new Date("2026-09-20T00:00:00Z");
-    queries.keepEvents(repo, since, [], fetchedAt);
+    queries.keepEvents(repo, since, { events: [], finished: [] }, fetchedAt);
     queries.keepFile(repo, "a.yaml", "text", fetchedAt);
     queries.keepFile(repo, "b.yaml", undefined, fetchedAt);
     queries.keepViewer("alice", fetchedAt);
     clock = new Date(fetchedAt.getTime() + 4 * minute);
     expect(queries.findFreshEvents(repo, since, 5 * minute)).toEqual({
       events: [],
+      finished: [],
       syncedAt: fetchedAt,
     });
     expect(queries.findFreshFile(repo, "a.yaml", 5 * minute)).toEqual({

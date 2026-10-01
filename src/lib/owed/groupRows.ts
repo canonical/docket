@@ -1,9 +1,23 @@
 import type { Repo } from "../config/index.js";
 import { collectStacks } from "../stacks/index.js";
 import { kindSections } from "./constants.js";
-import type { OwedGrouping, Owner, WaitGroup, WaitRow } from "./types.js";
+import nameHeading from "./nameHeading.js";
+import type {
+  FieldKind,
+  Heading,
+  OwedGrouping,
+  Owner,
+  StackHeading,
+  WaitGroup,
+  WaitRow,
+} from "./types.js";
 
-type Section = readonly [heading: string, rows: readonly WaitRow[]];
+type Section = readonly [
+  heading: string,
+  rows: readonly WaitRow[],
+  kind: FieldKind,
+  stack?: StackHeading,
+];
 
 /**
  * An owner's section heading: the owner as the section's rows name them,
@@ -17,7 +31,7 @@ function findOwner(rows: readonly WaitRow[], text: string): Owner {
     .find((owner) => owner?.text.toLowerCase() === key);
   return named && "group" in named
     ? { ...named, text }
-    : { text, fit: "trimmed" };
+    : { text, kind: named?.kind ?? "words" };
 }
 
 /**
@@ -36,10 +50,10 @@ function sectionOwners(rows: readonly WaitRow[]): Section[] {
     .map(([key, owner]): Section => {
       const owns = (row: WaitRow) =>
         row.wait.owners.some((login) => login.toLowerCase() === key);
-      return [owner, rows.filter(owns)];
+      return [owner, rows.filter(owns), "person"];
     });
   const unassigned = rows.filter((row) => row.wait.owners.length === 0);
-  return [...sections, ["unassigned", unassigned]];
+  return [...sections, ["unassigned", unassigned, "words"]];
 }
 
 /**
@@ -58,11 +72,30 @@ function sectionStacks(rows: readonly WaitRow[], order: string[]): Section[] {
       order.indexOf(a.repo) - order.indexOf(b.repo) || a.number - b.number,
   );
   const sections = stacks.map(({ repo, number, size, base, members }) => {
-    const prs = size === 1 ? "1 PR" : `${size} PRs`;
-    const heading = `${repo} stack ${number} · ${prs} → ${base}`;
-    return [heading, members.map(({ row }) => row)] as const;
+    const stack: StackHeading = { kind: "stack", repo, number, size, base };
+    return [
+      nameHeading(stack),
+      members.map(({ row }) => row),
+      "identifier",
+      stack,
+    ] as const;
   });
-  return [...sections, ["NOT IN A STACK", rows.filter((row) => !row.stacked)]];
+  return [
+    ...sections,
+    ["NOT IN A STACK", rows.filter((row) => !row.stacked), "words"],
+  ];
+}
+
+/** A section's heading: its owner, its stack in parts, or its name. */
+function describeHeading(
+  grouping: OwedGrouping,
+  members: readonly WaitRow[],
+  text: string,
+  kind: FieldKind,
+  stack: StackHeading | undefined,
+): Heading {
+  if (grouping === "owner") return findOwner(members, text);
+  return stack ?? { text, kind };
 }
 
 /**
@@ -90,6 +123,7 @@ export default function groupRows(
             ([kind, text]): Section => [
               text,
               rows.filter((row) => row.wait.thread.kind === kind),
+              "words",
             ],
           )
         : grouping === "repo"
@@ -97,16 +131,14 @@ export default function groupRows(
               (name): Section => [
                 name,
                 rows.filter((row) => row.repo === name),
+                "identifier",
               ],
             )
           : sectionStacks(rows, order);
   return sections
     .filter(([, members]) => members.length > 0)
-    .map(([text, members]) => ({
-      heading:
-        grouping === "owner"
-          ? findOwner(members, text)
-          : { text, fit: "trimmed" },
+    .map(([text, members, kind, stack]) => ({
+      heading: describeHeading(grouping, members, text, kind, stack),
       rows: members,
     }));
 }

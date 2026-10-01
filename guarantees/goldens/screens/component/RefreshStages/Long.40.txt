@@ -1,0 +1,16 @@
+40 columns
+|example-r…long-name ✓ 1234 threads
+|docs                reading page 3/3
+|site                ✗ failed: The
+|                    provider failed with
+|                    GITHUB_TIMED_OUT
+
+runs
+1:1 "example-r…long-name " fg #c6c8d1ff bg #00000000
+1:21 "✓" fg #b4be82ff bg #00000000
+1:22 " 1234 threads" fg #c6c8d1ff bg #00000000
+2:1 "docs                reading page 3/3" fg #c6c8d1ff bg #00000000
+3:1 "site                " fg #c6c8d1ff bg #00000000
+3:21 "✗ failed: The" fg #e27878ff bg #00000000
+4:21 "provider failed with" fg #e27878ff bg #00000000
+5:21 "GITHUB_TIMED_OUT" fg #e27878ff bg #00000000

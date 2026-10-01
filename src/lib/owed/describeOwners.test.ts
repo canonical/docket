@@ -4,14 +4,14 @@ import type { Person } from "./types.js";
 
 const person = (text: string): Person => ({
   text,
-  fit: "trimmed",
+  kind: "person",
   group: "team",
 });
 
 describe("describeOwners", () => {
   it("names nobody assigned as unassigned", () => {
     expect(describeOwners([])).toEqual({
-      owner: { text: "unassigned", fit: "trimmed" },
+      owner: { text: "unassigned", kind: "words" },
     });
   });
 
@@ -19,13 +19,13 @@ describe("describeOwners", () => {
     expect(describeOwners([person("alice")])).toEqual({
       owner: person("alice"),
     });
-    const team = { text: "example-org/reviewers", fit: "trimmed" } as const;
+    const team = { text: "example-org/reviewers", kind: "person" } as const;
     expect(describeOwners([team])).toEqual({ owner: team });
   });
 
   it("lists two or more owners on a wrapped line of their own", () => {
     expect(describeOwners([person("alice"), person("bob")])).toEqual({
-      owners: { fit: "wrapped", fields: [person("alice"), person("bob")] },
+      owners: { fields: [person("alice"), person("bob")] },
     });
   });
 });

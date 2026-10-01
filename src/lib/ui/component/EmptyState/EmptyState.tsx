@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import trimText from "../../trimText.js";
+import { fitField } from "../../fit/index.js";
 import type { EmptyStateProps } from "./types.js";
 
 /** The indent of the message, in display cells. */
@@ -16,7 +16,7 @@ const indent = 2;
 const EmptyState = ({ message, width }: EmptyStateProps): ReactNode => (
   <text fg={tokens["color.text"]}>
     {" ".repeat(indent)}
-    {trimText(message, width - indent)}
+    {fitField(message, "line", width - indent)}
   </text>
 );
 

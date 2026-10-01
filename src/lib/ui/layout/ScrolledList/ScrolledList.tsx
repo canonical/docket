@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { GroupHeading } from "../../component/GroupHeading/index.js";
+import { fitField } from "../../fit/index.js";
 import { useListScroll } from "../../hooks/index.js";
 import type { ScrolledListProps } from "./types.js";
 
@@ -41,7 +42,10 @@ const ScrolledList = ({
         <box flexShrink={0}>
           <GroupHeading
             heading={pinned.heading}
-            count={`${pinned.place} of ${pinned.size}`}
+            count={{
+              text: `${pinned.place} of ${pinned.size}`,
+              kind: "figure",
+            }}
             width={width}
           />
         </box>
@@ -60,7 +64,14 @@ const ScrolledList = ({
       </box>
       {below > 0 && (
         <text flexShrink={0} fg={tokens["color.text.muted"]}>
-          {`  ${tokens["glyph.below"]} ${below} below`}
+          {fitField(
+            {
+              text: `  ${tokens["glyph.below"]} ${below} below`,
+              kind: "figure",
+            },
+            "line",
+            width,
+          )}
         </text>
       )}
     </box>

@@ -1,3 +1,4 @@
+import { longRepo } from "../../../../testing/long.js";
 import { providerError } from "../../../../testing/provider.js";
 import type { Meta, Story } from "../../../../testing/stories.js";
 import RefreshStages from "./RefreshStages.js";
@@ -78,6 +79,25 @@ export const Failed: Story<RefreshStagesProps> = {
       { repo: site, stage: { kind: "waiting" } },
     ],
     names,
+    width: 38,
+  },
+};
+
+/** A repository with a long short name beside two short ones, the last failed. */
+export const Long: Story<RefreshStagesProps> = {
+  args: {
+    stages: [
+      {
+        repo: longRepo.repo,
+        stage: { kind: "done", threads: 1234, fetched: 12, total: 12 },
+      },
+      { repo: docs, stage: { kind: "reading", fetched: 2, total: 3 } },
+      {
+        repo: site,
+        stage: { kind: "failed", error: providerError("GITHUB_TIMED_OUT") },
+      },
+    ],
+    names: { ...names, [longRepo.repo]: longRepo.name },
     width: 38,
   },
 };

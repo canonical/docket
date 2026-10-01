@@ -12,6 +12,7 @@ export type Detail = "summary" | "standard" | "detailed";
 export type CommandName =
   | "owed"
   | "activity"
+  | "finished"
   | "show"
   | "assign"
   | "review"

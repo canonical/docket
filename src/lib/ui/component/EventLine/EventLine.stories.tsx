@@ -1,4 +1,5 @@
 import { findEventLine } from "../../../../testing/activity.js";
+import { longEvent } from "../../../../testing/long.js";
 import type { Meta, Story } from "../../../../testing/stories.js";
 import EventLine from "./EventLine.js";
 import type { EventLineProps } from "./types.js";
@@ -23,4 +24,9 @@ export const ChecksFailed: Story<EventLineProps> = {
 /** A bot opened a pull request: context, dimmed. */
 export const Bot: Story<EventLineProps> = {
   args: { line: findEventLine(14, 0), stacked: false, width: 40 },
+};
+
+/** Someone with a long login labelled a pull request with a long label. */
+export const Long: Story<EventLineProps> = {
+  args: { line: longEvent, stacked: true, width: 40 },
 };

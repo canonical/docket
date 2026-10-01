@@ -1,4 +1,4 @@
-import { owedCommands } from "../../../../testing/commands.js";
+import { longCommands, owedCommands } from "../../../../testing/commands.js";
 import type { Meta, Story } from "../../../../testing/stories.js";
 import {
   CountsLine,
@@ -27,13 +27,29 @@ export const NothingOwed: Story<PaneProps> = {
   args: {
     width,
     height,
-    header: <PaneHeader title="owed" width={width} />,
+    header: (
+      <PaneHeader title={{ text: "owed", kind: "words" }} width={width} />
+    ),
     children: (
       <box paddingTop={1}>
-        <EmptyState message="nothing owed" width={width} />
+        <EmptyState
+          message={{ text: "nothing owed", kind: "words" }}
+          width={width}
+        />
       </box>
     ),
-    counts: <CountsLine summary="0 over · 0 soon · 0 on track" width={width} />,
+    counts: (
+      <CountsLine
+        summary={{
+          fields: [
+            { text: "0 over", kind: "words" },
+            { text: "0 soon", kind: "words" },
+            { text: "0 on track", kind: "words" },
+          ],
+        }}
+        width={width}
+      />
+    ),
     status: (
       <StatusLine
         status={{
@@ -59,11 +75,13 @@ export const NothingOwed: Story<PaneProps> = {
 export const Help: Story<PaneProps> = {
   args: {
     ...NothingOwed.args,
-    header: <PaneHeader title="help" width={width} />,
+    header: (
+      <PaneHeader title={{ text: "help", kind: "words" }} width={width} />
+    ),
     help: (
       <HelpOverlay
         commands={owedCommands}
-        note="windows are counted in working time"
+        note={{ text: "windows are counted in working time", kind: "words" }}
         width={width}
         height={height - 1}
       />
@@ -74,4 +92,36 @@ export const Help: Story<PaneProps> = {
 /** No counts line: its place stays blank. */
 export const NoCounts: Story<PaneProps> = {
   args: { ...NothingOwed.args, counts: undefined },
+};
+
+/**
+ * Every line of the pane with more than 40 columns hold: an editor's
+ * header on a repository with a long short name, the widest counts, and
+ * more keys than the bar holds.
+ */
+export const Long: Story<PaneProps> = {
+  args: {
+    ...NothingOwed.args,
+    header: (
+      <PaneHeader
+        title={{
+          text: "assigning example-repository-with-a-long-name#12345",
+          kind: "identifier",
+        }}
+        width={width}
+      />
+    ),
+    counts: (
+      <CountsLine
+        summary={{
+          fields: ["9999 over", "9999 soon", "9999 on track"].map((text) => ({
+            text,
+            kind: "words" as const,
+          })),
+        }}
+        width={width}
+      />
+    ),
+    keys: <KeyBar commands={longCommands} width={width} />,
+  },
 };

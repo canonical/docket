@@ -41,10 +41,20 @@ describe("PaneHeader", () => {
     expect(screen.look("help")?.bold).toBe(false);
   });
 
-  it("gives up the sort first when the line is too short, then cuts the address with an ellipsis", async () => {
+  it("gives up the sort first when the line is too short, then leaves out the address's parts whole, the window first, and never the mode", async () => {
     const sorted = await draw(<PaneHeader {...Activity.args} width={30} />, 30);
     expect(sorted.lines.at(0)).toBe(`activity${" ".repeat(9)}24h · by kind`);
-    const cut = await draw(<PaneHeader {...Activity.args} width={16} />, 16);
-    expect(cut.lines.at(0)).toBe("activity 24h · …");
+    const header = (width: number) =>
+      draw(
+        <PaneHeader
+          title={{ text: "activity", kind: "words" }}
+          address={{ text: "1w · by repo", kind: "words" }}
+          width={width}
+        />,
+        width,
+      );
+    expect((await header(16)).lines.at(0)).toBe("activity by repo");
+    expect((await header(12)).lines.at(0)).toBe("activity");
+    expect((await header(6)).lines.at(0)).toBe("activ…");
   });
 });

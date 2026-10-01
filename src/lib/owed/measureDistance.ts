@@ -1,11 +1,11 @@
 import {
-  hourMilliseconds,
   measureDuration,
   measureWorkingTime,
   type WorkingClock,
 } from "../clock/index.js";
 import type { Wait } from "../waits/index.js";
 import { soonShare } from "./constants.js";
+import describeWorkingTime from "./describeWorkingTime.js";
 import type { WaitState } from "./types.js";
 
 /** Where a wait stands against its target, and how that reads. */
@@ -40,8 +40,7 @@ export default function measureDistance(
     : measureWorkingTime(now, wait.due, time);
   const target = measureDuration(wait.target, time);
   const share = gap / target;
-  const hours = Math.floor(gap / hourMilliseconds);
-  const amount = hours >= 24 ? `${Math.floor(hours / 24)}d` : `${hours}h`;
+  const amount = describeWorkingTime(gap);
   if (over) return { state: "over", overdue: share, text: `${amount} over` };
   return {
     state: share < soonShare ? "soon" : "onTrack",

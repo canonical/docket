@@ -1,8 +1,13 @@
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
-import fitPieces from "../../fitPieces.js";
-import markPerson from "../../markPerson.js";
-import measurePieces from "../../measurePieces.js";
+import { loginCells } from "../../constants.js";
+import {
+  fitField,
+  fitRuns,
+  markPerson,
+  measurePieces,
+  measureText,
+} from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import describeRight from "./describeRight.js";
 import describeStatus from "./describeStatus.js";
@@ -27,7 +32,7 @@ const colours: Readonly<Record<StatusMessage["kind"], string>> = {
 /**
  * The message's runs: its words in its kind's colour, then the people it
  * names, each behind their group's mark and in its hue, as `✓ assigned
- * ◐ erin`.
+ * ◐ erin`, each login cut at 12 cells as on a row.
  */
 function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
   const plain = tokens["color.text"];
@@ -35,9 +40,36 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
     { text, fg: colours[kind] },
     ...people.flatMap((person, place) => [
       { text: place === 0 ? " " : ", ", fg: plain },
-      markPerson(person, Number.POSITIVE_INFINITY),
+      markPerson(person, loginCells),
     ]),
   ];
+}
+
+/**
+ * A message's words fitted to `width`: a message too wide first drops the
+ * part that gives way, then cuts the repository's short name it names in
+ * its middle, so the place after it stays, and only then are its words
+ * cut, by the rule for docket's own words.
+ */
+function fitMessage(message: StatusMessage, width: number): string {
+  const { shorter, name } = message;
+  const chosen =
+    shorter !== undefined && measureText(message.text) > width
+      ? shorter
+      : message.text;
+  const over = measureText(chosen) - width;
+  if (name === undefined || over <= 0) {
+    return fitField({ text: chosen, kind: "words" }, "line", width);
+  }
+  // The name follows docket's fixed words, so its last place is its own.
+  const at = chosen.lastIndexOf(name);
+  const cut = fitField(
+    { text: name, kind: "identifier" },
+    "line",
+    measureText(name) - over,
+  );
+  const text = `${chosen.slice(0, at)}${cut}${chosen.slice(at + name.length)}`;
+  return fitField({ text, kind: "words" }, "line", width);
 }
 
 /**
@@ -45,11 +77,12 @@ function describeRuns({ kind, text, people = [] }: StatusMessage): Piece[] {
  * time: the cases are listed in priority order, the first that applies
  * is the one shown, and the side stays blank when none does (the
  * prerequisite frames). A message too wide for the pane drops its part
- * that gives way first, a full refresh its pages, and only then is cut
- * with `…`. The right side is dimmed, as `describeRight` chooses it:
- * `details 3/12` while any asked for are unread, else the live budget
- * figures it is given, such as `budget 35% · resets 14:20`, and dropped
- * when the two sides would meet.
+ * that gives way first, a full refresh its pages, and only then are its
+ * words cut with `…` by `fitField`, as docket's own words. The right
+ * side is dimmed, as `describeRight` chooses it: `details 3/12` while any
+ * asked for are unread, else the live budget figures it is given, such as
+ * `budget 35% · resets 14:20`, as docket's own words through `fitField`,
+ * and dropped when the two sides would meet.
  *
  * `import { StatusLine } from "../lib/ui/index.js";`
  *
@@ -74,16 +107,18 @@ const StatusLine = ({
     action,
     attention,
   );
-  // A message too wide first drops the part that gives way, and only
-  // then is cut.
-  const fitted =
-    message?.shorter !== undefined && Bun.stringWidth(message.text) > width
-      ? { ...message, text: message.shorter }
-      : message;
-  const runs = fitted ? fitPieces(describeRuns(fitted), width) : [];
-  const right = describeRight(status, message, attention, details, liveBudget);
+  const fitted = message && { ...message, text: fitMessage(message, width) };
+  const runs = fitted ? fitRuns(describeRuns(fitted), width) : [];
+  const right = fitField(
+    {
+      text: describeRight(status, message, attention, details, liveBudget),
+      kind: "words",
+    },
+    "line",
+    width,
+  );
   // At least one cell apart, or the right side is left out.
-  const gap = width - measurePieces(runs) - Bun.stringWidth(right);
+  const gap = width - measurePieces(runs) - measureText(right);
   return (
     <text>
       {runs.map(({ text, fg }, run) => (

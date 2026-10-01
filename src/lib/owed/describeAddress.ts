@@ -7,8 +7,8 @@ import type { Header, OwedAddress } from "./types.js";
  * alike.
  */
 export default function describeAddress(address: OwedAddress): Header {
-  const title = { text: address.mode, fit: "trimmed" } as const;
+  const title = { text: address.mode, kind: "words" } as const;
   return address.grouping === "none"
     ? { title }
-    : { title, address: { text: `by ${address.grouping}`, fit: "trimmed" } };
+    : { title, address: { text: `by ${address.grouping}`, kind: "words" } };
 }

@@ -25,17 +25,13 @@ import type { WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import type { Thread } from "../../../waits/index.js";
 import describeDetail from "./describeDetail.js";
-import type { DetailLine } from "./types.js";
+import readTexts from "./readTexts.js";
 
 const reading = {
   now: recordedNow,
   timezone: "Europe/Paris",
   waiting: { "example#13": "close" },
 };
-
-/** Each line's text, its runs joined. */
-const texts = (lines: readonly DetailLine[]) =>
-  lines.map(({ pieces }) => pieces.map(({ text }) => text).join(""));
 
 describe("describeDetail, while reading is paused", () => {
   it("gives a reply, a review and a close as the snapshot gives them while the details are read", () => {
@@ -67,7 +63,8 @@ describe("describeDetail, while reading is paused", () => {
   // The first two lines paused, then read with the requests given.
   const grows = (row: WaitRow, requests: ThreadDetail["requests"]) =>
     [pauseDetail(overReviewDetail), { ...overReviewDetail, requests }].map(
-      (detail) => texts(describeDetail(row, detail, reading).body).slice(0, 2),
+      (detail) =>
+        readTexts(describeDetail(row, detail, reading).body).slice(0, 2),
     );
 
   it("counts the same pushes paused and read, after a review and pushes, or a second request", () => {
@@ -116,9 +113,12 @@ describe("describeDetail, while reading is paused", () => {
       pauseDetail(sharedCloseDetail),
       reading,
     );
-    expect(texts(body)).toEqual(
-      texts(describeDetail(resting, sharedCloseDetail, reading).body),
+    expect(readTexts(body)).toEqual(
+      readTexts(describeDetail(resting, sharedCloseDetail, reading).body),
     );
-    expect(texts(stack)).toEqual(["example stack 3 · 2 of 3 · → main", "…"]);
+    expect(readTexts(stack)).toEqual([
+      "example stack 3 · 2 of 3 · → main",
+      "…",
+    ]);
   });
 });

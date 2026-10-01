@@ -18,13 +18,34 @@ exit 0
     }
   },
   "counts": {
-    "threads": 4,
-    "events": 7
+    "threads": 6,
+    "events": 10
   },
   "groups": [
     {
       "kind": "issue",
       "threads": [
+        {
+          "reference": "docs#3",
+          "title": "Broken link in the footer",
+          "kind": "issue",
+          "owners": null,
+          "draft": false,
+          "stack": null,
+          "invalidRepositoryFile": false,
+          "events": [
+            {
+              "kind": "closed",
+              "ending": {
+                "outcome": "completed",
+                "label": "closed as completed"
+              },
+              "bot": false,
+              "actor": "bob",
+              "at": "2026-09-28T08:30:00.000Z"
+            }
+          ]
+        },
         {
           "reference": "docs#4",
           "title": "Where do tokens live?",
@@ -60,6 +81,33 @@ exit 0
               "bot": false,
               "actor": "carol",
               "at": "2026-09-25T14:00:00.000Z"
+            }
+          ]
+        },
+        {
+          "reference": "docs#5",
+          "title": "Dark mode for the docs",
+          "kind": "issue",
+          "owners": null,
+          "draft": false,
+          "stack": null,
+          "invalidRepositoryFile": false,
+          "events": [
+            {
+              "kind": "closed",
+              "ending": {
+                "outcome": "notPlanned",
+                "label": "closed as not planned"
+              },
+              "bot": false,
+              "actor": "alice",
+              "at": "2026-09-25T10:00:00.000Z"
+            },
+            {
+              "kind": "opened",
+              "bot": false,
+              "actor": "dave",
+              "at": "2026-09-24T09:00:00.000Z"
             }
           ]
         }

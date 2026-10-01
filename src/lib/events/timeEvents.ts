@@ -4,6 +4,7 @@ import {
   measureDuration,
 } from "../clock/index.js";
 import type { Settings } from "../config/index.js";
+import type { Ending } from "../endings/index.js";
 import { type Account, classify } from "../people/index.js";
 import type { ThreadSummary } from "../waits/index.js";
 
@@ -26,9 +27,16 @@ export type ThreadEvent = EventFacts &
           | "commented"
           | "reviewed"
           | "reviewRequested"
-          | "closed"
           | "merged"
           | "reopened";
+      }
+    | {
+        readonly kind: "closed";
+        /**
+         * How the close ended the thread, in the provider's words: an
+         * issue's close says why, as `closed as completed` does.
+         */
+        readonly ending: Pick<Ending, "outcome" | "label">;
       }
     | {
         readonly kind: "assigned";

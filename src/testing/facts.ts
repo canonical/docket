@@ -3,6 +3,7 @@ import {
   type Group,
   type Settings,
 } from "../lib/config/index.js";
+import type { FinishedThread } from "../lib/endings/index.js";
 import type { Author } from "../lib/people/index.js";
 import type { Thread, Wait } from "../lib/waits/index.js";
 
@@ -80,6 +81,35 @@ export function wait(facts: Partial<Wait> = {}): Wait {
     started: at("2026-09-22T10:00+02:00"),
     target: { amount: 24, unit: "h" },
     due: at("2026-09-23T10:00+02:00"),
+    ...facts,
+  };
+}
+
+/**
+ * A pull request in example-org/example-repo that alice opened on
+ * Tuesday 22 September 2026 at 10:00 in Paris and bob merged on the
+ * Thursday at 16:00, with nothing else recorded on it.
+ */
+export function finishedThread(
+  facts: Partial<FinishedThread> = {},
+): FinishedThread {
+  return {
+    repo: "example-org/example-repo",
+    number: 2,
+    url: "https://github.com/example-org/example-repo/pull/2",
+    kind: "pullRequest",
+    title: "Example change",
+    author: alice,
+    createdAt: at("2026-09-22T10:00+02:00"),
+    draft: false,
+    labels: [],
+    assignees: [],
+    ending: {
+      outcome: "merged",
+      label: "merged",
+      at: at("2026-09-24T16:00+02:00"),
+      by: bob,
+    },
     ...facts,
   };
 }

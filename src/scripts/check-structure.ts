@@ -27,8 +27,16 @@ import ts from "typescript";
 type Finding = { file: string; rule: string; message: string };
 type Reach = "values" | "types";
 
-const model = ["clock", "config", "people", "waits", "events", "stacks"];
-const viewModels = ["owed", "activity"];
+const model = [
+  "clock",
+  "config",
+  "people",
+  "waits",
+  "events",
+  "stacks",
+  "endings",
+];
+const viewModels = ["owed", "activity", "finished"];
 const surfaces = ["text", "tokens", "ui"];
 
 /**
@@ -51,6 +59,9 @@ grant(viewModels, model, "values");
 // Both lists name their fields and their owners alike, so activity takes
 // owed's field types and owner naming rather than keeping a copy.
 grant(["activity"], ["owed"], "values");
+// finished's rows are activity's rows with the ending as their event, so
+// it takes both lists' field types, owner naming and ages.
+grant(["finished"], ["owed", "activity"], "values");
 grant(["provider"], model, "types");
 grant(["github", "cache"], [...model, "provider"], "values");
 grant(surfaces, [...viewModels, "tokens"], "values");
@@ -75,6 +86,23 @@ const propertyFolders = new Set([
   "util",
   "utils",
 ]);
+/**
+ * The fitting module, `src/lib/ui/fit/`, fits every text the terminal
+ * draws by one table of rules. Its primitives cut or wrap text without
+ * regard to what it is, so nothing outside it imports them.
+ */
+const fitting = "src/lib/ui/fit/";
+const fittingPrimitives =
+  /(^|\/)(trimText|wrapText|fitPieces|cutMiddle)(\.js)?$/;
+
+/**
+ * Bun's measure of display cells disagrees with what OpenTUI draws, so
+ * the terminal measures only through the fitting module's measure, and
+ * only that measure's tests name Bun's, to show where the two disagree.
+ */
+const bunMeasure = /\bBun\.stringWidth\b/;
+const bunMeasureTests = /^src\/lib\/ui\/fit\/measureText\.test\./;
+
 const maxLines = 500;
 const lengthHeader = /^\/\/ Longer than 500 lines because \S/;
 
@@ -196,9 +224,12 @@ function exportsOf(source: ts.SourceFile): Exports {
         }
       }
     } else if (hasModifier(statement, ts.SyntaxKind.ExportKeyword)) {
+      // An overload's signature declares no value: the body that follows
+      // it is the one export.
       if (
         ts.isInterfaceDeclaration(statement) ||
-        ts.isTypeAliasDeclaration(statement)
+        ts.isTypeAliasDeclaration(statement) ||
+        (ts.isFunctionDeclaration(statement) && !statement.body)
       ) {
         continue;
       }
@@ -331,6 +362,37 @@ function check(root: string): Finding[] {
       ts.ScriptTarget.Latest,
       true,
     );
+    if (
+      path.startsWith("src/lib/ui/") &&
+      !bunMeasureTests.test(path) &&
+      bunMeasure.test(text)
+    ) {
+      report(
+        "fitting",
+        "measures with Bun.stringWidth: count cells with measureText from src/lib/ui/fit/",
+      );
+    }
+    if (!path.startsWith(fitting)) {
+      for (const { specifier } of importsOf(source)) {
+        const target = join(dirname(path), specifier);
+        if (
+          target.startsWith(fitting) &&
+          !fittingPrimitives.test(specifier) &&
+          target !== `${fitting}index.js`
+        ) {
+          report(
+            "fitting",
+            `imports ${specifier}, past the fitting module's barrel: import from ${fitting}index.js`,
+          );
+        }
+        if (fittingPrimitives.test(specifier)) {
+          report(
+            "fitting",
+            `imports ${specifier}: fit text with fitField, fitRuns, fitBlock, endRuns or markPerson from ${fitting}`,
+          );
+        }
+      }
+    }
     const lines = text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
     if (lines > maxLines && !lengthHeader.test(text)) {
       report(
@@ -444,6 +506,10 @@ const breaks: Record<string, [string, string]> = {
     "dependencies",
     'import rows from "../activity/index.js";\nexport default function order() { return rows; }',
   ],
+  "src/lib/activity/ending.ts": [
+    "dependencies",
+    'import { listEndings } from "../finished/index.js";\nexport default function ending() { return listEndings; }',
+  ],
   "src/lib/clock/tick.ts": [
     "dependencies",
     'import rows from "../owed/index.js";\nexport default function tick() { return rows; }',
@@ -508,6 +574,46 @@ const breaks: Record<string, [string, string]> = {
   "src/lib/config/schema.ts": ["length", `${long}\nexport default 1;`],
   "src/lib/config/types.ts": ["exports", "export const x = 1;"],
   "src/lib/waits/owner.ts": ["tests", "export default function owner() {}"],
+  "src/lib/ui/component/Row/Row.tsx": [
+    "fitting",
+    'import trimText from "../../fit/trimText.js";\nexport default function Row() { return trimText; }',
+  ],
+  "src/application/wrap.ts": [
+    "fitting",
+    'export { default as wrapText } from "../lib/ui/fit/wrapText.js";',
+  ],
+  "src/lib/ui/component/Runs/Runs.tsx": [
+    "fitting",
+    'import fitPieces from "../../fit/fitPieces.js";\nexport default function Runs() { return fitPieces; }',
+  ],
+  "src/lib/ui/component/Table/Table.tsx": [
+    "fitting",
+    'import { fitRules } from "../../fit/constants.js";\nexport default function Table() { return fitRules; }',
+  ],
+  "src/lib/ui/component/Gap/Gap.tsx": [
+    "fitting",
+    "export default function Gap(text: string) { return Bun.stringWidth(text); }",
+  ],
+  "src/lib/ui/fit/cutMiddle.ts": [
+    "fitting",
+    "export default function cutMiddle(text: string) { return Bun.stringWidth(text); }",
+  ],
+  "src/lib/ui/fit/measureCluster.ts": [
+    "fitting",
+    "export default function measureCluster(text: string) { return Bun.stringWidth(text); }",
+  ],
+  "src/lib/ui/fit/measureText.ts": [
+    "fitting",
+    "export default function measureText(text: string) { return Bun.stringWidth(text); }",
+  ],
+  "src/lib/ui/component/Name/Name.tsx": [
+    "fitting",
+    'import cutMiddle from "../../fit/cutMiddle.js";\nexport default function Name() { return cutMiddle; }',
+  ],
+  "src/lib/ui/component/Cut/Cut.tsx": [
+    "fitting",
+    'import cutMiddle from "../../fit/cutMiddle";\nexport default function Cut() { return cutMiddle; }',
+  ],
 };
 
 /** Each file must be accepted: the allowances and the rules' scopes. */
@@ -536,11 +642,21 @@ const allowed: Record<string, string> = {
     'import { describeOwners } from "../owed/index.js";',
     "export default function rows() { return describeOwners; }",
   ].join("\n"),
+  "src/lib/finished/rows.ts": [
+    'import { describeAge } from "../activity/index.js";',
+    'import { describeOwners } from "../owed/index.js";',
+    "export default function rows() { return [describeAge, describeOwners]; }",
+  ].join("\n"),
   "src/lib/owed/rows.test.ts":
     'import alice from "../../testing/alice.js";\nalice;',
   "src/lib/owed/types.ts":
     "export type Group = string;\nexport interface Kind {}",
   "src/lib/owed/constants.ts": "export const limit = 3;",
+  "src/lib/owed/fitRow.ts": [
+    "export default function fitRow(row: string): string;",
+    "export default function fitRow(row: number): number;",
+    "export default function fitRow(row: string | number) { return row; }",
+  ].join("\n"),
   "src/lib/owed/index.ts": [
     'export { default as rows } from "./rows.js";',
     'export type { Group } from "./types.js";',
@@ -551,6 +667,15 @@ const allowed: Record<string, string> = {
     'import provider from "../provider/index.js";',
     'import clock from "../clock/index.js";',
     "export default function snapshot(): Port { return [provider, clock]; }",
+  ].join("\n"),
+  "src/lib/ui/component/Fitted/Fitted.tsx":
+    'import { fitField } from "../../fit/index.js";\nexport default function Fitted() { return fitField; }',
+  "src/lib/ui/fit/measureText.test.tsx":
+    'import { expect, it } from "vitest";\nit("differs", () => { expect(Bun.stringWidth("❤")).toBe(1); });',
+  "src/lib/ui/fit/fitField.ts": [
+    'import trimText from "./trimText.js";',
+    'import fitPieces from "./fitPieces.js";',
+    "export default function fitField() { return [trimText, fitPieces]; }",
   ].join("\n"),
   "src/lib/config/long.ts": `// Longer than 500 lines because the schema is one table\n${long}\nexport default function long() {}`,
   "src/application/main.ts": [

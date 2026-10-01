@@ -11,5 +11,10 @@ export default meta;
 
 /** owed with no running wait. */
 export const NothingOwed: Story<EmptyStateProps> = {
-  args: { message: "nothing owed", width: 40 },
+  args: { message: { text: "nothing owed", kind: "words" }, width: 40 },
+};
+
+/** The longest message the list area gives: owed, with nothing owed. */
+export const Long: Story<EmptyStateProps> = {
+  args: { message: { text: "nothing owed", kind: "words" }, width: 40 },
 };
