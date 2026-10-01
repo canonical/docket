@@ -29,7 +29,9 @@ const wordsCells = 4;
  * closing failed checks' names. The words give way first, cut at their
  * end down to four cells, so the target stays whole where it can; past
  * that the target is cut, by its kind's rule for an event, to the rest.
- * Each is measured as drawn, past `sanitize`.
+ * The raw text is split first and each part passes `sanitize` on its
+ * own, so an escape sequence in the target never swallows the words after
+ * it; each is measured as drawn.
  */
 function describeAction(
   { action, target }: EventLineProps["line"],
@@ -37,13 +39,13 @@ function describeAction(
   fg: string,
 ): Piece[] {
   if (!target) return [{ text: fitField(action, "event", room), fg }];
-  const text = sanitize(action.text);
-  const aim = sanitize(target.text);
-  const at = text.lastIndexOf(aim);
+  const at = action.text.lastIndexOf(target.text);
   // The space and any bracket before the target go with it.
-  const words = text.slice(0, at).replace(/[\s(]+$/, "");
-  const space = text.slice(words.length, at);
-  const after = text.slice(at + aim.length);
+  const raw = action.text.slice(0, at).replace(/[\s(]+$/, "");
+  const words = sanitize(raw);
+  const space = sanitize(action.text.slice(raw.length, at));
+  const aim = sanitize(target.text);
+  const after = sanitize(action.text.slice(at + target.text.length));
   const tail = measureText(aim) + measureText(after);
   const wordsRoom = Math.max(
     Math.min(measureText(words), wordsCells),

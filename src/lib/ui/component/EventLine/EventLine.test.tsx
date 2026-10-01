@@ -92,6 +92,21 @@ describe("EventLine", () => {
     expect(await at(53)).toBe(` ┆  ✗ checks fail… (${name}) 20m`);
   });
 
+  it("keeps the bracket closing failed checks' names whole, though a name ends in an escape", async () => {
+    const { line } = ChecksFailed.args;
+    const names = "lint, unit\u001b";
+    const failed = {
+      ...line,
+      action: { ...line.action, text: `checks failed (${names})` },
+      target: line.target && { ...line.target, text: names },
+    };
+    const screen = await draw(
+      <EventLine {...ChecksFailed.args} line={failed} />,
+      40,
+    );
+    expect(screen.lines.at(0)).toContain("✗ checks failed (lint, unit) ");
+  });
+
   it("splits what was done about the last place the target is named, though the words name it too", async () => {
     const line = {
       ...Pushed.args.line,
