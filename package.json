@@ -26,7 +26,7 @@
     "ci": "bun run check && bun run build && bun run test:coverage && bun run self-test && bun run check:identity && bun run check:secrets && bun run check:audit && bun run check:licences && bun run check:structure && bun run guarantees && bun run guarantees:prove"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.13",
+    "@biomejs/biome": "2.5.15",
     "@canonical/biome-config": "0.40.0",
     "@canonical/typescript-config-react": "0.40.0",
     "@types/bun": "1.4.2",
