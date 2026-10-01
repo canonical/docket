@@ -20,7 +20,7 @@
 |
 |
 |
-|0 merged · 0 closed · 0 over
+|0 over · 0 merged · 0 closed
 |synced 2m ago
 |←→ mode ↑↓ sel ⏎ open g grp t time ?
 
@@ -28,7 +28,7 @@ runs
 1:1 "finished                         1w · by kind · " fg #c6c8d1ff bg #161821ff
 1:49 "newest first" fg #6b7089ff bg #161821ff
 3:1 "  nothing merged or closed in 1w" fg #c6c8d1ff bg #161821ff
-22:1 "0 merged · 0 closed · 0 over" fg #c6c8d1ff bg #161821ff
+22:1 "0 over · 0 merged · 0 closed" fg #c6c8d1ff bg #161821ff
 23:1 "synced 2m ago" fg #6b7089ff bg #161821ff
 24:1 "←→" fg #c6c8d1ff bg #161821ff
 24:3 " mode" fg #6b7089ff bg #161821ff

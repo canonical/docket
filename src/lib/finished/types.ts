@@ -135,7 +135,7 @@ export interface EndingList {
   readonly counts: FinishedCounts;
   /** How each measure stands across the rows. */
   readonly measures: { readonly [Kind in MeasureKind]: Coverage };
-  /** `4 merged · 3 closed · 3 over`, each part a field. */
+  /** `3 over · 4 merged · 3 closed`, each part a field, most urgent first. */
   readonly summary: FieldList;
 }
 

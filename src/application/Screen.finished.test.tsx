@@ -66,7 +66,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
       "╵   ◉ alice closed as completed       1d",
     ]);
     expect(screen.lines.slice(21)).toEqual([
-      "4 merged · 3 closed · 3 over       1/3/7",
+      "3 over · 4 merged · 3 closed       1/3/7",
       "synced 2m ago",
       "←→ mode ↑↓ sel ⏎ open g grp t time ?",
     ]);
@@ -93,7 +93,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
       "│ docs#102 issue ○ dave          open 2d",
     ]);
     expect(screen.lines.at(21)).toBe(
-      "4 merged · 3 closed · 3 over       1/1/7",
+      "3 over · 4 merged · 3 closed       1/1/7",
     );
     expect(screen.lines).toContain("┃ Tokens page: contrast       unassigned");
   });
@@ -126,9 +126,9 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
       "┃┆below #1179 merged",
       "╹┆  ● bob merged                      2d",
     ]);
-    expect(moved.lines.at(21)).toBe("4 merged · 3 closed · 3 over         3/7");
+    expect(moved.lines.at(21)).toBe("3 over · 4 merged · 3 closed         3/7");
     const last = await press(screen, "end", "j");
-    expect(last.lines.at(21)).toBe("4 merged · 3 closed · 3 over         7/7");
+    expect(last.lines.at(21)).toBe("3 over · 4 merged · 3 closed         7/7");
   });
 
   it("reads no details while a thread in no stack is selected, and only stacked pull requests' once one is", async () => {
@@ -201,7 +201,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
       expect(lines.at(2)).toBe("  nothing merged or closed in 1w");
       return lines;
     });
-    expect(drawn.at(21)).toBe("0 merged · 0 closed · 0 over");
+    expect(drawn.at(21)).toBe("0 over · 0 merged · 0 closed");
   });
 
   it("says refresh in progress while its window is read", async () => {

@@ -52,7 +52,7 @@ describe("useFinished", () => {
     const screen = await draw(<Probe {...props} />, 120, 1);
     const read = await screen.redraw();
     expect(read.lines.at(0)).toBe(
-      "closed as completed, closed as not planned, merged · 4 merged · 3 closed · 3 over",
+      "closed as completed, closed as not planned, merged · 3 over · 4 merged · 3 closed",
     );
   });
 
@@ -60,7 +60,7 @@ describe("useFinished", () => {
     const day = { amount: 24, unit: "h" } as const;
     const screen = await draw(<Probe {...props} window={day} />, 120, 1);
     expect((await screen.redraw()).lines.at(0)).toBe(
-      "closed as completed, closed as not planned, merged · 2 merged · 2 closed · 2 over",
+      "closed as completed, closed as not planned, merged · 2 over · 2 merged · 2 closed",
     );
   });
 

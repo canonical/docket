@@ -2,7 +2,7 @@ exit 0
 --- out
 finished · 72h · by kind
 synced 0m ago
-1 merged · 2 closed · 1 over
+1 over · 1 merged · 2 closed
 
 ISSUES
 docs#3 · issue · 5d over

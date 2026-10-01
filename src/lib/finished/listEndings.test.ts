@@ -16,9 +16,9 @@ describe("listEndings", () => {
   it("says what it counts, and how each measure stands across the list", () => {
     const list = listEndings(repoEndings(), finishedNow);
     expect(list.summary.fields.map(({ text }) => text)).toEqual([
+      "1 over",
       "1 merged",
       "3 closed",
-      "1 over",
     ]);
     expect(list.measures).toEqual({
       close: { state: "measured", of: 3, pending: 0 },

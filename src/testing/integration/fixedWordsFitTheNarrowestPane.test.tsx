@@ -308,9 +308,9 @@ describe("docket's own words at the narrowest pane", () => {
       recordedNow,
     );
     expect(summary.fields.map(({ text }) => text)).toEqual([
+      "999 over",
       "999 merged",
       "999 closed",
-      "999 over",
     ]);
     const lines: (string | undefined)[] = [];
     for (const place of ["999/999/999", "999/999"]) {
@@ -325,9 +325,20 @@ describe("docket's own words at the narrowest pane", () => {
       lines.push(screen.lines.at(0));
     }
     expect(lines).toEqual([
-      `999 merged · 999 closed${" ".repeat(6)}999/999/999`,
-      `999 merged · 999 closed${" ".repeat(10)}999/999`,
+      `999 over · 999 merged${" ".repeat(8)}999/999/999`,
+      `999 over · 999 merged${" ".repeat(12)}999/999`,
     ]);
+    // Narrower than the pane allows, the next part leaves: `merged`
+    // before `over`, which stays last.
+    const narrow = await draw(
+      <CountsLine
+        summary={summary}
+        position={{ text: "999/999/999", kind: "figure" }}
+        width={30}
+      />,
+      30,
+    );
+    expect(narrow.lines.at(0)).toBe(`999 over${" ".repeat(11)}999/999/999`);
     const empty = groupEndings(
       listEndings([], recordedNow),
       { mode: "finished", window: week, grouping: "kind" },

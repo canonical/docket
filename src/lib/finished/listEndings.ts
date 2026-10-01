@@ -63,12 +63,13 @@ export default function listEndings(
     firstResponse: cover("firstResponse"),
     firstReview: cover("firstReview"),
   };
-  // The parts in the order they are read; a face too narrow for all of
-  // them leaves out the last whole.
+  // The parts in the order of their urgency, the most urgent first, as
+  // owed's are: a face too narrow for all of them leaves out the last
+  // whole, so `closed` leaves first, then `merged`, and `over` last.
   const fields = [
+    `${counts.over.value} over`,
     `${counts.merged} merged`,
     `${counts.closed} closed`,
-    `${counts.over.value} over`,
   ].map((text) => ({ text, kind: "words" as const }));
   return { rows, counts, measures, summary: { fields } };
 }
