@@ -1,16 +1,11 @@
 import { describe, expect, it } from "vitest";
-import {
-  activityGroupings,
-  describeAddress as describeActivityAddress,
-  listEvents,
-} from "../../lib/activity/index.js";
+import useAddress, {
+  type UseAddressProps,
+} from "../../application/useAddress.js";
+import { activityGroupings, listEvents } from "../../lib/activity/index.js";
 import type { CacheStatus, RepoStage } from "../../lib/cache/index.js";
 import type { WindowEvent } from "../../lib/events/index.js";
-import {
-  describeAddress,
-  listWaits,
-  owedGroupings,
-} from "../../lib/owed/index.js";
+import { listWaits, owedGroupings } from "../../lib/owed/index.js";
 import {
   CountsLine,
   StatusLine,
@@ -114,32 +109,49 @@ describe("docket's own words at the narrowest pane", () => {
     expect(screen.lines.at(0)).toBe("full refresh · example 1/1");
   });
 
-  it("holds each mode's header whole, every grouping and window", async () => {
-    const headers = [
-      ...owedGroupings.map((grouping) =>
-        describeAddress({ mode: "owed", grouping }),
+  it("holds each mode's header as the terminal builds it, every grouping and window, its sort leaving whole when it does not fit", async () => {
+    const opened: UseAddressProps[] = [
+      ...owedGroupings.map(
+        (owedGrouping): UseAddressProps => ({
+          mode: "owed",
+          owedGrouping,
+          windows: [{ amount: 24, unit: "h" }],
+          stacks: true,
+        }),
       ),
       ...activityGroupings.flatMap((grouping) =>
-        (["h", "d", "w"] as const).map((unit) =>
-          describeActivityAddress({
+        (["h", "d", "w"] as const).map(
+          (unit): UseAddressProps => ({
             mode: "activity",
-            grouping,
-            window: { amount: 999, unit },
+            owedGrouping: "none",
+            activity: { grouping, window: { amount: 999, unit } },
+            windows: [{ amount: 999, unit }],
+            stacks: true,
           }),
         ),
       ),
     ];
-    for (const { title, address } of headers) {
-      const screen = await draw(
-        <PaneHeader title={title} address={address} width={minColumns} />,
-        minColumns,
+    /** The header the terminal draws for where it opens. */
+    const Header = (props: UseAddressProps) => {
+      const { header } = useAddress(props);
+      return (
+        <PaneHeader
+          title={{ text: header.title, kind: "words" }}
+          address={{ text: header.address, kind: "words" }}
+          sort={{ text: header.sort, kind: "words" }}
+          width={minColumns}
+        />
       );
-      expect(screen.lines.at(0)).toMatch(
-        new RegExp(
-          address ? `^${title.text} +${address.text}$` : `^${title.text}$`,
-        ),
+    };
+    const lines: (string | undefined)[] = [];
+    for (const props of opened) {
+      const line = (await draw(<Header {...props} />, minColumns)).lines.at(0);
+      lines.push(line);
+      expect(line).toMatch(
+        /^(owed|activity) +(one list|by \w+|\d+[hdw] · (one list|by \w+))( · (overdue|newest) first)?$/,
       );
     }
+    expect(lines).toContain(`owed${" ".repeat(12)}one list · overdue first`);
   });
 
   it("holds the counts owed and activity build whole, with three digits in every state", async () => {
