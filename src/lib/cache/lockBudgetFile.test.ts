@@ -77,7 +77,7 @@ describe("lockBudgetFile", () => {
     }
   }, 15_000);
 
-  it("waits past the stale time, so a lock a dead process left is taken over", () => {
+  it("waits longer in all than a lock takes to go stale", () => {
     expect(budgetLockTiming.wait).toBeGreaterThan(budgetLockTiming.stale);
   });
 });

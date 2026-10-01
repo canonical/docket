@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fullBudget } from "../../testing/provider.js";
 import { waitUntil } from "../../testing/wait.js";
 import type { Budgets } from "../provider/index.js";
-import { lockName } from "./constants.js";
+import { budgetLockTiming, lockName } from "./constants.js";
 import createBudgetKeeper from "./createBudgetKeeper.js";
 import isSame from "./isSame.js";
 import mergeBudgets from "./mergeBudgets.js";
@@ -187,7 +187,22 @@ describe("createBudgetKeeper", () => {
       publishFloor: () => {},
       now: () => clock,
     });
-    await keeper();
+    const setTimer = vi.spyOn(globalThis, "setTimeout");
+    const clearTimer = vi.spyOn(globalThis, "clearTimeout");
+    try {
+      await keeper();
+      // The wait for the library to hear of the takeover ends before the
+      // stale time, and its fallback timer is cleared then.
+      const index = setTimer.mock.calls.findIndex(
+        ([, delay]) => delay === budgetLockTiming.stale,
+      );
+      expect(index).toBeGreaterThanOrEqual(0);
+      const fallback = setTimer.mock.results.at(index)?.value;
+      expect(clearTimer).toHaveBeenCalledWith(fallback);
+    } finally {
+      setTimer.mockRestore();
+      clearTimer.mockRestore();
+    }
     expect(await readBudgetFile(file)).toEqual(makeBudget(900));
     expect(await readdir(directory)).toContain("budget.json.lock");
   });
@@ -248,9 +263,12 @@ describe("createBudgetKeeper", () => {
 
   it("reads the file once it holds the file's lock, so a figure written before then stays", async () => {
     await writeBudgetFile(file, makeBudget(1000));
+    // Held as another live process holds it, touched in time.
     const release = await lock(file, {
+      stale: budgetLockTiming.stale,
+      update: budgetLockTiming.update,
       realpath: false,
-      lockfilePath: lockfilePath,
+      lockfilePath,
     });
     vi.mocked(lock).mockClear();
     const { peer, keeper } = createProcess(makeBudget(900));
