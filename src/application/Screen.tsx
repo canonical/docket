@@ -448,23 +448,29 @@ export default function Screen({
           />
         )
       }
-      status={drawStatusLine({
-        problem,
-        status,
-        // A failure reading activity's events, or whom gh is signed in
-        // as, leaves the rows held.
-        failure:
-          (activity && "list" in activity ? activity.failure : undefined) ??
-          you.failure,
-        action,
-        attention: attentionState,
-        detailsPaused: "cache" in source && source.details?.isCapped(at),
-        details: ahead.progress,
-        now: at,
-        timezone: settings.time.timezone,
-        watched,
-        width,
-      })}
+      // Setup has no state of its own, so its notice takes the lines.
+      status={
+        setup
+          ? undefined
+          : drawStatusLine({
+              problem,
+              status,
+              // A failure reading activity's events, or whom gh is signed in
+              // as, leaves the rows held.
+              failure:
+                (activity && "list" in activity
+                  ? activity.failure
+                  : undefined) ?? you.failure,
+              action,
+              attention: attentionState,
+              detailsPaused: "cache" in source && source.details?.isCapped(at),
+              details: ahead.progress,
+              now: at,
+              timezone: settings.time.timezone,
+              watched,
+              width,
+            })
+      }
       keys={<KeyBar commands={active} width={width} />}
       help={
         help ? (

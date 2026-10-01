@@ -57,8 +57,12 @@ const Pane = ({
             >
               {children}
             </box>
-            {counts ?? <box height={1} />}
-            {status}
+            {status !== undefined && (
+              <>
+                {counts ?? <box height={1} />}
+                {status}
+              </>
+            )}
             {keys}
           </>
         )}

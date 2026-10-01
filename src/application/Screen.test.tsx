@@ -456,8 +456,8 @@ describe("Screen", { timeout: 15_000 }, () => {
       ]);
       const keyed = await press(screen, "right", "g", "j");
       expect(keyed.lines).toEqual(screen.lines);
-      // On the shortest pane the reason keeps its line, and the recovery
-      // takes the rows left under it.
+      // On the shortest pane setup's notice takes the lines the counts and
+      // the status have elsewhere, so its recovery shows whole.
       const short = await (await show(view, 40, onQuit, 8)).redraw();
       expect(short.lines).toEqual([
         "setup",
@@ -465,7 +465,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  ✗ docket needs the GitHub CLI (gh)",
         "  Recovery: install it from",
         "  https://cli.github.com, then run",
-        "",
+        "  gh auth login",
         "",
         "? q quit",
       ]);

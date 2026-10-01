@@ -1,11 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import useAddress, {
   type UseAddressProps,
 } from "../../application/useAddress.js";
 import { activityGroupings, listEvents } from "../../lib/activity/index.js";
 import type { CacheStatus, RepoStage } from "../../lib/cache/index.js";
 import type { WindowEvent } from "../../lib/events/index.js";
+import { createProvider } from "../../lib/github/index.js";
 import { listWaits, owedGroupings } from "../../lib/owed/index.js";
+import type { Problem } from "../../lib/text/index.js";
 import {
   CountsLine,
   StatusLine,
@@ -14,16 +16,41 @@ import {
 import describeStage from "../../lib/ui/component/RefreshStages/describeStage.js";
 import describeDetails from "../../lib/ui/component/StatusLine/describeDetails.js";
 import describeStatus from "../../lib/ui/component/StatusLine/describeStatus.js";
-import { minColumns } from "../../lib/ui/constants.js";
+import { minColumns, minLines } from "../../lib/ui/constants.js";
 import { measureText } from "../../lib/ui/fit/index.js";
 import { PaneHeader } from "../../lib/ui/subcomponent/index.js";
 import type { Wait } from "../../lib/waits/index.js";
 import { activityNow } from "../activity.js";
 import { alice, teamSettings, thread } from "../facts.js";
 import { longReview } from "../long.js";
-import { recordedNow } from "../recorded.js";
+import { recordedNow, recordedSettings } from "../recorded.js";
 import { draftClose, overReview, soonReply } from "../rows.js";
-import { draw } from "../terminal.js";
+import { ScreenFrame } from "../screen.js";
+import { draw, drawSuspending } from "../terminal.js";
+
+/** How `gh` answers when docket asks it for a token. */
+const gh = vi.hoisted(() => ({
+  failure: null as (Error & { code?: string; killed?: boolean }) | null,
+}));
+
+vi.mock("node:child_process", () => ({
+  execFile: (...args: unknown[]) => {
+    const answer = args.at(-1) as (failure: Error | null, out: string) => void;
+    answer(gh.failure, "");
+  },
+}));
+
+/** The problem setup shows when `gh` answers with `failure`. */
+async function readSetupProblem(
+  failure: Error & { code?: string; killed?: boolean },
+): Promise<Problem> {
+  gh.failure = failure;
+  const refused = await createProvider("github.com", "0.0.0").catch(
+    (error: Problem) => error,
+  );
+  const { code, message, recovery } = refused as Problem;
+  return { code, message, recovery };
+}
 
 const now = new Date("2026-09-28T12:00:00Z");
 const idle: CacheStatus = {
@@ -240,5 +267,31 @@ describe("docket's own words at the narrowest pane", () => {
       minColumns,
     );
     expect(screen.lines.at(0)).toMatch(/ PR review 1d over$/);
+  });
+
+  it("holds every notice setup shows whole on the smallest pane, its recovery included", async () => {
+    const problems = await Promise.all([
+      readSetupProblem(Object.assign(new Error("gh"), { code: "ENOENT" })),
+      readSetupProblem(Object.assign(new Error("gh"), { killed: true })),
+      readSetupProblem(new Error("gh")),
+    ]);
+    for (const problem of problems) {
+      const screen = await drawSuspending(
+        <ScreenFrame
+          mode="owed"
+          owedGrouping="none"
+          now={() => recordedNow}
+          openInBrowser={async () => {}}
+          settings={recordedSettings}
+          watched={[]}
+          source={{ problem }}
+        />,
+        minColumns,
+        minLines,
+      );
+      const shown = screen.lines.join(" ").replace(/ +/g, " ");
+      expect(shown).toContain(problem.message.replace(/\.$/, ""));
+      expect(shown).toContain(`Recovery: ${problem.recovery}`);
+    }
   });
 });
