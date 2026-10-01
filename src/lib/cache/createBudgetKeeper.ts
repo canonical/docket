@@ -39,13 +39,16 @@ interface BudgetKeeperOptions {
  * held only to read, merge and write it: of each kind the later report
  * stays, so an older figure never overwrites a newer one, and the fetch
  * lock plays no part. The lock is checked to be still this keeping's before
- * the write, and again before it is let go: a takeover before the write
- * means no write, and a lock taken over is let go only once the library
- * has heard of the takeover it saw. One keeping runs at a time: a call
- * made while one runs joins it, and it runs once more for the figures
- * heard meanwhile. It never fails: a keeping that cannot read, lock or
- * write the file is dropped and its lock let go; the process's next
- * keeping, if it keeps again, carries the figures.
+ * the write, and again when the keeping ends. A takeover before the first
+ * check means no write; one between that check and the rename is not
+ * guarded, a narrow window this check leaves. A lock taken over is never
+ * released here: it belongs to the process that took it, and the keeping
+ * waits until the library has heard of the takeover, at most the lock's
+ * stale time. One keeping runs at a time: a call made while one runs
+ * joins it, and it runs once more for the figures heard meanwhile. It
+ * never fails: a keeping that cannot read, lock or write the file is
+ * dropped and its own lock let go; the process's next keeping, if it
+ * keeps again, carries the figures.
  *
  * @note Impure: writes the status, and reads, locks and writes the budget
  * file.
@@ -85,11 +88,15 @@ export default function createBudgetKeeper({
       adopt(kept);
     } finally {
       // The lock may also have been taken over since the check before the
-      // write. A lock taken over is let go only once the library has heard
-      // so, or its release would remove the lock of the process that took
-      // it.
+      // write. A lock taken over belongs to the process that took it and is
+      // never released here, since a release would remove that process's
+      // lock.
       taken ||= (await identifyFile(lockfilePath)) !== own;
       if (taken) {
+        // The library stops touching the lock once it hears of the
+        // takeover, which it does at its next touch. The keeping waits for
+        // that, and no longer than the lock's stale time, so it never waits
+        // for good should the library not hear.
         let timer: ReturnType<typeof setTimeout> | undefined;
         await Promise.race([
           forgotten.promise,
@@ -98,8 +105,7 @@ export default function createBudgetKeeper({
           }),
         ]);
         clearTimeout(timer);
-      }
-      await release().catch(() => undefined);
+      } else await release();
     }
   };
   // The keeping under way, which a call made meanwhile joins, and whether

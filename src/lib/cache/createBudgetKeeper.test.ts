@@ -1,4 +1,10 @@
-import { mkdirSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  rmSync,
+  statSync,
+  utimesSync,
+  writeFileSync,
+} from "node:fs";
 import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -187,25 +193,64 @@ describe("createBudgetKeeper", () => {
       publishFloor: () => {},
       now: () => clock,
     });
-    const setTimer = vi.spyOn(globalThis, "setTimeout");
-    const clearTimer = vi.spyOn(globalThis, "clearTimeout");
-    try {
-      await keeper();
-      // The wait for the library to hear of the takeover ends before the
-      // stale time, and its fallback timer is cleared then.
-      const index = setTimer.mock.calls.findIndex(
-        ([, delay]) => delay === budgetLockTiming.stale,
-      );
-      expect(index).toBeGreaterThanOrEqual(0);
-      const fallback = setTimer.mock.results.at(index)?.value;
-      expect(clearTimer).toHaveBeenCalledWith(fallback);
-    } finally {
-      setTimer.mockRestore();
-      clearTimer.mockRestore();
-    }
+    await keeper();
     expect(await readBudgetFile(file)).toEqual(makeBudget(900));
     expect(await readdir(directory)).toContain("budget.json.lock");
   });
+
+  it("leaves no timer behind once a takeover is heard of", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const keeper = createBudgetKeeper({
+        file,
+        lockfilePath,
+        readFigures: () => makeBudget(900),
+        isKept: () => false,
+        adopt: () => {
+          rmSync(lockfilePath, { recursive: true });
+          mkdirSync(lockfilePath);
+          const later = new Date(Date.now() + 2_000);
+          utimesSync(lockfilePath, later, later);
+        },
+        publishFloor: () => {},
+        now: () => clock,
+      });
+      let ended = false;
+      const keeping = keeper().then(() => {
+        ended = true;
+      });
+      // The library hears of the takeover at its next touch of the lock.
+      while (!ended) {
+        await vi.advanceTimersByTimeAsync(100);
+        await new Promise((resolve) => setImmediate(resolve));
+      }
+      await keeping;
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("never lets go of a lock taken over, though the library never hears of it", async () => {
+    const keeper = createBudgetKeeper({
+      file,
+      lockfilePath,
+      readFigures: () => makeBudget(900),
+      isKept: () => false,
+      // Another process takes the lock over with the very time the
+      // library last gave it, so the library never tells them apart.
+      adopt: () => {
+        const { mtime } = statSync(lockfilePath);
+        rmSync(lockfilePath, { recursive: true });
+        mkdirSync(lockfilePath);
+        utimesSync(lockfilePath, mtime, mtime);
+      },
+      publishFloor: () => {},
+      now: () => clock,
+    });
+    await keeper();
+    expect(await readdir(directory)).toContain("budget.json.lock");
+  }, 10_000);
 
   it("leaves the lowest figure of the window when processes keep falling figures together", async () => {
     const figures = [950, 900, 850, 800, 750, 700];
