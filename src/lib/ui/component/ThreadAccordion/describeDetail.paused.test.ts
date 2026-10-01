@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { readTexts } from "../../../../testing/accordion.js";
 import {
   overReviewDetail,
   pauseDetail,
@@ -26,6 +25,7 @@ import type { WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import type { Thread } from "../../../waits/index.js";
 import describeDetail from "./describeDetail.js";
+import readTexts from "./readTexts.js";
 
 const reading = {
   now: recordedNow,

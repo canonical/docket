@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { readTexts } from "../../../../testing/accordion.js";
 import {
   overReviewDetail,
   sharedCloseDetail,
@@ -24,10 +23,9 @@ import {
 } from "../../../../testing/rows.js";
 import type { WaitRow } from "../../../owed/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
-
 import { tokens } from "../../../tokens/index.js";
-
 import describeDetail from "./describeDetail.js";
+import readTexts from "./readTexts.js";
 import type { DetailLine } from "./types.js";
 
 const reading = {
