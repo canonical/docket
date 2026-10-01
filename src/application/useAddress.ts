@@ -27,11 +27,10 @@ export interface UseAddressProps
 /** Result of the useAddress hook: where the screen is, and how to move. */
 export interface UseAddressResult {
   readonly mode: TerminalMode;
-  /** Shows `mode`, at the grouping and window it was left on. */
-  readonly setMode: (mode: TerminalMode) => void;
   /**
    * Shows the mode before the one on screen, or after it, in the order
-   * owed, activity, finished; at either end it stays.
+   * owed, activity, finished, at the grouping and window it was left on;
+   * at either end it stays.
    */
   readonly stepMode: (direction: -1 | 1) => void;
   readonly owedGrouping: OwedGrouping;
@@ -121,7 +120,6 @@ export default function useAddress({
   }[mode];
   return {
     mode,
-    setMode,
     stepMode: (direction) =>
       setMode((current) => {
         const place = terminalModes.indexOf(current) + direction;

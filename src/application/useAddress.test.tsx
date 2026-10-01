@@ -71,7 +71,7 @@ describe("useAddress", () => {
     const screen = await draw(<Placed {...opening} />, 40, 1);
     const press = async (key: () => void) => (await screen.redraw(key)).lines;
     await press(() => address?.nextGrouping());
-    expect(await press(() => address?.setMode("activity"))).toEqual([
+    expect(await press(() => address?.stepMode(1))).toEqual([
       "activity | 24h · by kind | newest first",
     ]);
     await press(() => address?.nextGrouping());
@@ -79,10 +79,10 @@ describe("useAddress", () => {
       "activity | 1w · by repo | newest first",
     ]);
     await press(() => address?.nextWindow());
-    expect(await press(() => address?.setMode("owed"))).toEqual([
+    expect(await press(() => address?.stepMode(-1))).toEqual([
       "owed | by owner | overdue first",
     ]);
-    expect(await press(() => address?.setMode("activity"))).toEqual([
+    expect(await press(() => address?.stepMode(1))).toEqual([
       "activity | 24h · by repo | newest first",
     ]);
   });
@@ -115,7 +115,7 @@ describe("useAddress", () => {
     expect(await press(() => address?.nextWindow())).toBe(
       "finished | 1w · by kind | newest first",
     );
-    expect(await press(() => address?.setMode("activity"))).toBe(
+    expect(await press(() => address?.stepMode(-1))).toBe(
       "activity | 24h · by kind | newest first",
     );
   });
