@@ -199,7 +199,7 @@ export default function createCache({
   });
   const keepInFile = createBudgetKeeper({
     file: budgetFile,
-    lockPath: join(directory, budgetLockName),
+    lockfilePath: join(directory, budgetLockName),
     readFigures,
     isKept: () => isSame(readFigures(), mirror),
     adopt: (kept) => {

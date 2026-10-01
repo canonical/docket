@@ -25,12 +25,12 @@ vi.mock("proper-lockfile", async (importOriginal) => {
 
 let directory: string;
 let file: string;
-let lockPath: string;
+let lockfilePath: string;
 
 beforeEach(async () => {
   directory = await mkdtemp(join(tmpdir(), "docket-keeper-"));
   file = join(directory, "budget.json");
-  lockPath = join(directory, "budget.json.lock");
+  lockfilePath = join(directory, "budget.json.lock");
 });
 
 afterEach(async () => {
@@ -55,7 +55,7 @@ const createProcess = (heard: Budgets, at = clock) => {
   const readFigures = () => mergeBudgets(peer.mirror, peer.heard);
   const keeper = createBudgetKeeper({
     file,
-    lockPath,
+    lockfilePath,
     readFigures,
     isKept: () => isSame(readFigures(), peer.mirror),
     adopt: (kept) => {
@@ -136,7 +136,7 @@ describe("createBudgetKeeper", () => {
   });
 
   it("takes over a lock a dead process left, and keeps the figures", async () => {
-    await mkdir(lockPath);
+    await mkdir(lockfilePath);
     await createProcess(makeBudget(900)).keeper();
     expect(await readBudgetFile(file)).toEqual(makeBudget(900));
   }, 15_000);
@@ -146,17 +146,17 @@ describe("createBudgetKeeper", () => {
     let takenOver = false;
     const keeper = createBudgetKeeper({
       file,
-      lockPath,
+      lockfilePath,
       // Between its read and its write, another process takes the lock
       // over and writes a later figure.
       readFigures: () => {
         if (!takenOver) {
           takenOver = true;
-          rmSync(lockPath, { recursive: true });
-          mkdirSync(lockPath);
+          rmSync(lockfilePath, { recursive: true });
+          mkdirSync(lockfilePath);
           // The other process's lock carries its own time.
           const later = new Date(Date.now() + 2_000);
-          utimesSync(lockPath, later, later);
+          utimesSync(lockfilePath, later, later);
           writeFileSync(file, JSON.stringify(makeBudget(800)));
         }
         return makeBudget(900);
@@ -174,15 +174,15 @@ describe("createBudgetKeeper", () => {
   it("leaves alone a lock another process took over after its write", async () => {
     const keeper = createBudgetKeeper({
       file,
-      lockPath,
+      lockfilePath,
       readFigures: () => makeBudget(900),
       isKept: () => false,
       // Once the figures are written, another process takes the lock over.
       adopt: () => {
-        rmSync(lockPath, { recursive: true });
-        mkdirSync(lockPath);
+        rmSync(lockfilePath, { recursive: true });
+        mkdirSync(lockfilePath);
         const later = new Date(Date.now() + 2_000);
-        utimesSync(lockPath, later, later);
+        utimesSync(lockfilePath, later, later);
       },
       publishFloor: () => {},
       now: () => clock,
@@ -225,7 +225,7 @@ describe("createBudgetKeeper", () => {
     const readFigures = () => mergeBudgets(peer.mirror, peer.heard);
     const keeper = createBudgetKeeper({
       file,
-      lockPath,
+      lockfilePath,
       readFigures,
       isKept: () => isSame(readFigures(), peer.mirror),
       adopt: (kept) => {
@@ -250,7 +250,7 @@ describe("createBudgetKeeper", () => {
     await writeBudgetFile(file, makeBudget(1000));
     const release = await lock(file, {
       realpath: false,
-      lockfilePath: lockPath,
+      lockfilePath: lockfilePath,
     });
     vi.mocked(lock).mockClear();
     const { peer, keeper } = createProcess(makeBudget(900));
