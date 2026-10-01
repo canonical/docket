@@ -456,6 +456,19 @@ describe("Screen", { timeout: 15_000 }, () => {
       ]);
       const keyed = await press(screen, "right", "g", "j");
       expect(keyed.lines).toEqual(screen.lines);
+      // On the shortest pane the reason keeps its line, and the recovery
+      // takes the rows left under it.
+      const short = await (await show(view, 40, onQuit, 8)).redraw();
+      expect(short.lines).toEqual([
+        "setup",
+        "",
+        "  ✗ docket needs the GitHub CLI (gh)",
+        "  Recovery: install it from",
+        "  https://cli.github.com, then run",
+        "",
+        "",
+        "? q quit",
+      ]);
       const help = await press(screen, "?");
       expect(help.lines.slice(0, 9)).toEqual([
         "help",
