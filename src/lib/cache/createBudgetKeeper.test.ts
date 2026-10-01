@@ -14,6 +14,7 @@ import readBudgetFile from "./readBudgetFile.js";
 import withFetchLock from "./withFetchLock.js";
 import writeBudgetFile from "./writeBudgetFile.js";
 
+const clock = new Date("2026-09-28T10:00:00Z");
 let directory: string;
 let file: string;
 
@@ -46,6 +47,7 @@ const createProcess = (heard: Budgets) => {
       process.mirror = kept;
     },
     publishFloor: () => told.push("floor"),
+    now: () => clock,
   });
   return { process, keeper };
 };
@@ -84,6 +86,19 @@ describe("createBudgetKeeper", () => {
     }
   });
 
+  it("drops a report the file holds that resets past GitHub's window, and writes it away", async () => {
+    const far = {
+      ...fullBudget,
+      remaining: 0,
+      resetAt: new Date("9999-12-31T00:00:00Z"),
+    };
+    await writeBudgetFile(file, { graphql: far });
+    const { process, keeper } = createProcess(makeBudget(3500));
+    await keeper();
+    expect(await readBudgetFile(file)).toEqual(makeBudget(3500));
+    expect(process.mirror).toEqual(makeBudget(3500));
+  });
+
   it("takes over a lock a dead process left, and keeps the figures", async () => {
     await mkdir(`${file}.lock`);
     await createProcess(makeBudget(900)).keeper();
@@ -110,6 +125,7 @@ describe("createBudgetKeeper", () => {
       isKept: () => false,
       adopt: () => {},
       publishFloor: () => {},
+      now: () => clock,
     });
     await keeper();
     expect(await readBudgetFile(file)).toEqual(makeBudget(800));

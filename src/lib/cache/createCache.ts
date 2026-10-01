@@ -16,6 +16,7 @@ import {
 import createBudgetKeeper from "./createBudgetKeeper.js";
 import createBudgetRule from "./createBudgetRule.js";
 import createReadQueries from "./createReadQueries.js";
+import dropFarResets from "./dropFarResets.js";
 import dropPages from "./dropPages.js";
 import fetchRepos, { type FetchReposOptions } from "./fetchRepos.js";
 import identifyFile from "./identifyFile.js";
@@ -174,7 +175,8 @@ export default function createCache({
   };
   /** Takes the budget file's figures into the mirror; says their floor. */
   const loadBudget = async () => {
-    mirror = mergeBudgets(mirror, await readBudgetFile(budgetFile));
+    const read = dropFarResets(await readBudgetFile(budgetFile), now());
+    mirror = mergeBudgets(mirror, read);
     publishFloor();
   };
   /** Writes the cache file, then keeps the budgets its reads heard. */
@@ -201,6 +203,7 @@ export default function createCache({
       mirror = kept;
     },
     publishFloor,
+    now,
   });
 
   /**

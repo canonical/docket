@@ -14,6 +14,7 @@ import { budgetFileName, cacheFileName, lockName } from "./constants.js";
 import createCache from "./createCache.js";
 import identifyFile from "./identifyFile.js";
 import withFetchLock from "./withFetchLock.js";
+import writeBudgetFile from "./writeBudgetFile.js";
 
 const repo = "example-org/example-repo";
 const docs = "example-org/example-docs";
@@ -264,6 +265,21 @@ describe("the budget mirror of createCache", () => {
     const other = open(makeHearingProvider().provider);
     await other.load();
     expect(other.readBudgets()).toEqual({ graphql: makeBudget(900) });
+  });
+
+  it("judges no floor on a report in the budget file that resets past GitHub's window", async () => {
+    await writeBudgetFile(join(directory, budgetFileName), {
+      graphql: {
+        ...fullBudget,
+        remaining: 0,
+        resetAt: new Date("9999-12-31T00:00:00Z"),
+      },
+    });
+    const cache = open(makeHearingProvider().provider);
+    await cache.load();
+    expect(cache.readBudgets()).toEqual({});
+    expect(cache.maySpend()).toBe(true);
+    expect(cache.status().paused).toBeUndefined();
   });
 
   it("reads and saves the cache though the budget file cannot be written, keeping no figure", async () => {

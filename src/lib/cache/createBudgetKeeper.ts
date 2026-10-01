@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import { lock } from "proper-lockfile";
 import type { Budgets } from "../provider/index.js";
 import { budgetLockTiming } from "./constants.js";
+import dropFarResets from "./dropFarResets.js";
 import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeBudgets from "./mergeBudgets.js";
@@ -21,6 +22,8 @@ interface BudgetKeeperOptions {
   readonly adopt: (kept: Budgets) => void;
   /** Gives the status the floor as the mirror stands. */
   readonly publishFloor: () => void;
+  /** The cache's current time, which a reset in the file is judged by. */
+  readonly now: () => Date;
 }
 
 /**
@@ -44,6 +47,7 @@ export default function createBudgetKeeper({
   isKept,
   adopt,
   publishFloor,
+  now,
 }: BudgetKeeperOptions): () => Promise<void> {
   const keep = async () => {
     // With nothing heard since the file was last read or written, it holds
@@ -66,13 +70,15 @@ export default function createBudgetKeeper({
     const own = await identifyFile(lockPath);
     let taken = false;
     try {
-      const held = await readBudgetFile(file);
+      // A report no answer of GitHub's gives is dropped, and written away.
+      const read = await readBudgetFile(file);
+      const held = dropFarResets(read, now());
       const kept = mergeBudgets(held, readFigures());
       // Another process that took the lock over may have written a later
       // figure since the read, which nothing here overwrites.
       taken = (await identifyFile(lockPath)) !== own;
       if (taken) return;
-      if (!isSame(kept, held)) await writeBudgetFile(file, kept);
+      if (!isSame(kept, read)) await writeBudgetFile(file, kept);
       adopt(kept);
     } finally {
       // A lock taken over is let go only once the library has heard so,

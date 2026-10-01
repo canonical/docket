@@ -43,6 +43,14 @@ export const lockTiming = {
 export const budgetFileName = "budget.json";
 
 /**
+ * How far ahead of now, in milliseconds, a budget's reset may lie: GitHub
+ * resets each budget within the hour, and five minutes more allow for a
+ * clock that runs behind. A report that resets later is no report of
+ * GitHub's, and is dropped.
+ */
+export const farthestReset = 3_900_000;
+
+/**
  * How the budget file's own lock, `budget.json.lock`, is held and waited
  * for, in milliseconds. It is held only to read, merge and write that
  * small file. The holder touches it every `update`; a lock untouched for
