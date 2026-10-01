@@ -121,17 +121,12 @@ const Loaded = ({
   readonly onLines: ThreadAccordionProps["onLines"];
 }): ReactNode => {
   const shown = use(detail);
-  if ("resumes" in shown) {
+  // A pause leaves a finished thread with what the list gives, drawn as
+  // while a read is under way; only a thread with nothing held says when
+  // reading resumes.
+  const read = "resumes" in shown ? undefined : shown;
+  if ("resumes" in shown && !("ending" in row)) {
     const paused = `paused · resumes ${describeClock(shown.resumes, reading.timezone)}`;
-    if ("ending" in row) {
-      return (
-        <Lines
-          lines={fitAccordion(describeDetail(row, undefined, reading), room)}
-          stroke={stroke}
-          onLines={onLines}
-        />
-      );
-    }
     return (
       <Lines
         lines={[
@@ -144,7 +139,7 @@ const Loaded = ({
   }
   return (
     <Lines
-      lines={fitAccordion(describeDetail(row, shown, reading), room)}
+      lines={fitAccordion(describeDetail(row, read, reading), room)}
       stroke={stroke}
       onLines={onLines}
     />

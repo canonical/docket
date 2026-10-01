@@ -19,7 +19,6 @@ import {
   Failed,
   FinishedClosedIn,
   FinishedOver,
-  FinishedPaused,
   FinishedStackLoading,
   Loading,
   Paused,
@@ -87,7 +86,10 @@ describe("ThreadAccordion", () => {
     });
 
     it("keeps the list's lines while reading is paused, the stack's neighbours waiting as while they are read", async () => {
-      const paused = await open(FinishedPaused.args);
+      const paused = await open({
+        ...FinishedStackLoading.args,
+        detail: Promise.resolve({ resumes: new Date("2026-09-28T13:00:00Z") }),
+      });
       const loading = await open(FinishedStackLoading.args);
       expect(paused.lines).toEqual(loading.lines);
       expect(readText(paused).at(3)).toBe("…");
