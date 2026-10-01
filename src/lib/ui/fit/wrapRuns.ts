@@ -1,7 +1,7 @@
 import { sanitize } from "../../text/index.js";
 import { graphemes, noBreakSpace } from "./constants.js";
 import measureCluster from "./measureCluster.js";
-import measureUnkept from "./measureUnkept.js";
+import measureWord from "./measureWord.js";
 import type { Run } from "./types.js";
 
 /** Part of a word: its text, in the look of the run it came from. */
@@ -11,16 +11,21 @@ interface Fragment<Look> {
 }
 
 /**
- * The cells of a word's fragments, measured with `measureUnkept`, so a long
+ * The cells of a word's fragments, measured with `measureWord`, so a long
  * message's words never crowd out the texts every draw measures.
  */
 const measureFragments = <Look>(fragments: readonly Fragment<Look>[]) =>
-  fragments.reduce((sum, { text }) => sum + measureUnkept(text), 0);
+  fragments.reduce((sum, { text }) => sum + measureWord(text), 0);
 
 /** A word, and the look of the space before it. */
 interface Word<Look> {
   readonly space: Look;
   readonly fragments: Fragment<Look>[];
+}
+
+/** A word that fits a line, and the cells it takes, measured once. */
+interface Sized<Look> extends Word<Look> {
+  cells: number;
 }
 
 /**
@@ -50,20 +55,24 @@ function splitWords<Look extends Run>(
     : words;
 }
 
-/** Splits a word wider than a line into pieces that fit, losing no character. */
+/**
+ * Splits a word wider than a line into pieces that fit, losing no
+ * character, each with the cells it takes.
+ */
 function splitWide<Look extends Run>(
   word: Word<Look>,
   width: number,
-): Word<Look>[] {
-  if (measureFragments(word.fragments) <= width) return [word];
-  let piece: Word<Look> = { space: word.space, fragments: [] };
+): Sized<Look>[] {
+  const whole = measureFragments(word.fragments);
+  if (whole <= width) return [{ ...word, cells: whole }];
+  let piece: Sized<Look> = { space: word.space, fragments: [], cells: 0 };
   const pieces = [piece];
   let used = 0;
   for (const { look, text } of word.fragments) {
     for (const { segment } of graphemes.segment(text)) {
       const cells = measureCluster(segment);
       if (used > 0 && used + cells > width) {
-        piece = { space: look, fragments: [] };
+        piece = { space: look, fragments: [], cells: 0 };
         pieces.push(piece);
         used = 0;
       }
@@ -74,6 +83,7 @@ function splitWide<Look extends Run>(
         piece.fragments.push({ look, text: segment });
       }
       used += cells;
+      piece.cells += cells;
     }
   }
   return pieces;
@@ -99,9 +109,8 @@ export default function wrapRuns<Look extends Run>(
   );
   const lines: Fragment<Look>[][] = [];
   let line = [...first.fragments];
-  let used = measureFragments(line);
-  for (const word of rest) {
-    const cells = measureFragments(word.fragments);
+  let used = first.cells;
+  for (const { cells, ...word } of rest) {
     if (used + 1 + cells <= width) {
       line.push({ look: word.space, text: " " }, ...word.fragments);
       used += 1;

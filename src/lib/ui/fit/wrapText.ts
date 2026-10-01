@@ -1,7 +1,7 @@
 import { sanitize } from "../../text/index.js";
 import { graphemes, noBreakSpace } from "./constants.js";
 import measureCluster from "./measureCluster.js";
-import measureUnkept from "./measureUnkept.js";
+import measureWord from "./measureWord.js";
 
 /**
  * Splits a word too wide for a line into pieces that fit, between its
@@ -9,7 +9,7 @@ import measureUnkept from "./measureUnkept.js";
  * piece holds one character at least, however narrow the line.
  */
 function splitWord(word: string, width: number): string[] {
-  if (measureUnkept(word) <= width) return [word];
+  if (measureWord(word) <= width) return [word];
   const pieces: string[] = [""];
   let used = 0;
   for (const { segment } of graphemes.segment(word)) {
@@ -29,22 +29,30 @@ function splitWord(word: string, width: number): string[] {
  * at spaces. Words joined by a no-break space stay on one line and are
  * shown with an ordinary space; a single word wider than a line is split.
  * As `trimText` does, it removes escape sequences and control characters
- * first, and flows a line break as a space. Its words and growing lines
- * are measured with `measureUnkept`, so a long message keeps no text.
+ * first, and flows a line break as a space. Each word is measured once,
+ * with `measureWord`, and a line's cells are the sum of its words' and
+ * the spaces between, so a long message never crowds out the texts every
+ * draw measures.
  */
 export default function wrapText(text: string, width: number): string[] {
   const lines: string[] = [];
   let line = "";
+  let used = 0;
   const words = sanitize(text)
     .split(" ")
     .flatMap((word) => splitWord(word, width));
   for (const word of words) {
-    if (line === "") line = word;
-    else if (measureUnkept(`${line} ${word}`) <= width)
+    const cells = measureWord(word);
+    if (line === "") {
+      line = word;
+      used = cells;
+    } else if (used + 1 + cells <= width) {
       line = `${line} ${word}`;
-    else {
+      used += 1 + cells;
+    } else {
       lines.push(line);
       line = word;
+      used = cells;
     }
   }
   lines.push(line);

@@ -19,8 +19,9 @@ const measuredTexts = new Map<string, number>();
  * a line fitted to its width never runs past it, whichever method the
  * terminal draws with, and may stop short of it. Bun's own measure
  * counts much text narrower than OpenTUI draws it, such as `❤`, one cell
- * where OpenTUI draws two. Text measured once in a while is measured
- * with `measureUnkept`, which keeps nothing.
+ * where OpenTUI draws two. Wrapping measures its words with
+ * `measureWord`, which keeps them apart, so a long message never crowds
+ * out the texts kept here.
  *
  * @note Impure: it keeps the cells of up to `textsKept` texts, and
  * measures through `measureClusters`, which keeps its answers and calls

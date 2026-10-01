@@ -90,7 +90,8 @@ describe("measureText", () => {
         segment.mockRestore();
         return split;
       };
-      return { measure, block, measuresTitle };
+      const field = (await import("./fitField.js")).default;
+      return { measure, block, field, measuresTitle };
     };
 
     it("measures a text once until 4096 texts are kept, then forgets them all", async () => {
@@ -102,8 +103,8 @@ describe("measureText", () => {
       expect(measuresTitle()).toBe(true);
     });
 
-    it("keeps a title across draws of a wrapped message longer than it keeps", async () => {
-      const { measure, block, measuresTitle } = await load();
+    it("keeps a title across draws of a wrapped message longer than it keeps, in runs or as one field", async () => {
+      const { measure, block, field, measuresTitle } = await load();
       const message = Array.from({ length: 4500 }, (_, each) => `été${each}`);
       const runs = [{ text: message.join(" "), fg: "#ffffff" }];
       measure(title);
@@ -111,6 +112,23 @@ describe("measureText", () => {
       expect(measuresTitle()).toBe(false);
       block(runs, "quote", 37);
       expect(measuresTitle()).toBe(false);
+      const text = { text: message.join(" "), kind: "quote" as const };
+      field(text, "block", 37);
+      expect(measuresTitle()).toBe(false);
+      field(text, "block", 37);
+      expect(measuresTitle()).toBe(false);
+    });
+
+    it("splits no word of a wrapped message into characters when it is drawn a second time", async () => {
+      const { block, field } = await load();
+      const text = "Réparer ❤ une fois, puis été comme à l'été";
+      block([{ text, fg: "#ffffff" }], "quote", 12);
+      field({ text, kind: "quote" }, "block", 12);
+      const segment = vi.spyOn(Intl.Segmenter.prototype, "segment");
+      block([{ text, fg: "#ffffff" }], "quote", 12);
+      field({ text, kind: "quote" }, "block", 12);
+      expect(segment).not.toHaveBeenCalled();
+      segment.mockRestore();
     });
   });
 
