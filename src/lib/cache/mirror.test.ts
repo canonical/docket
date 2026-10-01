@@ -83,6 +83,29 @@ describe("the budget mirror of createCache", () => {
     });
   });
 
+  it("says the floor before it hands out the threads it loads, so no frame drawn from them reads ahead below it", async () => {
+    const { provider, answers } = makeHearingProvider();
+    // The fetch's own answer leaves the budget below the floor.
+    const snapshot = vi.fn(async () => {
+      answers.heard = { graphql: makeBudget(900) };
+      return { threads: [thread()], cursor: null };
+    });
+    await open({ ...provider, snapshot }).refresh();
+    const pane = open(makeHearingProvider().provider);
+    const seen: { threads: number; paused: unknown }[] = [];
+    pane.subscribe(() =>
+      seen.push({
+        threads: pane.threads().threads.length,
+        paused: pane.status().paused,
+      }),
+    );
+    await pane.load();
+    expect(seen.find(({ threads }) => threads > 0)).toEqual({
+      threads: 1,
+      paused: { until: fullBudget.resetAt, reason: "budget" },
+    });
+  });
+
   it("pauses at the floor another process's answers reached, with their reset, and spends nothing", async () => {
     const { provider, answers } = makeHearingProvider();
     answers.heard = { graphql: makeBudget(999) };

@@ -166,6 +166,7 @@ export default function createCache({
 
   const load = async () => {
     const contents = await readCacheFile(file);
+    await loadBudget();
     if (contents) {
       hydrate(client, contents.state);
       // Every write happens under the lock after a load, and carries the
@@ -173,9 +174,8 @@ export default function createCache({
       fullRefreshAt = contents.fullRefreshAt ?? fullRefreshAt;
     }
     publish();
-    await loadBudget();
   };
-  /** Takes the budget file's figures into the mirror; says their floor. */
+  /** Reads budget.json into the mirror, says its floor: first in a load. */
   const loadBudget = async () => {
     const read = dropFarResets(await readBudgetFile(budgetFile), now());
     mirror = mergeBudgets(mirror, read);
