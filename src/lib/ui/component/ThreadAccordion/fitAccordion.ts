@@ -187,12 +187,21 @@ function endWhole(
       kind,
       room,
     );
-  // The last end, the most names, that fits.
-  const kept =
-    ends
-      .toReversed()
-      .map(fitTo)
-      .find((fitted) => fitted.length <= lines) ?? [];
+  // Fewer names never take more lines, so halving finds the last end that
+  // fits in as few fittings as there are halvings.
+  let kept: Piece[][] = [];
+  let low = 0;
+  let high = ends.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    const fitted = fitTo(Number(ends.at(middle)));
+    if (fitted.length <= lines) {
+      kept = fitted;
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
   return kept.map((held, index) => ({
     runs: held,
     ended: index === kept.length - 1,
