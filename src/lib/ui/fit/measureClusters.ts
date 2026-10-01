@@ -35,7 +35,7 @@ const lineBreak = /[\n\r]|\p{Zl}|\p{Zp}/u;
  * order: plain ASCII one; a line break none; any other the wider of what
  * OpenTUI's own text buffer counts for it in its two width methods,
  * `wcwidth` and `unicode`. A line fitted with them never runs past its
- * width in either kind of terminal, and may stop a cell short in one.
+ * width in either kind of terminal, and may stop short of it in one.
  * The characters not measured before are measured together, one line
  * each, in one pass of each buffer, which is emptied first, so it never
  * grows.
