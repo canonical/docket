@@ -51,7 +51,8 @@ const GroupHeading = ({
   count,
   width,
 }: GroupHeadingProps): ReactNode => {
-  const counted = count === undefined ? "" : ` · ${count}`;
+  const counted =
+    count === undefined ? "" : ` · ${fitField(count, "line", width)}`;
   // A space and one cell of rule always follow the name and its count,
   // and a person's mark and its space come before the login.
   const mark = "group" in heading ? 2 : 0;

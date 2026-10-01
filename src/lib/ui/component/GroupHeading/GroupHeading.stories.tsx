@@ -66,7 +66,7 @@ export const LongTeam: Story<GroupHeadingProps> = {
 export const Pinned: Story<GroupHeadingProps> = {
   args: {
     heading: { text: "bob", kind: "person", group: "team" },
-    count: "3 of 5",
+    count: { text: "3 of 5", kind: "figure" },
     width: 40,
   },
 };

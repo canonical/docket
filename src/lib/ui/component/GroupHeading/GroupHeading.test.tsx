@@ -50,7 +50,11 @@ describe("GroupHeading", () => {
 
   it("cuts a stack's name in its middle before the count, below the narrowest pane, leaving room for the rule", async () => {
     const screen = await draw(
-      <GroupHeading {...Stack.args} count="2 of 3" width={24} />,
+      <GroupHeading
+        {...Stack.args}
+        count={{ text: "2 of 3", kind: "figure" }}
+        width={24}
+      />,
       24,
     );
     expect(screen.lines.at(0)).toBe("exampl…→ main · 2 of 3 ─");

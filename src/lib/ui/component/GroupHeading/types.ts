@@ -1,4 +1,4 @@
-import type { Heading } from "../../../owed/index.js";
+import type { Field, Heading } from "../../../owed/index.js";
 
 /** Props for the GroupHeading component. */
 export interface GroupHeadingProps {
@@ -15,7 +15,7 @@ export interface GroupHeadingProps {
    * the group, and the group's size: `3 of 8`.
    * Maps to DSL role: pinned count (cardinality: 0..1)
    */
-  count?: string;
+  count?: Field;
   /** The width of the pane, in display cells. */
   width: number;
 }
