@@ -3,8 +3,10 @@ import { collectStacks } from "../stacks/index.js";
 import { kindSections } from "./constants.js";
 import type {
   FieldKind,
+  Heading,
   OwedGrouping,
   Owner,
+  StackHeading,
   WaitGroup,
   WaitRow,
 } from "./types.js";
@@ -13,6 +15,7 @@ type Section = readonly [
   heading: string,
   rows: readonly WaitRow[],
   kind: FieldKind,
+  stack?: StackHeading["stack"],
 ];
 
 /**
@@ -69,13 +72,31 @@ function sectionStacks(rows: readonly WaitRow[], order: string[]): Section[] {
   );
   const sections = stacks.map(({ repo, number, size, base, members }) => {
     const prs = size === 1 ? "1 PR" : `${size} PRs`;
-    const heading = `${repo} stack ${number} · ${prs} → ${base}`;
-    return [heading, members.map(({ row }) => row), "identifier"] as const;
+    const place = `stack ${number} · ${prs} → `;
+    const heading = `${repo} ${place}${base}`;
+    return [
+      heading,
+      members.map(({ row }) => row),
+      "identifier",
+      { repo, place, base },
+    ] as const;
   });
   return [
     ...sections,
     ["NOT IN A STACK", rows.filter((row) => !row.stacked), "words"],
   ];
+}
+
+/** A section's heading: its owner, its stack in parts, or its name. */
+function describeHeading(
+  grouping: OwedGrouping,
+  members: readonly WaitRow[],
+  text: string,
+  kind: FieldKind,
+  stack: StackHeading["stack"] | undefined,
+): Heading {
+  if (grouping === "owner") return findOwner(members, text);
+  return stack ? { text, kind: "identifier", stack } : { text, kind };
 }
 
 /**
@@ -117,8 +138,8 @@ export default function groupRows(
           : sectionStacks(rows, order);
   return sections
     .filter(([, members]) => members.length > 0)
-    .map(([text, members, kind]) => ({
-      heading: grouping === "owner" ? findOwner(members, text) : { text, kind },
+    .map(([text, members, kind, stack]) => ({
+      heading: describeHeading(grouping, members, text, kind, stack),
       rows: members,
     }));
 }

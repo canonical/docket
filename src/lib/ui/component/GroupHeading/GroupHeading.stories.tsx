@@ -17,7 +17,11 @@ export const Owner: Story<GroupHeadingProps> = {
 /** A stack's section in owed `by stack`, with the stack's full size. */
 export const Stack: Story<GroupHeadingProps> = {
   args: {
-    heading: { text: "example stack 3 · 3 PRs → main", kind: "identifier" },
+    heading: {
+      text: "example stack 3 · 3 PRs → main",
+      kind: "identifier",
+      stack: { repo: "example", place: "stack 3 · 3 PRs → ", base: "main" },
+    },
     width: 40,
   },
 };
@@ -33,6 +37,11 @@ export const Long: Story<GroupHeadingProps> = {
     heading: {
       text: "example-repository-with-a-long-name stack 7 · 3 PRs → release/example-branch-with-a-long-name",
       kind: "identifier",
+      stack: {
+        repo: "example-repository-with-a-long-name",
+        place: "stack 7 · 3 PRs → ",
+        base: "release/example-branch-with-a-long-name",
+      },
     },
     width: 40,
   },

@@ -125,6 +125,11 @@ describe("groupRows", () => {
           heading: {
             text: "example stack 12 · 5 PRs → main",
             kind: "identifier",
+            stack: {
+              repo: "example",
+              place: "stack 12 · 5 PRs → ",
+              base: "main",
+            },
           },
           rows: [rows[1], rows[0]],
         },

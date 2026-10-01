@@ -48,7 +48,7 @@ describe("GroupHeading", () => {
     });
   });
 
-  it("cuts the name by its kind's rule before the count, leaving room for the rule", async () => {
+  it("cuts a stack's name in its middle before the count, below the narrowest pane, leaving room for the rule", async () => {
     const screen = await draw(
       <GroupHeading {...Stack.args} count="2 of 3" width={24} />,
       24,

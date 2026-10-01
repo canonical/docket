@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
+import type { StackHeading } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
-import { markPerson, measureText } from "../../fit/index.js";
+import { fitField, markPerson, measureText } from "../../fit/index.js";
 import type { GroupHeadingProps } from "./types.js";
 
 /**
@@ -20,6 +21,31 @@ import type { GroupHeadingProps } from "./types.js";
  *
  * @implements apps_docket.component.group_heading
  */
+/**
+ * A stack's heading in `room` cells, fitted as a stack's place is: its
+ * repository's short name leaves whole first, then its base branch is cut
+ * once in its middle, and `stack 3 · 3 PRs →` stays whole, in any pane
+ * the terminal draws.
+ */
+function fitStack(
+  { repo, place, base }: StackHeading["stack"],
+  room: number,
+): string {
+  const named = `${repo} ${place}`;
+  // Below the narrowest pane even docket's words cannot stay whole.
+  if (measureText(place) + 1 > room) {
+    return fitField(
+      { text: `${named}${base}`, kind: "identifier" },
+      "line",
+      room,
+    );
+  }
+  const lead = measureText(`${named}${base}`) <= room ? named : place;
+  const fixed = fitField({ text: lead, kind: "figure" }, "line", room);
+  const cells = room - measureText(fixed);
+  return `${fixed}${fitField({ text: base, kind: "identifier" }, "line", cells)}`;
+}
+
 const GroupHeading = ({
   heading,
   count,
@@ -29,7 +55,11 @@ const GroupHeading = ({
   // A space and one cell of rule always follow the name and its count,
   // and a person's mark and its space come before the login.
   const mark = "group" in heading ? 2 : 0;
-  const name = markPerson(heading, width - 2 - mark - measureText(counted));
+  const room = width - 2 - mark - measureText(counted);
+  const name =
+    "stack" in heading
+      ? { text: fitStack(heading.stack, room), fg: tokens["color.text"] }
+      : markPerson(heading, room);
   const rule = width - measureText(name.text) - measureText(counted) - 1;
   return (
     <text>

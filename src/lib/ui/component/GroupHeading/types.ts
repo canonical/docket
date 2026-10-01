@@ -1,4 +1,4 @@
-import type { Owner } from "../../../owed/index.js";
+import type { Heading } from "../../../owed/index.js";
 
 /** Props for the GroupHeading component. */
 export interface GroupHeadingProps {
@@ -9,7 +9,7 @@ export interface GroupHeadingProps {
    * its keys act on, such as `Mode`.
    * Maps to DSL role: heading text (cardinality: 1)
    */
-  heading: Owner;
+  heading: Heading;
   /**
    * On the pinned heading only, where the rows shown under it start in
    * the group, and the group's size: `3 of 8`.

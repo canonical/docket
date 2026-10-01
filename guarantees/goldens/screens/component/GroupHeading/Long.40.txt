@@ -1,5 +1,5 @@
 40 columns
-|example-repository…ch-with-a-long-name ─
+|stack 7 · 3 PRs → release/e…-long-name ─
 
 runs
-1:1 "example-repository…ch-with-a-long-name ─" fg #c6c8d1ff bg #00000000
+1:1 "stack 7 · 3 PRs → release/e…-long-name ─" fg #c6c8d1ff bg #00000000

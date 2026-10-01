@@ -58,6 +58,27 @@ export interface Person extends Field {
 export type Owner = Person | Field;
 
 /**
+ * A stack's section heading, `example stack 3 · 3 PRs → main`, with its
+ * parts, so a face fits it as it fits a stack's place: the repository's
+ * short name leaves whole first, then the base branch is cut once in its
+ * middle, and `stack 3 · 3 PRs →` stays whole.
+ */
+export interface StackHeading extends Field {
+  readonly kind: "identifier";
+  readonly stack: {
+    /** The repository's short name: `example`. */
+    readonly repo: string;
+    /** docket's words of the stack: `stack 3 · 3 PRs → `. */
+    readonly place: string;
+    /** The branch the stack's first pull request merges into: `main`. */
+    readonly base: string;
+  };
+}
+
+/** A section's heading: an owner, a stack, or docket's own name for it. */
+export type Heading = Owner | StackHeading;
+
+/**
  * A pane's header: the mode as its title, and where the reader is inside
  * it as its address, absent when there is nothing to add to the mode.
  */
@@ -155,7 +176,7 @@ export interface WaitRow {
  * An owner's section is headed by the owner, a person with their group.
  */
 export interface WaitGroup {
-  readonly heading?: Owner;
+  readonly heading?: Heading;
   readonly rows: readonly WaitRow[];
 }
 

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Owner } from "../owed/index.js";
+import type { Heading } from "../owed/index.js";
 
 /** A run of a line's text, in its own colour and, when it has one, text attribute. */
 export interface Piece {
@@ -26,7 +26,7 @@ export type ListBlock =
       readonly key: string;
       readonly lines: number;
       readonly node: ReactNode;
-      readonly heading: Owner;
+      readonly heading: Heading;
     }
   | {
       readonly kind: "row";
@@ -56,7 +56,7 @@ export interface ListPlacement {
    * shown, counted from one, and the group's rows.
    */
   readonly pinned?: {
-    readonly heading: Owner;
+    readonly heading: Heading;
     readonly place: number;
     readonly size: number;
   };

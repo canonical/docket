@@ -829,6 +829,19 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
     });
 
+    it("pins a stack's heading whole but for its parts that give way, keeping stack 3 and the place", async () => {
+      const screen = await showRecorded();
+      let stacked = await press(screen, "j");
+      for (let step = 0; step < 6; step += 1) {
+        if (stacked.lines.at(0)?.includes("by stack")) break;
+        stacked = await press(stacked, "g");
+      }
+      // The repository's short name leaves whole before the base is cut.
+      expect(stacked.lines.at(1)).toBe(
+        `stack 3 · 3 PRs → main · 2 of 3 ${"─".repeat(8)}`,
+      );
+    });
+
     it("moves a page at a time, as many rows as the list shows, never past either end", async () => {
       const short = await showRecorded();
       expect((await press(short, "pagedown")).lines.at(1)).toBe(

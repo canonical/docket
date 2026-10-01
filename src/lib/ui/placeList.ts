@@ -1,4 +1,4 @@
-import type { Owner } from "../owed/index.js";
+import type { Heading } from "../owed/index.js";
 import type { ListPlacement } from "./types.js";
 
 /** What placing a list reads of each block: what it is, and its lines. */
@@ -6,7 +6,7 @@ export type PlacedBlock =
   | {
       readonly kind: "heading";
       readonly lines: number;
-      readonly heading: Owner;
+      readonly heading: Heading;
     }
   | { readonly kind: "row"; readonly lines: number };
 
@@ -27,7 +27,7 @@ export interface PlaceListOptions {
 
 /** A group's heading and its rows, as its rows see it. */
 interface Group {
-  readonly heading: Owner;
+  readonly heading: Heading;
   size: number;
 }
 
