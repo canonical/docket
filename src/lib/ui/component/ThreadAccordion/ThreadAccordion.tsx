@@ -5,10 +5,10 @@ import {
   use,
   useLayoutEffect,
 } from "react";
+import { describeClock } from "../../../activity/index.js";
 import type { WaitRow } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
 import { accordionMaxLines } from "../../constants.js";
-import describeClock from "../../describeClock.js";
 import { endRuns, fitField } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";

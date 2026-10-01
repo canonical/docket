@@ -40,6 +40,28 @@ export const lockTiming = {
 } as const;
 
 /**
+ * The folder, in the cache folder, of GitHub's budgets as each docket
+ * process heard them: one file a process, named for its process id.
+ */
+export const budgetFolderName = "budget";
+
+/**
+ * How far ahead of now, in milliseconds, a budget's reset may lie: GitHub
+ * resets each budget within the hour, and two hours more allow for a
+ * clock far behind GitHub's. A report that resets later, whether a
+ * process's own answer or what it reads, is no report of GitHub's, and is
+ * dropped.
+ */
+export const farthestReset = 10_800_000;
+
+/**
+ * How old, in milliseconds, a temporary file in the budget folder is once
+ * its process can no longer be writing it: an hour, against a write that
+ * takes milliseconds.
+ */
+export const leftoverAge = 3_600_000;
+
+/**
  * How long, in milliseconds, cached data serves a reader that names no
  * maximum age, so an agent asking in a loop causes at most one refresh
  * every five minutes.

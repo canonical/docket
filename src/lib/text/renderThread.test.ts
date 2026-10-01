@@ -14,6 +14,7 @@ const freshness: Freshness = {
   syncedAt: new Date(recordedNow.getTime() - 120_000),
   timezone: "Europe/Paris",
   warnings: [],
+  budget: {},
 };
 
 const shown: ShownThread = {

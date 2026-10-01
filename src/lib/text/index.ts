@@ -2,6 +2,7 @@ export { default as catalogue } from "./catalogue.js";
 export { default as chooseExitCode } from "./chooseExitCode.js";
 export { default as chooseFormat } from "./chooseFormat.js";
 export { defaultDetail, details, formats } from "./constants.js";
+export { default as describeBudget } from "./describeBudget.js";
 export { default as quote } from "./quote.js";
 export type { ActivityAnswer } from "./renderActivity.js";
 export { default as renderActivity } from "./renderActivity.js";

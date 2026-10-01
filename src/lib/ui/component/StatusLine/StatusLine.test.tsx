@@ -8,9 +8,10 @@ import {
   Blank,
   BudgetPaused,
   DetailsLoading,
-  DetailsPaused,
   FullRefresh,
   Idle,
+  LiveBudget,
+  LiveBudgetWithDetails,
   RateLimited,
   RefreshFailed,
   Refreshing,
@@ -152,20 +153,30 @@ describe("StatusLine", () => {
     expect(screen.look("idle")?.fg).toBe(tokens["color.text.muted"]);
   });
 
-  it("dims details paused on the right side, apart from how old the data is", async () => {
-    const screen = await draw(<StatusLine {...DetailsPaused.args} />, 40);
-    expect(screen.lines.at(0)).toBe(
-      `synced 2m ago${" ".repeat(13)}details paused`,
-    );
-    expect(screen.look("details")?.fg).toBe(tokens["color.text.muted"]);
-  });
-
-  it("leaves details paused out where the two sides would meet", async () => {
+  it("leaves the count out where the two sides would meet", async () => {
     const screen = await draw(
-      <StatusLine {...DetailsPaused.args} width={27} />,
-      27,
+      <StatusLine {...DetailsLoading.args} width={25} />,
+      25,
     );
     expect(screen.lines.at(0)).toBe("synced 2m ago");
+  });
+
+  it("says what is left of the queries' budget on the right, dimmed, and when it resets", async () => {
+    const screen = await draw(<StatusLine {...LiveBudget.args} />, 40);
+    expect(screen.lines.at(0)).toBe(
+      `synced 2m ago${" ".repeat(2)}budget 35% · resets 14:20`,
+    );
+    expect(screen.look("budget")?.fg).toBe(tokens["color.text.muted"]);
+  });
+
+  it("gives the right side to the details count while the live budget figures show", async () => {
+    const screen = await draw(
+      <StatusLine {...LiveBudgetWithDetails.args} />,
+      40,
+    );
+    expect(screen.lines.at(0)).toBe(
+      `synced 2m ago${" ".repeat(15)}details 0/12`,
+    );
   });
 
   it("leaves the right side empty below the budget floor", async () => {
@@ -176,21 +187,6 @@ describe("StatusLine", () => {
       );
       expect(screen.lines.at(0)).toBe("paused: budget low · resumes 13:00");
     }
-  });
-
-  it("hides details paused while the left side shows an error, the rate limit pauses the refresh, or the pane is idle", async () => {
-    const failed = await draw(
-      <StatusLine {...RefreshFailed.args} detailsPaused />,
-      40,
-    );
-    expect(failed.lines.at(0)).toBe("✗ refresh failed · data from 10:12");
-    const limited = await draw(
-      <StatusLine {...RateLimited.args} detailsPaused />,
-      40,
-    );
-    expect(limited.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
-    const idle = await draw(<StatusLine {...Idle.args} detailsPaused />, 40);
-    expect(idle.lines.at(0)).toBe("synced 25m ago · idle · any key wakes");
   });
 
   it("counts the details read on the right, dimmed, beside how old the data is", async () => {

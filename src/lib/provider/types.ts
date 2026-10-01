@@ -172,12 +172,22 @@ export type Assignable = ThreadSummary & {
   readonly kind: "issue" | "pullRequest";
 };
 
-/** The rate budget left, as the provider last reported it. */
+/** One rate budget, as an answer reported it. */
 export interface Budget {
   readonly limit: number;
   readonly remaining: number;
   /** When the budget is full again. */
   readonly resetAt: Date;
+}
+
+/**
+ * The rate budgets the provider's answers report, each kept apart since
+ * each has its own limit: `graphql` for its queries and `rest` for its
+ * other requests. Each is absent until an answer of its kind has come.
+ */
+export interface Budgets {
+  readonly graphql?: Budget;
+  readonly rest?: Budget;
 }
 
 /**
@@ -276,8 +286,11 @@ export interface Provider {
    * `undefined` when there is none.
    */
   readFile(repo: string, path: string): Promise<string | undefined>;
-  /** The rate budget left. */
-  budget(): Promise<Budget>;
+  /**
+   * The budgets the latest answer of each kind reported, a refusal or
+   * "not modified" included. It asks nothing.
+   */
+  readBudgets(): Budgets;
   /** The login of the account the provider acts as. */
   viewer(): Promise<string>;
   capabilities(): ReadonlySet<Capability>;

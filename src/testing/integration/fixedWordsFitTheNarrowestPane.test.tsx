@@ -7,14 +7,14 @@ import type { CacheStatus, RepoStage } from "../../lib/cache/index.js";
 import type { WindowEvent } from "../../lib/events/index.js";
 import { createProvider } from "../../lib/github/index.js";
 import { listWaits, owedGroupings } from "../../lib/owed/index.js";
-import type { Problem } from "../../lib/text/index.js";
+import { describeBudget, type Problem } from "../../lib/text/index.js";
 import {
   CountsLine,
   StatusLine,
   ThreadRow,
 } from "../../lib/ui/component/index.js";
 import describeStage from "../../lib/ui/component/RefreshStages/describeStage.js";
-import describeDetails from "../../lib/ui/component/StatusLine/describeDetails.js";
+import describeRight from "../../lib/ui/component/StatusLine/describeRight.js";
 import describeStatus from "../../lib/ui/component/StatusLine/describeStatus.js";
 import { minColumns, minLines } from "../../lib/ui/constants.js";
 import { measureText } from "../../lib/ui/fit/index.js";
@@ -98,7 +98,14 @@ const messages: readonly CacheStatus[] = [
 ];
 
 describe("docket's own words at the narrowest pane", () => {
-  it("holds each status message whole, a full refresh without its pages, and the details' count, which leaves whole where they would meet", () => {
+  it("holds each status message whole, a full refresh without its pages, and the details' count and the live budget, which leave whole where they would meet", () => {
+    // The live budget at its widest: two digits of share, and a reset.
+    const budget = describeBudget(
+      { limit: 5000, remaining: 1999, resetAt: until },
+      now,
+      "UTC",
+    );
+    expect(budget).toBe("budget 39% · resets 23:59");
     for (const status of messages) {
       for (const attention of ["active", "idle"] as const) {
         const message = describeStatus(
@@ -109,13 +116,18 @@ describe("docket's own words at the narrowest pane", () => {
           undefined,
           attention,
         );
-        const right = describeDetails(status, message, attention, false, {
-          read: 999,
-          asked: 999,
-        });
+        const count = { read: 999, asked: 999 };
+        const right = describeRight(status, message, attention, count, "");
+        const live = describeRight(
+          status,
+          message,
+          attention,
+          undefined,
+          budget,
+        );
         // A message with a part that gives way keeps the words without it.
         const words = message?.shorter ?? message?.text ?? "";
-        for (const text of [words, right]) {
+        for (const text of [words, right, live]) {
           expect(measureText(text), text).toBeLessThanOrEqual(minColumns);
         }
       }

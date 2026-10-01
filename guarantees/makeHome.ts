@@ -8,11 +8,53 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import listThreads from "./listThreads.js";
 import type { Call, Home, Outcome, SentRequest } from "./types.js";
 
 const corpusRoot = import.meta.dirname;
 const entry = resolve(corpusRoot, "../src/application/main.ts");
 const standIn = resolve(corpusRoot, "standIn.ts");
+
+/** How long, in milliseconds, a key waits for the read it causes. */
+const readWait = 30_000;
+
+/**
+ * The whole lines of the request log `log` so far, the time zone's first:
+ * a line still being written, after the last line break, is left out.
+ */
+const readLog = (log: string) =>
+  readFileSync(log, "utf8")
+    .split("\n")
+    .slice(0, -1)
+    .filter((line) => line !== "");
+
+/**
+ * Waits until the request log `log` holds, past its first `sent` lines, a
+ * read of details that names `thread` (`owner/name#number`), in a query
+ * aliased per thread: `t0: repository(owner: "o", name: "n") {
+ * pullRequest(number: 4) … }`.
+ *
+ * @throws Error naming `cause`, such as the key, when no such read is
+ * sent in `readWait`.
+ */
+async function waitForRead(
+  log: string,
+  sent: number,
+  thread: string,
+  cause: string,
+): Promise<void> {
+  const started = Date.now();
+  while (Date.now() - started < readWait) {
+    const read = readLog(log)
+      .slice(sent)
+      .some((line) =>
+        listThreads(JSON.parse(line) as SentRequest).includes(thread),
+      );
+    if (read) return;
+    await Bun.sleep(20);
+  }
+  throw new Error(`${cause} sent no read of ${thread}`);
+}
 
 /**
  * Makes a home whose personal file is `personalFile`, and runs docket in
@@ -38,7 +80,7 @@ export default function makeHome(personalFile: string): Home {
   let calls = 0;
   /** A fresh request log, and the environment a call runs in. */
   const prepare = (
-    { now, recording, machineZone = "UTC" }: Call,
+    { now, recording, machineZone = "UTC", remaining }: Call,
     extra: Record<string, string> = {},
   ) => {
     calls += 1;
@@ -56,6 +98,9 @@ export default function makeHome(personalFile: string): Home {
       GUARANTEES_NOW: now,
       GUARANTEES_RECORDING: recording,
       GUARANTEES_REQUESTS: log,
+      ...(remaining === undefined
+        ? {}
+        : { GUARANTEES_REMAINING: String(remaining) }),
       // Set by `guarantees:prove` alone, to break the stand-in.
       ...(process.env.GUARANTEES_BREAK
         ? { GUARANTEES_BREAK: process.env.GUARANTEES_BREAK }
@@ -71,10 +116,7 @@ export default function makeHome(personalFile: string): Home {
     out: string,
     err: string,
   ): Outcome => {
-    const [ran, ...sent] = readFileSync(log, "utf8")
-      .split("\n")
-      .filter((line) => line !== "")
-      .map((line) => JSON.parse(line));
+    const [ran, ...sent] = readLog(log).map((line) => JSON.parse(line));
     return {
       code,
       out,
@@ -97,11 +139,20 @@ export default function makeHome(personalFile: string): Home {
       ]);
       return conclude(log, code, out, err);
     },
-    async open({ until, keys = [], ready = "", pause = 250, ...call }) {
+    async open({
+      until,
+      keys = [],
+      ready = "",
+      pause = 250,
+      changed,
+      opens,
+      ...call
+    }) {
       const { log, env } = prepare(call, {
         GUARANTEES_UNTIL: until,
         TERM: "xterm-256color",
         ...(keys.length > 0 ? { GUARANTEES_KEYS: "1" } : {}),
+        ...(changed ? { GUARANTEES_CHANGED: changed } : {}),
       });
       let out = "";
       const { promise: drawn, resolve: showDrawn } =
@@ -124,6 +175,8 @@ export default function makeHome(personalFile: string): Home {
       });
       if (keys.length > 0) {
         await drawn;
+        // Past the log's first line, the time zone, every request counts.
+        if (opens) await waitForRead(log, 1, opens, "the opening");
         for (const [place, key] of keys.entries()) {
           await Bun.sleep(pause);
           if (child.exitCode !== null) {
@@ -131,7 +184,13 @@ export default function makeHome(personalFile: string): Home {
               `docket ended before key ${place + 1} of ${keys.length} was pressed`,
             );
           }
-          child.terminal?.write(key);
+          if (typeof key === "string") child.terminal?.write(key);
+          else if ("pause" in key) child.kill("SIGUSR1");
+          else {
+            const sent = readLog(log).length;
+            child.terminal?.write(key.key);
+            await waitForRead(log, sent, key.reads, `key ${place + 1}`);
+          }
         }
         // The stand-in's clock moves on only once the last key is pressed.
         child.kill("SIGUSR2");

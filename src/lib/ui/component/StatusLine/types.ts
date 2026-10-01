@@ -68,15 +68,16 @@ export interface StatusLineProps {
    */
   attention?: AttentionState;
   /**
-   * Whether reading details spent the hour's budget for them, which the
-   * right side of an active pane then says.
-   */
-  detailsPaused?: boolean;
-  /**
    * How many of the details asked for are read, while any are pending,
    * which the right side says as `details 3/12`.
    */
   details?: DetailsCount;
+  /**
+   * The live budget figures, as the composition root words them, such as
+   * `budget 35% · resets 14:20`, which the right side says while no
+   * details count stands there; empty or absent while none are shown.
+   */
+  liveBudget?: string;
   /** The instant ages and waits are measured at. */
   now: Date;
   /** The time zone a time of day is written in, such as `Europe/Paris`. */

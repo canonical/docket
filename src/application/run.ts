@@ -145,6 +145,7 @@ export default async function run(context: Context): Promise<number> {
         syncedAt,
         timezone: settings.time.timezone,
         warnings: [...files.warnings, ...warnings],
+        budget: cache.readBudgets(),
       }),
     };
     return await answers[invocation.command](session);

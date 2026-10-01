@@ -80,10 +80,29 @@ describe("the refreshIfChanged step of createCache", () => {
     expect(provider.snapshot).not.toHaveBeenCalled();
   });
 
+  it("says the pause once its own check takes the budget below the floor", async () => {
+    let heard = {};
+    let armed = false;
+    const provider = watching(() => false, {
+      readBudgets: () => heard,
+      probe: vi.fn(async () => {
+        if (armed) heard = { graphql: { ...fullBudget, remaining: 900 } };
+        return { changed: false, tag: '"tag"' };
+      }),
+    });
+    const cache = await openFetched(provider);
+    armed = true;
+    await cache.refreshIfChanged(repo);
+    expect(cache.status().paused).toEqual({
+      until: fullBudget.resetAt,
+      reason: "budget",
+    });
+  });
+
   it("spends nothing below the budget floor, though the check sees a change", async () => {
     let remaining = fullBudget.remaining;
     const provider = watching(() => true, {
-      budget: async () => ({ ...fullBudget, remaining }),
+      readBudgets: () => ({ graphql: { ...fullBudget, remaining } }),
     });
     const cache = await openFetched(provider);
     remaining = 999;

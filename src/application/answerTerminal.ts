@@ -66,9 +66,19 @@ export default async function answerTerminal(
     });
   }
   const { provider, cache } = connection;
-  // Every read of details counts against the hour's budget for them.
-  const details = createDetailReader((threads) =>
-    provider.threadDetails(threads),
+  // Below the budget floor only the selected thread's details are read.
+  const details = createDetailReader(
+    async (threads) => {
+      try {
+        return await provider.threadDetails(threads);
+      } finally {
+        // The read spent points outside any refresh, so its figures go to
+        // this process's budget file for every other process; the next
+        // keeping writes them when this one cannot.
+        void cache.keepBudget();
+      }
+    },
+    () => cache.maySpend(),
   );
   const readWatched = async (): Promise<WatchedFiles> => {
     try {
@@ -101,7 +111,7 @@ export default async function answerTerminal(
       capabilities: provider.capabilities(),
       readWatched,
       readViewer: () => provider.viewer(),
-      readDetail: (thread) => readOneDetail(details, thread, now()),
+      readDetail: (thread) => readOneDetail(details, thread),
       details,
       readCandidates: (action, thread) =>
         readCandidates(provider, action, thread),

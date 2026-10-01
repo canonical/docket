@@ -160,10 +160,10 @@ export interface TerminalView {
          */
         readonly readDetail: (thread: ThreadSummary) => Promise<ThreadDetail>;
         /**
-         * Reads threads' details in batches within the hour's budget, so
-         * the rows around the selection are read ahead, and says when
-         * that budget is spent. Without it, each thread is read alone,
-         * through `readDetail`, and nothing is read ahead.
+         * Reads threads' details in batches above the budget floor, so the
+         * rows around the selection are read ahead. Without it, each
+         * thread is read alone, through `readDetail`, and nothing is read
+         * ahead.
          */
         readonly details?: DetailReader;
         /**

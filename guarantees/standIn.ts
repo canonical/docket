@@ -25,7 +25,15 @@
  *   before the one pressing keys sends `SIGUSR2` after the last, nor
  *   while a file operation of docket's is under way, which docket's
  *   modules take from a counted copy of `node:fs/promises`. Each logged
- *   request carries the clock's time.
+ *   request carries the clock's time. While keys are pressed, `SIGUSR1`
+ *   moves the clock on by a minute, as a person pausing between keys,
+ *   and no wait passes for it.
+ * - A change: with `GUARANTEES_CHANGED`, GitHub answers from that recording
+ *   once the clock first moves on through a wait of docket's, as if
+ *   something changed on GitHub while docket waited.
+ * - The budget: every GraphQL answer says `GUARANTEES_REMAINING` points
+ *   are left of GitHub's hourly 5,000, 4,900 unless given, until an hour
+ *   after `GUARANTEES_NOW`.
  *
  * A request the recording holds no answer for gets a 404 naming it, which
  * docket reports as a failure, so a recording that falls behind docket
@@ -59,6 +67,8 @@ const {
   GUARANTEES_BREAK,
   GUARANTEES_UNTIL,
   GUARANTEES_KEYS,
+  GUARANTEES_CHANGED,
+  GUARANTEES_REMAINING,
 } = process.env;
 if (!GUARANTEES_NOW || !GUARANTEES_RECORDING || !GUARANTEES_REQUESTS) {
   throw new Error(
@@ -114,26 +124,35 @@ const recordings: Readonly<
 > = {
   clock: () => import("./fixtures/clock.js"),
   crowded: () => import("./fixtures/crowded.js"),
+  crowdedChanged: () => import("./fixtures/crowdedChanged.js"),
   hostile: () => import("./fixtures/hostile.js"),
   team: () => import("./fixtures/team.js"),
   teamChanged: () => import("./fixtures/teamChanged.js"),
 };
-const load = recordings[GUARANTEES_RECORDING];
-if (!load) throw new Error(`no recording named ${GUARANTEES_RECORDING}`);
-const recording = (await load()).default;
+/** The recording `name` names. */
+const loadRecording = async (name: string) => {
+  const load = recordings[name];
+  if (!load) throw new Error(`no recording named ${name}`);
+  return (await load()).default;
+};
+let recording = await loadRecording(GUARANTEES_RECORDING);
+const changedRecording =
+  GUARANTEES_CHANGED && (await loadRecording(GUARANTEES_CHANGED));
 const log = GUARANTEES_REQUESTS;
 appendFileSync(
   log,
   `${JSON.stringify({ machineZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}\n`,
 );
 
-// How far a day passing has moved the clock on, in milliseconds.
+// How far a day passing has moved the clock on, in milliseconds, and how
+// far the minutes a person paused between keys have.
 let moved = 0;
+let paused = 0;
 const RealDate = Date;
 class FixedDate extends RealDate {
   // biome-ignore lint/suspicious/noExplicitAny: Date's constructor takes several shapes, passed on whole.
   constructor(...args: any[]) {
-    if (args.length === 0) super(fixed + moved);
+    if (args.length === 0) super(fixed + paused + moved);
     else super(...(args as [string]));
   }
 }
@@ -141,7 +160,7 @@ globalThis.Date = FixedDate as DateConstructor;
 
 const recordedRateLimit = {
   limit: 5000,
-  remaining: 4900,
+  remaining: Number(GUARANTEES_REMAINING ?? 4900),
   resetAt: new RealDate(fixed + 3_600_000).toISOString(),
 };
 
@@ -152,14 +171,19 @@ const answerDelay = 5;
 // one pressing them says with `SIGUSR2` that the last is pressed.
 const answered = Promise.withResolvers<void>();
 const pressed = Promise.withResolvers<void>();
-if (GUARANTEES_KEYS) process.on("SIGUSR2", () => pressed.resolve());
-else pressed.resolve();
+if (GUARANTEES_KEYS) {
+  process.on("SIGUSR2", () => pressed.resolve());
+  process.on("SIGUSR1", () => {
+    paused += 60_000;
+  });
+} else pressed.resolve();
 const touch = GUARANTEES_UNTIL
   ? fastForward({
       span: new RealDate(GUARANTEES_UNTIL).getTime() - fixed,
       isQuiet: () => inFlight === 0,
       moveClock: (by) => {
         moved = by;
+        if (changedRecording) recording = changedRecording;
       },
       onEnd: () => process.exit(0),
       start: Promise.all([answered.promise, pressed.promise]).then(() => {}),

@@ -46,7 +46,6 @@ describe("answerFinished", () => {
       snapshot: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
       events: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
       viewer: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
-      budget: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
     });
     const { session, out } = openSession(
       home,

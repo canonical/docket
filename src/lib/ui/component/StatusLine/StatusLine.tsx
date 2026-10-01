@@ -9,7 +9,7 @@ import {
   measureText,
 } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
-import describeDetails from "./describeDetails.js";
+import describeRight from "./describeRight.js";
 import describeStatus from "./describeStatus.js";
 import type { StatusLineProps, StatusMessage } from "./types.js";
 
@@ -79,10 +79,10 @@ function fitMessage(message: StatusMessage, width: number): string {
  * prerequisite frames). A message too wide for the pane drops its part
  * that gives way first, a full refresh its pages, and only then are its
  * words cut with `…` by `fitField`, as docket's own words. The right
- * side is the details', dimmed, as `describeDetails` chooses it:
- * `details 3/12` while any asked for are unread, or `details paused`
- * once their hour's budget is spent, hidden while nothing is read, and
- * dropped when the two sides would meet.
+ * side is dimmed, as `describeRight` chooses it: `details 3/12` while any
+ * asked for are unread, else the live budget figures it is given, such as
+ * `budget 35% · resets 14:20`, as docket's own words through `fitField`,
+ * and dropped when the two sides would meet.
  *
  * `import { StatusLine } from "../lib/ui/index.js";`
  *
@@ -92,8 +92,8 @@ const StatusLine = ({
   status,
   action,
   attention,
-  detailsPaused,
   details,
+  liveBudget = "",
   now,
   timezone,
   names,
@@ -109,12 +109,13 @@ const StatusLine = ({
   );
   const fitted = message && { ...message, text: fitMessage(message, width) };
   const runs = fitted ? fitRuns(describeRuns(fitted), width) : [];
-  const right = describeDetails(
-    status,
-    message,
-    attention,
-    detailsPaused,
-    details,
+  const right = fitField(
+    {
+      text: describeRight(status, message, attention, details, liveBudget),
+      kind: "words",
+    },
+    "line",
+    width,
   );
   // At least one cell apart, or the right side is left out.
   const gap = width - measurePieces(runs) - measureText(right);

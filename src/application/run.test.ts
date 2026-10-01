@@ -176,7 +176,7 @@ describe("run", () => {
       await home.call(["owed"]);
       const limited = recordedProvider({
         snapshot: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
-        budget: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+        readBudgets: () => ({}),
       });
       const { code, out } = await home.call(["owed", "--max-age", "0"], {
         provider: limited,
@@ -196,7 +196,7 @@ describe("run", () => {
     ] as const)("exits 3 when %s leaves no data at all", async (failure) => {
       const provider = recordedProvider({
         snapshot: () => Promise.reject(providerError(failure)),
-        budget: () => Promise.reject(providerError(failure)),
+        readBudgets: () => ({}),
       });
       const { code, out, err } = await home.call(["owed"], { provider });
       expect(code).toBe(3);
@@ -292,7 +292,7 @@ describe("run", () => {
         events: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
         threadDetail: () =>
           Promise.reject(providerError("GITHUB_RATE_LIMITED")),
-        budget: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+        readBudgets: () => ({}),
       });
       const call = (args: string[]) =>
         home.call([...args, "--max-age", "0"], {

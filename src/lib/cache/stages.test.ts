@@ -201,7 +201,9 @@ describe("the stages of createCache", () => {
 
   it("runs a first refresh that may not spend as a background one, never a full refresh", async () => {
     const cache = open(
-      fakeProvider({ budget: async () => ({ ...fullBudget, remaining: 999 }) }),
+      fakeProvider({
+        readBudgets: () => ({ graphql: { ...fullBudget, remaining: 999 } }),
+      }),
     );
     const seen: boolean[] = [];
     cache.subscribe(() => seen.push(cache.status().whole));
@@ -213,7 +215,7 @@ describe("the stages of createCache", () => {
   it("keeps each repository paused while the budget is low and it needs points to go on", async () => {
     const cache = open(
       fakeProvider({
-        budget: async () => ({ ...fullBudget, remaining: 999 }),
+        readBudgets: () => ({ graphql: { ...fullBudget, remaining: 999 } }),
       }),
     );
     await cache.refresh();

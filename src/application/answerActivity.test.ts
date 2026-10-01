@@ -42,7 +42,7 @@ describe("answerActivity", () => {
     const limited = recordedProvider({
       snapshot: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
       events: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
-      budget: () => Promise.reject(providerError("GITHUB_RATE_LIMITED")),
+      readBudgets: () => ({}),
     });
     const { session, out } = openSession(
       home,

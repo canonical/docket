@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createCache } from "../lib/cache/index.js";
 import type { Provider } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
-import { fakeProvider, providerError } from "../testing/provider.js";
+import {
+  fakeProvider,
+  fullBudget,
+  providerError,
+} from "../testing/provider.js";
 import {
   parserFix,
   parserFixDetail,
@@ -32,6 +36,7 @@ afterEach(() => rm(root, { recursive: true, force: true }));
 async function openOn(
   given: Provider | Problem,
   activity?: TerminalView["activity"],
+  directory = root,
 ) {
   const connection =
     "code" in given
@@ -41,7 +46,7 @@ async function openOn(
           cache: createCache({
             provider: given,
             repos: recordedSettings.repos.map(({ repo }) => repo),
-            directory: root,
+            directory,
             now: () => recordedNow,
           }),
         };
@@ -137,12 +142,41 @@ describe("answerTerminal", () => {
     });
   });
 
-  it("reads a thread's details from the provider, for the accordion, counting each read against the hour's budget", async () => {
+  it("reads a thread's details from the provider, for the accordion", async () => {
     const { view } = await openOn(recordedProvider());
     const [thread] = recordedThreads;
     if (!thread) throw new Error("the recording has a thread");
     expect(await cacheOf(view).readDetail(thread)).toEqual(parserFixDetail);
-    expect(cacheOf(view).details?.isCapped(new Date())).toBe(false);
+  });
+
+  it("writes the budget a read of details reported to its budget file, for every other process", async () => {
+    const heard = { graphql: { ...fullBudget, remaining: 1234 } };
+    const { view } = await openOn(
+      recordedProvider({ readBudgets: () => heard }),
+    );
+    await cacheOf(view).readDetail(parserFix);
+    // Each try is a later process, which reads the budget folder anew.
+    await waitUntil(async () => {
+      const other = createCache({
+        provider: fakeProvider({ readBudgets: () => ({}) }),
+        repos: [parserFix.repo],
+        directory: root,
+        now: () => recordedNow,
+      });
+      await other.load();
+      expect(other.readBudgets()).toEqual(heard);
+    });
+  });
+
+  it("reads a thread's details when the cache folder cannot keep their budget", async () => {
+    await Bun.write(join(root, "file"), "");
+    const provider = recordedProvider();
+    const { view } = await openOn(
+      provider,
+      undefined,
+      join(root, "file", "docket"),
+    );
+    expect(await cacheOf(view).readDetail(parserFix)).toEqual(parserFixDetail);
   });
 
   it("gives the editors whom GitHub offers, and writes as a confirmed text write does", async () => {

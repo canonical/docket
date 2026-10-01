@@ -1,7 +1,6 @@
 import type { ThreadDetail } from "../lib/provider/index.js";
 import type { DetailsCount } from "../lib/ui/index.js";
 import type { ThreadSummary } from "../lib/waits/index.js";
-import { detailStaleAfter } from "./constants.js";
 import type { DetailReader } from "./createDetailReader.js";
 import identifyThread from "./identifyThread.js";
 
@@ -21,8 +20,6 @@ interface Entry {
     readonly resolve: (detail: ThreadDetail) => void;
     readonly reject: (reason: unknown) => void;
   };
-  /** When they arrived, once they have. */
-  readAt?: number;
   /**
    * Whether a read was given them, which keeps them asked for when the
    * selection moves on.
@@ -34,6 +31,8 @@ interface Entry {
    * asks for it again.
    */
   failed: boolean;
+  /** True once they arrived, or failed. */
+  settled: boolean;
 }
 
 /** Threads' details asked for one at a time, read together. */
@@ -45,11 +44,12 @@ export interface DetailQueue {
    */
   read(thread: ThreadSummary, version: string): Promise<ThreadDetail>;
   /**
-   * Whether `thread`'s details are due a read at `at`: none were asked
-   * for at `version`, or those that arrived are `detailStaleAfter` old. A
-   * read that failed at `version` leaves them not due.
+   * Whether `thread`'s details are due a read: none were asked for at
+   * `version`. Details read at a version stay current until it moves,
+   * however long ago they arrived, and a read that failed at `version`
+   * leaves them not due.
    */
-  isDue(thread: ThreadSummary, version: string, at: Date): boolean;
+  isDue(thread: ThreadSummary, version: string): boolean;
   /**
    * Asks for the details of the threads of `window` that are due,
    * `selected` first among them, in the next request, which goes `delay`
@@ -69,7 +69,9 @@ export interface DetailQueue {
    * the list first shows, or the selected thread alone is read again:
    * nothing while nothing is pending, or while the queue is paused. A
    * thread that gives way to a later window, or that a request leaves
-   * out, is no longer counted as asked for.
+   * out, is no longer counted as asked for, except the thread the
+   * selection moved to while the request was under way: it stays counted,
+   * and is asked for in the very next request.
    */
   countDetails(): DetailsCount | undefined;
   /** How many times details arrived for `thread`: part of its version. */
@@ -77,12 +79,17 @@ export interface DetailQueue {
   /** Calls `listener` whenever details arrive, or their count moves. */
   subscribe(listener: () => void): () => void;
   /**
-   * Holds back every request while `paused`, as below the budget floor or
-   * under the rate limit, when no point may be spent; what waits is sent
-   * once it is not.
+   * Holds back every request while `paused`, as under the rate limit,
+   * when GitHub refuses every request; what waits is sent once it is not.
    */
   pause(paused: boolean): void;
-  /** Sends nothing more, when the pane closes. */
+  /**
+   * Forgets the details that arrived, and the reads that failed, so every
+   * thread is due again, as a full refresh asks, and asks at once for the
+   * window asked for last; reads under way stay.
+   */
+  forget(): void;
+  /** Sends nothing more, when the pane closes, a read under way included. */
   stop(): void;
 }
 
@@ -91,27 +98,34 @@ export interface DetailQueue {
  * at most `detailWindow` threads each, so the selected thread and those
  * around it cost one point together. A read asked for alone goes at once,
  * unless an ask for the rows around it is pending, which it joins. A
- * thread the request leaves out, once the hour's budget is spent, is
- * asked for again when it is due. One the provider no longer finds, or
- * one a request that fails asked for, fails its read, and is not asked
- * for again until its version moves or a read asks for it, as the
- * accordion does when the selection comes back to it.
- * Nothing is sent while it is paused.
+ * thread the request leaves out, as the reader does below the budget
+ * floor, is asked for again when it is due; the thread the selection
+ * moved to while that request was under way is asked for in the very
+ * next request. A thread's details are due again only when its version
+ * moves: a change GitHub records on it, or one the list's roll-up of its
+ * checks shows. One the provider no longer finds, or one a request that
+ * fails asked for, fails its read, and is not asked for again until its
+ * version moves or a read asks for it, as the accordion does when the
+ * selection comes back to it. Nothing is sent while it is paused, or once
+ * it is stopped.
  *
  * @note Impure: sets a timer for each request, and reads through
  * `reader`.
  */
 export default function createDetailQueue(
   reader: Pick<DetailReader, "read">,
-  now: () => Date,
 ): DetailQueue {
   const entries = new Map<string, Entry>();
   const arrivals = new Map<string, number>();
   const listeners = new Set<() => void>();
   let queued: (WantedDetail & { readonly entry: Entry })[] = [];
   let selected: ThreadSummary | undefined;
+  // The window the last request asked for, which a forget asks for again.
+  let lastWindow: readonly WantedDetail[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
   let paused = false;
+  // Once stopped, as when the pane closes, nothing more is sent.
+  let stopped = false;
   // The threads asked for since nothing was pending, and those answered.
   let round:
     | { readonly asked: Set<string>; readonly answered: Set<string> }
@@ -150,6 +164,7 @@ export default function createDetailQueue(
       settle: { resolve, reject },
       awaited: false,
       failed: false,
+      settled: false,
     };
     const key = identifyThread(thread);
     entries.set(key, entry);
@@ -173,24 +188,32 @@ export default function createDetailQueue(
       ...batch.filter(({ thread }) => identifyThread(thread) === first),
       ...batch.filter(({ thread }) => identifyThread(thread) !== first),
     ];
-    const asked = ordered.map(({ thread, entry }) => ({
+    const asked = ordered.map(({ thread, version, entry }) => ({
       key: identifyThread(thread),
+      thread,
+      version,
       entry,
     }));
-    const at = now();
     sending += 1;
     try {
       const read = await reader.read(
         ordered.map(({ thread }) => thread),
         selected,
-        at,
       );
       const found = new Map(
         read.map(({ thread, detail }) => [identifyThread(thread), detail]),
       );
-      for (const { key, entry } of asked) {
+      for (const { key, thread, version, entry } of asked) {
         if (entries.get(key) !== entry) continue;
         if (!found.has(key)) {
+          // The selection may have moved, while the read was under way, to
+          // a thread the reader left out, as it does below the budget floor:
+          // that thread is asked for again in the next request. Any other
+          // is no longer asked for.
+          if (key !== first && selected && key === identifyThread(selected)) {
+            queued.push({ thread, version, entry });
+            continue;
+          }
           entries.delete(key);
           round?.asked.delete(key);
           continue;
@@ -199,10 +222,11 @@ export default function createDetailQueue(
         const detail = found.get(key);
         if (!detail) {
           entry.failed = true;
+          entry.settled = true;
           entry.settle.reject(new Error(`${key} was not found.`));
           continue;
         }
-        entry.readAt = at.getTime();
+        entry.settled = true;
         entry.settle.resolve(detail);
         arrivals.set(key, (arrivals.get(key) ?? 0) + 1);
       }
@@ -211,29 +235,25 @@ export default function createDetailQueue(
         if (entries.get(key) !== entry) continue;
         round?.answered.add(key);
         entry.failed = true;
+        entry.settled = true;
         entry.settle.reject(reason);
       }
     }
     sending -= 1;
+    if (queued.length > 0 && timer === undefined) schedule(0);
     settleRound();
     tell();
   };
-  const isDue = (thread: ThreadSummary, version: string, at: Date) => {
-    const known = entries.get(identifyThread(thread));
-    if (known?.version !== version) return true;
-    return (
-      known.readAt !== undefined &&
-      at.getTime() - known.readAt >= detailStaleAfter
-    );
-  };
+  const isDue = (thread: ThreadSummary, version: string) =>
+    entries.get(identifyThread(thread))?.version !== version;
   const schedule = (delay: number) => {
     clearTimeout(timer);
     timer = undefined;
-    if (paused) return;
+    if (paused || stopped) return;
     timer = setTimeout(() => void flush(), delay);
   };
 
-  return {
+  const queue: DetailQueue = {
     read(thread, version) {
       const known = entries.get(identifyThread(thread));
       if (known?.version === version && !known.failed) {
@@ -249,6 +269,7 @@ export default function createDetailQueue(
     request: (window, chosen, delay) =>
       changeAndTell(() => {
         selected = chosen;
+        lastWindow = window;
         const kept = new Set(
           window.map(({ thread }) => identifyThread(thread)),
         );
@@ -259,9 +280,8 @@ export default function createDetailQueue(
           round?.asked.delete(key);
           return false;
         });
-        const at = now();
         for (const each of window) {
-          if (isDue(each.thread, each.version, at)) ask(each);
+          if (isDue(each.thread, each.version)) ask(each);
         }
         if (queued.length > 0) schedule(delay);
         else {
@@ -284,10 +304,19 @@ export default function createDetailQueue(
       });
       if (paused || queued.length > 0) schedule(0);
     },
+    forget() {
+      for (const [key, entry] of entries) {
+        if (entry.settled) entries.delete(key);
+      }
+      // The window asked for last is due again, and is read at once.
+      queue.request(lastWindow, selected, 0);
+    },
     stop() {
+      stopped = true;
       clearTimeout(timer);
       queued = [];
       round = undefined;
     },
   };
+  return queue;
 }

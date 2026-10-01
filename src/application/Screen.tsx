@@ -221,8 +221,7 @@ export default function Screen({
         help
           ? helpState.end(direction)
           : moveTo((_place, last) => (direction < 0 ? 0 : last)),
-      // Only a row is ever selected, in either mode, so a heading or a
-      // stack never opens.
+      // Only a row is ever selected, so a heading or a stack never opens.
       openSelected: () => {
         const row = drawnSelection.current;
         if (!row) return;
@@ -240,7 +239,11 @@ export default function Screen({
       edit: (action) => editor.start(action, selectThread()),
       toggleHelp: helpState.toggle,
       closeHelp: helpState.close,
-      refresh: () => void cache?.fullRefresh(),
+      // A full refresh that threw the data away reads the details again.
+      refresh: () =>
+        void cache
+          ?.fullRefresh()
+          .then((discarded) => discarded && ahead.drop()),
       quit: onQuit,
     },
   });
@@ -301,24 +304,21 @@ export default function Screen({
     })),
     selected: placeSelection(rows, selections[mode]),
     attention: attentionState,
-    paused: status?.paused !== undefined,
-    now,
+    paused: status?.paused?.reason,
   });
-  // A thread's details are read once for each change GitHub records on it,
-  // and once for each change the list's roll-up of its checks shows, since
-  // checks finish without GitHub recording a change to the thread. Any
-  // other copy of the data a refresh brings reads nothing. A thread the
-  // data does not hold, such as a closed one in activity, has no record of
-  // its last change, and is read once for each newest event its row shows.
-  // The details of a thread that left both the data and the list on screen
-  // are let go.
+  // A thread's details are read once for each change GitHub records on it
+  // or the list's roll-up of its checks shows, as checks finish without a
+  // change to the thread; no other copy of the data reads anything. A
+  // thread the data does not hold is read once for each newest event its
+  // row shows, and one gone from the data and the list is let go.
   const readHeld = useHeldDetails({
     kept: [...(cached?.threads ?? []), ...rows.map(summarize)],
     selected: () => {
       const row = drawnSelection.current;
       return row && summarize(row);
     },
-    resumes: status?.paused?.until,
+    resumes:
+      status?.paused?.reason === "rateLimit" ? status.paused.until : undefined,
   });
   /** The details the accordion under a row is given: read ahead, or alone. */
   const readRowDetail = (
@@ -463,8 +463,8 @@ export default function Screen({
                   : undefined) ?? you.failure,
               action,
               attention: attentionState,
-              detailsPaused: "cache" in source && source.details?.isCapped(at),
               details: ahead.progress,
+              budget: cache?.readBudgets().graphql,
               now: at,
               timezone: settings.time.timezone,
               watched,

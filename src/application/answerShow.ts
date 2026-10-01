@@ -15,7 +15,8 @@ import type { Session } from "./types.js";
  *
  * @note Impure: reads the cache, which asks GitHub when its data or the
  * login gh is signed in with is too old, asks GitHub for the thread's
- * details, and writes the answer.
+ * details, writes the answer, and then writes the budget the details'
+ * answer reported to the cache.
  */
 export default async function answerShow(session: Session): Promise<number> {
   const { context, invocation, watched, provider } = session;
@@ -72,5 +73,11 @@ export default async function answerShow(session: Session): Promise<number> {
       detail: invocation.detail,
     }),
   );
+  // The reads of details spent points outside any refresh, so their
+  // figures go to this process's budget file for every other process,
+  // once the answer is out: it stands without them. A write that fails
+  // loses them, at no cost, since the next answer kept reports the budget
+  // again.
+  await session.cache.keepBudget();
   return 0;
 }

@@ -9,6 +9,7 @@ const freshness: Freshness = {
   syncedAt: new Date(recordedNow.getTime() - 120_000),
   timezone: "Europe/Paris",
   warnings: [],
+  budget: {},
 };
 
 const render = (
@@ -144,6 +145,7 @@ describe("renderOwed", () => {
         syncedAt: "2026-09-28T09:58:00.000Z",
         ageSeconds: 120,
         warnings: [],
+        budget: {},
       },
       counts: { over: 2, soon: 1, onTrack: 3 },
     });

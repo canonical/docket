@@ -1,23 +1,29 @@
-import { mkdirSync, watch as watchFolder } from "node:fs";
+import { watch as watchFolder } from "node:fs";
 import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
 import type { Account } from "../people/index.js";
+import type { Budgets } from "../provider/index.js";
 import applyChecks from "./applyChecks.js";
 import classifyFolderFailure from "./classifyFolderFailure.js";
 import classifyRefreshFailure from "./classifyRefreshFailure.js";
 import {
+  budgetFolderName,
   cacheFileName,
   fullRefreshCooldown,
   idleInterval,
   refreshInterval,
 } from "./constants.js";
+import createBudgetKeeper from "./createBudgetKeeper.js";
+import createBudgetRule from "./createBudgetRule.js";
 import createReadQueries from "./createReadQueries.js";
+import dropFarResets from "./dropFarResets.js";
 import dropPages from "./dropPages.js";
 import fetchRepos, { type FetchReposOptions } from "./fetchRepos.js";
-import findBudgetFloor from "./findBudgetFloor.js";
 import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
+import mergeBudgets from "./mergeBudgets.js";
 import mergeSnapshot from "./mergeSnapshot.js";
+import readAndPruneBudgetFolder from "./readAndPruneBudgetFolder.js";
 import readCacheFile from "./readCacheFile.js";
 import refreshChecks from "./refreshChecks.js";
 import syncRepo from "./syncRepo.js";
@@ -28,6 +34,7 @@ import type {
   CacheStatus,
   RepoCache,
 } from "./types.js";
+import watchBudgetFolder from "./watchBudgetFolder.js";
 import withFetchLock from "./withFetchLock.js";
 import writeCacheFile from "./writeCacheFile.js";
 
@@ -56,10 +63,16 @@ export default function createCache({
     defaultOptions: { queries: { gcTime: Number.POSITIVE_INFINITY } },
   });
   const file = join(directory, cacheFileName);
+  const budgets = join(directory, budgetFolderName);
+  const ownBudget = `${process.pid}.json`;
   const listeners = new Set<() => void>();
   let fullRefreshAt: Date | undefined;
   // The file this process wrote last, as identifyFile names it.
   let written: string | undefined;
+  // The budgets the folder gave, which this process's own answers join.
+  let mirror: Budgets = {};
+  const readOwn = () => dropFarResets(provider.readBudgets(), now());
+  const readFigures = () => mergeBudgets(mirror, readOwn());
 
   const key = (repo: string) => ["snapshot", repo];
   const entry = (repo: string) => client.getQueryData<RepoCache>(key(repo));
@@ -151,8 +164,11 @@ export default function createCache({
     }
   };
 
+  // Each load reads the budgets until a watch keeps them, from its start.
+  let unwatch: (() => void) | undefined;
   const load = async () => {
     const contents = await readCacheFile(file);
+    if (!unwatch) await loadBudget();
     if (contents) {
       hydrate(client, contents.state);
       // Every write happens under the lock after a load, and carries the
@@ -161,21 +177,45 @@ export default function createCache({
     }
     publish();
   };
-  const save = () =>
-    writeCacheFile(file, { state: dehydrate(client), fullRefreshAt }, (id) => {
+  /** Merges budgets read into the mirror, once read, and says the floor. */
+  const adopt = (read: Budgets) => {
+    mirror = mergeBudgets(mirror, read);
+    publishFloor();
+  };
+  const loadBudget = async () =>
+    adopt(await readAndPruneBudgetFolder(budgets, now()));
+  /** Writes the cache file, then keeps the budgets its reads heard. */
+  const save = async () => {
+    const contents = { state: dehydrate(client), fullRefreshAt };
+    await writeCacheFile(file, contents, (id) => {
       written = id;
     });
+    await keepInFile();
+  };
+
+  const { judgeFloor, maySpend, publishFloor } = createBudgetRule({
+    readFigures,
+    now,
+    status: () => status,
+    // The threads are handed out once, when the run ends.
+    publish: (change) => publish(change, false),
+  });
+  const keepInFile = createBudgetKeeper({
+    file: join(budgets, ownBudget),
+    readOwn,
+    publishFloor,
+  });
 
   /**
    * Fetches every repository, the lock held, as `fetchRepos` does with
    * `options`, reporting each repository's stage.
    */
   const fetchAll = async (
-    options: Pick<FetchReposOptions, "spend" | "reconcile" | "checks"> = {},
+    options: Pick<FetchReposOptions, "maySpend" | "reconcile" | "checks"> = {},
   ) => {
     // Nothing is shown until every repository holds data, so a run that
     // may spend and starts with one lacking fetches while the list waits.
-    const whole = options.spend !== false && !syncedAt();
+    const whole = (options.maySpend?.() ?? true) && !syncedAt();
     // Every repository is dated from before its fetch, so the data is
     // never taken as newer than it is.
     const at = now();
@@ -225,11 +265,10 @@ export default function createCache({
    * Throws the cached data away, here and in the file, and fetches
    * everything, under the fetch lock, unless a full refresh started within
    * `fullRefreshCooldown` in any process: the file says when the last
-   * one started, and it is read once the lock is held.
-   *
-   * @returns Whether it fetched rather than being refused.
+   * one started, and it is read once the lock is held. `discarded` hears
+   * when the data is thrown away, before the fetch, which may fail.
    */
-  const discardAndFetch = () =>
+  const discardAndFetch = (discarded: () => void) =>
     withFetchLock(directory, async () => {
       await load();
       const at = now();
@@ -238,17 +277,17 @@ export default function createCache({
         fullRefreshCooldown;
       if (at.getTime() < available) {
         publish({ fullRefreshAvailableAt: new Date(available) });
-        return false;
+        return;
       }
       publish({ fullRefreshAvailableAt: undefined });
       fullRefreshAt = at;
       client.clear();
+      discarded();
       // The threads thrown away leave the screen at once, not once the
       // fetch that replaces them ends.
       publish();
       await save();
       await fetchAll();
-      return true;
     });
 
   /**
@@ -270,8 +309,7 @@ export default function createCache({
         await load();
         const fetched = find();
         if (fetched) return fetched;
-        // Dated from before the fetch, so it is never taken as newer than
-        // it is.
+        // Dated from before the fetch, so never taken as newer than it is.
         const held = await fetch(now());
         await save();
         return held;
@@ -322,13 +360,13 @@ export default function createCache({
           await load();
           const previous = entry(repo);
           if (!previous) return false;
-          const floor = await findBudgetFloor(provider, at);
           const value = await syncRepo(provider, repo, previous, at, {
-            spend: !floor,
+            spend: maySpend(),
             reconcile: false,
           });
           // Unchanged, the repository keeps its data, and its tag, which
           // GitHub still answers "not modified".
+          publishFloor();
           if (!value || value.threads === previous.threads) return false;
           store(repo, value, at);
           await save();
@@ -372,7 +410,9 @@ export default function createCache({
     async read(maxAge) {
       try {
         await load();
-        if (!isFresh(maxAge)) await sync(maxAge);
+        if (!isFresh(maxAge)) {
+          await sync(maxAge);
+        }
         return shown;
       } catch (error) {
         throw classifyFolderFailure(error, directory);
@@ -382,36 +422,42 @@ export default function createCache({
       const at = now();
       const { paused } = status;
       if (paused && at < paused.until && paused.reason === "rateLimit") return;
+      // A pause whose time is past no longer holds, and the floor as the
+      // mirror stands is in force from the start of the run.
+      publishFloor();
       try {
-        // Below the floor the free checks still run, so the data a check
-        // finds unchanged stays current and a change waits for the reset.
-        const floor =
-          paused && at < paused.until
-            ? paused
-            : await findBudgetFloor(provider, at);
-        // A pause whose time is past no longer holds while reading resumes.
-        if (paused && at >= paused.until) publish({ paused: undefined });
         const idle = attention === "idle";
         // Waking catches up at once, whatever another pane fetched.
         const maxAge =
           attention === "waking" ? 0 : idle ? idleInterval : refreshInterval;
-        await sync(maxAge, { spend: !floor, reconcile: !idle, checks: !idle });
-        publish({ paused: floor, failure: undefined });
+        // Below the floor the free checks still run, so the data a check
+        // finds unchanged stays current and a change waits for the reset.
+        // The floor is judged before each repository and before the checks.
+        await sync(maxAge, {
+          maySpend,
+          reconcile: !idle,
+          checks: !idle,
+        });
+        publish({ paused: judgeFloor(), failure: undefined });
       } catch (error) {
-        publish(await classifyRefreshFailure(error, provider));
+        publish(classifyRefreshFailure(error, readFigures()));
       }
     },
     async fullRefresh() {
+      let discarded = false;
       try {
-        if (await discardAndFetch()) {
-          publish({ paused: undefined, failure: undefined });
-        }
+        await discardAndFetch(() => {
+          discarded = true;
+        });
+        if (discarded) publish({ paused: judgeFloor(), failure: undefined });
       } catch (error) {
-        publish(await classifyRefreshFailure(error, provider));
+        publish(classifyRefreshFailure(error, readFigures()));
       }
+      return discarded;
     },
     watch() {
-      mkdirSync(directory, { recursive: true, mode: 0o700 });
+      unwatch = watchBudgetFolder(budgets, ownBudget, now, adopt);
+      void loadBudget(); // The files written before the watch began.
       const watcher = watchFolder(directory, (_event, name) => {
         if (name !== cacheFileName) return;
         // The file this process wrote holds nothing it lacks.
@@ -419,7 +465,11 @@ export default function createCache({
           found === written ? undefined : load(),
         );
       });
-      return () => watcher.close();
+      return () => {
+        watcher.close();
+        unwatch?.();
+        unwatch = undefined;
+      };
     },
     patchAssignees({ repo, number }, assignees) {
       const held = entry(repo);
@@ -436,6 +486,9 @@ export default function createCache({
         publish();
       };
     },
+    readBudgets: readFigures,
+    maySpend,
+    keepBudget: keepInFile,
     status: () => status,
     subscribe(listener) {
       listeners.add(listener);

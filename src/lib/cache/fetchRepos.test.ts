@@ -124,7 +124,7 @@ describe("fetchRepos", () => {
   });
 
   it("reads no checks when told not to, or when nothing may be spent", async () => {
-    for (const options of [{ checks: false }, { spend: false }]) {
+    for (const options of [{ checks: false }, { maySpend: () => false }]) {
       const provider = fakeProvider({
         probe: async () => ({ changed: false, tag: '"tag-1"' }),
         refreshVolatile: vi.fn(),
@@ -139,13 +139,32 @@ describe("fetchRepos", () => {
   });
 
   it("keeps nothing of a repository that needs points it may not spend, and reports it paused", async () => {
-    const { fetching, kept, reported } = fetchFrom({ spend: false });
+    const { fetching, kept, reported } = fetchFrom({ maySpend: () => false });
     await fetching;
     expect(kept).toEqual([]);
     expect(reported.at(-1)).toEqual([
       { repo, stage: { kind: "paused", reason: "budget" } },
       { repo: docs, stage: { kind: "paused", reason: "budget" } },
     ]);
+  });
+
+  it("asks before each repository and the checks whether it may spend, stopping where it may not", async () => {
+    let left = 1;
+    const provider = fakeProvider({ refreshVolatile: vi.fn() });
+    const { fetching, kept, reported } = fetchFrom({
+      provider,
+      maySpend: () => {
+        left -= 1;
+        return left >= 0;
+      },
+    });
+    await fetching;
+    expect(kept.map(([name]) => name)).toEqual([repo, repo]);
+    expect(stagesOf(reported, docs).at(-1)).toEqual({
+      kind: "paused",
+      reason: "budget",
+    });
+    expect(provider.refreshVolatile).not.toHaveBeenCalled();
   });
 
   it("keeps the repositories fetched before one that fails, reports it failed and those after it waiting, and throws its error", async () => {

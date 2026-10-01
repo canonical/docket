@@ -3,6 +3,7 @@ import type { FinishedThread } from "../endings/index.js";
 import type { ThreadEvent } from "../events/index.js";
 import type { Account } from "../people/index.js";
 import type {
+  Budgets,
   Cursor,
   PageProgress,
   Provider,
@@ -213,7 +214,8 @@ export interface Cache {
   threads(): CachedThreads;
   /**
    * Loads what other processes wrote to the cache file, keeping only data
-   * newer than what is held.
+   * newer than what is held, and, until a watch starts, the budget folder,
+   * merged into the mirror.
    */
   load(): Promise<void>;
   /**
@@ -318,14 +320,18 @@ export interface Cache {
    * repository whole, reporting its progress in the status. One is
    * refused within `fullRefreshCooldown` of the last, in any process,
    * checked under the fetch lock so two asked together fetch once, and
-   * the status then
-   * says when one is available. It never throws: whatever stops it is
-   * kept in the status, as `refresh` keeps it.
+   * the status then says when one is available. It never throws: whatever
+   * stops it is kept in the status, as `refresh` keeps it.
+   *
+   * @returns Whether it threw the data away, rather than being refused,
+   * whether or not the fetch after it succeeded.
    */
-  fullRefresh(): Promise<void>;
+  fullRefresh(): Promise<boolean>;
   /**
-   * Reloads the cache whenever another process writes it, watching the
-   * cache folder: the file itself is replaced on every write.
+   * Reloads the cache whenever another process writes it, and merges into
+   * the budget mirror each budget file another process writes, watching
+   * the cache folder and the budget folder: each file is replaced on every
+   * write. It reads the whole budget folder once as it starts.
    *
    * @returns Stops watching.
    */
@@ -344,6 +350,37 @@ export interface Cache {
     thread: Pick<Thread, "repo" | "number">,
     assignees: readonly Account[],
   ): () => void;
+  /**
+   * The mirror of the provider's budgets: for each kind, the latest
+   * report any docket process heard, as the budget folder gave it, or
+   * this process's own answers, whichever is later.
+   */
+  readBudgets(): Budgets;
+  /**
+   * Whether docket may spend points of its own at the time asked, judged
+   * on the mirror: false below the budget floor, the share of the hourly
+   * budget kept for the user's own requests, until the queries' budget
+   * resets. It writes nothing. docket's own background spending asks it
+   * before each request: the refresh cycle, reading details ahead of the
+   * selection, the watch of the selected thread's repository, and reading
+   * activity's events again at a sync.
+   * What the user or an agent asks for directly never asks, and still
+   * spends from the reserve: the selected thread's details, a full
+   * refresh, `show`, the read after a write, the read of the viewer on
+   * opening, the first read of an activity window, and every text command.
+   */
+  maySpend(): boolean;
+  /**
+   * Writes the budgets this process heard to its own file in the budget
+   * folder, `budget/<process id>.json` beside the cache file, so every
+   * docket process judges the floor on them: after a read of details, and
+   * after each save of the cache. Only this process writes that file,
+   * always whole, and no lock is taken. It gives the status the floor at
+   * once, and writes only when what it heard changed since its last write;
+   * the file outlives the process until its reports reset. It never fails: a write that
+   * fails is dropped, and the next keeping writes again.
+   */
+  keepBudget(): Promise<void>;
   /** The cache's state: the same value on every call until it changes. */
   status(): CacheStatus;
   /** Calls `listener` whenever the threads or the status change. */

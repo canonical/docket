@@ -1,4 +1,4 @@
-import { describeAge } from "../../../activity/index.js";
+import { describeAge, describeClock } from "../../../activity/index.js";
 import {
   describePerson,
   type Owner,
@@ -8,7 +8,6 @@ import type { Reviewer, ThreadDetail } from "../../../provider/index.js";
 import { tokens } from "../../../tokens/index.js";
 import type { Message, Thread, ThreadSummary } from "../../../waits/index.js";
 import { loginCells } from "../../constants.js";
-import describeClock from "../../describeClock.js";
 import { markPerson, measureText, noBreakSpace } from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import type {

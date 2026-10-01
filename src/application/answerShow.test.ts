@@ -1,8 +1,12 @@
+import { rm } from "node:fs/promises";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseFile, resolveSettings } from "../lib/config/index.js";
 import { type Home, makeHome, openSession } from "../testing/docket.js";
 import { carol, thread } from "../testing/facts.js";
+import { fullBudget } from "../testing/provider.js";
 import { parserFix, recordedProvider } from "../testing/recorded.js";
+import { waitUntil } from "../testing/wait.js";
 import answerShow from "./answerShow.js";
 
 let home: Home;
@@ -95,6 +99,49 @@ describe("answerShow", () => {
       { login: "carol", group: "internal" },
       { login: "carol", group: "internal" },
     ]);
+  });
+
+  it("writes its answer before it keeps the budget", async () => {
+    const { session, out } = openSession(home, ["show", "example#12"]);
+    const kept = Promise.withResolvers<void>();
+    const answering = answerShow({
+      ...session,
+      cache: { ...session.cache, keepBudget: () => kept.promise },
+    });
+    await waitUntil(() => expect(out()).toMatch(/^# show example#12\n/));
+    kept.resolve();
+    expect(await answering).toBe(0);
+  });
+
+  it("writes the budget the details' answer reported to its budget file, for later calls", async () => {
+    const heard = { graphql: { ...fullBudget, remaining: 1234 } };
+    const provider = recordedProvider({ readBudgets: () => heard });
+    const { session } = openSession(home, ["show", "example#12"], provider);
+    expect(await answerShow(session)).toBe(0);
+    const later = openSession(home, ["owed"]).session.cache;
+    await later.load();
+    expect(later.readBudgets()).toEqual(heard);
+  });
+
+  it("answers when the cache folder cannot keep the budget the details' answer reported", async () => {
+    const folder = join(home.root, "cache", "docket");
+    let heard = { graphql: { ...fullBudget, remaining: 1234 } };
+    const provider = recordedProvider({
+      readBudgets: () => heard,
+      threadDetail: async (thread) => {
+        heard = { graphql: { ...fullBudget, remaining: 1233 } };
+        await rm(folder, { recursive: true, force: true });
+        await Bun.write(folder, "");
+        return recordedProvider().threadDetail(thread);
+      },
+    });
+    const { session, out } = openSession(
+      home,
+      ["show", "example#12"],
+      provider,
+    );
+    expect(await answerShow(session)).toBe(0);
+    expect(out()).toMatch(/^# show example#12\n/);
   });
 
   it("refuses more than one reference", async () => {
