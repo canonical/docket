@@ -1,10 +1,4 @@
-import {
-  mkdirSync,
-  rmSync,
-  statSync,
-  utimesSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -15,6 +9,7 @@ import { waitUntil } from "../../testing/wait.js";
 import type { Budgets } from "../provider/index.js";
 import { budgetLockTiming, lockName } from "./constants.js";
 import createBudgetKeeper from "./createBudgetKeeper.js";
+import identifyFile from "./identifyFile.js";
 import isSame from "./isSame.js";
 import mergeBudgets from "./mergeBudgets.js";
 import readBudgetFile from "./readBudgetFile.js";
@@ -27,6 +22,11 @@ const clock = new Date("2026-09-28T10:00:00Z");
 vi.mock("proper-lockfile", async (importOriginal) => {
   const library = await importOriginal<typeof import("proper-lockfile")>();
   return { ...library, lock: vi.fn(library.lock) };
+});
+// Each look at the lock, so a test can make one fail.
+vi.mock("./identifyFile.js", async (original) => {
+  const actual = await original<typeof import("./identifyFile.js")>();
+  return { default: vi.fn(actual.default) };
 });
 
 let directory: string;
@@ -46,6 +46,17 @@ afterEach(async () => {
 const makeBudget = (remaining: number) => ({
   graphql: { ...fullBudget, remaining },
 });
+
+/**
+ * Another process takes the budget lock over, as one does that judged it
+ * abandoned: its own lock replaces this one, with its own time.
+ */
+const takeLockOver = () => {
+  rmSync(lockfilePath, { recursive: true });
+  mkdirSync(lockfilePath);
+  const later = new Date(Date.now() + 2_000);
+  utimesSync(lockfilePath, later, later);
+};
 
 /**
  * A keeper for one process that heard `heard`, as a cache makes it: its
@@ -158,11 +169,7 @@ describe("createBudgetKeeper", () => {
       readFigures: () => {
         if (!takenOver) {
           takenOver = true;
-          rmSync(lockfilePath, { recursive: true });
-          mkdirSync(lockfilePath);
-          // The other process's lock carries its own time.
-          const later = new Date(Date.now() + 2_000);
-          utimesSync(lockfilePath, later, later);
+          takeLockOver();
           writeFileSync(file, JSON.stringify(makeBudget(800)));
         }
         return makeBudget(900);
@@ -185,10 +192,7 @@ describe("createBudgetKeeper", () => {
       isKept: () => false,
       // Once the figures are written, another process takes the lock over.
       adopt: () => {
-        rmSync(lockfilePath, { recursive: true });
-        mkdirSync(lockfilePath);
-        const later = new Date(Date.now() + 2_000);
-        utimesSync(lockfilePath, later, later);
+        takeLockOver();
       },
       publishFloor: () => {},
       now: () => clock,
@@ -207,10 +211,7 @@ describe("createBudgetKeeper", () => {
         readFigures: () => makeBudget(900),
         isKept: () => false,
         adopt: () => {
-          rmSync(lockfilePath, { recursive: true });
-          mkdirSync(lockfilePath);
-          const later = new Date(Date.now() + 2_000);
-          utimesSync(lockfilePath, later, later);
+          takeLockOver();
         },
         publishFloor: () => {},
         now: () => clock,
@@ -220,37 +221,16 @@ describe("createBudgetKeeper", () => {
         ended = true;
       });
       // The library hears of the takeover at its next touch of the lock.
-      while (!ended) {
+      await waitUntil(async () => {
         await vi.advanceTimersByTimeAsync(100);
-        await new Promise((resolve) => setImmediate(resolve));
-      }
+        expect(ended).toBe(true);
+      });
       await keeping;
       expect(vi.getTimerCount()).toBe(0);
     } finally {
       vi.useRealTimers();
     }
   });
-
-  it("never lets go of a lock taken over, though the library never hears of it", async () => {
-    const keeper = createBudgetKeeper({
-      file,
-      lockfilePath,
-      readFigures: () => makeBudget(900),
-      isKept: () => false,
-      // Another process takes the lock over with the very time the
-      // library last gave it, so the library never tells them apart.
-      adopt: () => {
-        const { mtime } = statSync(lockfilePath);
-        rmSync(lockfilePath, { recursive: true });
-        mkdirSync(lockfilePath);
-        utimesSync(lockfilePath, mtime, mtime);
-      },
-      publishFloor: () => {},
-      now: () => clock,
-    });
-    await keeper();
-    expect(await readdir(directory)).toContain("budget.json.lock");
-  }, 10_000);
 
   it("leaves the lowest figure of the window when processes keep falling figures together", async () => {
     const figures = [950, 900, 850, 800, 750, 700];
@@ -343,5 +323,44 @@ describe("createBudgetKeeper", () => {
     expect(await readBudgetFile(file)).toEqual(makeBudget(800));
     await keeper();
     expect(peer.mirror).toEqual(makeBudget(800));
+  });
+
+  it("drops a keeping whose lock cannot be let go, and keeps at the next call", async () => {
+    const library =
+      await vi.importActual<typeof import("proper-lockfile")>(
+        "proper-lockfile",
+      );
+    vi.mocked(lock).mockImplementationOnce(async (...args) => {
+      const release = await library.lock(...args);
+      return async () => {
+        await release();
+        throw Object.assign(new Error("released"), { code: "ERELEASED" });
+      };
+    });
+    await expect(
+      createProcess(makeBudget(900)).keeper(),
+    ).resolves.toBeUndefined();
+    await createProcess(makeBudget(800)).keeper();
+    expect(await readBudgetFile(file)).toEqual(makeBudget(800));
+  });
+
+  it("writes, and lets its lock go, when a look at the lock fails and heals at once", async () => {
+    const failure = Object.assign(new Error("I/O error"), { code: "EIO" });
+    const keeper = createBudgetKeeper({
+      file,
+      lockfilePath,
+      // The look at the lock before the write fails.
+      readFigures: () => {
+        vi.mocked(identifyFile).mockRejectedValueOnce(failure);
+        return makeBudget(900);
+      },
+      isKept: () => false,
+      adopt: () => {},
+      publishFloor: () => {},
+      now: () => clock,
+    });
+    await keeper();
+    expect(await readBudgetFile(file)).toEqual(makeBudget(900));
+    expect(await readdir(directory)).toEqual(["budget.json"]);
   });
 });

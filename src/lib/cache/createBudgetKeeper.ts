@@ -3,7 +3,7 @@ import { dirname } from "node:path";
 import type { Budgets } from "../provider/index.js";
 import { budgetLockTiming } from "./constants.js";
 import dropFarResets from "./dropFarResets.js";
-import identifyFile from "./identifyFile.js";
+import holdLock from "./holdLock.js";
 import isSame from "./isSame.js";
 import lockBudgetFile from "./lockBudgetFile.js";
 import mergeBudgets from "./mergeBudgets.js";
@@ -37,18 +37,18 @@ interface BudgetKeeperOptions {
  * once. When this process heard anything since it last read or wrote the
  * file, the figures are merged into it under the file's own lock, which is
  * held only to read, merge and write it: of each kind the later report
- * stays, so an older figure never overwrites a newer one, and the fetch
- * lock plays no part. The lock is checked to be still this keeping's before
- * the write, and again when the keeping ends. A takeover before the first
- * check means no write; one between that check and the rename is not
- * guarded, a narrow window this check leaves. A lock taken over is never
- * released here: it belongs to the process that took it, and the keeping
- * waits until the library has heard of the takeover, at most the lock's
- * stale time. One keeping runs at a time: a call made while one runs
- * joins it, and it runs once more for the figures heard meanwhile. It
- * never fails: a keeping that cannot read, lock or write the file is
- * dropped and its own lock let go; the process's next keeping, if it
- * keeps again, carries the figures.
+ * stays, so a merge never trades a newer figure for an older one, and the
+ * fetch lock plays no part. The lock is held and let go as `holdLock`
+ * holds every docket lock, and checked to be still this keeping's before
+ * the write: a keeping whose lock another process took over before that
+ * check writes nothing. Two narrow windows remain: a takeover between the
+ * check and the end of the write, whose older merge may then replace a
+ * later figure the other process wrote; and one between the last check
+ * and the letting go, which removes the other process's lock. One keeping runs at a time: a call made while one runs joins it,
+ * and it runs once more for the figures heard meanwhile. It never fails: a
+ * keeping that cannot read, lock or write the file, or let go of its lock,
+ * is dropped; the process's next keeping, if it keeps again, carries the
+ * figures.
  *
  * @note Impure: writes the status, and reads, locks and writes the budget
  * file.
@@ -67,46 +67,25 @@ export default function createBudgetKeeper({
     // there is nothing to keep.
     if (isKept()) return;
     await mkdir(dirname(file), { recursive: true, mode: 0o700 });
-    const forgotten = Promise.withResolvers<void>();
-    // The library tells when another process took the lock over, which
-    // then belongs to that process.
-    const release = await lockBudgetFile(file, lockfilePath, () =>
-      forgotten.resolve(),
+    // The lock is held and let go as every docket lock is.
+    const { outcome } = await holdLock(
+      (onCompromised) => lockBudgetFile(file, lockfilePath, onCompromised),
+      lockfilePath,
+      budgetLockTiming.stale,
+      async (isOwn) => {
+        // A report no answer of GitHub's gives is dropped, and written
+        // away.
+        const read = await readBudgetFile(file);
+        const held = dropFarResets(read, now());
+        const kept = mergeBudgets(held, readFigures());
+        // A process that took the lock over may have written a later figure
+        // since the read, which nothing here overwrites.
+        if (!(await isOwn())) return;
+        if (!isSame(kept, read)) await writeBudgetFile(file, kept);
+        adopt(kept);
+      },
     );
-    const own = await identifyFile(lockfilePath);
-    let taken = false;
-    try {
-      // A report no answer of GitHub's gives is dropped, and written away.
-      const read = await readBudgetFile(file);
-      const held = dropFarResets(read, now());
-      const kept = mergeBudgets(held, readFigures());
-      // Another process that took the lock over may have written a later
-      // figure since the read, which nothing here overwrites.
-      taken = (await identifyFile(lockfilePath)) !== own;
-      if (taken) return;
-      if (!isSame(kept, read)) await writeBudgetFile(file, kept);
-      adopt(kept);
-    } finally {
-      // The lock may also have been taken over since the check before the
-      // write. A lock taken over belongs to the process that took it and is
-      // never released here, since a release would remove that process's
-      // lock.
-      taken ||= (await identifyFile(lockfilePath)) !== own;
-      if (taken) {
-        // The library stops touching the lock once it hears of the
-        // takeover, which it does at its next touch. The keeping waits for
-        // that, and no longer than the lock's stale time, so it never waits
-        // for good should the library not hear.
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        await Promise.race([
-          forgotten.promise,
-          new Promise((resolve) => {
-            timer = setTimeout(resolve, budgetLockTiming.stale);
-          }),
-        ]);
-        clearTimeout(timer);
-      } else await release();
-    }
+    if ("error" in outcome) throw outcome.error;
   };
   // The keeping under way, which a call made meanwhile joins, and whether
   // one did, which keeps the figures heard since once it ends.
