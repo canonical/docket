@@ -154,7 +154,7 @@ describe("docket's own words at the narrowest pane", () => {
     expect(lines).toContain(`owed${" ".repeat(12)}one list · overdue first`);
   });
 
-  it("holds the counts owed and activity build whole, with three digits in every state", async () => {
+  it("holds the counts owed and activity build, with three digits in every state and in the position, leaving parts out whole", async () => {
     const many = (wait: Wait) => Array.from({ length: 999 }, () => wait);
     const owed = listWaits(
       [
@@ -193,13 +193,25 @@ describe("docket's own words at the narrowest pane", () => {
       ],
       activityNow,
     ).summary;
-    for (const summary of [owed, activity]) {
+    const lines: (string | undefined)[] = [];
+    for (const [summary, place] of [
+      [owed, "999/999/999"],
+      [activity, "999/999"],
+    ] as const) {
       const screen = await draw(
-        <CountsLine summary={summary} width={minColumns} />,
+        <CountsLine
+          summary={summary}
+          position={{ text: place, kind: "figure" }}
+          width={minColumns}
+        />,
         minColumns,
       );
-      expect(screen.lines.at(0)).toBe(summary.text);
+      lines.push(screen.lines.at(0));
     }
+    expect(lines).toEqual([
+      `999 over · 999 soon${" ".repeat(10)}999/999/999`,
+      `999 threads · 999 events${" ".repeat(9)}999/999`,
+    ]);
     expect(owed.text).toBe("999 over · 999 soon · 999 on track");
     expect(activity.text).toBe("999 threads · 999 events");
   });
