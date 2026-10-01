@@ -109,8 +109,8 @@ function endHeld(
   ];
 }
 
-/** The dimmed `…` that ends a line still waiting for the details. */
-const pendingMark = (after: boolean): Piece => ({
+/** Draws the dimmed `…` that ends a line still waiting for the details. */
+const drawPendingMark = (after: boolean): Piece => ({
   text: after ? ` ${tokens["glyph.cut"]}` : tokens["glyph.cut"],
   fg: tokens["color.text.muted"],
 });
@@ -127,7 +127,9 @@ function fitLine(line: DetailLine, room: number): Fitted[] {
   if (most !== 1) {
     return fitBlock(pieces, kind, room).map((runs) => ({ runs, ended: false }));
   }
-  const runs = pending ? [...pieces, pendingMark(pieces.length > 0)] : pieces;
+  const runs = pending
+    ? [...pieces, drawPendingMark(pieces.length > 0)]
+    : pieces;
   const given = giveWay({ ...line, pieces: runs }, room);
   const held = fitRuns(given.runs, room);
   const ended = pending === true || endsInCut(held, given.whole);
