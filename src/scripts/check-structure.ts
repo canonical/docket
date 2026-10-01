@@ -87,10 +87,10 @@ const fittingPrimitives =
 /**
  * Bun's measure of display cells disagrees with what OpenTUI draws, so
  * the terminal measures only through the fitting module's measure, and
- * only that measure and its tests name Bun's.
+ * only that measure's tests name Bun's, to show where the two disagree.
  */
 const bunMeasure = /\bBun\.stringWidth\b/;
-const measureModule = /^src\/lib\/ui\/fit\/measure(Clusters?|Text)\./;
+const measureModule = /^src\/lib\/ui\/fit\/measureText\.test\./;
 
 const maxLines = 500;
 const lengthHeader = /^\/\/ Longer than 500 lines because \S/;
@@ -583,6 +583,10 @@ const breaks: Record<string, [string, string]> = {
     "fitting",
     "export default function cutMiddle(text: string) { return Bun.stringWidth(text); }",
   ],
+  "src/lib/ui/fit/measureCluster.ts": [
+    "fitting",
+    "export default function measureCluster(text: string) { return Bun.stringWidth(text); }",
+  ],
   "src/lib/ui/component/Name/Name.tsx": [
     "fitting",
     'import cutMiddle from "../../fit/cutMiddle.js";\nexport default function Name() { return cutMiddle; }',
@@ -642,8 +646,8 @@ const allowed: Record<string, string> = {
   ].join("\n"),
   "src/lib/ui/component/Fitted/Fitted.tsx":
     'import { fitField } from "../../fit/index.js";\nexport default function Fitted() { return fitField; }',
-  "src/lib/ui/fit/measureCluster.ts":
-    "export default function measureCluster(text: string) { return Bun.stringWidth(text); }",
+  "src/lib/ui/fit/measureText.test.tsx":
+    'import { expect, it } from "vitest";\nit("differs", () => { expect(Bun.stringWidth("❤")).toBe(1); });',
   "src/lib/ui/fit/fitField.ts": [
     'import trimText from "./trimText.js";',
     'import fitPieces from "./fitPieces.js";',
