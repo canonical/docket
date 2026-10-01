@@ -45,7 +45,7 @@ const makeBudget = (remaining: number) => ({
  * A keeper for one process that heard `heard`, as a cache makes it: its
  * mirror is what the file last gave it, and it records the floor said.
  */
-const createProcess = (heard: Budgets) => {
+const createProcess = (heard: Budgets, at = clock) => {
   const told: string[] = [];
   const peer: { mirror: Budgets; heard: Budgets; told: string[] } = {
     mirror: {},
@@ -62,7 +62,7 @@ const createProcess = (heard: Budgets) => {
       peer.mirror = kept;
     },
     publishFloor: () => told.push("floor"),
-    now: () => clock,
+    now: () => at,
   });
   return { peer, keeper };
 };
@@ -112,6 +112,27 @@ describe("createBudgetKeeper", () => {
     await keeper();
     expect(await readBudgetFile(file)).toEqual(makeBudget(3500));
     expect(peer.mirror).toEqual(makeBudget(3500));
+  });
+
+  it("writes a far report away though what remains of the file is what it heard", async () => {
+    const rest = { ...fullBudget, remaining: 10 };
+    const far = { ...fullBudget, resetAt: new Date("9999-12-31T00:00:00Z") };
+    await writeBudgetFile(file, { graphql: far, rest });
+    await createProcess({ rest }).keeper();
+    expect(await readBudgetFile(file)).toEqual({ rest });
+  });
+
+  it("judges a reset by the time it is given, not the machine's", async () => {
+    const at = new Date("2031-01-01T10:00:00Z");
+    const near = {
+      ...fullBudget,
+      remaining: 700,
+      resetAt: new Date("2031-01-01T10:30:00Z"),
+    };
+    await writeBudgetFile(file, { graphql: near });
+    const rest = { ...fullBudget, remaining: 9 };
+    await createProcess({ rest }, at).keeper();
+    expect(await readBudgetFile(file)).toEqual({ graphql: near, rest });
   });
 
   it("takes over a lock a dead process left, and keeps the figures", async () => {

@@ -30,6 +30,13 @@ describe("writeBudgetFile", () => {
     expect(await readdir(join(root, "docket"))).toEqual(["budget.json"]);
   });
 
+  it("puts a new file in place of the old one, which a reader never meets half written", async () => {
+    await writeBudgetFile(file, { graphql: fullBudget });
+    const before = (await stat(file)).ino;
+    await writeBudgetFile(file, { graphql: { ...fullBudget, remaining: 5 } });
+    expect((await stat(file)).ino).not.toBe(before);
+  });
+
   it("leaves no temporary file behind when the write fails", async () => {
     // A folder where the file goes: the rename over it fails.
     await mkdir(file, { recursive: true });
