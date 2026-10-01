@@ -92,23 +92,34 @@ const endLast = (lines: readonly Fitted[], room: number): Fitted[] => [
 ];
 
 /**
- * `line` ending in a `…` of its own, in the text's plain colour, after
- * the runs that leave it the cell: the runs past them, a name or the
- * comma after one, leave whole, so no name is cut inside.
+ * A line that yields, in at most `lines` lines of `room` cells, ending in
+ * a `…` of its own, in the text's plain colour, after the last whole name
+ * and the comma after it that leave the mark room: the names past them
+ * leave whole, so no name is cut inside, and the mark never passes the
+ * room. With no whole name kept it gets no line.
  */
-function endWhole(line: Fitted, room: number): Fitted {
-  const kept = [...line.runs];
-  // A name is never the run the `…` follows, which would read as cut.
-  while (
-    kept.length > 1 &&
-    (measurePieces(kept) + 1 > room || kept.at(-1)?.marked)
-  ) {
-    kept.pop();
+function endWhole(
+  { pieces, kind }: DetailLine,
+  room: number,
+  lines: number,
+): Fitted[] {
+  const mark = { text: tokens["glyph.cut"], fg: tokens["color.text"] };
+  for (let end = pieces.length; end > 0; end -= 1) {
+    const kept = pieces.slice(0, end);
+    if (!kept.some(({ marked }) => marked)) break;
+    const last = kept.pop();
+    // A name is never the run the `…` follows, which would read as cut.
+    if (last === undefined || last.marked) continue;
+    const runs = [...kept, { ...last, text: last.text.trimEnd() }, mark];
+    const fitted = fitBlock(runs, kind, room);
+    if (fitted.length <= lines) {
+      return fitted.map((held, index) => ({
+        runs: held,
+        ended: index === fitted.length - 1,
+      }));
+    }
   }
-  return {
-    runs: [...kept, { text: tokens["glyph.cut"], fg: tokens["color.text"] }],
-    ended: true,
-  };
+  return [];
 }
 
 /**
@@ -154,17 +165,10 @@ function fitLines(
   for (const { line, fitted } of lined) {
     if (line.yields) {
       const taken = Math.max(0, Math.min(spare, fitted.length));
-      const kept = fitted.slice(0, taken);
-      drawn.push(
-        ...(taken < fitted.length && taken > 0
-          ? [
-              ...kept.slice(0, -1),
-              ...kept.slice(-1).map((last) => endWhole(last, room)),
-            ]
-          : kept),
-      );
-      yielded ||= taken === 0 && fitted.length > 0;
-      spare -= taken;
+      const kept = taken < fitted.length ? endWhole(line, room, taken) : fitted;
+      drawn.push(...kept);
+      yielded ||= kept.length === 0 && fitted.length > 0;
+      spare -= kept.length;
     } else if (fitted.length <= left - drawn.length) {
       drawn.push(...fitted);
     } else if (!line.optional) {

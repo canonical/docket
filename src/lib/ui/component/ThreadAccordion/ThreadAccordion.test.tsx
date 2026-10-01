@@ -270,6 +270,26 @@ describe("ThreadAccordion", () => {
       );
     });
 
+    it("gives the owners line no line when the lines it gets end inside its one name, the accordion's last line ending in …", async () => {
+      const [failing, ...rest] = longReviewDetail.checks;
+      const checks = [
+        ...(failing ? [failing] : []),
+        ...rest.map((check) => ({ ...check, state: "passing" as const })),
+      ];
+      const detail = Promise.resolve({ ...longReviewDetail, checks });
+      const screen = await open({ ...Long.args, detail }, 40);
+      expect(readText(screen).slice(0, 7)).toEqual([
+        "asked by ● alice 6d ago",
+        "0 pushes since · 1 file · +40 −12",
+        "✗ checks: 1 of 4 failed",
+        "(lint the whole repository)",
+        "stack 7 · 2 of 3 · → release/…ong-name",
+        "below #12344 merged, above #12346 ope…",
+        "",
+      ]);
+      expect(screen.lines.at(5)?.startsWith("╹")).toBe(true);
+    });
+
     it("keeps docket's words of a stack's place whole, the repository's short name leaving whole before the base branch is cut once in its middle", async () => {
       const onStack = (stack: {
         number: number;

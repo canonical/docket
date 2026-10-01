@@ -53,7 +53,33 @@ describe("fitAccordion", () => {
       "owner ● alice,…",
       "checks",
     ]);
-    expect(read(fitAccordion(text, 14, 2))).toEqual(["owner …", "checks"]);
+    // With no whole name kept, it gets no line, and the last line ends.
+    expect(read(fitAccordion(text, 14, 2))).toEqual(["checks…"]);
+  });
+
+  it("leaves a name too long for the lines it gets whole, ending the part before it", () => {
+    const people = {
+      ...wrapped(""),
+      pieces: [
+        { text: "owner ", fg },
+        { text: "● alice", fg, marked: true },
+        { text: ", ", fg },
+        { text: "○ example-contributor-with-a-long-login", fg, marked: true },
+        { text: ", ", fg },
+        { text: "● bob", fg, marked: true },
+      ],
+      yields: true,
+    };
+    const text = { body: [people, wrapped("checks")], stack: [] };
+    expect(read(fitAccordion(text, 37, 3))).toEqual([
+      "owner ● alice,…",
+      "checks",
+    ]);
+    for (const lines of [2, 3, 4, 5, 6]) {
+      for (const line of read(fitAccordion(text, 37, lines))) {
+        expect(line.length).toBeLessThanOrEqual(37);
+      }
+    }
   });
 
   it("ends the accordion's last line with … when a line that yields has no line left at all", () => {
