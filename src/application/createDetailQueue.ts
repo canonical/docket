@@ -69,7 +69,9 @@ export interface DetailQueue {
    * the list first shows, or the selected thread alone is read again:
    * nothing while nothing is pending, or while the queue is paused. A
    * thread that gives way to a later window, or that a request leaves
-   * out, is no longer counted as asked for.
+   * out, is no longer counted as asked for, except the thread the
+   * selection moved to while the request was under way: it stays counted,
+   * and is asked for in the very next request.
    */
   countDetails(): DetailsCount | undefined;
   /** How many times details arrived for `thread`: part of its version. */
@@ -87,7 +89,7 @@ export interface DetailQueue {
    * window asked for last; reads under way stay.
    */
   forget(): void;
-  /** Sends nothing more, when the pane closes. */
+  /** Sends nothing more, when the pane closes, a read under way included. */
   stop(): void;
 }
 
@@ -97,13 +99,15 @@ export interface DetailQueue {
  * around it cost one point together. A read asked for alone goes at once,
  * unless an ask for the rows around it is pending, which it joins. A
  * thread the request leaves out, as the reader does below the budget
- * floor, is asked for again when it is due. A thread's details are due
- * again only when its version moves: a change GitHub records on it, or
- * one the list's roll-up of its checks shows. One the provider no longer
- * finds, or one a request that fails asked for, fails its read, and is
- * not asked for again until its version moves or a read asks for it, as
- * the accordion does when the selection comes back to it. Nothing is sent
- * while it is paused.
+ * floor, is asked for again when it is due; the thread the selection
+ * moved to while that request was under way is asked for in the very
+ * next request. A thread's details are due again only when its version
+ * moves: a change GitHub records on it, or one the list's roll-up of its
+ * checks shows. One the provider no longer finds, or one a request that
+ * fails asked for, fails its read, and is not asked for again until its
+ * version moves or a read asks for it, as the accordion does when the
+ * selection comes back to it. Nothing is sent while it is paused, or once
+ * it is stopped.
  *
  * @note Impure: sets a timer for each request, and reads through
  * `reader`.
