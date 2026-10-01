@@ -69,11 +69,29 @@ const endLast = (lines: readonly Piece[][], room: number): Piece[][] => [
 ];
 
 /**
+ * `line` ending in a `…` of its own, in the text's plain colour, after
+ * the runs that leave it the cell: the runs past them, a name or the
+ * comma after one, leave whole, so no name is cut inside.
+ */
+function endWhole(line: readonly Piece[], room: number): Piece[] {
+  const kept = [...line];
+  // A name is never the run the `…` follows, which would read as cut.
+  while (
+    kept.length > 1 &&
+    (measurePieces(kept) + 1 > room || kept.at(-1)?.marked)
+  ) {
+    kept.pop();
+  }
+  return [...kept, { text: tokens["glyph.cut"], fg: tokens["color.text"] }];
+}
+
+/**
  * Fits what the accordion shows into at most `lines` lines of `room`
  * cells, never more: the stack lines first, and the body in the lines
- * they leave, a line that yields in those the others leave it, one at
- * least, cut with `…` if it runs out. A line marked optional shows only when it fits
- * whole.
+ * they leave, a line that yields in those the others leave it, ending
+ * in `…` after a whole name when it runs out, and the accordion's last
+ * line ending in `…` when it gets none. A line marked optional shows
+ * only when it fits whole.
  * Content past the last line is cut, and only the last line kept ends in
  * `…`.
  */
@@ -95,23 +113,22 @@ export default function fitAccordion(
       .filter(({ line }) => !line.yields && !line.optional)
       .reduce((sum, { fitted }) => sum + fitted.length, 0);
   const drawn: Piece[][] = [];
+  // Whether a line that yields was left out, or cut, so the accordion's
+  // last line says more follows.
+  let yielded = false;
   for (const { line, fitted } of lined) {
     if (line.yields) {
-      // It keeps one line at least, ending in … when it is cut, while any
-      // is left: the lines after it give way then, so it never leaves
-      // without a mark.
-      const taken = Math.max(
-        0,
-        Math.min(Math.max(1, spare), fitted.length, left - drawn.length),
+      const taken = Math.max(0, Math.min(spare, fitted.length));
+      const kept = fitted.slice(0, taken);
+      drawn.push(
+        ...(taken < fitted.length && taken > 0
+          ? [
+              ...kept.slice(0, -1),
+              ...kept.slice(-1).map((last) => endWhole(last, room)),
+            ]
+          : kept),
       );
-      if (taken === 0) return endLast([...drawn, ...bottom], room);
-      // Held to one line, it names what it can there, a person cut after
-      // their mark.
-      const kept =
-        taken === 1 && fitted.length > 1
-          ? [fitRuns(line.pieces, room)]
-          : fitted.slice(0, taken);
-      drawn.push(...(taken < fitted.length ? endLast(kept, room) : kept));
+      yielded ||= taken === 0 && fitted.length > 0;
       spare -= taken;
     } else if (fitted.length <= left - drawn.length) {
       drawn.push(...fitted);
@@ -124,5 +141,5 @@ export default function fitAccordion(
         : endLast(bottom, room);
     }
   }
-  return [...drawn, ...bottom];
+  return yielded ? endLast([...drawn, ...bottom], room) : [...drawn, ...bottom];
 }

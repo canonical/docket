@@ -22,17 +22,38 @@ const read = (lines: ReturnType<typeof fitAccordion>) =>
 describe("fitAccordion", () => {
   const owners: DetailLine = { ...wrapped("owner a b c"), yields: true };
 
-  it("gives a line that yields one line at least, ending in …, and the others give way after it", () => {
+  it("gives a line that yields no line when the others need them all, the accordion's last line ending in …", () => {
     const text = {
       body: [owners, wrapped("checks one two three")],
       stack: [trimmed("stack")],
     };
     expect(read(fitAccordion(text, 7, 4))).toEqual([
-      "owner …",
       "checks",
-      "one tw…",
-      "stack",
+      "one two",
+      "three",
+      "stack…",
     ]);
+  });
+
+  it("ends a line that yields, when it runs out, with … after a whole name, never inside one", () => {
+    const people = {
+      ...wrapped(""),
+      pieces: [
+        { text: "owner ", fg },
+        { text: "● alice", fg, marked: true },
+        { text: ", ", fg },
+        { text: "● bob", fg, marked: true },
+        { text: ", ", fg },
+        { text: "● carol-at-example", fg, marked: true },
+      ],
+      yields: true,
+    };
+    const text = { body: [people, wrapped("checks")], stack: [] };
+    expect(read(fitAccordion(text, 20, 2))).toEqual([
+      "owner ● alice,…",
+      "checks",
+    ]);
+    expect(read(fitAccordion(text, 14, 2))).toEqual(["owner …", "checks"]);
   });
 
   it("ends the accordion's last line with … when a line that yields has no line left at all", () => {

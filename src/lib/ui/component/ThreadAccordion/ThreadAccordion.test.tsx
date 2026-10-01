@@ -252,24 +252,22 @@ describe("ThreadAccordion", () => {
       expect(screen.lines.at(7)?.startsWith("╹")).toBe(true);
     });
 
-    it("gives the owners line the lines a review's checks leave, one at least, ending it with …, each run in its own colour", async () => {
+    it("gives the owners line only the lines a review's checks leave, ending it after a whole name, or the accordion's last line, in …", async () => {
       const narrow = await open(Long.args);
-      expect(readText(narrow).slice(0, 6)).toEqual([
-        "owner ○ example-contributor-with-a-lo…",
+      expect(readText(narrow).slice(0, 8)).toEqual([
         "asked by ● alice 6d ago",
         "0 pushes since · 1 file · +40 −12",
         "✗ checks: 3 of 4 failed",
         "(lint the whole repository,",
-        "unit tests on every platform,…",
+        "unit tests on every platform,",
+        "build the documentation site)",
+        "stack 7 · 2 of 3 · → release/…ong-name",
+        "below #12344 merged, above #12346 ope…",
       ]);
       const wide = await open(Long.args, 60);
       expect(readText(wide).at(0)).toBe(
-        "owner ○ example-contributor-with-a-long-login, example-or…",
+        "owner ○ example-contributor-with-a-long-login,…",
       );
-      expect(wide.look("○ example-contributor")?.fg).toBe(
-        tokens["color.text.outside"],
-      );
-      expect(wide.look(", example-or…")?.fg).toBe(tokens["color.text"]);
     });
 
     it("keeps docket's words of a stack's place whole, the repository's short name leaving whole before the base branch is cut once in its middle", async () => {
