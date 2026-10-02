@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":pinAllExceptPeerDependencies"],
+  "extends": ["local>canonical/pragma-core//configs/renovate/default.json"],
   "lockFileMaintenance": { "enabled": true },
   "packageRules": [
     {
@@ -11,6 +11,11 @@
         "@opentui/react"
       ],
       "enabled": false
+    },
+    {
+      "description": "React stays on the 19.2 line that the terminal renderer's react-reconciler 0.33 is built for, and moves to 19.3 with the renderer.",
+      "matchPackageNames": ["react", "@types/react"],
+      "allowedVersions": "<19.3"
     }
   ]
 }
