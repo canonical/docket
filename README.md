@@ -91,6 +91,9 @@ Move through the list with `↑` and `↓`. The selected thread opens under its 
 
 If `gh` is missing or signed out, docket opens on a setup screen that names the problem and how to fix it.
 
+<!-- verify at release -->
+If GitHub refuses the token while docket is open, the screen turns to setup too. Run `gh auth login` in another pane, and it comes back as you left it.
+
 ## Three modes
 
 ### owed: who is waiting on us?
@@ -226,7 +229,6 @@ Your **personal file**, `~/.config/docket/docket.yaml`, says which repositories 
 For each repository, a section in its `.github/docket.yaml` wins over the same section in your personal file. Sections replace each other whole and never merge: whatever the winning section leaves out comes from the built-in defaults, not from the other file. So your personal file can't add someone to a repository's team.
 
 If a repository's file has a mistake, that repository falls back to the built-in defaults for the four shared sections, and its rows are marked `✗ file`. If your personal file has one, docket stops and says what to fix.
-<!-- verify at release: the setup-on-refusal change may show this on the setup screen instead -->
 `docket config` shows which file set each section, for each repository.
 
 ### repos
