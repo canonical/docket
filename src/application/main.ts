@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 import manifest from "../../package.json" with { type: "json" };
 import { createProvider } from "../lib/github/index.js";
 import openTerminal from "./openTerminal.js";
