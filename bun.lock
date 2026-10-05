@@ -21,7 +21,7 @@
       },
       "devDependencies": {
         "@biomejs/biome": "2.5.13",
-        "@canonical/biome-config": "0.40.0",
+        "@canonical/biome-config": "0.43.0",
         "@canonical/typescript-config-react": "0.43.0",
         "@types/bun": "1.4.2",
         "@types/proper-lockfile": "4.1.4",
@@ -62,7 +62,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.5.13", "", { "os": "win32", "cpu": "x64" }, "sha512-VOofU/nW761XWzUeUNE8zzYNyPrxuMuNFMizL0qz7J75yeV8N7WFheUlk1/K6dOkaFpH9wJ+lDKlwjAbw0346w=="],
 
-    "@canonical/biome-config": ["@canonical/biome-config@0.40.0", "", { "peerDependencies": { "@biomejs/biome": "2.5.13" } }, "sha512-ZJ+LW609eTu3y9Kal/EeyglI1hSfEU/5te70RdH29MmBD2QOHp0jd2bR/62n0GyEgH+gAA02puBCvdy2vMVo7A=="],
+    "@canonical/biome-config": ["@canonical/biome-config@0.43.0", "", { "peerDependencies": { "@biomejs/biome": "2.5.14" } }, "sha512-YTT/GjP+n1mxHRczlRp8RARTjvjt0oBfoQcRLvJ3poop29GXnWCSduL0lYW8XUHzC+DWXKw1pWQSGOv972r2jw=="],
 
     "@canonical/typescript-config": ["@canonical/typescript-config@0.43.0", "", { "peerDependencies": { "typescript": "^5.9.3 || ^6.0.0 || ^7.0.0" } }, "sha512-FbLT5cfsT8Cz8ogtmOUSue6wtRomz5Yz/gX6oajLW+obxDgeHpMNIhR/dngCL7PuN4MAh+Eg7Z6hmlKOw+NEyQ=="],
 
