@@ -70,7 +70,7 @@
     "@tanstack/query-core": "5.104.0",
     "bottleneck": "2.19.5",
     "proper-lockfile": "4.1.2",
-    "react": "19.2.8",
+    "react": "19.2.9",
     "yaml": "2.9.1"
   }
 }
