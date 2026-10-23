@@ -22,7 +22,7 @@
       "devDependencies": {
         "@biomejs/biome": "2.5.13",
         "@canonical/biome-config": "0.40.0",
-        "@canonical/typescript-config-react": "0.43.0",
+        "@canonical/typescript-config-react": "0.45.0",
         "@types/bun": "1.4.2",
         "@types/proper-lockfile": "4.1.4",
         "@types/react": "19.2.18",
@@ -66,7 +66,7 @@
 
     "@canonical/typescript-config": ["@canonical/typescript-config@0.43.0", "", { "peerDependencies": { "typescript": "^5.9.3 || ^6.0.0 || ^7.0.0" } }, "sha512-FbLT5cfsT8Cz8ogtmOUSue6wtRomz5Yz/gX6oajLW+obxDgeHpMNIhR/dngCL7PuN4MAh+Eg7Z6hmlKOw+NEyQ=="],
 
-    "@canonical/typescript-config-react": ["@canonical/typescript-config-react@0.43.0", "", { "dependencies": { "@canonical/typescript-config": "0.43.0" }, "peerDependencies": { "typescript": "^5.9.3 || ^6.0.0 || ^7.0.0" } }, "sha512-sJY6E23vybQsuY7CZfK5HK88M3FfeMTXGSrjJ19aOQCu+zpKXWWEZkNFRp05lSGTEZ8zjmpflmhtcIhMMtw+GQ=="],
+    "@canonical/typescript-config-react": ["@canonical/typescript-config-react@0.45.0", "", { "dependencies": { "@canonical/typescript-config": "0.43.0" }, "peerDependencies": { "typescript": "^5.9.3 || ^6.0.0 || ^7.0.0" } }, "sha512-HC2bTmPsTHYJiMCp3dkzu7F7K4hYHfF8PUWQWvg8Er+tAA+XgIPJkItM8v8P4NQTRvggFBbbtQa8d0nqaQK7HQ=="],
 
     "@gar/promise-retry": ["@gar/promise-retry@1.0.3", "", {}, "sha512-GmzA9ckNokPypTg10pgpeHNQe7ph+iIKKmhKu3Ob9ANkswreCx7R3cKmY781K8QK3AqVL3xVh9A42JvIAbkkSA=="],
 
