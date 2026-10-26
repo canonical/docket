@@ -67,7 +67,7 @@
     "@opentui/core": "0.5.12",
     "@opentui/keymap": "0.5.12",
     "@opentui/react": "0.5.12",
-    "@tanstack/query-core": "5.104.0",
+    "@tanstack/query-core": "5.105.0",
     "bottleneck": "2.19.5",
     "proper-lockfile": "4.1.2",
     "react": "19.2.8",
