@@ -37,9 +37,9 @@
 |? q quit
 
 runs
-1:1 "setup                                                       " fg #c6c8d1ff bg #161821ff
-3:3 "✗ docket needs the GitHub CLI (gh)" fg #e27878ff bg #161821ff
-4:3 "Recovery: install it from https://cli.github.com, then run" fg #c6c8d1ff bg #161821ff
-5:3 "gh auth login" fg #c6c8d1ff bg #161821ff
-36:1 "? q" fg #c6c8d1ff bg #161821ff
-36:4 " quit" fg #6b7089ff bg #161821ff
+1:1 "setup                                                       " fg #ffffffff bg #000000ff
+3:3 "✗ docket needs the GitHub CLI (gh)" fg #800000ff bg #000000ff
+4:3 "Recovery: install it from https://cli.github.com, then run" fg #ffffffff bg #000000ff
+5:3 "gh auth login" fg #ffffffff bg #000000ff
+36:1 "? q" fg #ffffffff bg #000000ff
+36:4 " quit" fg #808080ff bg #000000ff

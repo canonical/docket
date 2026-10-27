@@ -9,7 +9,7 @@ import {
   recordedNow,
   recordedRepos,
 } from "../testing/recorded.js";
-import { draw } from "../testing/terminal.js";
+import { draw, hex } from "../testing/terminal.js";
 import drawStandIn, { type StandInProps } from "./drawStandIn.js";
 
 /** owed with its threads in and its list drawn: nothing stands in. */
@@ -60,7 +60,9 @@ describe("drawStandIn", () => {
   it("says the first run is in progress, with no progress line, while no page count is known", async () => {
     const screen = await drawFor({ held: false, status: undefined });
     expect(screen.lines.slice(0, 2)).toEqual(["  refresh in progress…", ""]);
-    expect(screen.look("refresh in progress")?.fg).toBe(tokens["color.text"]);
+    expect(screen.look("refresh in progress")?.fg).toBe(
+      hex(tokens["color.text"]),
+    );
   });
 
   it("shows each repository's stage and the pages the first run read", async () => {
@@ -191,7 +193,9 @@ describe("drawStandIn", () => {
   it("says activity's events are being read while no list is held for the window", async () => {
     const screen = await drawFor({ mode: "activity", owedListed: false });
     expect(screen.lines.at(0)).toBe("  refresh in progress…");
-    expect(screen.look("refresh in progress")?.fg).toBe(tokens["color.text"]);
+    expect(screen.look("refresh in progress")?.fg).toBe(
+      hex(tokens["color.text"]),
+    );
   });
 
   it("stands in for nothing while owed's list is drawn, whatever activity holds", () => {

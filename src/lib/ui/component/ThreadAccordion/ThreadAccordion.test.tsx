@@ -12,7 +12,11 @@ import {
 } from "../../../../testing/long.js";
 import { recordedNow } from "../../../../testing/recorded.js";
 import { measureRow, overReview, soonReply } from "../../../../testing/rows.js";
-import { drawSuspending, type Screen } from "../../../../testing/terminal.js";
+import {
+  drawSuspending,
+  hex,
+  type Screen,
+} from "../../../../testing/terminal.js";
 import type { FinishedRow } from "../../../finished/index.js";
 import type { ThreadDetail } from "../../../provider/index.js";
 import { tokens } from "../../../tokens/index.js";
@@ -66,7 +70,7 @@ describe("ThreadAccordion", () => {
   it("draws on the selection's background, since it belongs to the selected item", async () => {
     const screen = await open(Review.args);
     expect(screen.look("asked by")?.bg).toBe(
-      tokens["color.background.selected"],
+      hex(tokens["color.background.selected"]),
     );
   });
 
@@ -86,13 +90,15 @@ describe("ThreadAccordion", () => {
         "below #11 merged, above #13 close",
         "",
       ]);
-      expect(screen.look("✗ checks")?.fg).toBe(tokens["color.text.error"]);
-      expect(screen.look("asked by")?.fg).toBe(tokens["color.text.muted"]);
-      expect(screen.look("● alice")?.fg).toBe(tokens["color.text.team"]);
+      expect(screen.look("✗ checks")?.fg).toBe(hex(tokens["color.text.error"]));
+      expect(screen.look("asked by")?.fg).toBe(hex(tokens["color.text.muted"]));
+      expect(screen.look("● alice")?.fg).toBe(hex(tokens["color.text.team"]));
       expect(screen.look("example stack 3")?.fg).toBe(
-        tokens["color.text.muted"],
+        hex(tokens["color.text.muted"]),
       );
-      expect(screen.look("below #11")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("below #11")?.fg).toBe(
+        hex(tokens["color.text.muted"]),
+      );
     });
 
     it("shows the snapshot's lines at once while the details are read, the same height, the rest ending in a dimmed …", async () => {
@@ -105,7 +111,7 @@ describe("ThreadAccordion", () => {
         "…",
         "",
       ]);
-      expect(screen.look(" …")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look(" …")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
 
     it("names an owner the row cuts whole, first, before the review's body and the stack lines", async () => {
@@ -134,14 +140,16 @@ describe("ThreadAccordion", () => {
         "waiting since Tue 10:00 · target 24h",
         "",
       ]);
-      expect(screen.look("It crashes")?.fg).toBe(tokens["color.text"]);
-      expect(screen.look("waiting since")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("It crashes")?.fg).toBe(hex(tokens["color.text"]));
+      expect(screen.look("waiting since")?.fg).toBe(
+        hex(tokens["color.text.muted"]),
+      );
     });
 
     it("says loading, dimmed, for a thread the snapshot holds nothing of", async () => {
       const screen = await open(RestingLoading.args);
       expect(readText(screen).slice(0, 2)).toEqual(["loading…", ""]);
-      expect(screen.look("loading…")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("loading…")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
 
     it("shows what the snapshot holds while reading is paused, as it does while the details are read", async () => {
@@ -155,7 +163,7 @@ describe("ThreadAccordion", () => {
         "",
       ]);
       expect(screen.lines).toEqual((await open(Loading.args)).lines);
-      expect(screen.look(" …")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look(" …")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
 
     it("says when reading resumes, dimmed, for a thread the snapshot holds nothing of", async () => {
@@ -165,7 +173,7 @@ describe("ThreadAccordion", () => {
         "",
       ]);
       expect(screen.look("paused · resumes")?.fg).toBe(
-        tokens["color.text.muted"],
+        hex(tokens["color.text.muted"]),
       );
     });
 
@@ -182,9 +190,11 @@ describe("ThreadAccordion", () => {
         "refresh",
         "",
       ]);
-      expect(screen.look("✗ failed")?.fg).toBe(tokens["color.text.error"]);
-      expect(screen.look("30 seconds")?.fg).toBe(tokens["color.text.error"]);
-      expect(screen.look("Recovery:")?.fg).toBe(tokens["color.text"]);
+      expect(screen.look("✗ failed")?.fg).toBe(hex(tokens["color.text.error"]));
+      expect(screen.look("30 seconds")?.fg).toBe(
+        hex(tokens["color.text.error"]),
+      );
+      expect(screen.look("Recovery:")?.fg).toBe(hex(tokens["color.text"]));
     });
 
     it("gives the reason alone, wrapped, for a thread the snapshot holds nothing of, and no recovery when the failure gives none", async () => {

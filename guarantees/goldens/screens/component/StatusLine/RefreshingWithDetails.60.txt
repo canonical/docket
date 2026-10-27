@@ -2,5 +2,5 @@
 |refreshing · docs 2/3                           details 3/12
 
 runs
-1:1 "refreshing · docs 2/3" fg #c6c8d1ff bg #00000000
-1:22 "                           details 3/12" fg #6b7089ff bg #00000000
+1:1 "refreshing · docs 2/3" fg #ffffffff bg #00000000
+1:22 "                           details 3/12" fg #808080ff bg #00000000

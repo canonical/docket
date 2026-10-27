@@ -25,76 +25,76 @@
 |←→ mode ↑↓ sel ⏎ open g grp t time ?
 
 runs
-1:1 "finished                       1w · by ending · " fg #c6c8d1ff bg #161821ff
-1:49 "newest first" fg #6b7089ff bg #161821ff
-2:1 "closed as completed ────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
-3:1 "│" fg #b4be82ff bg #2e3244ff
-3:2 " " fg #6b7089ff bg #2e3244ff
-3:3 "docs#102 issue " fg #c6c8d1ff bg #2e3244ff bold
-3:18 "○ dave" fg #89b8c2ff bg #2e3244ff bold
-3:24 "                              open 2d" fg #c6c8d1ff bg #2e3244ff bold
-4:1 "│" fg #b4be82ff bg #2e3244ff
-4:2 " " fg #6b7089ff bg #2e3244ff
-4:3 "Table: sticky header scrolls away" fg #c6c8d1ff bg #2e3244ff italic
-4:36 "                  " fg #c6c8d1ff bg #2e3244ff
-4:54 "◉ alice" fg #84a0c6ff bg #2e3244ff
-5:1 "│" fg #b4be82ff bg #2e3244ff
-5:2 " " fg #6b7089ff bg #2e3244ff
-5:3 "target 30d" fg #c6c8d1ff bg #2e3244ff
-5:13 "                                                " fg #ffffffff bg #2e3244ff
-6:1 "│" fg #b4be82ff bg #2e3244ff
-6:2 " " fg #6b7089ff bg #2e3244ff
-6:3 "labels kind=bug" fg #c6c8d1ff bg #2e3244ff
-6:18 "                                           " fg #ffffffff bg #2e3244ff
-7:1 "╵" fg #b4be82ff bg #161821ff
-7:5 "◉ alice" fg #84a0c6ff bg #161821ff
-7:12 " closed as completed                           1d" fg #c6c8d1ff bg #161821ff
-8:1 "┃" fg #e27878ff bg #161821ff
-8:3 "docs#98 issue " fg #c6c8d1ff bg #161821ff bold
-8:17 "■ example-sync" fg #6b7089ff bg #161821ff bold
-8:53 "40d over" fg #e27878ff bg #161821ff bold
-9:1 "┃" fg #e27878ff bg #161821ff
-9:3 "Sync: guard tripped" fg #c6c8d1ff bg #161821ff italic
-9:54 "◉ alice" fg #84a0c6ff bg #161821ff
-10:1 "╹" fg #e27878ff bg #161821ff
-10:5 "◉ alice" fg #84a0c6ff bg #161821ff
-10:12 " closed as completed                           5d" fg #c6c8d1ff bg #161821ff
-11:1 "closed as not planned ──────────────────────────────────────" fg #c6c8d1ff bg #161821ff
-12:1 "┃" fg #e27878ff bg #161821ff
-12:3 "docs#77 issue " fg #c6c8d1ff bg #161821ff bold
-12:17 "◐ carol" fg #a093c7ff bg #161821ff bold
-12:53 "10d over" fg #e27878ff bg #161821ff bold
-13:1 "┃" fg #e27878ff bg #161821ff
-13:3 "Tokens page: contrast" fg #c6c8d1ff bg #161821ff italic
-13:24 "                           unassigned" fg #c6c8d1ff bg #161821ff
-14:1 "╹" fg #e27878ff bg #161821ff
-14:5 "● bob" fg #84a0c6ff bg #161821ff
-14:10 " closed as not planned                           2d" fg #c6c8d1ff bg #161821ff
-15:1 "merged ─────────────────────────────────────────────────────" fg #c6c8d1ff bg #161821ff
-16:1 "│" fg #b4be82ff bg #161821ff
-16:2 "┆" fg #6b7089ff bg #161821ff
-16:3 "example#1200 PR " fg #c6c8d1ff bg #161821ff bold
-16:19 "● bob" fg #84a0c6ff bg #161821ff bold
-16:24 "                              open 3d" fg #c6c8d1ff bg #161821ff bold
-17:1 "│" fg #b4be82ff bg #161821ff
-17:2 "┆" fg #6b7089ff bg #161821ff
-17:3 "Focus ring: token names" fg #c6c8d1ff bg #161821ff italic
-17:56 "● bob" fg #84a0c6ff bg #161821ff
-18:1 "╵" fg #b4be82ff bg #161821ff
-18:2 "┆" fg #6b7089ff bg #161821ff
-18:5 "◉ alice" fg #84a0c6ff bg #161821ff
-18:12 " merged                                        6h" fg #c6c8d1ff bg #161821ff
-21:1 "  ↓ 3 below" fg #6b7089ff bg #161821ff
-22:1 "3 over · 4 merged · 3 closed                           1/2/7" fg #c6c8d1ff bg #161821ff
-23:1 "synced 2m ago" fg #6b7089ff bg #161821ff
-24:1 "←→" fg #c6c8d1ff bg #161821ff
-24:3 " mode" fg #6b7089ff bg #161821ff
-24:8 " ↑↓" fg #c6c8d1ff bg #161821ff
-24:11 " sel" fg #6b7089ff bg #161821ff
-24:15 " ⏎" fg #c6c8d1ff bg #161821ff
-24:17 " open" fg #6b7089ff bg #161821ff
-24:22 " g" fg #c6c8d1ff bg #161821ff
-24:24 " grp" fg #6b7089ff bg #161821ff
-24:28 " t" fg #c6c8d1ff bg #161821ff
-24:30 " time" fg #6b7089ff bg #161821ff
-24:35 " ?" fg #c6c8d1ff bg #161821ff
+1:1 "finished                       1w · by ending · " fg #ffffffff bg #000000ff
+1:49 "newest first" fg #808080ff bg #000000ff
+2:1 "closed as completed ────────────────────────────────────────" fg #ffffffff bg #000000ff
+3:1 "│" fg #008000ff bg #808080ff
+3:2 " " fg #808080ff bg #808080ff
+3:3 "docs#102 issue " fg #ffffffff bg #808080ff bold
+3:18 "○ dave" fg #008080ff bg #808080ff bold
+3:24 "                              open 2d" fg #ffffffff bg #808080ff bold
+4:1 "│" fg #008000ff bg #808080ff
+4:2 " " fg #808080ff bg #808080ff
+4:3 "Table: sticky header scrolls away" fg #ffffffff bg #808080ff italic
+4:36 "                  " fg #ffffffff bg #808080ff
+4:54 "◉ alice" fg #000080ff bg #808080ff
+5:1 "│" fg #008000ff bg #808080ff
+5:2 " " fg #808080ff bg #808080ff
+5:3 "target 30d" fg #ffffffff bg #808080ff
+5:13 "                                                " fg #ffffffff bg #808080ff
+6:1 "│" fg #008000ff bg #808080ff
+6:2 " " fg #808080ff bg #808080ff
+6:3 "labels kind=bug" fg #ffffffff bg #808080ff
+6:18 "                                           " fg #ffffffff bg #808080ff
+7:1 "╵" fg #008000ff bg #000000ff
+7:5 "◉ alice" fg #000080ff bg #000000ff
+7:12 " closed as completed                           1d" fg #ffffffff bg #000000ff
+8:1 "┃" fg #800000ff bg #000000ff
+8:3 "docs#98 issue " fg #ffffffff bg #000000ff bold
+8:17 "■ example-sync" fg #808080ff bg #000000ff bold
+8:53 "40d over" fg #800000ff bg #000000ff bold
+9:1 "┃" fg #800000ff bg #000000ff
+9:3 "Sync: guard tripped" fg #ffffffff bg #000000ff italic
+9:54 "◉ alice" fg #000080ff bg #000000ff
+10:1 "╹" fg #800000ff bg #000000ff
+10:5 "◉ alice" fg #000080ff bg #000000ff
+10:12 " closed as completed                           5d" fg #ffffffff bg #000000ff
+11:1 "closed as not planned ──────────────────────────────────────" fg #ffffffff bg #000000ff
+12:1 "┃" fg #800000ff bg #000000ff
+12:3 "docs#77 issue " fg #ffffffff bg #000000ff bold
+12:17 "◐ carol" fg #800080ff bg #000000ff bold
+12:53 "10d over" fg #800000ff bg #000000ff bold
+13:1 "┃" fg #800000ff bg #000000ff
+13:3 "Tokens page: contrast" fg #ffffffff bg #000000ff italic
+13:24 "                           unassigned" fg #ffffffff bg #000000ff
+14:1 "╹" fg #800000ff bg #000000ff
+14:5 "● bob" fg #000080ff bg #000000ff
+14:10 " closed as not planned                           2d" fg #ffffffff bg #000000ff
+15:1 "merged ─────────────────────────────────────────────────────" fg #ffffffff bg #000000ff
+16:1 "│" fg #008000ff bg #000000ff
+16:2 "┆" fg #808080ff bg #000000ff
+16:3 "example#1200 PR " fg #ffffffff bg #000000ff bold
+16:19 "● bob" fg #000080ff bg #000000ff bold
+16:24 "                              open 3d" fg #ffffffff bg #000000ff bold
+17:1 "│" fg #008000ff bg #000000ff
+17:2 "┆" fg #808080ff bg #000000ff
+17:3 "Focus ring: token names" fg #ffffffff bg #000000ff italic
+17:56 "● bob" fg #000080ff bg #000000ff
+18:1 "╵" fg #008000ff bg #000000ff
+18:2 "┆" fg #808080ff bg #000000ff
+18:5 "◉ alice" fg #000080ff bg #000000ff
+18:12 " merged                                        6h" fg #ffffffff bg #000000ff
+21:1 "  ↓ 3 below" fg #808080ff bg #000000ff
+22:1 "3 over · 4 merged · 3 closed                           1/2/7" fg #ffffffff bg #000000ff
+23:1 "synced 2m ago" fg #808080ff bg #000000ff
+24:1 "←→" fg #ffffffff bg #000000ff
+24:3 " mode" fg #808080ff bg #000000ff
+24:8 " ↑↓" fg #ffffffff bg #000000ff
+24:11 " sel" fg #808080ff bg #000000ff
+24:15 " ⏎" fg #ffffffff bg #000000ff
+24:17 " open" fg #808080ff bg #000000ff
+24:22 " g" fg #ffffffff bg #000000ff
+24:24 " grp" fg #808080ff bg #000000ff
+24:28 " t" fg #ffffffff bg #000000ff
+24:30 " time" fg #808080ff bg #000000ff
+24:35 " ?" fg #ffffffff bg #000000ff

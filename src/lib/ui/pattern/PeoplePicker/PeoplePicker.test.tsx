@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import PeoplePicker from "./PeoplePicker.js";
 import {
@@ -26,13 +26,13 @@ describe("PeoplePicker", () => {
   it("gives the option under the cursor the selection background, and no other", async () => {
     const screen = await draw(<PeoplePicker {...Assigning.args} />, 40);
     expect(screen.look("designer-example")?.bg).toBe(
-      tokens["color.background.selected"],
+      hex(tokens["color.background.selected"]),
     );
     expect(screen.look("● bob")?.bg).not.toBe(
-      tokens["color.background.selected"],
+      hex(tokens["color.background.selected"]),
     );
-    expect(screen.look("☑ ")?.fg).toBe(tokens["color.text"]);
-    expect(screen.look("◉ alice")?.fg).toBe(tokens["color.text.team"]);
+    expect(screen.look("☑ ")?.fg).toBe(hex(tokens["color.text"]));
+    expect(screen.look("◉ alice")?.fg).toBe(hex(tokens["color.text.team"]));
   });
 
   it("shows the text typed so far after the prompt", async () => {
@@ -94,7 +94,9 @@ describe("PeoplePicker", () => {
       "  ☐ ○ a-very-long-login-for-a-",
       "      narrow-pane",
     ]);
-    expect(screen.look("narrow-pane")?.fg).toBe(tokens["color.text.outside"]);
+    expect(screen.look("narrow-pane")?.fg).toBe(
+      hex(tokens["color.text.outside"]),
+    );
   });
 
   it("draws GitHub's refusal under the options, wrapped, in the error colour", async () => {
@@ -110,7 +112,7 @@ describe("PeoplePicker", () => {
       "",
     ]);
     expect(screen.look("✗ GitHub refused")?.fg).toBe(
-      tokens["color.text.error"],
+      hex(tokens["color.text.error"]),
     );
   });
 
@@ -134,7 +136,7 @@ describe("PeoplePicker", () => {
       "",
     ]);
     expect(screen.look("person-7")?.bg).toBe(
-      tokens["color.background.selected"],
+      hex(tokens["color.background.selected"]),
     );
     const top = await draw(<PeoplePicker {...Scrolled.args} cursor={1} />, 40);
     expect(top.lines.slice(1, 6)).toEqual([

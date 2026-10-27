@@ -2,4 +2,4 @@
 |requesting review e…th-a-long-name#12345
 
 runs
-1:1 "requesting review e…th-a-long-name#12345" fg #c6c8d1ff bg #00000000
+1:1 "requesting review e…th-a-long-name#12345" fg #ffffffff bg #00000000

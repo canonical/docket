@@ -2,4 +2,4 @@
 |9999 over · 9999 soon · 9999 on track
 
 runs
-1:1 "9999 over · 9999 soon · 9999 on track" fg #c6c8d1ff bg #00000000
+1:1 "9999 over · 9999 soon · 9999 on track" fg #ffffffff bg #00000000

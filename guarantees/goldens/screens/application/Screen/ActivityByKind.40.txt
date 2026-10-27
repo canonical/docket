@@ -37,66 +37,66 @@
 |←→ mode ↑↓ sel ⏎ open g grp t time a r ?
 
 runs
-1:1 "activity    24h · by kind · " fg #c6c8d1ff bg #161821ff
-1:29 "newest first" fg #6b7089ff bg #161821ff
-2:1 "ISSUES ─────────────────────────────────" fg #c6c8d1ff bg #161821ff
-3:1 " " fg #ffffffff bg #2e3244ff
-3:2 " " fg #6b7089ff bg #2e3244ff
-3:3 "docs#4 issue " fg #c6c8d1ff bg #2e3244ff bold
-3:16 "◉ alice" fg #84a0c6ff bg #2e3244ff bold
-3:23 "               16h" fg #c6c8d1ff bg #2e3244ff bold
-4:1 " " fg #ffffffff bg #2e3244ff
-4:2 " " fg #6b7089ff bg #2e3244ff
-4:3 "Where do tokens live?" fg #c6c8d1ff bg #2e3244ff italic
-4:24 "                 " fg #ffffffff bg #2e3244ff
-5:1 " " fg #ffffffff bg #2e3244ff
-5:2 " " fg #6b7089ff bg #2e3244ff
-5:3 "                        " fg #c6c8d1ff bg #2e3244ff
-5:27 "◉ alice" fg #84a0c6ff bg #2e3244ff
-5:34 ", " fg #c6c8d1ff bg #2e3244ff
-5:36 "● bob" fg #84a0c6ff bg #2e3244ff
-6:1 " " fg #ffffffff bg #2e3244ff
-6:2 " " fg #6b7089ff bg #2e3244ff
-6:3 "age 27d · owner " fg #c6c8d1ff bg #2e3244ff
-6:19 "◉ alice" fg #84a0c6ff bg #2e3244ff
-6:26 ", " fg #c6c8d1ff bg #2e3244ff
-6:28 "● bob" fg #84a0c6ff bg #2e3244ff
-6:33 "        " fg #ffffffff bg #2e3244ff
-7:1 " " fg #ffffffff bg #2e3244ff
-7:2 " " fg #6b7089ff bg #2e3244ff
-7:3 "last activity 27d ago · " fg #c6c8d1ff bg #2e3244ff
-7:27 "◉ alice" fg #84a0c6ff bg #2e3244ff
-7:34 "       " fg #ffffffff bg #2e3244ff
-8:1 " " fg #ffffffff bg #2e3244ff
-8:2 " " fg #6b7089ff bg #2e3244ff
-8:3 "labels none" fg #c6c8d1ff bg #2e3244ff
-8:14 "                           " fg #ffffffff bg #2e3244ff
-9:5 "■ example-sync labell… kind=docs" fg #6b7089ff bg #161821ff
-9:38 "16h" fg #6b7089ff bg #161821ff
-10:1 "PULL REQUESTS ──────────────────────────" fg #c6c8d1ff bg #161821ff
-11:2 "┆" fg #6b7089ff bg #161821ff
-11:3 "example#12 PR " fg #c6c8d1ff bg #161821ff bold
-11:17 "○ dave" fg #89b8c2ff bg #161821ff bold
-11:23 "               25m" fg #c6c8d1ff bg #161821ff bold
-12:2 "┆" fg #6b7089ff bg #161821ff
-12:3 "Fix the parser" fg #c6c8d1ff bg #161821ff italic
-12:34 "◉ alice" fg #84a0c6ff bg #161821ff
-13:2 "┆" fg #6b7089ff bg #161821ff
-13:5 "✗ checks failed (lint)" fg #e27878ff bg #161821ff
-13:27 "           25m" fg #c6c8d1ff bg #161821ff
-14:2 "┆" fg #6b7089ff bg #161821ff
-14:5 "◉ alice" fg #84a0c6ff bg #161821ff
-14:12 " requested review          3h" fg #c6c8d1ff bg #161821ff
-34:1 "2 threads · 3 events               1/1/2" fg #c6c8d1ff bg #161821ff
-35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
-36:1 "←→" fg #c6c8d1ff bg #161821ff
-36:3 " mode" fg #6b7089ff bg #161821ff
-36:8 " ↑↓" fg #c6c8d1ff bg #161821ff
-36:11 " sel" fg #6b7089ff bg #161821ff
-36:15 " ⏎" fg #c6c8d1ff bg #161821ff
-36:17 " open" fg #6b7089ff bg #161821ff
-36:22 " g" fg #c6c8d1ff bg #161821ff
-36:24 " grp" fg #6b7089ff bg #161821ff
-36:28 " t" fg #c6c8d1ff bg #161821ff
-36:30 " time" fg #6b7089ff bg #161821ff
-36:35 " a r ?" fg #c6c8d1ff bg #161821ff
+1:1 "activity    24h · by kind · " fg #ffffffff bg #000000ff
+1:29 "newest first" fg #808080ff bg #000000ff
+2:1 "ISSUES ─────────────────────────────────" fg #ffffffff bg #000000ff
+3:1 " " fg #ffffffff bg #808080ff
+3:2 " " fg #808080ff bg #808080ff
+3:3 "docs#4 issue " fg #ffffffff bg #808080ff bold
+3:16 "◉ alice" fg #000080ff bg #808080ff bold
+3:23 "               16h" fg #ffffffff bg #808080ff bold
+4:1 " " fg #ffffffff bg #808080ff
+4:2 " " fg #808080ff bg #808080ff
+4:3 "Where do tokens live?" fg #ffffffff bg #808080ff italic
+4:24 "                 " fg #ffffffff bg #808080ff
+5:1 " " fg #ffffffff bg #808080ff
+5:2 " " fg #808080ff bg #808080ff
+5:3 "                        " fg #ffffffff bg #808080ff
+5:27 "◉ alice" fg #000080ff bg #808080ff
+5:34 ", " fg #ffffffff bg #808080ff
+5:36 "● bob" fg #000080ff bg #808080ff
+6:1 " " fg #ffffffff bg #808080ff
+6:2 " " fg #808080ff bg #808080ff
+6:3 "age 27d · owner " fg #ffffffff bg #808080ff
+6:19 "◉ alice" fg #000080ff bg #808080ff
+6:26 ", " fg #ffffffff bg #808080ff
+6:28 "● bob" fg #000080ff bg #808080ff
+6:33 "        " fg #ffffffff bg #808080ff
+7:1 " " fg #ffffffff bg #808080ff
+7:2 " " fg #808080ff bg #808080ff
+7:3 "last activity 27d ago · " fg #ffffffff bg #808080ff
+7:27 "◉ alice" fg #000080ff bg #808080ff
+7:34 "       " fg #ffffffff bg #808080ff
+8:1 " " fg #ffffffff bg #808080ff
+8:2 " " fg #808080ff bg #808080ff
+8:3 "labels none" fg #ffffffff bg #808080ff
+8:14 "                           " fg #ffffffff bg #808080ff
+9:5 "■ example-sync labell… kind=docs" fg #808080ff bg #000000ff
+9:38 "16h" fg #808080ff bg #000000ff
+10:1 "PULL REQUESTS ──────────────────────────" fg #ffffffff bg #000000ff
+11:2 "┆" fg #808080ff bg #000000ff
+11:3 "example#12 PR " fg #ffffffff bg #000000ff bold
+11:17 "○ dave" fg #008080ff bg #000000ff bold
+11:23 "               25m" fg #ffffffff bg #000000ff bold
+12:2 "┆" fg #808080ff bg #000000ff
+12:3 "Fix the parser" fg #ffffffff bg #000000ff italic
+12:34 "◉ alice" fg #000080ff bg #000000ff
+13:2 "┆" fg #808080ff bg #000000ff
+13:5 "✗ checks failed (lint)" fg #800000ff bg #000000ff
+13:27 "           25m" fg #ffffffff bg #000000ff
+14:2 "┆" fg #808080ff bg #000000ff
+14:5 "◉ alice" fg #000080ff bg #000000ff
+14:12 " requested review          3h" fg #ffffffff bg #000000ff
+34:1 "2 threads · 3 events               1/1/2" fg #ffffffff bg #000000ff
+35:1 "synced 2m ago" fg #808080ff bg #000000ff
+36:1 "←→" fg #ffffffff bg #000000ff
+36:3 " mode" fg #808080ff bg #000000ff
+36:8 " ↑↓" fg #ffffffff bg #000000ff
+36:11 " sel" fg #808080ff bg #000000ff
+36:15 " ⏎" fg #ffffffff bg #000000ff
+36:17 " open" fg #808080ff bg #000000ff
+36:22 " g" fg #ffffffff bg #000000ff
+36:24 " grp" fg #808080ff bg #000000ff
+36:28 " t" fg #ffffffff bg #000000ff
+36:30 " time" fg #808080ff bg #000000ff
+36:35 " a r ?" fg #ffffffff bg #000000ff

@@ -3,10 +3,10 @@
 |╹ Token naming for the spacing scale              unassigned
 
 runs
-1:1 "┃" fg #e27878ff bg #00000000
-1:3 "example#1240 issue reply " fg #c6c8d1ff bg #00000000 bold
-1:28 "○ dave" fg #89b8c2ff bg #00000000 bold
-1:53 "22h over" fg #e27878ff bg #00000000 bold
-2:1 "╹" fg #e27878ff bg #00000000
-2:3 "Token naming for the spacing scale" fg #c6c8d1ff bg #00000000 italic
-2:37 "              unassigned" fg #c6c8d1ff bg #00000000
+1:1 "┃" fg #800000ff bg #00000000
+1:3 "example#1240 issue reply " fg #ffffffff bg #00000000 bold
+1:28 "○ dave" fg #008080ff bg #00000000 bold
+1:53 "22h over" fg #800000ff bg #00000000 bold
+2:1 "╹" fg #800000ff bg #00000000
+2:3 "Token naming for the spacing scale" fg #ffffffff bg #00000000 italic
+2:37 "              unassigned" fg #ffffffff bg #00000000

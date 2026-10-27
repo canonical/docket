@@ -2,4 +2,4 @@
 |docket needs 40 columns
 
 runs
-1:1 "docket needs 40 columns" fg #c6c8d1ff bg #161821ff
+1:1 "docket needs 40 columns" fg #ffffffff bg #000000ff

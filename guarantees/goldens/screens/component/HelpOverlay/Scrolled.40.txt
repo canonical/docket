@@ -9,10 +9,10 @@
 |  ↓ 1 below
 
 runs
-1:1 "List · 1 of 1 ──────────────────────────" fg #c6c8d1ff bg #00000000
-2:1 "  ↑ ↓  k j move the selection" fg #c6c8d1ff bg #00000000
-3:1 "           (opens the accordion)" fg #c6c8d1ff bg #00000000
-5:1 "App ────────────────────────────────────" fg #c6c8d1ff bg #00000000
-6:1 "  ?        show or hide help" fg #c6c8d1ff bg #00000000
-7:1 "  R        full refresh" fg #c6c8d1ff bg #00000000
-8:1 "  ↓ 1 below" fg #6b7089ff bg #00000000
+1:1 "List · 1 of 1 ──────────────────────────" fg #ffffffff bg #00000000
+2:1 "  ↑ ↓  k j move the selection" fg #ffffffff bg #00000000
+3:1 "           (opens the accordion)" fg #ffffffff bg #00000000
+5:1 "App ────────────────────────────────────" fg #ffffffff bg #00000000
+6:1 "  ?        show or hide help" fg #ffffffff bg #00000000
+7:1 "  R        full refresh" fg #ffffffff bg #00000000
+8:1 "  ↓ 1 below" fg #808080ff bg #00000000

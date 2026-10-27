@@ -3,9 +3,9 @@
 |  Update dependency …  draft  unassigned
 
 runs
-1:3 "example#9 PR " fg #c6c8d1ff bg #00000000 bold
-1:16 "■ example-sync" fg #6b7089ff bg #00000000 bold
-1:30 "         2d" fg #c6c8d1ff bg #00000000 bold
-2:3 "Update dependency …" fg #c6c8d1ff bg #00000000 italic
-2:24 "draft" fg #6b7089ff bg #00000000
-2:29 "  unassigned" fg #c6c8d1ff bg #00000000
+1:3 "example#9 PR " fg #ffffffff bg #00000000 bold
+1:16 "■ example-sync" fg #808080ff bg #00000000 bold
+1:30 "         2d" fg #ffffffff bg #00000000 bold
+2:3 "Update dependency …" fg #ffffffff bg #00000000 italic
+2:24 "draft" fg #808080ff bg #00000000
+2:29 "  unassigned" fg #ffffffff bg #00000000

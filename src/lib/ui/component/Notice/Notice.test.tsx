@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import Notice from "./Notice.js";
 import {
@@ -25,8 +25,8 @@ describe("Notice", () => {
       "  ✗ gh is not signed in to github.com",
       "  Recovery: run gh auth login",
     ]);
-    expect(screen.look("✗ gh")?.fg).toBe(tokens["color.text.error"]);
-    expect(screen.look("Recovery")?.fg).toBe(tokens["color.text"]);
+    expect(screen.look("✗ gh")?.fg).toBe(hex(tokens["color.text.error"]));
+    expect(screen.look("Recovery")?.fg).toBe(hex(tokens["color.text"]));
   });
 
   it("ends the command a recovery names at a semicolon, and wraps the rest", async () => {

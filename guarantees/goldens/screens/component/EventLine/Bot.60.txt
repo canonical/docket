@@ -2,5 +2,5 @@
 |    ■ example-sync opened                                 3h
 
 runs
-1:5 "■ example-sync opened" fg #6b7089ff bg #00000000
-1:59 "3h" fg #6b7089ff bg #00000000
+1:5 "■ example-sync opened" fg #808080ff bg #00000000
+1:59 "3h" fg #808080ff bg #00000000

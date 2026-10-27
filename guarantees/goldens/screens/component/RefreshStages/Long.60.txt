@@ -6,11 +6,11 @@
 |                                    GITHUB_TIMED_OUT
 
 runs
-1:1 "example-repository-with-a-long-name " fg #c6c8d1ff bg #00000000
-1:37 "✓" fg #b4be82ff bg #00000000
-1:38 " 1234 threads" fg #c6c8d1ff bg #00000000
-2:1 "docs                                reading page 3/3" fg #c6c8d1ff bg #00000000
-3:1 "site                                " fg #c6c8d1ff bg #00000000
-3:37 "✗ failed: The provider" fg #e27878ff bg #00000000
-4:37 "failed with" fg #e27878ff bg #00000000
-5:37 "GITHUB_TIMED_OUT" fg #e27878ff bg #00000000
+1:1 "example-repository-with-a-long-name " fg #ffffffff bg #00000000
+1:37 "✓" fg #008000ff bg #00000000
+1:38 " 1234 threads" fg #ffffffff bg #00000000
+2:1 "docs                                reading page 3/3" fg #ffffffff bg #00000000
+3:1 "site                                " fg #ffffffff bg #00000000
+3:37 "✗ failed: The provider" fg #800000ff bg #00000000
+4:37 "failed with" fg #800000ff bg #00000000
+5:37 "GITHUB_TIMED_OUT" fg #800000ff bg #00000000

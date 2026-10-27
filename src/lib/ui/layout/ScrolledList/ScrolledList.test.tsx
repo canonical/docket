@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import ScrolledList from "./ScrolledList.js";
 import { Pinned, Top } from "./ScrolledList.stories.js";
@@ -15,7 +15,7 @@ describe("ScrolledList", () => {
       "╵ a thread",
       "  ↓ 2 below",
     ]);
-    expect(screen.look("↓ 2 below")?.fg).toBe(tokens["color.text.muted"]);
+    expect(screen.look("↓ 2 below")?.fg).toBe(hex(tokens["color.text.muted"]));
   });
 
   it("pins the heading of the first row's group, with the row's place among the group's", async () => {
@@ -28,7 +28,7 @@ describe("ScrolledList", () => {
       "╵ a thread",
       "  ↓ 1 below",
     ]);
-    expect(screen.look("● bob")?.fg).toBe(tokens["color.text.team"]);
+    expect(screen.look("● bob")?.fg).toBe(hex(tokens["color.text.team"]));
   });
 
   it("tells how many rows it shows, headings not counted, and the first block it shows", async () => {

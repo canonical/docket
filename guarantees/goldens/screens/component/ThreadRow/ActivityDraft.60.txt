@@ -3,9 +3,9 @@
 |  Update dependency example-lib to 2.0     draft  unassigned
 
 runs
-1:3 "example#14 PR " fg #c6c8d1ff bg #00000000 bold
-1:17 "○ dave" fg #89b8c2ff bg #00000000 bold
-1:23 "                                    3h" fg #c6c8d1ff bg #00000000 bold
-2:3 "Update dependency example-lib to 2.0" fg #c6c8d1ff bg #00000000 italic
-2:44 "draft" fg #6b7089ff bg #00000000
-2:49 "  unassigned" fg #c6c8d1ff bg #00000000
+1:3 "example#14 PR " fg #ffffffff bg #00000000 bold
+1:17 "○ dave" fg #008080ff bg #00000000 bold
+1:23 "                                    3h" fg #ffffffff bg #00000000 bold
+2:3 "Update dependency example-lib to 2.0" fg #ffffffff bg #00000000 italic
+2:44 "draft" fg #808080ff bg #00000000
+2:49 "  unassigned" fg #ffffffff bg #00000000

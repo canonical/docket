@@ -9,7 +9,7 @@ import {
 import { alice, exampleSync, teamSettings } from "../testing/facts.js";
 import { recordedActivity, recordedNow } from "../testing/recorded.js";
 import { overReview } from "../testing/rows.js";
-import { draw, drawSuspending } from "../testing/terminal.js";
+import { draw, drawSuspending, hex } from "../testing/terminal.js";
 import ActivityList, { type ActivityListProps } from "./ActivityList.js";
 
 /** A list whose details are still being read, with no wait running. */
@@ -72,7 +72,9 @@ describe("ActivityList", () => {
       ` ┆Fix the parser${" ".repeat(37)}● alice`,
       ` ┆  ✗ checks failed (lint)${" ".repeat(31)}25m`,
     ]);
-    expect(screen.look("✗ checks failed")?.fg).toBe(tokens["color.text.error"]);
+    expect(screen.look("✗ checks failed")?.fg).toBe(
+      hex(tokens["color.text.error"]),
+    );
   });
 
   it("gives the selected thread the selection background, and never a heading", async () => {
@@ -86,7 +88,7 @@ describe("ActivityList", () => {
       40,
       20,
     );
-    const selected = tokens["color.background.selected"];
+    const selected = hex(tokens["color.background.selected"]);
     expect(screen.look("Fix the parser")?.bg).toBe(selected);
     expect(screen.look("docs#4")?.bg).not.toBe(selected);
     expect(screen.look("PULL REQUESTS")?.bg).not.toBe(selected);
@@ -144,7 +146,7 @@ describe("ActivityList", () => {
       `${" ".repeat(4)}■ example-sync labell… kind=docs 16h`,
     ]);
     expect(screen.look("docs#4")?.bg).not.toBe(
-      tokens["color.background.selected"],
+      hex(tokens["color.background.selected"]),
     );
   });
 
