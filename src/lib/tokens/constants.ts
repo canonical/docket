@@ -1,25 +1,30 @@
-import { TextAttributes } from "@opentui/core";
+import { RGBA, TextAttributes } from "@opentui/core";
 import type { Tokens } from "./types.js";
 
 /**
- * The token values docket draws with: the iceberg theme's dark colours,
- * and one glyph for each meaning. A colour is always paired with a glyph
- * or a word on screen, so nothing is lost on a terminal that shows it
- * differently. The on-track marker takes the theme's base04: base11
- * measures 1.49:1 on the selection background, where it would vanish.
+ * The token values docket draws with: the terminal's own theme colours,
+ * named by their ANSI index, and one glyph for each meaning. A colour is
+ * always paired with a glyph or a word on screen, so nothing is lost on a
+ * terminal that shows it differently: `color.text` and `color.background`
+ * are the terminal's default foreground and background, so ordinary text
+ * follows the theme, and the rest name the palette's indices — 1 red,
+ * 2 green, 3 yellow, 4 blue, 5 magenta, 6 cyan and 8 bright black — which
+ * every terminal palette shows in its own hue. The on-track marker takes
+ * the same bright black as the muted text: on the selection background,
+ * where it would vanish, it stays legible.
  */
 export const tokens: Tokens = {
-  "color.text": "#c6c8d1",
-  "color.text.muted": "#6b7089",
-  "color.text.error": "#e27878",
-  "color.text.warning": "#e2a478",
-  "color.text.success": "#b4be82",
-  "color.text.team": "#84a0c6",
-  "color.text.internal": "#a093c7",
-  "color.text.outside": "#89b8c2",
-  "color.border": "#818596",
-  "color.background": "#161821",
-  "color.background.selected": "#2e3244",
+  "color.text": RGBA.defaultForeground(),
+  "color.text.muted": RGBA.fromIndex(8),
+  "color.text.error": RGBA.fromIndex(1),
+  "color.text.warning": RGBA.fromIndex(3),
+  "color.text.success": RGBA.fromIndex(2),
+  "color.text.team": RGBA.fromIndex(4),
+  "color.text.internal": RGBA.fromIndex(5),
+  "color.text.outside": RGBA.fromIndex(6),
+  "color.border": RGBA.fromIndex(8),
+  "color.background": RGBA.defaultBackground(),
+  "color.background.selected": RGBA.fromIndex(8),
   "typography.weight.bold": TextAttributes.BOLD,
   "typography.style.italic": TextAttributes.ITALIC,
   "glyph.bar.attention": "┃",

@@ -37,14 +37,14 @@
 |←→ mode ↑↓ sel g grp ?
 
 runs
-1:1 "owed                                                        " fg #c6c8d1ff bg #161821ff
-3:1 "  nothing owed" fg #c6c8d1ff bg #161821ff
-34:1 "0 over · 0 soon · 0 on track" fg #c6c8d1ff bg #161821ff
-35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
-36:1 "←→" fg #c6c8d1ff bg #161821ff
-36:3 " mode" fg #6b7089ff bg #161821ff
-36:8 " ↑↓" fg #c6c8d1ff bg #161821ff
-36:11 " sel" fg #6b7089ff bg #161821ff
-36:15 " g" fg #c6c8d1ff bg #161821ff
-36:17 " grp" fg #6b7089ff bg #161821ff
-36:21 " ?" fg #c6c8d1ff bg #161821ff
+1:1 "owed                                                        " fg #ffffffff bg #000000ff
+3:1 "  nothing owed" fg #ffffffff bg #000000ff
+34:1 "0 over · 0 soon · 0 on track" fg #ffffffff bg #000000ff
+35:1 "synced 2m ago" fg #808080ff bg #000000ff
+36:1 "←→" fg #ffffffff bg #000000ff
+36:3 " mode" fg #808080ff bg #000000ff
+36:8 " ↑↓" fg #ffffffff bg #000000ff
+36:11 " sel" fg #808080ff bg #000000ff
+36:15 " g" fg #ffffffff bg #000000ff
+36:17 " grp" fg #808080ff bg #000000ff
+36:21 " ?" fg #ffffffff bg #000000ff

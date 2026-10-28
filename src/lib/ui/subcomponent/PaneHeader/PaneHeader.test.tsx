@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import PaneHeader from "./PaneHeader.js";
 import { Activity, Help, Owed, OwedByOwner } from "./PaneHeader.stories.js";
@@ -11,12 +11,12 @@ describe("PaneHeader", () => {
       `owed${" ".repeat(12)}one list · overdue first`,
     );
     expect(screen.look("owed")).toMatchObject({
-      fg: tokens["color.text"],
+      fg: hex(tokens["color.text"]),
       bold: false,
     });
-    expect(screen.look("one list")?.fg).toBe(tokens["color.text"]);
+    expect(screen.look("one list")?.fg).toBe(hex(tokens["color.text"]));
     expect(screen.look("overdue first")).toMatchObject({
-      fg: tokens["color.text.muted"],
+      fg: hex(tokens["color.text.muted"]),
       bold: false,
     });
   });

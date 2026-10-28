@@ -2,6 +2,6 @@
 |╹   ◉ alice closed as not planned     2d
 
 runs
-1:1 "╹" fg #e27878ff bg #00000000
-1:5 "◉ alice" fg #84a0c6ff bg #00000000
-1:12 " closed as not planned     2d" fg #c6c8d1ff bg #00000000
+1:1 "╹" fg #800000ff bg #00000000
+1:5 "◉ alice" fg #000080ff bg #00000000
+1:12 " closed as not planned     2d" fg #ffffffff bg #00000000

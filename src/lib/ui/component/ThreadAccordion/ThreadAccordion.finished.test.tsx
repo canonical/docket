@@ -3,7 +3,11 @@ import { failDetail, overReviewDetail } from "../../../../testing/details.js";
 import { findFinishedRow } from "../../../../testing/finished.js";
 import { recordedNow } from "../../../../testing/recorded.js";
 import { overReview } from "../../../../testing/rows.js";
-import { drawSuspending, type Screen } from "../../../../testing/terminal.js";
+import {
+  drawSuspending,
+  hex,
+  type Screen,
+} from "../../../../testing/terminal.js";
 import type { FinishedRow } from "../../../finished/index.js";
 import { tokens } from "../../../tokens/index.js";
 import ThreadAccordion from "./ThreadAccordion.js";
@@ -43,7 +47,7 @@ describe("ThreadAccordion", () => {
         "┃ labels kind=feat",
         "",
       ]);
-      expect(screen.look("┃")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("┃")?.fg).toBe(hex(tokens["color.text.error"]));
     });
 
     it("gives the target alone within it, and the pull request that closed the issue after dimmed words", async () => {
@@ -54,9 +58,11 @@ describe("ThreadAccordion", () => {
         "labels none",
         "",
       ]);
-      expect(screen.look("closed in")?.fg).toBe(tokens["color.text.muted"]);
-      expect(screen.look("example#2")?.fg).toBe(tokens["color.text"]);
-      expect(screen.look("│")?.fg).toBe(tokens["color.text.success"]);
+      expect(screen.look("closed in")?.fg).toBe(
+        hex(tokens["color.text.muted"]),
+      );
+      expect(screen.look("example#2")?.fg).toBe(hex(tokens["color.text"]));
+      expect(screen.look("│")?.fg).toBe(hex(tokens["color.text.success"]));
     });
 
     it("draws its lines from the list at once, never loading, the stack's neighbours waiting on the details", async () => {
@@ -78,7 +84,7 @@ describe("ThreadAccordion", () => {
       const loading = await open(FinishedStackLoading.args);
       expect(paused.lines).toEqual(loading.lines);
       expect(readText(paused).at(3)).toBe("…");
-      expect(paused.look("…")?.fg).toBe(tokens["color.text.muted"]);
+      expect(paused.look("…")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
 
     it("names the stack's neighbour once the details give it", async () => {

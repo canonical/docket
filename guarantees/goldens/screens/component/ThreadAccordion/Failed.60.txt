@@ -9,36 +9,36 @@
 |╹┆https://www.githubstatus.com, then refresh
 
 runs
-1:1 "┃" fg #e27878ff bg #2e3244ff
-1:2 "┆asked by " fg #6b7089ff bg #2e3244ff
-1:12 "● alice" fg #84a0c6ff bg #2e3244ff
-1:19 " 3d ago" fg #6b7089ff bg #2e3244ff
-1:26 "                                   " fg #ffffffff bg #2e3244ff
-2:1 "┃" fg #e27878ff bg #2e3244ff
-2:2 "┆" fg #6b7089ff bg #2e3244ff
-2:3 "1 push since ·" fg #c6c8d1ff bg #2e3244ff
-2:17 " …" fg #6b7089ff bg #2e3244ff
-2:19 "                                          " fg #ffffffff bg #2e3244ff
-3:1 "┃" fg #e27878ff bg #2e3244ff
-3:2 "┆" fg #6b7089ff bg #2e3244ff
-3:3 "✗ checks:" fg #e27878ff bg #2e3244ff
-3:12 " …" fg #6b7089ff bg #2e3244ff
-3:14 "                                               " fg #ffffffff bg #2e3244ff
-4:1 "┃" fg #e27878ff bg #2e3244ff
-4:2 "┆example stack 3 · 2 of 3 · → main" fg #6b7089ff bg #2e3244ff
-4:36 "                         " fg #ffffffff bg #2e3244ff
-5:1 "┃" fg #e27878ff bg #2e3244ff
-5:2 "┆…" fg #6b7089ff bg #2e3244ff
-5:4 "                                                         " fg #ffffffff bg #2e3244ff
-6:1 "┃" fg #e27878ff bg #2e3244ff
-6:2 "┆" fg #6b7089ff bg #2e3244ff
-6:3 "✗ failed: GitHub gave no answer within 30 seconds" fg #e27878ff bg #2e3244ff
-6:52 "         " fg #ffffffff bg #2e3244ff
-7:1 "┃" fg #e27878ff bg #2e3244ff
-7:2 "┆" fg #6b7089ff bg #2e3244ff
-7:3 "Recovery: check the network connection and" fg #c6c8d1ff bg #2e3244ff
-7:45 "                " fg #ffffffff bg #2e3244ff
-8:1 "╹" fg #e27878ff bg #2e3244ff
-8:2 "┆" fg #6b7089ff bg #2e3244ff
-8:3 "https://www.githubstatus.com, then refresh" fg #c6c8d1ff bg #2e3244ff
-8:45 "                " fg #ffffffff bg #2e3244ff
+1:1 "┃" fg #800000ff bg #808080ff
+1:2 "┆asked by " fg #808080ff bg #808080ff
+1:12 "● alice" fg #000080ff bg #808080ff
+1:19 " 3d ago" fg #808080ff bg #808080ff
+1:26 "                                   " fg #ffffffff bg #808080ff
+2:1 "┃" fg #800000ff bg #808080ff
+2:2 "┆" fg #808080ff bg #808080ff
+2:3 "1 push since ·" fg #ffffffff bg #808080ff
+2:17 " …" fg #808080ff bg #808080ff
+2:19 "                                          " fg #ffffffff bg #808080ff
+3:1 "┃" fg #800000ff bg #808080ff
+3:2 "┆" fg #808080ff bg #808080ff
+3:3 "✗ checks:" fg #800000ff bg #808080ff
+3:12 " …" fg #808080ff bg #808080ff
+3:14 "                                               " fg #ffffffff bg #808080ff
+4:1 "┃" fg #800000ff bg #808080ff
+4:2 "┆example stack 3 · 2 of 3 · → main" fg #808080ff bg #808080ff
+4:36 "                         " fg #ffffffff bg #808080ff
+5:1 "┃" fg #800000ff bg #808080ff
+5:2 "┆…" fg #808080ff bg #808080ff
+5:4 "                                                         " fg #ffffffff bg #808080ff
+6:1 "┃" fg #800000ff bg #808080ff
+6:2 "┆" fg #808080ff bg #808080ff
+6:3 "✗ failed: GitHub gave no answer within 30 seconds" fg #800000ff bg #808080ff
+6:52 "         " fg #ffffffff bg #808080ff
+7:1 "┃" fg #800000ff bg #808080ff
+7:2 "┆" fg #808080ff bg #808080ff
+7:3 "Recovery: check the network connection and" fg #ffffffff bg #808080ff
+7:45 "                " fg #ffffffff bg #808080ff
+8:1 "╹" fg #800000ff bg #808080ff
+8:2 "┆" fg #808080ff bg #808080ff
+8:3 "https://www.githubstatus.com, then refresh" fg #ffffffff bg #808080ff
+8:45 "                " fg #ffffffff bg #808080ff

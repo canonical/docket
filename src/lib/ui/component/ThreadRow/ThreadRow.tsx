@@ -1,3 +1,4 @@
+import type { ColorInput } from "@opentui/core";
 import type { ReactNode } from "react";
 import type { Verdict } from "../../../endings/index.js";
 import type { WaitState } from "../../../owed/index.js";
@@ -23,7 +24,7 @@ import type { ThreadRowProps } from "./types.js";
  * in finished, the error colour beside `over` past the target, and plain
  * text within it, where the bar alone is green.
  */
-const distanceColours: Readonly<Record<WaitState | Verdict, string>> = {
+const distanceColours: Readonly<Record<WaitState | Verdict, ColorInput>> = {
   over: tokens["color.text.error"],
   soon: tokens["color.text.warning"],
   onTrack: tokens["color.text"],

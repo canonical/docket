@@ -4,10 +4,10 @@
 |                          ● alice, ● bob
 
 runs
-1:3 "example#15 issue " fg #c6c8d1ff bg #00000000 bold
-1:20 "○ dave" fg #89b8c2ff bg #00000000 bold
-1:26 "             1d" fg #c6c8d1ff bg #00000000 bold
-2:3 "Crash on start" fg #c6c8d1ff bg #00000000 italic
-3:27 "● alice" fg #84a0c6ff bg #00000000
-3:34 ", " fg #c6c8d1ff bg #00000000
-3:36 "● bob" fg #84a0c6ff bg #00000000
+1:3 "example#15 issue " fg #ffffffff bg #00000000 bold
+1:20 "○ dave" fg #008080ff bg #00000000 bold
+1:26 "             1d" fg #ffffffff bg #00000000 bold
+2:3 "Crash on start" fg #ffffffff bg #00000000 italic
+3:27 "● alice" fg #000080ff bg #00000000
+3:34 ", " fg #ffffffff bg #00000000
+3:36 "● bob" fg #000080ff bg #00000000

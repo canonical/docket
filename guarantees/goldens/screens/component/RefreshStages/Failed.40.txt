@@ -5,11 +5,11 @@
 |site    waiting
 
 runs
-1:1 "example " fg #c6c8d1ff bg #00000000
-1:9 "✓" fg #b4be82ff bg #00000000
-1:10 " 12 threads" fg #c6c8d1ff bg #00000000
-2:1 "docs    " fg #c6c8d1ff bg #00000000
-2:9 "✗ failed: The provider failed" fg #e27878ff bg #00000000
-3:9 "with GITHUB_TIMED_OUT" fg #e27878ff bg #00000000
-4:1 "site    " fg #c6c8d1ff bg #00000000
-4:9 "waiting" fg #6b7089ff bg #00000000
+1:1 "example " fg #ffffffff bg #00000000
+1:9 "✓" fg #008000ff bg #00000000
+1:10 " 12 threads" fg #ffffffff bg #00000000
+2:1 "docs    " fg #ffffffff bg #00000000
+2:9 "✗ failed: The provider failed" fg #800000ff bg #00000000
+3:9 "with GITHUB_TIMED_OUT" fg #800000ff bg #00000000
+4:1 "site    " fg #ffffffff bg #00000000
+4:9 "waiting" fg #808080ff bg #00000000

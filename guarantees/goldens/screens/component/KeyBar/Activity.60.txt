@@ -2,10 +2,10 @@
 |←→ mode g grp t time ?
 
 runs
-1:1 "←→" fg #c6c8d1ff bg #00000000
-1:3 " mode" fg #6b7089ff bg #00000000
-1:8 " g" fg #c6c8d1ff bg #00000000
-1:10 " grp" fg #6b7089ff bg #00000000
-1:14 " t" fg #c6c8d1ff bg #00000000
-1:16 " time" fg #6b7089ff bg #00000000
-1:21 " ?" fg #c6c8d1ff bg #00000000
+1:1 "←→" fg #ffffffff bg #00000000
+1:3 " mode" fg #808080ff bg #00000000
+1:8 " g" fg #ffffffff bg #00000000
+1:10 " grp" fg #808080ff bg #00000000
+1:14 " t" fg #ffffffff bg #00000000
+1:16 " time" fg #808080ff bg #00000000
+1:21 " ?" fg #ffffffff bg #00000000

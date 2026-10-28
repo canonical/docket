@@ -37,18 +37,18 @@
 |←→ mode ↑↓ sel ⏎ open g grp t time a r ?
 
 runs
-1:1 "assigning example-r…th-a-long-name#12345" fg #c6c8d1ff bg #161821ff
-3:1 "  nothing owed" fg #c6c8d1ff bg #161821ff
-34:1 "9999 over · 9999 soon · 9999 on track" fg #c6c8d1ff bg #161821ff
-35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
-36:1 "←→" fg #c6c8d1ff bg #161821ff
-36:3 " mode" fg #6b7089ff bg #161821ff
-36:8 " ↑↓" fg #c6c8d1ff bg #161821ff
-36:11 " sel" fg #6b7089ff bg #161821ff
-36:15 " ⏎" fg #c6c8d1ff bg #161821ff
-36:17 " open" fg #6b7089ff bg #161821ff
-36:22 " g" fg #c6c8d1ff bg #161821ff
-36:24 " grp" fg #6b7089ff bg #161821ff
-36:28 " t" fg #c6c8d1ff bg #161821ff
-36:30 " time" fg #6b7089ff bg #161821ff
-36:35 " a r ?" fg #c6c8d1ff bg #161821ff
+1:1 "assigning example-r…th-a-long-name#12345" fg #ffffffff bg #000000ff
+3:1 "  nothing owed" fg #ffffffff bg #000000ff
+34:1 "9999 over · 9999 soon · 9999 on track" fg #ffffffff bg #000000ff
+35:1 "synced 2m ago" fg #808080ff bg #000000ff
+36:1 "←→" fg #ffffffff bg #000000ff
+36:3 " mode" fg #808080ff bg #000000ff
+36:8 " ↑↓" fg #ffffffff bg #000000ff
+36:11 " sel" fg #808080ff bg #000000ff
+36:15 " ⏎" fg #ffffffff bg #000000ff
+36:17 " open" fg #808080ff bg #000000ff
+36:22 " g" fg #ffffffff bg #000000ff
+36:24 " grp" fg #808080ff bg #000000ff
+36:28 " t" fg #ffffffff bg #000000ff
+36:30 " time" fg #808080ff bg #000000ff
+36:35 " a r ?" fg #ffffffff bg #000000ff

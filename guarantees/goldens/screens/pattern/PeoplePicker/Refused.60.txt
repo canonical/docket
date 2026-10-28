@@ -8,15 +8,15 @@
 |  then apply again
 
 runs
-1:3 "filter: " fg #c6c8d1ff bg #00000000
-1:11 "                                                  " fg #ffffffff bg #161821ff
-2:3 "☐ " fg #c6c8d1ff bg #00000000
-2:5 "◉ alice" fg #84a0c6ff bg #00000000
-3:1 "  " fg #ffffffff bg #2e3244ff
-3:3 "☑ " fg #c6c8d1ff bg #2e3244ff
-3:5 "◐ designer-example" fg #a093c7ff bg #2e3244ff
-3:23 "                                      " fg #ffffffff bg #2e3244ff
-4:3 "✗ GitHub refused: designer-example is not a collaborator" fg #e27878ff bg #00000000
-5:3 "on example" fg #e27878ff bg #00000000
-6:3 "Recovery: ask an example admin to add designer-example," fg #c6c8d1ff bg #00000000
-7:3 "then apply again" fg #c6c8d1ff bg #00000000
+1:3 "filter: " fg #ffffffff bg #00000000
+1:11 "                                                  " fg #ffffffff bg #000000ff
+2:3 "☐ " fg #ffffffff bg #00000000
+2:5 "◉ alice" fg #000080ff bg #00000000
+3:1 "  " fg #ffffffff bg #808080ff
+3:3 "☑ " fg #ffffffff bg #808080ff
+3:5 "◐ designer-example" fg #800080ff bg #808080ff
+3:23 "                                      " fg #ffffffff bg #808080ff
+4:3 "✗ GitHub refused: designer-example is not a collaborator" fg #800000ff bg #00000000
+5:3 "on example" fg #800000ff bg #00000000
+6:3 "Recovery: ask an example admin to add designer-example," fg #ffffffff bg #00000000
+7:3 "then apply again" fg #ffffffff bg #00000000

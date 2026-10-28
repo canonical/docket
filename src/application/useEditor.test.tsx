@@ -26,6 +26,7 @@ import {
   type Screen as Drawn,
   draw,
   drawSuspending,
+  hex,
   WithKeys,
 } from "../testing/terminal.js";
 import { waitUntil } from "../testing/wait.js";
@@ -221,9 +222,11 @@ describe("useEditor", { timeout: 15_000 }, () => {
         "synced 0m ago",
         "type filter ↑↓ ␣ tick ⏎ apply esc ?",
       ]);
-      expect(screen.look("☑ ")?.bg).toBe(tokens["color.background.selected"]);
+      expect(screen.look("☑ ")?.bg).toBe(
+        hex(tokens["color.background.selected"]),
+      );
       expect(screen.look("example#12 PR reply")?.bg).toBe(
-        tokens["color.background"],
+        hex(tokens["color.background"]),
       );
     });
 
@@ -267,10 +270,12 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const opened = await settle(await press(await showRecorded(), "a"));
       const moved = await press(opened, "down", "down", "down", "down", "down");
       expect(moved.look("◐ carol")?.bg).toBe(
-        tokens["color.background.selected"],
+        hex(tokens["color.background.selected"]),
       );
       const back = await press(moved, "up", "up", "up", "up", "up", "up");
-      expect(back.look("☑ ")?.bg).toBe(tokens["color.background.selected"]);
+      expect(back.look("☑ ")?.bg).toBe(
+        hex(tokens["color.background.selected"]),
+      );
     });
 
     it("ticks and unticks the option under the cursor with ␣", async () => {
@@ -308,7 +313,9 @@ describe("useEditor", { timeout: 15_000 }, () => {
         `┃┆Fix the parser${" ".repeat(16)}✗ checks`,
       );
       expect(applied.lines.at(-2)).toBe("✓ assigned ◉ alice, ◐ carol");
-      expect(applied.look("✓ assigned")?.fg).toBe(tokens["color.text.success"]);
+      expect(applied.look("✓ assigned")?.fg).toBe(
+        hex(tokens["color.text.success"]),
+      );
       expect(applied.lines.at(3)).toBe(`┃┆${" ".repeat(22)}◉ alice, ◐ carol`);
     });
 
@@ -402,7 +409,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       ]);
       expect(refused.lines.at(-2)).toBe("✗ assign refused");
       expect(refused.look("✗ assign refused")?.fg).toBe(
-        tokens["color.text.error"],
+        hex(tokens["color.text.error"]),
       );
     });
 
@@ -505,7 +512,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       expect(setAssignees).not.toHaveBeenCalled();
       const moved = await press(cancelled, "j");
       expect(moved.look("example#12 PR close")?.bg).toBe(
-        tokens["color.background.selected"],
+        hex(tokens["color.background.selected"]),
       );
     });
 

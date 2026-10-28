@@ -2,6 +2,6 @@
 |╹┆paused · resumes 15:00
 
 runs
-1:1 "╹" fg #e27878ff bg #2e3244ff
-1:2 "┆paused · resumes 15:00" fg #6b7089ff bg #2e3244ff
-1:25 "                                    " fg #ffffffff bg #2e3244ff
+1:1 "╹" fg #800000ff bg #808080ff
+1:2 "┆paused · resumes 15:00" fg #808080ff bg #808080ff
+1:25 "                                    " fg #ffffffff bg #808080ff

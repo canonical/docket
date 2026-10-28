@@ -2,4 +2,4 @@
 |0 over · 0 soon · 0 on track
 
 runs
-1:1 "0 over · 0 soon · 0 on track" fg #c6c8d1ff bg #00000000
+1:1 "0 over · 0 soon · 0 on track" fg #ffffffff bg #00000000

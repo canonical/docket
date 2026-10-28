@@ -4,10 +4,10 @@
 |site    paused: budget low
 
 runs
-1:1 "example " fg #c6c8d1ff bg #00000000
-1:9 "✓" fg #b4be82ff bg #00000000
-1:10 " 89 threads" fg #c6c8d1ff bg #00000000
-2:1 "docs    " fg #c6c8d1ff bg #00000000
-2:9 "paused: budget low" fg #6b7089ff bg #00000000
-3:1 "site    " fg #c6c8d1ff bg #00000000
-3:9 "paused: budget low" fg #6b7089ff bg #00000000
+1:1 "example " fg #ffffffff bg #00000000
+1:9 "✓" fg #008000ff bg #00000000
+1:10 " 89 threads" fg #ffffffff bg #00000000
+2:1 "docs    " fg #ffffffff bg #00000000
+2:9 "paused: budget low" fg #808080ff bg #00000000
+3:1 "site    " fg #ffffffff bg #00000000
+3:9 "paused: budget low" fg #808080ff bg #00000000

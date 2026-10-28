@@ -37,99 +37,97 @@
 |←→ mode ↑↓ sel ⏎ open g grp a r ?
 
 runs
-1:1 "owed                                one list · " fg #c6c8d1ff bg #161821ff
-1:48 "overdue first" fg #6b7089ff bg #161821ff
-2:3 "✗ no team in docket.yaml, so every comment starts a reply" fg #e27878ff bg #161821ff
-3:3 "wait" fg #e27878ff bg #161821ff
-4:3 "Recovery: list the team under people: in the personal file" fg #c6c8d1ff bg #161821ff
-5:3 "or the repository's .github/docket.yaml, then run" fg #c6c8d1ff bg #161821ff
-6:3 "docket config" fg #c6c8d1ff bg #161821ff
-7:1 "┃" fg #e27878ff bg #2e3244ff
-7:2 " " fg #6b7089ff bg #2e3244ff
-7:3 "docs#4 issue reply " fg #c6c8d1ff bg #2e3244ff bold
-7:22 "◉ alice" fg #84a0c6ff bg #2e3244ff bold
-7:29 "                        " fg #c6c8d1ff bg #2e3244ff bold
-7:53 "18d over" fg #e27878ff bg #2e3244ff bold
-8:1 "┃" fg #e27878ff bg #2e3244ff
-8:2 " " fg #6b7089ff bg #2e3244ff
-8:3 "Where do tokens live?" fg #c6c8d1ff bg #2e3244ff italic
-8:24 "                                     " fg #ffffffff bg #2e3244ff
-9:1 "┃" fg #e27878ff bg #2e3244ff
-9:2 " " fg #6b7089ff bg #2e3244ff
-9:3 "                                            " fg #c6c8d1ff bg #2e3244ff
-9:47 "◉ alice" fg #84a0c6ff bg #2e3244ff
-9:54 ", " fg #c6c8d1ff bg #2e3244ff
-9:56 "◐ bob" fg #a093c7ff bg #2e3244ff
-10:1 "┃" fg #e27878ff bg #2e3244ff
-10:2 " " fg #6b7089ff bg #2e3244ff
-10:3 "◉ alice" fg #84a0c6ff bg #2e3244ff
-10:10 " · 27d ago" fg #6b7089ff bg #2e3244ff
-10:20 "                                         " fg #ffffffff bg #2e3244ff
-11:1 "╹" fg #e27878ff bg #2e3244ff
-11:2 " waiting since Tue 10:00 · target 24h" fg #6b7089ff bg #2e3244ff
-11:39 "                      " fg #ffffffff bg #2e3244ff
-12:1 "┃" fg #e27878ff bg #161821ff
-12:2 "┆" fg #6b7089ff bg #161821ff
-12:3 "example#12 PR reply " fg #c6c8d1ff bg #161821ff bold
-12:23 "○ dave" fg #89b8c2ff bg #161821ff bold
-12:54 "4d over" fg #e27878ff bg #161821ff bold
-13:1 "╹" fg #e27878ff bg #161821ff
-13:2 "┆" fg #6b7089ff bg #161821ff
-13:3 "Fix the parser" fg #c6c8d1ff bg #161821ff italic
-13:44 "✗ checks" fg #e27878ff bg #161821ff
-13:54 "◉ alice" fg #84a0c6ff bg #161821ff
-14:1 "┃" fg #e27878ff bg #161821ff
-14:2 "┆" fg #6b7089ff bg #161821ff
-14:3 "example#12 PR close " fg #c6c8d1ff bg #161821ff bold
-14:23 "○ dave" fg #89b8c2ff bg #161821ff bold
-14:54 "2h over" fg #e27878ff bg #161821ff bold
-15:1 "╹" fg #e27878ff bg #161821ff
-15:2 "┆" fg #6b7089ff bg #161821ff
-15:3 "Fix the parser" fg #c6c8d1ff bg #161821ff italic
-15:44 "✗ checks" fg #e27878ff bg #161821ff
-15:54 "◉ alice" fg #84a0c6ff bg #161821ff
-16:1 "┃" fg #e2a478ff bg #161821ff
-16:3 "example#15 issue reply " fg #c6c8d1ff bg #161821ff bold
-16:26 "◐ carol" fg #a093c7ff bg #161821ff bold
-16:54 "4h left" fg #e2a478ff bg #161821ff bold
-17:1 "╹" fg #e2a478ff bg #161821ff
-17:3 "Crash on start" fg #c6c8d1ff bg #161821ff italic
-17:17 "                                  unassigned" fg #c6c8d1ff bg #161821ff
-18:1 "│" fg #818596ff bg #161821ff
-18:3 "docs#4 issue close " fg #c6c8d1ff bg #161821ff bold
-18:22 "◉ alice" fg #84a0c6ff bg #161821ff bold
-18:29 "                        10d left" fg #c6c8d1ff bg #161821ff bold
-19:1 "│" fg #818596ff bg #161821ff
-19:3 "Where do tokens live?" fg #c6c8d1ff bg #161821ff italic
-20:1 "╵" fg #818596ff bg #161821ff
-20:47 "◉ alice" fg #84a0c6ff bg #161821ff
-20:54 ", " fg #c6c8d1ff bg #161821ff
-20:56 "◐ bob" fg #a093c7ff bg #161821ff
-21:1 "│" fg #818596ff bg #161821ff
-21:2 "┆" fg #6b7089ff bg #161821ff
-21:3 "example#12 PR review " fg #c6c8d1ff bg #161821ff bold
-21:24 "○ dave" fg #89b8c2ff bg #161821ff bold
-21:30 "                        1d left" fg #c6c8d1ff bg #161821ff bold
-22:1 "╵" fg #818596ff bg #161821ff
-22:2 "┆" fg #6b7089ff bg #161821ff
-22:3 "Fix the parser" fg #c6c8d1ff bg #161821ff italic
-22:46 "✗ checks" fg #e27878ff bg #161821ff
-22:56 "◐ bob" fg #a093c7ff bg #161821ff
-23:1 "│" fg #818596ff bg #161821ff
-23:3 "example#15 issue close " fg #c6c8d1ff bg #161821ff bold
-23:26 "◐ carol" fg #a093c7ff bg #161821ff bold
-23:33 "                    29d left" fg #c6c8d1ff bg #161821ff bold
-24:1 "╵" fg #818596ff bg #161821ff
-24:3 "Crash on start" fg #c6c8d1ff bg #161821ff italic
-24:17 "                                  unassigned" fg #c6c8d1ff bg #161821ff
-34:1 "3 over · 1 soon · 3 on track                             1/7" fg #c6c8d1ff bg #161821ff
-35:1 "synced 2m ago" fg #6b7089ff bg #161821ff
-36:1 "←→" fg #c6c8d1ff bg #161821ff
-36:3 " mode" fg #6b7089ff bg #161821ff
-36:8 " ↑↓" fg #c6c8d1ff bg #161821ff
-36:11 " sel" fg #6b7089ff bg #161821ff
-36:15 " ⏎" fg #c6c8d1ff bg #161821ff
-36:17 " open" fg #6b7089ff bg #161821ff
-36:22 " g" fg #c6c8d1ff bg #161821ff
-36:24 " grp" fg #6b7089ff bg #161821ff
-36:28 " a r ?" fg #c6c8d1ff bg #161821ff
+1:1 "owed                                one list · " fg #ffffffff bg #000000ff
+1:48 "overdue first" fg #808080ff bg #000000ff
+2:3 "✗ no team in docket.yaml, so every comment starts a reply" fg #800000ff bg #000000ff
+3:3 "wait" fg #800000ff bg #000000ff
+4:3 "Recovery: list the team under people: in the personal file" fg #ffffffff bg #000000ff
+5:3 "or the repository's .github/docket.yaml, then run" fg #ffffffff bg #000000ff
+6:3 "docket config" fg #ffffffff bg #000000ff
+7:1 "┃" fg #800000ff bg #808080ff
+7:2 " " fg #808080ff bg #808080ff
+7:3 "docs#4 issue reply " fg #ffffffff bg #808080ff bold
+7:22 "◉ alice" fg #000080ff bg #808080ff bold
+7:29 "                        " fg #ffffffff bg #808080ff bold
+7:53 "18d over" fg #800000ff bg #808080ff bold
+8:1 "┃" fg #800000ff bg #808080ff
+8:2 " " fg #808080ff bg #808080ff
+8:3 "Where do tokens live?" fg #ffffffff bg #808080ff italic
+8:24 "                                     " fg #ffffffff bg #808080ff
+9:1 "┃" fg #800000ff bg #808080ff
+9:2 " " fg #808080ff bg #808080ff
+9:3 "                                            " fg #ffffffff bg #808080ff
+9:47 "◉ alice" fg #000080ff bg #808080ff
+9:54 ", " fg #ffffffff bg #808080ff
+9:56 "◐ bob" fg #800080ff bg #808080ff
+10:1 "┃" fg #800000ff bg #808080ff
+10:2 " " fg #808080ff bg #808080ff
+10:3 "◉ alice" fg #000080ff bg #808080ff
+10:10 " · 27d ago" fg #808080ff bg #808080ff
+10:20 "                                         " fg #ffffffff bg #808080ff
+11:1 "╹" fg #800000ff bg #808080ff
+11:2 " waiting since Tue 10:00 · target 24h" fg #808080ff bg #808080ff
+11:39 "                      " fg #ffffffff bg #808080ff
+12:1 "┃" fg #800000ff bg #000000ff
+12:2 "┆" fg #808080ff bg #000000ff
+12:3 "example#12 PR reply " fg #ffffffff bg #000000ff bold
+12:23 "○ dave" fg #008080ff bg #000000ff bold
+12:54 "4d over" fg #800000ff bg #000000ff bold
+13:1 "╹" fg #800000ff bg #000000ff
+13:2 "┆" fg #808080ff bg #000000ff
+13:3 "Fix the parser" fg #ffffffff bg #000000ff italic
+13:44 "✗ checks" fg #800000ff bg #000000ff
+13:54 "◉ alice" fg #000080ff bg #000000ff
+14:1 "┃" fg #800000ff bg #000000ff
+14:2 "┆" fg #808080ff bg #000000ff
+14:3 "example#12 PR close " fg #ffffffff bg #000000ff bold
+14:23 "○ dave" fg #008080ff bg #000000ff bold
+14:54 "2h over" fg #800000ff bg #000000ff bold
+15:1 "╹" fg #800000ff bg #000000ff
+15:2 "┆" fg #808080ff bg #000000ff
+15:3 "Fix the parser" fg #ffffffff bg #000000ff italic
+15:44 "✗ checks" fg #800000ff bg #000000ff
+15:54 "◉ alice" fg #000080ff bg #000000ff
+16:1 "┃" fg #808000ff bg #000000ff
+16:3 "example#15 issue reply " fg #ffffffff bg #000000ff bold
+16:26 "◐ carol" fg #800080ff bg #000000ff bold
+16:54 "4h left" fg #808000ff bg #000000ff bold
+17:1 "╹" fg #808000ff bg #000000ff
+17:3 "Crash on start" fg #ffffffff bg #000000ff italic
+17:17 "                                  unassigned" fg #ffffffff bg #000000ff
+18:1 "│ " fg #808080ff bg #000000ff
+18:3 "docs#4 issue close " fg #ffffffff bg #000000ff bold
+18:22 "◉ alice" fg #000080ff bg #000000ff bold
+18:29 "                        10d left" fg #ffffffff bg #000000ff bold
+19:1 "│ " fg #808080ff bg #000000ff
+19:3 "Where do tokens live?" fg #ffffffff bg #000000ff italic
+20:1 "╵ " fg #808080ff bg #000000ff
+20:47 "◉ alice" fg #000080ff bg #000000ff
+20:54 ", " fg #ffffffff bg #000000ff
+20:56 "◐ bob" fg #800080ff bg #000000ff
+21:1 "│┆" fg #808080ff bg #000000ff
+21:3 "example#12 PR review " fg #ffffffff bg #000000ff bold
+21:24 "○ dave" fg #008080ff bg #000000ff bold
+21:30 "                        1d left" fg #ffffffff bg #000000ff bold
+22:1 "╵┆" fg #808080ff bg #000000ff
+22:3 "Fix the parser" fg #ffffffff bg #000000ff italic
+22:46 "✗ checks" fg #800000ff bg #000000ff
+22:56 "◐ bob" fg #800080ff bg #000000ff
+23:1 "│ " fg #808080ff bg #000000ff
+23:3 "example#15 issue close " fg #ffffffff bg #000000ff bold
+23:26 "◐ carol" fg #800080ff bg #000000ff bold
+23:33 "                    29d left" fg #ffffffff bg #000000ff bold
+24:1 "╵ " fg #808080ff bg #000000ff
+24:3 "Crash on start" fg #ffffffff bg #000000ff italic
+24:17 "                                  unassigned" fg #ffffffff bg #000000ff
+34:1 "3 over · 1 soon · 3 on track                             1/7" fg #ffffffff bg #000000ff
+35:1 "synced 2m ago" fg #808080ff bg #000000ff
+36:1 "←→" fg #ffffffff bg #000000ff
+36:3 " mode" fg #808080ff bg #000000ff
+36:8 " ↑↓" fg #ffffffff bg #000000ff
+36:11 " sel" fg #808080ff bg #000000ff
+36:15 " ⏎" fg #ffffffff bg #000000ff
+36:17 " open" fg #808080ff bg #000000ff
+36:22 " g" fg #ffffffff bg #000000ff
+36:24 " grp" fg #808080ff bg #000000ff
+36:28 " a r ?" fg #ffffffff bg #000000ff

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import StatusLine from "./StatusLine.js";
 import {
@@ -24,19 +24,19 @@ describe("StatusLine", () => {
   it("dims how old the data is at 40 columns", async () => {
     const screen = await draw(<StatusLine {...Synced.args} />, 40);
     expect(screen.lines.at(0)).toBe("synced 2m ago");
-    expect(screen.look("synced")?.fg).toBe(tokens["color.text.muted"]);
+    expect(screen.look("synced")?.fg).toBe(hex(tokens["color.text.muted"]));
   });
 
   it("draws an error with its ✗ in the error colour", async () => {
     const screen = await draw(<StatusLine {...RefreshFailed.args} />, 40);
     expect(screen.lines.at(0)).toBe("✗ refresh failed · data from 10:12");
-    expect(screen.look("✗ refresh")?.fg).toBe(tokens["color.text.error"]);
+    expect(screen.look("✗ refresh")?.fg).toBe(hex(tokens["color.text.error"]));
   });
 
   it("draws a pause for the rate limit in the text colour, rows held or not", async () => {
     const held = await draw(<StatusLine {...RateLimited.args} />, 40);
     expect(held.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
-    expect(held.look("paused")?.fg).toBe(tokens["color.text"]);
+    expect(held.look("paused")?.fg).toBe(hex(tokens["color.text"]));
     const { status } = RateLimited.args;
     const first = await draw(
       <StatusLine
@@ -46,13 +46,13 @@ describe("StatusLine", () => {
       40,
     );
     expect(first.lines.at(0)).toBe("paused: rate limit · resumes 14:20");
-    expect(first.look("paused")?.fg).toBe(tokens["color.text"]);
+    expect(first.look("paused")?.fg).toBe(hex(tokens["color.text"]));
   });
 
   it("draws a refresh in progress in the text colour", async () => {
     const screen = await draw(<StatusLine {...Refreshing.args} />, 40);
     expect(screen.lines.at(0)).toBe("refreshing · docs 2/3");
-    expect(screen.look("refreshing")?.fg).toBe(tokens["color.text"]);
+    expect(screen.look("refreshing")?.fg).toBe(hex(tokens["color.text"]));
   });
 
   it("cuts a message wider than the pane at 40 columns", async () => {
@@ -136,21 +136,23 @@ describe("StatusLine", () => {
   it("draws a failed action's result with its ✗ in the error colour", async () => {
     const screen = await draw(<StatusLine {...ActionFailed.args} />, 40);
     expect(screen.lines.at(0)).toBe("✗ could not open the browser");
-    expect(screen.look("✗ could")?.fg).toBe(tokens["color.text.error"]);
+    expect(screen.look("✗ could")?.fg).toBe(hex(tokens["color.text.error"]));
   });
 
   it("draws an action's result with its ✓ in the success colour, each person it names behind their mark", async () => {
     const screen = await draw(<StatusLine {...ActionDone.args} />, 40);
     expect(screen.lines.at(0)).toBe("✓ assigned ◉ alice, ◐ erin");
-    expect(screen.look("✓ assigned")?.fg).toBe(tokens["color.text.success"]);
-    expect(screen.look("◉ alice")?.fg).toBe(tokens["color.text.team"]);
-    expect(screen.look("◐ erin")?.fg).toBe(tokens["color.text.internal"]);
+    expect(screen.look("✓ assigned")?.fg).toBe(
+      hex(tokens["color.text.success"]),
+    );
+    expect(screen.look("◉ alice")?.fg).toBe(hex(tokens["color.text.team"]));
+    expect(screen.look("◐ erin")?.fg).toBe(hex(tokens["color.text.internal"]));
   });
 
   it("dims an idle pane's freshness and the key that wakes it, whole at 40 columns", async () => {
     const screen = await draw(<StatusLine {...Idle.args} />, 40);
     expect(screen.lines.at(0)).toBe("synced 25m ago · idle · any key wakes");
-    expect(screen.look("idle")?.fg).toBe(tokens["color.text.muted"]);
+    expect(screen.look("idle")?.fg).toBe(hex(tokens["color.text.muted"]));
   });
 
   it("leaves the count out where the two sides would meet", async () => {
@@ -166,7 +168,7 @@ describe("StatusLine", () => {
     expect(screen.lines.at(0)).toBe(
       `synced 2m ago${" ".repeat(2)}budget 35% · resets 14:20`,
     );
-    expect(screen.look("budget")?.fg).toBe(tokens["color.text.muted"]);
+    expect(screen.look("budget")?.fg).toBe(hex(tokens["color.text.muted"]));
   });
 
   it("gives the right side to the details count while the live budget figures show", async () => {
@@ -194,7 +196,7 @@ describe("StatusLine", () => {
     expect(screen.lines.at(0)).toBe(
       `synced 2m ago${" ".repeat(15)}details 0/12`,
     );
-    expect(screen.look("details")?.fg).toBe(tokens["color.text.muted"]);
+    expect(screen.look("details")?.fg).toBe(hex(tokens["color.text.muted"]));
   });
 
   it("counts the details beside a background refresh, at 40 and 60 columns", async () => {

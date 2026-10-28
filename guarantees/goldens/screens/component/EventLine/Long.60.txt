@@ -2,6 +2,6 @@
 | ┆  ○ example-con… lab… priority: needs-…-the-maintainers 3h
 
 runs
-1:2 "┆" fg #6b7089ff bg #00000000
-1:5 "○ example-con…" fg #89b8c2ff bg #00000000
-1:19 " lab… priority: needs-…-the-maintainers 3h" fg #c6c8d1ff bg #00000000
+1:2 "┆" fg #808080ff bg #00000000
+1:5 "○ example-con…" fg #008080ff bg #00000000
+1:19 " lab… priority: needs-…-the-maintainers 3h" fg #ffffffff bg #00000000

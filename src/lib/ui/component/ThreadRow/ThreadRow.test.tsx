@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { thread } from "../../../../testing/facts.js";
 import { measureRow } from "../../../../testing/rows.js";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import ThreadRow from "./ThreadRow.js";
 import {
@@ -30,9 +30,9 @@ describe("ThreadRow", () => {
         "╵┆Example change                 ◉ alice",
         "",
       ]);
-      expect(screen.look("│")?.fg).toBe(tokens["color.text.success"]);
+      expect(screen.look("│")?.fg).toBe(hex(tokens["color.text.success"]));
       expect(screen.look("open 2d")).toMatchObject({
-        fg: tokens["color.text"],
+        fg: hex(tokens["color.text"]),
         bold: true,
       });
     });
@@ -43,8 +43,8 @@ describe("ThreadRow", () => {
         "┃ example#7 issue ○ dave         7d over",
         "╹ Dark mode everywhere        unassigned",
       ]);
-      expect(screen.look("┃")?.fg).toBe(tokens["color.text.error"]);
-      expect(screen.look("7d over")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("┃")?.fg).toBe(hex(tokens["color.text.error"]));
+      expect(screen.look("7d over")?.fg).toBe(hex(tokens["color.text.error"]));
     });
 
     it("leaves the bar's column blank on a thread a label exempts, its ending's age plain", async () => {
@@ -53,7 +53,7 @@ describe("ThreadRow", () => {
         "  example#9 PR ■ example-sync         2d",
         "  Update dependency …  draft  unassigned",
       ]);
-      expect(screen.look("2d")?.fg).toBe(tokens["color.text"]);
+      expect(screen.look("2d")?.fg).toBe(hex(tokens["color.text"]));
     });
   });
 
@@ -87,11 +87,11 @@ describe("ThreadRow", () => {
 
     it("gives the state's colour to the distance, a failing field the error colour, and each person their group's hue", async () => {
       const screen = await draw(<ThreadRow {...OverReviewSelected.args} />, 40);
-      expect(screen.look("1d over")?.fg).toBe(tokens["color.text.error"]);
-      expect(screen.look("✗ checks")?.fg).toBe(tokens["color.text.error"]);
-      expect(screen.look("example#12")?.fg).toBe(tokens["color.text"]);
-      expect(screen.look("○ dave")?.fg).toBe(tokens["color.text.outside"]);
-      expect(screen.look("● bob")?.fg).toBe(tokens["color.text.team"]);
+      expect(screen.look("1d over")?.fg).toBe(hex(tokens["color.text.error"]));
+      expect(screen.look("✗ checks")?.fg).toBe(hex(tokens["color.text.error"]));
+      expect(screen.look("example#12")?.fg).toBe(hex(tokens["color.text"]));
+      expect(screen.look("○ dave")?.fg).toBe(hex(tokens["color.text.outside"]));
+      expect(screen.look("● bob")?.fg).toBe(hex(tokens["color.text.team"]));
     });
 
     it("gives both lines of the selected row the selection background, and no other", async () => {
@@ -100,17 +100,17 @@ describe("ThreadRow", () => {
         40,
       );
       expect(selected.look("example#12")?.bg).toBe(
-        tokens["color.background.selected"],
+        hex(tokens["color.background.selected"]),
       );
       expect(selected.look("Fix the parser")?.bg).toBe(
-        tokens["color.background.selected"],
+        hex(tokens["color.background.selected"]),
       );
       const resting = await draw(
         <ThreadRow {...OverReviewSelected.args} selected={false} />,
         40,
       );
       expect(resting.look("Fix the parser")?.bg).not.toBe(
-        tokens["color.background.selected"],
+        hex(tokens["color.background.selected"]),
       );
     });
 
@@ -131,8 +131,8 @@ describe("ThreadRow", () => {
         "│┆example#13 PR close ○ dave     8d left",
         "╵┆Document the parser     draft  ● alice",
       ]);
-      expect(screen.look("8d left")?.fg).toBe(tokens["color.text"]);
-      expect(screen.look("draft")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("8d left")?.fg).toBe(hex(tokens["color.text"]));
+      expect(screen.look("draft")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
 
     it("names every owner on a third line, right-aligned, each login cut at 12 cells", async () => {
@@ -150,7 +150,7 @@ describe("ThreadRow", () => {
       expect(screen.lines.at(1)).toBe(
         "╹ Crash on start              unassigned",
       );
-      expect(screen.look("unassigned")?.fg).toBe(tokens["color.text"]);
+      expect(screen.look("unassigned")?.fg).toBe(hex(tokens["color.text"]));
     });
 
     it("drops the author from the first line when fewer than four cells of login would fit", async () => {
@@ -165,7 +165,7 @@ describe("ThreadRow", () => {
       expect(screen.lines.at(0)).toBe(
         "│ example#1250 PR review ■ exam… 2d left",
       );
-      expect(screen.look("■ exam…")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("■ exam…")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
 
     it("wraps the selected row's title in full, in italic, the owner on a line of its own when it does not fit beside the last", async () => {
@@ -211,7 +211,9 @@ describe("ThreadRow", () => {
         `┃ example#15 issue reply ○ dave${" ".repeat(22)}3h left`,
         `╹ Crash on start${" ".repeat(34)}unassigned`,
       ]);
-      expect(screen.look("3h left")?.fg).toBe(tokens["color.text.warning"]);
+      expect(screen.look("3h left")?.fg).toBe(
+        hex(tokens["color.text.warning"]),
+      );
     });
 
     it("keeps an author whole that 40 columns leave out", async () => {
@@ -230,7 +232,7 @@ describe("ThreadRow", () => {
       expect(screen.lines.at(1)).toBe(
         `╹ Example thread${" ".repeat(26)}✗ file  unassigned`,
       );
-      expect(screen.look("✗ file")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("✗ file")?.fg).toBe(hex(tokens["color.text.error"]));
     });
   });
 
@@ -271,8 +273,8 @@ describe("ThreadRow", () => {
         " ┆Fix the parser                 ● alice",
         "",
       ]);
-      expect(screen.look("20m")?.fg).toBe(tokens["color.text"]);
-      expect(screen.look("┆")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("20m")?.fg).toBe(hex(tokens["color.text"]));
+      expect(screen.look("┆")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
 
     it("keeps the age at the right edge of a wider pane, the word draft dimmed", async () => {
@@ -284,7 +286,7 @@ describe("ThreadRow", () => {
         `  example#14 PR ○ dave${" ".repeat(36)}3h`,
         `  Update dependency example-lib to 2.0${" ".repeat(5)}draft  unassigned`,
       ]);
-      expect(screen.look("draft")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("draft")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
 
     it("cuts the title first, so the owner and the word draft stay whole", async () => {
@@ -312,7 +314,7 @@ describe("ThreadRow", () => {
       expect(screen.lines.at(1)).toBe(
         "  Where do tokens live?    ✗ file  ● bob",
       );
-      expect(screen.look("✗ file")?.fg).toBe(tokens["color.text.error"]);
+      expect(screen.look("✗ file")?.fg).toBe(hex(tokens["color.text.error"]));
     });
 
     it("caps a long login at 12 cells", async () => {

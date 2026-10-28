@@ -1,3 +1,4 @@
+import type { ColorInput } from "@opentui/core";
 import type { Owner, PersonGroup } from "../../owed/index.js";
 import { tokens } from "../../tokens/index.js";
 import type { Piece } from "../types.js";
@@ -10,7 +11,7 @@ import fitField from "./fitField.js";
  * The marks differ in shape, so they carry the group where the hues
  * merge, as blue and purple do under red-green colour blindness.
  */
-const looks: Readonly<Record<PersonGroup, readonly [string, string]>> = {
+const looks: Readonly<Record<PersonGroup, readonly [string, ColorInput]>> = {
   you: [tokens["glyph.you"], tokens["color.text.team"]],
   team: [tokens["glyph.team"], tokens["color.text.team"]],
   internal: [tokens["glyph.internal"], tokens["color.text.internal"]],

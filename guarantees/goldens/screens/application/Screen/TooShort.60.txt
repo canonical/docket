@@ -2,4 +2,4 @@
 |docket needs 8 lines
 
 runs
-1:1 "docket needs 8 lines" fg #c6c8d1ff bg #161821ff
+1:1 "docket needs 8 lines" fg #ffffffff bg #000000ff

@@ -2,5 +2,5 @@
 |◉ a-team-with-a-very-long-name ─────────────────────────────
 
 runs
-1:1 "◉ a-team-with-a-very-long-name" fg #84a0c6ff bg #00000000
-1:31 " ─────────────────────────────" fg #c6c8d1ff bg #00000000
+1:1 "◉ a-team-with-a-very-long-name" fg #000080ff bg #00000000
+1:31 " ─────────────────────────────" fg #ffffffff bg #00000000

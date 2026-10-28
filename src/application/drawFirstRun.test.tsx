@@ -4,7 +4,7 @@ import { tokens } from "../lib/tokens/index.js";
 import { settleStatus } from "../testing/cache.js";
 import { providerError } from "../testing/provider.js";
 import { recordedNow, recordedRepos } from "../testing/recorded.js";
-import { draw } from "../testing/terminal.js";
+import { draw, hex } from "../testing/terminal.js";
 import drawFirstRun from "./drawFirstRun.js";
 
 const repo = "example-org/example-repo";
@@ -54,7 +54,7 @@ describe("drawFirstRun", () => {
       "  Recovery: try again",
       `  ${"█".repeat(28)} 1/1 pages`,
     ]);
-    expect(screen.look("Recovery")?.fg).toBe(tokens["color.text"]);
+    expect(screen.look("Recovery")?.fg).toBe(hex(tokens["color.text"]));
   });
 
   it("draws no repository lines, no step and no progress line before any repository has a stage", async () => {

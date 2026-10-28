@@ -3,10 +3,10 @@
 |╵ Update dependency example-lib …  ● bob
 
 runs
-1:1 "│" fg #818596ff bg #00000000
-1:3 "example#1250 PR review " fg #c6c8d1ff bg #00000000 bold
-1:26 "■ exam…" fg #6b7089ff bg #00000000 bold
-1:33 " 2d left" fg #c6c8d1ff bg #00000000 bold
-2:1 "╵" fg #818596ff bg #00000000
-2:3 "Update dependency example-lib …" fg #c6c8d1ff bg #00000000 italic
-2:36 "● bob" fg #84a0c6ff bg #00000000
+1:1 "│ " fg #808080ff bg #00000000
+1:3 "example#1250 PR review " fg #ffffffff bg #00000000 bold
+1:26 "■ exam…" fg #808080ff bg #00000000 bold
+1:33 " 2d left" fg #ffffffff bg #00000000 bold
+2:1 "╵ " fg #808080ff bg #00000000
+2:3 "Update dependency example-lib …" fg #ffffffff bg #00000000 italic
+2:36 "● bob" fg #000080ff bg #00000000
