@@ -48,6 +48,39 @@ describe("describeStatus", () => {
     }
   });
 
+  it("names the older of the threads and a windowed list's data, however fresh the threads", () => {
+    const { status } = Synced.args;
+    const readAt = new Date("2026-09-28T11:30:00Z");
+    expect(
+      describeStatus(status, now, "UTC", names, undefined, "active", readAt),
+    ).toEqual({
+      kind: "freshness",
+      text: "synced 30m ago",
+    });
+  });
+
+  it("names the threads' age when a windowed list's data is the newer", () => {
+    const { status } = Synced.args;
+    const readAt = new Date("2026-09-28T11:59:00Z");
+    expect(
+      describeStatus(status, now, "UTC", names, undefined, "active", readAt),
+    ).toEqual({
+      kind: "freshness",
+      text: "synced 2m ago",
+    });
+  });
+
+  it("names a windowed list's data, not the threads', with a failure that leaves its rows held", () => {
+    const { status } = Offline.args;
+    const readAt = new Date("2026-09-28T10:05:00Z");
+    expect(
+      describeStatus(status, now, "UTC", names, undefined, "active", readAt),
+    ).toEqual({
+      kind: "error",
+      text: "✗ offline · data from 10:05",
+    });
+  });
+
   it("says the refresh is paused for the rate limit with rows held, and when requests resume, in the time zone given", () => {
     expect(describeAt(statusOf(RateLimited), "Europe/Paris")).toEqual({
       kind: "notice",

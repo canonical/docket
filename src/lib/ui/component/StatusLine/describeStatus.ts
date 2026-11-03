@@ -28,8 +28,11 @@ const separator = ` ${tokens["glyph.separator"]} `;
  * short notice, such as when a full refresh is available again, or
  * `paused: budget low · resumes 14:20` while the budget is too low to
  * spend; and otherwise how old the data is, followed, while the pane is
- * idle, by `idle · any key wakes`. With no data and nothing happening
- * there is no message, and with no cache only an action's result.
+ * idle, by `idle · any key wakes`. The ages and the times name the
+ * older of the threads and, in a windowed mode, the data its list was
+ * built from, as text mode's freshness does. With no data and nothing
+ * happening there is no message, and with no cache only an action's
+ * result.
  */
 export default function describeStatus(
   status: CacheStatus | undefined,
@@ -38,10 +41,16 @@ export default function describeStatus(
   names: Readonly<Record<string, string>>,
   action?: ActionResult,
   attention?: AttentionState,
+  readAt?: Date,
 ): StatusMessage | undefined {
   const paused = status?.paused;
   const failure = status?.failure;
-  const syncedAt = status?.syncedAt;
+  // In a windowed mode, the data on screen is as old as the older of
+  // the threads and the data its list was built from.
+  const syncedAt =
+    readAt && status?.syncedAt && readAt < status.syncedAt
+      ? readAt
+      : status?.syncedAt;
   if (paused?.reason === "rateLimit") {
     const text = `paused: rate limit${separator}resumes ${describeClock(paused.until, timezone)}`;
     return { kind: "notice", text };

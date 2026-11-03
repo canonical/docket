@@ -205,8 +205,10 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
   });
 
   it("says refresh in progress while its window is read", async () => {
+    const connected = connectRecording();
     const source = {
-      ...connectRecording(),
+      ...connected,
+      cache: { ...connected.cache, findEvents: () => undefined },
       readEvents: () => new Promise<never>(() => {}),
     };
     const screen = await drawSuspending(
@@ -215,6 +217,23 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
       24,
     );
     expect((await screen.redraw()).lines.at(2)).toBe("  refresh in progress…");
+  });
+
+  it("shows cached finished threads while a refresh is still pending", async () => {
+    const source = {
+      ...connectRecording({ finished: weekEndings }),
+      readEvents: () => new Promise<never>(() => {}),
+    };
+    const screen = await drawSuspending(
+      <ScreenFrame {...viewWeek()} source={source} />,
+      40,
+      24,
+    );
+    await waitUntil(async () => {
+      const lines = (await screen.redraw()).lines;
+      expect(lines.at(2)).toMatch(/^│ docs#102/);
+      expect(lines).not.toContain("  refresh in progress…");
+    });
   });
 
   it("names on the status line a failure reading its window, with what the cache holds listed", async () => {

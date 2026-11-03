@@ -9,6 +9,7 @@ import type { ProviderError } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import describeFailure from "./describeFailure.js";
+import findWindowStart from "./findWindowStart.js";
 import isNamedError from "./isNamedError.js";
 import type { TerminalView, Watched } from "./types.js";
 
@@ -66,18 +67,28 @@ export interface UseWindowListProps<Timed, List> {
 type Failure = ProviderError | CacheError;
 
 /**
- * The mode's list, with what failed while reading its window when
- * something did; or why no repository could be read; or nothing while
- * the window is being read.
+ * The mode's list, with when the oldest data it was built from was
+ * fetched, and what failed while reading its window when something did;
+ * or why no repository could be read; or nothing while the window is
+ * being read.
  */
 export type UseWindowListResult<List> =
-  | { readonly list: List; readonly failure?: Failure }
+  | {
+      readonly list: List;
+      /** When the oldest data the list was built from was fetched. */
+      readonly readAt?: Date;
+      readonly failure?: Failure;
+    }
   | { readonly problem: Problem }
   | undefined;
 
 /** What was read last, and for which window. */
 type Read<Timed> = { readonly window: Duration } & (
-  | { readonly timed: Timed; readonly failure?: Failure }
+  | {
+      readonly timed: Timed;
+      readonly readAt?: Date;
+      readonly failure?: Failure;
+    }
   | { readonly problem: Problem }
 );
 
@@ -91,22 +102,30 @@ const isFailure = (error: unknown): error is Failure => isNamedError(error);
 /**
  * Reads a windowed mode's data through the cache, activity's events or
  * finished's threads, and builds its list from it at every instant the
- * screen is drawn at. The window is read whenever it, the watched
- * repositories or the cache's last sync change, for the mode on screen
- * and for the one behind it alike, so a switch of mode finds its list
- * already read; a list already shown for the window stays while it is,
- * and an idle pane reads no window again, however old what it holds,
- * until a key wakes it. Below the budget floor, what the cache holds for
- * the window answers, however old, and a window the cache holds nothing
- * of waits for the reset unless its mode is on screen, where the user's
- * own request reads it: a read the floor stops never settles, so the
- * window is read whole at the next sync above the floor, never in part.
- * When GitHub or the cache fails for a repository, what the cache holds
- * for it answers, however old and however far back it reaches, and the
- * failure goes with the list for the status line to name. A repository
- * with nothing held has nothing, so one failure never takes the others'
- * rows away; only when every repository fails with nothing held does the
- * failure stand in for the list.
+ * screen is drawn at. What the cache holds for the window serves at
+ * once, however old, so the first switch to the mode finds a list on
+ * screen while the read that follows brings it up to date in place; a
+ * window the cache holds nothing of keeps the loading line until that
+ * read settles, and a repository the cache holds nothing for leaves the
+ * window unserved, so a window is read whole or not at all. The window
+ * is read whenever it, the watched repositories or the cache's last sync
+ * change, for the mode on screen and for the one behind it alike, so a
+ * switch of mode finds its list already read; a list already shown for
+ * the window stays while it is, and an idle pane reads no window again,
+ * however old what it holds, until a key wakes it. Below the budget
+ * floor, what the cache holds for the window answers, however old, and
+ * a window the cache holds nothing of waits for the reset unless its
+ * mode is on screen, where the user's own request reads it: a read the
+ * floor stops never settles, so the window is read whole at the next
+ * sync above the floor, never in part. When GitHub or the cache fails
+ * for a repository, what the cache holds for it answers, however old and
+ * however far back it reaches, and the failure goes with the list for
+ * the status line to name. A repository with nothing held has nothing,
+ * so one failure never takes the others' rows away; only when every
+ * repository fails with nothing held does the failure stand in for the
+ * list. The list carries when the oldest data it was built from was
+ * fetched, so the status line's age names the data on screen, the older
+ * of the threads and the window, as text mode's freshness does.
  *
  * @note Impure: reads the cache, which asks GitHub when what it holds is
  * older than the call's maximum age.
@@ -129,13 +148,59 @@ export default function useWindowList<Timed, List>({
   // old, until a key wakes the pane.
   const awake = (attention ?? "active") !== "idle";
   const synced = syncedAt?.getTime();
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the last sync is named so that each sync reads the window.
+  // Switching modes need only restart a read when it releases the reserve.
+  const reserveRequested =
+    shown && "cache" in source && !source.cache.maySpend();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a sync triggers a read; read is only used to decide whether to seed it from the cache.
   useEffect(() => {
     if (!reading || !awake || !("cache" in source)) return;
     const { cache, readEvents } = source;
     let current = true;
     let failure: Failure | undefined;
     let missing = 0;
+    /** The oldest answer this read was built from, the age its list carries. */
+    let readAt: Date | undefined;
+    const note = (at: Date) => {
+      readAt = !readAt || at < readAt ? at : readAt;
+    };
+    // Take one snapshot of every covered repository before timing it.
+    // An incomplete window waits for the read rather than looking empty.
+    if (!read || read.window !== window) {
+      const at = now();
+      const held = watched.map(({ repo, resolved }) => ({
+        repo,
+        data: cache.findEvents(
+          repo,
+          findWindowStart(window, resolved.settings, at),
+        ),
+      }));
+      if (held.every(({ data }) => data !== undefined)) {
+        const byRepo = new Map(held.map(({ repo, data }) => [repo, data]));
+        const heldAt = held.reduce<Date | undefined>(
+          (oldest, { data }) =>
+            data && (!oldest || data.syncedAt < oldest)
+              ? data.syncedAt
+              : oldest,
+          undefined,
+        );
+        // The coverage check above guarantees every requested repo exists.
+        const serveHeld: ReadHeld = async (repo) =>
+          byRepo.get(repo) as CachedEvents;
+        time(serveHeld, watched, window, at).then(
+          (timed) => {
+            if (!current) return;
+            setRead((previous) =>
+              previous && previous.window === window
+                ? previous
+                : { window, timed, ...(heldAt && { readAt: heldAt }) },
+            );
+          },
+          // The fresh read reports failures; a failed cache snapshot must
+          // not replace a newer answer that arrived before it.
+          () => {},
+        );
+      }
+    }
     const readHeld: ReadHeld = async (repo, since) => {
       const kept = cache.findEvents(repo, since);
       // Below the budget floor, reading again what the cache holds is
@@ -144,38 +209,67 @@ export default function useWindowList<Timed, List>({
       // is on screen, and otherwise waits for the reset too, its read
       // never settling, so no part of it is taken as the window.
       if (!cache.maySpend()) {
-        if (kept) return kept;
-        if (!shown) return new Promise<CachedEvents>(() => {});
+        if (kept) {
+          note(kept.syncedAt);
+          return kept;
+        }
+        if (!reserveRequested) return new Promise<CachedEvents>(() => {});
       }
       try {
-        return await readEvents(repo, since);
+        const fresh = await readEvents(repo, since);
+        note(fresh.syncedAt);
+        return fresh;
       } catch (error) {
         if (!isFailure(error)) throw error;
         failure ??= error;
         const held = cache.findEvents(repo);
         if (!held) missing += 1;
-        return held ?? { events: [], finished: [], syncedAt: now() };
+        const answer = held ?? { events: [], finished: [], syncedAt: now() };
+        if (held) note(held.syncedAt);
+        return answer;
       }
     };
     time(readHeld, watched, window, now()).then(
-      (timed) =>
-        current &&
+      (timed) => {
+        if (!current) return;
         setRead(
           failure && missing === watched.length
             ? { window, problem: describeFailure(failure) }
-            : { window, timed, ...(failure && { failure }) },
-        ),
-      (error: unknown) =>
-        current && setRead({ window, problem: describeFailure(error) }),
+            : {
+                window,
+                timed,
+                ...(readAt && { readAt }),
+                ...(failure && { failure }),
+              },
+        );
+      },
+      (error: unknown) => {
+        if (!current) return;
+        setRead({ window, problem: describeFailure(error) });
+      },
     );
     return () => {
       current = false;
     };
-  }, [reading, awake, source, shown, watched, window, now, time, synced]);
+  }, [
+    reading,
+    awake,
+    source,
+    reserveRequested,
+    watched,
+    window,
+    now,
+    time,
+    synced,
+  ]);
   if (!reading || !threads || !read || read.window !== window) {
     return undefined;
   }
   if ("problem" in read) return { problem: read.problem };
-  const { timed, failure } = read;
-  return { list: build(timed, threads), ...(failure && { failure }) };
+  const { timed, failure, readAt } = read;
+  return {
+    list: build(timed, threads),
+    readAt,
+    ...(failure && { failure }),
+  };
 }

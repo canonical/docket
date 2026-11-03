@@ -22,6 +22,12 @@ export interface StatusLineState {
   readonly failure: CacheStatus["failure"];
   readonly action: ActionResult | undefined;
   readonly attention: AttentionState;
+  /**
+   * When the oldest data the list on screen was built from was fetched,
+   * in a windowed mode, which the line's ages and times name alongside
+   * the threads' when it is older.
+   */
+  readonly readAt: Date | undefined;
   /** How many of the details asked for are read, while any are pending. */
   readonly details: DetailsCount | undefined;
   /**
@@ -49,6 +55,7 @@ export default function drawStatusLine({
   failure,
   action,
   attention,
+  readAt,
   details,
   budget,
   now,
@@ -62,6 +69,7 @@ export default function drawStatusLine({
       status={problem ? undefined : shown}
       action={action}
       attention={attention}
+      readAt={readAt}
       details={details}
       liveBudget={describeBudget(budget, now, timezone)}
       now={now}

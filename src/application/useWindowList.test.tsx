@@ -19,7 +19,7 @@ import useWindowList, {
   type UseWindowListProps,
 } from "./useWindowList.js";
 
-const [day, twoDays] = recordedSettings.activity;
+const [day] = recordedSettings.activity;
 
 /** Reads each repository and gives how many events each holds. */
 const countEvents = async (read: ReadHeld, watched: readonly Watched[]) =>
@@ -32,8 +32,10 @@ const countEvents = async (read: ReadHeld, watched: readonly Watched[]) =>
 type Props = UseWindowListProps<number[], string>;
 
 /**
- * Draws what the hook gives on one line: the list, then the code of what
- * failed, if anything did; the code of its problem; or `reading`.
+ * Draws what the hook gives on one line: the list, the code of what
+ * failed, if anything did, and when the
+ * oldest data it was built from was fetched; the code of its problem; or
+ * `reading`.
  *
  * @param readEvents The source's reading of a repository's events.
  * @param cache The cache the source reads through.
@@ -75,8 +77,13 @@ async function probe(
     const result = useWindowList(props);
     if (!result) return <text>reading</text>;
     if ("problem" in result) return <text>{result.problem.code}</text>;
-    const failed = result.failure ? ` · ${result.failure.code}` : "";
-    return <text>{`${result.list}${failed}`}</text>;
+    const parts = [
+      result.list,
+      ...(result.failure ? [result.failure.code] : []),
+    ];
+    return (
+      <text>{`${parts.join(" · ")} · read ${result.readAt?.toISOString() ?? "-"}`}</text>
+    );
   }
   const screen = await draw(<Probe />, 60, 1);
   return {
@@ -97,6 +104,17 @@ const flooredEmpty = (): Cache => ({
   findEvents: () => undefined,
 });
 
+/** A cache whose events were fetched half an hour ago. */
+const aged = (): Cache =>
+  holdCache(
+    { threads: recordedThreads, syncedAt: recordedNow },
+    {
+      ...settleStatus(recordedNow),
+      syncedAt: new Date(recordedNow.getTime() - 30 * 60_000),
+    },
+    recordedEvents,
+  );
+
 describe("useWindowList", () => {
   it("builds the list from each repository read through the source, with the threads", async () => {
     const read = async (repo: string) => ({
@@ -104,7 +122,9 @@ describe("useWindowList", () => {
       finished: [],
       syncedAt: recordedNow,
     });
-    expect(await (await probe(read)).read()).toBe("3/1 of 3");
+    expect(await (await probe(read)).read()).toBe(
+      `3/1 of 3 · read ${recordedNow.toISOString()}`,
+    );
   });
 
   it("reads the window while the mode is not shown, and builds its list", async () => {
@@ -120,7 +140,7 @@ describe("useWindowList", () => {
       },
       { shown: false },
     );
-    expect(await read()).toBe("3/1 of 3");
+    expect(await read()).toBe(`3/1 of 3 · read ${recordedNow.toISOString()}`);
     expect(reads).toBe(2);
   });
 
@@ -137,20 +157,145 @@ describe("useWindowList", () => {
     expect(reads).toBe(0);
   });
 
+  it("builds an empty list when there are no repositories to watch", async () => {
+    const { read } = await probe(() => new Promise(() => {}), { watched: [] });
+    expect(await read()).toBe(" of 3 · read -");
+  });
+
+  it("keeps the fresh answer when timing the cached snapshot fails", async () => {
+    let attempts = 0;
+    const time: Props["time"] = async (read, watched) => {
+      attempts += 1;
+      if (attempts === 1) throw new Error("cannot time the snapshot");
+      return countEvents(read, watched);
+    };
+    const { read } = await probe(
+      async () => ({
+        events: [],
+        finished: [],
+        syncedAt: recordedNow,
+      }),
+      { time },
+    );
+    await waitUntil(async () =>
+      expect(await read()).toBe(`0/0 of 3 · read ${recordedNow.toISOString()}`),
+    );
+  });
+
+  it("keeps the fresh answer when timing the cached snapshot finishes later", async () => {
+    const snapshot = Promise.withResolvers<number[]>();
+    let attempts = 0;
+    const time: Props["time"] = async (read, watched) => {
+      attempts += 1;
+      if (attempts === 1) return snapshot.promise;
+      return countEvents(read, watched);
+    };
+    const { read } = await probe(
+      async () => ({ events: [], finished: [], syncedAt: recordedNow }),
+      { time },
+    );
+    await waitUntil(async () =>
+      expect(await read()).toBe(`0/0 of 3 · read ${recordedNow.toISOString()}`),
+    );
+    snapshot.resolve([3, 1]);
+    expect(await read()).toBe(`0/0 of 3 · read ${recordedNow.toISOString()}`);
+  });
+
+  it("ignores a cached snapshot when its window changes before it finishes", async () => {
+    const snapshot = Promise.withResolvers<number[]>();
+    const wider = recordedSettings.activity[1];
+    const time: Props["time"] = async (_read, _watched, window) =>
+      window === day ? snapshot.promise : [4];
+    const { change, read } = await probe(() => new Promise(() => {}), { time });
+    await change({ window: wider });
+    snapshot.resolve([3, 1]);
+    expect(await read()).toBe(`4 of 3 · read -`);
+  });
+
+  it("keeps an in-flight background read when its mode is shown", async () => {
+    const gate = Promise.withResolvers<CachedEvents>();
+    let reads = 0;
+    const cache: Cache = { ...aged(), findEvents: () => undefined };
+    const { change, read } = await probe(
+      () => {
+        reads += 1;
+        return gate.promise;
+      },
+      { shown: false },
+      cache,
+    );
+    expect(reads).toBe(2);
+    await change({ shown: true });
+    expect(reads).toBe(2);
+    gate.resolve({ events: [], finished: [], syncedAt: recordedNow });
+    await waitUntil(async () =>
+      expect(await read()).toBe(`0/0 of 3 · read ${recordedNow.toISOString()}`),
+    );
+  });
+
+  it("serves what the cache holds for the window at once, and the read that follows replaces it", async () => {
+    const gate = Promise.withResolvers<CachedEvents>();
+    const { read } = await probe(() => gate.promise, {}, aged());
+    // The held events serve without one request, however old, while the
+    // read that follows is under way.
+    expect(await read()).toBe(
+      `3/1 of 3 · read ${new Date(recordedNow.getTime() - 30 * 60_000).toISOString()}`,
+    );
+    gate.resolve({ events: [], finished: [], syncedAt: recordedNow });
+    await waitUntil(async () =>
+      expect(await read()).toBe(`0/0 of 3 · read ${recordedNow.toISOString()}`),
+    );
+  });
+
+  it("serves the events held below the budget floor, however old, without a read", async () => {
+    const cache: Cache = { ...aged(), maySpend: () => false };
+    const { read } = await probe(
+      async () => {
+        throw timedOut;
+      },
+      {},
+      cache,
+    );
+    expect(await read()).toBe(
+      `3/1 of 3 · read ${new Date(recordedNow.getTime() - 30 * 60_000).toISOString()}`,
+    );
+  });
+
+  it("gives nothing while the cache holds nothing for the window and the read is under way", async () => {
+    const empty: Cache = {
+      ...holdCache(
+        { threads: recordedThreads, syncedAt: recordedNow },
+        settleStatus(recordedNow),
+        recordedEvents,
+      ),
+      findEvents: () => undefined,
+    };
+    const { read } = await probe(() => new Promise(() => {}), {}, empty);
+    expect(await read()).toBe("reading");
+  });
+
   it("answers from what the cache holds when a repository's read fails, naming the failure", async () => {
     const { read } = await probe(async () => {
       throw timedOut;
     });
-    expect(await read()).toBe("3/1 of 3 · GITHUB_TIMED_OUT");
+    expect(await read()).toBe(
+      `3/1 of 3 · GITHUB_TIMED_OUT · read ${new Date(recordedNow.getTime() - 120_000).toISOString()}`,
+    );
   });
 
-  it("gives nothing for a window it has not read yet", async () => {
-    const { change, read } = await probe(() => new Promise(() => {}), {
-      time: async () => [1],
-    });
-    expect(await read()).toBe("1 of 3");
-    await change({ window: twoDays, time: () => new Promise(() => {}) });
-    expect(await read()).toBe("reading");
+  it("reads the window again at a sync, keeping the list it holds while the read is under way", async () => {
+    const gate = Promise.withResolvers<CachedEvents>();
+    const later = new Date(recordedNow.getTime() + 180_000);
+    const { change, read } = await probe(() => gate.promise, {}, aged());
+    await read();
+    await change({ syncedAt: later });
+    // The held list stays while the read for the window is under way,
+    // and its data's age with it.
+    expect(await read()).toBe(
+      `3/1 of 3 · read ${new Date(recordedNow.getTime() - 30 * 60_000).toISOString()}`,
+    );
+    gate.resolve({ events: [], finished: [], syncedAt: recordedNow });
+    await waitUntil(async () => expect(await read()).toContain("0/0 of 3"));
   });
 
   it("below the budget floor, a window held nothing of waits off screen, and the mode on screen reads it", async () => {
@@ -188,7 +333,9 @@ describe("useWindowList", () => {
       { shown: false },
       cache,
     );
-    expect(await read()).toBe("3/1 of 3");
+    expect(await read()).toBe(
+      `3/1 of 3 · read ${new Date(recordedNow.getTime() - 120_000).toISOString()}`,
+    );
     expect(reads).toBe(0);
   });
 
@@ -207,13 +354,13 @@ describe("useWindowList", () => {
     expect(await idle.read()).toBe("reading");
     expect(reads).toBe(0);
     const { change, read } = await probe(reading);
-    expect(await read()).toBe("3/1 of 3");
+    expect(await read()).toBe(`3/1 of 3 · read ${recordedNow.toISOString()}`);
     const held = reads;
     await change({
       attention: "idle",
       syncedAt: new Date(recordedNow.getTime() + 180_000),
     });
-    expect(await read()).toBe("3/1 of 3");
+    expect(await read()).toBe(`3/1 of 3 · read ${recordedNow.toISOString()}`);
     expect(reads).toBe(held);
   });
 

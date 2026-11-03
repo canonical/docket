@@ -453,6 +453,10 @@ export default function Screen({
                 (windowed && "list" in windowed
                   ? windowed.failure
                   : undefined) ?? you.failure,
+              // The window on screen's own data, whose age the line
+              // names beside the threads'.
+              readAt:
+                windowed && "list" in windowed ? windowed.readAt : undefined,
               action,
               attention: attentionState,
               details: ahead.progress,
