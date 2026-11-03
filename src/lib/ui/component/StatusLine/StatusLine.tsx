@@ -1,3 +1,4 @@
+import type { ColorInput } from "@opentui/core";
 import type { ReactNode } from "react";
 import { tokens } from "../../../tokens/index.js";
 import { loginCells } from "../../constants.js";
@@ -19,7 +20,7 @@ import type { StatusLineProps, StatusMessage } from "./types.js";
  * through takes the success colour beside its `✓`, and freshness is
  * context, so it is dimmed.
  */
-const colours: Readonly<Record<StatusMessage["kind"], string>> = {
+const colours: Readonly<Record<StatusMessage["kind"], ColorInput>> = {
   error: tokens["color.text.error"],
   actionFailed: tokens["color.text.error"],
   action: tokens["color.text.success"],

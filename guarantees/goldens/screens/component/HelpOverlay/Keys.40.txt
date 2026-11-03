@@ -20,18 +20,18 @@
 |  windows are counted in working time
 
 runs
-2:1 "Mode ───────────────────────────────────" fg #c6c8d1ff bg #00000000
-3:1 "  ← →  h l switch mode (owed ↔ activity)" fg #c6c8d1ff bg #00000000
-4:1 "           docket opens owed" fg #c6c8d1ff bg #00000000
-5:1 "  g        next grouping" fg #c6c8d1ff bg #00000000
-6:1 "  t        next time window (activity)" fg #c6c8d1ff bg #00000000
-7:1 "           owed: most overdue first" fg #c6c8d1ff bg #00000000
-8:1 "           activity: newest first" fg #c6c8d1ff bg #00000000
-10:1 "List ───────────────────────────────────" fg #c6c8d1ff bg #00000000
-11:1 "  ↑ ↓  k j move the selection" fg #c6c8d1ff bg #00000000
-12:1 "           (opens the accordion)" fg #c6c8d1ff bg #00000000
-14:1 "App ────────────────────────────────────" fg #c6c8d1ff bg #00000000
-15:1 "  ?        show or hide help" fg #c6c8d1ff bg #00000000
-16:1 "  R        full refresh" fg #c6c8d1ff bg #00000000
-17:1 "  q        quit" fg #c6c8d1ff bg #00000000
-19:1 "  windows are counted in working time" fg #c6c8d1ff bg #00000000
+2:1 "Mode ───────────────────────────────────" fg #ffffffff bg #00000000
+3:1 "  ← →  h l switch mode (owed ↔ activity)" fg #ffffffff bg #00000000
+4:1 "           docket opens owed" fg #ffffffff bg #00000000
+5:1 "  g        next grouping" fg #ffffffff bg #00000000
+6:1 "  t        next time window (activity)" fg #ffffffff bg #00000000
+7:1 "           owed: most overdue first" fg #ffffffff bg #00000000
+8:1 "           activity: newest first" fg #ffffffff bg #00000000
+10:1 "List ───────────────────────────────────" fg #ffffffff bg #00000000
+11:1 "  ↑ ↓  k j move the selection" fg #ffffffff bg #00000000
+12:1 "           (opens the accordion)" fg #ffffffff bg #00000000
+14:1 "App ────────────────────────────────────" fg #ffffffff bg #00000000
+15:1 "  ?        show or hide help" fg #ffffffff bg #00000000
+16:1 "  R        full refresh" fg #ffffffff bg #00000000
+17:1 "  q        quit" fg #ffffffff bg #00000000
+19:1 "  windows are counted in working time" fg #ffffffff bg #00000000

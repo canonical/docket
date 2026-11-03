@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import CountsLine from "./CountsLine.js";
 import { Activity, NothingOwed, Owed } from "./CountsLine.stories.js";
@@ -11,10 +11,10 @@ describe("CountsLine", () => {
       `3 over · 2 soon · 6 on track${" ".repeat(6)}3/4/11`,
     );
     expect(screen.look("3 over")).toMatchObject({
-      fg: tokens["color.text"],
+      fg: hex(tokens["color.text"]),
       bold: false,
     });
-    expect(screen.look("3/4/11")?.fg).toBe(tokens["color.text"]);
+    expect(screen.look("3/4/11")?.fg).toBe(hex(tokens["color.text"]));
   });
 
   it("states activity's counts whole and the position at the edge at 60 columns", async () => {

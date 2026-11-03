@@ -2,4 +2,4 @@
 |synced 2m ago
 
 runs
-1:1 "synced 2m ago" fg #6b7089ff bg #00000000
+1:1 "synced 2m ago" fg #c0c0c0ff bg #00000000

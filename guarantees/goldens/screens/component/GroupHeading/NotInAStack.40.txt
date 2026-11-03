@@ -2,4 +2,4 @@
 |NOT IN A STACK ─────────────────────────
 
 runs
-1:1 "NOT IN A STACK ─────────────────────────" fg #c6c8d1ff bg #00000000
+1:1 "NOT IN A STACK ─────────────────────────" fg #ffffffff bg #00000000

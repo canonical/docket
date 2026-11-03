@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import EmptyState from "./EmptyState.js";
 import { NothingOwed } from "./EmptyState.stories.js";
@@ -8,7 +8,7 @@ describe("EmptyState", () => {
   it("states the message two cells in, in the text colour, at 40 columns", async () => {
     const screen = await draw(<EmptyState {...NothingOwed.args} />, 40);
     expect(screen.lines.at(0)).toBe("  nothing owed");
-    expect(screen.look("nothing owed")?.fg).toBe(tokens["color.text"]);
+    expect(screen.look("nothing owed")?.fg).toBe(hex(tokens["color.text"]));
   });
 
   it("states the same line at 60 columns", async () => {

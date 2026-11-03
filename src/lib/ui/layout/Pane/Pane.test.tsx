@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import Pane from "./Pane.js";
 import { Help, NoCounts, NothingOwed } from "./Pane.stories.js";
@@ -17,7 +17,9 @@ describe("Pane", () => {
       "synced 2m ago",
       "←→ mode ↑↓ sel g grp ?",
     ]);
-    expect(screen.look("nothing owed")?.bg).toBe(tokens["color.background"]);
+    expect(screen.look("nothing owed")?.bg).toBe(
+      hex(tokens["color.background"]),
+    );
   });
 
   it("gives the list region every line the terminal adds, at 60 columns", async () => {

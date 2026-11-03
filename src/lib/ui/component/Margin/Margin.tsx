@@ -1,3 +1,4 @@
+import type { ColorInput } from "@opentui/core";
 import type { ReactNode } from "react";
 import type { Verdict } from "../../../endings/index.js";
 import type { WaitState } from "../../../owed/index.js";
@@ -10,7 +11,7 @@ import type { MarginProps } from "./types.js";
  * one on track. A finished thread that ended past its target takes the
  * error colour too, and one that ended within it the success colour.
  */
-const barColours: Readonly<Record<WaitState | Verdict, string>> = {
+const barColours: Readonly<Record<WaitState | Verdict, ColorInput>> = {
   over: tokens["color.text.error"],
   soon: tokens["color.text.warning"],
   onTrack: tokens["color.border"],

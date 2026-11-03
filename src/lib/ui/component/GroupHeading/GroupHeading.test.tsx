@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import GroupHeading from "./GroupHeading.js";
 import { NotInAStack, Owner, Pinned, Stack } from "./GroupHeading.stories.js";
@@ -11,7 +11,7 @@ describe("GroupHeading", () => {
       `example stack 3 · 3 PRs → main ${"─".repeat(9)}`,
     );
     expect(screen.look("example stack 3")).toMatchObject({
-      fg: tokens["color.text"],
+      fg: hex(tokens["color.text"]),
       bold: false,
     });
     expect(screen.look("─")?.bold).toBe(false);
@@ -20,7 +20,7 @@ describe("GroupHeading", () => {
   it("keeps a person's mark and hue in their section's heading", async () => {
     const screen = await draw(<GroupHeading {...Owner.args} />, 40);
     expect(screen.lines.at(0)).toBe(`◉ alice ${"─".repeat(32)}`);
-    expect(screen.look("◉ alice")?.fg).toBe(tokens["color.text.team"]);
+    expect(screen.look("◉ alice")?.fg).toBe(hex(tokens["color.text.team"]));
   });
 
   it("keeps a stack's repository name while it fits exactly, and leaves it whole one cell narrower", async () => {
@@ -50,9 +50,9 @@ describe("GroupHeading", () => {
   it("gives the pinned group's count after the name, plain, then the rule", async () => {
     const screen = await draw(<GroupHeading {...Pinned.args} />, 40);
     expect(screen.lines.at(0)).toBe(`● bob · 3 of 5 ${"─".repeat(25)}`);
-    expect(screen.look("● bob")?.fg).toBe(tokens["color.text.team"]);
+    expect(screen.look("● bob")?.fg).toBe(hex(tokens["color.text.team"]));
     expect(screen.look(" · 3 of 5")).toMatchObject({
-      fg: tokens["color.text"],
+      fg: hex(tokens["color.text"]),
       bold: false,
     });
   });

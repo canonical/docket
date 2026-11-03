@@ -3,37 +3,41 @@
  * colour or a shape, so a theme can change every value without a
  * component noticing. The names follow the design system's tokens
  * wherever the meaning is the same; the people hues, italic and the
- * glyphs are docket's own.
+ * glyphs are docket's own. The colour values are OpenTUI `RGBA`
+ * colours, named by their ANSI palette index or as the terminal's
+ * default, so the terminal's own theme decides the hue.
  */
+import type { RGBA } from "@opentui/core";
+
 export interface Tokens {
   /** Ordinary text. */
-  readonly "color.text": string;
+  readonly "color.text": RGBA;
   /**
    * Context rather than action: bots, the stack rule and lines,
    * freshness, key labels.
    */
-  readonly "color.text.muted": string;
+  readonly "color.text.muted": RGBA;
   /** Over target, a failing field, an error or a refusal. */
-  readonly "color.text.error": string;
+  readonly "color.text.error": RGBA;
   /** Due soon. */
-  readonly "color.text.warning": string;
+  readonly "color.text.warning": RGBA;
   /** The result of an action that succeeded. */
-  readonly "color.text.success": string;
+  readonly "color.text.success": RGBA;
   /** The team, and you, behind their marks. */
-  readonly "color.text.team": string;
+  readonly "color.text.team": RGBA;
   /** The organisation, not the team, behind its mark. */
-  readonly "color.text.internal": string;
+  readonly "color.text.internal": RGBA;
   /** Outside the organisation, behind its mark. */
-  readonly "color.text.outside": string;
+  readonly "color.text.outside": RGBA;
   /** The neutral state marker of a wait on track. */
-  readonly "color.border": string;
+  readonly "color.border": RGBA;
   /** The pane. */
-  readonly "color.background": string;
+  readonly "color.background": RGBA;
   /**
    * The selected item, its row and its accordion, and the option under
    * an editor's cursor: the only background on the screen.
    */
-  readonly "color.background.selected": string;
+  readonly "color.background.selected": RGBA;
   /** A row's first line, as OpenTUI's text attribute, and nothing else. */
   readonly "typography.weight.bold": number;
   /**

@@ -11,7 +11,7 @@ import {
   recordedNow,
   recordedOwed,
 } from "../testing/recorded.js";
-import { drawSuspending } from "../testing/terminal.js";
+import { drawSuspending, hex } from "../testing/terminal.js";
 import { waitUntil } from "../testing/wait.js";
 import OwedList from "./OwedList.js";
 
@@ -68,14 +68,14 @@ describe("OwedList", () => {
       "  ↓ 4 below",
     ]);
     expect(screen.look("● alice")).toMatchObject({
-      fg: tokens["color.text.team"],
+      fg: hex(tokens["color.text.team"]),
       bold: false,
     });
     expect(screen.look("example#12 PR reply")?.bg).toBe(
-      tokens["color.background.selected"],
+      hex(tokens["color.background.selected"]),
     );
     expect(screen.look("example#12 PR close")?.bg).not.toBe(
-      tokens["color.background.selected"],
+      hex(tokens["color.background.selected"]),
     );
   });
 
@@ -136,7 +136,7 @@ describe("OwedList", () => {
       "  ↓ 2 below",
     ]);
     expect(screen.look("example#12 PR review")?.bg).not.toBe(
-      tokens["color.background.selected"],
+      hex(tokens["color.background.selected"]),
     );
   });
 
@@ -152,7 +152,7 @@ describe("OwedList", () => {
       "  run docket config",
       `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
     ]);
-    expect(screen.look("✗ no team")?.fg).toBe(tokens["color.text.error"]);
+    expect(screen.look("✗ no team")?.fg).toBe(hex(tokens["color.text.error"]));
     expect(shown).toHaveBeenLastCalledWith(1, 0);
   });
 

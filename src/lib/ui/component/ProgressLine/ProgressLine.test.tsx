@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import ProgressLine from "./ProgressLine.js";
 import { Halfway } from "./ProgressLine.stories.js";
@@ -10,9 +10,9 @@ describe("ProgressLine", () => {
     expect(screen.lines.at(0)).toBe(
       `${"█".repeat(14)}${"░".repeat(12)} 50/89 pages`,
     );
-    expect(screen.look("█")?.fg).toBe(tokens["color.text"]);
-    expect(screen.look("░")?.fg).toBe(tokens["color.text.muted"]);
-    expect(screen.look("50/89")?.fg).toBe(tokens["color.text"]);
+    expect(screen.look("█")?.fg).toBe(hex(tokens["color.text"]));
+    expect(screen.look("░")?.fg).toBe(hex(tokens["color.text.muted"]));
+    expect(screen.look("50/89")?.fg).toBe(hex(tokens["color.text"]));
   });
 
   it("keeps the bar's length at 60 columns", async () => {

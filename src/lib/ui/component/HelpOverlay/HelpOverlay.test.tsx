@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import HelpOverlay from "./HelpOverlay.js";
 import { Keys, Scrolled } from "./HelpOverlay.stories.js";
@@ -48,7 +48,7 @@ describe("HelpOverlay", () => {
       20,
     );
     expect(screen.look("Mode")).toMatchObject({
-      fg: tokens["color.text"],
+      fg: hex(tokens["color.text"]),
       bold: false,
     });
     expect(screen.look("← →  h l")?.bold).toBe(false);
@@ -73,7 +73,7 @@ describe("HelpOverlay", () => {
       "",
       "  ↓ 5 below",
     ]);
-    expect(screen.look("↓ 5 below")?.fg).toBe(tokens["color.text.muted"]);
+    expect(screen.look("↓ 5 below")?.fg).toBe(hex(tokens["color.text.muted"]));
   });
 
   it("scrolls as a list does, from the place it is given, the heading of its keys pinned with their place", async () => {

@@ -42,6 +42,7 @@ import {
   type Screen as Drawn,
   draw,
   drawSuspending,
+  hex,
   WithKeys,
 } from "../testing/terminal.js";
 import { waitUntil } from "../testing/wait.js";
@@ -311,8 +312,8 @@ describe("Screen", { timeout: 15_000 }, () => {
         "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
       expect(screen.look("refresh in progress")).toMatchObject({
-        fg: tokens["color.text"],
-        bg: tokens["color.background"],
+        fg: hex(tokens["color.text"]),
+        bg: hex(tokens["color.background"]),
       });
     });
 
@@ -603,9 +604,9 @@ describe("Screen", { timeout: 15_000 }, () => {
         "←→ mode ↑↓ sel ⏎ open g grp a r ?",
       ]);
       expect(screen.look("example#12 PR reply")?.bg).toBe(
-        tokens["color.background.selected"],
+        hex(tokens["color.background.selected"]),
       );
-      expect(screen.look("synced")?.fg).toBe(tokens["color.text.muted"]);
+      expect(screen.look("synced")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
 
     it("says nothing is owed when nothing is, at 60 columns", async () => {
@@ -816,7 +817,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       ]);
       expect(down.lines.join("\n")).not.toContain("example#12 reply");
       expect(down.look("example#12 PR close")?.bg).toBe(
-        tokens["color.background.selected"],
+        hex(tokens["color.background.selected"]),
       );
       const back = await press(screen, "up");
       expect(back.lines.at(1)).toBe(
@@ -843,7 +844,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
       ]);
       expect(first.look("example#12 PR reply")?.bg).toBe(
-        tokens["color.background.selected"],
+        hex(tokens["color.background.selected"]),
       );
       expect((await press(screen, "k")).lines.slice(1, 3)).toEqual(
         first.lines.slice(1, 3),
@@ -883,7 +884,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "● bob ──────────────────────────────────",
       ]);
       expect(page.look("bob")?.bg).not.toBe(
-        tokens["color.background.selected"],
+        hex(tokens["color.background.selected"]),
       );
       const last = await press(screen, "pagedown", "pagedown");
       expect(last.lines.slice(10, 12)).toEqual([
@@ -967,7 +968,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         return drawn;
       });
       expect(activity.look("docs#4")?.bg).toBe(
-        tokens["color.background.selected"],
+        hex(tokens["color.background.selected"]),
       );
       const owed = await press(screen, "h");
       expect(owed.lines.at(1)).toBe(
@@ -1296,7 +1297,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       await press(screen, "return");
       const failed = await screen.redraw();
       expect(failed.lines.at(10)).toBe("✗ could not open the browser");
-      expect(failed.look("✗ could")?.fg).toBe(tokens["color.text.error"]);
+      expect(failed.look("✗ could")?.fg).toBe(hex(tokens["color.text.error"]));
     });
 
     it("opens nothing when nothing is owed", async () => {
@@ -1402,7 +1403,7 @@ describe("Screen", { timeout: 15_000 }, () => {
 
     it("moves the selection over the threads with j and k, never onto a heading", async () => {
       const screen = await showActivity(40);
-      const selected = tokens["color.background.selected"];
+      const selected = hex(tokens["color.background.selected"]);
       expect(screen.look("docs#4")?.bg).toBe(selected);
       const down = await press(screen, "j");
       expect(down.look("Fix the parser")?.bg).toBe(selected);
@@ -1418,7 +1419,7 @@ describe("Screen", { timeout: 15_000 }, () => {
 
     it("moves a page of the threads shown, past a heading, never beyond either end, and to either end with home and end", async () => {
       const screen = await showActivity(40);
-      const selected = tokens["color.background.selected"];
+      const selected = hex(tokens["color.background.selected"]);
       // The screen shows docs#4 alone, so a page is one thread.
       expect(screen.lines).not.toContain(" ┃Fix the parser · alice");
       const page = await press(screen, "pagedown");
@@ -1835,7 +1836,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "┃┆example stack 3 · 2 of 3 · → main",
         "╹┆…",
       ]);
-      expect(drawn.look("…")?.fg).toBe(tokens["color.text.muted"]);
+      expect(drawn.look("…")?.fg).toBe(hex(tokens["color.text.muted"]));
       expect(readDetails).not.toHaveBeenCalled();
       expect(readDetail).not.toHaveBeenCalled();
     });
@@ -1990,7 +1991,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(activity.lines.at(11)).toBe(
         "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
       );
-      expect(activity.look(" time")?.fg).toBe(tokens["color.text.muted"]);
+      expect(activity.look(" time")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
 
     it("shows every key with ?, grouped, counting the key line the pane leaves below, and hides it again", async () => {

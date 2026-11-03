@@ -2,4 +2,4 @@
 |full refresh available in 42s
 
 runs
-1:1 "full refresh available in 42s" fg #c6c8d1ff bg #00000000
+1:1 "full refresh available in 42s" fg #ffffffff bg #00000000

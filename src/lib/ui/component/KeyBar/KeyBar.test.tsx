@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { draw } from "../../../../testing/terminal.js";
+import { draw, hex } from "../../../../testing/terminal.js";
 import { tokens } from "../../../tokens/index.js";
 import KeyBar from "./KeyBar.js";
 import { Activity, Long, Owed } from "./KeyBar.stories.js";
@@ -13,11 +13,11 @@ describe("KeyBar", () => {
   it("draws keys plain and labels dimmed, neither bold", async () => {
     const screen = await draw(<KeyBar {...Owed.args} />, 40);
     expect(screen.look("←→")).toMatchObject({
-      fg: tokens["color.text"],
+      fg: hex(tokens["color.text"]),
       bold: false,
     });
     expect(screen.look("mode")).toMatchObject({
-      fg: tokens["color.text.muted"],
+      fg: hex(tokens["color.text.muted"]),
       bold: false,
     });
   });

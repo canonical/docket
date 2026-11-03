@@ -2,4 +2,4 @@
 |✗ could not open the browser
 
 runs
-1:1 "✗ could not open the browser" fg #e27878ff bg #00000000
+1:1 "✗ could not open the browser" fg #800000ff bg #00000000

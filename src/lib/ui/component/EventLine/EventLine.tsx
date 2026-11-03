@@ -1,3 +1,4 @@
+import type { ColorInput } from "@opentui/core";
 import type { ReactNode } from "react";
 import { sanitize } from "../../../text/index.js";
 import { tokens } from "../../../tokens/index.js";
@@ -46,7 +47,7 @@ const isQuiet = (line: EventLineProps["line"]) =>
 function describeAction(
   { action, target }: EventLineProps["line"],
   room: number,
-  fg: string,
+  fg: ColorInput,
 ): Piece[] {
   if (!target) return [{ text: fitField(action, "event", room), fg }];
   const at = action.text.lastIndexOf(target.text);

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { tokens } from "../lib/tokens/index.js";
 import { overReviewDetail, pendingDetail } from "../testing/details.js";
 import { finishedList, finishedNow } from "../testing/finished.js";
-import { draw, drawSuspending } from "../testing/terminal.js";
+import { draw, drawSuspending, hex } from "../testing/terminal.js";
 import FinishedList, { type FinishedListProps } from "./FinishedList.js";
 
 const props: Omit<FinishedListProps, "list" | "selected" | "width"> = {
@@ -50,10 +50,10 @@ describe("FinishedList", () => {
       20,
     );
     expect(screen.look("labels none")?.bg).toBe(
-      tokens["color.background.selected"],
+      hex(tokens["color.background.selected"]),
     );
     expect(screen.look(" closed as completed")?.bg).not.toBe(
-      tokens["color.background.selected"],
+      hex(tokens["color.background.selected"]),
     );
   });
 

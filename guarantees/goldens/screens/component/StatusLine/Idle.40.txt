@@ -2,4 +2,4 @@
 |synced 25m ago · idle · any key wakes
 
 runs
-1:1 "synced 25m ago · idle · any key wakes" fg #6b7089ff bg #00000000
+1:1 "synced 25m ago · idle · any key wakes" fg #c0c0c0ff bg #00000000

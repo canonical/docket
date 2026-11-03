@@ -5,7 +5,7 @@
 |  report it
 
 runs
-1:3 "✗ docket stopped on a failure it has no name for: disk on" fg #e27878ff bg #00000000
-2:3 "fire" fg #e27878ff bg #00000000
-3:3 "Recovery: run the command again; if it keeps failing," fg #c6c8d1ff bg #00000000
-4:3 "report it" fg #c6c8d1ff bg #00000000
+1:3 "✗ docket stopped on a failure it has no name for: disk on" fg #800000ff bg #00000000
+2:3 "fire" fg #800000ff bg #00000000
+3:3 "Recovery: run the command again; if it keeps failing," fg #ffffffff bg #00000000
+4:3 "report it" fg #ffffffff bg #00000000

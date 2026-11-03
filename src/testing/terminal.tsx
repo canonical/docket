@@ -41,7 +41,8 @@ afterEach(() => {
   for (const setup of drawn.splice(0)) setup.renderer.destroy();
 });
 
-const hex = (colour: CapturedSpan["fg"]) =>
+/** A colour as `#rrggbb`, as the tokens and the screen's spans compare. */
+export const hex = (colour: CapturedSpan["fg"]) =>
   `#${colour
     .toInts()
     .slice(0, 3)

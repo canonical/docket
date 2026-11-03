@@ -3,7 +3,7 @@
 |  loading…
 
 runs
-1:3 "filter: " fg #c6c8d1ff bg #00000000
-1:11 "ca" fg #c6c8d1ff bg #161821ff
-1:13 "                            " fg #ffffffff bg #161821ff
-2:3 "loading…" fg #c6c8d1ff bg #00000000
+1:3 "filter: " fg #ffffffff bg #00000000
+1:11 "ca" fg #ffffffff bg #000000ff
+1:13 "                            " fg #ffffffff bg #000000ff
+2:3 "loading…" fg #ffffffff bg #00000000
