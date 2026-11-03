@@ -79,6 +79,7 @@ async function probe(
     if ("problem" in result) return <text>{result.problem.code}</text>;
     const parts = [
       result.list,
+      ...(result.partial ? ["partial"] : []),
       ...(result.failure ? [result.failure.code] : []),
     ];
     return (
@@ -300,6 +301,19 @@ describe("useWindowList", () => {
     };
     const { read } = await probe(() => new Promise(() => {}), {}, empty);
     expect(await read()).toBe("reading");
+  });
+
+  it("serves covered repositories and marks the result partial while another is read", async () => {
+    const held = aged();
+    const cache: Cache = {
+      ...held,
+      findEvents: (repo, since) =>
+        repo === recordedWatched()[0]?.repo
+          ? held.findEvents(repo, since)
+          : undefined,
+    };
+    const { read } = await probe(() => new Promise(() => {}), {}, cache);
+    expect(await read()).toContain("3/0 of 3 · partial");
   });
 
   it("answers from what the cache holds when a repository's read fails, naming the failure", async () => {

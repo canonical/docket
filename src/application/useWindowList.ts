@@ -78,6 +78,8 @@ export type UseWindowListResult<List> =
       /** When the oldest data the list was built from was fetched. */
       readonly readAt?: Date;
       readonly failure?: Failure;
+      /** Cached data does not yet cover every watched repository. */
+      readonly partial?: boolean;
     }
   | { readonly problem: Problem }
   | undefined;
@@ -88,6 +90,7 @@ type Read<Timed> = { readonly window: Duration } & (
       readonly timed: Timed;
       readonly readAt?: Date;
       readonly failure?: Failure;
+      readonly partial?: boolean;
     }
   | { readonly problem: Problem }
 );
@@ -106,8 +109,8 @@ const isFailure = (error: unknown): error is Failure => isNamedError(error);
  * once, however old, so the first switch to the mode finds a list on
  * screen while the read that follows brings it up to date in place; a
  * window the cache holds nothing of keeps the loading line until that
- * read settles, and a repository the cache holds nothing for leaves the
- * window unserved, so a window is read whole or not at all. The window
+ * read settles. When only some repositories are held, their rows show
+ * with a partial count until the read settles. The window
  * is read whenever it, the watched repositories or the cache's last sync
  * change, for the mode on screen and for the one behind it alike, so a
  * switch of mode finds its list already read; a list already shown for
@@ -163,19 +166,26 @@ export default function useWindowList<Timed, List>({
     const note = (at: Date) => {
       readAt = !readAt || at < readAt ? at : readAt;
     };
-    // Take one snapshot of every covered repository before timing it.
-    // An incomplete window waits for the read rather than looking empty.
+    // Take one snapshot of the covered repositories before timing it.
+    // An incomplete window is explicitly marked partial.
     if (!read || read.window !== window) {
       const at = now();
-      const held = watched.map(({ repo, resolved }) => ({
-        repo,
-        data: cache.findEvents(
+      const held = watched.map(({ repo, resolved }) => {
+        const since = findWindowStart(window, resolved.settings, at);
+        const covered = cache.findEvents(repo, since);
+        return {
           repo,
-          findWindowStart(window, resolved.settings, at),
-        ),
-      }));
-      if (held.every(({ data }) => data !== undefined)) {
-        const byRepo = new Map(held.map(({ repo, data }) => [repo, data]));
+          covered: covered !== undefined,
+          data: covered ?? cache.findEvents(repo),
+        };
+      });
+      if (held.some(({ data }) => data !== undefined) || held.length === 0) {
+        const complete = held.every(({ covered }) => covered);
+        const byRepo = new Map(
+          held.flatMap(({ repo, data }) =>
+            data ? [[repo, data] as const] : [],
+          ),
+        );
         const heldAt = held.reduce<Date | undefined>(
           (oldest, { data }) =>
             data && (!oldest || data.syncedAt < oldest)
@@ -183,16 +193,20 @@ export default function useWindowList<Timed, List>({
               : oldest,
           undefined,
         );
-        // The coverage check above guarantees every requested repo exists.
         const serveHeld: ReadHeld = async (repo) =>
-          byRepo.get(repo) as CachedEvents;
+          byRepo.get(repo) ?? { events: [], finished: [], syncedAt: at };
         time(serveHeld, watched, window, at).then(
           (timed) => {
             if (!current) return;
             setRead((previous) =>
               previous && previous.window === window
                 ? previous
-                : { window, timed, ...(heldAt && { readAt: heldAt }) },
+                : {
+                    window,
+                    timed,
+                    ...(!complete && { partial: true }),
+                    ...(heldAt && { readAt: heldAt }),
+                  },
             );
           },
           // The fresh read reports failures; a failed cache snapshot must
@@ -273,6 +287,7 @@ export default function useWindowList<Timed, List>({
   return {
     list: build(timed, threads),
     readAt,
+    ...(read.partial && { partial: true }),
     ...(failure && { failure }),
   };
 }

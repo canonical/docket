@@ -1344,6 +1344,22 @@ describe("Screen", { timeout: 15_000 }, () => {
   });
 
   describe("activity", () => {
+    it("marks cached activity partial while another repository is missing", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      await cache.readEvents(recordedRepos[0].repo, new Date(0), 300_000);
+      const view = viewOf(cache);
+      const source = {
+        ...cacheSourceOf(view),
+        readEvents: () => new Promise<never>(() => {}),
+      };
+      const screen = await show({ ...view, mode: "activity", source });
+      await waitUntil(async () => {
+        const lines = (await screen.redraw()).lines;
+        expect(lines.at(9)).toContain("partial");
+        expect(lines.join("\n")).toContain("example#12");
+      });
+    });
     /** Opens the recording's activity on a pane 16 lines tall. */
     async function showActivity(
       width: number,

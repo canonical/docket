@@ -1,3 +1,4 @@
+// Longer than 500 lines because the cache's shared reads, refreshes, and process interactions are tested together.
 import { execFile } from "node:child_process";
 import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -314,6 +315,39 @@ describe("createCache, for events", () => {
     expect(provider.events).toHaveBeenCalledOnce();
     await cache.readEvents(repo, since, 0);
     expect(provider.events).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not let a forced refresh join a reader allowed stale events", async () => {
+    const gate = Promise.withResolvers<EventsSince>();
+    const provider = withEvents({ events: vi.fn(() => gate.promise) });
+    const cache = open(provider);
+    const first = cache.readEvents(repo, since, 300_000);
+    await waitUntil(() => expect(provider.events).toHaveBeenCalledOnce());
+    const forced = cache.readEvents(repo, since, 0);
+    gate.resolve({ events: [], finished: [] });
+    await Promise.all([first, forced]);
+    expect(provider.events).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a later different-window read pending after an earlier read finishes", async () => {
+    const first = Promise.withResolvers<EventsSince>();
+    const second = Promise.withResolvers<EventsSince>();
+    const events = vi
+      .fn()
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    const cache = open(withEvents({ events }));
+    const one = cache.readEvents(repo, since, 0);
+    await waitUntil(() => expect(events).toHaveBeenCalledOnce());
+    const earlier = new Date(since.getTime() - minute);
+    const two = cache.readEvents(repo, earlier, 0);
+    first.resolve({ events: [], finished: [] });
+    await one;
+    await waitUntil(() => expect(events).toHaveBeenCalledTimes(2));
+    const same = cache.readEvents(repo, earlier, 0);
+    second.resolve({ events: [], finished: [] });
+    expect(await two).toEqual(await same);
+    expect(events).toHaveBeenCalledTimes(2);
   });
 
   it("fetches again once the events are as old as the maximum age, or reach back less far than asked", async () => {

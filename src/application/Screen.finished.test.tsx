@@ -236,6 +236,31 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
     });
   });
 
+  it("marks cached finished results partial while another repository is missing", async () => {
+    const connected = connectRecording({ finished: weekEndings });
+    const source = {
+      ...connected,
+      cache: {
+        ...connected.cache,
+        findEvents: (repo: string, since?: Date) =>
+          repo === "example-org/example-docs"
+            ? undefined
+            : connected.cache.findEvents(repo, since),
+      },
+      readEvents: () => new Promise<never>(() => {}),
+    };
+    const screen = await drawSuspending(
+      <ScreenFrame {...viewWeek()} source={source} />,
+      40,
+      24,
+    );
+    await waitUntil(async () => {
+      const lines = (await screen.redraw()).lines;
+      expect(lines.at(21)).toContain("partial");
+      expect(lines).not.toContain("  nothing merged or closed in 1w");
+    });
+  });
+
   it("names on the status line a failure reading its window, with what the cache holds listed", async () => {
     const source = connectRecording({ finished: weekEndings });
     const failing = {

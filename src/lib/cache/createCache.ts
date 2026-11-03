@@ -1,3 +1,4 @@
+// Longer than 500 lines because the cache composes its storage, refresh, and read-through operations in one place.
 import { watch as watchFolder } from "node:fs";
 import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
@@ -105,7 +106,7 @@ export default function createCache({
   // maxAge is zero. Only identical windows join the same request.
   const pendingEvents = new Map<
     string,
-    { since: Date; promise: Promise<CachedEvents> }
+    { since: Date; maxAge: number; promise: Promise<CachedEvents> }
   >();
 
   const syncedAt = (): Date | undefined => {
@@ -332,7 +333,11 @@ export default function createCache({
     findEvents: queries.findEvents,
     readEvents: (repo, since, maxAge) => {
       const pending = pendingEvents.get(repo);
-      if (pending && pending.since.getTime() === since.getTime())
+      if (
+        pending &&
+        pending.since.getTime() === since.getTime() &&
+        (pending.maxAge === 0 || (maxAge > 0 && pending.maxAge <= maxAge))
+      )
         return pending.promise;
       const promise = readThrough(
         () => queries.findFreshEvents(repo, since, maxAge),
@@ -342,7 +347,7 @@ export default function createCache({
           return { ...read, syncedAt: at };
         },
       );
-      const entry = { since, promise };
+      const entry = { since, maxAge, promise };
       pendingEvents.set(repo, entry);
       const done = () => {
         if (pendingEvents.get(repo) === entry) pendingEvents.delete(repo);

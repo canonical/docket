@@ -1,3 +1,4 @@
+// Longer than 500 lines because the screen composes navigation, lists, and status in one place.
 import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
@@ -334,7 +335,11 @@ export default function Screen({
     teamless,
     owedListed: Boolean(owed && readThreadDetail),
     windowed,
-    ...(mode === "finished" && ended?.empty && { emptyWindow: ended.empty }),
+    ...(mode === "finished" &&
+      ended?.empty &&
+      !(windowed && "list" in windowed && windowed.partial) && {
+        emptyWindow: ended.empty,
+      }),
     watched,
     width,
   });
@@ -394,7 +399,15 @@ export default function Screen({
       />
     );
   }
-  const summary = shown?.summary;
+  const summary =
+    shown?.summary && windowed && "list" in windowed && windowed.partial
+      ? {
+          fields: [
+            { text: "partial", kind: "words" as const },
+            ...shown.summary.fields,
+          ],
+        }
+      : shown?.summary;
   const position = describePosition(
     shown?.groups ?? [],
     placeSelection(rows, selections[mode]),
