@@ -2,4 +2,4 @@
 |refresh in progress…
 
 runs
-1:1 "refresh in progress…" fg #c6c8d1ff bg #00000000
+1:1 "refresh in progress…" fg #ffffffff bg #00000000

@@ -191,7 +191,7 @@ export default function useScreenKeys({
           group: "Mode",
           hint: "time",
           notes: [
-            "owed: most overdue first",
+            "owed: overdue / target",
             "activity: newest first",
             "finished: newest first",
           ],

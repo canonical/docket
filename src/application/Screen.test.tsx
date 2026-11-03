@@ -2060,7 +2060,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         `${" ".repeat(11)}docket opens owed`,
         `  g${" ".repeat(8)}next grouping`,
         `  t${" ".repeat(8)}next time window`,
-        `${" ".repeat(11)}owed: most overdue first`,
+        `${" ".repeat(11)}owed: overdue / target`,
         `${" ".repeat(11)}activity: newest first`,
         `${" ".repeat(11)}finished: newest first`,
         "",
