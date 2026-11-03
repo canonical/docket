@@ -44,4 +44,4 @@ runs
 20:1 "  ⏎        open in the browser" fg #ffffffff bg #000000ff
 21:1 "  a        assign" fg #ffffffff bg #000000ff
 22:1 "  r        request review" fg #ffffffff bg #000000ff
-24:1 "  ↓ 9 below" fg #808080ff bg #000000ff
+24:1 "  ↓ 9 below" fg #c0c0c0ff bg #000000ff

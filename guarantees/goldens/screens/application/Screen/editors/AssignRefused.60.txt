@@ -39,12 +39,12 @@
 runs
 1:1 "assigning example#12                                        " fg #ffffffff bg #000000ff
 2:1 "┃" fg #800000ff bg #000000ff
-2:2 "┆" fg #808080ff bg #000000ff
+2:2 "┆" fg #c0c0c0ff bg #000000ff
 2:3 "example#12 PR reply " fg #ffffffff bg #000000ff bold
 2:23 "○ dave" fg #008080ff bg #000000ff bold
 2:54 "4d over" fg #800000ff bg #000000ff bold
 3:1 "╹" fg #800000ff bg #000000ff
-3:2 "┆" fg #808080ff bg #000000ff
+3:2 "┆" fg #c0c0c0ff bg #000000ff
 3:3 "Fix the parser" fg #ffffffff bg #000000ff italic
 3:44 "✗ checks" fg #800000ff bg #000000ff
 3:54 "◉ alice" fg #000080ff bg #000000ff
@@ -63,12 +63,12 @@ runs
 10:3 "Recovery: check that dave can be assigned in" fg #ffffffff bg #000000ff
 11:3 "example-org/example-repo, then apply again" fg #ffffffff bg #000000ff
 12:1 "┃" fg #800000ff bg #000000ff
-12:2 "┆" fg #808080ff bg #000000ff
+12:2 "┆" fg #c0c0c0ff bg #000000ff
 12:3 "example#12 PR close " fg #ffffffff bg #000000ff bold
 12:23 "○ dave" fg #008080ff bg #000000ff bold
 12:54 "2h over" fg #800000ff bg #000000ff bold
 13:1 "╹" fg #800000ff bg #000000ff
-13:2 "┆" fg #808080ff bg #000000ff
+13:2 "┆" fg #c0c0c0ff bg #000000ff
 13:3 "Fix the parser" fg #ffffffff bg #000000ff italic
 13:44 "✗ checks" fg #800000ff bg #000000ff
 13:54 "◉ alice" fg #000080ff bg #000000ff
@@ -79,37 +79,37 @@ runs
 15:1 "╹" fg #808000ff bg #000000ff
 15:3 "Crash on start" fg #ffffffff bg #000000ff italic
 15:17 "                                  unassigned" fg #ffffffff bg #000000ff
-16:1 "│ " fg #808080ff bg #000000ff
+16:1 "│ " fg #c0c0c0ff bg #000000ff
 16:3 "docs#4 issue close " fg #ffffffff bg #000000ff bold
 16:22 "◉ alice" fg #000080ff bg #000000ff bold
 16:29 "                        10d left" fg #ffffffff bg #000000ff bold
-17:1 "│ " fg #808080ff bg #000000ff
+17:1 "│ " fg #c0c0c0ff bg #000000ff
 17:3 "Where do tokens live?" fg #ffffffff bg #000000ff italic
-18:1 "╵ " fg #808080ff bg #000000ff
+18:1 "╵ " fg #c0c0c0ff bg #000000ff
 18:47 "◉ alice" fg #000080ff bg #000000ff
 18:54 ", " fg #ffffffff bg #000000ff
 18:56 "● bob" fg #000080ff bg #000000ff
-19:1 "│┆" fg #808080ff bg #000000ff
+19:1 "│┆" fg #c0c0c0ff bg #000000ff
 19:3 "example#12 PR review " fg #ffffffff bg #000000ff bold
 19:24 "○ dave" fg #008080ff bg #000000ff bold
 19:30 "                        1d left" fg #ffffffff bg #000000ff bold
-20:1 "╵┆" fg #808080ff bg #000000ff
+20:1 "╵┆" fg #c0c0c0ff bg #000000ff
 20:3 "Fix the parser" fg #ffffffff bg #000000ff italic
 20:46 "✗ checks" fg #800000ff bg #000000ff
 20:56 "● bob" fg #000080ff bg #000000ff
-21:1 "│ " fg #808080ff bg #000000ff
+21:1 "│ " fg #c0c0c0ff bg #000000ff
 21:3 "example#15 issue close " fg #ffffffff bg #000000ff bold
 21:26 "◐ carol" fg #800080ff bg #000000ff bold
 21:33 "                    29d left" fg #ffffffff bg #000000ff bold
-22:1 "╵ " fg #808080ff bg #000000ff
+22:1 "╵ " fg #c0c0c0ff bg #000000ff
 22:3 "Crash on start" fg #ffffffff bg #000000ff italic
 22:17 "                                  unassigned" fg #ffffffff bg #000000ff
 34:1 "2 over · 1 soon · 3 on track                             1/6" fg #ffffffff bg #000000ff
 35:1 "✗ assign refused" fg #800000ff bg #000000ff
 36:1 "type" fg #ffffffff bg #000000ff
-36:5 " filter" fg #808080ff bg #000000ff
+36:5 " filter" fg #c0c0c0ff bg #000000ff
 36:12 " ↑↓ ␣" fg #ffffffff bg #000000ff
-36:17 " tick" fg #808080ff bg #000000ff
+36:17 " tick" fg #c0c0c0ff bg #000000ff
 36:22 " ⏎" fg #ffffffff bg #000000ff
-36:24 " apply" fg #808080ff bg #000000ff
+36:24 " apply" fg #c0c0c0ff bg #000000ff
 36:30 " esc ?" fg #ffffffff bg #000000ff

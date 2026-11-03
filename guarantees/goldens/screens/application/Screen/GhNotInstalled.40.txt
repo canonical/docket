@@ -43,4 +43,4 @@ runs
 5:3 "https://cli.github.com, then run" fg #ffffffff bg #000000ff
 6:3 "gh auth login" fg #ffffffff bg #000000ff
 36:1 "? q" fg #ffffffff bg #000000ff
-36:4 " quit" fg #808080ff bg #000000ff
+36:4 " quit" fg #c0c0c0ff bg #000000ff

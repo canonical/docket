@@ -3,6 +3,6 @@
 
 runs
 1:1 "╵" fg #008000ff bg #00000000
-1:2 "┆" fg #808080ff bg #00000000
+1:2 "┆" fg #c0c0c0ff bg #00000000
 1:5 "● bob" fg #000080ff bg #00000000
 1:10 " merged                     20h" fg #ffffffff bg #00000000

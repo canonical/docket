@@ -9,20 +9,19 @@ import type { Tokens } from "./types.js";
  * are the terminal's default foreground and background, so ordinary text
  * follows the theme, and the rest name the palette's indices — 1 red,
  * 2 green, 3 yellow, 4 blue, 5 magenta, 6 cyan and 8 bright black — which
- * every terminal palette shows in its own hue. The on-track marker takes
- * the same bright black as the muted text: on the selection background,
- * where it would vanish, it stays legible.
+ * every terminal palette shows in its own hue. Muted text and the
+ * on-track marker take white, distinct from the bright-black selection.
  */
 export const tokens: Tokens = {
   "color.text": RGBA.defaultForeground(),
-  "color.text.muted": RGBA.fromIndex(8),
+  "color.text.muted": RGBA.fromIndex(7),
   "color.text.error": RGBA.fromIndex(1),
   "color.text.warning": RGBA.fromIndex(3),
   "color.text.success": RGBA.fromIndex(2),
   "color.text.team": RGBA.fromIndex(4),
   "color.text.internal": RGBA.fromIndex(5),
   "color.text.outside": RGBA.fromIndex(6),
-  "color.border": RGBA.fromIndex(8),
+  "color.border": RGBA.fromIndex(7),
   "color.background": RGBA.defaultBackground(),
   "color.background.selected": RGBA.fromIndex(8),
   "typography.weight.bold": TextAttributes.BOLD,

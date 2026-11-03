@@ -39,11 +39,11 @@
 runs
 1:1 "owed                                    " fg #ffffffff bg #000000ff
 3:1 "  nothing owed" fg #ffffffff bg #000000ff
-35:1 "synced 2m ago" fg #808080ff bg #000000ff
+35:1 "synced 2m ago" fg #c0c0c0ff bg #000000ff
 36:1 "←→" fg #ffffffff bg #000000ff
-36:3 " mode" fg #808080ff bg #000000ff
+36:3 " mode" fg #c0c0c0ff bg #000000ff
 36:8 " ↑↓" fg #ffffffff bg #000000ff
-36:11 " sel" fg #808080ff bg #000000ff
+36:11 " sel" fg #c0c0c0ff bg #000000ff
 36:15 " g" fg #ffffffff bg #000000ff
-36:17 " grp" fg #808080ff bg #000000ff
+36:17 " grp" fg #c0c0c0ff bg #000000ff
 36:21 " ?" fg #ffffffff bg #000000ff

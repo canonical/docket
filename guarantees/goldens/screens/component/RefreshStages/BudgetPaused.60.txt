@@ -8,6 +8,6 @@ runs
 1:9 "✓" fg #008000ff bg #00000000
 1:10 " 89 threads" fg #ffffffff bg #00000000
 2:1 "docs    " fg #ffffffff bg #00000000
-2:9 "paused: budget low" fg #808080ff bg #00000000
+2:9 "paused: budget low" fg #c0c0c0ff bg #00000000
 3:1 "site    " fg #ffffffff bg #00000000
-3:9 "paused: budget low" fg #808080ff bg #00000000
+3:9 "paused: budget low" fg #c0c0c0ff bg #00000000

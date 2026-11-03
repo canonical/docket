@@ -66,4 +66,4 @@ runs
 32:1 "  ?        show or hide help" fg #ffffffff bg #000000ff
 33:1 "  esc      close help" fg #ffffffff bg #000000ff
 34:1 "  R        full refresh" fg #ffffffff bg #000000ff
-36:1 "  ↓ 1 below" fg #808080ff bg #000000ff
+36:1 "  ↓ 1 below" fg #c0c0c0ff bg #000000ff

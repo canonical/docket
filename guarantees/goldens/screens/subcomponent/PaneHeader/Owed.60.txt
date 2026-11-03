@@ -3,4 +3,4 @@
 
 runs
 1:1 "owed                                one list · " fg #ffffffff bg #00000000
-1:48 "overdue first" fg #808080ff bg #00000000
+1:48 "overdue first" fg #c0c0c0ff bg #00000000

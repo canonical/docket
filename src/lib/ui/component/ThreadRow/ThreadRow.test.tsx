@@ -114,6 +114,21 @@ describe("ThreadRow", () => {
       );
     });
 
+    it("keeps an on-track bar, stack and bot author visible on a selected row", async () => {
+      const screen = await draw(<ThreadRow {...BotAuthorSelected.args} />, 40);
+      for (const text of ["│", "■"]) {
+        const run = screen.look(text);
+        expect(run).toBeDefined();
+        expect(run?.fg).not.toBe(run?.bg);
+      }
+      const stacked = await draw(
+        <ThreadRow {...DraftClose.args} selected />,
+        40,
+      );
+      expect(stacked.look("┆")?.fg).not.toBe(stacked.look("┆")?.bg);
+      expect(stacked.look("draft")?.fg).not.toBe(stacked.look("draft")?.bg);
+    });
+
     it("runs the bar on past the row when more of the item follows", async () => {
       const screen = await draw(
         <ThreadRow {...OverReviewSelected.args} continued />,

@@ -41,4 +41,4 @@ runs
 3:3 "✗ gh is not signed in to github.com" fg #800000ff bg #000000ff
 4:3 "Recovery: run gh auth login" fg #ffffffff bg #000000ff
 36:1 "? q" fg #ffffffff bg #000000ff
-36:4 " quit" fg #808080ff bg #000000ff
+36:4 " quit" fg #c0c0c0ff bg #000000ff

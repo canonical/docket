@@ -12,4 +12,4 @@ runs
 2:9 "✗ failed: The provider failed" fg #800000ff bg #00000000
 3:9 "with GITHUB_TIMED_OUT" fg #800000ff bg #00000000
 4:1 "site    " fg #ffffffff bg #00000000
-4:9 "waiting" fg #808080ff bg #00000000
+4:9 "waiting" fg #c0c0c0ff bg #00000000

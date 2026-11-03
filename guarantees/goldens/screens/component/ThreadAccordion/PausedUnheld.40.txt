@@ -3,5 +3,5 @@
 
 runs
 1:1 "╹" fg #800000ff bg #808080ff
-1:2 "┆paused · resumes 15:00" fg #808080ff bg #808080ff
+1:2 "┆paused · resumes 15:00" fg #c0c0c0ff bg #808080ff
 1:25 "                " fg #ffffffff bg #808080ff

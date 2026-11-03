@@ -38,22 +38,22 @@
 
 runs
 1:1 "owed            one list · " fg #ffffffff bg #000000ff
-1:28 "overdue first" fg #808080ff bg #000000ff
+1:28 "overdue first" fg #c0c0c0ff bg #000000ff
 3:3 "refresh in progress…" fg #ffffffff bg #000000ff
 4:3 "example " fg #ffffffff bg #000000ff
 4:11 "✓" fg #008000ff bg #000000ff
 4:12 " 2 threads" fg #ffffffff bg #000000ff
 5:3 "docs    reading page 6/9" fg #ffffffff bg #000000ff
 6:3 "████████████████" fg #ffffffff bg #000000ff
-6:19 "░░░░░░░░░░░" fg #808080ff bg #000000ff
+6:19 "░░░░░░░░░░░" fg #c0c0c0ff bg #000000ff
 6:30 " 6/10 pages" fg #ffffffff bg #000000ff
 35:1 "full refresh · docs 2/2 · pages 6/10" fg #ffffffff bg #000000ff
 36:1 "←→" fg #ffffffff bg #000000ff
-36:3 " mode" fg #808080ff bg #000000ff
+36:3 " mode" fg #c0c0c0ff bg #000000ff
 36:8 " ↑↓" fg #ffffffff bg #000000ff
-36:11 " sel" fg #808080ff bg #000000ff
+36:11 " sel" fg #c0c0c0ff bg #000000ff
 36:15 " ⏎" fg #ffffffff bg #000000ff
-36:17 " open" fg #808080ff bg #000000ff
+36:17 " open" fg #c0c0c0ff bg #000000ff
 36:22 " g" fg #ffffffff bg #000000ff
-36:24 " grp" fg #808080ff bg #000000ff
+36:24 " grp" fg #c0c0c0ff bg #000000ff
 36:28 " a r ?" fg #ffffffff bg #000000ff

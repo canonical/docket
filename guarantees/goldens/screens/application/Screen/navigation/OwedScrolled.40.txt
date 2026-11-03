@@ -16,53 +16,53 @@
 
 runs
 1:1 "owed            by owner · " fg #ffffffff bg #000000ff
-1:28 "overdue first" fg #808080ff bg #000000ff
+1:28 "overdue first" fg #c0c0c0ff bg #000000ff
 2:1 "◉ alice" fg #000080ff bg #000000ff
 2:8 " · 2 of 3 ───────────────────────" fg #ffffffff bg #000000ff
 3:1 "┃" fg #800000ff bg #000000ff
-3:2 "┆" fg #808080ff bg #000000ff
+3:2 "┆" fg #c0c0c0ff bg #000000ff
 3:3 "example#12 PR close " fg #ffffffff bg #000000ff bold
 3:23 "○ dave" fg #008080ff bg #000000ff bold
 3:34 "2h over" fg #800000ff bg #000000ff bold
 4:1 "╹" fg #800000ff bg #000000ff
-4:2 "┆" fg #808080ff bg #000000ff
+4:2 "┆" fg #c0c0c0ff bg #000000ff
 4:3 "Fix the parser" fg #ffffffff bg #000000ff italic
 4:24 "✗ checks" fg #800000ff bg #000000ff
 4:34 "◉ alice" fg #000080ff bg #000000ff
-5:1 "│ " fg #808080ff bg #808080ff
+5:1 "│ " fg #c0c0c0ff bg #808080ff
 5:3 "docs#4 issue close " fg #ffffffff bg #808080ff bold
 5:22 "◉ alice" fg #000080ff bg #808080ff bold
 5:29 "    10d left" fg #ffffffff bg #808080ff bold
-6:1 "│ " fg #808080ff bg #808080ff
+6:1 "│ " fg #c0c0c0ff bg #808080ff
 6:3 "Where do tokens live?" fg #ffffffff bg #808080ff italic
 6:24 "                 " fg #ffffffff bg #808080ff
-7:1 "│ " fg #808080ff bg #808080ff
+7:1 "│ " fg #c0c0c0ff bg #808080ff
 7:3 "                        " fg #ffffffff bg #808080ff
 7:27 "◉ alice" fg #000080ff bg #808080ff
 7:34 ", " fg #ffffffff bg #808080ff
 7:36 "● bob" fg #000080ff bg #808080ff
-8:1 "│ " fg #808080ff bg #808080ff
+8:1 "│ " fg #c0c0c0ff bg #808080ff
 8:3 "age 27d · owner " fg #ffffffff bg #808080ff
 8:19 "◉ alice" fg #000080ff bg #808080ff
 8:26 ", " fg #ffffffff bg #808080ff
 8:28 "● bob" fg #000080ff bg #808080ff
 8:33 "        " fg #ffffffff bg #808080ff
-9:1 "│ " fg #808080ff bg #808080ff
+9:1 "│ " fg #c0c0c0ff bg #808080ff
 9:3 "last activity 27d ago · " fg #ffffffff bg #808080ff
 9:27 "◉ alice" fg #000080ff bg #808080ff
 9:34 "       " fg #ffffffff bg #808080ff
-10:1 "╵ " fg #808080ff bg #808080ff
+10:1 "╵ " fg #c0c0c0ff bg #808080ff
 10:3 "labels none" fg #ffffffff bg #808080ff
 10:14 "                           " fg #ffffffff bg #808080ff
-11:1 "  ↓ 4 below" fg #808080ff bg #000000ff
+11:1 "  ↓ 4 below" fg #c0c0c0ff bg #000000ff
 12:1 "2 over · 1 soon · 3 on track       3/3/6" fg #ffffffff bg #000000ff
-13:1 "synced 2m ago" fg #808080ff bg #000000ff
+13:1 "synced 2m ago" fg #c0c0c0ff bg #000000ff
 14:1 "←→" fg #ffffffff bg #000000ff
-14:3 " mode" fg #808080ff bg #000000ff
+14:3 " mode" fg #c0c0c0ff bg #000000ff
 14:8 " ↑↓" fg #ffffffff bg #000000ff
-14:11 " sel" fg #808080ff bg #000000ff
+14:11 " sel" fg #c0c0c0ff bg #000000ff
 14:15 " ⏎" fg #ffffffff bg #000000ff
-14:17 " open" fg #808080ff bg #000000ff
+14:17 " open" fg #c0c0c0ff bg #000000ff
 14:22 " g" fg #ffffffff bg #000000ff
-14:24 " grp" fg #808080ff bg #000000ff
+14:24 " grp" fg #c0c0c0ff bg #000000ff
 14:28 " a r ?" fg #ffffffff bg #000000ff

@@ -3,5 +3,5 @@
 
 runs
 1:1 " " fg #ffffffff bg #808080ff
-1:2 "┆loading…" fg #808080ff bg #808080ff
+1:2 "┆loading…" fg #c0c0c0ff bg #808080ff
 1:11 "                                                  " fg #ffffffff bg #808080ff

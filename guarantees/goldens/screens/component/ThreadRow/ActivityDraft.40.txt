@@ -7,5 +7,5 @@ runs
 1:17 "○ dave" fg #008080ff bg #00000000 bold
 1:23 "                3h" fg #ffffffff bg #00000000 bold
 2:3 "Update dependency …" fg #ffffffff bg #00000000 italic
-2:24 "draft" fg #808080ff bg #00000000
+2:24 "draft" fg #c0c0c0ff bg #00000000
 2:29 "  unassigned" fg #ffffffff bg #00000000
