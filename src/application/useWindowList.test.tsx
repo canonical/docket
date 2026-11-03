@@ -127,9 +127,9 @@ describe("useWindowList", () => {
     );
   });
 
-  it("reads the window while the mode is not shown, and builds its list", async () => {
+  it("reads the window while hidden and builds its list when shown", async () => {
     let reads = 0;
-    const { read } = await probe(
+    const { read, change } = await probe(
       async (repo: string) => {
         reads += 1;
         return {
@@ -140,8 +140,10 @@ describe("useWindowList", () => {
       },
       { shown: false },
     );
-    expect(await read()).toBe(`3/1 of 3 · read ${recordedNow.toISOString()}`);
+    expect(await read()).toBe("reading");
     expect(reads).toBe(2);
+    await change({ shown: true });
+    expect(await read()).toBe(`3/1 of 3 · read ${recordedNow.toISOString()}`);
   });
 
   it("reads nothing while no threads are in", async () => {
@@ -231,6 +233,32 @@ describe("useWindowList", () => {
     await waitUntil(async () =>
       expect(await read()).toBe(`0/0 of 3 · read ${recordedNow.toISOString()}`),
     );
+  });
+
+  it("does not start another repository after the pane becomes idle", async () => {
+    const first = Promise.withResolvers<CachedEvents>();
+    let reads = 0;
+    const cache: Cache = { ...aged(), findEvents: () => undefined };
+    const time: Props["time"] = async (read, watched) => {
+      const counts: number[] = [];
+      for (const { repo } of watched) {
+        counts.push((await read(repo, new Date(0))).events.length);
+      }
+      return counts;
+    };
+    const { change } = await probe(
+      () => {
+        reads += 1;
+        return first.promise;
+      },
+      { shown: false, time },
+      cache,
+    );
+    expect(reads).toBe(1);
+    await change({ attention: "idle" });
+    first.resolve({ events: [], finished: [], syncedAt: recordedNow });
+    await change({ attention: "idle" });
+    expect(reads).toBe(1);
   });
 
   it("serves what the cache holds for the window at once, and the read that follows replaces it", async () => {
@@ -325,7 +353,7 @@ describe("useWindowList", () => {
       ),
       maySpend: () => false,
     };
-    const { read } = await probe(
+    const { read, change } = await probe(
       async () => {
         reads += 1;
         throw timedOut;
@@ -333,6 +361,7 @@ describe("useWindowList", () => {
       { shown: false },
       cache,
     );
+    await change({ shown: true });
     expect(await read()).toBe(
       `3/1 of 3 · read ${new Date(recordedNow.getTime() - 120_000).toISOString()}`,
     );

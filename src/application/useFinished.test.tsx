@@ -56,12 +56,10 @@ describe("useFinished", () => {
     );
   });
 
-  it("reads while finished is not shown, and lists the same", async () => {
+  it("does not build the finished list while it is hidden", async () => {
     const screen = await draw(<Probe {...props} shown={false} />, 120, 1);
     const read = await screen.redraw();
-    expect(read.lines.at(0)).toBe(
-      "closed as completed, closed as not planned, merged · 3 over · 4 merged · 3 closed",
-    );
+    expect(read.lines.at(0)).toBe("reading");
   });
 
   it("lists only the threads that ended within a shorter window", async () => {

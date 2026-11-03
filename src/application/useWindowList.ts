@@ -202,6 +202,9 @@ export default function useWindowList<Timed, List>({
       }
     }
     const readHeld: ReadHeld = async (repo, since) => {
+      // The preceding request can finish after this effect was cleaned up.
+      // Do not start another repository once the pane is idle or moved on.
+      if (!current) return new Promise<CachedEvents>(() => {});
       const kept = cache.findEvents(repo, since);
       // Below the budget floor, reading again what the cache holds is
       // docket's own spending, which waits for the reset; a window it
@@ -262,7 +265,7 @@ export default function useWindowList<Timed, List>({
     time,
     synced,
   ]);
-  if (!reading || !threads || !read || read.window !== window) {
+  if (!shown || !reading || !threads || !read || read.window !== window) {
     return undefined;
   }
   if ("problem" in read) return { problem: read.problem };

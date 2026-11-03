@@ -140,17 +140,18 @@ describe("useActivity", () => {
 
   it("reads while activity is not shown, once there are threads", async () => {
     let reads = 0;
-    const { read } = await probe(
+    const { read, change } = await probe(
       (cache) => (repo, since) => {
         reads += 1;
         return throughCache(cache)(repo, since);
       },
       { shown: false },
     );
+    await waitUntil(() => expect(reads).toBe(2));
+    await change({ shown: true });
     await waitUntil(async () =>
       expect(await read()).toBe("2 threads · 3 events · 25m"),
     );
-    expect(reads).toBe(2);
   });
 
   it("reads nothing while no threads are in", async () => {

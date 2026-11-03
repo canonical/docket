@@ -10,6 +10,7 @@ import {
   fakeProvider,
   providerError,
 } from "../../testing/provider.js";
+import { waitUntil } from "../../testing/wait.js";
 import type { EventsSince, Provider } from "../provider/index.js";
 import createCache from "./createCache.js";
 
@@ -299,6 +300,20 @@ describe("createCache, for events", () => {
       vi.mocked(first.events).mock.calls.length +
       vi.mocked(second.events).mock.calls.length;
     expect(fetches).toBe(1);
+  });
+
+  it("shares an in-flight events fetch in one process even at maximum age zero", async () => {
+    const gate = Promise.withResolvers<EventsSince>();
+    const provider = withEvents({ events: vi.fn(() => gate.promise) });
+    const cache = open(provider);
+    const first = cache.readEvents(repo, since, 0);
+    const second = cache.readEvents(repo, since, 0);
+    await waitUntil(() => expect(provider.events).toHaveBeenCalledOnce());
+    gate.resolve({ events: [], finished: [] });
+    expect(await first).toEqual(await second);
+    expect(provider.events).toHaveBeenCalledOnce();
+    await cache.readEvents(repo, since, 0);
+    expect(provider.events).toHaveBeenCalledTimes(2);
   });
 
   it("fetches again once the events are as old as the maximum age, or reach back less far than asked", async () => {

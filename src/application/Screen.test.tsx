@@ -979,21 +979,19 @@ describe("Screen", { timeout: 15_000 }, () => {
     it("draws the mode it switches to at once, its window read off screen", async () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
-      const reads: ReturnType<Cache["readEvents"]>[] = [];
-      const readEvents = vi.fn((repo: string, since: Date) => {
-        const read = cache.readEvents(repo, since, 300_000);
-        reads.push(read);
-        return read;
+      const { promise: gate, resolve } = Promise.withResolvers<void>();
+      const readEvents = vi.fn(async (repo: string, since: Date) => {
+        await gate;
+        return cache.readEvents(repo, since, 300_000);
       });
+      // Warm the cache before opening, then hold all refreshes in flight.
+      for (const { repo } of recordedRepos) {
+        await cache.readEvents(repo, new Date(0), 300_000);
+      }
       const view = viewOf(cache);
       const source = { ...cacheSourceOf(view), readEvents };
       const screen = await show({ ...view, source });
-      // Both windowed modes read their windows while owed is on screen,
-      // once as the screen opens and again once the repositories' own
-      // files arrive.
-      await waitUntil(() => expect(readEvents).toHaveBeenCalledTimes(8));
-      await Promise.allSettled(reads);
-      await screen.redraw();
+      await waitUntil(() => expect(readEvents).toHaveBeenCalled());
       const activity = await press(screen, "right");
       expect(activity.lines.at(0)).toBe(
         describeHeader("activity", "24h · by kind"),
@@ -1008,6 +1006,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
       expect(finished.lines.join("\n")).not.toContain("refresh in progress");
       expect(finished.lines.join("\n")).toMatch(/docs#|example#/);
+      resolve();
     });
 
     it("stays on nothing owed whichever key moves the selection", async () => {
