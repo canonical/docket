@@ -45,7 +45,7 @@ const timeEndings = (
  * cache, with activity's events, and builds its list from them at every
  * instant the screen is drawn at, as `useWindowList` reads a window.
  *
- * @note Impure: reads the cache, which asks GitHub when what it holds is
+ * @note Impure: reads the cache, which asks GitHub when its events are
  * older than the call's maximum age.
  */
 export default function useFinished({

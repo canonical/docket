@@ -4,6 +4,7 @@ import type { Repo } from "../lib/config/index.js";
 import { tokens } from "../lib/tokens/index.js";
 import {
   countPages,
+  Loading,
   ProgressLine,
   RefreshStages,
   wrapNotice,
@@ -20,7 +21,7 @@ export interface FirstRunProps {
 
 /**
  * What stands in for the list while nothing is shown, as on the first
- * run: `refresh in progress…`, then a line for each repository with its
+ * run: the loading line, then a line for each repository with its
  * stage, the step that recovers from the failure a repository stopped on
  * under them, and the progress line, counting the pages of the
  * repositories begun, once a first page says how many there are.
@@ -41,7 +42,10 @@ export default function drawFirstRun({
     );
   return (
     <box flexDirection="column" paddingLeft={standInIndent}>
-      <text fg={tokens["color.text"]}>refresh in progress…</text>
+      <Loading
+        label={{ text: "refresh in progress…", kind: "words" }}
+        width={room}
+      />
       {stages.length > 0 && (
         <RefreshStages
           stages={stages}

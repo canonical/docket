@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import type { CachedEvents, CacheError } from "../lib/cache/index.js";
+import type {
+  AttentionState,
+  CachedEvents,
+  CacheError,
+} from "../lib/cache/index.js";
 import type { Duration } from "../lib/clock/index.js";
 import type { ProviderError } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
@@ -25,8 +29,20 @@ export interface UseWindowListProps<Timed, List> {
    * window again, through the cache's maximum age.
    */
   readonly syncedAt: Date | undefined;
-  /** Whether the mode is on screen; nothing is read while it is not. */
+  /**
+   * Whether the mode is on screen. Both windowed modes read their
+   * windows, on screen or not, so a switch of mode finds its list
+   * already read; below the budget floor, only the mode on screen reads
+   * a window the cache holds nothing of, as the user's own request.
+   */
   readonly shown: boolean;
+  /**
+   * The pane's attention, which the reads follow: an idle pane reads no
+   * window again, and a list it holds stays until a key wakes it, as the
+   * details read ahead does. Absent when nothing follows the pane's
+   * attention, and then never idle.
+   */
+  readonly attention?: AttentionState;
   readonly watched: readonly Watched[];
   readonly window: Duration;
   /** The current time, read whenever the window is read. */
@@ -52,7 +68,7 @@ type Failure = ProviderError | CacheError;
 /**
  * The mode's list, with what failed while reading its window when
  * something did; or why no repository could be read; or nothing while
- * the window on screen is being read.
+ * the window is being read.
  */
 export type UseWindowListResult<List> =
   | { readonly list: List; readonly failure?: Failure }
@@ -76,16 +92,21 @@ const isFailure = (error: unknown): error is Failure => isNamedError(error);
  * Reads a windowed mode's data through the cache, activity's events or
  * finished's threads, and builds its list from it at every instant the
  * screen is drawn at. The window is read whenever it, the watched
- * repositories or the cache's last sync change; a list already shown for
- * the window stays while it is. Below the budget floor, what the cache
- * holds for the window answers however old, and only a window it holds
- * nothing of is read. When GitHub or the cache fails for a
- * repository, what the cache holds for it answers, however old and
- * however far back it reaches, and the failure goes with the list for
- * the status line to name. A repository with nothing held has nothing,
- * so one failure never takes the others' rows away; only when every
- * repository fails with nothing held does the failure stand in for the
- * list.
+ * repositories or the cache's last sync change, for the mode on screen
+ * and for the one behind it alike, so a switch of mode finds its list
+ * already read; a list already shown for the window stays while it is,
+ * and an idle pane reads no window again, however old what it holds,
+ * until a key wakes it. Below the budget floor, what the cache holds for
+ * the window answers, however old, and a window the cache holds nothing
+ * of waits for the reset unless its mode is on screen, where the user's
+ * own request reads it: a read the floor stops never settles, so the
+ * window is read whole at the next sync above the floor, never in part.
+ * When GitHub or the cache fails for a repository, what the cache holds
+ * for it answers, however old and however far back it reaches, and the
+ * failure goes with the list for the status line to name. A repository
+ * with nothing held has nothing, so one failure never takes the others'
+ * rows away; only when every repository fails with nothing held does the
+ * failure stand in for the list.
  *
  * @note Impure: reads the cache, which asks GitHub when what it holds is
  * older than the call's maximum age.
@@ -95,6 +116,7 @@ export default function useWindowList<Timed, List>({
   threads,
   syncedAt,
   shown,
+  attention,
   watched,
   window,
   now,
@@ -102,21 +124,29 @@ export default function useWindowList<Timed, List>({
   build,
 }: UseWindowListProps<Timed, List>): UseWindowListResult<List> {
   const [read, setRead] = useState<Read<Timed>>();
-  const reading = shown && threads !== undefined && "cache" in source;
+  const reading = threads !== undefined && "cache" in source;
+  // An idle pane reads no window again: a list it holds stays, however
+  // old, until a key wakes the pane.
+  const awake = (attention ?? "active") !== "idle";
   const synced = syncedAt?.getTime();
   // biome-ignore lint/correctness/useExhaustiveDependencies: the last sync is named so that each sync reads the window.
   useEffect(() => {
-    if (!reading || !("cache" in source)) return;
+    if (!reading || !awake || !("cache" in source)) return;
     const { cache, readEvents } = source;
     let current = true;
     let failure: Failure | undefined;
     let missing = 0;
     const readHeld: ReadHeld = async (repo, since) => {
+      const kept = cache.findEvents(repo, since);
       // Below the budget floor, reading again what the cache holds is
       // docket's own spending, which waits for the reset; a window it
-      // holds nothing of is the user's own request, and is read.
-      const kept = cache.findEvents(repo, since);
-      if (kept && !cache.maySpend()) return kept;
+      // holds nothing of is the user's own request only while the mode
+      // is on screen, and otherwise waits for the reset too, its read
+      // never settling, so no part of it is taken as the window.
+      if (!cache.maySpend()) {
+        if (kept) return kept;
+        if (!shown) return new Promise<CachedEvents>(() => {});
+      }
       try {
         return await readEvents(repo, since);
       } catch (error) {
@@ -141,7 +171,7 @@ export default function useWindowList<Timed, List>({
     return () => {
       current = false;
     };
-  }, [reading, source, watched, window, now, time, synced]);
+  }, [reading, awake, source, shown, watched, window, now, time, synced]);
   if (!reading || !threads || !read || read.window !== window) {
     return undefined;
   }

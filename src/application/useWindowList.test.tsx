@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
-import type { CachedEvents } from "../lib/cache/index.js";
+import type { Cache, CachedEvents } from "../lib/cache/index.js";
 import { holdCache, settleStatus } from "../testing/cache.js";
 import { everyCapability, providerError } from "../testing/provider.js";
 import {
@@ -12,6 +12,7 @@ import {
   recordedWatched,
 } from "../testing/recorded.js";
 import { draw } from "../testing/terminal.js";
+import { waitUntil } from "../testing/wait.js";
 import type { TerminalView, Watched } from "./types.js";
 import useWindowList, {
   type ReadHeld,
@@ -35,16 +36,17 @@ type Props = UseWindowListProps<number[], string>;
  * failed, if anything did; the code of its problem; or `reading`.
  *
  * @param readEvents The source's reading of a repository's events.
+ * @param cache The cache the source reads through.
  */
 async function probe(
   readEvents: (repo: string, since: Date) => Promise<CachedEvents>,
   overrides: Partial<Props> = {},
-) {
-  const cache = holdCache(
+  cache: Cache = holdCache(
     { threads: recordedThreads, syncedAt: recordedNow },
     settleStatus(recordedNow),
     recordedEvents,
-  );
+  ),
+) {
   const source: TerminalView["source"] = {
     cache,
     capabilities: everyCapability,
@@ -85,6 +87,16 @@ async function probe(
 
 const timedOut = providerError("GITHUB_TIMED_OUT");
 
+/** A cache below the budget floor that holds nothing for any window. */
+const flooredEmpty = (): Cache => ({
+  ...holdCache(
+    { threads: recordedThreads, syncedAt: recordedNow },
+    settleStatus(recordedNow),
+  ),
+  maySpend: () => false,
+  findEvents: () => undefined,
+});
+
 describe("useWindowList", () => {
   it("builds the list from each repository read through the source, with the threads", async () => {
     const read = async (repo: string) => ({
@@ -95,14 +107,31 @@ describe("useWindowList", () => {
     expect(await (await probe(read)).read()).toBe("3/1 of 3");
   });
 
-  it("reads nothing while the mode is not shown, and gives nothing", async () => {
+  it("reads the window while the mode is not shown, and builds its list", async () => {
+    let reads = 0;
+    const { read } = await probe(
+      async (repo: string) => {
+        reads += 1;
+        return {
+          events: recordedEvents.filter(({ thread }) => thread.repo === repo),
+          finished: [],
+          syncedAt: recordedNow,
+        };
+      },
+      { shown: false },
+    );
+    expect(await read()).toBe("3/1 of 3");
+    expect(reads).toBe(2);
+  });
+
+  it("reads nothing while no threads are in", async () => {
     let reads = 0;
     const { read } = await probe(
       async () => {
         reads += 1;
         throw timedOut;
       },
-      { shown: false },
+      { threads: undefined },
     );
     expect(await read()).toBe("reading");
     expect(reads).toBe(0);
@@ -122,6 +151,70 @@ describe("useWindowList", () => {
     expect(await read()).toBe("1 of 3");
     await change({ window: twoDays, time: () => new Promise(() => {}) });
     expect(await read()).toBe("reading");
+  });
+
+  it("below the budget floor, a window held nothing of waits off screen, and the mode on screen reads it", async () => {
+    let reads = 0;
+    const reading = () => {
+      reads += 1;
+      throw timedOut;
+    };
+    const hidden = await probe(reading, { shown: false }, flooredEmpty());
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(await hidden.read()).toBe("reading");
+    expect(reads).toBe(0);
+    const shown = await probe(reading, {}, flooredEmpty());
+    await waitUntil(async () =>
+      expect(await shown.read()).toBe("GITHUB_TIMED_OUT"),
+    );
+    expect(reads).toBe(2);
+  });
+
+  it("below the budget floor, what the cache holds answers, off screen as on", async () => {
+    let reads = 0;
+    const cache: Cache = {
+      ...holdCache(
+        { threads: recordedThreads, syncedAt: recordedNow },
+        settleStatus(recordedNow),
+        recordedEvents,
+      ),
+      maySpend: () => false,
+    };
+    const { read } = await probe(
+      async () => {
+        reads += 1;
+        throw timedOut;
+      },
+      { shown: false },
+      cache,
+    );
+    expect(await read()).toBe("3/1 of 3");
+    expect(reads).toBe(0);
+  });
+
+  it("reads no window again while the pane is idle, and the list it holds stays", async () => {
+    let reads = 0;
+    const reading = async (repo: string) => {
+      reads += 1;
+      return {
+        events: recordedEvents.filter(({ thread }) => thread.repo === repo),
+        finished: [],
+        syncedAt: recordedNow,
+      };
+    };
+    const idle = await probe(reading, { attention: "idle" });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(await idle.read()).toBe("reading");
+    expect(reads).toBe(0);
+    const { change, read } = await probe(reading);
+    expect(await read()).toBe("3/1 of 3");
+    const held = reads;
+    await change({
+      attention: "idle",
+      syncedAt: new Date(recordedNow.getTime() + 180_000),
+    });
+    expect(await read()).toBe("3/1 of 3");
+    expect(reads).toBe(held);
   });
 
   it("gives a failure no code names as the problem, in place of the list", async () => {

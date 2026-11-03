@@ -976,6 +976,40 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
     });
 
+    it("draws the mode it switches to at once, its window read off screen", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const reads: ReturnType<Cache["readEvents"]>[] = [];
+      const readEvents = vi.fn((repo: string, since: Date) => {
+        const read = cache.readEvents(repo, since, 300_000);
+        reads.push(read);
+        return read;
+      });
+      const view = viewOf(cache);
+      const source = { ...cacheSourceOf(view), readEvents };
+      const screen = await show({ ...view, source });
+      // Both windowed modes read their windows while owed is on screen,
+      // once as the screen opens and again once the repositories' own
+      // files arrive.
+      await waitUntil(() => expect(readEvents).toHaveBeenCalledTimes(8));
+      await Promise.allSettled(reads);
+      await screen.redraw();
+      const activity = await press(screen, "right");
+      expect(activity.lines.at(0)).toBe(
+        describeHeader("activity", "24h · by kind"),
+      );
+      expect(activity.lines.join("\n")).not.toContain("refresh in progress");
+      expect(activity.lines.at(2)).toBe(
+        `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
+      );
+      const finished = await press(screen, "right");
+      expect(finished.lines.at(0)).toBe(
+        describeHeader("finished", "24h · by kind"),
+      );
+      expect(finished.lines.join("\n")).not.toContain("refresh in progress");
+      expect(finished.lines.join("\n")).toMatch(/docs#|example#/);
+    });
+
     it("stays on nothing owed whichever key moves the selection", async () => {
       const cache = await openCache(fakeProvider());
       await cache.refresh();

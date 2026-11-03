@@ -56,6 +56,14 @@ describe("useFinished", () => {
     );
   });
 
+  it("reads while finished is not shown, and lists the same", async () => {
+    const screen = await draw(<Probe {...props} shown={false} />, 120, 1);
+    const read = await screen.redraw();
+    expect(read.lines.at(0)).toBe(
+      "closed as completed, closed as not planned, merged · 3 over · 4 merged · 3 closed",
+    );
+  });
+
   it("lists only the threads that ended within a shorter window", async () => {
     const day = { amount: 24, unit: "h" } as const;
     const screen = await draw(<Probe {...props} window={day} />, 120, 1);
