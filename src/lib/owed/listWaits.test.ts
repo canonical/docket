@@ -20,26 +20,47 @@ const docs: Repo = { name: "docs", repo: "example-org/example-docs", tags: [] };
 const onDocs = thread({ repo: docs.repo, number: 7 });
 
 describe("listWaits", () => {
-  it("sorts most overdue first, as a share of each wait's own target", () => {
-    // 12 hours past a 24-hour target ranks above 12 hours past five days.
+  it("sorts by working time overdue, regardless of each wait's target", () => {
     const reply = wait({
       kind: "response",
-      due: at("2026-09-22T22:00+02:00"),
+      due: at("2026-09-22T20:00+02:00"),
     });
     const close = wait({
+      kind: "close",
       target: { amount: 5, unit: "d" },
-      due: at("2026-09-22T22:00+02:00"),
+      due: at("2026-09-22T10:00+02:00"),
     });
     const onTrack = wait({ thread: onDocs, due: at("2026-09-23T20:00+02:00") });
     const list = listWaits(
       [
-        { repo: example, time, people, yours: [], waits: [close, reply] },
+        { repo: example, time, people, yours: [], waits: [reply, close] },
         { repo: docs, time, people, yours: [], waits: [onTrack] },
       ],
       now,
     );
-    expect(list.rows.map((row) => row.wait)).toEqual([reply, close, onTrack]);
+    expect(list.rows.map((row) => row.wait)).toEqual([close, reply, onTrack]);
     expect(list.rows[2]?.reference.text).toBe("docs#7");
+  });
+
+  it("orders waits with time left by the least working time left, not target share", () => {
+    const shortTarget = wait({ due: at("2026-09-23T22:00+02:00") });
+    const longTarget = wait({
+      target: { amount: 5, unit: "d" },
+      due: at("2026-09-23T14:00+02:00"),
+    });
+    const list = listWaits(
+      [
+        {
+          repo: example,
+          time,
+          people,
+          yours: [],
+          waits: [shortTarget, longTarget],
+        },
+      ],
+      now,
+    );
+    expect(list.rows.map((row) => row.wait)).toEqual([longTarget, shortTarget]);
   });
 
   it("keeps waits that stand equal in the order given", () => {

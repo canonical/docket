@@ -6,18 +6,18 @@
 |╹┆Fix the parser                           ✗ checks  ◉ alice
 |┃ example#15 issue reply ◐ carol                     4h left
 |╹ Crash on start                                  unassigned
-|│ docs#4 issue close ◉ alice                        10d left
-|│ Where do tokens live?
-|╵                                             ◉ alice, ● bob
 |│ example#20 PR review ■ example-sync                1d left
 |╵ Update dependency zod to 3.24                        ● bob
+|│┆example#12 PR review ○ dave                        1d left
+|╵┆Fix the parser                             ✗ checks  ● bob
 |│ example#20 PR close ■ example-sync                 4d left
 |│ Update dependency zod to 3.24                        ● bob
 |│ age 2d · owner ● bob
 |│ last activity 2d ago · ■ example-sync
 |╵ labels dependencies
-|│┆example#12 PR review ○ dave                        1d left
-|╵┆Fix the parser                             ✗ checks  ● bob
+|│ docs#4 issue close ◉ alice                        10d left
+|│ Where do tokens live?
+|╵                                             ◉ alice, ● bob
 |│ example#15 issue close ◐ carol                    29d left
 |╵ Crash on start                                  unassigned
 |
@@ -67,48 +67,48 @@ runs
 7:3 "Crash on start" fg #ffffffff bg #000000ff italic
 7:17 "                                  unassigned" fg #ffffffff bg #000000ff
 8:1 "│ " fg #c0c0c0ff bg #000000ff
-8:3 "docs#4 issue close " fg #ffffffff bg #000000ff bold
-8:22 "◉ alice" fg #000080ff bg #000000ff bold
-8:29 "                        10d left" fg #ffffffff bg #000000ff bold
-9:1 "│ " fg #c0c0c0ff bg #000000ff
-9:3 "Where do tokens live?" fg #ffffffff bg #000000ff italic
-10:1 "╵ " fg #c0c0c0ff bg #000000ff
-10:47 "◉ alice" fg #000080ff bg #000000ff
-10:54 ", " fg #ffffffff bg #000000ff
-10:56 "● bob" fg #000080ff bg #000000ff
-11:1 "│ " fg #c0c0c0ff bg #000000ff
-11:3 "example#20 PR review " fg #ffffffff bg #000000ff bold
-11:24 "■ example-sync" fg #c0c0c0ff bg #000000ff bold
-11:38 "                1d left" fg #ffffffff bg #000000ff bold
-12:1 "╵ " fg #c0c0c0ff bg #000000ff
-12:3 "Update dependency zod to 3.24" fg #ffffffff bg #000000ff italic
-12:56 "● bob" fg #000080ff bg #000000ff
+8:3 "example#20 PR review " fg #ffffffff bg #000000ff bold
+8:24 "■ example-sync" fg #c0c0c0ff bg #000000ff bold
+8:38 "                1d left" fg #ffffffff bg #000000ff bold
+9:1 "╵ " fg #c0c0c0ff bg #000000ff
+9:3 "Update dependency zod to 3.24" fg #ffffffff bg #000000ff italic
+9:56 "● bob" fg #000080ff bg #000000ff
+10:1 "│┆" fg #c0c0c0ff bg #000000ff
+10:3 "example#12 PR review " fg #ffffffff bg #000000ff bold
+10:24 "○ dave" fg #008080ff bg #000000ff bold
+10:30 "                        1d left" fg #ffffffff bg #000000ff bold
+11:1 "╵┆" fg #c0c0c0ff bg #000000ff
+11:3 "Fix the parser" fg #ffffffff bg #000000ff italic
+11:46 "✗ checks" fg #800000ff bg #000000ff
+11:56 "● bob" fg #000080ff bg #000000ff
+12:1 "│ " fg #c0c0c0ff bg #808080ff
+12:3 "example#20 PR close " fg #ffffffff bg #808080ff bold
+12:23 "■ example-sync" fg #c0c0c0ff bg #808080ff bold
+12:37 "                 4d left" fg #ffffffff bg #808080ff bold
 13:1 "│ " fg #c0c0c0ff bg #808080ff
-13:3 "example#20 PR close " fg #ffffffff bg #808080ff bold
-13:23 "■ example-sync" fg #c0c0c0ff bg #808080ff bold
-13:37 "                 4d left" fg #ffffffff bg #808080ff bold
+13:3 "Update dependency zod to 3.24" fg #ffffffff bg #808080ff italic
+13:32 "                        " fg #ffffffff bg #808080ff
+13:56 "● bob" fg #000080ff bg #808080ff
 14:1 "│ " fg #c0c0c0ff bg #808080ff
-14:3 "Update dependency zod to 3.24" fg #ffffffff bg #808080ff italic
-14:32 "                        " fg #ffffffff bg #808080ff
-14:56 "● bob" fg #000080ff bg #808080ff
+14:3 "age 2d · owner " fg #ffffffff bg #808080ff
+14:18 "● bob" fg #000080ff bg #808080ff
+14:23 "                                      " fg #ffffffff bg #808080ff
 15:1 "│ " fg #c0c0c0ff bg #808080ff
-15:3 "age 2d · owner " fg #ffffffff bg #808080ff
-15:18 "● bob" fg #000080ff bg #808080ff
-15:23 "                                      " fg #ffffffff bg #808080ff
-16:1 "│ " fg #c0c0c0ff bg #808080ff
-16:3 "last activity 2d ago · " fg #ffffffff bg #808080ff
-16:26 "■ example-sync" fg #c0c0c0ff bg #808080ff
-16:40 "                     " fg #ffffffff bg #808080ff
-17:1 "╵ " fg #c0c0c0ff bg #808080ff
-17:3 "labels dependencies" fg #ffffffff bg #808080ff
-17:22 "                                       " fg #ffffffff bg #808080ff
-18:1 "│┆" fg #c0c0c0ff bg #000000ff
-18:3 "example#12 PR review " fg #ffffffff bg #000000ff bold
-18:24 "○ dave" fg #008080ff bg #000000ff bold
-18:30 "                        1d left" fg #ffffffff bg #000000ff bold
-19:1 "╵┆" fg #c0c0c0ff bg #000000ff
-19:3 "Fix the parser" fg #ffffffff bg #000000ff italic
-19:46 "✗ checks" fg #800000ff bg #000000ff
+15:3 "last activity 2d ago · " fg #ffffffff bg #808080ff
+15:26 "■ example-sync" fg #c0c0c0ff bg #808080ff
+15:40 "                     " fg #ffffffff bg #808080ff
+16:1 "╵ " fg #c0c0c0ff bg #808080ff
+16:3 "labels dependencies" fg #ffffffff bg #808080ff
+16:22 "                                       " fg #ffffffff bg #808080ff
+17:1 "│ " fg #c0c0c0ff bg #000000ff
+17:3 "docs#4 issue close " fg #ffffffff bg #000000ff bold
+17:22 "◉ alice" fg #000080ff bg #000000ff bold
+17:29 "                        10d left" fg #ffffffff bg #000000ff bold
+18:1 "│ " fg #c0c0c0ff bg #000000ff
+18:3 "Where do tokens live?" fg #ffffffff bg #000000ff italic
+19:1 "╵ " fg #c0c0c0ff bg #000000ff
+19:47 "◉ alice" fg #000080ff bg #000000ff
+19:54 ", " fg #ffffffff bg #000000ff
 19:56 "● bob" fg #000080ff bg #000000ff
 20:1 "│ " fg #c0c0c0ff bg #000000ff
 20:3 "example#15 issue close " fg #ffffffff bg #000000ff bold

@@ -106,13 +106,13 @@ describe("OwedList", () => {
   });
 
   it("scrolls so the selected row and its details are in view, cut above the sign of the rows below", async () => {
-    const screen = await drawList("owner", 4, 40, 8);
+    const screen = await drawList("owner", 3, 40, 8);
     expect(screen.lines.slice(0, 3)).toEqual([
-      `● bob · 2 of 2 ${"─".repeat(25)}`,
+      `● bob · 1 of 2 ${"─".repeat(25)}`,
       `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
       `│┆Fix the parser${" ".repeat(9)}✗ checks  ● bob`,
     ]);
-    expect(screen.lines.at(7)).toBe("  ↓ 2 below");
+    expect(screen.lines.at(7)).toBe("  ↓ 3 below");
   });
 
   it("draws an editor in the details' place under the selected row, which gives up its background, and keeps it in view", async () => {
@@ -126,14 +126,14 @@ describe("OwedList", () => {
       ),
       lines: 3,
     };
-    const screen = await drawList("owner", 4, 40, 6, editor);
+    const screen = await drawList("owner", 3, 40, 6, editor);
     expect(screen.lines).toEqual([
-      `● bob · 2 of 2 ${"─".repeat(25)}`,
+      `● bob · 1 of 2 ${"─".repeat(25)}`,
       `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
       `╵┆Fix the parser${" ".repeat(9)}✗ checks  ● bob`,
       "  filter:",
       "  ☑ alice",
-      "  ↓ 2 below",
+      "  ↓ 3 below",
     ]);
     expect(screen.look("example#12 PR review")?.bg).not.toBe(
       hex(tokens["color.background.selected"]),
@@ -199,7 +199,7 @@ describe("OwedList", () => {
     const screen = await drawSuspending(
       <OwedList
         list={recordedOwed("none")}
-        selected={4}
+        selected={3}
         readDetail={() => failed}
         now={recordedNow}
         timezone="Europe/Paris"
@@ -211,7 +211,7 @@ describe("OwedList", () => {
       12,
     );
     expect(screen.lines).toContain("╵┆✗ failed: GitHub timed out");
-    expect(screen.lines.at(0)).toBe("│ docs#4 issue close ● alice    10d left");
+    expect(screen.lines.at(0)).toBe("┃ example#15 issue reply ◐ carol 4h left");
     expect(shown.at(-1)).toBe(2);
   });
 
@@ -230,7 +230,7 @@ describe("OwedList", () => {
     root.render(
       <OwedList
         list={recordedOwed("none")}
-        selected={4}
+        selected={3}
         readDetail={() => read.promise}
         now={recordedNow}
         timezone="Europe/Paris"

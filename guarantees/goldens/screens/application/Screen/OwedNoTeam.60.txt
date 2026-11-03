@@ -16,11 +16,11 @@
 |╹┆Fix the parser                           ✗ checks  ◉ alice
 |┃ example#15 issue reply ◐ carol                     4h left
 |╹ Crash on start                                  unassigned
+|│┆example#12 PR review ○ dave                        1d left
+|╵┆Fix the parser                             ✗ checks  ◐ bob
 |│ docs#4 issue close ◉ alice                        10d left
 |│ Where do tokens live?
 |╵                                             ◉ alice, ◐ bob
-|│┆example#12 PR review ○ dave                        1d left
-|╵┆Fix the parser                             ✗ checks  ◐ bob
 |│ example#15 issue close ◐ carol                    29d left
 |╵ Crash on start                                  unassigned
 |
@@ -95,23 +95,23 @@ runs
 17:1 "╹" fg #808000ff bg #000000ff
 17:3 "Crash on start" fg #ffffffff bg #000000ff italic
 17:17 "                                  unassigned" fg #ffffffff bg #000000ff
-18:1 "│ " fg #c0c0c0ff bg #000000ff
-18:3 "docs#4 issue close " fg #ffffffff bg #000000ff bold
-18:22 "◉ alice" fg #000080ff bg #000000ff bold
-18:29 "                        10d left" fg #ffffffff bg #000000ff bold
-19:1 "│ " fg #c0c0c0ff bg #000000ff
-19:3 "Where do tokens live?" fg #ffffffff bg #000000ff italic
-20:1 "╵ " fg #c0c0c0ff bg #000000ff
-20:47 "◉ alice" fg #000080ff bg #000000ff
-20:54 ", " fg #ffffffff bg #000000ff
-20:56 "◐ bob" fg #800080ff bg #000000ff
-21:1 "│┆" fg #c0c0c0ff bg #000000ff
-21:3 "example#12 PR review " fg #ffffffff bg #000000ff bold
-21:24 "○ dave" fg #008080ff bg #000000ff bold
-21:30 "                        1d left" fg #ffffffff bg #000000ff bold
-22:1 "╵┆" fg #c0c0c0ff bg #000000ff
-22:3 "Fix the parser" fg #ffffffff bg #000000ff italic
-22:46 "✗ checks" fg #800000ff bg #000000ff
+18:1 "│┆" fg #c0c0c0ff bg #000000ff
+18:3 "example#12 PR review " fg #ffffffff bg #000000ff bold
+18:24 "○ dave" fg #008080ff bg #000000ff bold
+18:30 "                        1d left" fg #ffffffff bg #000000ff bold
+19:1 "╵┆" fg #c0c0c0ff bg #000000ff
+19:3 "Fix the parser" fg #ffffffff bg #000000ff italic
+19:46 "✗ checks" fg #800000ff bg #000000ff
+19:56 "◐ bob" fg #800080ff bg #000000ff
+20:1 "│ " fg #c0c0c0ff bg #000000ff
+20:3 "docs#4 issue close " fg #ffffffff bg #000000ff bold
+20:22 "◉ alice" fg #000080ff bg #000000ff bold
+20:29 "                        10d left" fg #ffffffff bg #000000ff bold
+21:1 "│ " fg #c0c0c0ff bg #000000ff
+21:3 "Where do tokens live?" fg #ffffffff bg #000000ff italic
+22:1 "╵ " fg #c0c0c0ff bg #000000ff
+22:47 "◉ alice" fg #000080ff bg #000000ff
+22:54 ", " fg #ffffffff bg #000000ff
 22:56 "◐ bob" fg #800080ff bg #000000ff
 23:1 "│ " fg #c0c0c0ff bg #000000ff
 23:3 "example#15 issue close " fg #ffffffff bg #000000ff bold

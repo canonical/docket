@@ -15,7 +15,7 @@ const linesAt = (width: number) => [
   "           docket opens owed",
   "  g        next grouping",
   "  t        next time window (activity)",
-  "           owed: overdue / target",
+  "           owed: most overdue first",
   "           activity: newest first",
   "",
   heading("List", width),

@@ -7,7 +7,7 @@
 |           docket opens owed
 |  g        next grouping
 |  t        next time window
-|           owed: overdue / target
+|           owed: most overdue first
 |           activity: newest first
 |           finished: newest first
 |
@@ -32,7 +32,7 @@ runs
 6:1 "           docket opens owed" fg #ffffffff bg #000000ff
 7:1 "  g        next grouping" fg #ffffffff bg #000000ff
 8:1 "  t        next time window" fg #ffffffff bg #000000ff
-9:1 "           owed: overdue / target" fg #ffffffff bg #000000ff
+9:1 "           owed: most overdue first" fg #ffffffff bg #000000ff
 10:1 "           activity: newest first" fg #ffffffff bg #000000ff
 11:1 "           finished: newest first" fg #ffffffff bg #000000ff
 13:1 "List ───────────────────────────────────" fg #ffffffff bg #000000ff

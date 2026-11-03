@@ -93,27 +93,6 @@ exit 0
           "target": "24h"
         },
         {
-          "reference": "docs#4",
-          "title": "Where do tokens live?",
-          "kind": "close",
-          "author": {
-            "login": "alice",
-            "group": "you"
-          },
-          "state": "onTrack",
-          "overdue": -0.3638888888888889,
-          "owners": [
-            "alice",
-            "bob"
-          ],
-          "due": "2026-10-13T08:00:00.000Z",
-          "draft": false,
-          "checksFailing": false,
-          "stack": null,
-          "invalidRepositoryFile": false,
-          "target": "720h"
-        },
-        {
           "reference": "example#12",
           "title": "Fix the parser",
           "kind": "review",
@@ -137,6 +116,27 @@ exit 0
           },
           "invalidRepositoryFile": false,
           "target": "48h"
+        },
+        {
+          "reference": "docs#4",
+          "title": "Where do tokens live?",
+          "kind": "close",
+          "author": {
+            "login": "alice",
+            "group": "you"
+          },
+          "state": "onTrack",
+          "overdue": -0.3638888888888889,
+          "owners": [
+            "alice",
+            "bob"
+          ],
+          "due": "2026-10-13T08:00:00.000Z",
+          "draft": false,
+          "checksFailing": false,
+          "stack": null,
+          "invalidRepositoryFile": false,
+          "target": "720h"
         },
         {
           "reference": "example#15",
