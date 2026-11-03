@@ -69,7 +69,7 @@ const catalogue: readonly Command[] = [
     answers:
       "Which replies, reviews and closes are owed on the watched repositories, by whom, and how far each is from its target.",
     notes: [
-      "Rows run most overdue first, measured as a share of each wait's own target, so a reply 12 hours over a 24-hour target ranks above a close 12 hours over a 5-day one.",
+      "Rows run most overdue first by working time past the target; waits not yet due follow in order of time left.",
       "Targets count working time on the configured workdays and time zone.",
       "In a terminal, with no `--format`, `docket owed` and `docket` alone open the terminal interface on owed, grouped as `--by` names; piped or captured, or given `--format`, they print the list.",
     ],

@@ -104,7 +104,7 @@ Every wait the team owes on an open thread:
 - A **review** is owed by each reviewer a pull request still asks for. Once they've reviewed, the author's next push starts the wait again.
 - A **close** is owed from the day a thread opens until it closes.
 
-Rows run most overdue first, as a share of each target, so a reply 12 hours over a 24-hour target ranks above a close 12 hours over a five-day one. Each row says where it stands: `4d over`, `10d left`, or `4h left, due soon` once less than a fifth of the target remains.
+Rows run most overdue first by working time past the target. A wait with more days over appears above one with fewer, whatever their targets; waits not yet due follow in order of time left. Each row says where it stands: `4d over`, `10d left`, or `4h left, due soon` once less than a fifth of the target remains.
 
 ### activity: what happened while I was away?
 

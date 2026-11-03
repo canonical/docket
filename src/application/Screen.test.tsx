@@ -826,7 +826,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect((await press(screen, "k")).lines.at(1)).toBe(back.lines.at(1));
       const last = await press(screen, "down", "j", "j", "j", "j", "j");
       expect(last.lines.at(1)).toBe(
-        `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
+        `│ docs#4 issue close ◉ alice${" ".repeat(4)}10d left`,
       );
     });
 
@@ -877,11 +877,11 @@ describe("Screen", { timeout: 15_000 }, () => {
         "◉ alice ────────────────────────────────",
         `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
       ]);
-      // alice's three rows fill the screen, bob's heading below them.
+      // The next page reaches the review in bob's group.
       const page = await press(screen, "pagedown");
       expect(page.lines.slice(8, 10)).toEqual([
-        `╵${" ".repeat(25)}◉ alice, ● bob`,
-        "● bob ──────────────────────────────────",
+        "│┆example#12 PR review ○ dave    1d left",
+        "│┆Fix the parser         ✗ checks  ● bob",
       ]);
       expect(page.look("bob")?.bg).not.toBe(
         hex(tokens["color.background.selected"]),
@@ -905,8 +905,8 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await showRecorded();
       const last = await press(screen, "end");
       expect(last.lines.slice(1, 3)).toEqual([
-        `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
-        `╵┆Fix the parser${" ".repeat(9)}✗ checks  ● bob`,
+        `│ docs#4 issue close ◉ alice${" ".repeat(4)}10d left`,
+        "│ Where do tokens live?",
       ]);
       expect((await press(screen, "end")).lines.at(1)).toBe(last.lines.at(1));
       const first = await press(screen, "home");
@@ -1157,7 +1157,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         readDetail,
         () => threads,
       );
-      const running = await press(screen, "j", "j", "j", "j");
+      const running = await press(screen, "j", "j", "j");
       expect(running.lines).toContain("│┆checks running 1 of 2");
       readDetail.mockReturnValueOnce(promise);
       threads = [{ ...parserFix, checks: "passing" }, crash, tokensGuide];
@@ -1859,7 +1859,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         60,
       );
       await waitUntil(() => expect(readDetails).toHaveBeenCalledOnce());
-      const moved = await press(screen, "down", "down", "down");
+      const moved = await press(screen, "down", "down");
       await waitUntil(() =>
         expect(readDetails.mock.calls.length).toBeGreaterThan(1),
       );
@@ -2076,7 +2076,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         `${" ".repeat(11)}docket opens owed`,
         `  g${" ".repeat(8)}next grouping`,
         `  t${" ".repeat(8)}next time window`,
-        `${" ".repeat(11)}owed: overdue / target`,
+        `${" ".repeat(11)}owed: most overdue first`,
         `${" ".repeat(11)}activity: newest first`,
         `${" ".repeat(11)}finished: newest first`,
         "",

@@ -8,9 +8,10 @@ import type { RepoWaits, WaitList } from "./types.js";
  * the list, which the reader changes far more often than the data or the
  * time, works on these rows and measures nothing again.
  *
- * Rows sort most overdue first, as a share of each wait's own target, so
- * a reply 12 hours past a 24-hour target ranks above a close 12 hours
- * past a 5-day one. Waits that stand equal keep the order given.
+ * Rows sort by working time past due, most overdue first. Before the due
+ * time, the wait with the least working time left comes first. The row
+ * keeps its overdue share and target separately for the JSON interface.
+ * Waits that stand equal keep the order given.
  *
  * @param repos The watched repositories, in the configuration's order. A
  * repository whose own file is invalid has each of its rows marked.
@@ -34,7 +35,7 @@ export default function listWaits(
           : row;
       }),
     )
-    .sort((a, b) => b.overdue - a.overdue);
+    .sort((a, b) => b.overdue * b.targetHours - a.overdue * a.targetHours);
   const counts = countStates(rows);
   // The parts in the order of their urgency, the most urgent first.
   const fields = [
