@@ -30,6 +30,10 @@
   "engines": {
     "bun": ">=1.4.2"
   },
+  "overrides": {
+    "glob": "14.0.3",
+    "minimatch": "11.0.4"
+  },
   "scripts": {
     "build": "tsc --noEmit -p tsconfig.build.json",
     "check": "biome check && tsc --noEmit",
