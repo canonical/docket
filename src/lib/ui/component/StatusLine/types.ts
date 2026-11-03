@@ -68,6 +68,12 @@ export interface StatusLineProps {
    */
   attention?: AttentionState;
   /**
+   * When the oldest data the list on screen was built from was fetched,
+   * in a windowed mode, which the line's ages and times name alongside
+   * the threads' when it is older.
+   */
+  readAt?: Date;
+  /**
    * How many of the details asked for are read, while any are pending,
    * which the right side says as `details 3/12`.
    */

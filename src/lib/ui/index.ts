@@ -15,6 +15,8 @@ export {
   type HelpOverlayProps,
   KeyBar,
   type KeyBarProps,
+  Loading,
+  type LoadingProps,
   Notice,
   type NoticeProps,
   ProgressLine,

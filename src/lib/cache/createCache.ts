@@ -1,3 +1,4 @@
+// Longer than 500 lines because the cache composes its storage, refresh, and read-through operations in one place.
 import { watch as watchFolder } from "node:fs";
 import { join } from "node:path";
 import { dehydrate, hydrate, QueryClient } from "@tanstack/query-core";
@@ -29,6 +30,7 @@ import refreshChecks from "./refreshChecks.js";
 import syncRepo from "./syncRepo.js";
 import type {
   Cache,
+  CachedEvents,
   CachedThreads,
   CacheOptions,
   CacheStatus,
@@ -100,6 +102,12 @@ export default function createCache({
     client.setQueryData(key(repo), value, { updatedAt: at.getTime() });
 
   const queries = createReadQueries(client, now);
+  // Readers in this process share an in-flight events fetch, even when
+  // maxAge is zero. Only identical windows join the same request.
+  const pendingEvents = new Map<
+    string,
+    { since: Date; maxAge: number; promise: Promise<CachedEvents> }
+  >();
 
   const syncedAt = (): Date | undefined => {
     const times = repos.map(
@@ -323,15 +331,30 @@ export default function createCache({
     threads: () => shown,
     load,
     findEvents: queries.findEvents,
-    readEvents: (repo, since, maxAge) =>
-      readThrough(
+    readEvents: (repo, since, maxAge) => {
+      const pending = pendingEvents.get(repo);
+      if (
+        pending &&
+        pending.since.getTime() === since.getTime() &&
+        (pending.maxAge === 0 || (maxAge > 0 && pending.maxAge <= maxAge))
+      )
+        return pending.promise;
+      const promise = readThrough(
         () => queries.findFreshEvents(repo, since, maxAge),
         async (at) => {
           const read = await provider.events(repo, since);
           queries.keepEvents(repo, since, read, at);
           return { ...read, syncedAt: at };
         },
-      ),
+      );
+      const entry = { since, maxAge, promise };
+      pendingEvents.set(repo, entry);
+      const done = () => {
+        if (pendingEvents.get(repo) === entry) pendingEvents.delete(repo);
+      };
+      void promise.then(done, done);
+      return promise;
+    },
     readFile: (repo, path, maxAge) =>
       readThrough(
         () => queries.findFreshFile(repo, path, maxAge),

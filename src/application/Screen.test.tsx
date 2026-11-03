@@ -976,6 +976,39 @@ describe("Screen", { timeout: 15_000 }, () => {
       );
     });
 
+    it("draws the mode it switches to at once, its window read off screen", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const { promise: gate, resolve } = Promise.withResolvers<void>();
+      const readEvents = vi.fn(async (repo: string, since: Date) => {
+        await gate;
+        return cache.readEvents(repo, since, 300_000);
+      });
+      // Warm the cache before opening, then hold all refreshes in flight.
+      for (const { repo } of recordedRepos) {
+        await cache.readEvents(repo, new Date(0), 300_000);
+      }
+      const view = viewOf(cache);
+      const source = { ...cacheSourceOf(view), readEvents };
+      const screen = await show({ ...view, source });
+      await waitUntil(() => expect(readEvents).toHaveBeenCalled());
+      const activity = await press(screen, "right");
+      expect(activity.lines.at(0)).toBe(
+        describeHeader("activity", "24h · by kind"),
+      );
+      expect(activity.lines.join("\n")).not.toContain("refresh in progress");
+      expect(activity.lines.at(2)).toBe(
+        `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
+      );
+      const finished = await press(screen, "right");
+      expect(finished.lines.at(0)).toBe(
+        describeHeader("finished", "24h · by kind"),
+      );
+      expect(finished.lines.join("\n")).not.toContain("refresh in progress");
+      expect(finished.lines.join("\n")).toMatch(/docs#|example#/);
+      resolve();
+    });
+
     it("stays on nothing owed whichever key moves the selection", async () => {
       const cache = await openCache(fakeProvider());
       await cache.refresh();
@@ -1311,6 +1344,22 @@ describe("Screen", { timeout: 15_000 }, () => {
   });
 
   describe("activity", () => {
+    it("marks cached activity partial while another repository is missing", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      await cache.readEvents(recordedRepos[0].repo, new Date(0), 300_000);
+      const view = viewOf(cache);
+      const source = {
+        ...cacheSourceOf(view),
+        readEvents: () => new Promise<never>(() => {}),
+      };
+      const screen = await show({ ...view, mode: "activity", source });
+      await waitUntil(async () => {
+        const lines = (await screen.redraw()).lines;
+        expect(lines.at(9)).toContain("partial");
+        expect(lines.join("\n")).toContain("example#12");
+      });
+    });
     /** Opens the recording's activity on a pane 16 lines tall. */
     async function showActivity(
       width: number,
@@ -1340,7 +1389,27 @@ describe("Screen", { timeout: 15_000 }, () => {
       return screen.redraw();
     }
 
-    it("says refresh in progress while the events are read, on opening and after t", async () => {
+    it("names the window's data age on the status line, in activity, however fresh the threads", async () => {
+      const cache = await openCache(recordedProvider());
+      await cache.refresh();
+      const older = new Date(recordedNow.getTime() - 30 * 60_000);
+      const view = viewOf(cache);
+      const source = {
+        ...cacheSourceOf(view),
+        readEvents: async (repo: string, since: Date) => {
+          const read = await cache.readEvents(repo, since, 300_000);
+          return { ...read, syncedAt: older };
+        },
+      };
+      const screen = await show({ ...view, mode: "activity", source });
+      await waitUntil(async () =>
+        expect((await screen.redraw()).lines.at(10)).toBe("synced 30m ago"),
+      );
+      const owed = await press(screen, "left");
+      expect(owed.lines.at(10)).toBe("synced 0m ago");
+    });
+
+    it("shows loading on a cold cache, then serves a covered window while reading", async () => {
       const cache = await openCache(recordedProvider());
       await cache.refresh();
       let gate = Promise.withResolvers<void>();
@@ -1367,10 +1436,10 @@ describe("Screen", { timeout: 15_000 }, () => {
       const wider = await press(screen, "t");
       expect(wider.lines.slice(0, 3)).toEqual([
         describeHeader("activity", "48h · by kind"),
-        "",
-        "  refresh in progress…",
+        `ISSUES · 1 of 1 ${"─".repeat(24)}`,
+        `  docs#4 issue ◉ alice${" ".repeat(15)}16h`,
       ]);
-      expect(wider.lines.at(9)).toBe("");
+      expect(wider.lines.at(9)).toContain("2 threads · 4 events");
       gate.resolve();
       await waitUntil(async () =>
         expect((await screen.redraw()).lines.at(9)).toBe(
@@ -2007,7 +2076,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         `${" ".repeat(11)}docket opens owed`,
         `  g${" ".repeat(8)}next grouping`,
         `  t${" ".repeat(8)}next time window`,
-        `${" ".repeat(11)}owed: most overdue first`,
+        `${" ".repeat(11)}owed: overdue / target`,
         `${" ".repeat(11)}activity: newest first`,
         `${" ".repeat(11)}finished: newest first`,
         "",

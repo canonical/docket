@@ -138,13 +138,53 @@ describe("useActivity", () => {
     ]);
   });
 
-  it("reads nothing while activity is not shown or no threads are in", async () => {
+  it("reads while activity is not shown, once there are threads", async () => {
+    let reads = 0;
+    const { read, change } = await probe(
+      (cache) => (repo, since) => {
+        reads += 1;
+        return throughCache(cache)(repo, since);
+      },
+      { shown: false },
+    );
+    await waitUntil(() => expect(reads).toBe(2));
+    await change({ shown: true });
+    await waitUntil(async () =>
+      expect(await read()).toBe("2 threads · 3 events · 25m"),
+    );
+  });
+
+  it("reads nothing while no threads are in", async () => {
     const reader = vi.fn(() => new Promise<CachedEvents>(() => {}));
-    const hidden = await probe(() => reader, { shown: false });
-    expect(await hidden.read()).toBe("reading");
     const empty = await probe(() => reader, { threads: undefined });
     expect(await empty.read()).toBe("reading");
     expect(reader).not.toHaveBeenCalled();
+  });
+
+  it("below the budget floor, a window held nothing of waits while activity is off screen, and reads on screen", async () => {
+    let reads = 0;
+    const resetAt = new Date(recordedNow.getTime() + 3_600_000);
+    const floored = recordedProvider({
+      readBudgets: () => ({
+        graphql: { ...fullBudget, remaining: 100, resetAt },
+      }),
+    });
+    const { change, read } = await probe(
+      (cache) => (repo, since) => {
+        reads += 1;
+        return throughCache(cache)(repo, since);
+      },
+      { shown: false },
+      floored,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(await read()).toBe("reading");
+    expect(reads).toBe(0);
+    await change({ shown: true });
+    await waitUntil(async () =>
+      expect(await read()).toBe("2 threads · 3 events · 25m"),
+    );
+    expect(reads).toBe(2);
   });
 
   it("moves the ages with the clock without another read", async () => {
@@ -169,7 +209,7 @@ describe("useActivity", () => {
     expect(vi.mocked(addWorkingTime).mock.calls.length).toBe(counted);
   });
 
-  it("reads at each sync, and gives no list for a window t steps to until its events are in", async () => {
+  it("reads at each sync, and serves a covered window while it is refreshed", async () => {
     let reads = 0;
     let wait: Promise<CachedEvents> | undefined;
     const { change, read } = await probe((cache) => (repo, since) => {
@@ -182,7 +222,7 @@ describe("useActivity", () => {
     const { promise, resolve } = Promise.withResolvers<CachedEvents>();
     wait = promise;
     await change({ window: twoDays });
-    expect(await read()).toBe("reading");
+    expect(await read()).toBe("2 threads · 4 events · 25m");
     resolve({ events: [], finished: [], syncedAt: recordedNow });
     await waitUntil(async () =>
       expect(await read()).toBe("0 threads · 0 events · -"),

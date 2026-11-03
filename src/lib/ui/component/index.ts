@@ -7,6 +7,7 @@ export {
 } from "./GroupHeading/index.js";
 export { HelpOverlay, type HelpOverlayProps } from "./HelpOverlay/index.js";
 export { KeyBar, type KeyBarProps } from "./KeyBar/index.js";
+export { Loading, type LoadingProps } from "./Loading/index.js";
 export {
   Notice,
   type NoticeProps,

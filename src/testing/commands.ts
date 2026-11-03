@@ -38,7 +38,7 @@ const nextWindow: KeyCommand = {
   label: "next time window (activity)",
   hint: "time",
   group: "Mode",
-  notes: ["owed: most overdue first", "activity: newest first"],
+  notes: ["owed: overdue / target", "activity: newest first"],
 };
 
 const help: KeyCommand = {

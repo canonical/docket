@@ -210,7 +210,7 @@ describe("drawStandIn", () => {
   });
 
   it("stands in for nothing while activity's list is held", () => {
-    const activity = { list: recordedActivity("kind") };
+    const activity = { list: recordedActivity("kind"), readAt: recordedNow };
     expect(
       drawStandIn({
         ...listing,
@@ -225,7 +225,7 @@ describe("drawStandIn", () => {
     const screen = await drawFor({
       mode: "finished",
       owedListed: false,
-      windowed: { list: undefined },
+      windowed: { list: undefined, readAt: recordedNow },
       emptyWindow: { text: "nothing merged or closed in 24h", kind: "words" },
     });
     expect(screen.lines.at(0)).toBe("  nothing merged or closed in 24h");

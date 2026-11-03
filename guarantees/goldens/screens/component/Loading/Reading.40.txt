@@ -1,0 +1,5 @@
+40 columns
+|refresh in progress…
+
+runs
+1:1 "refresh in progress…" fg #ffffffff bg #00000000

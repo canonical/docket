@@ -93,6 +93,7 @@ const StatusLine = ({
   status,
   action,
   attention,
+  readAt,
   details,
   liveBudget = "",
   now,
@@ -107,6 +108,7 @@ const StatusLine = ({
     names,
     action,
     attention,
+    readAt,
   );
   const fitted = message && { ...message, text: fitMessage(message, width) };
   const runs = fitted ? fitRuns(describeRuns(fitted), width) : [];

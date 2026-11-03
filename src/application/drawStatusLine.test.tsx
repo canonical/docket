@@ -13,6 +13,7 @@ const synced: StatusLineState = {
   failure: undefined,
   action: undefined,
   attention: "active",
+  readAt: undefined,
   details: undefined,
   budget: undefined,
   now: recordedNow,

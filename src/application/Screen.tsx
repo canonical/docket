@@ -1,3 +1,4 @@
+// Longer than 500 lines because the screen composes navigation, lists, and status in one place.
 import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
@@ -258,6 +259,7 @@ export default function Screen({
     threads,
     syncedAt: status?.syncedAt,
     shown: mode === "activity",
+    attention: attentionState,
     watched,
     window,
     grouping: activityGrouping,
@@ -270,6 +272,7 @@ export default function Screen({
     threads,
     syncedAt: status?.syncedAt,
     shown: mode === "finished",
+    attention: attentionState,
     watched,
     window: finishedWindow,
     grouping: finishedGrouping,
@@ -277,14 +280,19 @@ export default function Screen({
     at,
     viewer: you.viewer,
   });
-  // Only the mode on screen reads its window, so at most one is held.
-  const windowed = activity ?? finished;
+  // Both windowed modes read their windows, on screen or not, so a
+  // switch of mode finds its list already read; the status line names a
+  // failure reading the window on screen alone.
+  const windowed =
+    mode === "activity" ? activity : mode === "finished" ? finished : undefined;
   // The header, the counts, the status and the keys take a line each, and
   // a pane shorter than they are leaves the list no line, never fewer.
   const listHeight = Math.max(0, height - 4);
   const listed = activity && "list" in activity ? activity.list : undefined;
   const ended = finished && "list" in finished ? finished.list : undefined;
-  const shown = owed ?? listed ?? ended;
+  // The mode on screen's list alone drives the keys and the counts, so a
+  // list read off screen is never what a key acts on.
+  const shown = mode === "owed" ? owed : mode === "activity" ? listed : ended;
   const rows: readonly ListRow[] =
     shown?.groups.flatMap((group): readonly ListRow[] => group.rows) ?? [];
   const selectedRow = rows.at(placeSelection(rows, selections[mode]));
@@ -327,7 +335,11 @@ export default function Screen({
     teamless,
     owedListed: Boolean(owed && readThreadDetail),
     windowed,
-    ...(ended?.empty && { emptyWindow: ended.empty }),
+    ...(mode === "finished" &&
+      ended?.empty &&
+      !(windowed && "list" in windowed && windowed.partial) && {
+        emptyWindow: ended.empty,
+      }),
     watched,
     width,
   });
@@ -347,7 +359,7 @@ export default function Screen({
       />
     );
   }
-  if (listed && threads && readThreadDetail) {
+  if (mode === "activity" && listed && threads && readThreadDetail) {
     region = (
       <ActivityList
         list={listed}
@@ -367,7 +379,13 @@ export default function Screen({
       />
     );
   }
-  if (region === undefined && ended && threads && readThreadDetail) {
+  if (
+    region === undefined &&
+    mode === "finished" &&
+    ended &&
+    threads &&
+    readThreadDetail
+  ) {
     region = (
       <FinishedList
         list={ended}
@@ -381,11 +399,25 @@ export default function Screen({
       />
     );
   }
-  const summary = shown?.summary;
+  const summary =
+    shown?.summary && windowed && "list" in windowed && windowed.partial
+      ? {
+          fields: [
+            { text: "partial", kind: "words" as const },
+            ...shown.summary.fields,
+          ],
+        }
+      : shown?.summary;
   const position = describePosition(
     shown?.groups ?? [],
     placeSelection(rows, selections[mode]),
   );
+  // A list with its rows needs no room above it; what stands in for one
+  // takes a blank line, whichever mode is on screen.
+  const drawsRows =
+    mode === "activity"
+      ? listed !== undefined
+      : (shown?.groups.length ?? 0) > 0;
 
   return (
     <Pane
@@ -434,6 +466,10 @@ export default function Screen({
                 (windowed && "list" in windowed
                   ? windowed.failure
                   : undefined) ?? you.failure,
+              // The window on screen's own data, whose age the line
+              // names beside the threads'.
+              readAt:
+                windowed && "list" in windowed ? windowed.readAt : undefined,
               action,
               attention: attentionState,
               details: ahead.progress,
@@ -463,11 +499,7 @@ export default function Screen({
         ) : undefined
       }
     >
-      {listed || (shown && shown.groups.length > 0) ? (
-        region
-      ) : (
-        <box paddingTop={1}>{region}</box>
-      )}
+      {drawsRows ? region : <box paddingTop={1}>{region}</box>}
     </Pane>
   );
 }

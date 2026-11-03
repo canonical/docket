@@ -2,8 +2,7 @@ import type { ReactNode } from "react";
 import type { CacheStatus } from "../lib/cache/index.js";
 import type { Field } from "../lib/owed/index.js";
 import type { Problem } from "../lib/text/index.js";
-import { tokens } from "../lib/tokens/index.js";
-import { EmptyState, Notice } from "../lib/ui/index.js";
+import { EmptyState, Loading, Notice } from "../lib/ui/index.js";
 import { standInIndent } from "./constants.js";
 import describeHold from "./describeHold.js";
 import drawFirstRun, { type FirstRunProps } from "./drawFirstRun.js";
@@ -52,8 +51,8 @@ const dropFullStop = (sentence: string) => sentence.replace(/\.$/, "");
  * which a failure no stage names shows, or else each repository's stage
  * and the progress (`drawFirstRun`); nothing owed, under the notice
  * while no team is listed; then, unless owed's list is drawn, why the
- * window on screen could not be read, that it is being read, or that
- * finished's window holds no thread. Nothing stands in otherwise.
+ * window on screen could not be read, the loading line while it is, or
+ * that finished's window holds no thread. Nothing stands in otherwise.
  */
 export default function drawStandIn({
   mode,
@@ -125,7 +124,10 @@ export default function drawStandIn({
     // No list is held for the window yet: on opening, and after t.
     return (
       <box paddingLeft={standInIndent}>
-        <text fg={tokens["color.text"]}>refresh in progress…</text>
+        <Loading
+          label={{ text: "refresh in progress…", kind: "words" }}
+          width={width - standInIndent}
+        />
       </box>
     );
   }

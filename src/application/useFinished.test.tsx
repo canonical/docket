@@ -56,6 +56,12 @@ describe("useFinished", () => {
     );
   });
 
+  it("does not build the finished list while it is hidden", async () => {
+    const screen = await draw(<Probe {...props} shown={false} />, 120, 1);
+    const read = await screen.redraw();
+    expect(read.lines.at(0)).toBe("reading");
+  });
+
   it("lists only the threads that ended within a shorter window", async () => {
     const day = { amount: 24, unit: "h" } as const;
     const screen = await draw(<Probe {...props} window={day} />, 120, 1);
