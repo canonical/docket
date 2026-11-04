@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   AttentionState,
   CachedEvents,
@@ -279,15 +279,14 @@ export default function useWindowList<Timed, List>({
     time,
     synced,
   ]);
-  if (!shown || !reading || !threads || !read || read.window !== window) {
-    return undefined;
-  }
-  if ("problem" in read) return { problem: read.problem };
-  const { timed, failure, readAt } = read;
-  return {
-    list: build(timed, threads),
-    readAt,
-    ...(read.partial && { partial: true }),
-    ...(failure && { failure }),
-  };
+  const built = useMemo(
+    () =>
+      !shown || !reading || !threads || !read || read.window !== window
+        ? undefined
+        : "problem" in read
+          ? { problem: read.problem }
+          : { ...read, list: build(read.timed, threads) },
+    [shown, reading, threads, read, window, build],
+  );
+  return built;
 }

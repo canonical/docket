@@ -63,6 +63,13 @@ describe("groupRows", () => {
       ]);
     });
 
+    it("lists a row once when the same owner is repeated in another case", () => {
+      const repeated = row({ owners: ["Alice", "alice"] });
+      const groups = groupRows([repeated], "owner", repos);
+      expect(groups).toHaveLength(1);
+      expect(groups[0]?.rows).toEqual([repeated]);
+    });
+
     it("heads an owner's section with the owner's group, and unassigned as text", () => {
       const assigned = row({
         owners: ["alice"],

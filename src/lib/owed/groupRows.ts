@@ -40,19 +40,26 @@ function findOwner(rows: readonly WaitRow[], text: string): Owner {
  * owner written two ways is one section, headed as first written.
  */
 function sectionOwners(rows: readonly WaitRow[]): Section[] {
-  const owners = new Map<string, string>();
-  for (const owner of rows.flatMap((row) => row.wait.owners)) {
-    const key = owner.toLowerCase();
-    if (!owners.has(key)) owners.set(key, owner);
+  const owners = new Map<string, { name: string; rows: WaitRow[] }>();
+  const unassigned: WaitRow[] = [];
+  for (const row of rows) {
+    if (row.wait.owners.length === 0) unassigned.push(row);
+    const seen = new Set<string>();
+    for (const owner of row.wait.owners) {
+      const key = owner.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      let section = owners.get(key);
+      if (!section) {
+        section = { name: owner, rows: [] };
+        owners.set(key, section);
+      }
+      section.rows.push(row);
+    }
   }
   const sections = [...owners]
     .sort(([a], [b]) => (a < b ? -1 : 1))
-    .map(([key, owner]): Section => {
-      const owns = (row: WaitRow) =>
-        row.wait.owners.some((login) => login.toLowerCase() === key);
-      return [owner, rows.filter(owns), "person"];
-    });
-  const unassigned = rows.filter((row) => row.wait.owners.length === 0);
+    .map(([, owner]): Section => [owner.name, owner.rows, "person"]);
   return [...sections, ["unassigned", unassigned, "words"]];
 }
 

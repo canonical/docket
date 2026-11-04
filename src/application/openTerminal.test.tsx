@@ -56,6 +56,30 @@ async function openCache(snapshot = vi.fn(fakeProvider().snapshot)) {
 }
 
 describe("openTerminal", () => {
+  it("reports a renderer that cannot start", async () => {
+    const error = new Error("renderer failed");
+    const view: TerminalView = {
+      mode: "owed",
+      owedGrouping: "none",
+      now: () => recordedNow,
+      openInBrowser: async () => {},
+      settings: recordedSettings,
+      watched: [],
+      source: {
+        problem: {
+          code: "GH_NOT_SIGNED_IN",
+          message: "gh is not signed in to github.com.",
+          recovery: "run gh auth login",
+        },
+      },
+    };
+    await expect(
+      openTerminal(view, async () => {
+        throw error;
+      }),
+    ).rejects.toBe(error);
+  });
+
   it("draws owed, refreshes while open, and exits 0 once q closes it", async () => {
     const { cache, snapshot } = await openCache();
     const { setup, closed } = await open({

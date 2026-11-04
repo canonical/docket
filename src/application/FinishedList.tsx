@@ -106,7 +106,7 @@ export default function FinishedList({
             ? drawn.measure(key, countAccordionLines(row, reading, width))
             : 0) +
           1,
-        node: (
+        node: () => (
           <>
             <ThreadRow row={row} selected={chosen} continued width={width} />
             {chosen && (

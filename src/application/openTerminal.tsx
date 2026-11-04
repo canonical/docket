@@ -8,6 +8,7 @@ import { createRoot } from "@opentui/react";
 import { createAttention, startRefreshCycle } from "../lib/cache/index.js";
 import { createKeymap } from "../lib/ui/index.js";
 import Screen from "./Screen.js";
+import setTerminalBackground from "./setTerminalBackground.js";
 import type { TerminalView } from "./types.js";
 
 /**
@@ -30,13 +31,21 @@ export default async function openTerminal(
 ): Promise<number> {
   const { promise, resolve } = Promise.withResolvers<number>();
   let stop = () => {};
-  const renderer = await createRenderer({
-    exitOnCtrlC: true,
-    onDestroy: () => {
-      stop();
-      resolve(0);
-    },
-  });
+  const restoreBackground = setTerminalBackground();
+  let renderer: CliRenderer;
+  try {
+    renderer = await createRenderer({
+      exitOnCtrlC: true,
+      onDestroy: () => {
+        stop();
+        restoreBackground();
+        resolve(0);
+      },
+    });
+  } catch (error) {
+    restoreBackground();
+    throw error;
+  }
   const keymap = createKeymap(renderer);
   const attention = "cache" in view.source ? createAttention() : undefined;
   createRoot(renderer).render(

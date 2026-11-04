@@ -57,17 +57,24 @@ function findNearest(
   place: number,
   limit: number,
 ): WantedDetail[] {
-  const byDistance = rows
-    .map((row, index) => ({ row, distance: Math.abs(index - place), index }))
-    .sort((a, b) => a.distance - b.distance || a.index - b.index);
   const seen = new Set<string>();
   const nearest: WantedDetail[] = [];
-  for (const { row } of byDistance) {
+  const add = (row: WantedDetail | undefined) => {
+    if (!row) return;
     const key = identifyThread(row.thread);
-    if (seen.has(key)) continue;
+    if (seen.has(key)) return;
     seen.add(key);
     nearest.push(row);
-    if (nearest.length === limit) break;
+  };
+  for (
+    let distance = Math.max(0, -place, place - rows.length + 1);
+    distance <= Math.max(Math.abs(place), Math.abs(rows.length - 1 - place));
+    distance++
+  ) {
+    add(rows[place - distance]);
+    if (nearest.length >= limit) break;
+    if (distance > 0) add(rows[place + distance]);
+    if (nearest.length >= limit) break;
   }
   return nearest;
 }

@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import type { ActivityGrouping, ActivityList } from "../lib/activity/index.js";
 import type { Duration } from "../lib/clock/index.js";
 import buildActivity from "./buildActivity.js";
@@ -54,18 +55,17 @@ export default function useActivity({
   viewer,
   ...props
 }: UseActivityProps): UseActivityResult {
+  const { watched, window } = props;
+  const build = useCallback(
+    (
+      events: Parameters<typeof buildActivity>[0],
+      threads: Parameters<typeof buildActivity>[1],
+    ) => buildActivity(events, threads, watched, window, grouping, at, viewer),
+    [watched, window, grouping, at, viewer],
+  );
   return useWindowList({
     ...props,
     time: timeEvents,
-    build: (events, threads) =>
-      buildActivity(
-        events,
-        threads,
-        props.watched,
-        props.window,
-        grouping,
-        at,
-        viewer,
-      ),
+    build,
   });
 }

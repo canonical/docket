@@ -46,4 +46,32 @@ describe("ScrolledList", () => {
     expect(screen.lines.at(-1)).toBe("╵ a thread");
     expect(screen.lines.join("\n")).not.toContain("below");
   });
+
+  it("creates nodes only for blocks visible in the viewport", async () => {
+    const make = Array.from({ length: 10 }, (_, index) =>
+      vi.fn(() => <text>{`row ${index}`}</text>),
+    );
+    const blocks = make.map((node, index) => ({
+      kind: "row" as const,
+      key: `${index}`,
+      lines: 1,
+      node,
+    }));
+    const screen = await draw(
+      <ScrolledList
+        blocks={blocks}
+        from={0}
+        to={0}
+        height={3}
+        width={40}
+        onShown={() => {}}
+      />,
+      40,
+      3,
+    );
+    expect(screen.lines).toEqual(["row 0", "row 1", "  ↓ 8 below"]);
+    expect(make[0]).toHaveBeenCalled();
+    expect(make[1]).toHaveBeenCalled();
+    expect(make[2]).not.toHaveBeenCalled();
+  });
 });

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { AttentionState, CacheStatus } from "../lib/cache/index.js";
 import type { DetailsCount, ShownDetail } from "../lib/ui/index.js";
 import type { Thread, ThreadSummary } from "../lib/waits/index.js";
@@ -72,20 +73,29 @@ export default function useRowDetails({
   status,
 }: UseRowDetailsProps): UseRowDetailsResult {
   const findVersion = (row: ListRow) => describeRowVersion(row, findFacts(row));
-  const detailed = rows.filter((row) => !("ending" in row) || row.stacked);
+  const detailed = useMemo(
+    () => rows.filter((row) => !("ending" in row) || row.stacked),
+    [rows],
+  );
   const chosen = selected ? detailed.indexOf(selected) : -1;
+  const wanted = useMemo(
+    () =>
+      detailed.map((row) => ({
+        thread: summarize(row),
+        version: describeRowVersion(row, findFacts(row)),
+      })),
+    [detailed, findFacts],
+  );
+  const kept = useMemo(() => [...held, ...rows.map(summarize)], [held, rows]);
   const ahead = useReadAhead({
     reader,
-    rows: detailed.map((row) => ({
-      thread: summarize(row),
-      version: findVersion(row),
-    })),
+    rows: wanted,
     selected: chosen < 0 ? detailed.length : chosen,
     attention,
     paused: status?.paused?.reason,
   });
   const readHeld = useHeldDetails({
-    kept: [...held, ...rows.map(summarize)],
+    kept,
     selected: () => {
       const row = drawnSelected();
       return row && summarize(row);

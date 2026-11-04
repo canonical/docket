@@ -16,7 +16,7 @@ export default function countRowLines(
 ): number {
   return (
     1 +
-    describeTitleLines(row, width - marginCells, selected).length +
+    (selected ? describeTitleLines(row, width - marginCells, true).length : 1) +
     listOwnerLines(row, width).length
   );
 }

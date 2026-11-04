@@ -78,6 +78,17 @@ describe("useReadAhead", () => {
     );
   });
 
+  it("keeps the lower row first when the last place in the window ties", async () => {
+    const { readDetails, reader } = reading();
+    const screen = await open(reader, "idle");
+    await screen.redraw(() => steer({ selected: 10, attention: "active" }));
+    await vi.advanceTimersByTimeAsync(0);
+    const [asked] = readDetails.mock.calls[0] ?? [];
+    expect(asked?.map(({ number }) => number)).toEqual([
+      11, 10, 12, 9, 13, 8, 14, 7, 15, 6, 16, 5, 17, 4,
+    ]);
+  });
+
   it("reads 200 milliseconds after the selection rests, only the rows not read yet, around it", async () => {
     const { readDetails, reader } = reading();
     const screen = await open(reader);
