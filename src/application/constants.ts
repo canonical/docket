@@ -1,3 +1,4 @@
+import { viewModes } from "../lib/config/index.js";
 import type { TerminalMode } from "./types.js";
 
 /**
@@ -29,8 +30,4 @@ export const detailRest = 200;
 export const standInIndent = 2;
 
 /** The modes the arrows reach, in order; neither end wraps to the other. */
-export const terminalModes: readonly TerminalMode[] = [
-  "owed",
-  "activity",
-  "finished",
-];
+export const terminalModes: readonly TerminalMode[] = viewModes;

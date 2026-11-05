@@ -206,16 +206,16 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const screen = await settle(await press(await showRecorded(), "a"));
       expect(screen.lines).toEqual([
         "assigning example#12",
-        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+        `┃┆⇄ example#12 PR reply ○ dave${" ".repeat(3)}4d over`,
         `╹┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
         "  filter:",
         "  ☑ ◉ alice",
         "  ☐ ● bob",
         "  ☐ ○ dave",
         "  ☐ ◐ carol",
-        `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
+        `┃┆⇄ example#12 PR close ○ dave${" ".repeat(3)}2h over`,
         `╹┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
-        "┃ example#15 issue reply ◐ carol 4h left",
+        "┃ ◇ example#15 issue reply       4h left",
         `╹ Crash on start${" ".repeat(14)}unassigned`,
         "  ↓ 3 below",
         `2 over · 1 soon · 3 on track${" ".repeat(9)}1/6`,
@@ -292,7 +292,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       );
       expect(readRegion(none).slice(2, 4)).toEqual([
         "  filter: z",
-        `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
+        `┃┆⇄ example#12 PR close ○ dave${" ".repeat(3)}2h over`,
       ]);
     });
 
@@ -327,7 +327,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       );
       const writing = await press(opened, "down", "space", "return");
       expect(writing.lines.slice(1, 4)).toEqual([
-        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+        `┃┆⇄ example#12 PR reply ○ dave${" ".repeat(3)}4d over`,
         `┃┆Fix the parser${" ".repeat(16)}✗ checks`,
         `╹┆${" ".repeat(24)}◉ alice, ● bob`,
       ]);
@@ -335,7 +335,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const refused = await settle(writing, isAnswered);
       expect(refused.lines.at(-2)).toBe("✗ assign refused");
       expect(refused.lines.slice(1, 3)).toEqual([
-        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+        `┃┆⇄ example#12 PR reply ○ dave${" ".repeat(3)}4d over`,
         `╹┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
       ]);
     });
@@ -480,7 +480,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       expect(setAssignees).not.toHaveBeenCalled();
       expect(after.lines.slice(0, 3)).toEqual([
         "assigning example#12",
-        `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+        `┃┆⇄ example#12 PR reply ○ dave${" ".repeat(3)}4d over`,
         `╹┆Fix the parser${" ".repeat(7)}✗ checks  ◉ alice`,
       ]);
       expect(after.lines.at(-2)).toBe("synced 0m ago");
@@ -712,7 +712,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
       const after = await settle(opened, isEditorClosed);
       expect(after.lines.at(0)).toBe(owedHeader);
       expect(after.lines.at(1)).toBe(
-        "┃ example#15 issue reply ◐ carol 4h left",
+        "┃ ◇ example#15 issue reply       4h left",
       );
     });
 
@@ -790,7 +790,7 @@ describe("useEditor", { timeout: 15_000 }, () => {
         "r",
       );
       expect(readRegion(screen).slice(4, 9)).toEqual([
-        "┃ example#15 issue reply ◐ carol 4h left",
+        "┃ ◇ example#15 issue reply       4h left",
         `╹ Crash on start${" ".repeat(14)}unassigned`,
         "  ✗ example#15 is not a pull request, so",
         "  no review can be requested on it",

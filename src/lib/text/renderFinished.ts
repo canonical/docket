@@ -96,7 +96,8 @@ function renderPlainRow(row: FinishedRow, timezone: string, detail: Detail) {
 
 /**
  * What a section holds, as data: the kind of its threads, with their
- * outcome by ending, or their repository. A section always holds a row.
+ * outcome by ending, their author, or their repository. A section always
+ * holds a row.
  */
 function describeGroupData(group: FinishedGroup, grouping: FinishedGrouping) {
   const [first] = group.rows;
@@ -104,6 +105,7 @@ function describeGroupData(group: FinishedGroup, grouping: FinishedGrouping) {
   if (grouping === "ending") {
     return { kind: first?.thread.kind, outcome: first?.thread.ending.outcome };
   }
+  if (grouping === "author") return { author: first?.author.text };
   if (grouping === "repo") return { repo: first?.repo };
   return {};
 }
@@ -155,7 +157,11 @@ export default function renderFinished({
   }
   const llm = format === "llm";
   const sections = groups.map((group) => {
-    const heading = group.heading && sanitize(group.heading.text);
+    const heading =
+      group.heading &&
+      (llm && list.address.grouping === "author"
+        ? quote(group.heading.text)
+        : sanitize(group.heading.text));
     const rows = group.rows.flatMap((row) =>
       llm
         ? [renderLlmRow(row, timezone)]

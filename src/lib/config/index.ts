@@ -1,4 +1,4 @@
-export { builtInSettings } from "./constants.js";
+export { builtInSettings, viewModes } from "./constants.js";
 export { default as parseFile } from "./parseFile.js";
 export type { PersonalFile } from "./readPersonalFile.js";
 export { default as readPersonalFile } from "./readPersonalFile.js";
@@ -18,5 +18,6 @@ export type {
   Section,
   Settings,
   Targets,
+  View,
   You,
 } from "./types.js";

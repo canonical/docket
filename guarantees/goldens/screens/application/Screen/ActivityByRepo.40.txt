@@ -1,7 +1,7 @@
 40 columns
 |activity    72h · by repo · newest first
 |example ────────────────────────────────
-| ┆example#12 PR ○ dave               25m
+| ┆⇄ example#12 PR ○ dave             25m
 | ┆Fix the parser                 ◉ alice
 | ┆○ dave · 3d ago
 | ┆Rebased on main. Could someone look
@@ -13,7 +13,7 @@
 | ┆  ◉ alice requested review          3h
 | ┆  ○ dave commented                  3d
 |docs ───────────────────────────────────
-|  docs#4 issue ◉ alice               16h
+|  ◇ docs#4 issue ◉ alice             16h
 |  Where do tokens live?
 |                          ◉ alice, ● bob
 |    ■ example-sync labell… kind=docs 16h
@@ -42,9 +42,9 @@ runs
 2:1 "example ────────────────────────────────" fg #ffffffff bg #000000ff
 3:1 " " fg #ffffffff bg #808080ff
 3:2 "┆" fg #c0c0c0ff bg #808080ff
-3:3 "example#12 PR " fg #ffffffff bg #808080ff bold
-3:17 "○ dave" fg #008080ff bg #808080ff bold
-3:23 "               25m" fg #ffffffff bg #808080ff bold
+3:3 "⇄ example#12 PR " fg #ffffffff bg #808080ff bold
+3:19 "○ dave" fg #008080ff bg #808080ff bold
+3:25 "             25m" fg #ffffffff bg #808080ff bold
 4:1 " " fg #ffffffff bg #808080ff
 4:2 "┆" fg #c0c0c0ff bg #808080ff
 4:3 "Fix the parser" fg #ffffffff bg #808080ff italic
@@ -82,9 +82,9 @@ runs
 13:5 "○ dave" fg #008080ff bg #000000ff
 13:11 " commented                  3d" fg #ffffffff bg #000000ff
 14:1 "docs ───────────────────────────────────" fg #ffffffff bg #000000ff
-15:3 "docs#4 issue " fg #ffffffff bg #000000ff bold
-15:16 "◉ alice" fg #000080ff bg #000000ff bold
-15:23 "               16h" fg #ffffffff bg #000000ff bold
+15:3 "◇ docs#4 issue " fg #ffffffff bg #000000ff bold
+15:18 "◉ alice" fg #000080ff bg #000000ff bold
+15:25 "             16h" fg #ffffffff bg #000000ff bold
 16:3 "Where do tokens live?" fg #ffffffff bg #000000ff italic
 17:27 "◉ alice" fg #000080ff bg #000000ff
 17:34 ", " fg #ffffffff bg #000000ff

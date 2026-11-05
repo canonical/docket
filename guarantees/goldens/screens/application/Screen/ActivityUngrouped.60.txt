@@ -1,6 +1,6 @@
 60 columns
 |activity                       72h · one list · newest first
-| ┆example#12 PR ○ dave                                   25m
+| ┆⇄ example#12 PR ○ dave                                 25m
 | ┆Fix the parser                                     ◉ alice
 | ┆○ dave · 3d ago
 | ┆Rebased on main. Could someone look again?
@@ -10,7 +10,7 @@
 | ┆  ✗ checks failed (lint)                               25m
 | ┆  ◉ alice requested review                              3h
 | ┆  ○ dave commented                                      3d
-|  docs#4 issue ◉ alice                                   16h
+|  ◇ docs#4 issue ◉ alice                                 16h
 |  Where do tokens live?
 |                                              ◉ alice, ● bob
 |    ■ example-sync labelled kind=docs                    16h
@@ -41,9 +41,9 @@ runs
 1:49 "newest first" fg #c0c0c0ff bg #000000ff
 2:1 " " fg #ffffffff bg #808080ff
 2:2 "┆" fg #c0c0c0ff bg #808080ff
-2:3 "example#12 PR " fg #ffffffff bg #808080ff bold
-2:17 "○ dave" fg #008080ff bg #808080ff bold
-2:23 "                                   25m" fg #ffffffff bg #808080ff bold
+2:3 "⇄ example#12 PR " fg #ffffffff bg #808080ff bold
+2:19 "○ dave" fg #008080ff bg #808080ff bold
+2:25 "                                 25m" fg #ffffffff bg #808080ff bold
 3:1 " " fg #ffffffff bg #808080ff
 3:2 "┆" fg #c0c0c0ff bg #808080ff
 3:3 "Fix the parser" fg #ffffffff bg #808080ff italic
@@ -76,9 +76,9 @@ runs
 11:2 "┆" fg #c0c0c0ff bg #000000ff
 11:5 "○ dave" fg #008080ff bg #000000ff
 11:11 " commented                                      3d" fg #ffffffff bg #000000ff
-12:3 "docs#4 issue " fg #ffffffff bg #000000ff bold
-12:16 "◉ alice" fg #000080ff bg #000000ff bold
-12:23 "                                   16h" fg #ffffffff bg #000000ff bold
+12:3 "◇ docs#4 issue " fg #ffffffff bg #000000ff bold
+12:18 "◉ alice" fg #000080ff bg #000000ff bold
+12:25 "                                 16h" fg #ffffffff bg #000000ff bold
 13:3 "Where do tokens live?" fg #ffffffff bg #000000ff italic
 14:47 "◉ alice" fg #000080ff bg #000000ff
 14:54 ", " fg #ffffffff bg #000000ff

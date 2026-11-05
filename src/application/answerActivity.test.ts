@@ -82,7 +82,7 @@ describe("answerActivity", () => {
       answerActivity({ ...session, invocation }),
     ).rejects.toMatchObject({
       code: "USAGE_INVALID_VALUE",
-      message: "`--by` takes kind, repo, none, not `owner`.",
+      message: "`--by` takes kind, author, repo, none, not `owner`.",
     });
   });
 

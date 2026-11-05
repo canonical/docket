@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { Verdict } from "../../../endings/index.js";
 import type { WaitState } from "../../../owed/index.js";
 import { tokens } from "../../../tokens/index.js";
+import type { ThreadKind } from "../../../waits/index.js";
 import { loginCells } from "../../constants.js";
 import {
   fitField,
@@ -45,6 +46,17 @@ const readState = (row: ThreadRowProps["row"]) =>
  */
 const authorMinCells = 4;
 
+/** The mark before a row's reference: its kind, in one cell, in every mode. */
+const threadMarks: Readonly<Record<ThreadKind, string>> = {
+  issue: tokens["glyph.thread.issue"],
+  pullRequest: tokens["glyph.thread.pullRequest"],
+  discussion: tokens["glyph.thread.discussion"],
+};
+
+/** The kind of thread a row names, in whichever mode built it. */
+const threadKind = (row: ThreadRowProps["row"]): ThreadKind =>
+  "wait" in row ? row.wait.thread.kind : row.thread.kind;
+
 const space = (count: number): Piece => ({
   text: " ".repeat(Math.max(0, count)),
   fg: tokens["color.text"],
@@ -58,19 +70,32 @@ const space = (count: number): Piece => ({
  * number. The author gives way first, its login cut before its mark, and
  * once fewer than four cells of login would remain it leaves the line.
  */
-function describeHead(row: ThreadRowProps["row"], inner: number): Piece[] {
+function describeHead(
+  row: ThreadRowProps["row"],
+  inner: number,
+  showKind: boolean,
+): Piece[] {
   const text = tokens["color.text"];
   const figure = fitField(row.distance, "line", inner);
-  const kinds = ("wait" in row ? [row.threadKind, row.kind] : [row.kind])
-    .map((field) => fitField(field, "line", inner))
-    .join(" ");
-  // A space after the reference, and one before the distance.
+  const fields =
+    "wait" in row
+      ? showKind
+        ? [row.threadKind, row.kind]
+        : [row.kind]
+      : showKind
+        ? [row.kind]
+        : [];
+  const kinds = fields.map((field) => fitField(field, "line", inner)).join(" ");
+  // The mark and the space after it precede the reference; a space
+  // follows it before the kinds, when there are any.
+  const mark = `${threadMarks[threadKind(row)]} `;
+  const after = kinds === "" ? "" : ` ${kinds}`;
   const reference = fitField(
     row.reference,
     "line",
-    inner - measureText(kinds) - measureText(figure) - 2,
+    inner - measureText(mark) - measureText(after) - measureText(figure) - 1,
   );
-  const words = `${reference} ${kinds}`;
+  const words = `${mark}${reference}${after}`;
   // The mark and the space after it take two cells beside the login.
   const room = inner - measureText(words) - measureText(figure) - 4;
   const author =
@@ -104,9 +129,12 @@ const drawLine = (pieces: readonly Piece[], width: number) => (
 
 /**
  * One thread in the list, two lines tall. The first line, the row's head and
- * the only bold text on the screen, carries the reference, the kind of thread,
- * the kind of wait, the author and the distance; the second the title in
- * italic, then at the right `draft`, any field in trouble and the owner.
+ * the only bold text on the screen, opens with the kind's one-cell mark,
+ * `◇`, `⇄` or `◌`, then the reference, the kind of thread when `showKind`
+ * names it, the kind of wait, the author and the distance; the second the
+ * title in italic, then at the right `draft`, any field in trouble and the
+ * owner. A list grouped by kind leaves the name to its headings (`showKind`
+ * false), so the mark alone carries the kind there.
  * Position carries each person's role: the person waiting at the left of the
  * first line, the person who owes at the right of the second, each behind their
  * group's mark. The same row serves every mode: in owed the figure is the
@@ -128,6 +156,7 @@ const drawLine = (pieces: readonly Piece[], width: number) => (
 const ThreadRow = ({
   row,
   selected = false,
+  showKind = true,
   continued = false,
   width,
 }: ThreadRowProps): ReactNode => {
@@ -149,7 +178,7 @@ const ThreadRow = ({
         ends={!continued}
       />
       <box flexDirection="column" width={inner}>
-        {drawLine(describeHead(row, inner), inner)}
+        {drawLine(describeHead(row, inner, showKind), inner)}
         {titles.map((line, place) => (
           // The title's lines never reorder, so their place is their key.
           // biome-ignore lint/suspicious/noArrayIndexKey: see above.

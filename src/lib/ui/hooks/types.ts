@@ -24,7 +24,7 @@ export interface KeyCommand {
   readonly hint?: string;
   /** What the keys act on, which groups the help: `Mode`, `App`. */
   readonly group: string;
-  /** Lines the help shows under the keys, such as `docket opens owed`. */
+  /** Lines the help shows under the keys, such as `docket opens start view`. */
   readonly notes: readonly string[];
 }
 

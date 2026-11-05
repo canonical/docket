@@ -96,6 +96,7 @@ function writeSharedLines({ settings, origins }: Sections): string[] {
   return [
     `repos (${originWords[origins.repos]}): ${formatList(settings.repos.map(({ name, repo }) => `${name} ${repo}`))}`,
     `activity (${originWords[origins.activity]}): ${settings.activity.map(formatDuration).join(", ")}`,
+    `start (${originWords[origins.start]}): ${settings.start}`,
     `hosts (${originWords[origins.hosts]}): ${formatList(settings.hosts)}`,
     `you (${originWords[origins.you]}): teams ${formatList(settings.you.teams)}`,
   ];
@@ -160,11 +161,13 @@ export default function renderConfig(answer: ConfigAnswer): string {
       warnings: warnings.map(describeProblem),
       repos: settings.repos,
       activity: settings.activity.map(formatDuration),
+      start: settings.start,
       hosts: settings.hosts,
       you: { teams: settings.you.teams.map((team) => sanitize(team)) },
       origins: {
         repos: origins.repos,
         activity: origins.activity,
+        start: origins.start,
         hosts: origins.hosts,
         you: origins.you,
       },

@@ -76,6 +76,11 @@ export const OwedByOwner: Story<ScreenFrameProps> = {
   args: { ...recording, owedGrouping: "owner" },
 };
 
+/** owed by author: each login that opened a thread, with their group, alphabetically. */
+export const OwedByAuthor: Story<ScreenFrameProps> = {
+  args: { ...recording, owedGrouping: "author" },
+};
+
 /**
  * owed by kind of thread: ISSUES, then PULL REQUESTS, as activity heads
  * them, with no section for a kind that owes nothing.
@@ -203,6 +208,15 @@ export const ActivityByKind: Story<ScreenFrameProps> = {
     ...recording,
     mode: "activity",
     activity: { window: { amount: 24, unit: "h" }, grouping: "kind" },
+  },
+};
+
+/** activity over 72 working hours, by author, each with their group. */
+export const ActivityByAuthor: Story<ScreenFrameProps> = {
+  args: {
+    ...recording,
+    mode: "activity",
+    activity: { window: { amount: 72, unit: "h" }, grouping: "author" },
   },
 };
 

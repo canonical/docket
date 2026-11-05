@@ -98,6 +98,7 @@ export default function ActivityList({
   firstShown,
 }: ActivityListProps): ReactNode {
   const drawn = useDrawnLines();
+  const showKind = list.address.grouping !== "kind";
   const blocks: ListBlock[] = [];
   let place = 0;
   let from = 0;
@@ -143,6 +144,7 @@ export default function ActivityList({
             <ThreadRow
               row={row}
               selected={chosen && !editor}
+              showKind={showKind}
               continued={chosen && !editor}
               width={width}
             />

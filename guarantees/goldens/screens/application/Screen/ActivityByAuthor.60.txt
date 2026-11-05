@@ -1,0 +1,107 @@
+60 columns
+|activity                      72h · by author · newest first
+|◉ alice ────────────────────────────────────────────────────
+|  ◇ docs#4 issue ◉ alice                                 16h
+|  Where do tokens live?
+|                                              ◉ alice, ● bob
+|  age 27d · owner ◉ alice, ● bob
+|  last activity 27d ago · ◉ alice
+|  labels none
+|    ■ example-sync labelled kind=docs                    16h
+|○ dave ─────────────────────────────────────────────────────
+| ┆⇄ example#12 PR ○ dave                                 25m
+| ┆Fix the parser                                     ◉ alice
+| ┆  ✗ checks failed (lint)                               25m
+| ┆  ◉ alice requested review                              3h
+| ┆  ○ dave commented                                      3d
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|2 threads · 4 events                                   1/1/2
+|synced 2m ago
+|←→ mode ↑↓ sel ⏎ open g grp t time a r ?
+
+runs
+1:1 "activity                      72h · by author · " fg #ffffffff bg #000000ff
+1:49 "newest first" fg #c0c0c0ff bg #000000ff
+2:1 "◉ alice" fg #000080ff bg #000000ff
+2:8 " ────────────────────────────────────────────────────" fg #ffffffff bg #000000ff
+3:1 " " fg #ffffffff bg #808080ff
+3:2 " " fg #c0c0c0ff bg #808080ff
+3:3 "◇ docs#4 issue " fg #ffffffff bg #808080ff bold
+3:18 "◉ alice" fg #000080ff bg #808080ff bold
+3:25 "                                 16h" fg #ffffffff bg #808080ff bold
+4:1 " " fg #ffffffff bg #808080ff
+4:2 " " fg #c0c0c0ff bg #808080ff
+4:3 "Where do tokens live?" fg #ffffffff bg #808080ff italic
+4:24 "                                     " fg #ffffffff bg #808080ff
+5:1 " " fg #ffffffff bg #808080ff
+5:2 " " fg #c0c0c0ff bg #808080ff
+5:3 "                                            " fg #ffffffff bg #808080ff
+5:47 "◉ alice" fg #000080ff bg #808080ff
+5:54 ", " fg #ffffffff bg #808080ff
+5:56 "● bob" fg #000080ff bg #808080ff
+6:1 " " fg #ffffffff bg #808080ff
+6:2 " " fg #c0c0c0ff bg #808080ff
+6:3 "age 27d · owner " fg #ffffffff bg #808080ff
+6:19 "◉ alice" fg #000080ff bg #808080ff
+6:26 ", " fg #ffffffff bg #808080ff
+6:28 "● bob" fg #000080ff bg #808080ff
+6:33 "                            " fg #ffffffff bg #808080ff
+7:1 " " fg #ffffffff bg #808080ff
+7:2 " " fg #c0c0c0ff bg #808080ff
+7:3 "last activity 27d ago · " fg #ffffffff bg #808080ff
+7:27 "◉ alice" fg #000080ff bg #808080ff
+7:34 "                           " fg #ffffffff bg #808080ff
+8:1 " " fg #ffffffff bg #808080ff
+8:2 " " fg #c0c0c0ff bg #808080ff
+8:3 "labels none" fg #ffffffff bg #808080ff
+8:14 "                                               " fg #ffffffff bg #808080ff
+9:5 "■ example-sync labelled kind=docs" fg #c0c0c0ff bg #000000ff
+9:58 "16h" fg #c0c0c0ff bg #000000ff
+10:1 "○ dave" fg #008080ff bg #000000ff
+10:7 " ─────────────────────────────────────────────────────" fg #ffffffff bg #000000ff
+11:2 "┆" fg #c0c0c0ff bg #000000ff
+11:3 "⇄ example#12 PR " fg #ffffffff bg #000000ff bold
+11:19 "○ dave" fg #008080ff bg #000000ff bold
+11:25 "                                 25m" fg #ffffffff bg #000000ff bold
+12:2 "┆" fg #c0c0c0ff bg #000000ff
+12:3 "Fix the parser" fg #ffffffff bg #000000ff italic
+12:54 "◉ alice" fg #000080ff bg #000000ff
+13:2 "┆" fg #c0c0c0ff bg #000000ff
+13:5 "✗ checks failed (lint)" fg #800000ff bg #000000ff
+13:27 "                               25m" fg #ffffffff bg #000000ff
+14:2 "┆" fg #c0c0c0ff bg #000000ff
+14:5 "◉ alice" fg #000080ff bg #000000ff
+14:12 " requested review                              3h" fg #ffffffff bg #000000ff
+15:2 "┆" fg #c0c0c0ff bg #000000ff
+15:5 "○ dave" fg #008080ff bg #000000ff
+15:11 " commented                                      3d" fg #ffffffff bg #000000ff
+34:1 "2 threads · 4 events                                   1/1/2" fg #ffffffff bg #000000ff
+35:1 "synced 2m ago" fg #c0c0c0ff bg #000000ff
+36:1 "←→" fg #ffffffff bg #000000ff
+36:3 " mode" fg #c0c0c0ff bg #000000ff
+36:8 " ↑↓" fg #ffffffff bg #000000ff
+36:11 " sel" fg #c0c0c0ff bg #000000ff
+36:15 " ⏎" fg #ffffffff bg #000000ff
+36:17 " open" fg #c0c0c0ff bg #000000ff
+36:22 " g" fg #ffffffff bg #000000ff
+36:24 " grp" fg #c0c0c0ff bg #000000ff
+36:28 " t" fg #ffffffff bg #000000ff
+36:30 " time" fg #c0c0c0ff bg #000000ff
+36:35 " a r ?" fg #ffffffff bg #000000ff

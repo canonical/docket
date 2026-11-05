@@ -1,11 +1,11 @@
 40 columns
-|  example#14 PR ○ dave                3h
+|  ⇄ example#14 PR ○ dave              3h
 |  Update dependency …  draft  unassigned
 
 runs
-1:3 "example#14 PR " fg #ffffffff bg #00000000 bold
-1:17 "○ dave" fg #008080ff bg #00000000 bold
-1:23 "                3h" fg #ffffffff bg #00000000 bold
+1:3 "⇄ example#14 PR " fg #ffffffff bg #00000000 bold
+1:19 "○ dave" fg #008080ff bg #00000000 bold
+1:25 "              3h" fg #ffffffff bg #00000000 bold
 2:3 "Update dependency …" fg #ffffffff bg #00000000 italic
 2:24 "draft" fg #c0c0c0ff bg #00000000
 2:29 "  unassigned" fg #ffffffff bg #00000000

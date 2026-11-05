@@ -14,6 +14,12 @@ describe("chooseActivityAddress", () => {
     });
   });
 
+  it("takes the first grouping when --by names none", () => {
+    expect(
+      chooseActivityAddress(windows, { window: undefined, by: undefined }),
+    ).toEqual({ window: { amount: 24, unit: "h" }, grouping: "kind" });
+  });
+
   it("takes the configured window and the grouping the call names", () => {
     expect(
       chooseActivityAddress(windows, { window: "1w", by: "none" }),
@@ -39,7 +45,7 @@ describe("chooseActivityAddress", () => {
     ).toThrow(
       expect.objectContaining({
         code: "USAGE_INVALID_VALUE",
-        message: "`--by` takes kind, repo, none, not `owner`.",
+        message: "`--by` takes kind, author, repo, none, not `owner`.",
       }),
     );
   });

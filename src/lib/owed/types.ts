@@ -92,7 +92,13 @@ export interface Header {
 export type WaitState = "over" | "soon" | "onTrack";
 
 /** How owed splits its list into sections. */
-export type OwedGrouping = "none" | "owner" | "kind" | "repo" | "stack";
+export type OwedGrouping =
+  | "none"
+  | "owner"
+  | "author"
+  | "kind"
+  | "repo"
+  | "stack";
 
 /** Where the reader is in owed: the mode and its grouping. */
 export interface OwedAddress {

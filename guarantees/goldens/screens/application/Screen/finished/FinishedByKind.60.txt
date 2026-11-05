@@ -1,22 +1,22 @@
 60 columns, 24 lines
 |finished                         1w · by kind · newest first
 |ISSUES ─────────────────────────────────────────────────────
-|│ docs#102 issue ○ dave                              open 2d
+|│ ◇ docs#102 ○ dave                                  open 2d
 |│ Table: sticky header scrolls away                  ◉ alice
 |│ target 30d
 |│ labels kind=bug
 |╵   ◉ alice closed as completed                           1d
-|┃ docs#77 issue ◐ carol                             10d over
+|┃ ◇ docs#77 ◐ carol                                 10d over
 |┃ Tokens page: contrast                           unassigned
 |╹   ● bob closed as not planned                           2d
-|┃ docs#98 issue ■ example-sync                      40d over
+|┃ ◇ docs#98 ■ example-sync                          40d over
 |┃ Sync: guard tripped                                ◉ alice
 |╹   ◉ alice closed as completed                           5d
 |PULL REQUESTS ──────────────────────────────────────────────
-|│┆example#1200 PR ● bob                              open 3d
+|│┆⇄ example#1200 ● bob                               open 3d
 |│┆Focus ring: token names                              ● bob
 |╵┆  ◉ alice merged                                        6h
-|┃┆example#1180 PR ● bob                              4d over
+|┃┆⇄ example#1180 ● bob                               4d over
 |┃┆Chip: token migration                                ● bob
 |╹┆  ● bob merged                                          2d
 |  ↓ 2 below
@@ -30,9 +30,9 @@ runs
 2:1 "ISSUES ─────────────────────────────────────────────────────" fg #ffffffff bg #000000ff
 3:1 "│" fg #008000ff bg #808080ff
 3:2 " " fg #c0c0c0ff bg #808080ff
-3:3 "docs#102 issue " fg #ffffffff bg #808080ff bold
-3:18 "○ dave" fg #008080ff bg #808080ff bold
-3:24 "                              open 2d" fg #ffffffff bg #808080ff bold
+3:3 "◇ docs#102 " fg #ffffffff bg #808080ff bold
+3:14 "○ dave" fg #008080ff bg #808080ff bold
+3:20 "                                  open 2d" fg #ffffffff bg #808080ff bold
 4:1 "│" fg #008000ff bg #808080ff
 4:2 " " fg #c0c0c0ff bg #808080ff
 4:3 "Table: sticky header scrolls away" fg #ffffffff bg #808080ff italic
@@ -50,8 +50,8 @@ runs
 7:5 "◉ alice" fg #000080ff bg #000000ff
 7:12 " closed as completed                           1d" fg #ffffffff bg #000000ff
 8:1 "┃" fg #800000ff bg #000000ff
-8:3 "docs#77 issue " fg #ffffffff bg #000000ff bold
-8:17 "◐ carol" fg #800080ff bg #000000ff bold
+8:3 "◇ docs#77 " fg #ffffffff bg #000000ff bold
+8:13 "◐ carol" fg #800080ff bg #000000ff bold
 8:53 "10d over" fg #800000ff bg #000000ff bold
 9:1 "┃" fg #800000ff bg #000000ff
 9:3 "Tokens page: contrast" fg #ffffffff bg #000000ff italic
@@ -60,8 +60,8 @@ runs
 10:5 "● bob" fg #000080ff bg #000000ff
 10:10 " closed as not planned                           2d" fg #ffffffff bg #000000ff
 11:1 "┃" fg #800000ff bg #000000ff
-11:3 "docs#98 issue " fg #ffffffff bg #000000ff bold
-11:17 "■ example-sync" fg #c0c0c0ff bg #000000ff bold
+11:3 "◇ docs#98 " fg #ffffffff bg #000000ff bold
+11:13 "■ example-sync" fg #c0c0c0ff bg #000000ff bold
 11:53 "40d over" fg #800000ff bg #000000ff bold
 12:1 "┃" fg #800000ff bg #000000ff
 12:3 "Sync: guard tripped" fg #ffffffff bg #000000ff italic
@@ -72,9 +72,9 @@ runs
 14:1 "PULL REQUESTS ──────────────────────────────────────────────" fg #ffffffff bg #000000ff
 15:1 "│" fg #008000ff bg #000000ff
 15:2 "┆" fg #c0c0c0ff bg #000000ff
-15:3 "example#1200 PR " fg #ffffffff bg #000000ff bold
-15:19 "● bob" fg #000080ff bg #000000ff bold
-15:24 "                              open 3d" fg #ffffffff bg #000000ff bold
+15:3 "⇄ example#1200 " fg #ffffffff bg #000000ff bold
+15:18 "● bob" fg #000080ff bg #000000ff bold
+15:23 "                               open 3d" fg #ffffffff bg #000000ff bold
 16:1 "│" fg #008000ff bg #000000ff
 16:2 "┆" fg #c0c0c0ff bg #000000ff
 16:3 "Focus ring: token names" fg #ffffffff bg #000000ff italic
@@ -85,8 +85,8 @@ runs
 17:12 " merged                                        6h" fg #ffffffff bg #000000ff
 18:1 "┃" fg #800000ff bg #000000ff
 18:2 "┆" fg #c0c0c0ff bg #000000ff
-18:3 "example#1180 PR " fg #ffffffff bg #000000ff bold
-18:19 "● bob" fg #000080ff bg #000000ff bold
+18:3 "⇄ example#1180 " fg #ffffffff bg #000000ff bold
+18:18 "● bob" fg #000080ff bg #000000ff bold
 18:54 "4d over" fg #800000ff bg #000000ff bold
 19:1 "┃" fg #800000ff bg #000000ff
 19:2 "┆" fg #c0c0c0ff bg #000000ff

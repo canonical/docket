@@ -103,7 +103,7 @@ describe("answerFinished", () => {
       answerFinished({ ...session, invocation }),
     ).rejects.toMatchObject({
       code: "USAGE_INVALID_VALUE",
-      message: "`--by` takes kind, ending, repo, none, not `owner`.",
+      message: "`--by` takes kind, author, ending, repo, none, not `owner`.",
     });
   });
 

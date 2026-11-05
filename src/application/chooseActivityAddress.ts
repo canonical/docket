@@ -10,9 +10,9 @@ import type { Invocation } from "./types.js";
 /**
  * The window and grouping a call names for activity: the configured
  * window `--window` names, the first when it names none, and the grouping
- * `--by` names. Text mode and the terminal interface read the same
- * address, so `docket activity --window 72h --by repo` prints that list,
- * or opens the terminal interface on it.
+ * `--by` names, the first when it names none. Text mode and the terminal
+ * interface read the same address, so `docket activity --window 72h --by
+ * repo` prints that list, or opens the terminal interface on it.
  *
  * @param windows The configured windows, in the order `t` steps through.
  * @throws Error `USAGE_INVALID_VALUE` when `--window` names no configured
@@ -23,7 +23,10 @@ export default function chooseActivityAddress(
   invocation: Pick<Invocation, "window" | "by">,
 ): Pick<ActivityAddress, "window" | "grouping"> {
   const window = chooseWindow(windows, invocation.window, "activity");
-  const grouping = activityGroupings.find((entry) => entry === invocation.by);
+  const grouping =
+    invocation.by === undefined
+      ? activityGroupings.at(0)
+      : activityGroupings.find((entry) => entry === invocation.by);
   if (!grouping) {
     fail(
       "USAGE_INVALID_VALUE",

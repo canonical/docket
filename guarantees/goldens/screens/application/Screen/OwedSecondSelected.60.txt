@@ -1,22 +1,22 @@
 60 columns
 |owed                                one list · overdue first
-|┃┆example#12 PR reply ○ dave                         4d over
+|┃┆⇄ example#12 PR reply ○ dave                       4d over
 |╹┆Fix the parser                           ✗ checks  ◉ alice
-|┃┆example#12 PR close ○ dave                         2h over
+|┃┆⇄ example#12 PR close ○ dave                       2h over
 |┃┆Fix the parser                           ✗ checks  ◉ alice
 |┃┆age 7d · owner ◉ alice
 |┃┆last activity 25m ago · ○ dave
 |┃┆labels kind=bug
 |┃┆example stack 3 · 2 of 3 · → main
 |╹┆below #11 merged, above #13 open
-|┃ example#15 issue reply ◐ carol                     4h left
+|┃ ◇ example#15 issue reply ◐ carol                   4h left
 |╹ Crash on start                                  unassigned
-|│┆example#12 PR review ○ dave                        1d left
+|│┆⇄ example#12 PR review ○ dave                      1d left
 |╵┆Fix the parser                             ✗ checks  ● bob
-|│ docs#4 issue close ◉ alice                        10d left
+|│ ◇ docs#4 issue close ◉ alice                      10d left
 |│ Where do tokens live?
 |╵                                             ◉ alice, ● bob
-|│ example#15 issue close ◐ carol                    29d left
+|│ ◇ example#15 issue close ◐ carol                  29d left
 |╵ Crash on start                                  unassigned
 |
 |
@@ -41,8 +41,8 @@ runs
 1:48 "overdue first" fg #c0c0c0ff bg #000000ff
 2:1 "┃" fg #800000ff bg #000000ff
 2:2 "┆" fg #c0c0c0ff bg #000000ff
-2:3 "example#12 PR reply " fg #ffffffff bg #000000ff bold
-2:23 "○ dave" fg #008080ff bg #000000ff bold
+2:3 "⇄ example#12 PR reply " fg #ffffffff bg #000000ff bold
+2:25 "○ dave" fg #008080ff bg #000000ff bold
 2:54 "4d over" fg #800000ff bg #000000ff bold
 3:1 "╹" fg #800000ff bg #000000ff
 3:2 "┆" fg #c0c0c0ff bg #000000ff
@@ -51,9 +51,9 @@ runs
 3:54 "◉ alice" fg #000080ff bg #000000ff
 4:1 "┃" fg #800000ff bg #808080ff
 4:2 "┆" fg #c0c0c0ff bg #808080ff
-4:3 "example#12 PR close " fg #ffffffff bg #808080ff bold
-4:23 "○ dave" fg #008080ff bg #808080ff bold
-4:29 "                         " fg #ffffffff bg #808080ff bold
+4:3 "⇄ example#12 PR close " fg #ffffffff bg #808080ff bold
+4:25 "○ dave" fg #008080ff bg #808080ff bold
+4:31 "                       " fg #ffffffff bg #808080ff bold
 4:54 "2h over" fg #800000ff bg #808080ff bold
 5:1 "┃" fg #800000ff bg #808080ff
 5:2 "┆" fg #c0c0c0ff bg #808080ff
@@ -83,24 +83,24 @@ runs
 10:2 "┆below #11 merged, above #13 open" fg #c0c0c0ff bg #808080ff
 10:35 "                          " fg #ffffffff bg #808080ff
 11:1 "┃" fg #808000ff bg #000000ff
-11:3 "example#15 issue reply " fg #ffffffff bg #000000ff bold
-11:26 "◐ carol" fg #800080ff bg #000000ff bold
+11:3 "◇ example#15 issue reply " fg #ffffffff bg #000000ff bold
+11:28 "◐ carol" fg #800080ff bg #000000ff bold
 11:54 "4h left" fg #808000ff bg #000000ff bold
 12:1 "╹" fg #808000ff bg #000000ff
 12:3 "Crash on start" fg #ffffffff bg #000000ff italic
 12:17 "                                  unassigned" fg #ffffffff bg #000000ff
 13:1 "│┆" fg #c0c0c0ff bg #000000ff
-13:3 "example#12 PR review " fg #ffffffff bg #000000ff bold
-13:24 "○ dave" fg #008080ff bg #000000ff bold
-13:30 "                        1d left" fg #ffffffff bg #000000ff bold
+13:3 "⇄ example#12 PR review " fg #ffffffff bg #000000ff bold
+13:26 "○ dave" fg #008080ff bg #000000ff bold
+13:32 "                      1d left" fg #ffffffff bg #000000ff bold
 14:1 "╵┆" fg #c0c0c0ff bg #000000ff
 14:3 "Fix the parser" fg #ffffffff bg #000000ff italic
 14:46 "✗ checks" fg #800000ff bg #000000ff
 14:56 "● bob" fg #000080ff bg #000000ff
 15:1 "│ " fg #c0c0c0ff bg #000000ff
-15:3 "docs#4 issue close " fg #ffffffff bg #000000ff bold
-15:22 "◉ alice" fg #000080ff bg #000000ff bold
-15:29 "                        10d left" fg #ffffffff bg #000000ff bold
+15:3 "◇ docs#4 issue close " fg #ffffffff bg #000000ff bold
+15:24 "◉ alice" fg #000080ff bg #000000ff bold
+15:31 "                      10d left" fg #ffffffff bg #000000ff bold
 16:1 "│ " fg #c0c0c0ff bg #000000ff
 16:3 "Where do tokens live?" fg #ffffffff bg #000000ff italic
 17:1 "╵ " fg #c0c0c0ff bg #000000ff
@@ -108,9 +108,9 @@ runs
 17:54 ", " fg #ffffffff bg #000000ff
 17:56 "● bob" fg #000080ff bg #000000ff
 18:1 "│ " fg #c0c0c0ff bg #000000ff
-18:3 "example#15 issue close " fg #ffffffff bg #000000ff bold
-18:26 "◐ carol" fg #800080ff bg #000000ff bold
-18:33 "                    29d left" fg #ffffffff bg #000000ff bold
+18:3 "◇ example#15 issue close " fg #ffffffff bg #000000ff bold
+18:28 "◐ carol" fg #800080ff bg #000000ff bold
+18:35 "                  29d left" fg #ffffffff bg #000000ff bold
 19:1 "╵ " fg #c0c0c0ff bg #000000ff
 19:3 "Crash on start" fg #ffffffff bg #000000ff italic
 19:17 "                                  unassigned" fg #ffffffff bg #000000ff

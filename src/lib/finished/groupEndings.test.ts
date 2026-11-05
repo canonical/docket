@@ -44,6 +44,21 @@ describe("groupEndings", () => {
     ]);
   });
 
+  it("groups by author alphabetically, each with their group", () => {
+    expect(sections("author")).toEqual([
+      ["alice", ["example#2"]],
+      ["carol", ["docs#4"]],
+      ["dave", ["example#7"]],
+      ["example-sync", ["example#9"]],
+    ]);
+    expect(group("author").groups.map(({ heading }) => heading)).toEqual([
+      { text: "alice", kind: "person", group: "team" },
+      { text: "carol", kind: "person", group: "internal" },
+      { text: "dave", kind: "person", group: "outside" },
+      { text: "example-sync", kind: "person", group: "bot" },
+    ]);
+  });
+
   it("keeps one list without a heading, and the figures whatever the grouping", () => {
     expect(sections("none")).toEqual([
       [undefined, ["docs#4", "example#2", "example#7", "example#9"]],
