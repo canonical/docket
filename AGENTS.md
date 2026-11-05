@@ -72,7 +72,7 @@
 
 ## Boundaries
 
-- `package.json`'s `version` is the only place the version is written. The program reads it from `package.json` at run time. A release publishes that version to npm: run the Release workflow (`.github/workflows/release.yml`) from `main` once the pull request that sets it has merged.
+- `package.json`'s `version` is the only place the version is written; Lerna updates it at release time. The program reads it from `package.json` at run time. A release runs from `main` through the Release workflow (`.github/workflows/release.yml`), which runs the gates, lets Lerna bump the version and generate `CHANGELOG.md` from Conventional Commits, commits and tags `v<version>`, then publishes that tag to npm.
 - Security reports go through GitHub's private vulnerability reporting, as `SECURITY.md` says, never through a public issue.
 
 ## Gotchas

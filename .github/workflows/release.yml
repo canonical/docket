@@ -1,10 +1,23 @@
-# Publishes the version package.json holds to npm, then tags it and makes
-# its GitHub release. A release is cut by hand: run this workflow from main
-# once a pull request that sets the new version has merged.
+# Bumps the package version and generates CHANGELOG.md from Conventional
+# Commits with Lerna, tags the result, then publishes that tag to npm and
+# creates its GitHub release. A release is cut by hand: run this workflow
+# from main.
 name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Release type. If not 'stable', the current version is bumped as a pre-release instead."
+        default: "stable"
+        required: false
+        type: choice
+        options:
+          - "stable"
+          - "alpha"
+          - "beta"
+          - "rc"
+          - "experimental"
 
 permissions:
   contents: read
@@ -31,23 +44,49 @@ jobs:
     needs: validate
     uses: ./.github/workflows/ci.yml
 
+  version:
+    name: Bump version and changelog
+    needs: gate
+    runs-on: ubuntu-latest
+    # Pushing the version commit and tag back to main needs write access.
+    permissions:
+      contents: write
+    outputs:
+      VERSION: ${{ steps.version.outputs.VERSION }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Lerna reads the commit history and the tags to find what changed.
+          fetch-depth: 0
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Version, changelog, commit and tag
+        id: version
+        uses: ./.github/actions/lerna-version
+        with:
+          release_type: ${{ inputs.release_type }}
+
   publish:
     name: Publish to npm
-    needs: gate
+    needs: version
     runs-on: ubuntu-latest
     # npm's trusted publisher names this environment, so only a job in it can
     # publish; its protection rules decide who may run one.
     environment: release
     # OIDC trusted publishing: GitHub mints a short-lived token that npm
     # exchanges for the right to publish, so no npm token is stored.
-    # contents: write lets the job tag the release and create it on GitHub.
+    # contents: write lets the job create the GitHub release.
     permissions:
       id-token: write
       contents: write
     steps:
-      - name: Checkout repository
+      - name: Checkout the release tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: v${{ needs.version.outputs.VERSION }}
           persist-credentials: false
 
       # Trusted publishing needs npm 11.5.1 or later, which Node 24 carries.
@@ -76,10 +115,10 @@ jobs:
           echo "Publishing $VERSION to dist-tag '$DIST_TAG'"
           npm publish --provenance --access public --tag "$DIST_TAG"
 
-      # The tag is made from the commit the gate passed on. A re-run after a
-      # successful publish fails at the publish above, since npm never takes
-      # a version twice: then create the release by hand.
-      - name: Tag and create the GitHub release
+      # The version job made and pushed the tag before this job checked it
+      # out. A re-run after a successful publish fails at the publish above,
+      # since npm never takes a version twice: then create the release by hand.
+      - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -88,7 +127,7 @@ jobs:
           if [[ "$VERSION" == *-* ]]; then PRERELEASE=(--prerelease); fi
           gh release create "v$VERSION" \
             --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
+            --verify-tag \
             --title "v$VERSION" \
             --generate-notes \
             "${PRERELEASE[@]}"

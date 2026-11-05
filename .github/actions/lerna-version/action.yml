@@ -1,0 +1,31 @@
+name: Version package
+description: Updates the package version and CHANGELOG for changed commits.
+inputs:
+  release_type:
+    description: "Release type. If not 'stable', the current version is bumped as a pre-release instead."
+    required: true
+outputs:
+  VERSION:
+    description: "The version the package was bumped to."
+    value: ${{ steps.lerna_version.outputs.VERSION }}
+runs:
+  using: composite
+  steps:
+    - name: Configure Git
+      shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+    - name: Version the package and generate its changelog
+      id: lerna_version
+      shell: bash
+      env:
+        # Lerna may open the changelog in an editor even under --yes.
+        GIT_EDITOR: "true"
+        EDITOR: "true"
+      run: ${{ github.action_path }}/version.sh ${{ inputs.release_type }}
+
+    - name: Commit and tag v${{ steps.lerna_version.outputs.VERSION }}
+      shell: bash
+      run: ${{ github.action_path }}/git-commit.sh "v${{ steps.lerna_version.outputs.VERSION }}"
