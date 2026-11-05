@@ -28,6 +28,28 @@ const row = (kind: ThreadKind, repo = "example") => {
     now,
   );
 };
+const byAuthor = (
+  login: string,
+  kind: ThreadKind = "issue",
+  repo = "example",
+) => {
+  const summary = thread({ kind, author: { ...dave, login } });
+  const event = {
+    thread: summary,
+    kind: "commented",
+    actor: dave,
+    at: at("2026-09-28T09:00+02:00"),
+    bot: false,
+  } as const;
+  return buildThreadRow(
+    summary,
+    repo,
+    summary,
+    teamSettings.people,
+    [event],
+    now,
+  );
+};
 const headings = (groups: ReturnType<typeof groupThreads>) =>
   groups.map(({ heading }) => heading?.text);
 
@@ -58,5 +80,45 @@ describe("groupThreads", () => {
       "example",
       "docs",
     ]);
+  });
+
+  it("orders authors alphabetically, keeping the sort inside, and heads each with their group", () => {
+    const first = byAuthor("bob");
+    const second = byAuthor("alice");
+    const third = byAuthor("bob");
+    const groups = groupThreads([first, second, third], "author", repos);
+    expect(groups).toEqual([
+      {
+        heading: { text: "alice", kind: "person", group: "team" },
+        rows: [second],
+      },
+      {
+        heading: { text: "bob", kind: "person", group: "team" },
+        rows: [first, third],
+      },
+    ]);
+    expect(
+      headings(
+        groupThreads([byAuthor("alice"), byAuthor("bob")], "author", repos),
+      ),
+    ).toEqual(["alice", "bob"]);
+  });
+
+  it("gathers one author written two ways in one section, headed as first written", () => {
+    const rows = [byAuthor("Alice"), byAuthor("alice")];
+    expect(headings(groupThreads(rows, "author", repos))).toEqual(["Alice"]);
+    expect(groupThreads(rows, "author", repos)[0]?.rows).toEqual(rows);
+  });
+
+  it("puts threads whose facts were not given under unknown author, last", () => {
+    const unknown = row("issue");
+    const known = byAuthor("alice");
+    const groups = groupThreads([unknown, known], "author", repos);
+    expect(headings(groups)).toEqual(["alice", "unknown author"]);
+    expect(groups[1]?.heading).toEqual({
+      text: "unknown author",
+      kind: "words",
+    });
+    expect(groups[1]?.rows).toEqual([unknown]);
   });
 });

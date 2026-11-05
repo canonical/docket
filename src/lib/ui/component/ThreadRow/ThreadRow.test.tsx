@@ -26,7 +26,7 @@ describe("ThreadRow", () => {
     it("gives a thread that ended within its target the time it was open, plain, beside a light green bar", async () => {
       const screen = await draw(<ThreadRow {...FinishedWithin.args} />, 40);
       expect(screen.lines.slice(0, 3)).toEqual([
-        "│┆example#2 PR ◉ alice           open 2d",
+        "│┆⇄ example#2 PR ◉ alice         open 2d",
         "╵┆Example change                 ◉ alice",
         "",
       ]);
@@ -40,7 +40,7 @@ describe("ThreadRow", () => {
     it("gives a thread that ended past its target how far past in the error colour, beside a heavy red bar", async () => {
       const screen = await draw(<ThreadRow {...FinishedOver.args} />, 40);
       expect(screen.lines.slice(0, 2)).toEqual([
-        "┃ example#7 issue ○ dave         7d over",
+        "┃ ◇ example#7 issue ○ dave       7d over",
         "╹ Dark mode everywhere        unassigned",
       ]);
       expect(screen.look("┃")?.fg).toBe(hex(tokens["color.text.error"]));
@@ -50,7 +50,7 @@ describe("ThreadRow", () => {
     it("leaves the bar's column blank on a thread a label exempts, its ending's age plain", async () => {
       const screen = await draw(<ThreadRow {...FinishedExempt.args} />, 40);
       expect(screen.lines.slice(0, 2)).toEqual([
-        "  example#9 PR ■ example-sync         2d",
+        "  ⇄ example#9 PR ■ example-sync       2d",
         "  Update dependency …  draft  unassigned",
       ]);
       expect(screen.look("2d")?.fg).toBe(hex(tokens["color.text"]));
@@ -61,7 +61,7 @@ describe("ThreadRow", () => {
     it("heads the row with the reference, both kinds, the author and the distance, the owner right-aligned below", async () => {
       const screen = await draw(<ThreadRow {...OverReviewSelected.args} />, 40);
       expect(screen.lines.slice(0, 3)).toEqual([
-        "┃┆example#12 PR review ○ dave    1d over",
+        "┃┆⇄ example#12 PR review ○ dave  1d over",
         "╹┆Fix the parser         ✗ checks  ● bob",
         "",
       ]);
@@ -115,7 +115,10 @@ describe("ThreadRow", () => {
     });
 
     it("keeps an on-track bar, stack and bot author visible on a selected row", async () => {
-      const screen = await draw(<ThreadRow {...BotAuthorSelected.args} />, 40);
+      const screen = await draw(
+        <ThreadRow {...BotAuthorSelected.args} width={60} />,
+        60,
+      );
       for (const text of ["│", "■"]) {
         const run = screen.look(text);
         expect(run).toBeDefined();
@@ -143,7 +146,7 @@ describe("ThreadRow", () => {
     it("draws a draft's close on track, the word draft dimmed before the owner", async () => {
       const screen = await draw(<ThreadRow {...DraftClose.args} />, 40);
       expect(screen.lines.slice(0, 2)).toEqual([
-        "│┆example#13 PR close ○ dave     8d left",
+        "│┆⇄ example#13 PR close ○ dave   8d left",
         "╵┆Document the parser     draft  ● alice",
       ]);
       expect(screen.look("8d left")?.fg).toBe(hex(tokens["color.text"]));
@@ -153,7 +156,7 @@ describe("ThreadRow", () => {
     it("names every owner on a third line, right-aligned, each login cut at 12 cells", async () => {
       const screen = await draw(<ThreadRow {...SharedClose.args} />, 40);
       expect(screen.lines.slice(0, 4)).toEqual([
-        "┃ example#4 issue close ○ dave   5d over",
+        "┃ ◇ example#4 issue close ○ dave 5d over",
         "┃ Where do tokens live?",
         "╹         ● alice, ● bob, ◐ carol-at-ex…",
         "",
@@ -171,16 +174,42 @@ describe("ThreadRow", () => {
     it("drops the author from the first line when fewer than four cells of login would fit", async () => {
       const screen = await draw(<ThreadRow {...AuthorLeaves.args} />, 40);
       expect(screen.lines.at(0)).toBe(
-        "┃ example#1240 issue reply      22h over",
+        "┃ ◇ example#1240 issue reply    22h over",
       );
     });
 
-    it("cuts a bot's login to the cells left and keeps its mark, dimmed", async () => {
-      const screen = await draw(<ThreadRow {...BotAuthor.args} />, 40);
-      expect(screen.lines.at(0)).toBe(
-        "│ example#1250 PR review ■ exam… 2d left",
+    it("keeps a bot's mark and cuts its login when the kind's name leaves too little room", async () => {
+      const screen = await draw(
+        <ThreadRow {...BotAuthor.args} showKind={false} />,
+        40,
       );
-      expect(screen.look("■ exam…")?.fg).toBe(hex(tokens["color.text.muted"]));
+      expect(screen.lines.at(0)).toBe(
+        "│ ⇄ example#1250 review ■ examp… 2d left",
+      );
+      expect(screen.look("■ examp…")?.fg).toBe(hex(tokens["color.text.muted"]));
+    });
+
+    it("leaves the thread kind's name to the section heading when the list asks it to", async () => {
+      const screen = await draw(
+        <ThreadRow {...OverReviewSelected.args} showKind={false} />,
+        40,
+      );
+      expect(screen.lines.at(0)).toBe(
+        "┃┆⇄ example#12 review ○ dave     1d over",
+      );
+    });
+
+    it("marks a discussion as ◌ and names it when the list does", async () => {
+      const screen = await draw(
+        <ThreadRow
+          row={measureRow({
+            thread: thread({ kind: "discussion", number: 21 }),
+          })}
+          width={40}
+        />,
+        40,
+      );
+      expect(screen.lines.at(0)).toContain("◌ example#21 discussion close");
     });
 
     it("wraps the selected row's title in full, in italic, the owner on a line of its own when it does not fit beside the last", async () => {
@@ -223,7 +252,7 @@ describe("ThreadRow", () => {
         60,
       );
       expect(screen.lines.slice(0, 2)).toEqual([
-        `┃ example#15 issue reply ○ dave${" ".repeat(22)}3h left`,
+        `┃ ◇ example#15 issue reply ○ dave${" ".repeat(20)}3h left`,
         `╹ Crash on start${" ".repeat(34)}unassigned`,
       ]);
       expect(screen.look("3h left")?.fg).toBe(
@@ -237,7 +266,7 @@ describe("ThreadRow", () => {
         60,
       );
       expect(screen.lines.at(0)).toBe(
-        `┃ example#1240 issue reply ○ dave${" ".repeat(19)}22h over`,
+        `┃ ◇ example#1240 issue reply ○ dave${" ".repeat(17)}22h over`,
       );
     });
 
@@ -268,7 +297,7 @@ describe("ThreadRow", () => {
         24,
       );
       expect(screen.lines.slice(0, 2)).toEqual([
-        "┃┆e…12 PR review 1d over",
+        "┃┆⇄ …2 PR review 1d over",
         "┃┆Fix the parser",
       ]);
     });
@@ -284,7 +313,7 @@ describe("ThreadRow", () => {
     it("names the thread, its author and its newest event's age in the plain text colour, with no bar", async () => {
       const screen = await draw(<ThreadRow {...ActivityStacked.args} />, 40);
       expect(screen.lines.slice(0, 3)).toEqual([
-        " ┆example#12 PR ○ dave               20m",
+        " ┆⇄ example#12 PR ○ dave             20m",
         " ┆Fix the parser                 ● alice",
         "",
       ]);
@@ -298,7 +327,7 @@ describe("ThreadRow", () => {
         60,
       );
       expect(screen.lines.slice(0, 2)).toEqual([
-        `  example#14 PR ○ dave${" ".repeat(36)}3h`,
+        `  ⇄ example#14 PR ○ dave${" ".repeat(34)}3h`,
         `  Update dependency example-lib to 2.0${" ".repeat(5)}draft  unassigned`,
       ]);
       expect(screen.look("draft")?.fg).toBe(hex(tokens["color.text.muted"]));
@@ -314,7 +343,7 @@ describe("ThreadRow", () => {
     it("lists two owners on a third line", async () => {
       const screen = await draw(<ThreadRow {...ActivityTwoOwners.args} />, 40);
       expect(screen.lines.slice(0, 4)).toEqual([
-        "  example#15 issue ○ dave             1d",
+        "  ◇ example#15 issue ○ dave           1d",
         "  Crash on start",
         `${" ".repeat(26)}● alice, ● bob`,
         "",

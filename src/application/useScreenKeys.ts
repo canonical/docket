@@ -129,7 +129,7 @@ export default function useScreenKeys({
           desc: "switch mode",
           group: "Mode",
           hint: "mode",
-          notes: ["owed → activity → finished", "docket opens owed"],
+          notes: ["owed → activity → finished", "docket opens start view"],
           run: () => latest.current.stepMode(1),
         },
         {

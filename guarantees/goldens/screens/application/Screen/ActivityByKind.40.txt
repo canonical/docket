@@ -1,7 +1,7 @@
 40 columns
 |activity    24h · by kind · newest first
 |ISSUES ─────────────────────────────────
-|  docs#4 issue ◉ alice               16h
+|  ◇ docs#4 ◉ alice                   16h
 |  Where do tokens live?
 |                          ◉ alice, ● bob
 |  age 27d · owner ◉ alice, ● bob
@@ -9,7 +9,7 @@
 |  labels none
 |    ■ example-sync labell… kind=docs 16h
 |PULL REQUESTS ──────────────────────────
-| ┆example#12 PR ○ dave               25m
+| ┆⇄ example#12 ○ dave                25m
 | ┆Fix the parser                 ◉ alice
 | ┆  ✗ checks failed (lint)           25m
 | ┆  ◉ alice requested review          3h
@@ -42,9 +42,9 @@ runs
 2:1 "ISSUES ─────────────────────────────────" fg #ffffffff bg #000000ff
 3:1 " " fg #ffffffff bg #808080ff
 3:2 " " fg #c0c0c0ff bg #808080ff
-3:3 "docs#4 issue " fg #ffffffff bg #808080ff bold
-3:16 "◉ alice" fg #000080ff bg #808080ff bold
-3:23 "               16h" fg #ffffffff bg #808080ff bold
+3:3 "◇ docs#4 " fg #ffffffff bg #808080ff bold
+3:12 "◉ alice" fg #000080ff bg #808080ff bold
+3:19 "                   16h" fg #ffffffff bg #808080ff bold
 4:1 " " fg #ffffffff bg #808080ff
 4:2 " " fg #c0c0c0ff bg #808080ff
 4:3 "Where do tokens live?" fg #ffffffff bg #808080ff italic
@@ -75,9 +75,9 @@ runs
 9:38 "16h" fg #c0c0c0ff bg #000000ff
 10:1 "PULL REQUESTS ──────────────────────────" fg #ffffffff bg #000000ff
 11:2 "┆" fg #c0c0c0ff bg #000000ff
-11:3 "example#12 PR " fg #ffffffff bg #000000ff bold
-11:17 "○ dave" fg #008080ff bg #000000ff bold
-11:23 "               25m" fg #ffffffff bg #000000ff bold
+11:3 "⇄ example#12 " fg #ffffffff bg #000000ff bold
+11:16 "○ dave" fg #008080ff bg #000000ff bold
+11:22 "                25m" fg #ffffffff bg #000000ff bold
 12:2 "┆" fg #c0c0c0ff bg #000000ff
 12:3 "Fix the parser" fg #ffffffff bg #000000ff italic
 12:34 "◉ alice" fg #000080ff bg #000000ff

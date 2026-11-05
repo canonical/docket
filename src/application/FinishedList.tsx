@@ -75,6 +75,7 @@ export default function FinishedList({
 }: FinishedListProps): ReactNode {
   const drawn = useDrawnLines();
   const reading = { now, timezone, waiting };
+  const showKind = list.address.grouping !== "kind";
   const blocks: ListBlock[] = [];
   let place = 0;
   let from = 0;
@@ -108,7 +109,13 @@ export default function FinishedList({
           1,
         node: () => (
           <>
-            <ThreadRow row={row} selected={chosen} continued width={width} />
+            <ThreadRow
+              row={row}
+              selected={chosen}
+              showKind={showKind}
+              continued
+              width={width}
+            />
             {chosen && (
               <ThreadAccordion
                 row={row}

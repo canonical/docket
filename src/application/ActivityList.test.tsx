@@ -37,14 +37,14 @@ describe("ActivityList", () => {
     );
     expect(screen.lines.slice(0, 5)).toEqual([
       "ISSUES ─────────────────────────────────",
-      `  docs#4 issue ● alice${" ".repeat(15)}16h`,
+      `  ◇ docs#4 ● alice${" ".repeat(19)}16h`,
       "  Where do tokens live?",
       `${" ".repeat(26)}● alice, ● bob`,
       `${" ".repeat(4)}■ example-sync labell… kind=docs 16h`,
     ]);
     expect(screen.lines.slice(5, 8)).toEqual([
       "PULL REQUESTS ──────────────────────────",
-      ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
+      ` ┆⇄ example#12 ○ dave${" ".repeat(16)}25m`,
       ` ┆Fix the parser${" ".repeat(17)}● alice`,
     ]);
     expect(screen.lines.slice(8, 13)).toEqual([
@@ -68,7 +68,7 @@ describe("ActivityList", () => {
       60,
     );
     expect(screen.lines.slice(0, 3)).toEqual([
-      ` ┆example#12 PR ○ dave${" ".repeat(35)}25m`,
+      ` ┆⇄ example#12 PR ○ dave${" ".repeat(33)}25m`,
       ` ┆Fix the parser${" ".repeat(37)}● alice`,
       ` ┆  ✗ checks failed (lint)${" ".repeat(31)}25m`,
     ]);
@@ -110,7 +110,7 @@ describe("ActivityList", () => {
       "  loading…",
       `${" ".repeat(4)}■ example-sync labell… kind=docs 16h`,
       "PULL REQUESTS ──────────────────────────",
-      ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
+      ` ┆⇄ example#12 ○ dave${" ".repeat(16)}25m`,
       ` ┆Fix the parser${" ".repeat(17)}● alice`,
       ` ┆  ✗ checks failed (lint)${" ".repeat(11)}25m`,
     ]);
@@ -138,7 +138,7 @@ describe("ActivityList", () => {
       20,
     );
     expect(screen.lines.slice(1, 7)).toEqual([
-      `  docs#4 issue ● alice${" ".repeat(15)}16h`,
+      `  ◇ docs#4 ● alice${" ".repeat(19)}16h`,
       "  Where do tokens live?",
       `${" ".repeat(26)}● alice, ● bob`,
       "  filter:",
@@ -196,7 +196,7 @@ describe("ActivityList", () => {
       20,
     );
     expect(screen.lines.slice(1, 6)).toEqual([
-      `  docs#4 issue ● alice${" ".repeat(15)}16h`,
+      `  ◇ docs#4 ● alice${" ".repeat(19)}16h`,
       "  Where do tokens live?",
       "  age 6d · owner ● alice",
       "  last activity 3h ago · ● bob",
@@ -217,7 +217,7 @@ describe("ActivityList", () => {
     );
     expect(screen.lines.slice(0, 3)).toEqual([
       "PULL REQUESTS ──────────────────────────",
-      ` ┆example#12 PR ○ dave${" ".repeat(15)}25m`,
+      ` ┆⇄ example#12 ○ dave${" ".repeat(16)}25m`,
       ` ┆Fix the parser${" ".repeat(17)}● alice`,
     ]);
   });
@@ -264,7 +264,7 @@ describe("ActivityList", () => {
     const tall = await screen.redraw(() => grow());
     expect(tall.lines.slice(0, 2)).toEqual([
       "ISSUES ─────────────────────────────────",
-      `  docs#4 issue ● alice${" ".repeat(15)}16h`,
+      `  ◇ docs#4 ● alice${" ".repeat(19)}16h`,
     ]);
   });
 
@@ -286,7 +286,7 @@ describe("ActivityList", () => {
     );
     expect(screen.lines).toEqual([
       `ISSUES · 1 of 1 ${"─".repeat(24)}`,
-      `  docs#4 issue ● alice${" ".repeat(15)}16h`,
+      `  ◇ docs#4 ● alice${" ".repeat(19)}16h`,
       "  Where do tokens live?",
       `${" ".repeat(26)}● alice, ● bob`,
       "  age 6d · owner ● alice, ● bob",

@@ -45,6 +45,15 @@ describe("renderOwed", () => {
     ]);
   });
 
+  it("heads each author's section with their login, quoted for an agent, in alphabetical order", () => {
+    expect(
+      render("llm", "standard", "author").filter((line) =>
+        line.startsWith("## "),
+      ),
+    ).toEqual(['## "alice"', '## "carol"', '## "dave"']);
+    expect(render("plain", "standard", "author")).toContain("carol");
+  });
+
   it("heads the kinds of thread in capitals, issues first, with the title unchanged", () => {
     for (const format of ["llm", "plain"] as const) {
       const lines = render(format, "standard", "kind");
@@ -189,6 +198,11 @@ describe("renderOwed", () => {
       { owner: "alice" },
       { owner: "bob" },
       { owner: null },
+    ]);
+    expect(data("author")).toEqual([
+      { author: "alice" },
+      { author: "carol" },
+      { author: "dave" },
     ]);
     expect(data("kind")).toEqual([{ kind: "issue" }, { kind: "pullRequest" }]);
     expect(data("repo")).toEqual([{ repo: "example" }, { repo: "docs" }]);

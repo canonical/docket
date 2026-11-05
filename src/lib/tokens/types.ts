@@ -55,6 +55,12 @@ export interface Tokens {
   readonly "glyph.bar.onTrack.end": string;
   /** In a stack, on every line of the item, dashed so it never reads as the bar. */
   readonly "glyph.stack": string;
+  /** An issue, before the row's reference. */
+  readonly "glyph.thread.issue": string;
+  /** A pull request, before the row's reference. */
+  readonly "glyph.thread.pullRequest": string;
+  /** A discussion, before the row's reference. */
+  readonly "glyph.thread.discussion": string;
   /** A section heading's rule, to the pane's edge. */
   readonly "glyph.rule": string;
   /** You, or a GitHub team you belong to, before a login. */

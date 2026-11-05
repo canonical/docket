@@ -1,0 +1,110 @@
+40 columns, 24 lines
+|finished   1w · by author · newest first
+|● bob ──────────────────────────────────
+|│┆⇄ example#1200 PR ● bob        open 3d
+|│┆Focus ring: token names          ● bob
+|│┆target 5d
+|│┆labels none
+|│┆example stack 12 · 1 of 5 · → main
+|│┆above #1201 open
+|╵┆  ◉ alice merged                    6h
+|┃┆⇄ example#1180 PR ● bob        4d over
+|┃┆Chip: token migration            ● bob
+|╹┆  ● bob merged                      2d
+|│ ⇄ example#1195 PR ● bob        open 4d
+|│ Focus ring: base tokens          ● bob
+|╵   ◉ alice merged                    4d
+|◐ carol ────────────────────────────────
+|┃ ◇ docs#77 issue ◐ carol       10d over
+|┃ Tokens page: contrast       unassigned
+|╹   ● bob closed as not planned       2d
+|○ dave ─────────────────────────────────
+|  ↓ 3 below
+|3 over · 4 merged · 3 closed       1/3/7
+|synced 2m ago
+|←→ mode ↑↓ sel ⏎ open g grp t time ?
+
+runs
+1:1 "finished   1w · by author · " fg #ffffffff bg #000000ff
+1:29 "newest first" fg #c0c0c0ff bg #000000ff
+2:1 "● bob" fg #000080ff bg #000000ff
+2:6 " ──────────────────────────────────" fg #ffffffff bg #000000ff
+3:1 "│" fg #008000ff bg #808080ff
+3:2 "┆" fg #c0c0c0ff bg #808080ff
+3:3 "⇄ example#1200 PR " fg #ffffffff bg #808080ff bold
+3:21 "● bob" fg #000080ff bg #808080ff bold
+3:26 "        open 3d" fg #ffffffff bg #808080ff bold
+4:1 "│" fg #008000ff bg #808080ff
+4:2 "┆" fg #c0c0c0ff bg #808080ff
+4:3 "Focus ring: token names" fg #ffffffff bg #808080ff italic
+4:26 "          " fg #ffffffff bg #808080ff
+4:36 "● bob" fg #000080ff bg #808080ff
+5:1 "│" fg #008000ff bg #808080ff
+5:2 "┆" fg #c0c0c0ff bg #808080ff
+5:3 "target 5d" fg #ffffffff bg #808080ff
+5:12 "                             " fg #ffffffff bg #808080ff
+6:1 "│" fg #008000ff bg #808080ff
+6:2 "┆" fg #c0c0c0ff bg #808080ff
+6:3 "labels none" fg #ffffffff bg #808080ff
+6:14 "                           " fg #ffffffff bg #808080ff
+7:1 "│" fg #008000ff bg #808080ff
+7:2 "┆example stack 12 · 1 of 5 · → main" fg #c0c0c0ff bg #808080ff
+7:37 "    " fg #ffffffff bg #808080ff
+8:1 "│" fg #008000ff bg #808080ff
+8:2 "┆above #1201 open" fg #c0c0c0ff bg #808080ff
+8:19 "                      " fg #ffffffff bg #808080ff
+9:1 "╵" fg #008000ff bg #000000ff
+9:2 "┆" fg #c0c0c0ff bg #000000ff
+9:5 "◉ alice" fg #000080ff bg #000000ff
+9:12 " merged                    6h" fg #ffffffff bg #000000ff
+10:1 "┃" fg #800000ff bg #000000ff
+10:2 "┆" fg #c0c0c0ff bg #000000ff
+10:3 "⇄ example#1180 PR " fg #ffffffff bg #000000ff bold
+10:21 "● bob" fg #000080ff bg #000000ff bold
+10:34 "4d over" fg #800000ff bg #000000ff bold
+11:1 "┃" fg #800000ff bg #000000ff
+11:2 "┆" fg #c0c0c0ff bg #000000ff
+11:3 "Chip: token migration" fg #ffffffff bg #000000ff italic
+11:36 "● bob" fg #000080ff bg #000000ff
+12:1 "╹" fg #800000ff bg #000000ff
+12:2 "┆" fg #c0c0c0ff bg #000000ff
+12:5 "● bob" fg #000080ff bg #000000ff
+12:10 " merged                      2d" fg #ffffffff bg #000000ff
+13:1 "│" fg #008000ff bg #000000ff
+13:3 "⇄ example#1195 PR " fg #ffffffff bg #000000ff bold
+13:21 "● bob" fg #000080ff bg #000000ff bold
+13:26 "        open 4d" fg #ffffffff bg #000000ff bold
+14:1 "│" fg #008000ff bg #000000ff
+14:3 "Focus ring: base tokens" fg #ffffffff bg #000000ff italic
+14:36 "● bob" fg #000080ff bg #000000ff
+15:1 "╵" fg #008000ff bg #000000ff
+15:5 "◉ alice" fg #000080ff bg #000000ff
+15:12 " merged                    4d" fg #ffffffff bg #000000ff
+16:1 "◐ carol" fg #800080ff bg #000000ff
+16:8 " ────────────────────────────────" fg #ffffffff bg #000000ff
+17:1 "┃" fg #800000ff bg #000000ff
+17:3 "◇ docs#77 issue " fg #ffffffff bg #000000ff bold
+17:19 "◐ carol" fg #800080ff bg #000000ff bold
+17:33 "10d over" fg #800000ff bg #000000ff bold
+18:1 "┃" fg #800000ff bg #000000ff
+18:3 "Tokens page: contrast" fg #ffffffff bg #000000ff italic
+18:24 "       unassigned" fg #ffffffff bg #000000ff
+19:1 "╹" fg #800000ff bg #000000ff
+19:5 "● bob" fg #000080ff bg #000000ff
+19:10 " closed as not planned       2d" fg #ffffffff bg #000000ff
+20:1 "○ dave" fg #008080ff bg #000000ff
+20:7 " ─────────────────────────────────" fg #ffffffff bg #000000ff
+21:1 "  ↓ 3 below" fg #c0c0c0ff bg #000000ff
+22:1 "3 over · 4 merged · 3 closed       1/3/7" fg #ffffffff bg #000000ff
+23:1 "synced 2m ago" fg #c0c0c0ff bg #000000ff
+24:1 "←→" fg #ffffffff bg #000000ff
+24:3 " mode" fg #c0c0c0ff bg #000000ff
+24:8 " ↑↓" fg #ffffffff bg #000000ff
+24:11 " sel" fg #c0c0c0ff bg #000000ff
+24:15 " ⏎" fg #ffffffff bg #000000ff
+24:17 " open" fg #c0c0c0ff bg #000000ff
+24:22 " g" fg #ffffffff bg #000000ff
+24:24 " grp" fg #c0c0c0ff bg #000000ff
+24:28 " t" fg #ffffffff bg #000000ff
+24:30 " time" fg #c0c0c0ff bg #000000ff
+24:35 " ?" fg #ffffffff bg #000000ff

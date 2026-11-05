@@ -37,13 +37,14 @@ describe("useAddress", () => {
   it("steps owed through its groupings, after the last the first, naming the ungrouped list one list", async () => {
     const screen = await draw(<Placed {...opening} />, 40, 1);
     const seen: (string | undefined)[] = [];
-    for (let step = 0; step < 5; step += 1) {
+    for (let step = 0; step < 6; step += 1) {
       seen.push(
         (await screen.redraw(() => address?.nextGrouping())).lines.at(0),
       );
     }
     expect(seen).toEqual([
       "owed | by owner | overdue first",
+      "owed | by author | overdue first",
       "owed | by kind | overdue first",
       "owed | by repo | overdue first",
       "owed | by stack | overdue first",
@@ -58,8 +59,9 @@ describe("useAddress", () => {
       1,
     );
     expect(screen.lines).toEqual(["owed | one list | overdue first"]);
-    await screen.redraw(() => address?.nextGrouping());
-    await screen.redraw(() => address?.nextGrouping());
+    for (let step = 0; step < 3; step += 1) {
+      await screen.redraw(() => address?.nextGrouping());
+    }
     const after = await screen.redraw(() => address?.nextGrouping());
     expect(after.lines).toEqual(["owed | by repo | overdue first"]);
     expect((await screen.redraw(() => address?.nextGrouping())).lines).toEqual([
@@ -68,7 +70,7 @@ describe("useAddress", () => {
   });
 
   it("keeps each mode's grouping, and steps activity's own groupings and windows", async () => {
-    const screen = await draw(<Placed {...opening} />, 40, 1);
+    const screen = await draw(<Placed {...opening} />, 60, 1);
     const press = async (key: () => void) => (await screen.redraw(key)).lines;
     await press(() => address?.nextGrouping());
     expect(await press(() => address?.stepMode(1))).toEqual([
@@ -76,14 +78,14 @@ describe("useAddress", () => {
     ]);
     await press(() => address?.nextGrouping());
     expect(await press(() => address?.nextWindow())).toEqual([
-      "activity | 1w · by repo | newest first",
+      "activity | 1w · by author | newest first",
     ]);
     await press(() => address?.nextWindow());
     expect(await press(() => address?.stepMode(-1))).toEqual([
       "owed | by owner | overdue first",
     ]);
     expect(await press(() => address?.stepMode(1))).toEqual([
-      "activity | 24h · by repo | newest first",
+      "activity | 24h · by author | newest first",
     ]);
   });
 
@@ -103,10 +105,11 @@ describe("useAddress", () => {
     const press = async (key: () => void) =>
       (await screen.redraw(key)).lines.at(0);
     const seen = [];
-    for (let step = 0; step < 4; step += 1) {
+    for (let step = 0; step < 5; step += 1) {
       seen.push(await press(() => address?.nextGrouping()));
     }
     expect(seen).toEqual([
+      "finished | 24h · by author | newest first",
       "finished | 24h · by ending | newest first",
       "finished | 24h · by repo | newest first",
       "finished | 24h · one list | newest first",

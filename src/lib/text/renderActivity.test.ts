@@ -68,6 +68,15 @@ describe("renderActivity", () => {
     ]);
   });
 
+  it("heads each author's section with their login, quoted for an agent, in alphabetical order", () => {
+    expect(
+      render("llm", "standard", "author").filter((line) =>
+        line.startsWith("## "),
+      ),
+    ).toEqual(['## "alice"', '## "dave"']);
+    expect(render("plain", "standard", "author")).toContain("dave");
+  });
+
   it("adds each event's absolute time for a person at the detailed level", () => {
     expect(render("plain", "detailed", "none").at(7)).toBe(
       "  checks failed (lint) (bot) · 25m ago, 2026-09-28 11:35 Europe/Paris",
@@ -119,6 +128,12 @@ describe("renderActivity", () => {
       "example",
       "docs",
     ]);
+    const byAuthor = JSON.parse(
+      render("json", "standard", "author").join("\n"),
+    );
+    expect(
+      byAuthor.groups.map(({ author }: { author: string }) => author),
+    ).toEqual(["alice", "dave"]);
     expect(answer.groups.at(0)).not.toHaveProperty("heading");
     const summary = JSON.parse(render("json", "summary").join("\n"));
     expect(summary).not.toHaveProperty("groups");

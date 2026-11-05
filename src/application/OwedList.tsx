@@ -86,6 +86,7 @@ export default function OwedList({
     () => listWaiting(list.groups.flatMap((group) => group.rows)),
     [list],
   );
+  const showKind = list.address.grouping !== "kind";
   const drawn = useDrawnLines();
   const blocks: ListBlock[] = [];
   let place = 0;
@@ -125,6 +126,7 @@ export default function OwedList({
             <ThreadRow
               row={row}
               selected={open && !editor}
+              showKind={showKind}
               continued={open && !editor}
               width={width}
             />

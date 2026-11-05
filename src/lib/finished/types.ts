@@ -12,7 +12,7 @@ import type {
 import type { Field, FieldList, Owner, Person } from "../owed/index.js";
 
 /** How finished splits its list into sections. */
-export type FinishedGrouping = "kind" | "ending" | "repo" | "none";
+export type FinishedGrouping = "kind" | "author" | "ending" | "repo" | "none";
 
 /** Where the reader is in finished: the mode, its window and its grouping. */
 export interface FinishedAddress {

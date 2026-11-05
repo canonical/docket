@@ -34,6 +34,12 @@ export const FinishedByKind: Story<ScreenFrameProps> = {
   parameters,
 };
 
+/** finished by author, each login that opened a thread with their group, alphabetically. */
+export const FinishedByAuthor: Story<ScreenFrameProps> = {
+  args: { ...recording, finished: { window: week, grouping: "author" } },
+  parameters,
+};
+
 /** finished by ending, the endings in GitHub's words as sections, by kind then GitHub's order. */
 export const FinishedByEnding: Story<ScreenFrameProps> = {
   args: { ...recording, finished: { window: week, grouping: "ending" } },

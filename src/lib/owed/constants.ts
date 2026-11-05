@@ -3,12 +3,14 @@ import type { OwedGrouping } from "./types.js";
 
 /**
  * The groupings, in the order the reader steps through them; the first is
- * the default. The two about what you must do, by owner and by kind of
- * thread, come before the two about where a thread lives.
+ * the default. The sections about who is involved, by owner and by author,
+ * and what you must do, by kind of thread, come before the two about
+ * where a thread lives.
  */
 export const owedGroupings: readonly OwedGrouping[] = [
   "none",
   "owner",
+  "author",
   "kind",
   "repo",
   "stack",

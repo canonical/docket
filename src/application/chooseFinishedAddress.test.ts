@@ -11,6 +11,12 @@ describe("chooseFinishedAddress", () => {
     ).toEqual({ window: { amount: 24, unit: "h" }, grouping: "kind" });
   });
 
+  it("takes the first grouping when --by names none", () => {
+    expect(
+      chooseFinishedAddress(windows, { window: undefined, by: undefined }),
+    ).toEqual({ window: { amount: 24, unit: "h" }, grouping: "kind" });
+  });
+
   it("takes the configured window and the grouping the call names, by ending among them", () => {
     expect(
       chooseFinishedAddress(windows, { window: "1w", by: "ending" }),
@@ -34,7 +40,7 @@ describe("chooseFinishedAddress", () => {
     ).toThrow(
       expect.objectContaining({
         code: "USAGE_INVALID_VALUE",
-        message: "`--by` takes kind, ending, repo, none, not `owner`.",
+        message: "`--by` takes kind, author, ending, repo, none, not `owner`.",
       }),
     );
   });

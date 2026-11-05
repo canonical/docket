@@ -5,7 +5,7 @@ import type { Field, FieldList, Owner, Person } from "../owed/index.js";
 import type { Thread, ThreadSummary } from "../waits/index.js";
 
 /** How activity splits its list into sections. */
-export type ActivityGrouping = "kind" | "repo" | "none";
+export type ActivityGrouping = "kind" | "author" | "repo" | "none";
 
 /** Where the reader is in activity: the mode, its window and its grouping. */
 export interface ActivityAddress {

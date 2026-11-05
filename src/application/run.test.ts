@@ -2,7 +2,11 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type Home, makeHome } from "../testing/docket.js";
+import {
+  type Home,
+  makeHome,
+  recordedPersonalFile,
+} from "../testing/docket.js";
 import { alice, bob, exampleSync } from "../testing/facts.js";
 import { providerError } from "../testing/provider.js";
 import {
@@ -67,6 +71,40 @@ describe("run", () => {
       expect(view?.settings.time.timezone).toBe("Europe/Paris");
       expect(view?.now()).toEqual(recordedNow);
       expect(view && "cache" in view.source).toBe(true);
+    });
+
+    it("opens the start view the personal file names for docket alone, and the command a call names", async () => {
+      const startHome = await makeHome(
+        `${recordedPersonalFile}start: activity\n`,
+      );
+      try {
+        const views: TerminalView[] = [];
+        const openTerminal = async (view: TerminalView) => {
+          views.push(view);
+          return 0;
+        };
+        await startHome.call([], { interactive: true, openTerminal });
+        await startHome.call(["--by", "author"], {
+          interactive: true,
+          openTerminal,
+        });
+        await startHome.call(["owed"], { interactive: true, openTerminal });
+        expect(views.map(({ mode, activity }) => [mode, activity])).toEqual([
+          ["activity", { window: { amount: 72, unit: "h" }, grouping: "kind" }],
+          [
+            "activity",
+            { window: { amount: 72, unit: "h" }, grouping: "author" },
+          ],
+          ["owed", undefined],
+        ]);
+        const piped = await startHome.call([], {
+          interactive: true,
+          interactiveInput: false,
+        });
+        expect(piped.out).toMatch(/^owed\n/);
+      } finally {
+        await startHome.remove();
+      }
     });
 
     it("opens the terminal interface on activity for docket activity in a terminal, without --format", async () => {

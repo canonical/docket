@@ -85,6 +85,15 @@ describe("renderFinished", () => {
     ]);
   });
 
+  it("heads each author's section with their login, quoted for an agent, in alphabetical order", () => {
+    expect(
+      lines("llm", "standard", "author").filter((line) =>
+        line.startsWith("## "),
+      ),
+    ).toEqual(['## "alice"', '## "carol"', '## "dave"', '## "example-sync"']);
+    expect(lines("plain", "standard", "author")).toContain("carol");
+  });
+
   it("adds each ending's absolute time for a person at the detailed level", () => {
     expect(lines("plain", "detailed", "none").at(7)).toBe(
       "  bob closed as completed · 3h ago, 2026-09-25 09:00 Europe/Paris",
@@ -167,6 +176,12 @@ describe("renderFinished", () => {
       { kind: "pullRequest" },
     ]);
     expect(groups("repo")).toEqual([{ repo: "example" }, { repo: "docs" }]);
+    expect(groups("author")).toEqual([
+      { author: "alice" },
+      { author: "carol" },
+      { author: "dave" },
+      { author: "example-sync" },
+    ]);
     expect(groups("none")).toEqual([{}]);
     expect(JSON.parse(render("json", "summary"))).not.toHaveProperty("groups");
   });

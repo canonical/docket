@@ -72,6 +72,7 @@ export default function resolveSettings(
     },
     exempt: { ...builtIn.exempt, ...exempt },
     activity: declared("activity") ?? builtIn.activity,
+    start: declared("start") ?? builtIn.start,
     hosts: declared("hosts") ?? builtIn.hosts,
     you: { ...builtIn.you, ...you },
   };

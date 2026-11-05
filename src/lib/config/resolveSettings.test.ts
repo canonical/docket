@@ -20,7 +20,7 @@ describe("resolveSettings", () => {
   it("uses the built-in defaults when no file exists", () => {
     const resolved = resolveSettings(undefined, undefined);
     expect(resolved.settings).toEqual(builtInSettings);
-    expect(Object.values(resolved.origins)).toEqual(Array(8).fill("built-in"));
+    expect(Object.values(resolved.origins)).toEqual(Array(9).fill("built-in"));
     expect(resolved.repositoryErrors).toEqual([]);
   });
 
@@ -35,7 +35,20 @@ describe("resolveSettings", () => {
       "example",
       "docs",
     ]);
-    expect(Object.values(origins)).toEqual(Array(8).fill("personal"));
+    expect(Object.values(origins)).toHaveLength(9);
+    expect(
+      Object.values(origins).filter((origin) => origin === "personal"),
+    ).toHaveLength(8);
+    expect(origins.start).toBe("built-in");
+  });
+
+  it("uses the start view the personal file declares", () => {
+    const declared = layerOf(
+      parseFile("version: 1\nstart: activity\n", "personal"),
+    );
+    const { settings, origins } = resolveSettings(declared, undefined);
+    expect(settings.start).toBe("activity");
+    expect(origins.start).toBe("personal");
   });
 
   it("gives the repository file the whole of each section it declares", () => {

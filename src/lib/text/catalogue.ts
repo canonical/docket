@@ -71,7 +71,7 @@ const catalogue: readonly Command[] = [
     notes: [
       "Rows run most overdue first by working time past the target; waits not yet due follow in order of time left.",
       "Targets count working time on the configured workdays and time zone.",
-      "In a terminal, with no `--format`, `docket owed` and `docket` alone open the terminal interface on owed, grouped as `--by` names; piped or captured, or given `--format`, they print the list.",
+      "In a terminal, with no `--format`, `docket owed` opens the terminal interface on owed, and `docket` alone on the view `start` names in the personal file (owed by default), grouped as `--by` names; piped or captured, or given `--format`, they print the list.",
     ],
     flags: [
       {
@@ -80,7 +80,7 @@ const catalogue: readonly Command[] = [
         choices: owedGroupings,
         default: "none",
         description:
-          "Splits the list into sections: by owner, by kind of thread (ISSUES, PULL REQUESTS, DISCUSSIONS), by repo, or by stack; a wait with two owners appears under each owner.",
+          "Splits the list into sections: by owner, by author (who opened the thread), by kind of thread (ISSUES, PULL REQUESTS, DISCUSSIONS), by repo, or by stack; a wait with two owners appears under each owner.",
       },
       format,
       detail,
@@ -107,7 +107,7 @@ const catalogue: readonly Command[] = [
         choices: activityGroupings,
         default: "kind",
         description:
-          "Splits the list into sections: by kind of thread (ISSUES, PULL REQUESTS, DISCUSSIONS), by repo, or none.",
+          "Splits the list into sections: by kind of thread (ISSUES, PULL REQUESTS, DISCUSSIONS), by author (who opened the thread), by repo, or none.",
       },
       format,
       detail,
@@ -136,7 +136,7 @@ const catalogue: readonly Command[] = [
         choices: finishedGroupings,
         default: "kind",
         description:
-          "Splits the list into sections: by kind of thread (ISSUES, PULL REQUESTS), by ending, as GitHub words it, by repo, or none.",
+          "Splits the list into sections: by kind of thread (ISSUES, PULL REQUESTS), by author (who opened the thread), by ending, as GitHub words it, by repo, or none.",
       },
       format,
       {

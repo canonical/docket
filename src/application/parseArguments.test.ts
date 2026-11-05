@@ -8,12 +8,14 @@ describe("parseArguments", () => {
       kind: "command",
       invocation: {
         command: "owed",
+        commandGiven: false,
         positionals: [],
         format: "llm",
         formatGiven: false,
         detail: "standard",
         maxAge: 300_000,
         by: "none",
+        byGiven: false,
         window: undefined,
         confirm: false,
       },
@@ -42,6 +44,7 @@ describe("parseArguments", () => {
       kind: "command",
       invocation: {
         command: "assign",
+        commandGiven: true,
         positionals: ["example#12", "alice"],
         format: "json",
         formatGiven: true,
@@ -98,7 +101,7 @@ describe("parseArguments", () => {
     [
       ["owed", "--by", "ending"],
       "USAGE_INVALID_VALUE",
-      "`--by` takes none, owner, kind, repo, stack, not `ending`.",
+      "`--by` takes none, owner, author, kind, repo, stack, not `ending`.",
     ],
     [
       ["owed", "--max-age", "5m"],

@@ -8,6 +8,7 @@ import type {
   Repo,
   Resolved,
   Settings,
+  View,
 } from "../lib/config/index.js";
 import type { FinishedAddress, FinishedRow } from "../lib/finished/index.js";
 import type { OwedGrouping, WaitRow } from "../lib/owed/index.js";
@@ -63,6 +64,12 @@ export interface Context {
 /** A call, parsed and checked against the command catalogue. */
 export interface Invocation {
   readonly command: CommandName;
+  /**
+   * Whether the call named its command. `docket` alone asks for owed, and
+   * its terminal interface opens on the mode the personal file's `start`
+   * names.
+   */
+  readonly commandGiven: boolean;
   /** The arguments after the command's name. */
   readonly positionals: readonly string[];
   readonly format: Format;
@@ -72,6 +79,8 @@ export interface Invocation {
   /** How old cached data may be, in milliseconds. */
   readonly maxAge: number;
   readonly by: string | undefined;
+  /** Whether `--by` named the grouping, rather than the command's default. */
+  readonly byGiven: boolean;
   readonly window: string | undefined;
   readonly confirm: boolean;
 }
@@ -120,7 +129,7 @@ export interface Session {
 export type ListRow = WaitRow | ActivityThread | FinishedRow;
 
 /** The modes of the terminal interface, in the order the arrows reach them. */
-export type TerminalMode = "owed" | "activity" | "finished";
+export type TerminalMode = View;
 
 /** What the terminal interface shows, and where its data comes from. */
 export interface TerminalView {

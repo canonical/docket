@@ -154,6 +154,7 @@ export default function parseArguments(
     kind: "command",
     invocation: {
       command: command.name,
+      commandGiven: first !== undefined,
       positionals: rest,
       format:
         formats.find((entry) => entry === values.format) ??
@@ -162,6 +163,7 @@ export default function parseArguments(
       detail: details.find((entry) => entry === values.detail) ?? defaultDetail,
       maxAge: Number(seconds) * 1000,
       by: choose("by"),
+      byGiven: values.by !== undefined,
       window: choose("window"),
       confirm: values.confirm === true,
     },

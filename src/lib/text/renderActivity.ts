@@ -116,12 +116,13 @@ function describeRowData(row: ThreadRow) {
 }
 
 /**
- * What a section holds, as data: the kind of its threads, or their
- * repository. A section always holds a row.
+ * What a section holds, as data: the kind of its threads, their author,
+ * or their repository. A section always holds a row.
  */
 function describeGroupData(group: ThreadGroup, grouping: ActivityGrouping) {
   const [first] = group.rows;
   if (grouping === "kind") return { kind: first?.thread.kind };
+  if (grouping === "author") return { author: first?.author?.text ?? null };
   if (grouping === "repo") return { repo: first?.repo };
   return {};
 }
@@ -163,7 +164,11 @@ export default function renderActivity({
   }
   const llm = format === "llm";
   const sections = groups.map((group) => {
-    const heading = group.heading && sanitize(group.heading.text);
+    const heading =
+      group.heading &&
+      (llm && list.address.grouping === "author"
+        ? quote(group.heading.text)
+        : sanitize(group.heading.text));
     const rows = group.rows.flatMap((row) =>
       llm ? renderLlmRow(row, timezone) : renderPlainRow(row, timezone, detail),
     );

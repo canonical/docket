@@ -1,18 +1,21 @@
 import { describe, expect, it } from "vitest";
 import chooseTerminalMode from "./chooseTerminalMode.js";
 import parseArguments from "./parseArguments.js";
+import type { TerminalMode } from "./types.js";
 
 /** The mode a call opens on, with its input and output each a terminal or not. */
 function modeOf(
   args: string[],
   interactive: boolean,
   interactiveInput: boolean,
+  start: TerminalMode = "owed",
 ) {
   const request = parseArguments(args, interactive);
   if (request.kind !== "command") throw new Error("the call is a command");
   return chooseTerminalMode(
     { interactive, interactiveInput },
     request.invocation,
+    start,
   );
 }
 
@@ -27,10 +30,27 @@ describe("chooseTerminalMode", () => {
   describe.each(terminals)(
     "with output a terminal: $interactive, input a terminal: $interactiveInput",
     ({ interactive, interactiveInput, both }) => {
-      it("opens owed for docket alone only when both are terminals", () => {
+      it("opens the start view for docket alone only when both are terminals", () => {
+        for (const start of ["owed", "activity", "finished"] as const) {
+          expect(modeOf([], interactive, interactiveInput, start)).toBe(
+            both ? start : undefined,
+          );
+        }
+      });
+
+      it("opens owed for docket alone when the personal file names no start view", () => {
         expect(modeOf([], interactive, interactiveInput)).toBe(
           both ? "owed" : undefined,
         );
+      });
+
+      it("opens the command a call names, whatever the start view", () => {
+        expect(
+          modeOf(["owed"], interactive, interactiveInput, "activity"),
+        ).toBe(both ? "owed" : undefined);
+        expect(
+          modeOf(["activity"], interactive, interactiveInput, "finished"),
+        ).toBe(both ? "activity" : undefined);
       });
 
       it("opens owed for docket owed without --format, whatever its grouping, only when both are terminals", () => {

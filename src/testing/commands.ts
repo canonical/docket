@@ -11,7 +11,7 @@ const switchMode: KeyCommand = {
   label: "switch mode (owed ↔ activity)",
   hint: "mode",
   group: "Mode",
-  notes: ["docket opens owed"],
+  notes: ["docket opens start view"],
 };
 
 const moveSelection: KeyCommand = {
