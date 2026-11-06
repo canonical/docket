@@ -58,7 +58,7 @@ const ScrolledList = ({
       >
         {shown.map(({ key, node }) => (
           <box key={key} flexDirection="column" flexShrink={0}>
-            {node}
+            {typeof node === "function" ? node() : node}
           </box>
         ))}
       </box>

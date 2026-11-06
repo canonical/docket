@@ -2,13 +2,14 @@
 import { useTerminalDimensions } from "@opentui/react";
 import {
   type ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
-import { describeNoTeam } from "../lib/owed/index.js";
+import { describeNoTeam, groupWaits, listWaits } from "../lib/owed/index.js";
 import {
   type ActionResult,
   CountsLine,
@@ -21,7 +22,6 @@ import {
 } from "../lib/ui/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
-import buildOwed from "./buildOwed.js";
 import buildThreadWaits from "./buildThreadWaits.js";
 import describeCandidate from "./describeCandidate.js";
 import describePosition from "./describePosition.js";
@@ -35,6 +35,7 @@ import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
 import placeSelection, { type Selection } from "./placeSelection.js";
+import prepareOwed from "./prepareOwed.js";
 import type {
   ListRow,
   SelectedThread,
@@ -159,6 +160,16 @@ export default function Screen({
   const drawnSelection = useRef<ListRow>(undefined);
   const heldThreads = cached?.threads;
   const named = useMemo(() => gatherNamed(heldThreads ?? []), [heldThreads]);
+  const factsByThread = useMemo(
+    () =>
+      new Map(
+        heldThreads?.map((thread) => [
+          `${thread.repo}#${thread.number}`,
+          thread,
+        ]),
+      ),
+    [heldThreads],
+  );
   const editor = useEditor({
     source: "cache" in source ? source : undefined,
     findTeam: (repo) => listTeam(watched, repo),
@@ -183,13 +194,14 @@ export default function Screen({
 
   // A row's thread as the data records it: an owed row carries its
   // thread, and another row names one the cache holds while it is open.
-  const findFacts = (row: ListRow): Thread | undefined => {
-    if ("wait" in row) return row.wait.thread;
-    const { repo, number } = row.thread;
-    return cached?.threads.find(
-      (each) => each.repo === repo && each.number === number,
-    );
-  };
+  const findFacts = useCallback(
+    (row: ListRow): Thread | undefined => {
+      if ("wait" in row) return row.wait.thread;
+      const { repo, number } = row.thread;
+      return factsByThread.get(`${repo}#${number}`);
+    },
+    [factsByThread],
+  );
   // The thread `a` and `r` act on, in owed or activity.
   const selectThread = (): SelectedThread | undefined => {
     const row = drawnSelection.current;
@@ -250,10 +262,55 @@ export default function Screen({
     !problem && cached && (cached.syncedAt || watched.length === 0)
       ? cached.threads
       : undefined;
-  const owed =
-    threads && mode === "owed"
-      ? buildOwed(threads, watched, owedGrouping, at, you.viewer)
-      : undefined;
+  const preparedOwed = useMemo(
+    () =>
+      threads && mode === "owed" ? prepareOwed(threads, watched) : undefined,
+    [threads, mode, watched],
+  );
+  const measuredOwed = useMemo(
+    () => (preparedOwed ? listWaits(preparedOwed, at, you.viewer) : undefined),
+    [preparedOwed, at, you.viewer],
+  );
+  const owed = useMemo(
+    () =>
+      measuredOwed &&
+      groupWaits(
+        measuredOwed,
+        { mode: "owed", grouping: owedGrouping },
+        watched,
+      ),
+    [measuredOwed, owedGrouping, watched],
+  );
+  const measureActivityWaits = useMemo(() => {
+    const byThread = new Map<string, ReturnType<typeof buildThreadWaits>>();
+    return (row: ListRow) => {
+      const { repo, number } = summarize(row);
+      const key = `${repo}#${number}`;
+      let waits = byThread.get(key);
+      if (!waits && threads) {
+        waits = buildThreadWaits(
+          summarize(row),
+          threads,
+          watched,
+          at,
+          you.viewer,
+        );
+        byThread.set(key, waits);
+      }
+      return waits ?? [];
+    };
+  }, [threads, watched, at, you.viewer]);
+  const readActivityPeople = useMemo(() => {
+    const byRepo = new Map<string, ReturnType<typeof findPeople>>();
+    return (repo: string) => {
+      let people = byRepo.get(repo);
+      if (!people && threads) {
+        people = findPeople(repo, threads, watched);
+        byRepo.set(repo, people);
+      }
+      return people ?? new Map();
+    };
+  }, [threads, watched]);
   const activity = useActivity({
     source,
     threads,
@@ -293,8 +350,11 @@ export default function Screen({
   // The mode on screen's list alone drives the keys and the counts, so a
   // list read off screen is never what a key acts on.
   const shown = mode === "owed" ? owed : mode === "activity" ? listed : ended;
-  const rows: readonly ListRow[] =
-    shown?.groups.flatMap((group): readonly ListRow[] => group.rows) ?? [];
+  const rows: readonly ListRow[] = useMemo(
+    () =>
+      shown?.groups.flatMap((group): readonly ListRow[] => group.rows) ?? [],
+    [shown],
+  );
   const selectedRow = rows.at(placeSelection(rows, selections[mode]));
   useEffect(() => {
     drawnRows.current = rows;
@@ -365,10 +425,8 @@ export default function Screen({
         list={listed}
         selected={placeSelection(rows, selections.activity)}
         readDetail={(row) => ahead.readRowDetail(row, readThreadDetail)}
-        measureWaits={(row) =>
-          buildThreadWaits(row.thread, threads, watched, at, you.viewer)
-        }
-        readPeople={(row) => findPeople(row.thread.repo, threads, watched)}
+        measureWaits={measureActivityWaits}
+        readPeople={(row) => readActivityPeople(row.thread.repo)}
         viewer={you.viewer}
         now={at}
         timezone={settings.time.timezone}

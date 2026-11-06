@@ -58,7 +58,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
     expect(screen.lines.slice(0, 8)).toEqual([
       "finished     1w · by kind · newest first",
       `ISSUES ${"─".repeat(33)}`,
-      "│ docs#102 issue ○ dave          open 2d",
+      "│ ◇ docs#102 ○ dave              open 2d",
       "│ Table: sticky header scrolls away",
       "│                                ◉ alice",
       "│ target 30d",
@@ -75,10 +75,11 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
   it("steps its groupings with g: by kind, by ending, by repo, one list, then by kind again", async () => {
     const screen = await show(viewWeek());
     const headers: (string | undefined)[] = [];
-    for (let step = 0; step < 4; step += 1) {
+    for (let step = 0; step < 5; step += 1) {
       headers.push((await press(screen, "g")).lines.at(0));
     }
     expect(headers).toEqual([
+      "finished   1w · by author · newest first",
       "finished   1w · by ending · newest first",
       "finished     1w · by repo · newest first",
       "finished    1w · one list · newest first",
@@ -87,10 +88,10 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
   });
 
   it("heads by ending's sections with the endings in GitHub's words, the selection kept on its thread", async () => {
-    const screen = await press(await show(viewWeek()), "j", "g");
+    const screen = await press(await show(viewWeek()), "j", "g", "g");
     expect(screen.lines.slice(1, 3)).toEqual([
       `closed as completed ${"─".repeat(20)}`,
-      "│ docs#102 issue ○ dave          open 2d",
+      "│ ◇ docs#102 issue ○ dave        open 2d",
     ]);
     expect(screen.lines.at(21)).toBe(
       "3 over · 4 merged · 3 closed       1/1/7",
@@ -118,7 +119,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
     );
     const moved = await press(screen, "j", "j");
     expect(moved.lines.slice(7, 14)).toEqual([
-      "┃┆example#1180 PR ● bob          4d over",
+      "┃┆⇄ example#1180 PR ● bob        4d over",
       "┃┆Chip: token migration            ● bob",
       "┃┆open 9d · target 5d",
       "┃┆labels kind=feat",
@@ -153,7 +154,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
     await press(screen, "j", "j");
     reached = true;
     const stacked = await press(screen, "j");
-    expect(stacked.lines).toContain("│┆example#1200 PR ● bob          open 3d");
+    expect(stacked.lines).toContain("│┆⇄ example#1200 ● bob           open 3d");
     const numbers = () => asked.flatMap(([, each]) => each);
     await waitUntil(() => expect(numbers()).toContain(1200));
     expect(asked.every(([after]) => after)).toBe(true);
@@ -163,7 +164,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
   it("keeps a group's heading above its first thread, selected below the top, rather than pinning it", async () => {
     const screen = await show(viewWeek(), 40, 14);
     const up = await press(screen, "end", "k", "k", "k");
-    const row = up.lines.indexOf("│┆example#1200 PR ● bob          open 3d");
+    const row = up.lines.indexOf("│┆⇄ example#1200 ● bob           open 3d");
     expect(row).toBeGreaterThan(1);
     expect(up.lines.at(row - 1)).toBe(`PULL REQUESTS ${"─".repeat(26)}`);
   });
@@ -231,7 +232,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
     );
     await waitUntil(async () => {
       const lines = (await screen.redraw()).lines;
-      expect(lines.at(2)).toMatch(/^│ docs#102/);
+      expect(lines.at(2)).toMatch(/^│ ◇ docs#102/);
       expect(lines).not.toContain("  refresh in progress…");
     });
   });
@@ -276,7 +277,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
     );
     const drawn = await waitUntil(async () => {
       const lines = (await screen.redraw()).lines;
-      expect(lines.at(2)).toMatch(/^│ docs#102/);
+      expect(lines.at(2)).toMatch(/^│ ◇ docs#102/);
       return lines;
     });
     expect(drawn.at(22)).toMatch(/^✗/);

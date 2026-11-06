@@ -36,6 +36,15 @@ describe("createLocalTimeReader", () => {
     expect(read(at("2026-09-22T10:00:00.750Z")).offset).toBe(0);
   });
 
+  it("keeps repeated readings for a second, even across a clock change", () => {
+    const read = createLocalTimeReader("Europe/Paris");
+    const before = at("2026-10-25T00:59:59Z");
+    const after = before + 1_000;
+    expect(read(before)).toBe(read(before + 999));
+    expect(read(after).offset).toBe(hourMilliseconds);
+    expect(read(before).offset).toBe(2 * hourMilliseconds);
+  });
+
   it("gives every caller in a zone the same reader", () => {
     expect(createLocalTimeReader("Asia/Tokyo")).toBe(
       createLocalTimeReader("Asia/Tokyo"),

@@ -1,9 +1,9 @@
 40 columns, 14 lines
 |owed            by owner · overdue first
 |◉ alice · 2 of 3 ───────────────────────
-|┃┆example#12 PR close ○ dave     2h over
+|┃┆⇄ example#12 PR close ○ dave   2h over
 |╹┆Fix the parser       ✗ checks  ◉ alice
-|│ docs#4 issue close ◉ alice    10d left
+|│ ◇ docs#4 issue close ◉ alice  10d left
 |│ Where do tokens live?
 |│                         ◉ alice, ● bob
 |│ age 27d · owner ◉ alice, ● bob
@@ -21,8 +21,8 @@ runs
 2:8 " · 2 of 3 ───────────────────────" fg #ffffffff bg #000000ff
 3:1 "┃" fg #800000ff bg #000000ff
 3:2 "┆" fg #c0c0c0ff bg #000000ff
-3:3 "example#12 PR close " fg #ffffffff bg #000000ff bold
-3:23 "○ dave" fg #008080ff bg #000000ff bold
+3:3 "⇄ example#12 PR close " fg #ffffffff bg #000000ff bold
+3:25 "○ dave" fg #008080ff bg #000000ff bold
 3:34 "2h over" fg #800000ff bg #000000ff bold
 4:1 "╹" fg #800000ff bg #000000ff
 4:2 "┆" fg #c0c0c0ff bg #000000ff
@@ -30,9 +30,9 @@ runs
 4:24 "✗ checks" fg #800000ff bg #000000ff
 4:34 "◉ alice" fg #000080ff bg #000000ff
 5:1 "│ " fg #c0c0c0ff bg #808080ff
-5:3 "docs#4 issue close " fg #ffffffff bg #808080ff bold
-5:22 "◉ alice" fg #000080ff bg #808080ff bold
-5:29 "    10d left" fg #ffffffff bg #808080ff bold
+5:3 "◇ docs#4 issue close " fg #ffffffff bg #808080ff bold
+5:24 "◉ alice" fg #000080ff bg #808080ff bold
+5:31 "  10d left" fg #ffffffff bg #808080ff bold
 6:1 "│ " fg #c0c0c0ff bg #808080ff
 6:3 "Where do tokens live?" fg #ffffffff bg #808080ff italic
 6:24 "                 " fg #ffffffff bg #808080ff

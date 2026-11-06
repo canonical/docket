@@ -98,6 +98,7 @@ export default function ActivityList({
   firstShown,
 }: ActivityListProps): ReactNode {
   const drawn = useDrawnLines();
+  const showKind = list.address.grouping !== "kind";
   const blocks: ListBlock[] = [];
   let place = 0;
   let from = 0;
@@ -117,7 +118,9 @@ export default function ActivityList({
       const chosen = place === selected;
       const waits = chosen ? measureWaits(row) : [];
       const people = chosen ? readPeople(row) : new Map();
-      const state = findThreadState(row, waits, people, viewer);
+      const state = chosen
+        ? findThreadState(row, waits, people, viewer)
+        : undefined;
       const reading = { now, timezone, waiting: listWaiting(waits) };
       if (chosen) {
         to = blocks.length;
@@ -128,7 +131,7 @@ export default function ActivityList({
         kind: "row",
         lines:
           countRowLines(row, width, chosen && !editor) +
-          (chosen
+          (chosen && state
             ? (editor?.lines ??
               drawn.measure(
                 row.reference.text,
@@ -136,16 +139,17 @@ export default function ActivityList({
               ))
             : 0) +
           row.events.length,
-        node: (
+        node: () => (
           <>
             <ThreadRow
               row={row}
               selected={chosen && !editor}
+              showKind={showKind}
               continued={chosen && !editor}
               width={width}
             />
             {chosen && editor?.node}
-            {chosen && !editor && (
+            {chosen && !editor && state && (
               <ThreadAccordion
                 row={state}
                 detail={readDetail(row)}

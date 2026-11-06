@@ -7,6 +7,7 @@ import type {
   Heading,
   OwedGrouping,
   Owner,
+  Person,
   StackHeading,
   WaitGroup,
   WaitRow,
@@ -17,6 +18,7 @@ type Section = readonly [
   rows: readonly WaitRow[],
   kind: FieldKind,
   stack?: StackHeading,
+  person?: Person,
 ];
 
 /**
@@ -40,20 +42,56 @@ function findOwner(rows: readonly WaitRow[], text: string): Owner {
  * owner written two ways is one section, headed as first written.
  */
 function sectionOwners(rows: readonly WaitRow[]): Section[] {
-  const owners = new Map<string, string>();
-  for (const owner of rows.flatMap((row) => row.wait.owners)) {
-    const key = owner.toLowerCase();
-    if (!owners.has(key)) owners.set(key, owner);
+  const owners = new Map<string, { name: string; rows: WaitRow[] }>();
+  const unassigned: WaitRow[] = [];
+  for (const row of rows) {
+    if (row.wait.owners.length === 0) unassigned.push(row);
+    const seen = new Set<string>();
+    for (const owner of row.wait.owners) {
+      const key = owner.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      let section = owners.get(key);
+      if (!section) {
+        section = { name: owner, rows: [] };
+        owners.set(key, section);
+      }
+      section.rows.push(row);
+    }
   }
   const sections = [...owners]
     .sort(([a], [b]) => (a < b ? -1 : 1))
-    .map(([key, owner]): Section => {
-      const owns = (row: WaitRow) =>
-        row.wait.owners.some((login) => login.toLowerCase() === key);
-      return [owner, rows.filter(owns), "person"];
-    });
-  const unassigned = rows.filter((row) => row.wait.owners.length === 0);
+    .map(([, owner]): Section => [owner.name, owner.rows, "person"]);
   return [...sections, ["unassigned", unassigned, "words"]];
+}
+
+/**
+ * Authors alphabetically, each headed by their login with their group.
+ * GitHub logins ignore case, so one author written two ways is one
+ * section, headed as first written.
+ */
+function sectionAuthors(rows: readonly WaitRow[]): Section[] {
+  const authors = new Map<string, { person: Person; rows: WaitRow[] }>();
+  for (const row of rows) {
+    const key = row.author.text.toLowerCase();
+    let section = authors.get(key);
+    if (!section) {
+      section = { person: row.author, rows: [] };
+      authors.set(key, section);
+    }
+    section.rows.push(row);
+  }
+  return [...authors]
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(
+      ([, { person, rows }]): Section => [
+        person.text,
+        rows,
+        "person",
+        undefined,
+        person,
+      ],
+    );
 }
 
 /**
@@ -86,14 +124,16 @@ function sectionStacks(rows: readonly WaitRow[], order: string[]): Section[] {
   ];
 }
 
-/** A section's heading: its owner, its stack in parts, or its name. */
+/** A section's heading: its author, its owner, its stack in parts, or its name. */
 function describeHeading(
   grouping: OwedGrouping,
   members: readonly WaitRow[],
   text: string,
   kind: FieldKind,
   stack: StackHeading | undefined,
+  person: Person | undefined,
 ): Heading {
+  if (person) return person;
   if (grouping === "owner") return findOwner(members, text);
   return stack ?? { text, kind };
 }
@@ -101,9 +141,9 @@ function describeHeading(
 /**
  * Splits sorted rows into the sections of a grouping. The order of the
  * sections is a fixed rule of each grouping and never follows the sort:
- * kinds as `ISSUES`, `PULL REQUESTS`, `DISCUSSIONS`, as activity's.
- * Rows keep the sort inside a section, except inside a stack, and a
- * section with no rows is left out.
+ * owners and authors alphabetically, kinds as `ISSUES`, `PULL REQUESTS`,
+ * `DISCUSSIONS`, as activity's. Rows keep the sort inside a section,
+ * except inside a stack, and a section with no rows is left out.
  *
  * @param repos The watched repositories, in the configuration's order,
  * which is the order of the `repo` sections.
@@ -118,27 +158,29 @@ export default function groupRows(
   const sections =
     grouping === "owner"
       ? sectionOwners(rows)
-      : grouping === "kind"
-        ? kindSections.map(
-            ([kind, text]): Section => [
-              text,
-              rows.filter((row) => row.wait.thread.kind === kind),
-              "words",
-            ],
-          )
-        : grouping === "repo"
-          ? order.map(
-              (name): Section => [
-                name,
-                rows.filter((row) => row.repo === name),
-                "identifier",
+      : grouping === "author"
+        ? sectionAuthors(rows)
+        : grouping === "kind"
+          ? kindSections.map(
+              ([kind, text]): Section => [
+                text,
+                rows.filter((row) => row.wait.thread.kind === kind),
+                "words",
               ],
             )
-          : sectionStacks(rows, order);
+          : grouping === "repo"
+            ? order.map(
+                (name): Section => [
+                  name,
+                  rows.filter((row) => row.repo === name),
+                  "identifier",
+                ],
+              )
+            : sectionStacks(rows, order);
   return sections
     .filter(([, members]) => members.length > 0)
-    .map(([text, members, kind, stack]) => ({
-      heading: describeHeading(grouping, members, text, kind, stack),
+    .map(([text, members, kind, stack, person]) => ({
+      heading: describeHeading(grouping, members, text, kind, stack, person),
       rows: members,
     }));
 }

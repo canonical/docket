@@ -1,5 +1,8 @@
 import type { DurationUnit } from "../clock/index.js";
-import type { Place, Section, Settings } from "./types.js";
+import type { Place, Section, Settings, View } from "./types.js";
+
+/** The modes a call may name, in the order the arrows reach them. */
+export const viewModes: readonly View[] = ["owed", "activity", "finished"];
 
 /** The values docket uses wherever no file declares a section. */
 export const builtInSettings: Settings = {
@@ -24,6 +27,7 @@ export const builtInSettings: Settings = {
     { amount: 72, unit: "h" },
     { amount: 1, unit: "w" },
   ],
+  start: "owed",
   hosts: ["github.com"],
   you: { teams: [] },
 };
@@ -41,6 +45,7 @@ export const sectionsByPlace: Readonly<Record<Place, readonly Section[]>> = {
     "targets",
     "exempt",
     "activity",
+    "start",
     "hosts",
     "you",
   ],

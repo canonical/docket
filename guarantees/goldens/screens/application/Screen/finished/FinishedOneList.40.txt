@@ -1,22 +1,22 @@
 40 columns, 24 lines
 |finished    1w · one list · newest first
-|│┆example#1200 PR ● bob          open 3d
+|│┆⇄ example#1200 PR ● bob        open 3d
 |│┆Focus ring: token names          ● bob
 |╵┆  ◉ alice merged                    6h
-|│ docs#102 issue ○ dave          open 2d
+|│ ◇ docs#102 issue ○ dave        open 2d
 |│ Table: sticky header scrolls…  ◉ alice
 |╵   ◉ alice closed as completed       1d
-|┃┆example#1180 PR ● bob          4d over
+|┃┆⇄ example#1180 PR ● bob        4d over
 |┃┆Chip: token migration            ● bob
 |┃┆open 9d · target 5d
 |┃┆labels kind=feat
 |┃┆example stack 11 · 3 of 3 · → main
 |┃┆below #1179 merged
 |╹┆  ● bob merged                      2d
-|┃ docs#77 issue ◐ carol         10d over
+|┃ ◇ docs#77 issue ◐ carol       10d over
 |┃ Tokens page: contrast       unassigned
 |╹   ● bob closed as not planned       2d
-|│ example#1244 PR ■ example-sync open 2d
+|│ ⇄ example#1244 PR ■ example-s… open 2d
 |│ Update dependency example-lib …  ● bob
 |╵   ● bob merged                      3d
 |  ↓ 2 below
@@ -29,9 +29,9 @@ runs
 1:29 "newest first" fg #c0c0c0ff bg #000000ff
 2:1 "│" fg #008000ff bg #000000ff
 2:2 "┆" fg #c0c0c0ff bg #000000ff
-2:3 "example#1200 PR " fg #ffffffff bg #000000ff bold
-2:19 "● bob" fg #000080ff bg #000000ff bold
-2:24 "          open 3d" fg #ffffffff bg #000000ff bold
+2:3 "⇄ example#1200 PR " fg #ffffffff bg #000000ff bold
+2:21 "● bob" fg #000080ff bg #000000ff bold
+2:26 "        open 3d" fg #ffffffff bg #000000ff bold
 3:1 "│" fg #008000ff bg #000000ff
 3:2 "┆" fg #c0c0c0ff bg #000000ff
 3:3 "Focus ring: token names" fg #ffffffff bg #000000ff italic
@@ -41,9 +41,9 @@ runs
 4:5 "◉ alice" fg #000080ff bg #000000ff
 4:12 " merged                    6h" fg #ffffffff bg #000000ff
 5:1 "│" fg #008000ff bg #000000ff
-5:3 "docs#102 issue " fg #ffffffff bg #000000ff bold
-5:18 "○ dave" fg #008080ff bg #000000ff bold
-5:24 "          open 2d" fg #ffffffff bg #000000ff bold
+5:3 "◇ docs#102 issue " fg #ffffffff bg #000000ff bold
+5:20 "○ dave" fg #008080ff bg #000000ff bold
+5:26 "        open 2d" fg #ffffffff bg #000000ff bold
 6:1 "│" fg #008000ff bg #000000ff
 6:3 "Table: sticky header scrolls…" fg #ffffffff bg #000000ff italic
 6:34 "◉ alice" fg #000080ff bg #000000ff
@@ -52,9 +52,9 @@ runs
 7:12 " closed as completed       1d" fg #ffffffff bg #000000ff
 8:1 "┃" fg #800000ff bg #808080ff
 8:2 "┆" fg #c0c0c0ff bg #808080ff
-8:3 "example#1180 PR " fg #ffffffff bg #808080ff bold
-8:19 "● bob" fg #000080ff bg #808080ff bold
-8:24 "          " fg #ffffffff bg #808080ff bold
+8:3 "⇄ example#1180 PR " fg #ffffffff bg #808080ff bold
+8:21 "● bob" fg #000080ff bg #808080ff bold
+8:26 "        " fg #ffffffff bg #808080ff bold
 8:34 "4d over" fg #800000ff bg #808080ff bold
 9:1 "┃" fg #800000ff bg #808080ff
 9:2 "┆" fg #c0c0c0ff bg #808080ff
@@ -80,8 +80,8 @@ runs
 14:5 "● bob" fg #000080ff bg #000000ff
 14:10 " merged                      2d" fg #ffffffff bg #000000ff
 15:1 "┃" fg #800000ff bg #000000ff
-15:3 "docs#77 issue " fg #ffffffff bg #000000ff bold
-15:17 "◐ carol" fg #800080ff bg #000000ff bold
+15:3 "◇ docs#77 issue " fg #ffffffff bg #000000ff bold
+15:19 "◐ carol" fg #800080ff bg #000000ff bold
 15:33 "10d over" fg #800000ff bg #000000ff bold
 16:1 "┃" fg #800000ff bg #000000ff
 16:3 "Tokens page: contrast" fg #ffffffff bg #000000ff italic
@@ -90,8 +90,8 @@ runs
 17:5 "● bob" fg #000080ff bg #000000ff
 17:10 " closed as not planned       2d" fg #ffffffff bg #000000ff
 18:1 "│" fg #008000ff bg #000000ff
-18:3 "example#1244 PR " fg #ffffffff bg #000000ff bold
-18:19 "■ example-sync" fg #c0c0c0ff bg #000000ff bold
+18:3 "⇄ example#1244 PR " fg #ffffffff bg #000000ff bold
+18:21 "■ example-s…" fg #c0c0c0ff bg #000000ff bold
 18:33 " open 2d" fg #ffffffff bg #000000ff bold
 19:1 "│" fg #008000ff bg #000000ff
 19:3 "Update dependency example-lib …" fg #ffffffff bg #000000ff italic

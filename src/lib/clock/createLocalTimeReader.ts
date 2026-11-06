@@ -13,8 +13,9 @@ type Reader = (instant: number) => LocalTime;
 
 /**
  * The reader of each zone asked for so far. Building a formatter costs
- * more than a week of readings, and a reader holds nothing but its
- * formatter, so every caller in a zone shares one.
+ * more than a week of readings, so every caller in a zone shares one.
+ * Each keeps up to 4096 readings by whole second, the precision the
+ * formatter provides, and clears them together when full.
  */
 const readers = new Map<string, Reader>();
 
@@ -31,7 +32,11 @@ function buildReader(timezone: string): Reader {
     minute: "numeric",
     second: "numeric",
   });
+  const readings = new Map<number, LocalTime>();
   return (instant) => {
+    const second = Math.floor(instant / 1000);
+    const known = readings.get(second);
+    if (known) return known;
     const parts = Object.fromEntries(
       format.formatToParts(instant).map(({ type, value }) => [type, value]),
     );
@@ -45,17 +50,20 @@ function buildReader(timezone: string): Reader {
       ((Number(parts.hour) * 60 + Number(parts.minute)) * 60 +
         Number(parts.second)) *
         1000;
-    return {
+    const result = {
       date,
-      offset: wall - Math.floor(instant / 1000) * 1000,
+      offset: wall - second * 1000,
       weekday: String(parts.weekday).toLowerCase() as Weekday,
     };
+    if (readings.size >= 4096) readings.clear();
+    readings.set(second, result);
+    return result;
   };
 }
 
 /**
  * Gives the reader of the local time `timezone` shows at an instant, with
- * one formatter per zone for every reading.
+ * one formatter per zone and a bounded cache for repeated instants.
  */
 export default function createLocalTimeReader(timezone: string): Reader {
   let reader = readers.get(timezone);

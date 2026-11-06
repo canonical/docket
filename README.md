@@ -59,27 +59,27 @@ Then open docket:
 docket
 ```
 
-The first run reads each repository from GitHub and shows its progress. Then you land on owed, most overdue first:
+The first run reads each repository from GitHub and shows its progress. Then you land on owed, most overdue first, unless `start` in your personal file names another mode:
 
 ```text
 owed                                one list · overdue first
-┃┆example#12 PR reply ○ dave                         4d over
+┃┆⇄ example#12 PR reply ○ dave                       4d over
 ┃┆Fix the parser                           ✗ checks  ◉ alice
 ┃┆○ dave · 3d ago
 ┃┆Rebased on main. Could someone look again?
 ┃┆waiting since Mon 10:00 · target 24h
 ┃┆example stack 3 · 2 of 3 · → main
 ╹┆below #11 merged, above #13 open
-┃┆example#12 PR close ○ dave                         2h over
+┃┆⇄ example#12 PR close ○ dave                       2h over
 ╹┆Fix the parser                           ✗ checks  ◉ alice
-┃ example#15 issue reply ◐ carol                     4h left
+┃ ◇ example#15 issue reply ◐ carol                   4h left
 ╹ Crash on start                                  unassigned
-│ docs#4 issue close ◉ alice                        10d left
+│ ◇ docs#4 issue close ◉ alice                      10d left
 │ Where do tokens live?
 ╵                                             ◉ alice, ● bob
-│┆example#12 PR review ○ dave                        1d left
+│┆⇄ example#12 PR review ○ dave                      1d left
 ╵┆Fix the parser                             ✗ checks  ● bob
-│ example#15 issue close ◐ carol                    29d left
+│ ◇ example#15 issue close ◐ carol                  29d left
 ╵ Crash on start                                  unassigned
 
 2 over · 1 soon · 3 on track                             1/6
@@ -134,7 +134,7 @@ The issues and pull requests merged or closed within a time window. Each shows i
 
 `a` and `r` open a picker under the row. Type to filter, move with `↑` `↓`, tick with `space`, apply with `⏎`, or cancel with `esc`.
 
-People carry a mark wherever they appear: `◉` you, `●` your team, `◐` your organisation, `○` outside, `■` a bot.
+People carry a mark wherever they appear: `◉` you, `●` your team, `◐` your organisation, `○` outside, `■` a bot. Threads carry their kind at the start: `◇` issue, `⇄` pull request, `◌` discussion. A mixed list names the kind beside it; a list grouped by kind leaves the name to its section heading.
 
 The terminal needs at least 40 columns and 8 lines.
 
@@ -153,6 +153,7 @@ In `llm` output, every title, login and comment from GitHub is marked as quoted 
 ```sh
 docket owed --format plain
 docket owed --by owner --format plain
+docket owed --by author --format plain
 docket activity --window 48h --format llm
 docket finished --window 1w --by ending --format json
 docket show example#12
@@ -187,7 +188,7 @@ example#15 · close · 29d left
 
 The flags you'll reach for most:
 
-- `--by` splits the list into sections. owed takes `none`, `owner`, `kind`, `repo` or `stack`. activity takes `kind`, `repo` or `none`, and finished takes those and `ending`.
+- `--by` splits the list into sections. owed takes `none`, `owner`, `author`, `kind`, `repo` or `stack`. activity takes `kind`, `author`, `repo` or `none`, and finished takes those and `ending`. `author` groups by whoever opened each thread, so a team lead can see their reports' pull requests together.
 - `--window` picks one of your activity windows, for activity and finished.
 - `--detail` is `summary` for the counts alone, `standard` for the usual rows, or `detailed` for every message, file and check.
 - `--max-age <seconds>` is how old cached data may be before docket asks GitHub again. It defaults to 300, and `0` always fetches.
@@ -224,6 +225,7 @@ Your **personal file**, `~/.config/docket/docket.yaml`, says which repositories 
 | `targets` | yes | yes |
 | `exempt` | yes | yes |
 | `activity` | yes | |
+| `start` | yes | |
 | `you` | yes | |
 
 For each repository, a section in its `.github/docket.yaml` wins over the same section in your personal file. Sections replace each other whole and never merge: whatever the winning section leaves out comes from the built-in defaults, not from the other file. So your personal file can't add someone to a repository's team.
@@ -307,6 +309,16 @@ activity: [24h, 48h, 72h, 1w]
 ```
 
 Windows count working time too, so `24h` on a Monday morning reaches back to Friday morning.
+
+### start
+
+The mode `docket` alone opens on in the terminal interface: `owed` (the default), `activity` or `finished`. A call that names its command still opens that command, so `docket activity` opens activity whatever `start` says, and a piped call still prints owed.
+
+```yaml
+start: activity
+```
+
+With `start: activity`, a shell alias can choose the grouping docket opens on, such as `alias docket='docket --by author'`.
 
 ### A repository's file
 

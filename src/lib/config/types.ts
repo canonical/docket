@@ -3,6 +3,9 @@ import type { Duration, WorkingClock } from "../clock/index.js";
 /** The four groups a login belongs to. */
 export type Group = "team" | "internal" | "external" | "bot";
 
+/** The mode docket's terminal interface opens on when a call names none. */
+export type View = "owed" | "activity" | "finished";
+
 /**
  * Logins and the group each belongs to, keyed in lower case because GitHub
  * logins ignore case.
@@ -50,6 +53,8 @@ export interface Settings {
   readonly exempt: Exempt;
   /** Activity's time windows, the first being the default. */
   readonly activity: readonly Duration[];
+  /** The mode `docket` alone opens on in the terminal interface. */
+  readonly start: View;
   readonly hosts: readonly string[];
   readonly you: You;
 }
@@ -70,6 +75,7 @@ export interface Layer {
   };
   readonly exempt?: Partial<Exempt>;
   readonly activity?: readonly Duration[];
+  readonly start?: View;
   readonly hosts?: readonly string[];
   readonly you?: Partial<You>;
 }
@@ -100,6 +106,7 @@ export type ConfigErrorCode =
   | "CONFIG_UNKNOWN_TIMEZONE"
   | "CONFIG_UNKNOWN_WORKDAY"
   | "CONFIG_UNREADABLE_FILE"
+  | "CONFIG_UNKNOWN_VIEW"
   | "CONFIG_UNSUPPORTED_HOST"
   | "CONFIG_UNSUPPORTED_VERSION"
   | "CONFIG_WRONG_TYPE";

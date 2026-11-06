@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
 import {
   type OwedList as List,
   nameHeading,
@@ -82,7 +82,11 @@ export default function OwedList({
   onShownRows,
   firstShown,
 }: OwedListProps): ReactNode {
-  const waiting = listWaiting(list.groups.flatMap((group) => group.rows));
+  const waiting = useMemo(
+    () => listWaiting(list.groups.flatMap((group) => group.rows)),
+    [list],
+  );
+  const showKind = list.address.grouping !== "kind";
   const drawn = useDrawnLines();
   const blocks: ListBlock[] = [];
   let place = 0;
@@ -117,11 +121,12 @@ export default function OwedList({
                 countAccordionLines(row, { now, timezone, waiting }, width),
               ))
             : 0),
-        node: (
+        node: () => (
           <>
             <ThreadRow
               row={row}
               selected={open && !editor}
+              showKind={showKind}
               continued={open && !editor}
               width={width}
             />

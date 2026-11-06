@@ -19,6 +19,12 @@ export interface ThreadRowProps {
   /** Whether the row is selected, which gives each of its lines the selection background. */
   selected?: boolean;
   /**
+   * Whether the row names the kind of thread beside its mark, `◇ issue`
+   * or `⇄ PR`, as a mixed list does. A list grouped by kind leaves the
+   * name to its section headings and keeps the mark alone.
+   */
+  showKind?: boolean;
+  /**
    * Whether more of the item follows the row, such as its accordion, so
    * the state bar runs on rather than ending on the row's last line.
    */

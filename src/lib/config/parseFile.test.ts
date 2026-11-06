@@ -58,6 +58,13 @@ describe("parseFile", () => {
       });
     });
 
+    it("reads the mode docket opens on", () => {
+      expect(personal("start: activity\n")).toEqual({
+        ok: true,
+        layer: { start: "activity" },
+      });
+    });
+
     it("keeps only the sections and keys a file declares", () => {
       expect(parseFile(repositoryFile, "repository")).toEqual({
         ok: true,
@@ -163,7 +170,7 @@ describe("parseFile", () => {
       refuses("owners: {}\n", "CONFIG_UNKNOWN_KEY");
     });
 
-    it.each(["repos", "activity", "hosts", "you"])(
+    it.each(["repos", "activity", "start", "hosts", "you"])(
       "refuses %s in a repository file",
       (section) => {
         const outcome = parseFile(`version: 1\n${section}: []\n`, "repository");

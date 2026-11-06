@@ -5,6 +5,7 @@ import type { FinishedGrouping } from "./types.js";
 /** The groupings, in the order the reader steps through them; the first is the default. */
 export const finishedGroupings: readonly FinishedGrouping[] = [
   "kind",
+  "author",
   "ending",
   "repo",
   "none",

@@ -19,21 +19,22 @@ export interface Piece {
  * One block of a scrolled list, drawn whole or not at all, but for the
  * first: a group's heading, with the name the heading pinned above its
  * rows gives, or a row with what opens under it. Each carries the key
- * React names it by among its siblings, and the lines it takes.
+ * React names it by among its siblings, and the lines it takes. A node may
+ * be a factory, called only when its block is visible.
  */
 export type ListBlock =
   | {
       readonly kind: "heading";
       readonly key: string;
       readonly lines: number;
-      readonly node: ReactNode;
+      readonly node: ReactNode | (() => ReactNode);
       readonly heading: Heading;
     }
   | {
       readonly kind: "row";
       readonly key: string;
       readonly lines: number;
-      readonly node: ReactNode;
+      readonly node: ReactNode | (() => ReactNode);
     };
 
 /** What a block of a scrolled list is: a group's heading, or a row. */

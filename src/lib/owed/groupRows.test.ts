@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { alice, at, teamSettings, thread, wait } from "../../testing/facts.js";
+import {
+  alice,
+  at,
+  bob,
+  dave,
+  teamSettings,
+  thread,
+  wait,
+} from "../../testing/facts.js";
 import type { Repo } from "../config/index.js";
 import type { StackEntry } from "../stacks/index.js";
 import type { Wait } from "../waits/index.js";
@@ -63,6 +71,13 @@ describe("groupRows", () => {
       ]);
     });
 
+    it("lists a row once when the same owner is repeated in another case", () => {
+      const repeated = row({ owners: ["Alice", "alice"] });
+      const groups = groupRows([repeated], "owner", repos);
+      expect(groups).toHaveLength(1);
+      expect(groups[0]?.rows).toEqual([repeated]);
+    });
+
     it("heads an owner's section with the owner's group, and unassigned as text", () => {
       const assigned = row({
         owners: ["alice"],
@@ -72,6 +87,50 @@ describe("groupRows", () => {
       expect(groups.map(({ heading }) => heading)).toEqual([
         { text: "alice", kind: "person", group: "team" },
         { text: "unassigned", kind: "words" },
+      ]);
+    });
+  });
+
+  describe("by author", () => {
+    it("orders authors alphabetically, keeping the sort inside, and heads each with their group", () => {
+      const first = row({ author: bob });
+      const second = row({ author: alice });
+      const third = row({ author: bob });
+      const groups = groupRows([first, second, third], "author", repos);
+      expect(groups.map(({ heading }) => heading)).toEqual([
+        { text: "alice", kind: "person", group: "team" },
+        { text: "bob", kind: "person", group: "team" },
+      ]);
+      expect(references(groups)).toEqual([
+        ["example#1"],
+        ["example#1", "example#1"],
+      ]);
+    });
+
+    it("marks an author outside the organisation as outside", () => {
+      expect(
+        groupRows([row({ author: dave })], "author", repos)[0]?.heading,
+      ).toEqual({ text: "dave", kind: "person", group: "outside" });
+    });
+
+    it("keeps authors in alphabetical order when they arrive in that order already", () => {
+      const rows = [row({ author: alice }), row({ author: bob })];
+      expect(headings(groupRows(rows, "author", repos))).toEqual([
+        "alice",
+        "bob",
+      ]);
+    });
+
+    it("gathers one author written two ways in one section, headed as first written", () => {
+      const rows = [
+        row({ author: { ...alice, login: "Alice" } }),
+        row({ author: alice }),
+      ];
+      expect(groupRows(rows, "author", repos)).toEqual([
+        {
+          heading: { text: "Alice", kind: "person", group: "team" },
+          rows,
+        },
       ]);
     });
   });

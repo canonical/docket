@@ -7,6 +7,7 @@ import parseExempt from "./parseExempt.js";
 import parseHosts from "./parseHosts.js";
 import parsePeople from "./parsePeople.js";
 import parseRepos from "./parseRepos.js";
+import parseStart from "./parseStart.js";
 import parseTargets from "./parseTargets.js";
 import parseTime from "./parseTime.js";
 import parseYou from "./parseYou.js";
@@ -28,6 +29,7 @@ const parsers: {
   targets: parseTargets,
   exempt: parseExempt,
   activity: parseActivity,
+  start: parseStart,
   hosts: parseHosts,
   you: parseYou,
 };

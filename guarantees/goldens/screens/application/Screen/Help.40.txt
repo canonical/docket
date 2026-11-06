@@ -4,7 +4,7 @@
 |Mode ───────────────────────────────────
 |  ← →  h l switch mode
 |           owed → activity → finished
-|           docket opens owed
+|           docket opens start view
 |  g        next grouping
 |  t        next time window
 |           owed: most overdue first
@@ -41,7 +41,7 @@ runs
 3:1 "Mode ───────────────────────────────────" fg #ffffffff bg #000000ff
 4:1 "  ← →  h l switch mode" fg #ffffffff bg #000000ff
 5:1 "           owed → activity → finished" fg #ffffffff bg #000000ff
-6:1 "           docket opens owed" fg #ffffffff bg #000000ff
+6:1 "           docket opens start view" fg #ffffffff bg #000000ff
 7:1 "  g        next grouping" fg #ffffffff bg #000000ff
 8:1 "  t        next time window" fg #ffffffff bg #000000ff
 9:1 "           owed: most overdue first" fg #ffffffff bg #000000ff

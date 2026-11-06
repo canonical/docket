@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import type { Duration } from "../lib/clock/index.js";
 import type { FinishedGrouping, FinishedList } from "../lib/finished/index.js";
 import buildFinished from "./buildFinished.js";
@@ -54,18 +55,17 @@ export default function useFinished({
   viewer,
   ...props
 }: UseFinishedProps): UseFinishedResult {
+  const { watched, window } = props;
+  const build = useCallback(
+    (
+      endings: Parameters<typeof buildFinished>[0],
+      threads: Parameters<typeof buildFinished>[1],
+    ) => buildFinished(endings, threads, watched, window, grouping, at, viewer),
+    [watched, window, grouping, at, viewer],
+  );
   return useWindowList({
     ...props,
     time: timeEndings,
-    build: (endings, threads) =>
-      buildFinished(
-        endings,
-        threads,
-        props.watched,
-        props.window,
-        grouping,
-        at,
-        viewer,
-      ),
+    build,
   });
 }

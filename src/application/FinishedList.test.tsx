@@ -27,7 +27,7 @@ describe("FinishedList", () => {
     );
     expect(screen.lines.slice(0, 7)).toEqual([
       `ISSUES ${"─".repeat(33)}`,
-      "│ docs#4 issue ◐ carol           open 4d",
+      "│ ◇ docs#4 ◐ carol               open 4d",
       "│ Where do tokens live?",
       `│${" ".repeat(25)}◉ alice, ● bob`,
       "│ target 30d",
@@ -35,7 +35,7 @@ describe("FinishedList", () => {
       "│ labels none",
     ]);
     expect(screen.lines.at(7)).toBe("╵   ● bob closed as completed         3h");
-    expect(screen.lines.at(8)).toBe("┃ example#7 issue ○ dave         7d over");
+    expect(screen.lines.at(8)).toBe("┃ ◇ example#7 ○ dave             7d over");
   });
 
   it("draws every ending on no background, the selection's covering the row and its accordion alone", async () => {
@@ -69,9 +69,9 @@ describe("FinishedList", () => {
       60,
       20,
     );
-    expect(screen.lines.at(0)).toMatch(/^│ docs#4 issue/);
+    expect(screen.lines.at(0)).toMatch(/^│ ◇ docs#4 issue/);
     expect(screen.lines.slice(4, 7)).toEqual([
-      `│┆example#2 PR ◉ alice${" ".repeat(31)}open 2d`,
+      `│┆⇄ example#2 PR ◉ alice${" ".repeat(29)}open 2d`,
       `│┆Example change${" ".repeat(37)}◉ alice`,
       "│┆target 5d",
     ]);

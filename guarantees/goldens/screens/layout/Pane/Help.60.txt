@@ -3,7 +3,7 @@
 |
 |Mode ───────────────────────────────────────────────────────
 |  ← →  h l switch mode (owed ↔ activity)
-|           docket opens owed
+|           docket opens start view
 |  g        next grouping
 |
 |List ───────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ runs
 1:1 "help                                                        " fg #ffffffff bg #000000ff
 3:1 "Mode ───────────────────────────────────────────────────────" fg #ffffffff bg #000000ff
 4:1 "  ← →  h l switch mode (owed ↔ activity)" fg #ffffffff bg #000000ff
-5:1 "           docket opens owed" fg #ffffffff bg #000000ff
+5:1 "           docket opens start view" fg #ffffffff bg #000000ff
 6:1 "  g        next grouping" fg #ffffffff bg #000000ff
 8:1 "List ───────────────────────────────────────────────────────" fg #ffffffff bg #000000ff
 9:1 "  ↑ ↓  k j move the selection" fg #ffffffff bg #000000ff

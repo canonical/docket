@@ -38,10 +38,10 @@ const answers = {
  * Answers one call of docket: parses it, reads the personal file, asks gh
  * for a token, and answers the command from the shared cache, which also
  * holds each watched repository's own file. In a terminal, `docket` alone
- * and `docket owed` without `--format` open the terminal interface
- * instead, on owed at `--by`'s grouping, and `docket activity` without
- * `--format` on activity; a missing prerequisite then shows there rather
- * than as text.
+ * without `--format` opens the terminal interface on the personal file's
+ * `start` view, owed by default, and `docket owed`, `docket activity` and
+ * `docket finished` without `--format` open it on their command's mode; a
+ * missing prerequisite then shows there rather than as text.
  * Text mode never refreshes in the background: it fetches only when the
  * cached data is older than `--max-age`.
  *
@@ -106,15 +106,22 @@ export default async function run(context: Context): Promise<number> {
         connection,
       );
     }
-    const mode = chooseTerminalMode(context, invocation);
+    const mode = chooseTerminalMode(context, invocation, settings.start);
     if (mode) {
-      // The interface opens where the call would print, and a window or
-      // grouping the mode lacks stops the call before it opens.
+      // The interface opens where the call would print, or on the personal
+      // file's `start` view for a call that names no command, and a window
+      // or grouping the mode lacks stops the call before it opens. A call
+      // that names no grouping opens on the mode's first, which may not be
+      // the command's own default when `start` picks the mode.
+      const named = {
+        window: invocation.window,
+        by: invocation.byGiven ? invocation.by : undefined,
+      };
       const addresses =
         mode === "activity"
-          ? { activity: chooseActivityAddress(settings.activity, invocation) }
+          ? { activity: chooseActivityAddress(settings.activity, named) }
           : mode === "finished"
-            ? { finished: chooseFinishedAddress(settings.activity, invocation) }
+            ? { finished: chooseFinishedAddress(settings.activity, named) }
             : {};
       return await answerTerminal(
         context,

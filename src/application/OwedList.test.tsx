@@ -51,7 +51,7 @@ describe("OwedList", () => {
     const screen = await drawList("owner", 0, 40, 16);
     expect(screen.lines).toEqual([
       "● alice ────────────────────────────────",
-      `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+      `┃┆⇄ example#12 PR reply ○ dave${" ".repeat(3)}4d over`,
       `┃┆Fix the parser${" ".repeat(7)}✗ checks  ● alice`,
       "┃┆○ dave · 3d ago",
       "┃┆Rebased on main. Could someone look",
@@ -59,9 +59,9 @@ describe("OwedList", () => {
       "┃┆waiting since Mon 10:00 · target 24h",
       "┃┆example stack 3 · 2 of 3 · → main",
       "╹┆below #11 merged, above #13 open",
-      `┃┆example#12 PR close ○ dave${" ".repeat(5)}2h over`,
+      `┃┆⇄ example#12 PR close ○ dave${" ".repeat(3)}2h over`,
       `╹┆Fix the parser${" ".repeat(7)}✗ checks  ● alice`,
-      `│ docs#4 issue close ● alice${" ".repeat(4)}10d left`,
+      `│ ◇ docs#4 issue close ● alice${" ".repeat(2)}10d left`,
       "│ Where do tokens live?",
       `╵${" ".repeat(25)}● alice, ● bob`,
       "● bob ──────────────────────────────────",
@@ -89,13 +89,13 @@ describe("OwedList", () => {
     const screen = await drawList("stack", 2, 60, 14);
     expect(screen.lines.slice(0, 5)).toEqual([
       "example stack 3 · 3 PRs → main ─────────────────────────────",
-      `┃┆example#12 PR reply ○ dave${" ".repeat(25)}4d over`,
+      `┃┆⇄ example#12 PR reply ○ dave${" ".repeat(23)}4d over`,
       `╹┆Fix the parser${" ".repeat(27)}✗ checks  ● alice`,
-      `┃┆example#12 PR close ○ dave${" ".repeat(25)}2h over`,
+      `┃┆⇄ example#12 PR close ○ dave${" ".repeat(23)}2h over`,
       `╹┆Fix the parser${" ".repeat(27)}✗ checks  ● alice`,
     ]);
     expect(screen.lines.slice(5, 9)).toEqual([
-      `│┆example#12 PR review ○ dave${" ".repeat(24)}1d left`,
+      `│┆⇄ example#12 PR review ○ dave${" ".repeat(22)}1d left`,
       `│┆Fix the parser${" ".repeat(29)}✗ checks  ● bob`,
       "│┆asked by ● alice 3h ago",
       "│┆0 pushes since · 2 files · +65 −12",
@@ -109,7 +109,7 @@ describe("OwedList", () => {
     const screen = await drawList("owner", 3, 40, 8);
     expect(screen.lines.slice(0, 3)).toEqual([
       `● bob · 1 of 2 ${"─".repeat(25)}`,
-      `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
+      `│┆⇄ example#12 PR review ○ dave${" ".repeat(2)}1d left`,
       `│┆Fix the parser${" ".repeat(9)}✗ checks  ● bob`,
     ]);
     expect(screen.lines.at(7)).toBe("  ↓ 3 below");
@@ -129,7 +129,7 @@ describe("OwedList", () => {
     const screen = await drawList("owner", 3, 40, 6, editor);
     expect(screen.lines).toEqual([
       `● bob · 1 of 2 ${"─".repeat(25)}`,
-      `│┆example#12 PR review ○ dave${" ".repeat(4)}1d left`,
+      `│┆⇄ example#12 PR review ○ dave${" ".repeat(2)}1d left`,
       `╵┆Fix the parser${" ".repeat(9)}✗ checks  ● bob`,
       "  filter:",
       "  ☑ alice",
@@ -150,7 +150,7 @@ describe("OwedList", () => {
       "  in the personal file or the",
       "  repository's .github/docket.yaml, then",
       "  run docket config",
-      `┃┆example#12 PR reply ○ dave${" ".repeat(5)}4d over`,
+      `┃┆⇄ example#12 PR reply ○ dave${" ".repeat(3)}4d over`,
     ]);
     expect(screen.look("✗ no team")?.fg).toBe(hex(tokens["color.text.error"]));
     expect(shown).toHaveBeenLastCalledWith(1, 0);
@@ -190,7 +190,7 @@ describe("OwedList", () => {
       "  or the repository's .github/docket.yaml, then run",
       "  docket config",
     ]);
-    expect(screen.lines.at(5)).toMatch(/^┃┆example#12 PR reply/);
+    expect(screen.lines.at(5)).toMatch(/^┃┆⇄ example#12 PR reply/);
   });
 
   it("scrolls to keep the selected item whole once a failed read adds its line under the snapshot's", async () => {
@@ -211,7 +211,7 @@ describe("OwedList", () => {
       12,
     );
     expect(screen.lines).toContain("╵┆✗ failed: GitHub timed out");
-    expect(screen.lines.at(0)).toBe("┃ example#15 issue reply ◐ carol 4h left");
+    expect(screen.lines.at(0)).toBe("┃ ◇ example#15 issue reply       4h left");
     expect(shown.at(-1)).toBe(2);
   });
 
