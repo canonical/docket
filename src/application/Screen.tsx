@@ -286,29 +286,27 @@ export default function Screen({
     return (row: ListRow) => {
       const { repo, number } = summarize(row);
       const key = `${repo}#${number}`;
-      let waits = byThread.get(key);
-      if (!waits && threads) {
-        waits = buildThreadWaits(
-          summarize(row),
-          threads,
-          watched,
-          at,
-          you.viewer,
-        );
-        byThread.set(key, waits);
-      }
-      return waits ?? [];
+      const kept = byThread.get(key);
+      if (kept) return kept;
+      const waits = buildThreadWaits(
+        summarize(row),
+        threads as readonly Thread[],
+        watched,
+        at,
+        you.viewer,
+      );
+      byThread.set(key, waits);
+      return waits;
     };
   }, [threads, watched, at, you.viewer]);
   const readActivityPeople = useMemo(() => {
     const byRepo = new Map<string, ReturnType<typeof findPeople>>();
     return (repo: string) => {
-      let people = byRepo.get(repo);
-      if (!people && threads) {
-        people = findPeople(repo, threads, watched);
-        byRepo.set(repo, people);
-      }
-      return people ?? new Map();
+      const kept = byRepo.get(repo);
+      if (kept) return kept;
+      const people = findPeople(repo, threads as readonly Thread[], watched);
+      byRepo.set(repo, people);
+      return people;
     };
   }, [threads, watched]);
   const activity = useActivity({

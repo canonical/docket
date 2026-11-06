@@ -29,8 +29,12 @@ export default async function main(): Promise<void> {
     openTerminal: async (view) => {
       // The terminal interface and its React renderer are loaded only when
       // a terminal opens it; a text call, or an agent's, never pays for them.
-      const { default: openTerminal } = await import("./openTerminal.js");
-      process.exit(await openTerminal(view));
+      const [{ default: openTerminal }, { createCliRenderer }] =
+        await Promise.all([
+          import("./openTerminal.js"),
+          import("@opentui/core"),
+        ]);
+      process.exit(await openTerminal(view, createCliRenderer));
     },
     version: manifest.version,
   });

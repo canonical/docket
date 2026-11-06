@@ -113,6 +113,19 @@ describe("describeCandidate", () => {
     ).toBe("internal");
   });
 
+  it("puts a team in the organisation even when its repository is not watched", () => {
+    const elsewhere = {
+      ...discussed,
+      repo: "example-org/other",
+      author: alice,
+    };
+    expect(
+      groupOf(
+        describeCandidate("example-org/reviewers", elsewhere, watched, "alice"),
+      ),
+    ).toBe("internal");
+  });
+
   it("lists nobody for a repository not watched", () => {
     const elsewhere = {
       ...discussed,

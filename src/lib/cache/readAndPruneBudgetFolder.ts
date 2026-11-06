@@ -46,7 +46,7 @@ export default async function readAndPruneBudgetFolder(
     .map((name) => join(folder, name));
   await Promise.all([
     ...files.map((file, index) =>
-      isSpent(read[index] ?? {}) ? remove(file) : undefined,
+      isSpent(read[index]) ? remove(file) : undefined,
     ),
     ...temporaries.map(async (file) =>
       (await isLeftOver(file).catch(() => false)) ? remove(file) : undefined,

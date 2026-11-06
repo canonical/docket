@@ -49,7 +49,7 @@ export default function readEnding(
       outcome: "merged",
       label: endingLabels.merged,
       at: new Date(ended),
-      by: readAccount(node.mergedBy ?? null),
+      by: readAccount(node.mergedBy),
     };
   }
   const outcome = readOutcome(kind, node.stateReason);
@@ -59,7 +59,7 @@ export default function readEnding(
     outcome,
     label: endingLabels[outcome],
     at: new Date(ended),
-    ...(close ? { by: readAccount(close.actor ?? null) } : {}),
+    ...(close ? { by: readAccount(close.actor) } : {}),
     ...(closer ? { closer } : {}),
     ...(duplicate ? { duplicateOf: readAddress(duplicate) } : {}),
   };

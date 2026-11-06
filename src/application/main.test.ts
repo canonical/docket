@@ -9,6 +9,8 @@ const createProvider = vi.fn(async () => ({}));
 vi.mock("../lib/github/index.js", () => ({ createProvider }));
 const openTerminal = vi.fn(async () => 0);
 vi.mock("./openTerminal.js", () => ({ default: openTerminal }));
+const createCliRenderer = vi.fn();
+vi.mock("@opentui/core", () => ({ createCliRenderer }));
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -65,7 +67,7 @@ describe("main", () => {
       },
     };
     await context.openTerminal(view);
-    expect(openTerminal).toHaveBeenCalledWith(view);
+    expect(openTerminal).toHaveBeenCalledWith(view, createCliRenderer);
     // Closing the interface ends the process at once, whatever requests
     // are still waiting on GitHub.
     expect(exit).toHaveBeenCalledWith(0);

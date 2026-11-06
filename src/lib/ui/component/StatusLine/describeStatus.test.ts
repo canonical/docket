@@ -251,6 +251,23 @@ describe("describeStatus", () => {
     });
   });
 
+  it("names a refreshing repository it has no short name for in full", () => {
+    const status = {
+      ...statusOf(Refreshing),
+      stages: [
+        {
+          repo: "example-org/example-site",
+          stage: { kind: "checking" as const },
+        },
+      ],
+    };
+    expect(describeAt(status)).toEqual({
+      kind: "refreshing",
+      text: "refreshing · example-org/example-site 1/1",
+      name: "example-org/example-site",
+    });
+  });
+
   it("drops the notice once the cooldown is over", () => {
     const status = {
       ...statusOf(Synced),

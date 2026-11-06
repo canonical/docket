@@ -49,7 +49,7 @@ export default async function answerTerminal(
   personal: Layer | undefined,
   settings: Settings,
   connection: Connection | Problem,
-  addresses: Pick<TerminalView, "activity" | "finished"> = {},
+  addresses: Pick<TerminalView, "activity" | "finished">,
 ): Promise<number> {
   const { now, openTerminal } = context;
   if ("code" in connection) {

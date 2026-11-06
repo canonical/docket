@@ -1,4 +1,16 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": ["@canonical/biome-config"]
+  "extends": ["@canonical/biome-config"],
+  "overrides": [
+    {
+      "includes": ["**/*.md"],
+      "formatter": { "enabled": false }
+    },
+    {
+      "includes": ["**/*.test.tsx", "src/testing/**", "guarantees/**"],
+      "linter": {
+        "rules": { "correctness": { "noComponentHookFactories": "off" } }
+      }
+    }
+  ]
 }
