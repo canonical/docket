@@ -1,5 +1,7 @@
 # AGENTS.md
 
+Read the top-level `.kb/agents.md` file before continuing below.
+
 ## Commands
 
 - `bun install`: installs the exact toolchain that `bun.lock` records.
@@ -72,7 +74,7 @@
 
 ## Boundaries
 
-- `package.json`'s `version` is the only place the version is written. The program reads it from `package.json` at run time. A release publishes that version to npm: run the Release workflow (`.github/workflows/release.yml`) from `main` once the pull request that sets it has merged.
+- `package.json`'s `version` is the only place the version is written; Lerna updates it at release time. The program reads it from `package.json` at run time. A release runs from `main` through the Release workflow (`.github/workflows/release.yml`), which runs the gates, lets Lerna bump the version and generate `CHANGELOG.md` from Conventional Commits, commits and tags `v<version>`, then publishes that tag to npm.
 - Security reports go through GitHub's private vulnerability reporting, as `SECURITY.md` says, never through a public issue.
 
 ## Gotchas
@@ -88,3 +90,7 @@
 - The audit and its self-test query the advisory database, and the first gitleaks run through nix downloads it, so `bun run ci` needs the network.
 - The throttling plugin spaces GraphQL requests a second apart, and the guarantees send them for real to the stand-in, so the tier takes about a minute.
 - GitHub Actions runs the same gates on every pull request and on `main` (`.github/workflows/ci.yml`), on the Bun that `.bun-version` names; `bun run ci` runs them locally: paste its output into the pull request's QA section.
+
+## Documents
+
+- `.kb/agents.md` - Rules for reading and writing this knowledge base.
