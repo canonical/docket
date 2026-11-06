@@ -117,4 +117,13 @@ describe("useInbox", () => {
       process.off("unhandledRejection", listener);
     }
   });
+
+  it("ignores a read that arrives after the mode closes", async () => {
+    const gate = Promise.withResolvers<void>();
+    const screen = await probe(() => gate.promise as Promise<never>);
+    await screen.redraw(() => setShown(false));
+    gate.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect((await screen.redraw()).lines.at(0)).toBe("reading");
+  });
 });
