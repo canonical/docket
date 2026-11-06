@@ -2,7 +2,11 @@ import type {
   ActivityAddress,
   ThreadRow as ActivityThread,
 } from "../lib/activity/index.js";
-import type { Cache, CachedEvents } from "../lib/cache/index.js";
+import type {
+  Cache,
+  CachedEvents,
+  CachedNotifications,
+} from "../lib/cache/index.js";
 import type {
   PersonalFile,
   Repo,
@@ -11,6 +15,7 @@ import type {
   View,
 } from "../lib/config/index.js";
 import type { FinishedAddress, FinishedRow } from "../lib/finished/index.js";
+import type { InboxAddress, InboxRow } from "../lib/inbox/index.js";
 import type { OwedGrouping, WaitRow } from "../lib/owed/index.js";
 import type { Author } from "../lib/people/index.js";
 import type {
@@ -83,6 +88,8 @@ export interface Invocation {
   readonly byGiven: boolean;
   readonly window: string | undefined;
   readonly confirm: boolean;
+  /** Whether the inbox shows read notifications as well as unread. */
+  readonly all: boolean;
 }
 
 /** A watched repository, with the settings in effect for it. */
@@ -126,7 +133,10 @@ export interface Session {
 }
 
 /** A row of any mode's list: owed's wait, or activity's or finished's thread. */
-export type ListRow = WaitRow | ActivityThread | FinishedRow;
+export type ListRow = WaitRow | ActivityThread | FinishedRow | InboxRow;
+
+/** A row that names a thread; the inbox's rows name none. */
+export type ThreadListRow = Exclude<ListRow, InboxRow>;
 
 /** The modes of the terminal interface, in the order the arrows reach them. */
 export type TerminalMode = View;
@@ -152,6 +162,10 @@ export interface TerminalView {
    * activity's for `docket finished`: the first of each when absent.
    */
   readonly finished?: Pick<FinishedAddress, "window" | "grouping">;
+  /**
+   * The grouping and filter inbox opens on: the first of each when absent.
+   */
+  readonly inbox?: Pick<InboxAddress, "grouping" | "filter">;
   /** The current time, read whenever an age is measured. */
   readonly now: () => Date;
   /** Opens a thread's page in the browser, and rejects when it cannot. */
@@ -226,6 +240,15 @@ export interface TerminalView {
           repo: string,
           since: Date,
         ) => Promise<CachedEvents>;
+        /**
+         * Reads the notification inbox through the cache, no older than
+         * the call's maximum age.
+         */
+        readonly readInbox: () => Promise<CachedNotifications>;
+        /** Fetches the notification inbox again, for `R`. */
+        readonly refreshInbox: () => Promise<void>;
+        /** Marks one notification read, then keeps it in the cache. */
+        readonly markNotificationRead: (id: string) => Promise<void>;
       }
     | { readonly problem: Problem };
 }

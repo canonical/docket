@@ -1,0 +1,11 @@
+60 columns
+|● ⇄ example#12 review requested                           3h
+|  Fix the parser
+
+runs
+1:1 "● " fg #c0c0c0ff bg #808080ff
+1:3 "⇄ example#12 review requested                           3h" fg #ffffffff bg #808080ff bold
+2:1 " " fg #c0c0c0ff bg #808080ff
+2:2 " " fg #ffffffff bg #808080ff
+2:3 "Fix the parser" fg #ffffffff bg #808080ff italic
+2:17 "                                            " fg #ffffffff bg #808080ff

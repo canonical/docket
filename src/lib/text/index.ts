@@ -11,6 +11,8 @@ export { default as renderConfig } from "./renderConfig.js";
 export type { FinishedAnswer } from "./renderFinished.js";
 export { default as renderFinished } from "./renderFinished.js";
 export { default as renderHelp } from "./renderHelp.js";
+export type { InboxAnswer } from "./renderInbox.js";
+export { default as renderInbox } from "./renderInbox.js";
 export type { OwedAnswer } from "./renderOwed.js";
 export { default as renderOwed } from "./renderOwed.js";
 export type { WritePlan } from "./renderPlan.js";

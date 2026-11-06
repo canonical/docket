@@ -1,0 +1,8 @@
+60 columns
+|● ◇ example-repository-with-a-long-name#12345 mention     3h
+|  Keep the comments at the ends of lines when the parser me…
+
+runs
+1:1 "● " fg #c0c0c0ff bg #00000000
+1:3 "◇ example-repository-with-a-long-name#12345 mention     3h" fg #ffffffff bg #00000000 bold
+2:3 "Keep the comments at the ends of lines when the parser me…" fg #ffffffff bg #00000000 italic

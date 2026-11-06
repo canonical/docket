@@ -19,6 +19,7 @@ export const everyCapability: ReadonlySet<Capability> = new Set<Capability>([
   "botAccounts",
   "pushes",
   "changeProbe",
+  "notifications",
 ]);
 
 /** A full hourly budget that resets at 11:00 UTC on 28 September 2026. */
@@ -42,6 +43,8 @@ export function fakeProvider(overrides: Partial<Provider> = {}): Provider {
     events: unused("events"),
     threadDetail: unused("threadDetail"),
     threadDetails: unused("threadDetails"),
+    notifications: async () => [],
+    markNotificationRead: async () => {},
     assignableUsers: unused("assignableUsers"),
     reviewCandidates: unused("reviewCandidates"),
     readAssignees: unused("readAssignees"),

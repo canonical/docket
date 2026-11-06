@@ -9,21 +9,29 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import type { ThreadRow as ActivityThread } from "../lib/activity/index.js";
+import type { FinishedThread } from "../lib/endings/index.js";
+import { describeEmptyInbox } from "../lib/inbox/index.js";
 import { describeNoTeam, groupWaits, listWaits } from "../lib/owed/index.js";
 import {
   type ActionResult,
   CountsLine,
+  EmptyState,
   HelpOverlay,
   KeyBar,
+  Loading,
   minColumns,
   minLines,
+  Notice,
   Pane,
   PaneHeader,
 } from "../lib/ui/index.js";
-import type { Thread } from "../lib/waits/index.js";
+import type { Thread, ThreadSummary } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
 import buildThreadWaits from "./buildThreadWaits.js";
+import { standInIndent } from "./constants.js";
 import describeCandidate from "./describeCandidate.js";
+import describeFailure from "./describeFailure.js";
 import describePosition from "./describePosition.js";
 import drawEditorSlot from "./drawEditorSlot.js";
 import drawStandIn from "./drawStandIn.js";
@@ -31,6 +39,7 @@ import drawStatusLine from "./drawStatusLine.js";
 import FinishedList from "./FinishedList.js";
 import findPeople from "./findPeople.js";
 import gatherNamed from "./gatherNamed.js";
+import InboxList from "./InboxList.js";
 import identifyRow from "./identifyRow.js";
 import listTeam from "./listTeam.js";
 import OwedList from "./OwedList.js";
@@ -41,6 +50,7 @@ import type {
   SelectedThread,
   TerminalMode,
   TerminalView,
+  ThreadListRow,
   WatchedFiles,
 } from "./types.js";
 import useActivity from "./useActivity.js";
@@ -49,6 +59,7 @@ import useAttention, { type UseAttentionProps } from "./useAttention.js";
 import useEditor from "./useEditor.js";
 import useFinished from "./useFinished.js";
 import useHelp from "./useHelp.js";
+import useInbox from "./useInbox.js";
 import useRowDetails from "./useRowDetails.js";
 import useScreenKeys from "./useScreenKeys.js";
 import useSelectedWatch from "./useSelectedWatch.js";
@@ -58,8 +69,8 @@ import useViewer from "./useViewer.js";
 /** How often, in milliseconds, the screen reads the clock again. */
 const tick = 1_000;
 
-/** The thread a row names, in any mode. */
-const summarize = (row: ListRow) =>
+/** The thread a row names, in any mode but the inbox, which names none. */
+const summarize = (row: ThreadListRow): ThreadSummary | FinishedThread =>
   "wait" in row ? row.wait.thread : row.thread;
 
 /** Stand in for the cache's store when there is no cache: nothing changes. */
@@ -144,15 +155,39 @@ export default function Screen({
     windows: settings.activity,
     stacks: "capabilities" in source && source.capabilities.has("stacks"),
   });
-  const { mode, owedGrouping, activityGrouping, window, header } = address;
+  const {
+    mode,
+    owedGrouping,
+    activityGrouping,
+    window,
+    inboxGrouping,
+    inboxFilter,
+    header,
+  } = address;
   const { finishedGrouping, finishedWindow } = address;
+  const inbox = useInbox({
+    source,
+    shown: mode === "inbox",
+    attention: attentionState,
+    syncedAt: status?.syncedAt,
+    watched,
+    grouping: inboxGrouping,
+    filter: inboxFilter,
+    now,
+    at,
+  });
   const helpState = useHelp();
   const help = helpState.open;
   // Each mode keeps its own selection, so switching back finds it where it
   // was left.
   const [selections, setSelections] = useState<
     Readonly<Record<TerminalMode, Selection>>
-  >({ owed: unselected, activity: unselected, finished: unselected });
+  >({
+    owed: unselected,
+    activity: unselected,
+    finished: unselected,
+    inbox: unselected,
+  });
   const [action, setAction] = useState<ActionResult>();
   // The keys read the rows drawn last, and the row selected among them,
   // so a binding never holds a list older than the one on screen.
@@ -195,7 +230,7 @@ export default function Screen({
   // A row's thread as the data records it: an owed row carries its
   // thread, and another row names one the cache holds while it is open.
   const findFacts = useCallback(
-    (row: ListRow): Thread | undefined => {
+    (row: ThreadListRow): Thread | undefined => {
       if ("wait" in row) return row.wait.thread;
       const { repo, number } = row.thread;
       return factsByThread.get(`${repo}#${number}`);
@@ -205,7 +240,7 @@ export default function Screen({
   // The thread `a` and `r` act on, in owed or activity.
   const selectThread = (): SelectedThread | undefined => {
     const row = drawnSelection.current;
-    if (!row) return undefined;
+    if (!row || "notification" in row) return undefined;
     const reference = row.reference.text;
     const thread = findFacts(row);
     return thread ? { reference, thread } : { reference };
@@ -234,7 +269,12 @@ export default function Screen({
       openSelected: () => {
         const row = drawnSelection.current;
         if (!row) return;
-        const { url } = "wait" in row ? row.wait.thread : row.thread;
+        const url =
+          "notification" in row
+            ? row.url
+            : "wait" in row
+              ? row.wait.thread.url
+              : row.thread.url;
         openInBrowser(url).catch(() =>
           setAction({
             failed: true,
@@ -245,14 +285,39 @@ export default function Screen({
       },
       nextGrouping: address.nextGrouping,
       nextWindow: address.nextWindow,
+      toggleInbox: address.toggleInbox,
+      toggleInboxFilter: address.toggleInboxFilter,
+      markRead: () => {
+        const row = drawnSelection.current;
+        if (!row || !("notification" in row) || !("cache" in source)) return;
+        void source.markNotificationRead(row.notification.id).catch((error) => {
+          setAction({
+            failed: true,
+            text: describeFailure(error).message,
+            at: now(),
+          });
+        });
+      },
       edit: (action) => editor.start(action, selectThread()),
       toggleHelp: helpState.toggle,
       closeHelp: helpState.close,
-      // A full refresh that threw the data away reads the details again.
-      refresh: () =>
+      // A full refresh that threw the data away reads the details again;
+      // in the inbox it reads the notifications again instead.
+      refresh: () => {
+        if (mode === "inbox" && "cache" in source) {
+          void source.refreshInbox().catch((error) => {
+            setAction({
+              failed: true,
+              text: describeFailure(error).message,
+              at: now(),
+            });
+          });
+          return;
+        }
         void cache
           ?.fullRefresh()
-          .then((discarded) => discarded && ahead.drop()),
+          .then((discarded) => discarded && ahead.drop());
+      },
       quit: onQuit,
     },
   });
@@ -283,7 +348,7 @@ export default function Screen({
   );
   const measureActivityWaits = useMemo(() => {
     const byThread = new Map<string, ReturnType<typeof buildThreadWaits>>();
-    return (row: ListRow) => {
+    return (row: ActivityThread) => {
       const { repo, number } = summarize(row);
       const key = `${repo}#${number}`;
       let waits = byThread.get(key);
@@ -349,13 +414,31 @@ export default function Screen({
   const ended = finished && "list" in finished ? finished.list : undefined;
   // The mode on screen's list alone drives the keys and the counts, so a
   // list read off screen is never what a key acts on.
-  const shown = mode === "owed" ? owed : mode === "activity" ? listed : ended;
+  const inboxListed = inbox && "list" in inbox ? inbox.list : undefined;
+  const shown =
+    mode === "owed"
+      ? owed
+      : mode === "activity"
+        ? listed
+        : mode === "finished"
+          ? ended
+          : inboxListed;
   const rows: readonly ListRow[] = useMemo(
     () =>
       shown?.groups.flatMap((group): readonly ListRow[] => group.rows) ?? [],
     [shown],
   );
   const selectedRow = rows.at(placeSelection(rows, selections[mode]));
+  const selectedThread =
+    selectedRow && !("notification" in selectedRow)
+      ? summarize(selectedRow)
+      : undefined;
+  const threadRows = useMemo(
+    () => rows.filter((row): row is ThreadListRow => !("notification" in row)),
+    [rows],
+  );
+  const selectedThreadRow =
+    selectedRow && !("notification" in selectedRow) ? selectedRow : undefined;
   useEffect(() => {
     drawnRows.current = rows;
     drawnSelection.current = selectedRow;
@@ -363,14 +446,17 @@ export default function Screen({
   });
   useSelectedWatch({
     cache,
-    selected: selectedRow && summarize(selectedRow),
+    selected: selectedThread,
     attention: attentionState,
   });
   const ahead = useRowDetails({
     reader: "cache" in source ? source.details : undefined,
-    rows,
-    selected: selectedRow,
-    drawnSelected: () => drawnSelection.current,
+    rows: threadRows,
+    selected: selectedThreadRow,
+    drawnSelected: () => {
+      const row = drawnSelection.current;
+      return row && !("notification" in row) ? row : undefined;
+    },
     held: cached?.threads ?? [],
     findFacts,
     attention: attentionState,
@@ -403,6 +489,42 @@ export default function Screen({
     watched,
     width,
   });
+  if (mode === "inbox" && !problem) {
+    if (inbox && "problem" in inbox) {
+      region = (
+        <Notice
+          reason={inbox.problem.message.replace(/\.$/, "")}
+          recovery={inbox.problem.recovery}
+          width={width}
+        />
+      );
+    } else if (inboxListed) {
+      region =
+        inboxListed.groups.length === 0 ? (
+          <EmptyState
+            message={describeEmptyInbox(inboxListed.address)}
+            width={width}
+          />
+        ) : (
+          <InboxList
+            list={inboxListed}
+            selected={placeSelection(rows, selections.inbox)}
+            width={width}
+            height={listHeight}
+            {...shownList.list}
+          />
+        );
+    } else {
+      region = (
+        <box paddingLeft={standInIndent}>
+          <Loading
+            label={{ text: "refresh in progress…", kind: "words" }}
+            width={width - standInIndent}
+          />
+        </box>
+      );
+    }
+  }
   if (region === undefined && owed && readThreadDetail) {
     region = (
       <OwedList
@@ -521,13 +643,19 @@ export default function Screen({
               // A failure reading the window on screen, or whom gh is
               // signed in as, leaves the rows held.
               failure:
-                (windowed && "list" in windowed
-                  ? windowed.failure
-                  : undefined) ?? you.failure,
-              // The window on screen's own data, whose age the line
-              // names beside the threads'.
+                (mode === "inbox" && inbox && "failure" in inbox
+                  ? inbox.failure
+                  : windowed && "list" in windowed
+                    ? windowed.failure
+                    : undefined) ?? you.failure,
+              // The window or inbox on screen's own data, whose age the
+              // line names beside the threads'.
               readAt:
-                windowed && "list" in windowed ? windowed.readAt : undefined,
+                mode === "inbox" && inbox && "readAt" in inbox
+                  ? inbox.readAt
+                  : windowed && "list" in windowed
+                    ? windowed.readAt
+                    : undefined,
               action,
               attention: attentionState,
               details: ahead.progress,

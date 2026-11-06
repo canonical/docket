@@ -76,10 +76,40 @@ describe("createProvider", () => {
       "changeProbe",
       "checks",
       "discussions",
+      "notifications",
       "pushes",
       "stacks",
       "teamReviews",
     ]);
+  });
+
+  it("reads the notification inbox and marks a thread read", async () => {
+    const provider = await createProvider("github.com", "1.2.3");
+    const raw = {
+      id: "1",
+      unread: true,
+      reason: "mention",
+      updated_at: "2026-09-28T09:00:00Z",
+      last_read_at: null,
+      subject: {
+        title: "Crash on start",
+        url: "https://api.github.com/repos/example-org/example-repo/issues/15",
+        latest_comment_url: "",
+        type: "Issue",
+      },
+      repository: {
+        full_name: "example-org/example-repo",
+        html_url: "https://github.com/example-org/example-repo",
+      },
+      url: "https://api.github.com/notifications/threads/1",
+      subscription_url: "",
+    };
+    github.rest("GET /notifications", { body: [raw] });
+    github.rest("PATCH /notifications/threads/1", { status: 205 });
+    expect(await settle(provider.notifications())).toEqual([
+      expect.objectContaining({ id: "1", reason: "mention" }),
+    ]);
+    await settle(provider.markNotificationRead("1"));
   });
 
   it("reads a team's members once while it lives, however many snapshots request it", async () => {

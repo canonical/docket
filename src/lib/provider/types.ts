@@ -1,5 +1,6 @@
 import type { FinishedThread } from "../endings/index.js";
 import type { ThreadEvent } from "../events/index.js";
+import type { InboxNotification } from "../inbox/index.js";
 import type { Account, Author } from "../people/index.js";
 import type {
   Checks,
@@ -28,7 +29,9 @@ export type Capability =
   /** Each push of commits, with its time and the account that made it. */
   | "pushes"
   /** A check for changes that costs nothing when nothing changed. */
-  | "changeProbe";
+  | "changeProbe"
+  /** The account's GitHub notification inbox. */
+  | "notifications";
 
 /**
  * Where the last snapshot of a repository ended, so the next one fetches
@@ -256,6 +259,13 @@ export interface Provider {
   threadDetails(
     threads: readonly ThreadSummary[],
   ): Promise<readonly (ThreadDetail | undefined)[]>;
+  /**
+   * The account's notification inbox: read and unread, every subject
+   * kind, and no notification marked done.
+   */
+  notifications(): Promise<readonly InboxNotification[]>;
+  /** Marks one notification thread read, as opening it in the inbox does. */
+  markNotificationRead(id: string): Promise<void>;
   /** Everyone who can be assigned in `repo`. */
   assignableUsers(repo: string): Promise<readonly Account[]>;
   reviewCandidates(pullRequest: ThreadSummary): Promise<ReviewCandidates>;

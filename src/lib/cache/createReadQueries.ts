@@ -1,11 +1,14 @@
 import type { QueryClient } from "@tanstack/query-core";
+import type { InboxNotification } from "../inbox/index.js";
 import type { EventsSince } from "../provider/index.js";
 import type {
   CachedEvents,
   CachedFile,
+  CachedNotifications,
   CachedViewer,
   EventsCache,
   FileCache,
+  NotificationsCache,
 } from "./types.js";
 
 /**
@@ -24,6 +27,7 @@ export default function createReadQueries(
   const eventsKey = (repo: string) => ["events", repo];
   const fileKey = (repo: string, path: string) => ["file", repo, path];
   const viewerKey = ["viewer"];
+  const notificationsKey = ["notifications"];
   const isYounger = (syncedAt: Date, maxAge: number) =>
     now().getTime() - syncedAt.getTime() < maxAge;
 
@@ -64,6 +68,15 @@ export default function createReadQueries(
         ? { text: state.data.text ?? undefined, syncedAt }
         : undefined;
     },
+    /** The notification inbox held, read and unread, and when it was fetched. */
+    findNotifications(): CachedNotifications | undefined {
+      return client.getQueryData<NotificationsCache>(notificationsKey);
+    },
+    /** The notification inbox held, when it is younger than `maxAge`. */
+    findFreshNotifications(maxAge: number): CachedNotifications | undefined {
+      const held = client.getQueryData<NotificationsCache>(notificationsKey);
+      return held && isYounger(held.syncedAt, maxAge) ? held : undefined;
+    },
     /** The viewer's login held, when it is younger than `maxAge`. */
     findFreshViewer(maxAge: number): CachedViewer | undefined {
       const state = client.getQueryState<string>(viewerKey);
@@ -87,6 +100,35 @@ export default function createReadQueries(
       client.setQueryData(fileKey(repo, path), value, {
         updatedAt: at.getTime(),
       });
+    },
+    /** Keeps the notification inbox, fetched `at`. */
+    keepNotifications(items: readonly InboxNotification[], at: Date) {
+      client.setQueryData<NotificationsCache>(
+        notificationsKey,
+        { items, syncedAt: at },
+        { updatedAt: at.getTime() },
+      );
+    },
+    /**
+     * Marks one notification read in the held inbox, keeping when the
+     * inbox was fetched.
+     */
+    setNotificationRead(id: string) {
+      const held = client.getQueryData<NotificationsCache>(notificationsKey);
+      if (!held?.items.some((item) => item.id === id && item.unread)) {
+        return false;
+      }
+      client.setQueryData<NotificationsCache>(
+        notificationsKey,
+        {
+          ...held,
+          items: held.items.map((item) =>
+            item.id === id ? { ...item, unread: false } : item,
+          ),
+        },
+        { updatedAt: held.syncedAt.getTime() },
+      );
+      return true;
     },
     /** Keeps the viewer's login, fetched `at`. */
     keepViewer(login: string, at: Date) {

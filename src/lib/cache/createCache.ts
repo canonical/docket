@@ -31,6 +31,7 @@ import syncRepo from "./syncRepo.js";
 import type {
   Cache,
   CachedEvents,
+  CachedNotifications,
   CachedThreads,
   CacheOptions,
   CacheStatus,
@@ -125,6 +126,7 @@ export default function createCache({
   // something in it changes, because a face reads them through React's
   // useSyncExternalStore, which needs the same value back until then.
   let shown: CachedThreads = { threads: [], syncedAt: undefined };
+  let shownNotifications: CachedNotifications | undefined;
   let shownData = repos.map(() => ({ data: undefined as unknown, at: 0 }));
   let shownPatches = 0;
   let patchCount = 0;
@@ -164,10 +166,13 @@ export default function createCache({
         syncedAt: syncedAt(),
       };
     }
+    const notifications = queries.findNotifications();
+    const notificationsChanged = notifications !== shownNotifications;
+    if (notificationsChanged) shownNotifications = notifications;
     const next = { ...status, ...change, syncedAt: shown.syncedAt };
     const statusChanged = !isSame(next, status);
     if (statusChanged) status = next;
-    if (threadsChanged || statusChanged) {
+    if (threadsChanged || notificationsChanged || statusChanged) {
       for (const listener of listeners) listener();
     }
   };
@@ -329,6 +334,38 @@ export default function createCache({
 
   return {
     threads: () => shown,
+    notifications: () => shownNotifications,
+    async readNotifications(maxAge) {
+      const held = await readThrough(
+        () => queries.findFreshNotifications(maxAge),
+        async (at) => {
+          const items = await provider.notifications();
+          queries.keepNotifications(items, at);
+          return { items, syncedAt: at };
+        },
+      );
+      publish();
+      return held;
+    },
+    async refreshNotifications() {
+      try {
+        await withFetchLock(directory, async () => {
+          await load();
+          const at = now();
+          const items = await provider.notifications();
+          queries.keepNotifications(items, at);
+          await save();
+          publish();
+        });
+      } catch (error) {
+        throw classifyFolderFailure(error, directory);
+      }
+    },
+    async setNotificationRead(id) {
+      if (!queries.setNotificationRead(id)) return;
+      await save();
+      publish();
+    },
     load,
     findEvents: queries.findEvents,
     readEvents: (repo, since, maxAge) => {

@@ -18,6 +18,7 @@ describe("parseArguments", () => {
         byGiven: false,
         window: undefined,
         confirm: false,
+        all: false,
       },
     });
     const request = parseArguments([], true);

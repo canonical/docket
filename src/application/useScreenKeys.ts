@@ -29,6 +29,12 @@ export interface ScreenActions {
   readonly nextGrouping: () => void;
   /** Shows the mode's next time window. */
   readonly nextWindow: () => void;
+  /** Opens the inbox, or returns to owed when it is open. */
+  readonly toggleInbox: () => void;
+  /** Shows the whole inbox, or only its unread notifications. */
+  readonly toggleInboxFilter: () => void;
+  /** Marks the selected notification read. */
+  readonly markRead: () => void;
   /** Opens the editor for `action` on the selected thread, in owed or activity. */
   readonly edit: (action: WriteAction) => void;
   /** Shows the help, or hides it. */
@@ -129,8 +135,28 @@ export default function useScreenKeys({
           desc: "switch mode",
           group: "Mode",
           hint: "mode",
-          notes: ["owed → activity → finished", "docket opens start view"],
+          notes: [
+            "owed → activity → finished → inbox",
+            "docket opens start view",
+          ],
           run: () => latest.current.stepMode(1),
+        },
+        {
+          name: "inbox.toggle",
+          desc: "open the inbox",
+          group: "Mode",
+          hint: "",
+          notes: ["n again returns to owed"],
+          run: () => latest.current.toggleInbox(),
+        },
+        {
+          name: "inbox.filter",
+          desc: "show all or unread",
+          group: "Mode",
+          hint: "all",
+          notes: ["A switches between unread and the whole inbox"],
+          enabled: mode === "inbox",
+          run: () => latest.current.toggleInboxFilter(),
         },
         {
           name: "selection.previous",
@@ -195,7 +221,7 @@ export default function useScreenKeys({
             "activity: newest first",
             "finished: newest first",
           ],
-          enabled: mode !== "owed",
+          enabled: mode === "activity" || mode === "finished",
           run: () => latest.current.nextWindow(),
         },
         {
@@ -203,7 +229,7 @@ export default function useScreenKeys({
           desc: "assign",
           group: "Thread",
           hint: "",
-          enabled: mode !== "finished",
+          enabled: mode === "owed" || mode === "activity",
           run: () => latest.current.edit("assign"),
         },
         {
@@ -211,8 +237,16 @@ export default function useScreenKeys({
           desc: "request review",
           group: "Thread",
           hint: "",
-          enabled: mode !== "finished",
+          enabled: mode === "owed" || mode === "activity",
           run: () => latest.current.edit("review"),
+        },
+        {
+          name: "inbox.read",
+          desc: "mark read",
+          group: "Thread",
+          hint: "read",
+          enabled: mode === "inbox",
+          run: () => latest.current.markRead(),
         },
         {
           name: "help.toggle",
@@ -276,6 +310,9 @@ export default function useScreenKeys({
         { key: "home", cmd: "selection.first" },
         { key: "end", cmd: "selection.last" },
         { key: "return", cmd: "thread.open" },
+        { key: "n", cmd: "inbox.toggle" },
+        { key: "shift+a", cmd: "inbox.filter" },
+        { key: "m", cmd: "inbox.read" },
         { key: "a", cmd: "thread.assign" },
         { key: "r", cmd: "thread.review" },
         { key: "g", cmd: "grouping.next" },

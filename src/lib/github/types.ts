@@ -265,3 +265,23 @@ export interface FinishedNode extends StateNode, WrittenNode {
     readonly nodes: readonly ({ readonly __typename: string } & CloseNode)[];
   };
 }
+/** A notification as REST gives it. */
+export interface RestNotification {
+  readonly id: string;
+  readonly unread: boolean;
+  readonly reason: string;
+  readonly updated_at: string;
+  readonly last_read_at: string | null;
+  readonly subject: {
+    readonly title: string;
+    readonly url: string;
+    readonly latest_comment_url: string;
+    readonly type: string;
+  };
+  readonly repository: {
+    readonly full_name: string;
+    readonly html_url: string;
+  };
+  readonly url: string;
+  readonly subscription_url: string;
+}

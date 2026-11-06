@@ -1,5 +1,6 @@
 import { activityGroupings } from "../activity/index.js";
 import { finishedGroupings } from "../finished/index.js";
+import { inboxGroupings } from "../inbox/index.js";
 import { owedGroupings } from "../owed/index.js";
 import { defaultDetail, details, formats } from "./constants.js";
 import type { Command, Flag } from "./types.js";
@@ -147,6 +148,37 @@ const catalogue: readonly Command[] = [
       maxAge,
     ],
     example: "docket finished --window 1w --by ending",
+    exits: readExits,
+  },
+  {
+    name: "inbox",
+    arguments: "",
+    notes: [
+      "Shows GitHub's notification inbox: unread first, then the newest update, for issues, pull requests, discussions and the notifications docket cannot detail.",
+      "A subject docket cannot detail says `browser only`; its notification can still be marked read or done.",
+      "In a terminal, with no `--format`, `docket inbox` opens the terminal interface on the inbox; piped or captured, or given `--format`, it prints the list.",
+    ],
+    answers:
+      "Which GitHub notifications are unread, why each notified, and when it last changed.",
+    flags: [
+      {
+        name: "all",
+        description:
+          "Shows read notifications as well as unread ones. Without it, the inbox shows unread notifications only.",
+      },
+      {
+        name: "by",
+        value: "grouping",
+        choices: inboxGroupings,
+        default: "repo",
+        description:
+          "Splits the list into sections: by repository, by reason GitHub notified, by kind of subject, or none.",
+      },
+      format,
+      detail,
+      maxAge,
+    ],
+    example: "docket inbox --all --by reason",
     exits: readExits,
   },
   {

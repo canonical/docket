@@ -9,6 +9,7 @@ describe("catalogue", () => {
       "owed",
       "activity",
       "finished",
+      "inbox",
       "show",
       "assign",
       "review",

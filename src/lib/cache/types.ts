@@ -1,6 +1,7 @@
 import type { DehydratedState } from "@tanstack/query-core";
 import type { FinishedThread } from "../endings/index.js";
 import type { ThreadEvent } from "../events/index.js";
+import type { InboxNotification } from "../inbox/index.js";
 import type { Account } from "../people/index.js";
 import type {
   Budgets,
@@ -88,6 +89,18 @@ export interface CachedEvents {
   readonly finished: readonly FinishedThread[];
   readonly syncedAt: Date;
 }
+
+/**
+ * The account's notification inbox, and when it was fetched. The list
+ * holds read and unread notifications, and every subject kind.
+ */
+export interface CachedNotifications {
+  readonly items: readonly InboxNotification[];
+  readonly syncedAt: Date;
+}
+
+/** What the cache keeps of the notification inbox. */
+export interface NotificationsCache extends CachedNotifications {}
 
 /** One file of a repository, and when it was fetched. */
 export interface CachedFile {
@@ -350,6 +363,23 @@ export interface Cache {
     thread: Pick<Thread, "repo" | "number">,
     assignees: readonly Account[],
   ): () => void;
+  /**
+   * The notification inbox held in memory, as last loaded or fetched: the
+   * same value on every call until it changes.
+   */
+  notifications(): CachedNotifications | undefined;
+  /**
+   * Reads the notification inbox through the cache, fetching it when what
+   * is held is older than `maxAge`.
+   */
+  readNotifications(maxAge: number): Promise<CachedNotifications>;
+  /** Fetches the notification inbox again, and keeps it. */
+  refreshNotifications(): Promise<void>;
+  /**
+   * Marks one notification read in the cached list, keeping its fetch
+   * time, and writes the cache file.
+   */
+  setNotificationRead(id: string): Promise<void>;
   /**
    * The mirror of the provider's budgets: for each kind, the latest
    * report any docket process heard, as the budget folder gave it, or

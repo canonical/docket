@@ -94,7 +94,7 @@ If `gh` is missing or signed out, docket opens on a setup screen that names the 
 <!-- verify at release -->
 If GitHub refuses the token while docket is open, the screen turns to setup too. Run `gh auth login` in another pane, and it comes back as you left it.
 
-## Three modes
+## Four modes
 
 ### owed: who is waiting on us?
 
@@ -114,16 +114,23 @@ Every comment, review, push, assignment, label and failed check on the watched t
 
 The issues and pull requests merged or closed within a time window. Each shows its ending as GitHub words it, such as merged or closed as not planned, and whether it closed within its close target.
 
+### inbox: what needs my attention?
+
+GitHub's notification inbox, unread first and then newest. It covers issues, pull requests and discussions, and the notifications docket cannot detail: those carry `browser only` and open in the browser. `A` switches between unread and the whole inbox, `g` groups by repository, reason or kind, and `R` fetches the inbox again. The inbox reads through the same cache as the other modes, so it shows what it holds while a read brings it up to date.
+
 ## Keys
 
 | Key | What it does |
 |---|---|
-| `←` `→` or `h` `l` | Switch mode: owed, activity, finished |
+| `←` `→` or `h` `l` | Switch mode: owed, activity, finished, inbox |
+| `n` | Open the inbox, or return to owed |
 | `↑` `↓` or `k` `j` | Move the selection, which opens the thread's details under its row |
 | `PgUp` `PgDn` | Move a page up or down |
 | `Home` `End` | Go to the first or last thread |
 | `⏎` | Open the thread in the browser |
 | `g` | Next grouping |
+| `A` | Show all or unread, in inbox |
+| `m` | Mark the selected notification read |
 | `t` | Next time window, in activity and finished |
 | `a` | Assign people, in owed and activity |
 | `r` | Request reviews, in owed and activity |
@@ -156,6 +163,7 @@ docket owed --by owner --format plain
 docket owed --by author --format plain
 docket activity --window 48h --format llm
 docket finished --window 1w --by ending --format json
+docket inbox --all --by reason --format plain
 docket show example#12
 ```
 
@@ -188,7 +196,7 @@ example#15 · close · 29d left
 
 The flags you'll reach for most:
 
-- `--by` splits the list into sections. owed takes `none`, `owner`, `author`, `kind`, `repo` or `stack`. activity takes `kind`, `author`, `repo` or `none`, and finished takes those and `ending`. `author` groups by whoever opened each thread, so a team lead can see their reports' pull requests together.
+- `--by` splits the list into sections. owed takes `none`, `owner`, `author`, `kind`, `repo` or `stack`. activity takes `kind`, `author`, `repo` or `none`, and finished takes those and `ending`. inbox takes `repo`, `reason`, `type` or `none`. `author` groups by whoever opened each thread, so a team lead can see their reports' pull requests together.
 - `--window` picks one of your activity windows, for activity and finished.
 - `--detail` is `summary` for the counts alone, `standard` for the usual rows, or `detailed` for every message, file and check.
 - `--max-age <seconds>` is how old cached data may be before docket asks GitHub again. It defaults to 300, and `0` always fetches.
@@ -312,7 +320,7 @@ Windows count working time too, so `24h` on a Monday morning reaches back to Fri
 
 ### start
 
-The mode `docket` alone opens on in the terminal interface: `owed` (the default), `activity` or `finished`. A call that names its command still opens that command, so `docket activity` opens activity whatever `start` says, and a piped call still prints owed.
+The mode `docket` alone opens on in the terminal interface: `owed` (the default), `activity`, `finished` or `inbox`. A call that names its command still opens that command, so `docket activity` opens activity whatever `start` says, and a piped call still prints owed.
 
 ```yaml
 start: activity

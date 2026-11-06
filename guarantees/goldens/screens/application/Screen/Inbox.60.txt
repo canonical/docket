@@ -1,0 +1,73 @@
+60 columns
+|inbox                        unread · by repo · unread first
+|example ────────────────────────────────────────────────────
+|● ⇄ example#12 review requested                           1h
+|  Fix the parser
+|● ◌ example#7 team mention                                3h
+|  Tokens page
+|● • example release browser only                          4h
+|  Update dependency example-lib to 2.0
+|docs ───────────────────────────────────────────────────────
+|● ◇ docs#4 mention                                        2h
+|  Where do tokens live?
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|4 unread                                               1/3/4
+|synced 2m ago
+|←→ mode n A all ↑↓ sel ⏎ open g grp m read ?
+
+runs
+1:1 "inbox                        unread · by repo · " fg #ffffffff bg #000000ff
+1:49 "unread first" fg #c0c0c0ff bg #000000ff
+2:1 "example ────────────────────────────────────────────────────" fg #ffffffff bg #000000ff
+3:1 "● " fg #c0c0c0ff bg #808080ff
+3:3 "⇄ example#12 review requested                           1h" fg #ffffffff bg #808080ff bold
+4:1 " " fg #c0c0c0ff bg #808080ff
+4:2 " " fg #ffffffff bg #808080ff
+4:3 "Fix the parser" fg #ffffffff bg #808080ff italic
+4:17 "                                            " fg #ffffffff bg #808080ff
+5:1 "● " fg #c0c0c0ff bg #000000ff
+5:3 "◌ example#7 team mention                                3h" fg #ffffffff bg #000000ff bold
+6:3 "Tokens page" fg #ffffffff bg #000000ff italic
+7:1 "● " fg #c0c0c0ff bg #000000ff
+7:3 "• example release browser only                          4h" fg #ffffffff bg #000000ff bold
+8:3 "Update dependency example-lib to 2.0" fg #ffffffff bg #000000ff italic
+9:1 "docs ───────────────────────────────────────────────────────" fg #ffffffff bg #000000ff
+10:1 "● " fg #c0c0c0ff bg #000000ff
+10:3 "◇ docs#4 mention                                        2h" fg #ffffffff bg #000000ff bold
+11:3 "Where do tokens live?" fg #ffffffff bg #000000ff italic
+34:1 "4 unread                                               1/3/4" fg #ffffffff bg #000000ff
+35:1 "synced 2m ago" fg #c0c0c0ff bg #000000ff
+36:1 "←→" fg #ffffffff bg #000000ff
+36:3 " mode" fg #c0c0c0ff bg #000000ff
+36:8 " n A" fg #ffffffff bg #000000ff
+36:12 " all" fg #c0c0c0ff bg #000000ff
+36:16 " ↑↓" fg #ffffffff bg #000000ff
+36:19 " sel" fg #c0c0c0ff bg #000000ff
+36:23 " ⏎" fg #ffffffff bg #000000ff
+36:25 " open" fg #c0c0c0ff bg #000000ff
+36:30 " g" fg #ffffffff bg #000000ff
+36:32 " grp" fg #c0c0c0ff bg #000000ff
+36:36 " m" fg #ffffffff bg #000000ff
+36:38 " read" fg #c0c0c0ff bg #000000ff
+36:43 " ?" fg #ffffffff bg #000000ff

@@ -1,0 +1,8 @@
+40 columns
+|● ◇ example-repo…ng-name#12345 mention …
+|  Keep the comments at the ends of line…
+
+runs
+1:1 "● " fg #c0c0c0ff bg #00000000
+1:3 "◇ example-repo…ng-name#12345 mention …" fg #ffffffff bg #00000000 bold
+2:3 "Keep the comments at the ends of line…" fg #ffffffff bg #00000000 italic

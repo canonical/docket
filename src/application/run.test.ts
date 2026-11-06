@@ -8,6 +8,7 @@ import {
   recordedPersonalFile,
 } from "../testing/docket.js";
 import { alice, bob, exampleSync } from "../testing/facts.js";
+import { recordedNotifications } from "../testing/inbox.js";
 import { providerError } from "../testing/provider.js";
 import {
   parserFix,
@@ -105,6 +106,36 @@ describe("run", () => {
       } finally {
         await startHome.remove();
       }
+    });
+
+    it("prints the inbox in text, and opens the terminal interface on it", async () => {
+      const provider = recordedProvider({
+        notifications: async () => recordedNotifications,
+      });
+      const piped = await home.call(["inbox", "--format", "plain"], {
+        provider,
+      });
+      expect(piped.code).toBe(0);
+      expect(piped.out).toMatch(/^inbox · unread · by repo\n/);
+      expect(piped.out).toContain("browser only");
+      const views: TerminalView[] = [];
+      const opened = await home.call(["inbox"], {
+        provider,
+        interactive: true,
+        openTerminal: async (view) => {
+          views.push(view);
+          if ("cache" in view.source) {
+            await view.source.readInbox();
+            await view.source.refreshInbox();
+            await view.source.markNotificationRead("1");
+          }
+          return 0;
+        },
+      });
+      expect([opened.code, opened.out, opened.err]).toEqual([0, "", ""]);
+      expect(views.map(({ mode, inbox }) => [mode, inbox])).toEqual([
+        ["inbox", { grouping: "repo", filter: "unread" }],
+      ]);
     });
 
     it("opens the terminal interface on activity for docket activity in a terminal, without --format", async () => {

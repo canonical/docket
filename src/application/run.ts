@@ -11,12 +11,14 @@ import {
 import answerActivity from "./answerActivity.js";
 import answerConfig from "./answerConfig.js";
 import answerFinished from "./answerFinished.js";
+import answerInbox from "./answerInbox.js";
 import answerOwed from "./answerOwed.js";
 import answerShow from "./answerShow.js";
 import answerTerminal from "./answerTerminal.js";
 import answerWrite from "./answerWrite.js";
 import chooseActivityAddress from "./chooseActivityAddress.js";
 import chooseFinishedAddress from "./chooseFinishedAddress.js";
+import chooseInboxAddress from "./chooseInboxAddress.js";
 import chooseOwedGrouping from "./chooseOwedGrouping.js";
 import chooseTerminalMode from "./chooseTerminalMode.js";
 import describeFailure from "./describeFailure.js";
@@ -29,6 +31,7 @@ const answers = {
   owed: answerOwed,
   activity: answerActivity,
   finished: answerFinished,
+  inbox: answerInbox,
   show: answerShow,
   assign: answerWrite,
   review: answerWrite,
@@ -122,7 +125,14 @@ export default async function run(context: Context): Promise<number> {
           ? { activity: chooseActivityAddress(settings.activity, named) }
           : mode === "finished"
             ? { finished: chooseFinishedAddress(settings.activity, named) }
-            : {};
+            : mode === "inbox"
+              ? {
+                  inbox: chooseInboxAddress({
+                    by: named.by,
+                    all: invocation.all,
+                  }),
+                }
+              : {};
       return await answerTerminal(
         context,
         mode,

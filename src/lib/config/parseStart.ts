@@ -17,7 +17,7 @@ export default function parseStart(value: unknown): Checked<View> {
       {
         code: "CONFIG_UNKNOWN_VIEW",
         message: `\`start\` is \`${formatValue(text.value)}\`, which is not a view.`,
-        recovery: "Write one of `owed`, `activity` or `finished`.",
+        recovery: "Write one of `owed`, `activity`, `finished` or `inbox`.",
       },
     ];
     return { value: undefined, errors };

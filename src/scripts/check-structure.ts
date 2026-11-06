@@ -36,7 +36,7 @@ const model = [
   "stacks",
   "endings",
 ];
-const viewModels = ["owed", "activity", "finished"];
+const viewModels = ["owed", "activity", "finished", "inbox"];
 const surfaces = ["text", "tokens", "ui"];
 
 /**
@@ -62,8 +62,12 @@ grant(["activity"], ["owed"], "values");
 // finished's rows are activity's rows with the ending as their event, so
 // it takes both lists' field types, owner naming and ages.
 grant(["finished"], ["owed", "activity"], "values");
+// inbox rows name the same fields and ages as the other lists.
+grant(["inbox"], ["owed", "activity"], "values");
 grant(["provider"], model, "types");
+grant(["provider"], ["inbox"], "types");
 grant(["github", "cache"], [...model, "provider"], "values");
+grant(["github", "cache"], ["inbox"], "types");
 grant(surfaces, [...viewModels, "tokens"], "values");
 grant(surfaces, ["provider"], "types");
 // A face shows the cache's status, so it names the status's types; it

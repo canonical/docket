@@ -3,8 +3,14 @@
 |
 |Mode ───────────────────────────────────
 |  ← →  h l switch mode
-|           owed → activity → finished
+|           owed → activity → finished →
+|           inbox
 |           docket opens start view
+|  n        open the inbox
+|           n again returns to owed
+|  A        show all or unread
+|           A switches between unread and
+|           the whole inbox
 |  g        next grouping
 |  t        next time window
 |           owed: most overdue first
@@ -16,32 +22,28 @@
 |           (opens the accordion)
 |  ⇞ ⇟      a page up or down
 |  home end the first or last thread
-|
-|Thread ─────────────────────────────────
-|  ⏎        open in the browser
-|  a        assign
-|  r        request review
-|
-|  ↓ 9 below
+|  ↓ 13 below
 
 runs
 1:1 "help                                    " fg #ffffffff bg #000000ff
 3:1 "Mode ───────────────────────────────────" fg #ffffffff bg #000000ff
 4:1 "  ← →  h l switch mode" fg #ffffffff bg #000000ff
-5:1 "           owed → activity → finished" fg #ffffffff bg #000000ff
-6:1 "           docket opens start view" fg #ffffffff bg #000000ff
-7:1 "  g        next grouping" fg #ffffffff bg #000000ff
-8:1 "  t        next time window" fg #ffffffff bg #000000ff
-9:1 "           owed: most overdue first" fg #ffffffff bg #000000ff
-10:1 "           activity: newest first" fg #ffffffff bg #000000ff
-11:1 "           finished: newest first" fg #ffffffff bg #000000ff
-13:1 "List ───────────────────────────────────" fg #ffffffff bg #000000ff
-14:1 "  ↑ ↓  k j move the selection" fg #ffffffff bg #000000ff
-15:1 "           (opens the accordion)" fg #ffffffff bg #000000ff
-16:1 "  ⇞ ⇟      a page up or down" fg #ffffffff bg #000000ff
-17:1 "  home end the first or last thread" fg #ffffffff bg #000000ff
-19:1 "Thread ─────────────────────────────────" fg #ffffffff bg #000000ff
-20:1 "  ⏎        open in the browser" fg #ffffffff bg #000000ff
-21:1 "  a        assign" fg #ffffffff bg #000000ff
-22:1 "  r        request review" fg #ffffffff bg #000000ff
-24:1 "  ↓ 9 below" fg #c0c0c0ff bg #000000ff
+5:1 "           owed → activity → finished →" fg #ffffffff bg #000000ff
+6:1 "           inbox" fg #ffffffff bg #000000ff
+7:1 "           docket opens start view" fg #ffffffff bg #000000ff
+8:1 "  n        open the inbox" fg #ffffffff bg #000000ff
+9:1 "           n again returns to owed" fg #ffffffff bg #000000ff
+10:1 "  A        show all or unread" fg #ffffffff bg #000000ff
+11:1 "           A switches between unread and" fg #ffffffff bg #000000ff
+12:1 "           the whole inbox" fg #ffffffff bg #000000ff
+13:1 "  g        next grouping" fg #ffffffff bg #000000ff
+14:1 "  t        next time window" fg #ffffffff bg #000000ff
+15:1 "           owed: most overdue first" fg #ffffffff bg #000000ff
+16:1 "           activity: newest first" fg #ffffffff bg #000000ff
+17:1 "           finished: newest first" fg #ffffffff bg #000000ff
+19:1 "List ───────────────────────────────────" fg #ffffffff bg #000000ff
+20:1 "  ↑ ↓  k j move the selection" fg #ffffffff bg #000000ff
+21:1 "           (opens the accordion)" fg #ffffffff bg #000000ff
+22:1 "  ⇞ ⇟      a page up or down" fg #ffffffff bg #000000ff
+23:1 "  home end the first or last thread" fg #ffffffff bg #000000ff
+24:1 "  ↓ 13 below" fg #c0c0c0ff bg #000000ff

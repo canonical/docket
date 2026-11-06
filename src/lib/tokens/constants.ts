@@ -34,6 +34,8 @@ export const tokens: Tokens = {
   "glyph.thread.issue": "◇",
   "glyph.thread.pullRequest": "⇄",
   "glyph.thread.discussion": "◌",
+  "glyph.inbox.other": "•",
+  "glyph.inbox.unread": "●",
   "glyph.rule": "─",
   "glyph.you": "◉",
   "glyph.team": "●",

@@ -28,6 +28,7 @@ export default function useShownList(mode: TerminalMode): UseShownListResult {
     owed: 0,
     activity: 0,
     finished: 0,
+    inbox: 0,
   });
   return {
     pageRows,

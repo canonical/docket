@@ -2,7 +2,12 @@ import type { DurationUnit } from "../clock/index.js";
 import type { Place, Section, Settings, View } from "./types.js";
 
 /** The modes a call may name, in the order the arrows reach them. */
-export const viewModes: readonly View[] = ["owed", "activity", "finished"];
+export const viewModes: readonly View[] = [
+  "owed",
+  "activity",
+  "finished",
+  "inbox",
+];
 
 /** The values docket uses wherever no file declares a section. */
 export const builtInSettings: Settings = {

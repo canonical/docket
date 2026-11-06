@@ -8,6 +8,11 @@ import {
   type FinishedGrouping,
   finishedGroupings,
 } from "../lib/finished/index.js";
+import {
+  type InboxFilter,
+  type InboxGrouping,
+  inboxGroupings,
+} from "../lib/inbox/index.js";
 import { type OwedGrouping, owedGroupings } from "../lib/owed/index.js";
 import { terminalModes } from "./constants.js";
 import type { TerminalMode, TerminalView } from "./types.js";
@@ -16,7 +21,7 @@ import type { TerminalMode, TerminalView } from "./types.js";
 export interface UseAddressProps
   extends Pick<
     TerminalView,
-    "mode" | "owedGrouping" | "activity" | "finished"
+    "mode" | "owedGrouping" | "activity" | "finished" | "inbox"
   > {
   /** The windows `t` steps through, the first the default. */
   readonly windows: readonly Duration[];
@@ -40,6 +45,12 @@ export interface UseAddressResult {
   readonly finishedGrouping: FinishedGrouping;
   /** finished's window, kept apart from activity's. */
   readonly finishedWindow: Duration;
+  readonly inboxGrouping: InboxGrouping;
+  readonly inboxFilter: InboxFilter;
+  /** Shows the whole inbox, or only its unread notifications. */
+  readonly toggleInboxFilter: () => void;
+  /** Opens the inbox, or returns to owed when it is already open. */
+  readonly toggleInbox: () => void;
   /** Steps the mode on screen to its next grouping, after the last the first. */
   readonly nextGrouping: () => void;
   /** Steps the mode on screen to its next window, after the last the first. */
@@ -49,7 +60,7 @@ export interface UseAddressResult {
     readonly title: TerminalMode;
     /** `one list` or `by owner`, after the window where the mode has one, `24h · by kind`. */
     readonly address: string;
-    /** The mode's fixed order: `overdue first`, `newest first`. */
+    /** The mode's fixed order: `overdue first`, `newest first`, `unread first`. */
     readonly sort: string;
   };
 }
@@ -83,6 +94,7 @@ export default function useAddress({
   owedGrouping: openingGrouping,
   activity: openingActivity,
   finished: openingFinished,
+  inbox: openingInbox,
   windows,
   stacks,
 }: UseAddressProps): UseAddressResult {
@@ -93,6 +105,7 @@ export default function useAddress({
   const [firstActivity] = activityGroupings;
   const [firstFinished] = finishedGroupings;
   const [firstWindow] = windows;
+  const [firstInbox] = inboxGroupings;
   const [mode, setMode] = useState<TerminalMode>(openingMode);
   const [owedGrouping, setOwedGrouping] = useState(
     owedChoices.includes(openingGrouping) ? openingGrouping : firstOwed,
@@ -107,6 +120,12 @@ export default function useAddress({
   const [finishedWindow, setFinishedWindow] = useState(
     openingFinished?.window ?? firstWindow,
   );
+  const [inboxGrouping, setInboxGrouping] = useState(
+    openingInbox?.grouping ?? firstInbox,
+  );
+  const [inboxFilter, setInboxFilter] = useState<InboxFilter>(
+    openingInbox?.filter ?? "unread",
+  );
   const header = {
     owed: { address: nameGrouping(owedGrouping), sort: "overdue first" },
     activity: {
@@ -116,6 +135,10 @@ export default function useAddress({
     finished: {
       address: nameWindow(finishedWindow, finishedGrouping),
       sort: "newest first",
+    },
+    inbox: {
+      address: `${inboxFilter} · ${nameGrouping(inboxGrouping)}`,
+      sort: "unread first",
     },
   }[mode];
   return {
@@ -132,13 +155,21 @@ export default function useAddress({
     window,
     finishedGrouping,
     finishedWindow,
+    inboxGrouping,
+    inboxFilter,
+    toggleInboxFilter: () =>
+      setInboxFilter((current) => (current === "unread" ? "all" : "unread")),
+    toggleInbox: () =>
+      setMode((current) => (current === "inbox" ? "owed" : "inbox")),
     nextGrouping: () => {
       if (mode === "owed") {
         setOwedGrouping((current) => cycle(owedChoices, current));
       } else if (mode === "activity") {
         setActivityGrouping((current) => cycle(activityGroupings, current));
-      } else {
+      } else if (mode === "finished") {
         setFinishedGrouping((current) => cycle(finishedGroupings, current));
+      } else {
+        setInboxGrouping((current) => cycle(inboxGroupings, current));
       }
     },
     nextWindow: () =>
