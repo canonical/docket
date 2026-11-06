@@ -34,7 +34,7 @@
 |
 |2 threads · 4 events               1/1/2
 |synced 2m ago
-|←→ mode ↑↓ sel ⏎ open g grp t time a r ?
+|←→ mode n ↑↓ sel ⏎ open g grp t time a ?
 
 runs
 1:1 "activity  72h · by author · " fg #ffffffff bg #000000ff
@@ -96,12 +96,12 @@ runs
 35:1 "synced 2m ago" fg #c0c0c0ff bg #000000ff
 36:1 "←→" fg #ffffffff bg #000000ff
 36:3 " mode" fg #c0c0c0ff bg #000000ff
-36:8 " ↑↓" fg #ffffffff bg #000000ff
-36:11 " sel" fg #c0c0c0ff bg #000000ff
-36:15 " ⏎" fg #ffffffff bg #000000ff
-36:17 " open" fg #c0c0c0ff bg #000000ff
-36:22 " g" fg #ffffffff bg #000000ff
-36:24 " grp" fg #c0c0c0ff bg #000000ff
-36:28 " t" fg #ffffffff bg #000000ff
-36:30 " time" fg #c0c0c0ff bg #000000ff
-36:35 " a r ?" fg #ffffffff bg #000000ff
+36:8 " n ↑↓" fg #ffffffff bg #000000ff
+36:13 " sel" fg #c0c0c0ff bg #000000ff
+36:17 " ⏎" fg #ffffffff bg #000000ff
+36:19 " open" fg #c0c0c0ff bg #000000ff
+36:24 " g" fg #ffffffff bg #000000ff
+36:26 " grp" fg #c0c0c0ff bg #000000ff
+36:30 " t" fg #ffffffff bg #000000ff
+36:32 " time" fg #c0c0c0ff bg #000000ff
+36:37 " a ?" fg #ffffffff bg #000000ff

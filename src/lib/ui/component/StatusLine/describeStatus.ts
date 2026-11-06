@@ -48,7 +48,7 @@ export default function describeStatus(
   // In a windowed mode, the data on screen is as old as the older of
   // the threads and the data its list was built from.
   const syncedAt =
-    readAt && status?.syncedAt && readAt < status.syncedAt
+    readAt && (!status?.syncedAt || readAt < status.syncedAt)
       ? readAt
       : status?.syncedAt;
   if (paused?.reason === "rateLimit") {

@@ -10,6 +10,7 @@ export type {
   Cache,
   CachedEvents,
   CachedFile,
+  CachedNotifications,
   CachedThreads,
   CachedViewer,
   CacheErrorCode,

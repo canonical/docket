@@ -4,6 +4,7 @@ import createClient from "./createClient.js";
 import fetchAssignees from "./fetchAssignees.js";
 import fetchEvents from "./fetchEvents.js";
 import fetchFile from "./fetchFile.js";
+import fetchNotifications from "./fetchNotifications.js";
 import fetchSnapshot from "./fetchSnapshot.js";
 import fetchThreadDetail from "./fetchThreadDetail.js";
 import fetchThreadDetails from "./fetchThreadDetails.js";
@@ -11,6 +12,7 @@ import fetchViewer from "./fetchViewer.js";
 import listAssignableUsers from "./listAssignableUsers.js";
 import listReviewCandidates from "./listReviewCandidates.js";
 import listTeamMembers from "./listTeamMembers.js";
+import markNotificationRead from "./markNotificationRead.js";
 import probeChanges from "./probeChanges.js";
 import readToken from "./readToken.js";
 import refreshChecks from "./refreshChecks.js";
@@ -53,6 +55,8 @@ export default async function createProvider(
     events: (repo, since) => fetchEvents(client, repo, since),
     threadDetail: (thread) => fetchThreadDetail(client, thread),
     threadDetails: (threads) => fetchThreadDetails(client, threads),
+    notifications: () => fetchNotifications(client),
+    markNotificationRead: (id) => markNotificationRead(client, id),
     assignableUsers: (repo) => listAssignableUsers(client, repo),
     reviewCandidates: (pull) => listReviewCandidates(client, pull),
     readAssignees: (thread) => fetchAssignees(client, thread),

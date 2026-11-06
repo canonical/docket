@@ -18,7 +18,10 @@ export default function chooseTerminalMode(
   const { command, commandGiven, formatGiven } = invocation;
   if (formatGiven) return undefined;
   if (!commandGiven) return start;
-  return command === "owed" || command === "activity" || command === "finished"
+  return command === "owed" ||
+    command === "activity" ||
+    command === "finished" ||
+    command === "inbox"
     ? command
     : undefined;
 }

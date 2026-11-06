@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { alice, bob, finishedThread, thread } from "../../testing/facts.js";
+import { notification } from "../../testing/inbox.js";
 import {
   everyCapability,
   fakeProvider,
@@ -540,5 +541,42 @@ describe("createCache, after a write", () => {
     await expect(
       open(counting(), [repo], join(file, "docket")).refreshRepo(repo),
     ).rejects.toMatchObject({ code: "CACHE_UNUSABLE" });
+  });
+
+  it("marks nothing read when the inbox holds nothing", async () => {
+    const cache = open(fakeProvider());
+    await cache.setNotificationRead("1");
+    expect(cache.notifications()).toBeUndefined();
+  });
+
+  it("passes a failure refreshing the notification inbox through", async () => {
+    const cache = open(
+      fakeProvider({
+        notifications: () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
+      }),
+    );
+    await expect(cache.refreshNotifications()).rejects.toMatchObject({
+      code: "GITHUB_TIMED_OUT",
+    });
+  });
+
+  it("reads, keeps, patches and refreshes the notification inbox", async () => {
+    const items = [notification()];
+    const notifications = vi.fn(async () => items);
+    const provider = fakeProvider({ notifications });
+    const cache = open(provider);
+    const first = await cache.readNotifications(5 * minute);
+    expect(first).toEqual({ items, syncedAt: clock });
+    expect(cache.notifications()).toEqual(first);
+    clock = new Date(clock.getTime() + minute);
+    await cache.readNotifications(5 * minute);
+    expect(notifications).toHaveBeenCalledTimes(1);
+    await cache.setNotificationRead("1");
+    expect(cache.notifications()?.items[0]?.unread).toBe(false);
+    const other = open(provider);
+    await other.load();
+    expect(other.notifications()?.items[0]?.unread).toBe(false);
+    await cache.refreshNotifications();
+    expect(notifications).toHaveBeenCalledTimes(2);
   });
 });

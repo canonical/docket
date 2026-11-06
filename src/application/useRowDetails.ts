@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import type { AttentionState, CacheStatus } from "../lib/cache/index.js";
+
 import type { DetailsCount, ShownDetail } from "../lib/ui/index.js";
 import type { Thread, ThreadSummary } from "../lib/waits/index.js";
 import type { DetailReader } from "./createDetailReader.js";
 import describeRowVersion from "./describeRowVersion.js";
-import type { ListRow, TerminalView } from "./types.js";
+import type { TerminalView, ThreadListRow } from "./types.js";
 import useHeldDetails from "./useHeldDetails.js";
 import useReadAhead from "./useReadAhead.js";
 
@@ -19,15 +20,15 @@ export interface UseRowDetailsProps {
   /** Reads threads' details ahead in batches; without it, none are. */
   readonly reader: DetailReader | undefined;
   /** The list's rows, in the order drawn. */
-  readonly rows: readonly ListRow[];
+  readonly rows: readonly ThreadListRow[];
   /** The selected row, if any. */
-  readonly selected: ListRow | undefined;
+  readonly selected: ThreadListRow | undefined;
   /** The row selected on the frame drawn last, if any. */
-  readonly drawnSelected: () => ListRow | undefined;
+  readonly drawnSelected: () => ThreadListRow | undefined;
   /** The threads the data holds, whose details are kept. */
   readonly held: readonly Thread[];
   /** A row's thread as the data holds it, when it does. */
-  readonly findFacts: (row: ListRow) => Thread | undefined;
+  readonly findFacts: (row: ThreadListRow) => Thread | undefined;
   readonly attention: AttentionState;
   readonly status: CacheStatus | undefined;
 }
@@ -36,7 +37,7 @@ export interface UseRowDetailsProps {
 export interface UseRowDetailsResult {
   /** The details the accordion under `row` is given: read ahead, or alone. */
   readonly readRowDetail: (
-    row: ListRow,
+    row: ThreadListRow,
     readAlone: ReadAlone,
   ) => Promise<ShownDetail>;
   /** How many of the details asked for are read, while some are not. */
@@ -46,7 +47,7 @@ export interface UseRowDetailsResult {
 }
 
 /** The thread a row names, in any mode. */
-const summarize = (row: ListRow): ThreadSummary =>
+const summarize = (row: ThreadListRow): ThreadSummary =>
   "wait" in row ? row.wait.thread : row.thread;
 
 /**
@@ -72,7 +73,8 @@ export default function useRowDetails({
   attention,
   status,
 }: UseRowDetailsProps): UseRowDetailsResult {
-  const findVersion = (row: ListRow) => describeRowVersion(row, findFacts(row));
+  const findVersion = (row: ThreadListRow) =>
+    describeRowVersion(row, findFacts(row));
   const detailed = useMemo(
     () => rows.filter((row) => !("ending" in row) || row.stacked),
     [rows],

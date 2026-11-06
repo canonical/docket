@@ -10,7 +10,7 @@ import readCandidates from "../application/readCandidates.js";
 import Screen from "../application/Screen.js";
 import type { TerminalView } from "../application/types.js";
 import writeFromTerminal from "../application/writeFromTerminal.js";
-import type { CacheStatus } from "../lib/cache/index.js";
+import type { CachedNotifications, CacheStatus } from "../lib/cache/index.js";
 import type { FinishedThread } from "../lib/endings/index.js";
 import type { Provider, ThreadDetail } from "../lib/provider/index.js";
 import type { Thread, ThreadSummary } from "../lib/waits/index.js";
@@ -193,6 +193,7 @@ export function connectRecording({
   details,
   github,
   finished = [],
+  notifications,
 }: {
   readonly status?: CacheStatus;
   readonly threads?: readonly Thread[];
@@ -200,6 +201,7 @@ export function connectRecording({
   readonly details?: DetailReader;
   readonly github?: Provider;
   readonly finished?: readonly FinishedThread[];
+  readonly notifications?: CachedNotifications;
 } = {}): Connected {
   const cache = holdCache(
     { threads, syncedAt: status.syncedAt },
@@ -207,6 +209,7 @@ export function connectRecording({
     recordedEvents,
     github,
     finished,
+    notifications,
   );
   return {
     cache,
@@ -216,6 +219,9 @@ export function connectRecording({
     readDetail: read,
     ...(details && { details }),
     readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
+    readInbox: () => cache.readNotifications(300_000),
+    refreshInbox: () => cache.refreshNotifications(),
+    markNotificationRead: async (id) => cache.setNotificationRead(id),
     readCandidates: github
       ? (action, thread) => readCandidates(github, action, thread)
       : refuseEditor,

@@ -7,6 +7,7 @@
 import type {
   Cache,
   CachedEvents,
+  CachedNotifications,
   CachedThreads,
   CacheStatus,
 } from "../lib/cache/index.js";
@@ -42,6 +43,7 @@ export function holdCache(
   events: readonly ThreadEvent[] = [],
   github?: Pick<Provider, "snapshot">,
   finished: readonly FinishedThread[] = [],
+  notifications?: CachedNotifications,
 ): Cache {
   const syncedAt = status.syncedAt ?? new Date(0);
   const findHeldEvents = (repo: string, since = new Date(0)): CachedEvents => ({
@@ -55,6 +57,7 @@ export function holdCache(
   });
   let held = threads;
   let shown = threads;
+  let inbox = notifications;
   const patches = new Map<string, Thread["assignees"]>();
   const listeners = new Set<() => void>();
   // The screen reads the threads again only when told they changed, and
@@ -71,6 +74,20 @@ export function holdCache(
   };
   return {
     threads: () => shown,
+    notifications: () => inbox,
+    readNotifications: async (): Promise<CachedNotifications> =>
+      inbox ?? { items: [], syncedAt },
+    refreshNotifications: async () => {},
+    setNotificationRead: async (id) => {
+      if (!inbox) return;
+      inbox = {
+        ...inbox,
+        items: inbox.items.map((item) =>
+          item.id === id ? { ...item, unread: false } : item,
+        ),
+      };
+      for (const listener of listeners) listener();
+    },
     load: async () => {},
     read: async () => shown,
     refreshRepo: async (repo) => {

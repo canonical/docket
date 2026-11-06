@@ -30,6 +30,7 @@ export const capabilities: ReadonlySet<Capability> = new Set<Capability>([
   "botAccounts",
   "pushes",
   "changeProbe",
+  "notifications",
 ]);
 
 /**

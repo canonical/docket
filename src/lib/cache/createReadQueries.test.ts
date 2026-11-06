@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/query-core";
 import { beforeEach, describe, expect, it } from "vitest";
 import { alice, finishedThread, thread } from "../../testing/facts.js";
+import { notification } from "../../testing/inbox.js";
 import type { ThreadEvent } from "../events/index.js";
 import createReadQueries from "./createReadQueries.js";
 
@@ -92,5 +93,28 @@ describe("createReadQueries", () => {
     expect(queries.findFreshEvents(repo, since, 5 * minute)).toBeUndefined();
     expect(queries.findFreshFile(repo, "a.yaml", 5 * minute)).toBeUndefined();
     expect(queries.findFreshViewer(5 * minute)).toBeUndefined();
+  });
+
+  it("keeps notifications, gives them while fresh, and marks one read without changing when they were fetched", () => {
+    const items = [notification(), notification({ id: "2" })];
+    expect(queries.findNotifications()).toBeUndefined();
+    queries.keepNotifications(items, fetchedAt);
+    expect(queries.findNotifications()).toEqual({ items, syncedAt: fetchedAt });
+    expect(queries.findFreshNotifications(5 * minute)).toEqual({
+      items,
+      syncedAt: fetchedAt,
+    });
+    clock = new Date(fetchedAt.getTime() + 5 * minute);
+    expect(queries.findFreshNotifications(5 * minute)).toBeUndefined();
+    expect(queries.setNotificationRead("1")).toBe(true);
+    expect(queries.findNotifications()).toMatchObject({
+      syncedAt: fetchedAt,
+      items: [
+        { id: "1", unread: false },
+        { id: "2", unread: true },
+      ],
+    });
+    expect(queries.setNotificationRead("1")).toBe(false);
+    expect(queries.setNotificationRead("missing")).toBe(false);
   });
 });

@@ -18,6 +18,7 @@ export default function describeRowVersion(
   row: ListRow,
   facts: Thread | undefined,
 ): string {
+  if ("notification" in row) return row.notification.id;
   if ("wait" in row) return describeChange(row.wait.thread);
   if (facts) return describeChange(facts);
   if ("ending" in row) return `${row.thread.ending.at.getTime()}`;

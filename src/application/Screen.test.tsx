@@ -19,6 +19,7 @@ import {
 } from "../lib/waits/index.js";
 import { pendingDetail } from "../testing/details.js";
 import { bob, thread } from "../testing/facts.js";
+import { recordedNotifications } from "../testing/inbox.js";
 import {
   everyCapability,
   fakeProvider,
@@ -116,7 +117,12 @@ const readRecordedDetails = (threads: readonly ThreadSummary[]) =>
  * and its sort against the right edge.
  */
 const describeHeader = (mode: TerminalMode, address: string, width = 40) => {
-  const sort = mode === "owed" ? "overdue first" : "newest first";
+  const sort =
+    mode === "owed"
+      ? "overdue first"
+      : mode === "inbox"
+        ? "unread first"
+        : "newest first";
   const right = `${address} · ${sort}`;
   // Every character of the header takes one cell.
   const gap = width - mode.length - right.length;
@@ -164,6 +170,9 @@ function viewOf(
       readViewer: async () => "alice",
       readDetail,
       readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
+      readInbox: () => cache.readNotifications(300_000),
+      refreshInbox: () => cache.refreshNotifications(),
+      markNotificationRead: async (id) => cache.setNotificationRead(id),
       ...edits,
     },
   };
@@ -309,7 +318,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
+        "←→ mode n ↑↓ sel ⏎ open g grp a r ?",
       ]);
       expect(screen.look("refresh in progress")).toMatchObject({
         fg: hex(tokens["color.text"]),
@@ -579,7 +588,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "",
         "",
         "",
-        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
+        "←→ mode n ↑↓ sel ⏎ open g grp a r ?",
       ]);
     });
   });
@@ -601,7 +610,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  ↓ 5 below",
         `2 over · 1 soon · 3 on track${" ".repeat(9)}1/6`,
         "synced 0m ago",
-        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
+        "←→ mode n ↑↓ sel ⏎ open g grp a r ?",
       ]);
       expect(screen.look("example#12 PR reply")?.bg).toBe(
         hex(tokens["color.background.selected"]),
@@ -1343,6 +1352,211 @@ describe("Screen", { timeout: 15_000 }, () => {
     });
   });
 
+  describe("inbox", () => {
+    const openInbox = async (openInBrowser = openNothing) => {
+      const cache = await openCache(
+        recordedProvider({ notifications: async () => recordedNotifications }),
+      );
+      await cache.readNotifications(300_000);
+      const view = {
+        ...viewOf(
+          cache,
+          everyCapability,
+          readRecorded,
+          readRecordedDetail,
+          openInBrowser,
+        ),
+        mode: "inbox" as const,
+        inbox: { grouping: "repo" as const, filter: "unread" as const },
+      };
+      const screen = await show(view, 40, () => {}, 24);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await waitUntil(async () =>
+        expect((await screen.redraw()).lines.join("\n")).toContain(
+          "example#12",
+        ),
+      );
+      return screen;
+    };
+
+    it("lists unread notifications by repository, marks one read, shows the whole inbox and returns to owed", async () => {
+      const screen = await openInbox();
+      const drawn = await screen.redraw();
+      expect(drawn.lines.at(0)).toBe(
+        describeHeader("inbox", "unread · by repo"),
+      );
+      expect(drawn.lines).toContain("● ⇄ example#12 review requested       1h");
+      expect(drawn.lines).toContain("● • example release browser only      4h");
+      expect(drawn.lines.join("\n")).toContain("4 unread");
+      const read = await press(screen, "m");
+      await waitUntil(async () =>
+        expect((await screen.redraw()).lines.join("\n")).not.toContain(
+          "example#12",
+        ),
+      );
+      expect((await screen.redraw()).lines.join("\n")).toContain("3 unread");
+      const all = await press(read, "A");
+      expect(all.lines.join("\n")).toContain("example#15");
+      expect(all.lines.join("\n")).toContain("3 unread · 2 read");
+      const owed = await press(all, "n");
+      expect(owed.lines.at(0)).toBe(describeHeader("owed", "one list"));
+      expect((await press(owed, "n")).lines.at(0)).toBe(
+        describeHeader("inbox", "all · by repo"),
+      );
+    });
+
+    it("says why marking a notification read failed, and why refreshing it failed", async () => {
+      const cache = await openCache(
+        recordedProvider({ notifications: async () => recordedNotifications }),
+      );
+      const base = {
+        ...viewOf(cache),
+        mode: "inbox" as const,
+        inbox: { grouping: "repo" as const, filter: "unread" as const },
+      };
+      const readFailure = await show(
+        {
+          ...base,
+          source: {
+            ...base.source,
+            markNotificationRead: () =>
+              Promise.reject(providerError("GITHUB_REQUEST_FAILED")),
+          },
+        },
+        40,
+        () => {},
+        24,
+      );
+      await waitUntil(async () =>
+        expect((await readFailure.redraw()).lines.join("\n")).toContain(
+          "example#12",
+        ),
+      );
+      const refused = await press(readFailure, "m");
+      await waitUntil(async () =>
+        expect((await readFailure.redraw()).lines.join("\n")).toContain(
+          "✗ The provider failed",
+        ),
+      );
+      expect(refused.lines.join("\n")).toContain("✗ The provider failed");
+      const refreshFailure = await show(
+        {
+          ...base,
+          source: {
+            ...base.source,
+            refreshInbox: () =>
+              Promise.reject(providerError("GITHUB_REQUEST_FAILED")),
+          },
+        },
+        40,
+        () => {},
+        24,
+      );
+      await waitUntil(async () =>
+        expect((await refreshFailure.redraw()).lines.join("\n")).toContain(
+          "example#12",
+        ),
+      );
+      const failed = await press(refreshFailure, "R");
+      await waitUntil(async () =>
+        expect((await refreshFailure.redraw()).lines.join("\n")).toContain(
+          "✗ The provider failed",
+        ),
+      );
+      expect(failed.lines.join("\n")).toContain("✗ The provider failed");
+    });
+
+    it("stands the failure in place of the list when the inbox cannot be read", async () => {
+      const cache = await openCache(recordedProvider());
+      const view = {
+        ...viewOf(cache),
+        mode: "inbox" as const,
+        inbox: { grouping: "repo" as const, filter: "unread" as const },
+      };
+      const screen = await show(
+        {
+          ...view,
+          source: {
+            ...view.source,
+            readInbox: () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
+          },
+        },
+        40,
+        () => {},
+        24,
+      );
+      await waitUntil(async () =>
+        expect((await screen.redraw()).lines.join("\n")).toContain(
+          "GITHUB_TIMED_OUT",
+        ),
+      );
+    });
+
+    it("opens the selected notification's page in the browser", async () => {
+      const opened = vi.fn(async (_url: string) => {});
+      const screen = await openInbox(opened);
+      await press(screen, "return");
+      expect(opened).toHaveBeenCalledWith(
+        "https://github.com/example-org/example-repo/pull/12",
+      );
+    });
+
+    it("does nothing for m when the inbox holds no row", async () => {
+      const cache = await openCache(recordedProvider());
+      const view = {
+        ...viewOf(cache),
+        mode: "inbox" as const,
+        inbox: { grouping: "repo" as const, filter: "unread" as const },
+      };
+      const screen = await show(view, 40, () => {}, 24);
+      await waitUntil(async () =>
+        expect((await screen.redraw()).lines.join("\n")).toContain(
+          "nothing unread",
+        ),
+      );
+      expect((await press(screen, "m")).lines.join("\n")).toContain(
+        "nothing unread",
+      );
+    });
+
+    it("keeps the cached rows and names the failure when reading the inbox fails", async () => {
+      const cache = await openCache(
+        recordedProvider({ notifications: async () => recordedNotifications }),
+      );
+      await cache.readNotifications(300_000);
+      const view = {
+        ...viewOf(cache),
+        mode: "inbox" as const,
+        inbox: { grouping: "repo" as const, filter: "unread" as const },
+      };
+      const screen = await show(
+        {
+          ...view,
+          source: {
+            ...view.source,
+            readInbox: () => Promise.reject(providerError("GITHUB_TIMED_OUT")),
+          },
+        },
+        40,
+        () => {},
+        24,
+      );
+      await waitUntil(async () => {
+        const lines = (await screen.redraw()).lines;
+        expect(lines.join("\n")).toContain("example#12");
+        expect(lines.join("\n")).toContain("offline");
+      });
+    });
+
+    it("refreshes the inbox with R and groups it with g", async () => {
+      const screen = await openInbox();
+      const grouped = await press(screen, "g");
+      expect(grouped.lines.at(0)).toContain("by reason");
+      const refreshed = await press(grouped, "R");
+      expect(refreshed.lines.join("\n")).toContain("review requested");
+    });
+  });
+
   describe("activity", () => {
     it("marks cached activity partial while another repository is missing", async () => {
       const cache = await openCache(recordedProvider());
@@ -1466,7 +1680,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  ↓ 1 below",
         `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "synced 0m ago",
-        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
+        "←→ mode n ↑↓ sel ⏎ open g grp t time a ?",
       ]);
     });
 
@@ -1625,7 +1839,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  ↓ 1 below",
         `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "✗ review refused",
-        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
+        "←→ mode n ↑↓ sel ⏎ open g grp t time a ?",
       ]);
     });
 
@@ -1658,7 +1872,7 @@ describe("Screen", { timeout: 15_000 }, () => {
         "  ↓ 1 below",
         `2 threads · 3 events${" ".repeat(15)}1/1/2`,
         "✗ assign refused",
-        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
+        "←→ mode n ↑↓ sel ⏎ open g grp t time a ?",
       ]);
     });
 
@@ -1995,7 +2209,8 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect((await press(screen, "right")).lines.at(0)).toBe(
         describeHeader("finished", "24h · by kind"),
       );
-      expect((await press(screen, "right")).lines.at(0)).toMatch(/^finished/);
+      expect((await press(screen, "right")).lines.at(0)).toMatch(/^inbox/);
+      expect((await press(screen, "h")).lines.at(0)).toMatch(/^finished/);
       expect((await press(screen, "h")).lines.at(0)).toMatch(/^activity/);
       expect((await press(screen, "h")).lines.at(0)).toBe(
         describeHeader("owed", "one list"),
@@ -2058,10 +2273,10 @@ describe("Screen", { timeout: 15_000 }, () => {
       const screen = await show(viewOf(await openCache(fakeProvider())));
       const owed = await press(screen, "t");
       expect(owed.lines.at(0)).toBe(describeHeader("owed", "one list"));
-      expect(owed.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
+      expect(owed.lines.at(11)).toBe("←→ mode n ↑↓ sel ⏎ open g grp a r ?");
       const activity = await press(screen, "right");
       expect(activity.lines.at(11)).toBe(
-        "←→ mode ↑↓ sel ⏎ open g grp t time a r ?",
+        "←→ mode n ↑↓ sel ⏎ open g grp t time a ?",
       );
       expect(activity.look(" time")?.fg).toBe(hex(tokens["color.text.muted"]));
     });
@@ -2073,40 +2288,40 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect(help.lines).toEqual([
         "help",
         "",
-        "Mode ───────────────────────────────────",
-        "  ← →  h l switch mode",
-        `${" ".repeat(11)}owed → activity → finished`,
-        `${" ".repeat(11)}docket opens start view`,
-        `  g${" ".repeat(8)}next grouping`,
-        `  t${" ".repeat(8)}next time window`,
-        `${" ".repeat(11)}owed: most overdue first`,
-        `${" ".repeat(11)}activity: newest first`,
-        `${" ".repeat(11)}finished: newest first`,
+        "Mode \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "  \u2190 \u2192  h l switch mode",
+        "           owed \u2192 activity \u2192 finished \u2192",
+        "           inbox",
+        "           docket opens start view",
+        "  n        open the inbox",
+        "           n again returns to owed",
+        "  A        show all or unread",
+        "           A switches between unread and",
+        "           the whole inbox",
+        "  g        next grouping",
+        "  t        next time window",
+        "           owed: most overdue first",
+        "           activity: newest first",
+        "           finished: newest first",
         "",
-        "List ───────────────────────────────────",
-        "  ↑ ↓  k j move the selection",
-        `${" ".repeat(11)}(opens the accordion)`,
-        `  ⇞ ⇟${" ".repeat(6)}a page up or down`,
+        "List \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "  \u2191 \u2193  k j move the selection",
+        "           (opens the accordion)",
+        "  \u21de \u21df      a page up or down",
         "  home end the first or last thread",
         "",
-        "Thread ─────────────────────────────────",
-        `  ⏎${" ".repeat(8)}open in the browser`,
-        `  a${" ".repeat(8)}assign`,
-        `  r${" ".repeat(8)}request review`,
+        "Thread \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "  \u23ce        open in the browser",
+        "  a        assign",
+        "  r        request review",
+        "  m        mark read",
         "",
-        "Editor ─────────────────────────────────",
-        `  type${" ".repeat(5)}filter`,
-        `  ↑ ↓${" ".repeat(6)}move`,
-        `  ␣${" ".repeat(8)}toggle`,
-        `  ⏎${" ".repeat(8)}apply`,
-        `  esc${" ".repeat(6)}cancel`,
-        "",
-        "App ────────────────────────────────────",
-        `  ?${" ".repeat(8)}show or hide help`,
-        `  esc${" ".repeat(6)}close help`,
-        `  R${" ".repeat(8)}full refresh`,
-        "",
-        "  ↓ 1 below",
+        "Editor \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "  type     filter",
+        "  \u2191 \u2193      move",
+        "  \u2423        toggle",
+        "  \u23ce        apply",
+        "  \u2193 5 below",
       ]);
       expect((await press(screen, "?")).lines.at(0)).toBe(
         describeHeader("owed", "one list"),
@@ -2124,14 +2339,14 @@ describe("Screen", { timeout: 15_000 }, () => {
         "",
         `Mode ${"─".repeat(35)}`,
       ]);
-      expect(opened.lines.at(23)).toBe("  ↓ 9 below");
+      expect(opened.lines.at(23)).toBe("  ↓ 13 below");
       const down = await press(screen, "j");
       expect(down.lines.slice(1, 3)).toEqual([
-        `Mode · 1 of 3 ${"─".repeat(26)}`,
+        `Mode · 1 of 5 ${"─".repeat(26)}`,
         "  ← →  h l switch mode",
       ]);
       const end = await press(screen, "end");
-      expect(end.lines.at(1)).toBe(`List · 2 of 3 ${"─".repeat(26)}`);
+      expect(end.lines.at(1)).toBe(`List · 3 of 3 ${"─".repeat(26)}`);
       expect(end.lines.at(23)).toBe("  windows are counted in working time");
       const pagedUp = await press(screen, "pageup");
       // A page back from the end is the whole help's height of key lines.
@@ -2146,7 +2361,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       ]).toEqual([
         `List · 2 of 3 ${"─".repeat(26)}`,
         "  ⇞ ⇟      a page up or down",
-        "  windows are counted in working time",
+        "  ↓ 1 below",
       ]);
       expect((await press(screen, "escape")).lines).toEqual(list);
     });
@@ -2275,7 +2490,7 @@ describe("Screen", { timeout: 15_000 }, () => {
       screen.setup.resize(60, 12);
       const wide = await screen.redraw();
       expect(wide.lines.at(0)).toBe(describeHeader("owed", "one list", 60));
-      expect(wide.lines.at(11)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
+      expect(wide.lines.at(11)).toBe("←→ mode n ↑↓ sel ⏎ open g grp a r ?");
     });
 
     // It draws the screen some 90 times, narrowed and widened for each of

@@ -1,10 +1,12 @@
 import type { ProviderError, ThreadDetail } from "../lib/provider/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import { at, bob, exampleSync } from "../testing/facts.js";
+import { recordedNotifications } from "../testing/inbox.js";
 import {
   crash,
   parserFix,
   parserFixDetail,
+  recordedNow,
   recordedSettings,
   recordedThreads,
   recordedWatched,
@@ -235,6 +237,17 @@ export const ActivityUngrouped: Story<ScreenFrameProps> = {
     ...recording,
     mode: "activity",
     activity: { window: { amount: 72, unit: "h" }, grouping: "none" },
+  },
+};
+
+/** The inbox: unread notifications first, grouped by repository, with the browser-only label. */
+export const Inbox: Story<ScreenFrameProps> = {
+  args: {
+    ...viewRecording({
+      notifications: { items: recordedNotifications, syncedAt: recordedNow },
+    }),
+    mode: "inbox",
+    inbox: { grouping: "repo", filter: "unread" },
   },
 };
 

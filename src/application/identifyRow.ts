@@ -1,5 +1,6 @@
 import type { ThreadRow } from "../lib/activity/index.js";
 import type { FinishedRow } from "../lib/finished/index.js";
+import type { InboxRow } from "../lib/inbox/index.js";
 import type { WaitRow } from "../lib/owed/index.js";
 
 /**
@@ -11,8 +12,9 @@ import type { WaitRow } from "../lib/owed/index.js";
  * references name.
  */
 export default function identifyRow(
-  row: WaitRow | ThreadRow | FinishedRow,
+  row: WaitRow | ThreadRow | FinishedRow | InboxRow,
 ): string {
+  if ("notification" in row) return row.notification.id;
   if (!("wait" in row)) return row.reference.text;
   const { kind, owners } = row.wait;
   return `${row.reference.text} ${kind} ${owners.join(",")}`;

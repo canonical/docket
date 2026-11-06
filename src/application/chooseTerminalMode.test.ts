@@ -31,7 +31,12 @@ describe("chooseTerminalMode", () => {
     "with output a terminal: $interactive, input a terminal: $interactiveInput",
     ({ interactive, interactiveInput, both }) => {
       it("opens the start view for docket alone only when both are terminals", () => {
-        for (const start of ["owed", "activity", "finished"] as const) {
+        for (const start of [
+          "owed",
+          "activity",
+          "finished",
+          "inbox",
+        ] as const) {
           expect(modeOf([], interactive, interactiveInput, start)).toBe(
             both ? start : undefined,
           );

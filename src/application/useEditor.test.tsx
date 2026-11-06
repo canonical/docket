@@ -83,6 +83,9 @@ async function showOn(
         readCandidates(provider, action, thread),
       write: (request) => writeFromTerminal({ provider, cache }, request),
       readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
+      readInbox: () => cache.readNotifications(300_000),
+      refreshInbox: () => cache.refreshNotifications(),
+      markNotificationRead: async (id) => cache.setNotificationRead(id),
     },
   };
   const screen = await drawSuspending(
@@ -508,7 +511,9 @@ describe("useEditor", { timeout: 15_000 }, () => {
       );
       const cancelled = await press(opened, "down", "space", "escape");
       expect(cancelled.lines.at(0)).toBe(owedHeader);
-      expect(cancelled.lines.at(-1)).toBe("←→ mode ↑↓ sel ⏎ open g grp a r ?");
+      expect(cancelled.lines.at(-1)).toBe(
+        "←→ mode n ↑↓ sel ⏎ open g grp a r ?",
+      );
       expect(setAssignees).not.toHaveBeenCalled();
       const moved = await press(cancelled, "j");
       expect(moved.look("example#12 PR close")?.bg).toBe(

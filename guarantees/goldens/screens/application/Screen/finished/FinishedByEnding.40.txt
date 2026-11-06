@@ -22,7 +22,7 @@
 |  ↓ 3 below
 |3 over · 4 merged · 3 closed       1/2/7
 |synced 2m ago
-|←→ mode ↑↓ sel ⏎ open g grp t time ?
+|←→ mode n ↑↓ sel ⏎ open g grp t time ?
 
 runs
 1:1 "finished   1w · by ending · " fg #ffffffff bg #000000ff
@@ -92,12 +92,12 @@ runs
 23:1 "synced 2m ago" fg #c0c0c0ff bg #000000ff
 24:1 "←→" fg #ffffffff bg #000000ff
 24:3 " mode" fg #c0c0c0ff bg #000000ff
-24:8 " ↑↓" fg #ffffffff bg #000000ff
-24:11 " sel" fg #c0c0c0ff bg #000000ff
-24:15 " ⏎" fg #ffffffff bg #000000ff
-24:17 " open" fg #c0c0c0ff bg #000000ff
-24:22 " g" fg #ffffffff bg #000000ff
-24:24 " grp" fg #c0c0c0ff bg #000000ff
-24:28 " t" fg #ffffffff bg #000000ff
-24:30 " time" fg #c0c0c0ff bg #000000ff
-24:35 " ?" fg #ffffffff bg #000000ff
+24:8 " n ↑↓" fg #ffffffff bg #000000ff
+24:13 " sel" fg #c0c0c0ff bg #000000ff
+24:17 " ⏎" fg #ffffffff bg #000000ff
+24:19 " open" fg #c0c0c0ff bg #000000ff
+24:24 " g" fg #ffffffff bg #000000ff
+24:26 " grp" fg #c0c0c0ff bg #000000ff
+24:30 " t" fg #ffffffff bg #000000ff
+24:32 " time" fg #c0c0c0ff bg #000000ff
+24:37 " ?" fg #ffffffff bg #000000ff

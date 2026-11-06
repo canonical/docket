@@ -6,6 +6,8 @@ export {
   type GroupHeadingProps,
 } from "./GroupHeading/index.js";
 export { HelpOverlay, type HelpOverlayProps } from "./HelpOverlay/index.js";
+export type { InboxRowProps } from "./InboxRow/index.js";
+export { InboxRow } from "./InboxRow/index.js";
 export { KeyBar, type KeyBarProps } from "./KeyBar/index.js";
 export { Loading, type LoadingProps } from "./Loading/index.js";
 export {

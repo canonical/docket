@@ -13,6 +13,7 @@ export type CommandName =
   | "owed"
   | "activity"
   | "finished"
+  | "inbox"
   | "show"
   | "assign"
   | "review"

@@ -168,6 +168,7 @@ export default function parseArguments(
       byGiven: values.by !== undefined,
       window: choose("window"),
       confirm: values.confirm === true,
+      all: values.all === true,
     },
   };
 }

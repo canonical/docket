@@ -68,7 +68,7 @@ describe("Screen in finished", { timeout: 15_000 }, () => {
     expect(screen.lines.slice(21)).toEqual([
       "3 over · 4 merged · 3 closed       1/3/7",
       "synced 2m ago",
-      "←→ mode ↑↓ sel ⏎ open g grp t time ?",
+      "←→ mode n ↑↓ sel ⏎ open g grp t time ?",
     ]);
   });
 

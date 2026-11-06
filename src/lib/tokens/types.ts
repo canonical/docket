@@ -61,6 +61,10 @@ export interface Tokens {
   readonly "glyph.thread.pullRequest": string;
   /** A discussion, before the row's reference. */
   readonly "glyph.thread.discussion": string;
+  /** A notification whose subject is not an issue, pull request or discussion. */
+  readonly "glyph.inbox.other": string;
+  /** An unread notification, in the inbox margin. */
+  readonly "glyph.inbox.unread": string;
   /** A section heading's rule, to the pane's edge. */
   readonly "glyph.rule": string;
   /** You, or a GitHub team you belong to, before a login. */

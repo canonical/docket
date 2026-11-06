@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { InboxRow } from "../lib/inbox/index.js";
 import type { ThreadSummary } from "../lib/waits/index.js";
 import { findFinishedRow } from "../testing/finished.js";
 import { parserFixDetail } from "../testing/recorded.js";
@@ -22,15 +23,16 @@ afterEach(() => {
 /** finished's rows: a stacked pull request, and an issue in no stack. */
 const stacked = findFinishedRow("example#2");
 const unstacked = findFinishedRow("example#7");
-const rows: readonly ListRow[] = [unstacked, stacked];
+type Row = Exclude<ListRow, InboxRow>;
+const rows: readonly Row[] = [unstacked, stacked];
 
 let result: UseRowDetailsResult | undefined;
-let select: (row: ListRow) => void = () => {};
+let select: (row: Row) => void = () => {};
 
 /** Reads the rows' details with `readDetails`, the selection on `first`. */
 async function open(
   readDetails: (threads: readonly ThreadSummary[]) => Promise<unknown[]>,
-  first: ListRow,
+  first: Row,
 ) {
   const reader = createDetailReader(
     readDetails as Parameters<typeof createDetailReader>[0],

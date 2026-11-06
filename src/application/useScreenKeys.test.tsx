@@ -23,6 +23,9 @@ function noting(ran: string[], label?: string): ScreenActions {
     openSelected: note("openSelected"),
     nextGrouping: note("nextGrouping"),
     nextWindow: note("nextWindow"),
+    toggleInbox: note("toggleInbox"),
+    toggleInboxFilter: note("toggleInboxFilter"),
+    markRead: note("markRead"),
     edit: note("edit"),
     toggleHelp: note("toggleHelp"),
     closeHelp: note("closeHelp"),
@@ -151,12 +154,12 @@ describe("useScreenKeys", () => {
     expect(ran).toEqual(["nextWindow", "edit assign", "edit review"]);
     expect([owed, activity].map(({ lines }) => lines.slice(0, 2))).toEqual([
       [
-        "← → ↑ ↓ ⇞ ⇟ home end ⏎ g a r ? R q",
-        "← → g t ↑ ↓ ⇞ ⇟ home end ⏎ a r ? esc R q",
+        "← → n ↑ ↓ ⇞ ⇟ home end ⏎ g a r ? R q",
+        "← → n A g t ↑ ↓ ⇞ ⇟ home end ⏎ a r m ? esc R q",
       ],
       [
-        "← → ↑ ↓ ⇞ ⇟ home end ⏎ g t a r ? R q",
-        "← → g t ↑ ↓ ⇞ ⇟ home end ⏎ a r ? esc R q",
+        "← → n ↑ ↓ ⇞ ⇟ home end ⏎ g t a r ? R q",
+        "← → n A g t ↑ ↓ ⇞ ⇟ home end ⏎ a r m ? esc R q",
       ],
     ]);
   });
@@ -165,7 +168,7 @@ describe("useScreenKeys", () => {
     const { ran, screen } = await bind({ mode: "finished" });
     const finished = await press(screen, "t", "a", "r");
     expect(ran).toEqual(["nextWindow"]);
-    expect(finished.lines.at(0)).toBe("← → ↑ ↓ ⇞ ⇟ home end ⏎ g t ? R q");
+    expect(finished.lines.at(0)).toBe("← → n ↑ ↓ ⇞ ⇟ home end ⏎ g t ? R q");
   });
 
   it("runs the actions the screen gave last, though nothing else changed", async () => {

@@ -58,6 +58,9 @@ async function probe(
     readCandidates: () => Promise.reject(new Error("no editor opens")),
     write: () => Promise.reject(new Error("no editor opens")),
     readEvents,
+    readInbox: () => cache.readNotifications(300_000),
+    refreshInbox: () => cache.refreshNotifications(),
+    markNotificationRead: async (id) => cache.setNotificationRead(id),
   };
   let setNext: (props: Partial<Props>) => void = () => {};
   function Probe() {

@@ -13,6 +13,8 @@ export {
   type GroupHeadingProps,
   HelpOverlay,
   type HelpOverlayProps,
+  InboxRow,
+  type InboxRowProps,
   KeyBar,
   type KeyBarProps,
   Loading,

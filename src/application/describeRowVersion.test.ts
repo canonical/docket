@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { buildRow } from "../lib/inbox/index.js";
 import { findActivityRow } from "../testing/activity.js";
 import { findFinishedRow } from "../testing/finished.js";
+import { notification } from "../testing/inbox.js";
 import { parserFix } from "../testing/recorded.js";
 import { overReview } from "../testing/rows.js";
 import describeRowVersion from "./describeRowVersion.js";
@@ -32,5 +34,10 @@ describe("describeRowVersion", () => {
     expect(describeRowVersion(row, undefined)).toBe(
       `${row.events.at(0)?.event.at.getTime()}`,
     );
+  });
+
+  it("names a notification row by its GitHub id", () => {
+    const row = buildRow(notification({ id: "thread-1" }), [], new Date());
+    expect(describeRowVersion(row, undefined)).toBe("thread-1");
   });
 });

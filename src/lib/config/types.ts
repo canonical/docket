@@ -4,7 +4,7 @@ import type { Duration, WorkingClock } from "../clock/index.js";
 export type Group = "team" | "internal" | "external" | "bot";
 
 /** The mode docket's terminal interface opens on when a call names none. */
-export type View = "owed" | "activity" | "finished";
+export type View = "owed" | "activity" | "finished" | "inbox";
 
 /**
  * Logins and the group each belongs to, keyed in lower case because GitHub

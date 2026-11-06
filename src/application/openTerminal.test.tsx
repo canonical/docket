@@ -100,6 +100,9 @@ describe("openTerminal", () => {
         readCandidates: () => Promise.reject(new Error("no editor opens")),
         write: () => Promise.reject(new Error("no editor opens")),
         readEvents: (repo, since) => cache.readEvents(repo, since, 300_000),
+        readInbox: () => cache.readNotifications(300_000),
+        refreshInbox: () => cache.refreshNotifications(),
+        markNotificationRead: async (id) => cache.setNotificationRead(id),
       },
     });
     await waitUntil(() => expect(snapshot).toHaveBeenCalledTimes(2));
@@ -107,7 +110,7 @@ describe("openTerminal", () => {
       await setup.renderOnce();
       const frame = setup.captureCharFrame();
       expect(frame).toContain("nothing owed");
-      expect(frame).toContain("←→ mode ↑↓ sel ⏎ open g grp a r ?");
+      expect(frame).toContain("←→ mode n ↑↓ sel ⏎ open g grp a r ?");
     });
     setup.mockInput.pressKey("q");
     expect(await closed).toBe(0);
@@ -133,6 +136,9 @@ describe("openTerminal", () => {
         readCandidates: () => Promise.reject(new Error("no editor opens")),
         write: () => Promise.reject(new Error("no editor opens")),
         readEvents: () => new Promise(() => {}),
+        readInbox: () => new Promise(() => {}),
+        refreshInbox: () => new Promise(() => {}),
+        markNotificationRead: async () => {},
       },
     });
     await waitUntil(async () => {
@@ -140,7 +146,7 @@ describe("openTerminal", () => {
       await setup.renderOnce();
       // The keys work once the key bar, drawn from them, shows.
       expect(setup.captureCharFrame()).toContain(
-        "←→ mode ↑↓ sel ⏎ open g grp a r ?",
+        "←→ mode n ↑↓ sel ⏎ open g grp a r ?",
       );
     });
     setup.mockInput.pressKey("q");

@@ -96,8 +96,8 @@ describe("useAddress", () => {
     expect(await step(-1)).toBe("owed | one list | overdue first");
     expect(await step(1)).toBe("activity | 24h · by kind | newest first");
     expect(await step(1)).toBe("finished | 24h · by kind | newest first");
-    expect(await step(1)).toBe("finished | 24h · by kind | newest first");
-    expect(await step(-1)).toBe("activity | 24h · by kind | newest first");
+    expect(await step(1)).toBe("inbox | unread · by repo | unread first");
+    expect(await step(-1)).toBe("finished | 24h · by kind | newest first");
   });
 
   it("steps finished through its own groupings and window, apart from activity's", async () => {
@@ -147,5 +147,30 @@ describe("useAddress", () => {
       1,
     );
     expect(screen.lines).toEqual(["activity | 1w · one list | newest first"]);
+  });
+
+  it("opens the inbox, steps its grouping and filter, and returns to owed", async () => {
+    const screen = await draw(<Placed {...opening} mode="inbox" />, 60, 1);
+    const press = async (key: () => void) =>
+      (await screen.redraw(key)).lines.at(0);
+    expect(screen.lines.at(0)).toBe("inbox | unread · by repo | unread first");
+    expect(await press(() => address?.nextGrouping())).toBe(
+      "inbox | unread · by reason | unread first",
+    );
+    expect(await press(() => address?.toggleInboxFilter())).toBe(
+      "inbox | all · by reason | unread first",
+    );
+    expect(await press(() => address?.toggleInboxFilter())).toBe(
+      "inbox | unread · by reason | unread first",
+    );
+    expect(await press(() => address?.toggleInboxFilter())).toBe(
+      "inbox | all · by reason | unread first",
+    );
+    expect(await press(() => address?.toggleInbox())).toBe(
+      "owed | one list | overdue first",
+    );
+    expect(await press(() => address?.toggleInbox())).toBe(
+      "inbox | all · by reason | unread first",
+    );
   });
 });
