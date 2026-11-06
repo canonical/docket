@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 import manifest from "../../package.json" with { type: "json" };
 import { createProvider } from "../lib/github/index.js";
-import openTerminal from "./openTerminal.js";
 import run from "./run.js";
 
 /**
@@ -27,7 +26,12 @@ export default async function main(): Promise<void> {
     // minutes after the screen is gone; so closing ends the process. The
     // fetch lock goes with it, and a cache write it cuts short leaves the
     // cache file as it was. Text mode ends only once its output is written.
-    openTerminal: async (view) => process.exit(await openTerminal(view)),
+    openTerminal: async (view) => {
+      // The terminal interface and its React renderer are loaded only when
+      // a terminal opens it; a text call, or an agent's, never pays for them.
+      const { default: openTerminal } = await import("./openTerminal.js");
+      process.exit(await openTerminal(view));
+    },
     version: manifest.version,
   });
 }
