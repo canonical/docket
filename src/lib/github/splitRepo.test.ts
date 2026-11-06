@@ -15,5 +15,9 @@ describe("splitRepo", () => {
       name: "",
     });
     expect(splitRepo("")).toEqual({ owner: "", name: "" });
+    expect(splitRepo("/example-repo")).toEqual({
+      owner: "",
+      name: "example-repo",
+    });
   });
 });

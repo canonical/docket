@@ -85,7 +85,7 @@ const retrySoon = (
  * names a node GitHub did not find there.
  */
 const onlyMissing = (error: unknown): error is { readonly data: unknown } => {
-  const { data, errors } = (error ?? {}) as {
+  const { data, errors } = error as {
     readonly data?: unknown;
     readonly errors?: unknown;
   };

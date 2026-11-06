@@ -8,7 +8,7 @@ import type { ActorNode, RestAccount } from "./types.js";
  * gives as nothing, reads as `ghost`, the name GitHub shows for it.
  */
 export default function readAccount(
-  node: ActorNode | RestAccount | null,
+  node: ActorNode | RestAccount | null | undefined,
 ): Account {
   if (!node) return { login: "ghost", type: "user" };
   const type = "__typename" in node ? node.__typename : node.type;

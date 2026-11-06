@@ -401,6 +401,11 @@ describe("describeDetail, for an owner the row cuts", () => {
     );
   });
 
+  it("shows no owner line when the thread's facts give none", () => {
+    const row = { ...soonReply, owner: undefined, owners: undefined };
+    expect(firstLine(row)).toBe("○ dave · 1d ago");
+  });
+
   it("names every owner whole, behind their marks, when the row cuts any of them", () => {
     const row = ownedBy(sharedClose, ["alice", "bob", "carol-at-example-org"]);
     const reply = measureRow({ ...row.wait, kind: "response" });

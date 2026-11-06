@@ -89,6 +89,13 @@ describe("groupRows", () => {
         { text: "unassigned", kind: "words" },
       ]);
     });
+
+    it("heads an unassigned section as text when no row names an owner", () => {
+      const ownerless = { ...row({ owners: [] }), owner: undefined };
+      expect(headings(groupRows([ownerless], "owner", repos))).toEqual([
+        "unassigned",
+      ]);
+    });
   });
 
   describe("by author", () => {

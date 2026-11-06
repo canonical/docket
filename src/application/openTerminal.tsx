@@ -1,8 +1,4 @@
-import {
-  type CliRenderer,
-  type CliRendererConfig,
-  createCliRenderer,
-} from "@opentui/core";
+import type { CliRenderer, CliRendererConfig } from "@opentui/core";
 import { KeymapProvider } from "@opentui/keymap/react";
 import { createRoot } from "@opentui/react";
 import { createAttention, startRefreshCycle } from "../lib/cache/index.js";
@@ -25,9 +21,7 @@ import type { TerminalView } from "./types.js";
  */
 export default async function openTerminal(
   view: TerminalView,
-  createRenderer: (
-    config: CliRendererConfig,
-  ) => Promise<CliRenderer> = createCliRenderer,
+  createRenderer: (config: CliRendererConfig) => Promise<CliRenderer>,
 ): Promise<number> {
   const { promise, resolve } = Promise.withResolvers<number>();
   let stop = () => {};

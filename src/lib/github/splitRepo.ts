@@ -6,6 +6,6 @@ export interface RepoName {
 
 /** Splits `owner/name` into its two parts. */
 export default function splitRepo(repo: string): RepoName {
-  const [owner = "", name = ""] = repo.split("/");
+  const [owner, name = ""] = repo.split("/");
   return { owner, name };
 }

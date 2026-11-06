@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { recordedActivity, recordedNow } from "../../testing/recorded.js";
+import {
+  recordedActivity,
+  recordedNow,
+  recordedRepos,
+} from "../../testing/recorded.js";
+import groupThreads from "../activity/groupThreads.js";
 import type { ActivityGrouping } from "../activity/index.js";
 import renderActivity from "./renderActivity.js";
 import type { Detail, Format, Freshness } from "./types.js";
@@ -137,6 +142,30 @@ describe("renderActivity", () => {
     expect(answer.groups.at(0)).not.toHaveProperty("heading");
     const summary = JSON.parse(render("json", "summary").join("\n"));
     expect(summary).not.toHaveProperty("groups");
+  });
+
+  it("gives a section whose threads' facts are missing a null author", () => {
+    const list = recordedActivity("none");
+    const [row] = list.groups.at(0)?.rows ?? [];
+    if (!row) throw new Error("the recording has a row");
+    const groups = groupThreads(
+      [{ ...row, author: undefined }],
+      "author",
+      recordedRepos,
+    );
+    const answer = JSON.parse(
+      renderActivity({
+        list: {
+          ...list,
+          groups,
+          address: { ...list.address, grouping: "author" },
+        },
+        freshness,
+        format: "json",
+        detail: "standard",
+      }),
+    );
+    expect(answer.groups.at(0)?.author).toBeNull();
   });
 
   it("names the owners as given: unassigned, one, or none when the thread's facts are missing", () => {

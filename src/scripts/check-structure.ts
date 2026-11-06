@@ -22,7 +22,9 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
-import ts from "typescript";
+// TypeScript 7 is the native compiler and no longer exposes the compiler
+// API this gate walks; a second copy keeps the 5.x AST API for it.
+import ts from "typescript-ast";
 
 type Finding = { file: string; rule: string; message: string };
 type Reach = "values" | "types";

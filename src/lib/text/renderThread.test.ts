@@ -196,6 +196,14 @@ describe("renderThread", () => {
     expect(json.stack).toBeNull();
   });
 
+  it("gives a stack no neighbours when the details do not carry them", () => {
+    const details = { ...parserFixDetail, stack: undefined };
+    const json = JSON.parse(
+      render("json", "standard", [{ ...shown, details }]),
+    ).threads.at(0);
+    expect(json.stack.members).toEqual([]);
+  });
+
   it("names a team asked for a review, running checks, a draft, and a stack's end", () => {
     const details = {
       ...parserFixDetail,

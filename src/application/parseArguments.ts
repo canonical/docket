@@ -49,7 +49,9 @@ function read(args: readonly string[]) {
       strict: true,
     });
   } catch (error) {
-    const flag = /'(-[^'\s]*)/.exec((error as Error).message)?.[1] ?? "";
+    const flag = (
+      /'(-[^'\s]*)/.exec((error as Error).message) as RegExpExecArray
+    )[1];
     if (
       (error as NodeJS.ErrnoException).code === "ERR_PARSE_ARGS_UNKNOWN_OPTION"
     ) {

@@ -82,9 +82,7 @@ export default async function run(context: Context): Promise<number> {
     // no token.
     let connection: Connection | Problem;
     try {
-      const provider = await context.connect(
-        settings.hosts.at(0) ?? "github.com",
-      );
+      const provider = await context.connect(settings.hosts[0]);
       const cache = createCache({
         provider,
         repos: settings.repos.map(({ repo }) => repo),
@@ -150,7 +148,7 @@ export default async function run(context: Context): Promise<number> {
       watched: files.watched,
       provider,
       cache,
-      describeFreshness: (syncedAt, warnings = []) => ({
+      describeFreshness: (syncedAt, warnings) => ({
         now: context.now(),
         syncedAt,
         timezone: settings.time.timezone,
