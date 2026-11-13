@@ -158,7 +158,7 @@ export default async function run(context: Context): Promise<number> {
       watched: files.watched,
       provider,
       cache,
-      describeFreshness: (syncedAt, warnings) => ({
+      describeFreshness: (syncedAt, warnings = []) => ({
         now: context.now(),
         syncedAt,
         timezone: settings.time.timezone,

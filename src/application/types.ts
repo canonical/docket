@@ -128,7 +128,7 @@ export interface Session {
    */
   readonly describeFreshness: (
     syncedAt: Date | undefined,
-    warnings: Freshness["warnings"],
+    warnings?: Freshness["warnings"],
   ) => Freshness;
 }
 
