@@ -1,3 +1,4 @@
+import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { recordedWatched, yourTeamSettings } from "../testing/recorded.js";
 import {
   connectRecording,
@@ -6,13 +7,14 @@ import {
   standInGitHub,
   viewRecording,
 } from "../testing/screen.js";
-import type { Meta, Story } from "../testing/stories.js";
+import { drawAtWidth } from "../testing/stories.js";
 
 /** The composed screen's editors, which read and write a stand-in for GitHub. */
-const meta: Meta<ScreenFrameProps> = {
+const meta = {
   title: "application/Screen/editors",
   component: ScreenFrame,
-};
+  render: drawAtWidth(ScreenFrame),
+} satisfies Meta<typeof ScreenFrame>;
 
 export default meta;
 
@@ -27,7 +29,7 @@ const editable: ScreenFrameProps = {
  * her, then the team, the people who wrote on the thread and everyone else
  * GitHub can assign, the cursor on carol, whom only GitHub offers.
  */
-export const AssignEditor: Story<ScreenFrameProps> = {
+export const AssignEditor: StoryObj<typeof meta> = {
   args: {
     ...editable,
     run: ["thread.assign", "editor.next", "editor.next", "editor.next"],
@@ -38,7 +40,7 @@ export const AssignEditor: Story<ScreenFrameProps> = {
  * `r` on the review row: bob ticked as asked, then whom GitHub suggests,
  * the collaborators and the team, the cursor on the team.
  */
-export const RequestReviewEditor: Story<ScreenFrameProps> = {
+export const RequestReviewEditor: StoryObj<typeof meta> = {
   args: {
     ...editable,
     run: [
@@ -59,7 +61,7 @@ export const RequestReviewEditor: Story<ScreenFrameProps> = {
  * records alice alone, so the editor stays open with the reason and a
  * Recovery line, and the status line says the assignment was refused.
  */
-export const AssignRefused: Story<ScreenFrameProps> = {
+export const AssignRefused: StoryObj<typeof meta> = {
   args: {
     ...editable,
     run: [
@@ -76,7 +78,7 @@ export const AssignRefused: Story<ScreenFrameProps> = {
  * carol ticked beside alice and applied: the editor closes, the row reads
  * both, and the status line says whom GitHub assigned.
  */
-export const AssignSucceeded: Story<ScreenFrameProps> = {
+export const AssignSucceeded: StoryObj<typeof meta> = {
   args: {
     ...editable,
     run: [
@@ -117,7 +119,7 @@ const toTheTeam = [
  * `r` on the review row while the personal file names the team as
  * alice's: the team takes her mark, though no thread shows her in it.
  */
-export const RequestReviewYourTeam: Story<ScreenFrameProps> = {
+export const RequestReviewYourTeam: StoryObj<typeof meta> = {
   args: { ...editableYours, run: toTheTeam },
 };
 
@@ -125,7 +127,7 @@ export const RequestReviewYourTeam: Story<ScreenFrameProps> = {
  * The team ticked beside bob and applied: the status line names it with
  * alice's mark, as the picker did.
  */
-export const RequestReviewYourTeamSucceeded: Story<ScreenFrameProps> = {
+export const RequestReviewYourTeamSucceeded: StoryObj<typeof meta> = {
   args: {
     ...editableYours,
     run: [...toTheTeam, "editor.toggle", "editor.apply"],

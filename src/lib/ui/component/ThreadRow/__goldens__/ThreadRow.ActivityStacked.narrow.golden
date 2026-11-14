@@ -1,0 +1,11 @@
+40x36
+| ┆⇄ example#12 PR ○ dave             20m
+| ┆Fix the parser                 ● alice
+
+1:2 "┆" fg=7
+1:3 "⇄ example#12 PR" bold
+1:19 "○ dave" fg=6 bold
+1:38 "20m" bold
+2:2 "┆" fg=7
+2:3 "Fix the parser" italic
+2:34 "● alice" fg=4

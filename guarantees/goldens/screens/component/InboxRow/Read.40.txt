@@ -1,9 +1,0 @@
-40 columns
-|  ◇ example#15 assigned               3h
-|  Crash on start
-
-runs
-1:3 "◇ example#15 " fg #ffffffff bg #00000000 bold
-1:16 "assigned" fg #c0c0c0ff bg #00000000 bold
-1:39 "3h" fg #c0c0c0ff bg #00000000 bold
-2:3 "Crash on start" fg #c0c0c0ff bg #00000000 italic

@@ -1,3 +1,4 @@
+import type { Meta, StoryObj } from "@aztlan/lago-react";
 import type { CacheStatus } from "../lib/cache/index.js";
 import type { ProviderError } from "../lib/provider/index.js";
 import {
@@ -6,14 +7,15 @@ import {
   settled,
   viewRecording,
 } from "../testing/screen.js";
-import type { Meta, Story } from "../testing/stories.js";
+import { drawAtWidth } from "../testing/stories.js";
 import createDetailReader from "./createDetailReader.js";
 
 /** The composed screen while its data loads, or waits to. */
-const meta: Meta<ScreenFrameProps> = {
+const meta = {
   title: "application/Screen/loading",
   component: ScreenFrame,
-};
+  render: drawAtWidth(ScreenFrame),
+} satisfies Meta<typeof ScreenFrame>;
 
 export default meta;
 
@@ -31,7 +33,7 @@ const stopped = (
   });
 
 /** The first run paused for the budget after the first repository. */
-export const FirstRunPaused: Story<ScreenFrameProps> = {
+export const FirstRunPaused: StoryObj<typeof meta> = {
   args: stopped(
     [
       { repo, stage: { kind: "done", threads: 2, fetched: 1, total: 1 } },
@@ -47,7 +49,7 @@ export const FirstRunPaused: Story<ScreenFrameProps> = {
 };
 
 /** GitHub refused the first run for its rate limit on the second repository. */
-export const FirstRunRateLimited: Story<ScreenFrameProps> = {
+export const FirstRunRateLimited: StoryObj<typeof meta> = {
   args: stopped(
     [
       { repo, stage: { kind: "done", threads: 2, fetched: 1, total: 1 } },
@@ -68,7 +70,7 @@ const timedOut: ProviderError = Object.assign(
 );
 
 /** The first run failed on the second repository: its reason, then the step. */
-export const FirstRunFailed: Story<ScreenFrameProps> = {
+export const FirstRunFailed: StoryObj<typeof meta> = {
   args: stopped(
     [
       { repo, stage: { kind: "done", threads: 2, fetched: 1, total: 1 } },
@@ -86,12 +88,12 @@ const unanswered = () =>
   );
 
 /** The details near the selection being read: none of them yet. */
-export const DetailsLoading: Story<ScreenFrameProps> = {
+export const DetailsLoading: StoryObj<typeof meta> = {
   args: viewRecording({ details: unanswered() }),
 };
 
 /** A background refresh on the list's side, the details being read on the other. */
-export const RefreshingWithDetails: Story<ScreenFrameProps> = {
+export const RefreshingWithDetails: StoryObj<typeof meta> = {
   args: viewRecording({
     details: unanswered(),
     status: {

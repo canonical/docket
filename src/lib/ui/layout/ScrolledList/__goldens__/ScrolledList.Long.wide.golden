@@ -1,0 +1,15 @@
+60x36
+|● example-contributor-with-a-long-login · 2 of 3 ───────────
+|│ second of theirs
+|╵ a thread
+|│ third of theirs
+|╵ a thread
+|  ↓ 1 below
+
+1:1 "● example-contributor-with-a-long-login" fg=4
+1:41 "· 2 of 3 ───────────"
+2:1 "│ second of theirs" fg=#ffffff
+3:1 "╵ a thread" fg=#ffffff
+4:1 "│ third of theirs" fg=#ffffff
+5:1 "╵ a thread" fg=#ffffff
+6:3 "↓ 1 below" fg=7

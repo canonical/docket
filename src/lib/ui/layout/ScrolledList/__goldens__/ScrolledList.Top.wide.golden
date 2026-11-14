@@ -1,0 +1,15 @@
+60x36
+|● bob ──────────────────────────────────────────────────────
+|│ first of bob's
+|╵ a thread
+|│ second of bob's
+|╵ a thread
+|  ↓ 2 below
+
+1:1 "● bob" fg=4
+1:7 "──────────────────────────────────────────────────────"
+2:1 "│ first of bob's" fg=#ffffff
+3:1 "╵ a thread" fg=#ffffff
+4:1 "│ second of bob's" fg=#ffffff
+5:1 "╵ a thread" fg=#ffffff
+6:3 "↓ 2 below" fg=7

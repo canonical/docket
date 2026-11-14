@@ -1,0 +1,17 @@
+40x8
+|List · 1 of 1 ──────────────────────────
+|  ↑ ↓  k j move the selection
+|           (opens the accordion)
+|
+|App ────────────────────────────────────
+|  ?        show or hide help
+|  R        full refresh
+|  ↓ 1 below
+
+1:1 "List · 1 of 1 ──────────────────────────"
+2:3 "↑ ↓  k j move the selection"
+3:12 "(opens the accordion)"
+5:1 "App ────────────────────────────────────"
+6:3 "?        show or hide help"
+7:3 "R        full refresh"
+8:3 "↓ 1 below" fg=7

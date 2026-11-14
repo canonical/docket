@@ -1,14 +1,16 @@
+import type { Meta, StoryObj } from "@aztlan/lago-react";
 import {
   ScreenFrame,
   type ScreenFrameProps,
   viewRecording,
 } from "../testing/screen.js";
-import type { Meta, Story } from "../testing/stories.js";
+import { atHeight, drawAtWidth } from "../testing/stories.js";
 
-const meta: Meta<ScreenFrameProps> = {
+const meta = {
   title: "application/Screen/navigation",
   component: ScreenFrame,
-};
+  render: drawAtWidth(ScreenFrame),
+} satisfies Meta<typeof ScreenFrame>;
 
 export default meta;
 
@@ -20,13 +22,13 @@ const recording = viewRecording();
  * counts line giving the selection's own place, and the last line
  * counting every row under the pane, the pull requests after the issues.
  */
-export const OwedPinnedHeading: Story<ScreenFrameProps> = {
+export const OwedPinnedHeading: StoryObj<typeof meta> = {
   args: {
     ...recording,
     owedGrouping: "kind",
     run: ["selection.next", "selection.next"],
   },
-  parameters: { height: 14 },
+  parameters: { viewports: atHeight(14) },
 };
 
 /**
@@ -34,13 +36,13 @@ export const OwedPinnedHeading: Story<ScreenFrameProps> = {
  * her heading pinned with the place of the first row shown, and bob's
  * and the unassigned rows under the pane counted.
  */
-export const OwedScrolled: Story<ScreenFrameProps> = {
+export const OwedScrolled: StoryObj<typeof meta> = {
   args: {
     ...recording,
     owedGrouping: "owner",
     run: ["selection.next", "selection.pageDown"],
   },
-  parameters: { height: 14 },
+  parameters: { viewports: atHeight(14) },
 };
 
 /**
@@ -48,7 +50,7 @@ export const OwedScrolled: Story<ScreenFrameProps> = {
  * last line counts the key lines under the pane, as a list counts its
  * rows.
  */
-export const HelpShort: Story<ScreenFrameProps> = {
+export const HelpShort: StoryObj<typeof meta> = {
   args: { ...recording, run: ["help.toggle"] },
-  parameters: { height: 24 },
+  parameters: { viewports: atHeight(24) },
 };

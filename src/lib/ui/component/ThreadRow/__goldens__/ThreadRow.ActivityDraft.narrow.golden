@@ -1,0 +1,10 @@
+40x36
+|  ⇄ example#14 PR ○ dave              3h
+|  Update dependency …  draft  unassigned
+
+1:3 "⇄ example#14 PR" bold
+1:19 "○ dave" fg=6 bold
+1:39 "3h" bold
+2:3 "Update dependency …" italic
+2:24 "draft" fg=7
+2:31 "unassigned"

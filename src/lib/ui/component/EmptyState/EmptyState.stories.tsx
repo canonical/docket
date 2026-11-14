@@ -1,20 +1,22 @@
-import type { Meta, Story } from "../../../../testing/stories.js";
+import type { Meta, StoryObj } from "@aztlan/lago-react";
+import { drawAtWidth } from "../../../../testing/stories.js";
 import EmptyState from "./EmptyState.js";
 import type { EmptyStateProps } from "./types.js";
 
-const meta: Meta<EmptyStateProps> = {
+const meta = {
   title: "component/EmptyState",
   component: EmptyState,
-};
+  render: drawAtWidth(EmptyState),
+} satisfies Meta<typeof EmptyState>;
 
 export default meta;
 
 /** owed with no running wait. */
-export const NothingOwed: Story<EmptyStateProps> = {
+export const NothingOwed: StoryObj<typeof meta> = {
   args: { message: { text: "nothing owed", kind: "words" }, width: 40 },
 };
 
 /** The longest message the list area gives: owed, with nothing owed. */
-export const Long: Story<EmptyStateProps> = {
+export const Long: StoryObj<typeof meta> = {
   args: { message: { text: "nothing owed", kind: "words" }, width: 40 },
 };

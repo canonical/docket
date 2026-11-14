@@ -1,0 +1,33 @@
+40x36
+|┃┆asked by ● alice 3d ago…
+|┃┆example stack 3 · 2 of 3 · → main
+|┃┆…
+|┃┆✗ failed: GitHub gave no answer within
+|┃┆30 seconds
+|┃┆Recovery: check the network connection
+|┃┆and https://www.githubstatus.com, then
+|╹┆refresh
+
+1:1 "┃" fg=1 bg=8
+1:2 "┆asked by " fg=7 bg=8
+1:12 "● alice " fg=4 bg=8
+1:20 "3d ago…              " fg=7 bg=8
+2:1 "┃" fg=1 bg=8
+2:2 "┆example stack 3 · 2 of 3 · → main     " fg=7 bg=8
+3:1 "┃" fg=1 bg=8
+3:2 "┆…                                     " fg=7 bg=8
+4:1 "┃" fg=1 bg=8
+4:2 "┆" fg=7 bg=8
+4:3 "✗ failed: GitHub gave no answer within" fg=1 bg=8
+5:1 "┃" fg=1 bg=8
+5:2 "┆" fg=7 bg=8
+5:3 "30 seconds                            " fg=1 bg=8
+6:1 "┃" fg=1 bg=8
+6:2 "┆" fg=7 bg=8
+6:3 "Recovery: check the network connection" bg=8
+7:1 "┃" fg=1 bg=8
+7:2 "┆" fg=7 bg=8
+7:3 "and https://www.githubstatus.com, then" bg=8
+8:1 "╹" fg=1 bg=8
+8:2 "┆" fg=7 bg=8
+8:3 "refresh                               " bg=8

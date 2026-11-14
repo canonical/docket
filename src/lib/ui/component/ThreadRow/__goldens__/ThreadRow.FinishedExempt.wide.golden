@@ -1,0 +1,10 @@
+60x36
+|  ⇄ example#9 PR ■ example-sync                           2d
+|  Update dependency example-lib to 2.0     draft  unassigned
+
+1:3 "⇄ example#9 PR" bold
+1:18 "■ example-sync" fg=7 bold
+1:59 "2d" bold
+2:3 "Update dependency example-lib to 2.0" italic
+2:44 "draft" fg=7
+2:51 "unassigned"

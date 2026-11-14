@@ -1,5 +1,0 @@
-60 columns
-|✗ refresh failed · data from 10:12
-
-runs
-1:1 "✗ refresh failed · data from 10:12" fg #800000ff bg #00000000

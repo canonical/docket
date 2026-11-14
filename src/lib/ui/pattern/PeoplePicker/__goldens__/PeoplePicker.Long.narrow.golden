@@ -1,0 +1,14 @@
+40x36
+|  filter:
+|  ☑ ○ example-contributor-with-a-long-lo
+|      gin-past-the-pane
+|  ☐ ◐ example-org/a-team-with-a-very-lon
+|      g-name-past-the-pane
+
+1:3 "filter:"
+2:3 "☑"
+2:5 "○ example-contributor-with-a-long-lo" fg=6
+3:7 "gin-past-the-pane" fg=6
+4:1 "  ☐ " bg=8
+4:5 "◐ example-org/a-team-with-a-very-lon" fg=5 bg=8
+5:1 "      g-name-past-the-pane              " fg=5 bg=8

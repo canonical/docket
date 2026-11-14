@@ -1,5 +1,0 @@
-40 columns
-|  nothing owed
-
-runs
-1:1 "  nothing owed" fg #ffffffff bg #00000000

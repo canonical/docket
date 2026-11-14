@@ -1,0 +1,12 @@
+40x36
+|example ✓ 89 threads
+|docs    paused: budget low
+|site    paused: budget low
+
+1:1 "example"
+1:9 "✓" fg=2
+1:11 "89 threads"
+2:1 "docs"
+2:9 "paused: budget low" fg=7
+3:1 "site"
+3:9 "paused: budget low" fg=7

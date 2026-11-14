@@ -1,5 +1,0 @@
-60 columns
-|9999 over · 9999 soon · 9999 on track
-
-runs
-1:1 "9999 over · 9999 soon · 9999 on track" fg #ffffffff bg #00000000

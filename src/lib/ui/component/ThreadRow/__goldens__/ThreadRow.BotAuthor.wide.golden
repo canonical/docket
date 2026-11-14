@@ -1,0 +1,11 @@
+60x36
+|│ ⇄ example#1250 PR review ■ example-sync            2d left
+|╵ Update dependency example-lib to 3.24                ● bob
+
+1:1 "│" fg=7
+1:3 "⇄ example#1250 PR review" bold
+1:28 "■ example-sync" fg=7 bold
+1:54 "2d left" bold
+2:1 "╵" fg=7
+2:3 "Update dependency example-lib to 3.24" italic
+2:56 "● bob" fg=4

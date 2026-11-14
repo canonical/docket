@@ -7,10 +7,6 @@ import { defineConfig } from "vitest/config";
  * none of docket's.
  */
 export default defineConfig({
-  // `screens` draws the components' stories as the unit suite does: JSX
-  // through OpenTUI's React runtime, and OpenTUI's Bun build throughout.
-  oxc: { jsx: { runtime: "automatic", importSource: "@opentui/react" } },
-  ssr: { resolve: { conditions: ["bun"] } },
   test: {
     root: import.meta.dirname,
     include: ["**/*.test.{ts,tsx}"],

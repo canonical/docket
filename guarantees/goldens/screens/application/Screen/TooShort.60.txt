@@ -1,5 +1,0 @@
-60 columns, 7 lines
-|docket needs 8 lines
-
-runs
-1:1 "docket needs 8 lines" fg #ffffffff bg #000000ff

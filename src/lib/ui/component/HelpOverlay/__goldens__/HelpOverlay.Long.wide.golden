@@ -1,0 +1,45 @@
+60x36
+|
+|Mode ───────────────────────────────────────────────────────
+|  ← →  h l switch mode (owed ↔ activity)
+|           docket opens start view
+|  g        next grouping
+|  t        next time window (activity)
+|           owed: most overdue first
+|           activity: newest first
+|
+|List ───────────────────────────────────────────────────────
+|  ↑ ↓  k j move the selection
+|           (opens the accordion)
+|
+|Thread ─────────────────────────────────────────────────────
+|  ⏎        open in the browser
+|  a        assign
+|  r        request review
+|
+|App ────────────────────────────────────────────────────────
+|  R        full refresh
+|  ?        show or hide help
+|  q        quit
+|
+|  windows are counted in working time
+
+2:1 "Mode ───────────────────────────────────────────────────────"
+3:3 "← →  h l switch mode (owed ↔ activity)"
+4:12 "docket opens start view"
+5:3 "g        next grouping"
+6:3 "t        next time window (activity)"
+7:12 "owed: most overdue first"
+8:12 "activity: newest first"
+10:1 "List ───────────────────────────────────────────────────────"
+11:3 "↑ ↓  k j move the selection"
+12:12 "(opens the accordion)"
+14:1 "Thread ─────────────────────────────────────────────────────"
+15:3 "⏎        open in the browser"
+16:3 "a        assign"
+17:3 "r        request review"
+19:1 "App ────────────────────────────────────────────────────────"
+20:3 "R        full refresh"
+21:3 "?        show or hide help"
+22:3 "q        quit"
+24:3 "windows are counted in working time"

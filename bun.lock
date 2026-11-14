@@ -20,6 +20,9 @@
         "yaml": "2.9.1",
       },
       "devDependencies": {
+        "@aztlan/lago": "link:@aztlan/lago",
+        "@aztlan/lago-config": "link:@aztlan/lago-config",
+        "@aztlan/lago-react": "link:@aztlan/lago-react",
         "@biomejs/biome": "2.6.6",
         "@canonical/biome-config": "0.44.0",
         "@canonical/typescript-config-react": "0.45.0",
@@ -42,6 +45,12 @@
     "undici": "7.30.2",
   },
   "packages": {
+    "@aztlan/lago": ["@aztlan/lago@link:@aztlan/lago", { "bin": { "lago": "./dist/esm/bin.js" } }],
+
+    "@aztlan/lago-config": ["@aztlan/lago-config@link:@aztlan/lago-config", {}],
+
+    "@aztlan/lago-react": ["@aztlan/lago-react@link:@aztlan/lago-react", {}],
+
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
     "@babel/helper-string-parser": ["@babel/helper-string-parser@7.29.13", "", {}, "sha512-fWegr+WsEsiMVW4KUNdIIzzMTZSzNiqhy0//6+2MRi2d5NFNsL/AYwBQW8eBnRbTBVRnDVzjaJEUqKaCWjMMdQ=="],

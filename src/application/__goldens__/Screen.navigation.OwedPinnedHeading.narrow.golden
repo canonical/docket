@@ -1,0 +1,55 @@
+40x14
+|owed             by kind · overdue first
+|ISSUES · 2 of 3 ────────────────────────
+|│ ◇ docs#4 close ◉ alice        10d left
+|│ Where do tokens live?
+|╵                         ◉ alice, ● bob
+|│ ◇ example#15 close ◐ carol    29d left
+|│ Crash on start              unassigned
+|│ age 2d · owner unassigned
+|│ last activity 2d ago · ◐ carol
+|╵ labels none
+|  ↓ 3 below
+|2 over · 1 soon · 3 on track       3/3/6
+|synced 2m ago
+|←→ mode n ↑↓ sel ⏎ open g grp a r ?
+
+1:1 "owed             by kind ·"
+1:28 "overdue first" fg=7
+2:1 "ISSUES · 2 of 3 ────────────────────────"
+3:1 "│" fg=7
+3:3 "◇ docs#4 close" bold
+3:18 "◉ alice" fg=4 bold
+3:33 "10d left" bold
+4:1 "│" fg=7
+4:3 "Where do tokens live?" italic
+5:1 "╵" fg=7
+5:27 "◉ alice" fg=4
+5:34 ","
+5:36 "● bob" fg=4
+6:1 "│ " fg=7 bg=8
+6:3 "◇ example#15 close " bg=8 bold
+6:22 "◐ carol    " fg=5 bg=8 bold
+6:33 "29d left" bg=8 bold
+7:1 "│ " fg=7 bg=8
+7:3 "Crash on start              " bg=8 italic
+7:31 "unassigned" bg=8
+8:1 "│ " fg=7 bg=8
+8:3 "age 2d · owner unassigned             " bg=8
+9:1 "│ " fg=7 bg=8
+9:3 "last activity 2d ago · " bg=8
+9:26 "◐ carol        " fg=5 bg=8
+10:1 "╵ " fg=7 bg=8
+10:3 "labels none                           " bg=8
+11:3 "↓ 3 below" fg=7
+12:1 "2 over · 1 soon · 3 on track       3/3/6"
+13:1 "synced 2m ago" fg=7
+14:1 "←→"
+14:4 "mode" fg=7
+14:9 "n ↑↓"
+14:14 "sel" fg=7
+14:18 "⏎"
+14:20 "open" fg=7
+14:25 "g"
+14:27 "grp" fg=7
+14:31 "a r ?"

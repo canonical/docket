@@ -1,0 +1,92 @@
+60x24
+|finished                       1w · by ending · newest first
+|closed as completed ────────────────────────────────────────
+|│ ◇ docs#102 issue ○ dave                            open 2d
+|│ Table: sticky header scrolls away                  ◉ alice
+|│ target 30d
+|│ labels kind=bug
+|╵   ◉ alice closed as completed                           1d
+|┃ ◇ docs#98 issue ■ example-sync                    40d over
+|┃ Sync: guard tripped                                ◉ alice
+|╹   ◉ alice closed as completed                           5d
+|closed as not planned ──────────────────────────────────────
+|┃ ◇ docs#77 issue ◐ carol                           10d over
+|┃ Tokens page: contrast                           unassigned
+|╹   ● bob closed as not planned                           2d
+|merged ─────────────────────────────────────────────────────
+|│┆⇄ example#1200 PR ● bob                            open 3d
+|│┆Focus ring: token names                              ● bob
+|╵┆  ◉ alice merged                                        6h
+|
+|
+|  ↓ 3 below
+|3 over · 4 merged · 3 closed                           1/2/7
+|synced 2m ago
+|←→ mode n ↑↓ sel ⏎ open g grp t time ?
+
+1:1 "finished                       1w · by ending ·"
+1:49 "newest first" fg=7
+2:1 "closed as completed ────────────────────────────────────────"
+3:1 "│ " fg=2 bg=8
+3:3 "◇ docs#102 issue " bg=8 bold
+3:20 "○ dave                            " fg=6 bg=8 bold
+3:54 "open 2d" bg=8 bold
+4:1 "│ " fg=2 bg=8
+4:3 "Table: sticky header scrolls away                  " bg=8 italic
+4:54 "◉ alice" fg=4 bg=8
+5:1 "│ " fg=2 bg=8
+5:3 "target 30d                                                " bg=8
+6:1 "│ " fg=2 bg=8
+6:3 "labels kind=bug                                           " bg=8
+7:1 "╵" fg=2
+7:5 "◉ alice" fg=4
+7:13 "closed as completed                           1d"
+8:1 "┃" fg=1
+8:3 "◇ docs#98 issue" bold
+8:19 "■ example-sync" fg=7 bold
+8:53 "40d over" fg=1 bold
+9:1 "┃" fg=1
+9:3 "Sync: guard tripped" italic
+9:54 "◉ alice" fg=4
+10:1 "╹" fg=1
+10:5 "◉ alice" fg=4
+10:13 "closed as completed                           5d"
+11:1 "closed as not planned ──────────────────────────────────────"
+12:1 "┃" fg=1
+12:3 "◇ docs#77 issue" bold
+12:19 "◐ carol" fg=5 bold
+12:53 "10d over" fg=1 bold
+13:1 "┃" fg=1
+13:3 "Tokens page: contrast" italic
+13:51 "unassigned"
+14:1 "╹" fg=1
+14:5 "● bob" fg=4
+14:11 "closed as not planned                           2d"
+15:1 "merged ─────────────────────────────────────────────────────"
+16:1 "│" fg=2
+16:2 "┆" fg=7
+16:3 "⇄ example#1200 PR" bold
+16:21 "● bob" fg=4 bold
+16:54 "open 3d" bold
+17:1 "│" fg=2
+17:2 "┆" fg=7
+17:3 "Focus ring: token names" italic
+17:56 "● bob" fg=4
+18:1 "╵" fg=2
+18:2 "┆" fg=7
+18:5 "◉ alice" fg=4
+18:13 "merged                                        6h"
+21:3 "↓ 3 below" fg=7
+22:1 "3 over · 4 merged · 3 closed                           1/2/7"
+23:1 "synced 2m ago" fg=7
+24:1 "←→"
+24:4 "mode" fg=7
+24:9 "n ↑↓"
+24:14 "sel" fg=7
+24:18 "⏎"
+24:20 "open" fg=7
+24:25 "g"
+24:27 "grp" fg=7
+24:31 "t"
+24:33 "time" fg=7
+24:38 "?"

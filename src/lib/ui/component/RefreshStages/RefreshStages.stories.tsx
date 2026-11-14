@@ -1,13 +1,15 @@
+import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { longRepo } from "../../../../testing/long.js";
 import { providerError } from "../../../../testing/provider.js";
-import type { Meta, Story } from "../../../../testing/stories.js";
+import { drawAtWidth } from "../../../../testing/stories.js";
 import RefreshStages from "./RefreshStages.js";
 import type { RefreshStagesProps } from "./types.js";
 
-const meta: Meta<RefreshStagesProps> = {
+const meta = {
   title: "component/RefreshStages",
   component: RefreshStages,
-};
+  render: drawAtWidth(RefreshStages),
+} satisfies Meta<typeof RefreshStages>;
 
 export default meta;
 
@@ -17,7 +19,7 @@ const site = "example-org/example-site";
 const names = { [repo]: "example", [docs]: "docs", [site]: "site" };
 
 /** A first run on the second of three repositories. */
-export const Running: Story<RefreshStagesProps> = {
+export const Running: StoryObj<typeof meta> = {
   args: {
     stages: [
       {
@@ -33,7 +35,7 @@ export const Running: Story<RefreshStagesProps> = {
 };
 
 /** The budget ran low on the second repository. */
-export const BudgetPaused: Story<RefreshStagesProps> = {
+export const BudgetPaused: StoryObj<typeof meta> = {
   args: {
     stages: [
       {
@@ -49,7 +51,7 @@ export const BudgetPaused: Story<RefreshStagesProps> = {
 };
 
 /** GitHub refused the second repository for its rate limit. */
-export const RateLimited: Story<RefreshStagesProps> = {
+export const RateLimited: StoryObj<typeof meta> = {
   args: {
     stages: [
       {
@@ -65,7 +67,7 @@ export const RateLimited: Story<RefreshStagesProps> = {
 };
 
 /** The refresh failed on the second repository, its reason wrapped. */
-export const Failed: Story<RefreshStagesProps> = {
+export const Failed: StoryObj<typeof meta> = {
   args: {
     stages: [
       {
@@ -84,7 +86,7 @@ export const Failed: Story<RefreshStagesProps> = {
 };
 
 /** A repository with a long short name beside two short ones, the last failed. */
-export const Long: Story<RefreshStagesProps> = {
+export const Long: StoryObj<typeof meta> = {
   args: {
     stages: [
       {

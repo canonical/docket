@@ -1,0 +1,7 @@
+40x36
+|╵┆  ● bob merged                     20h
+
+1:1 "╵" fg=2
+1:2 "┆" fg=7
+1:5 "● bob" fg=4
+1:11 "merged                     20h"

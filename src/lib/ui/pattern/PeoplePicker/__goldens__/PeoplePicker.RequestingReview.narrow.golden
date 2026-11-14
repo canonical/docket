@@ -1,0 +1,19 @@
+40x36
+|  filter:
+|  ☑ ● bob
+|  ☐ ◐ carol
+|  ☐ ◉ example-org/ui
+|  ☐ ○ dave
+|  ☐ ◐ example-org/reviewers
+
+1:3 "filter:"
+2:3 "☑"
+2:5 "● bob" fg=4
+3:3 "☐"
+3:5 "◐ carol" fg=5
+4:3 "☐"
+4:5 "◉ example-org/ui" fg=4
+5:3 "☐"
+5:5 "○ dave" fg=6
+6:1 "  ☐ " bg=8
+6:5 "◐ example-org/reviewers             " fg=5 bg=8

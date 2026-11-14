@@ -1,0 +1,20 @@
+40x36
+|  ✗ GitHub refused the request: Reviews
+|  may only be requested from
+|  collaborators of
+|  example-org/example-repository-with-a-
+|  long-name.
+|  Recovery: change what GitHub's reason
+|  names, then close the editor with esc,
+|  refresh with R, then open it again
+|  with r
+
+1:3 "✗ GitHub refused the request: Reviews" fg=1
+2:3 "may only be requested from" fg=1
+3:3 "collaborators of" fg=1
+4:3 "example-org/example-repository-with-a-" fg=1
+5:3 "long-name." fg=1
+6:3 "Recovery: change what GitHub's reason"
+7:3 "names, then close the editor with esc,"
+8:3 "refresh with R, then open it again"
+9:3 "with r"

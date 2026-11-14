@@ -1,7 +1,0 @@
-60 columns
-|╹   ◉ alice closed as not planned                         2d
-
-runs
-1:1 "╹" fg #800000ff bg #00000000
-1:5 "◉ alice" fg #000080ff bg #00000000
-1:12 " closed as not planned                         2d" fg #ffffffff bg #00000000

@@ -1,7 +1,0 @@
-40 columns
-| ┆  ✗ checks failed (lint)           20m
-
-runs
-1:2 "┆" fg #c0c0c0ff bg #00000000
-1:5 "✗ checks failed (lint)" fg #800000ff bg #00000000
-1:27 "           20m" fg #ffffffff bg #00000000

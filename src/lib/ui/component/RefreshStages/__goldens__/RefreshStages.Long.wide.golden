@@ -1,0 +1,15 @@
+60x36
+|example-repository-with-a-long-name ✓ 1234 threads
+|docs                                reading page 3/3
+|site                                ✗ failed: The provider
+|                                    failed with
+|                                    GITHUB_TIMED_OUT
+
+1:1 "example-repository-with-a-long-name"
+1:37 "✓" fg=2
+1:39 "1234 threads"
+2:1 "docs                                reading page 3/3"
+3:1 "site"
+3:37 "✗ failed: The provider" fg=1
+4:37 "failed with" fg=1
+5:37 "GITHUB_TIMED_OUT" fg=1

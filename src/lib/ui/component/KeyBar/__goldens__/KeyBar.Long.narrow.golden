@@ -1,0 +1,14 @@
+40x36
+|←→ mode ↑↓ sel ⏎ open g grp t time a r ?
+
+1:1 "←→"
+1:4 "mode" fg=7
+1:9 "↑↓"
+1:12 "sel" fg=7
+1:16 "⏎"
+1:18 "open" fg=7
+1:23 "g"
+1:25 "grp" fg=7
+1:29 "t"
+1:31 "time" fg=7
+1:36 "a r ?"

@@ -1,13 +1,15 @@
-import type { Meta, Story } from "../../../../testing/stories.js";
+import type { Meta, StoryObj } from "@aztlan/lago-react";
+import { drawAtWidth } from "../../../../testing/stories.js";
 import type { CacheStatus } from "../../../cache/index.js";
 import type { ProviderError } from "../../../provider/index.js";
 import StatusLine from "./StatusLine.js";
 import type { StatusLineProps } from "./types.js";
 
-const meta: Meta<StatusLineProps> = {
+const meta = {
   title: "component/StatusLine",
   component: StatusLine,
-};
+  render: drawAtWidth(StatusLine),
+} satisfies Meta<typeof StatusLine>;
 
 export default meta;
 
@@ -62,12 +64,12 @@ const base = {
 };
 
 /** How old the data is, dimmed. */
-export const Synced: Story<StatusLineProps> = {
+export const Synced: StoryObj<typeof meta> = {
   args: { ...base, status: settled },
 };
 
 /** GitHub refused requests for its rate limit, until the budget resets. */
-export const RateLimited: Story<StatusLineProps> = {
+export const RateLimited: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: {
@@ -78,7 +80,7 @@ export const RateLimited: Story<StatusLineProps> = {
 };
 
 /** GitHub gave no answer in time; the data shown is from before. */
-export const Offline: Story<StatusLineProps> = {
+export const Offline: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: {
@@ -90,7 +92,7 @@ export const Offline: Story<StatusLineProps> = {
 };
 
 /** GitHub refused the last refresh; the data shown is from before it. */
-export const RefreshFailed: Story<StatusLineProps> = {
+export const RefreshFailed: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: {
@@ -102,7 +104,7 @@ export const RefreshFailed: Story<StatusLineProps> = {
 };
 
 /** A full refresh fetching the first repository's pages. */
-export const FullRefresh: Story<StatusLineProps> = {
+export const FullRefresh: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: {
@@ -122,12 +124,12 @@ export const FullRefresh: Story<StatusLineProps> = {
 };
 
 /** A refresh in the background, while the data shown stays. */
-export const Refreshing: Story<StatusLineProps> = {
+export const Refreshing: StoryObj<typeof meta> = {
   args: { ...base, status: background },
 };
 
 /** A full refresh asked for within the cooldown of the last one. */
-export const FullRefreshRefused: Story<StatusLineProps> = {
+export const FullRefreshRefused: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: {
@@ -138,7 +140,7 @@ export const FullRefreshRefused: Story<StatusLineProps> = {
 };
 
 /** The user's own action failed a second ago, over how old the data is. */
-export const ActionFailed: Story<StatusLineProps> = {
+export const ActionFailed: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: background,
@@ -151,7 +153,7 @@ export const ActionFailed: Story<StatusLineProps> = {
 };
 
 /** The user's own action went through a second ago, naming the people it set. */
-export const ActionDone: Story<StatusLineProps> = {
+export const ActionDone: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: settled,
@@ -168,7 +170,7 @@ export const ActionDone: Story<StatusLineProps> = {
 };
 
 /** No key for 20 minutes: the pane refreshes slowly until one wakes it. */
-export const Idle: Story<StatusLineProps> = {
+export const Idle: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: { ...settled, syncedAt: new Date("2026-09-28T11:35:00Z") },
@@ -180,7 +182,7 @@ export const Idle: Story<StatusLineProps> = {
  * Below the budget floor: the list spends no point, nothing is read ahead,
  * and the left side says until when, so the right side stays empty.
  */
-export const BudgetPaused: Story<StatusLineProps> = {
+export const BudgetPaused: StoryObj<typeof meta> = {
   args: {
     ...base,
     liveBudget: "budget 18% · resets 13:00",
@@ -192,12 +194,12 @@ export const BudgetPaused: Story<StatusLineProps> = {
 };
 
 /** Less than 40% of the queries' budget left: how much, and when it resets, dimmed. */
-export const LiveBudget: Story<StatusLineProps> = {
+export const LiveBudget: StoryObj<typeof meta> = {
   args: { ...base, status: settled, liveBudget: live },
 };
 
 /** The budget live while details are read: the count takes the right side. */
-export const LiveBudgetWithDetails: Story<StatusLineProps> = {
+export const LiveBudgetWithDetails: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: settled,
@@ -207,17 +209,17 @@ export const LiveBudgetWithDetails: Story<StatusLineProps> = {
 };
 
 /** No cache: gh is missing or not signed in. */
-export const Blank: Story<StatusLineProps> = {
+export const Blank: StoryObj<typeof meta> = {
   args: base,
 };
 
 /** The details near the selection being read, how old the data is on the left. */
-export const DetailsLoading: Story<StatusLineProps> = {
+export const DetailsLoading: StoryObj<typeof meta> = {
   args: { ...base, status: settled, details: { read: 0, asked: 12 } },
 };
 
 /** A refresh in the background, and the details read so far. */
-export const RefreshingWithDetails: Story<StatusLineProps> = {
+export const RefreshingWithDetails: StoryObj<typeof meta> = {
   args: { ...base, status: background, details: { read: 3, asked: 12 } },
 };
 
@@ -225,7 +227,7 @@ export const RefreshingWithDetails: Story<StatusLineProps> = {
  * A key woke the pane: it catches up at once, and reads again the whole
  * window of details around the selection.
  */
-export const Waking: Story<StatusLineProps> = {
+export const Waking: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: {
@@ -242,7 +244,7 @@ export const Waking: Story<StatusLineProps> = {
 };
 
 /** A review requested of more people than the line holds, with long names. */
-export const Long: Story<StatusLineProps> = {
+export const Long: StoryObj<typeof meta> = {
   args: {
     ...base,
     status: settled,

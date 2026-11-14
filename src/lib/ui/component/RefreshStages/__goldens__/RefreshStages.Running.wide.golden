@@ -1,0 +1,11 @@
+60x36
+|example ✓ 89 threads
+|docs    reading page 2/3
+|site    waiting
+
+1:1 "example"
+1:9 "✓" fg=2
+1:11 "89 threads"
+2:1 "docs    reading page 2/3"
+3:1 "site"
+3:9 "waiting" fg=7

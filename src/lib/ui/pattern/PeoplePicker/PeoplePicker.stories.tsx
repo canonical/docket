@@ -1,12 +1,14 @@
-import type { Meta, Story } from "../../../../testing/stories.js";
+import type { Meta, StoryObj } from "@aztlan/lago-react";
+import { drawAtWidth } from "../../../../testing/stories.js";
 import type { PersonGroup } from "../../../owed/index.js";
 import PeoplePicker from "./PeoplePicker.js";
 import type { PeoplePickerProps } from "./types.js";
 
-const meta: Meta<PeoplePickerProps> = {
+const meta = {
   title: "pattern/PeoplePicker",
   component: PeoplePicker,
-};
+  render: drawAtWidth(PeoplePicker),
+} satisfies Meta<typeof PeoplePicker>;
 
 export default meta;
 
@@ -23,7 +25,7 @@ const person = (text: string, group: PersonGroup) => ({
  * Assigning: the current assignee ticked, then the team, people in the
  * thread, and someone beyond the team under the cursor.
  */
-export const Assigning: Story<PeoplePickerProps> = {
+export const Assigning: StoryObj<typeof meta> = {
   args: {
     filter: "",
     onFilter: ignoreTyping,
@@ -42,7 +44,7 @@ export const Assigning: Story<PeoplePickerProps> = {
  * Requesting review: the current request, a suggestion, a team the viewer
  * belongs to, a collaborator and another team of the organisation.
  */
-export const RequestingReview: Story<PeoplePickerProps> = {
+export const RequestingReview: StoryObj<typeof meta> = {
   args: {
     filter: "",
     onFilter: ignoreTyping,
@@ -62,7 +64,7 @@ export const RequestingReview: Story<PeoplePickerProps> = {
 };
 
 /** GitHub refused the change: the reason and a recovery under the options. */
-export const Refused: Story<PeoplePickerProps> = {
+export const Refused: StoryObj<typeof meta> = {
   args: {
     filter: "",
     onFilter: ignoreTyping,
@@ -82,7 +84,7 @@ export const Refused: Story<PeoplePickerProps> = {
 };
 
 /** The candidates are still being read from GitHub. */
-export const Loading: Story<PeoplePickerProps> = {
+export const Loading: StoryObj<typeof meta> = {
   args: {
     filter: "ca",
     onFilter: ignoreTyping,
@@ -92,7 +94,7 @@ export const Loading: Story<PeoplePickerProps> = {
 };
 
 /** More people than the picker draws at once, the cursor far down. */
-export const Scrolled: Story<PeoplePickerProps> = {
+export const Scrolled: StoryObj<typeof meta> = {
   args: {
     filter: "",
     onFilter: ignoreTyping,
@@ -106,7 +108,7 @@ export const Scrolled: Story<PeoplePickerProps> = {
 };
 
 /** Requesting review from a login and a team longer than the pane. */
-export const Long: Story<PeoplePickerProps> = {
+export const Long: StoryObj<typeof meta> = {
   args: {
     filter: "",
     onFilter: ignoreTyping,

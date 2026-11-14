@@ -1,0 +1,10 @@
+60x36
+|  filter:
+|  ☑ ○ example-contributor-with-a-long-login-past-the-pane
+|  ☐ ◐ example-org/a-team-with-a-very-long-name-past-the-pane
+
+1:3 "filter:"
+2:3 "☑"
+2:5 "○ example-contributor-with-a-long-login-past-the-pane" fg=6
+3:1 "  ☐ " bg=8
+3:5 "◐ example-org/a-team-with-a-very-long-name-past-the-pane" fg=5 bg=8

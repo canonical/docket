@@ -1,0 +1,6 @@
+60x36
+| ┆  ○ example-con… lab… priority: needs-…-the-maintainers 3h
+
+1:2 "┆" fg=7
+1:5 "○ example-con…" fg=6
+1:20 "lab… priority: needs-…-the-maintainers 3h"

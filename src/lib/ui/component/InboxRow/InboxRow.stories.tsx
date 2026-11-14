@@ -1,15 +1,17 @@
+import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { notification } from "../../../../testing/inbox.js";
 import { longRepo } from "../../../../testing/long.js";
-import type { Meta, Story } from "../../../../testing/stories.js";
+import { drawAtWidth } from "../../../../testing/stories.js";
 import type { Repo } from "../../../config/index.js";
 import { buildRow } from "../../../inbox/index.js";
 import InboxRow from "./InboxRow.js";
 import type { InboxRowProps } from "./types.js";
 
-const meta: Meta<InboxRowProps> = {
+const meta = {
   title: "component/InboxRow",
   component: InboxRow,
-};
+  render: drawAtWidth(InboxRow),
+} satisfies Meta<typeof InboxRow>;
 
 export default meta;
 
@@ -47,22 +49,22 @@ const browserOnly = buildRow(
 );
 
 /** An unread review request on a pull request, selected. */
-export const Unread: Story<InboxRowProps> = {
+export const Unread: StoryObj<typeof meta> = {
   args: { row: unread, selected: true, width: 40 },
 };
 
 /** A read assignment on an issue, dimmed. */
-export const Read: Story<InboxRowProps> = {
+export const Read: StoryObj<typeof meta> = {
   args: { row: read, width: 40 },
 };
 
 /** A release notification, which docket can only send to the browser. */
-export const BrowserOnly: Story<InboxRowProps> = {
+export const BrowserOnly: StoryObj<typeof meta> = {
   args: { row: browserOnly, width: 40 },
 };
 
 /** A notification in a repository and with a title longer than the row holds. */
-export const Long: Story<InboxRowProps> = {
+export const Long: StoryObj<typeof meta> = {
   args: {
     row: buildRow(
       notification({

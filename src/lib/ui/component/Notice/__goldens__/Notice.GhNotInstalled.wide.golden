@@ -1,0 +1,8 @@
+60x36
+|  ✗ docket needs the GitHub CLI (gh)
+|  Recovery: install it from https://cli.github.com, then run
+|  gh auth login
+
+1:3 "✗ docket needs the GitHub CLI (gh)" fg=1
+2:3 "Recovery: install it from https://cli.github.com, then run"
+3:3 "gh auth login"

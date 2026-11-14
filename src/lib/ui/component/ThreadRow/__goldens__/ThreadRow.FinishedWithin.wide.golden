@@ -1,0 +1,13 @@
+60x36
+|│┆⇄ example#2 PR ◉ alice                             open 2d
+|╵┆Example change                                     ◉ alice
+
+1:1 "│" fg=2
+1:2 "┆" fg=7
+1:3 "⇄ example#2 PR" bold
+1:18 "◉ alice" fg=4 bold
+1:54 "open 2d" bold
+2:1 "╵" fg=2
+2:2 "┆" fg=7
+2:3 "Example change" italic
+2:54 "◉ alice" fg=4
