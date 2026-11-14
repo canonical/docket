@@ -1,5 +1,6 @@
 import {
   OptimizedBuffer,
+  ResourceContext,
   TextBuffer,
   TextBufferView,
   type WidthMethod,
@@ -12,16 +13,20 @@ import measureText from "./measureText.js";
  * text: into a cell buffer, from a text buffer, read back from the grid.
  */
 function drawCells(text: string, method: WidthMethod): number {
-  const grid = OptimizedBuffer.create(60, 1, method);
-  const buffer = TextBuffer.create(method);
+  const owner = new ResourceContext({ objectCapacity: 8, renderCellsMax: 64 });
+  const grid = OptimizedBuffer.create(60, 1, method, { owner });
+  const buffer = TextBuffer.create(method, owner);
   buffer.setText(`${text}|`);
   const view = TextBufferView.create(buffer);
   view.setWrapMode("none");
   grid.drawTextBuffer(view, 0, 0);
-  const cells = [...grid.buffers.char].indexOf("|".charCodeAt(0));
+  const cells = grid.withBuffers(({ char }) =>
+    [...char].indexOf("|".charCodeAt(0)),
+  );
   view.destroy();
   buffer.destroy();
   grid.destroy();
+  owner.destroy();
   return cells;
 }
 
@@ -69,8 +74,8 @@ describe("measureText", () => {
   });
 
   it("counts where Bun's measure counts fewer cells than are drawn", () => {
-    expect(Bun.stringWidth("❤")).toBe(1);
-    expect(measureText("❤")).toBe(2);
+    expect(Bun.stringWidth("👨‍👩‍👧")).toBe(2);
+    expect(measureText("👨‍👩‍👧")).toBe(6);
     expect(measureText("👍🏽")).toBe(4);
     expect(Bun.stringWidth("👍🏽")).toBe(2);
   });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { AttentionState, CacheStatus } from "../lib/cache/index.js";
 import type { ThreadDetail } from "../lib/provider/index.js";
 import type { DetailsCount } from "../lib/ui/index.js";
@@ -104,7 +104,9 @@ export default function useReadAhead({
   const [queue] = useState(() => reader && createDetailQueue(reader));
   useEffect(() => () => queue?.stop(), [queue]);
   const [, redraw] = useState(0);
-  useEffect(
+  // Subscribed in the layout phase, before the ask below, so the count the
+  // ask starts draws again.
+  useLayoutEffect(
     () => queue?.subscribe(() => redraw((count) => count + 1)),
     [queue],
   );
@@ -116,8 +118,12 @@ export default function useReadAhead({
     .map(({ thread, version }) => `${identifyThread(thread)}@${version}`)
     .join(" ");
   const chosenKey = chosen && identifyThread(chosen.thread);
+  // A layout effect, so the ask is pending before the selected row's
+  // accordion, mounted in the same commit, reads its thread: a child's
+  // effects run before its parent's, and its read would otherwise go alone
+  // rather than join the rows around it.
   // biome-ignore lint/correctness/useExhaustiveDependencies: the window's key names what it holds.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (
       !queue ||
       attention === "idle" ||

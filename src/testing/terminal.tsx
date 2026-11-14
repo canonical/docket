@@ -10,7 +10,7 @@ import { KeymapProvider } from "@opentui/keymap/react";
 import { useRenderer } from "@opentui/react";
 import { testRender } from "@opentui/react/test-utils";
 import { act, type ReactNode, useMemo, useState } from "react";
-import { afterEach } from "vitest";
+import { afterEach, vi } from "vitest";
 import createKeymap from "../lib/ui/createKeymap.js";
 
 /** What a drawn screen shows. */
@@ -49,6 +49,37 @@ export const hex = (colour: CapturedSpan["fg"]) =>
     .map((part) => part.toString(16).padStart(2, "0"))
     .join("")}`;
 
+/**
+ * The scheduler's own turn, taken as the module loads, before a test fakes
+ * the timers.
+ */
+const { setImmediate: takeTurn } = globalThis;
+
+/** How many frames a screen may draw while it settles. */
+const frameLimit = 100;
+
+/**
+ * Draws until the screen shows everything that has happened: React has
+ * nothing left to commit and the renderer has no frame asked for. Each
+ * frame is drawn on demand and nothing waits on a timer, so a test that
+ * fakes the timers can still redraw: the renderer's own `flush` waits for
+ * a quiet frame on a timer, and never returns while they are faked.
+ */
+async function settle(setup: TestRendererSetup): Promise<void> {
+  for (let frame = 0; frame < frameLimit; frame += 1) {
+    await act(async () => {
+      await new Promise((resolve) => takeTurn(resolve));
+    });
+    await setup.renderOnce();
+    const { isRendering, hasScheduledRender } =
+      setup.renderer.getSchedulerState();
+    if (!isRendering && !hasScheduledRender) return;
+  }
+  throw new Error(
+    `The screen did not settle in ${frameLimit} frames: something asks for a frame on every frame.`,
+  );
+}
+
 function read(setup: TestRendererSetup): Screen {
   // A test that ran out of time can still be reading its screen after
   // the screen is destroyed, and reading a destroyed screen's buffer ends
@@ -78,9 +109,11 @@ function read(setup: TestRendererSetup): Screen {
     redraw: async (action) => {
       await act(async () => {
         action?.();
-        await setup.flush();
+        // While time runs, the renderer's own flush also gives what an
+        // update set going, such as a read of the cache, time to land.
+        if (!vi.isFakeTimers()) await setup.flush();
       });
-      await setup.renderOnce();
+      await settle(setup);
       return read(setup);
     },
     setup,

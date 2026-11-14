@@ -12,6 +12,19 @@ export default defineConfig({
   ssr: { resolve: { conditions: ["bun"] } },
   test: {
     include: ["src/**/*.test.{ts,tsx}"],
+    // What `vi.useFakeTimers()` fakes: the timers a component waits on.
+    // `setImmediate` stays real, because React's `act` waits on it to know
+    // that an update has been committed, and would never return with it
+    // faked.
+    fakeTimers: {
+      toFake: [
+        "setTimeout",
+        "clearTimeout",
+        "setInterval",
+        "clearInterval",
+        "Date",
+      ],
+    },
     coverage: {
       provider: "v8",
       include: ["src/application/**", "src/lib/**"],
