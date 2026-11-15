@@ -1,4 +1,9 @@
-import { TextBuffer, TextBufferView, type WidthMethod } from "@opentui/core";
+import {
+  ResourceContext,
+  TextBuffer,
+  TextBufferView,
+  type WidthMethod,
+} from "@opentui/core";
 import { ascii } from "./constants.js";
 
 /** OpenTUI's own text buffer and a view over it, which measure as it draws. */
@@ -21,6 +26,9 @@ const methods: readonly WidthMethod[] = ["wcwidth", "unicode"];
  * the process.
  */
 let measuring: readonly Measuring[] | undefined;
+
+/** What owns the measuring buffers in OpenTUI's native library. */
+let owner: ResourceContext | undefined;
 
 /** The cells of each character measured so far, which every draw reads. */
 const measured = new Map<string, number>();
@@ -53,8 +61,12 @@ export default function measureClusters(clusters: readonly string[]): number[] {
     ),
   ];
   if (fresh.length > 0) {
+    // The buffers belong to a context of their own: they outlive every
+    // renderer, and hold two buffers and two views and no cells to draw.
+    owner ??= new ResourceContext({ objectCapacity: 8, renderCellsMax: 1 });
+    const context = owner;
     measuring ??= methods.map((method) => {
-      const buffer = TextBuffer.create(method);
+      const buffer = TextBuffer.create(method, context);
       const view = TextBufferView.create(buffer);
       view.setWrapMode("none");
       return { buffer, view };
