@@ -3,7 +3,6 @@ import { drawAtWidth } from "../../../../testing/stories.js";
 import type { CacheStatus } from "../../../cache/index.js";
 import type { ProviderError } from "../../../provider/index.js";
 import StatusLine from "./StatusLine.js";
-import type { StatusLineProps } from "./types.js";
 
 const meta = {
   title: "component/StatusLine",

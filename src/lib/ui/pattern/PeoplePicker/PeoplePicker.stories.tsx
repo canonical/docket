@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import type { PersonGroup } from "../../../owed/index.js";
 import PeoplePicker from "./PeoplePicker.js";
-import type { PeoplePickerProps } from "./types.js";
 
 const meta = {
   title: "pattern/PeoplePicker",

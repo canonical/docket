@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { everyCommand, longCommands } from "../../../../testing/commands.js";
 import { atHeight, drawAtWidth } from "../../../../testing/stories.js";
 import HelpOverlay from "./HelpOverlay.js";
-import type { HelpOverlayProps } from "./types.js";
 
 const meta = {
   title: "component/HelpOverlay",

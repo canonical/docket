@@ -6,7 +6,6 @@ import {
 } from "../../../../testing/commands.js";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import KeyBar from "./KeyBar.js";
-import type { KeyBarProps } from "./types.js";
 
 const meta = {
   title: "component/KeyBar",

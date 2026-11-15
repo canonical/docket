@@ -22,7 +22,6 @@ import {
 } from "../../../../testing/rows.js";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import ThreadAccordion from "./ThreadAccordion.js";
-import type { ThreadAccordionProps } from "./types.js";
 
 const meta = {
   title: "component/ThreadAccordion",

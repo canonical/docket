@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import Notice from "./Notice.js";
-import type { NoticeProps } from "./types.js";
 
 const meta = {
   title: "component/Notice",

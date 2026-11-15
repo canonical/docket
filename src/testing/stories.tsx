@@ -14,15 +14,14 @@ export const viewports = {
 
 /** The two screens on fewer lines, for a story that ends sooner. */
 export const atHeight = (rows: number) => ({
-  narrow: { cols: 40, rows },
-  wide: { cols: 60, rows },
+  narrow: { rows },
+  wide: { rows },
 });
 
-/** The two screens and one narrower than the pane allows, where it says only that. */
+/** A screen narrower than the pane allows, where it says only that, drawn beside the two. */
 export const withTooNarrow = {
-  ...viewports,
   tooNarrow: { cols: 32, rows: 36 },
-};
+} as const satisfies Record<string, Viewport>;
 
 /**
  * `value` with every `width` that equals `from` set to `to`, however deep,

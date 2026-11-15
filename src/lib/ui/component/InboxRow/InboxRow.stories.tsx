@@ -5,7 +5,6 @@ import { drawAtWidth } from "../../../../testing/stories.js";
 import type { Repo } from "../../../config/index.js";
 import { buildRow } from "../../../inbox/index.js";
 import InboxRow from "./InboxRow.js";
-import type { InboxRowProps } from "./types.js";
 
 const meta = {
   title: "component/InboxRow",

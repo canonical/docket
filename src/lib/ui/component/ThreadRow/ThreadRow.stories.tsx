@@ -12,7 +12,6 @@ import {
 } from "../../../../testing/rows.js";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import ThreadRow from "./ThreadRow.js";
-import type { ThreadRowProps } from "./types.js";
 
 const meta = {
   title: "component/ThreadRow",

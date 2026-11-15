@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import CountsLine from "./CountsLine.js";
-import type { CountsLineProps } from "./types.js";
 
 const meta = {
   title: "component/CountsLine",

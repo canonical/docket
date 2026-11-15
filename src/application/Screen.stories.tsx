@@ -16,7 +16,6 @@ import {
 import {
   connectRecording,
   ScreenFrame,
-  type ScreenFrameProps,
   settled,
   viewRecording,
 } from "../testing/screen.js";

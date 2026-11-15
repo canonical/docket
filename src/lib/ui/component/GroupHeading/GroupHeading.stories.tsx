@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import GroupHeading from "./GroupHeading.js";
-import type { GroupHeadingProps } from "./types.js";
 
 const meta = {
   title: "component/GroupHeading",

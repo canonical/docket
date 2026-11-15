@@ -393,6 +393,18 @@ function check(root: string): Finding[] {
         }
       }
     }
+    // Each block draws text longer than its slots hold in a story named
+    // `Long`, so how it gives way is drawn and kept as a golden.
+    if (
+      path.startsWith("src/lib/ui/") &&
+      path.endsWith(".stories.tsx") &&
+      !exportsOf(source).values.includes("Long")
+    ) {
+      report(
+        "stories",
+        "has no story named Long, drawing text longer than the block's slots hold",
+      );
+    }
     const lines = text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
     if (lines > maxLines && !lengthHeader.test(text)) {
       report(
@@ -574,6 +586,10 @@ const breaks: Record<string, [string, string]> = {
   "src/lib/config/schema.ts": ["length", `${long}\nexport default 1;`],
   "src/lib/config/types.ts": ["exports", "export const x = 1;"],
   "src/lib/waits/owner.ts": ["tests", "export default function owner() {}"],
+  "src/lib/ui/component/Margin/Margin.stories.tsx": [
+    "stories",
+    "export const Short = {};",
+  ],
   "src/lib/ui/component/Row/Row.tsx": [
     "fitting",
     'import trimText from "../../fit/trimText.js";\nexport default function Row() { return trimText; }',

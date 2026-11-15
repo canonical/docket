@@ -4,7 +4,6 @@ import { findFinishedRow } from "../../../../testing/finished.js";
 import { longEvent } from "../../../../testing/long.js";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import EventLine from "./EventLine.js";
-import type { EventLineProps } from "./types.js";
 
 const meta = {
   title: "component/EventLine",

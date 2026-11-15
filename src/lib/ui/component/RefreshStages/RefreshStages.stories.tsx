@@ -3,7 +3,6 @@ import { longRepo } from "../../../../testing/long.js";
 import { providerError } from "../../../../testing/provider.js";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import RefreshStages from "./RefreshStages.js";
-import type { RefreshStagesProps } from "./types.js";
 
 const meta = {
   title: "component/RefreshStages",

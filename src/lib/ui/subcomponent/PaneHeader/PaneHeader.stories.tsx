@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import PaneHeader from "./PaneHeader.js";
-import type { PaneHeaderProps } from "./types.js";
 
 const meta = {
   title: "subcomponent/PaneHeader",

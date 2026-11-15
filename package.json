@@ -19,6 +19,7 @@
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
     "!src/**/*.stories.tsx",
+    "!src/**/__goldens__",
     "!src/testing",
     "!src/scripts",
     "LICENSE",

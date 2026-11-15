@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import ProgressLine from "./ProgressLine.js";
-import type { ProgressLineProps } from "./types.js";
 
 const meta = {
   title: "component/ProgressLine",

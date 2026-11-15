@@ -1,10 +1,6 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { readWeekDetail, weekEndings } from "../testing/endings.js";
-import {
-  ScreenFrame,
-  type ScreenFrameProps,
-  viewRecording,
-} from "../testing/screen.js";
+import { ScreenFrame, viewRecording } from "../testing/screen.js";
 import { atHeight, drawAtWidth } from "../testing/stories.js";
 
 const meta = {

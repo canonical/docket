@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import EmptyState from "./EmptyState.js";
-import type { EmptyStateProps } from "./types.js";
 
 const meta = {
   title: "component/EmptyState",

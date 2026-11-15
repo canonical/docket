@@ -10,7 +10,6 @@ import {
 } from "../../component/index.js";
 import { PaneHeader } from "../../subcomponent/index.js";
 import Pane from "./Pane.js";
-import type { PaneProps } from "./types.js";
 
 const meta = {
   title: "layout/Pane",

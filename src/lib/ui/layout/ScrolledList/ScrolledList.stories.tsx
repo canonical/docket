@@ -4,7 +4,6 @@ import { drawAtWidth } from "../../../../testing/stories.js";
 import { GroupHeading } from "../../component/index.js";
 import type { ListBlock } from "../../types.js";
 import ScrolledList from "./ScrolledList.js";
-import type { ScrolledListProps } from "./types.js";
 
 const meta = {
   title: "layout/ScrolledList",

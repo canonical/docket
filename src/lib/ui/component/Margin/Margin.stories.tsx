@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import Margin from "./Margin.js";
-import type { MarginProps } from "./types.js";
 
 const meta = {
   title: "component/Margin",
