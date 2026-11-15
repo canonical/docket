@@ -6,7 +6,7 @@ import type {
   InboxList,
 } from "../lib/inbox/index.js";
 import { listInbox } from "../lib/inbox/index.js";
-import type { ProviderError } from "../lib/provider/index.js";
+import type { PageProgress, ProviderError } from "../lib/provider/index.js";
 import type { Problem } from "../lib/text/index.js";
 import describeFailure from "./describeFailure.js";
 import isNamedError from "./isNamedError.js";
@@ -36,15 +36,19 @@ export interface UseInboxProps {
 /** A failure of GitHub or the cache, which the status line names. */
 type Failure = ProviderError | CacheError;
 
-/** The inbox's list, with when its data was fetched and what failed reading it. */
-export type UseInboxResult =
-  | {
-      readonly list: InboxList;
-      readonly readAt?: Date;
-      readonly failure?: Failure;
-    }
-  | { readonly problem: Problem }
-  | undefined;
+/** The inbox's list, and how far the read behind it has come. */
+export interface UseInboxResult {
+  readonly list?: InboxList;
+  readonly readAt?: Date;
+  readonly failure?: Failure;
+  readonly problem?: Problem;
+  /** Whether a read is under way. */
+  readonly reading: boolean;
+  /** The pages of the read under way, once GitHub reports any. */
+  readonly progress?: PageProgress;
+  /** When the read under way began. */
+  readonly startedAt?: Date;
+}
 
 /** Nothing changes, for a source with no cache, such as setup. */
 const ignore = () => () => {};
@@ -70,6 +74,7 @@ export default function useInbox({
   watched,
   grouping,
   filter,
+  now,
   at,
 }: UseInboxProps): UseInboxResult {
   const cache = "cache" in source ? source.cache : undefined;
@@ -77,38 +82,53 @@ export default function useInbox({
     cache?.subscribe ?? ignore,
     cache?.notifications ?? (() => undefined as never),
   );
-  const [failure, setFailure] = useState<ProviderError | CacheError>();
+  const [failure, setFailure] = useState<Failure>();
   const [reading, setReading] = useState(false);
-  const awake = (attention ?? "active") !== "idle";
-  const read = "cache" in source && shown && awake;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: a sync triggers a read, and the source is the cache's way to it.
+  const [progress, setProgress] = useState<PageProgress>();
+  const [startedAt, setStartedAt] = useState<Date>();
+  const awake = attention !== "idle";
+  const reader = shown && awake && "cache" in source ? source : undefined;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a sync triggers a read.
   useEffect(() => {
-    if (!read || !("cache" in source)) return;
+    if (!reader) return;
     let current = true;
     setReading(true);
-    source.readInbox().then(
-      () => {
-        if (!current) return;
-        setFailure(undefined);
-        setReading(false);
-      },
-      (error) => {
-        if (!current) return;
-        setFailure(isFailure(error) ? error : undefined);
-        setReading(false);
-        if (!isFailure(error)) throw error;
-      },
-    );
+    setProgress(undefined);
+    setStartedAt(now());
+    reader
+      .readInbox((next) => {
+        if (current) setProgress(next);
+      })
+      .then(
+        () => {
+          if (!current) return;
+          setFailure(undefined);
+          setReading(false);
+          setProgress(undefined);
+          setStartedAt(undefined);
+        },
+        (error) => {
+          if (!current) return;
+          setFailure(isFailure(error) ? error : undefined);
+          setReading(false);
+          setProgress(undefined);
+          setStartedAt(undefined);
+          if (!isFailure(error)) throw error;
+        },
+      );
     return () => {
       current = false;
     };
-  }, [read, syncedAt, source]);
+  }, [reader, syncedAt]);
   const list = cached
     ? listInbox(cached.items, watched, { mode: "inbox", grouping, filter }, at)
     : undefined;
-  if (list && failure) return { list, readAt: cached?.syncedAt, failure };
-  if (list) return { list, ...(cached && { readAt: cached.syncedAt }) };
-  if (failure) return { problem: describeFailure(failure) };
-  if (reading) return undefined;
-  return undefined;
+  return {
+    ...(list && { list, ...(cached && { readAt: cached.syncedAt }) }),
+    ...(failure &&
+      (list ? { failure } : { problem: describeFailure(failure) })),
+    reading,
+    ...(progress && { progress }),
+    ...(startedAt && { startedAt }),
+  };
 }

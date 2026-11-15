@@ -7,6 +7,7 @@ export type InboxSubjectKind =
   | "pullRequest"
   | "discussion"
   | "commit"
+  | "workflow"
   | "release"
   | "security"
   | "invitation"
@@ -17,6 +18,13 @@ export type InboxFilter = "unread" | "all";
 
 /** How the inbox splits its list into sections. */
 export type InboxGrouping = "repo" | "reason" | "type" | "none";
+
+/** A GitHub Actions workflow run a notification names. */
+export interface InboxWorkflow {
+  readonly name: string;
+  readonly branch: string;
+  readonly failed: boolean;
+}
 
 /**
  * One GitHub notification, as the provider reads it. Its subject is either
@@ -40,6 +48,8 @@ export interface InboxNotification {
   };
   /** GitHub's reason for the notification, such as `review_requested`. */
   readonly reason: string;
+  /** The workflow and branch a GitHub Actions notification names. */
+  readonly workflow?: InboxWorkflow;
   readonly unread: boolean;
   readonly updatedAt: Date;
   readonly lastReadAt?: Date;
@@ -61,6 +71,10 @@ export interface InboxRow {
   readonly distance: Field;
   readonly title: Field;
   readonly unread: boolean;
+  /** Whether the notification names a workflow run that failed. */
+  readonly failed?: boolean;
+  /** The notifications this row stands for: one, or one workflow's runs. */
+  readonly notifications: readonly InboxNotification[];
   readonly url: string;
 }
 

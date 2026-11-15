@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordedNotifications } from "../../testing/inbox.js";
+import { notification, recordedNotifications } from "../../testing/inbox.js";
 import type { Repo } from "../config/index.js";
 import listInbox from "./listInbox.js";
 
@@ -26,6 +26,35 @@ describe("listInbox", () => {
       list.groups.flatMap(({ rows }) => rows.map((row) => row.notification.id)),
     ).toEqual(["1", "4", "5", "2"]);
     expect(list.summary.fields.map(({ text }) => text)).toEqual(["4 unread"]);
+  });
+
+  it("gathers a workflow's runs on one branch under its newest run", () => {
+    const run = (id: string, at: Date, branch: string) =>
+      notification({
+        id,
+        reason: "ci_activity",
+        workflow: { name: "CI", branch, failed: true },
+        subject: {
+          title: `CI workflow run failed for ${branch} branch`,
+          kind: "workflow",
+          url: "https://github.com/example-org/example-repo/actions",
+        },
+        updatedAt: at,
+      });
+    const older = run("1", new Date("2026-09-28T10:00:00Z"), "main");
+    const newer = run("2", new Date("2026-09-28T11:00:00Z"), "main");
+    const other = run("3", new Date("2026-09-28T09:00:00Z"), "next");
+    const list = listInbox(
+      [older, newer, other],
+      repos,
+      address("unread"),
+      now,
+    );
+    const rows = list.groups.flatMap(({ rows }) => rows);
+    expect(rows).toHaveLength(2);
+    expect(rows.at(0)?.notification.id).toBe("2");
+    expect(rows.at(0)?.notifications.map(({ id }) => id)).toEqual(["2", "1"]);
+    expect(rows.at(1)?.notification.id).toBe("3");
   });
 
   it("shows the whole inbox with unread first and read rows after", () => {

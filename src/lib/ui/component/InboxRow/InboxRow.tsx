@@ -1,7 +1,12 @@
 import type { ReactNode } from "react";
 import type { InboxSubjectKind } from "../../../inbox/index.js";
 import { tokens } from "../../../tokens/index.js";
-import { fitField, fitRuns, measureText } from "../../fit/index.js";
+import {
+  fitField,
+  fitRuns,
+  measurePieces,
+  measureText,
+} from "../../fit/index.js";
 import type { Piece } from "../../types.js";
 import { marginCells } from "../Margin/constants.js";
 import type { InboxRowProps } from "./types.js";
@@ -12,6 +17,7 @@ const marks: Readonly<Record<InboxSubjectKind, string>> = {
   pullRequest: tokens["glyph.thread.pullRequest"],
   discussion: tokens["glyph.thread.discussion"],
   commit: tokens["glyph.inbox.other"],
+  workflow: tokens["glyph.inbox.other"],
   release: tokens["glyph.inbox.other"],
   security: tokens["glyph.inbox.other"],
   invitation: tokens["glyph.inbox.other"],
@@ -47,21 +53,32 @@ export default function InboxRow({
   const inner = width - marginCells;
   const mark = marks[row.subjectKind];
   const figure = fitField(row.distance, "line", inner);
-  const reason = fitField(row.reason, "line", inner);
+  const repeats =
+    row.notifications.length > 1 ? ` ×${row.notifications.length}` : "";
+  const reason = fitField(
+    { ...row.reason, text: `${row.reason.text}${repeats}` },
+    "line",
+    inner,
+  );
   const reference = fitField(
     row.reference,
     "line",
     inner - measureText(mark) - measureText(reason) - measureText(figure) - 2,
   );
   const head: Piece[] = [
-    { text: `${mark} ${reference} ${reason}`, fg: tokens["color.text"] },
+    { text: `${mark} ${reference} `, fg: tokens["color.text"] },
+    {
+      text: reason,
+      fg: row.failed ? tokens["color.text.error"] : tokens["color.text.muted"],
+    },
   ];
-  const left = measureText(head[0]?.text ?? "");
   head.push({
-    text: " ".repeat(Math.max(1, inner - left - measureText(figure))),
+    text: " ".repeat(
+      Math.max(1, inner - measurePieces(head) - measureText(figure)),
+    ),
     fg: tokens["color.text"],
   });
-  head.push({ text: figure, fg: tokens["color.text"] });
+  head.push({ text: figure, fg: tokens["color.text.muted"] });
   return (
     <box
       flexDirection="row"
@@ -88,7 +105,9 @@ export default function InboxRow({
           [
             {
               text: fitField(row.title, "line", inner),
-              fg: tokens["color.text"],
+              fg: row.unread
+                ? tokens["color.text"]
+                : tokens["color.text.muted"],
               attributes: tokens["typography.style.italic"],
             },
           ],

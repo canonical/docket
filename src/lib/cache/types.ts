@@ -372,9 +372,14 @@ export interface Cache {
    * Reads the notification inbox through the cache, fetching it when what
    * is held is older than `maxAge`.
    */
-  readNotifications(maxAge: number): Promise<CachedNotifications>;
+  readNotifications(
+    maxAge: number,
+    onPage?: (progress: PageProgress) => void,
+  ): Promise<CachedNotifications>;
   /** Fetches the notification inbox again, and keeps it. */
-  refreshNotifications(): Promise<void>;
+  refreshNotifications(
+    onPage?: (progress: PageProgress) => void,
+  ): Promise<void>;
   /**
    * Marks one notification read in the cached list, keeping its fetch
    * time, and writes the cache file.

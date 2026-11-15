@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeGitHub, settle, token } from "../../testing/github.js";
+import type { PageProgress } from "../provider/index.js";
 import createClient from "./createClient.js";
 import fetchNotifications from "./fetchNotifications.js";
 import type { RestNotification } from "./types.js";
@@ -46,7 +47,31 @@ describe("fetchNotifications", () => {
     expect(read.map(({ id }) => id)).toEqual(["1", "2"]);
     expect(github.sent.at(0)?.url.searchParams.get("all")).toBe("true");
     expect(github.sent.at(0)?.url.searchParams.get("is_done")).toBe("false");
-    expect(github.sent.at(0)?.url.searchParams.get("per_page")).toBe("50");
+    expect(github.sent.at(0)?.url.searchParams.get("per_page")).toBe("100");
+  });
+
+  it("reports each page read against the last page GitHub names", async () => {
+    github.rest(
+      "GET /notifications",
+      {
+        body: [raw("1")],
+        headers: {
+          link: '<https://api.github.com/notifications?page=2>; rel="next", <https://api.github.com/notifications?page=3>; rel="last"',
+        },
+      },
+      { body: [raw("2")] },
+    );
+    const progress: PageProgress[] = [];
+    const read = await settle(
+      fetchNotifications(createClient(token, "github.com", "1.2.3"), (page) =>
+        progress.push(page),
+      ),
+    );
+    expect(read.map(({ id }) => id)).toEqual(["1", "2"]);
+    expect(progress).toEqual([
+      { fetched: 1, total: 3 },
+      { fetched: 2, total: 3 },
+    ]);
   });
 
   it("stops with the provider's named error when GitHub refuses", async () => {

@@ -42,6 +42,7 @@ export default function describeStatus(
   action?: ActionResult,
   attention?: AttentionState,
   readAt?: Date,
+  reading?: string,
 ): StatusMessage | undefined {
   const paused = status?.paused;
   const failure = status?.failure;
@@ -82,6 +83,7 @@ export default function describeStatus(
           ...(action.people && { people: action.people }),
         };
   }
+  if (reading) return { kind: "refreshing", text: reading };
   if (!status) return undefined;
   const underWay = findStageUnderWay(status.stages);
   if (status.whole && underWay) {

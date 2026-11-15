@@ -62,6 +62,8 @@ export interface StatusLineProps {
   status?: CacheStatus;
   /** The result of the user's last action, if any. */
   action?: ActionResult;
+  /** A read under way outside the cache, such as the inbox's. */
+  reading?: string;
   /**
    * Whether anyone is using the pane, which an idle pane's freshness
    * says, with the key that wakes it. Active when not given.

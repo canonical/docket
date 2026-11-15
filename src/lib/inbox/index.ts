@@ -21,4 +21,5 @@ export type {
   InboxRepos,
   InboxRow,
   InboxSubjectKind,
+  InboxWorkflow,
 } from "./types.js";

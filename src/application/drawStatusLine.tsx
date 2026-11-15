@@ -21,6 +21,8 @@ export interface StatusLineState {
    */
   readonly failure: CacheStatus["failure"];
   readonly action: ActionResult | undefined;
+  /** A read under way outside the cache, such as the inbox's. */
+  readonly reading: string | undefined;
   readonly attention: AttentionState;
   /**
    * When the oldest data the list on screen was built from was fetched,
@@ -54,6 +56,7 @@ export default function drawStatusLine({
   status,
   failure,
   action,
+  reading,
   attention,
   readAt,
   details,
@@ -68,6 +71,7 @@ export default function drawStatusLine({
     <StatusLine
       status={problem ? undefined : shown}
       action={action}
+      reading={reading}
       attention={attention}
       readAt={readAt}
       details={details}

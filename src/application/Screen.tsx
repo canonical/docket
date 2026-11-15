@@ -13,6 +13,7 @@ import type { ThreadRow as ActivityThread } from "../lib/activity/index.js";
 import type { FinishedThread } from "../lib/endings/index.js";
 import { describeEmptyInbox } from "../lib/inbox/index.js";
 import { describeNoTeam, groupWaits, listWaits } from "../lib/owed/index.js";
+import { tokens } from "../lib/tokens/index.js";
 import {
   type ActionResult,
   CountsLine,
@@ -25,6 +26,7 @@ import {
   Notice,
   Pane,
   PaneHeader,
+  ProgressLine,
 } from "../lib/ui/index.js";
 import type { Thread, ThreadSummary } from "../lib/waits/index.js";
 import ActivityList from "./ActivityList.js";
@@ -36,6 +38,7 @@ import describePosition from "./describePosition.js";
 import drawEditorSlot from "./drawEditorSlot.js";
 import drawStandIn from "./drawStandIn.js";
 import drawStatusLine from "./drawStatusLine.js";
+import estimateRemaining from "./estimateRemaining.js";
 import FinishedList from "./FinishedList.js";
 import findPeople from "./findPeople.js";
 import gatherNamed from "./gatherNamed.js";
@@ -290,7 +293,11 @@ export default function Screen({
       markRead: () => {
         const row = drawnSelection.current;
         if (!row || !("notification" in row) || !("cache" in source)) return;
-        void source.markNotificationRead(row.notification.id).catch((error) => {
+        void (async () => {
+          for (const { id } of row.notifications) {
+            await source.markNotificationRead(id);
+          }
+        })().catch((error) => {
           setAction({
             failed: true,
             text: describeFailure(error).message,
@@ -412,7 +419,12 @@ export default function Screen({
   const ended = finished && "list" in finished ? finished.list : undefined;
   // The mode on screen's list alone drives the keys and the counts, so a
   // list read off screen is never what a key acts on.
-  const inboxListed = inbox && "list" in inbox ? inbox.list : undefined;
+  const inboxListed = inbox?.list;
+  const inboxReading = inbox.reading;
+  const inboxRemaining =
+    inbox?.progress && inbox.startedAt
+      ? estimateRemaining(inbox.progress, inbox.startedAt, at)
+      : undefined;
   const shown =
     mode === "owed"
       ? owed
@@ -488,7 +500,7 @@ export default function Screen({
     width,
   });
   if (mode === "inbox" && !problem) {
-    if (inbox && "problem" in inbox) {
+    if (inbox?.problem) {
       region = (
         <Notice
           reason={inbox.problem.message.replace(/\.$/, "")}
@@ -513,12 +525,19 @@ export default function Screen({
           />
         );
     } else {
+      const room = width - standInIndent;
       region = (
-        <box paddingLeft={standInIndent}>
+        <box flexDirection="column" paddingLeft={standInIndent}>
           <Loading
-            label={{ text: "refresh in progress…", kind: "words" }}
-            width={width - standInIndent}
+            label={{ text: "reading inbox…", kind: "words" }}
+            width={room}
           />
+          {inbox?.progress && inbox.progress.total > 0 && (
+            <ProgressLine {...inbox.progress} width={room} />
+          )}
+          {inboxRemaining && (
+            <text fg={tokens["color.text.muted"]}>{inboxRemaining}</text>
+          )}
         </box>
       );
     }
@@ -641,19 +660,21 @@ export default function Screen({
               // A failure reading the window on screen, or whom gh is
               // signed in as, leaves the rows held.
               failure:
-                (mode === "inbox" && inbox && "failure" in inbox
-                  ? inbox.failure
+                (mode === "inbox"
+                  ? inbox?.failure
                   : windowed && "list" in windowed
                     ? windowed.failure
                     : undefined) ?? you.failure,
               // The window or inbox on screen's own data, whose age the
               // line names beside the threads'.
               readAt:
-                mode === "inbox" && inbox && "readAt" in inbox
-                  ? inbox.readAt
+                mode === "inbox"
+                  ? inbox?.readAt
                   : windowed && "list" in windowed
                     ? windowed.readAt
                     : undefined,
+              reading:
+                mode === "inbox" && inboxReading ? "reading inbox…" : undefined,
               action,
               attention: attentionState,
               details: ahead.progress,

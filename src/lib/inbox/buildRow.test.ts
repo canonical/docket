@@ -42,6 +42,65 @@ describe("buildRow", () => {
     ).toBe("other-org/other-repo#12");
   });
 
+  it("marks a failed workflow, and names its workflow and branch", () => {
+    expect(
+      buildRow(
+        notification({
+          reason: "ci_activity",
+          workflow: { name: "CI", branch: "main", failed: true },
+          subject: {
+            title: "CI workflow run failed for main branch",
+            kind: "workflow",
+            url: "https://github.com/example-org/example-repo/actions",
+          },
+        }),
+        repos,
+        now,
+      ),
+    ).toMatchObject({
+      reference: { text: "example workflow", kind: "identifier" },
+      subjectKind: "workflow",
+      kind: { text: "workflow", kind: "words" },
+      reason: { text: "CI failed", kind: "words" },
+      failed: true,
+    });
+  });
+
+  it("names a workflow that did not fail by GitHub's reason", () => {
+    const row = buildRow(
+      notification({
+        reason: "ci_activity",
+        workflow: { name: "CI", branch: "main", failed: false },
+        subject: {
+          title: "CI workflow run succeeded for main branch",
+          kind: "workflow",
+          url: "https://github.com/example-org/example-repo/actions",
+        },
+      }),
+      repos,
+      now,
+    );
+    expect(row.reason.text).toBe("CI activity");
+    expect(row.failed).toBeUndefined();
+  });
+
+  it("marks a failed workflow whose title docket cannot parse", () => {
+    const row = buildRow(
+      notification({
+        reason: "ci_activity",
+        subject: {
+          title: "Run failed: CI - main (push)",
+          kind: "workflow",
+          url: "https://github.com/example-org/example-repo/actions",
+        },
+      }),
+      repos,
+      now,
+    );
+    expect(row.reason.text).toBe("CI failed");
+    expect(row.failed).toBe(true);
+  });
+
   it("names a subject docket cannot detail by its kind and says browser only", () => {
     expect(
       buildRow(

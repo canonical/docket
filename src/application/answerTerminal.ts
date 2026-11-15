@@ -117,8 +117,8 @@ export default async function answerTerminal(
         readCandidates(provider, action, thread),
       write: (request) => writeFromTerminal({ provider, cache }, request),
       readEvents: (repo, since) => cache.readEvents(repo, since, maxAge),
-      readInbox: () => cache.readNotifications(maxAge),
-      refreshInbox: () => cache.refreshNotifications(),
+      readInbox: (onPage) => cache.readNotifications(maxAge, onPage),
+      refreshInbox: (onPage) => cache.refreshNotifications(onPage),
       markNotificationRead: async (id) => {
         await provider.markNotificationRead(id);
         await cache.setNotificationRead(id);

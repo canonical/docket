@@ -1,7 +1,4 @@
-import {
-  notification,
-  recordedNotifications,
-} from "../../../../testing/inbox.js";
+import { notification } from "../../../../testing/inbox.js";
 import { longRepo } from "../../../../testing/long.js";
 import type { Meta, Story } from "../../../../testing/stories.js";
 import type { Repo } from "../../../config/index.js";

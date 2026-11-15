@@ -1,4 +1,4 @@
-import type { Budgets } from "../provider/index.js";
+import type { Budgets, PageProgress } from "../provider/index.js";
 
 /** A REST answer: its status, its body and its headers. */
 export interface RestResponse<T> {
@@ -46,6 +46,7 @@ export interface Client {
   pages<T>(
     route: string,
     parameters?: Record<string, unknown>,
+    onPage?: (progress: PageProgress) => void,
   ): AsyncIterable<readonly T[]>;
   /**
    * The budgets the latest answer of each kind reported, whatever its
@@ -274,8 +275,8 @@ export interface RestNotification {
   readonly last_read_at: string | null;
   readonly subject: {
     readonly title: string;
-    readonly url: string;
-    readonly latest_comment_url: string;
+    readonly url: string | null;
+    readonly latest_comment_url: string | null;
     readonly type: string;
   };
   readonly repository: {

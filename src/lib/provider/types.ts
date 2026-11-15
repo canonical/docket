@@ -263,7 +263,9 @@ export interface Provider {
    * The account's notification inbox: read and unread, every subject
    * kind, and no notification marked done.
    */
-  notifications(): Promise<readonly InboxNotification[]>;
+  notifications(
+    onPage?: (progress: PageProgress) => void,
+  ): Promise<readonly InboxNotification[]>;
   /** Marks one notification thread read, as opening it in the inbox does. */
   markNotificationRead(id: string): Promise<void>;
   /** Everyone who can be assigned in `repo`. */
