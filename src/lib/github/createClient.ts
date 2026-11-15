@@ -4,7 +4,7 @@ import { paginateRest } from "@octokit/plugin-paginate-rest";
 import { retry } from "@octokit/plugin-retry";
 import { throttling } from "@octokit/plugin-throttling";
 import Bottleneck from "bottleneck";
-import type { Budget, Budgets } from "../provider/index.js";
+import type { Budget, Budgets, PageProgress } from "../provider/index.js";
 import { requestTimeout } from "./constants.js";
 import describeFailure from "./describeFailure.js";
 import type { Client, RestResponse } from "./types.js";
@@ -97,6 +97,15 @@ const onlyMissing = (error: unknown): error is { readonly data: unknown } => {
         type === "NOT_FOUND" && Array.isArray(path),
     )
   );
+};
+
+/**
+ * The page number GitHub's `Link` header names as the last of a list, or
+ * nothing when the answer carries no such link.
+ */
+const lastPage = (link: string | undefined): number | undefined => {
+  const match = /[?&]page=(\d+)[^>]*>;\s*rel="last"/.exec(link ?? "");
+  return match ? Number(match[1]) : undefined;
 };
 
 /**
@@ -222,12 +231,21 @@ export default function createClient(
         throw describeFailure(error, host);
       }
     },
-    async *pages<T>(route: string, parameters: Record<string, unknown> = {}) {
+    async *pages<T>(
+      route: string,
+      parameters: Record<string, unknown> = {},
+      onPage?: (progress: PageProgress) => void,
+    ) {
       try {
-        for await (const { data } of octokit.paginate.iterator(
+        let fetched = 0;
+        let total: number | undefined;
+        for await (const { data, headers } of octokit.paginate.iterator(
           route,
           parameters,
         )) {
+          fetched += 1;
+          total = lastPage(headers.link) ?? total ?? fetched;
+          onPage?.({ fetched, total });
           yield data as readonly T[];
         }
       } catch (error) {

@@ -12,6 +12,7 @@ const synced: StatusLineState = {
   status: settleStatus(recordedNow),
   failure: undefined,
   action: undefined,
+  reading: undefined,
   attention: "active",
   readAt: undefined,
   details: undefined,
@@ -31,6 +32,10 @@ async function drawFor(state: Partial<StatusLineState>) {
 describe("drawStatusLine", () => {
   it("says how old the data is", async () => {
     expect(await drawFor({})).toBe("synced 2m ago");
+  });
+
+  it("says what a separate read is doing before the data's age", async () => {
+    expect(await drawFor({ reading: "reading inbox…" })).toBe("reading inbox…");
   });
 
   it("names a failure that leaves the rows held as a failed refresh, with the data's age", async () => {

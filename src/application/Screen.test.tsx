@@ -8,6 +8,7 @@ import { type Cache, createCache } from "../lib/cache/index.js";
 import type { ThreadEvent } from "../lib/events/index.js";
 import type {
   Capability,
+  PageProgress,
   Provider,
   ThreadDetail,
 } from "../lib/provider/index.js";
@@ -19,7 +20,7 @@ import {
 } from "../lib/waits/index.js";
 import { pendingDetail } from "../testing/details.js";
 import { bob, thread } from "../testing/facts.js";
-import { recordedNotifications } from "../testing/inbox.js";
+import { notification, recordedNotifications } from "../testing/inbox.js";
 import {
   everyCapability,
   fakeProvider,
@@ -1379,6 +1380,59 @@ describe("Screen", { timeout: 15_000 }, () => {
       return screen;
     };
 
+    it("says it is reading the inbox, with its pages, rather than naming the threads' age", async () => {
+      const cache = await openCache(
+        recordedProvider({ notifications: async () => recordedNotifications }),
+      );
+      await cache.refresh();
+      const gate = Promise.withResolvers<void>();
+      let calls = 0;
+      const view = {
+        ...viewOf(cache),
+        now: () => {
+          calls += 1;
+          const at = new Date(recordedNow);
+          return calls === 1 ? at : new Date(at.getTime() - 2_000);
+        },
+      };
+      const source = {
+        ...cacheSourceOf(view),
+        readInbox: async (onPage?: (progress: PageProgress) => void) => {
+          onPage?.({ fetched: 1, total: 3 });
+          await gate.promise;
+          return cache.readNotifications(300_000, onPage);
+        },
+      };
+      const screen = await show(
+        {
+          ...view,
+          mode: "inbox",
+          inbox: { grouping: "repo", filter: "unread" },
+          source,
+        },
+        40,
+        () => {},
+        24,
+      );
+      await waitUntil(async () => {
+        const lines = (await screen.redraw()).lines;
+        const text = lines.join("\n");
+        expect(text).toContain("reading inbox…");
+        expect(text).toContain("1/3 pages");
+        expect(text).toContain("~4s left");
+        expect(text).not.toContain("synced 0m ago");
+        expect(
+          lines.filter((line) => line.includes("reading inbox…")),
+        ).toHaveLength(2);
+      });
+      gate.resolve();
+      await waitUntil(async () =>
+        expect((await screen.redraw()).lines.join("\n")).toContain(
+          "example#12",
+        ),
+      );
+    });
+
     it("lists unread notifications by repository, marks one read, shows the whole inbox and returns to owed", async () => {
       const screen = await openInbox();
       const drawn = await screen.redraw();
@@ -1403,6 +1457,54 @@ describe("Screen", { timeout: 15_000 }, () => {
       expect((await press(owed, "n")).lines.at(0)).toBe(
         describeHeader("inbox", "all · by repo"),
       );
+    });
+
+    it("marks every run a workflow row stands for", async () => {
+      const run = (id: string, at: Date) =>
+        notification({
+          id,
+          reason: "ci_activity",
+          workflow: { name: "CI", branch: "main", failed: true },
+          subject: {
+            title: "CI workflow run failed for main branch",
+            kind: "workflow",
+            url: "https://github.com/example-org/example-repo/actions",
+          },
+          updatedAt: at,
+        });
+      const items = [
+        run("2", new Date("2026-09-28T11:00:00Z")),
+        run("1", new Date("2026-09-28T10:00:00Z")),
+      ];
+      const cache = await openCache(
+        recordedProvider({ notifications: async () => items }),
+      );
+      await cache.readNotifications(300_000);
+      const screen = await show(
+        {
+          ...viewOf(cache),
+          mode: "inbox",
+          inbox: { grouping: "repo", filter: "unread" },
+        },
+        40,
+        () => {},
+        24,
+      );
+      await waitUntil(async () =>
+        expect((await screen.redraw()).lines.join("\n")).toContain(
+          "CI failed ×2",
+        ),
+      );
+      await press(screen, "m");
+      await waitUntil(async () =>
+        expect((await screen.redraw()).lines.join("\n")).not.toContain(
+          "CI failed",
+        ),
+      );
+      expect(cache.notifications()?.items.map(({ unread }) => unread)).toEqual([
+        false,
+        false,
+      ]);
     });
 
     it("says why marking a notification read failed, and why refreshing it failed", async () => {

@@ -90,6 +90,52 @@ describe("readNotification", () => {
     expect(commit.subject.number).toBeUndefined();
   });
 
+  it("reads a failed workflow's kind and opens the Actions page of its branch", () => {
+    const workflow = readNotification(
+      raw({
+        reason: "ci_activity",
+        subject: {
+          ...raw().subject,
+          title:
+            "conventions workflow run failed for feature/019-usage-chart branch",
+          type: "CheckSuite",
+          url: null,
+        },
+      }),
+    );
+    expect(workflow.subject).toMatchObject({
+      kind: "workflow",
+      title:
+        "conventions workflow run failed for feature/019-usage-chart branch",
+      url: "https://github.com/example-org/example-repo/actions?query=branch%3Afeature%2F019-usage-chart+workflow%3A%22conventions%22",
+    });
+    expect(workflow.subject.number).toBeUndefined();
+    expect(workflow.workflow).toEqual({
+      name: "conventions",
+      branch: "feature/019-usage-chart",
+      failed: true,
+    });
+  });
+
+  it("opens the repository's Actions page when a workflow title names no branch", () => {
+    expect(
+      readNotification(
+        raw({
+          reason: "ci_activity",
+          subject: {
+            ...raw().subject,
+            title: "Something changed",
+            type: "WorkflowRun",
+            url: null,
+          },
+        }),
+      ).subject,
+    ).toMatchObject({
+      kind: "workflow",
+      url: "https://github.com/example-org/example-repo/actions",
+    });
+  });
+
   it("falls back to the repository page for a subject docket cannot place", () => {
     expect(
       readNotification(

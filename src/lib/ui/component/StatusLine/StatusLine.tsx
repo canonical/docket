@@ -92,6 +92,7 @@ function fitMessage(message: StatusMessage, width: number): string {
 const StatusLine = ({
   status,
   action,
+  reading,
   attention,
   readAt,
   details,
@@ -109,6 +110,7 @@ const StatusLine = ({
     action,
     attention,
     readAt,
+    reading,
   );
   const fitted = message && { ...message, text: fitMessage(message, width) };
   const runs = fitted ? fitRuns(describeRuns(fitted), width) : [];

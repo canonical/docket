@@ -20,6 +20,7 @@ import type { OwedGrouping, WaitRow } from "../lib/owed/index.js";
 import type { Author } from "../lib/people/index.js";
 import type {
   Capability,
+  PageProgress,
   Provider,
   ThreadDetail,
 } from "../lib/provider/index.js";
@@ -244,9 +245,13 @@ export interface TerminalView {
          * Reads the notification inbox through the cache, no older than
          * the call's maximum age.
          */
-        readonly readInbox: () => Promise<CachedNotifications>;
+        readonly readInbox: (
+          onPage?: (progress: PageProgress) => void,
+        ) => Promise<CachedNotifications>;
         /** Fetches the notification inbox again, for `R`. */
-        readonly refreshInbox: () => Promise<void>;
+        readonly refreshInbox: (
+          onPage?: (progress: PageProgress) => void,
+        ) => Promise<void>;
         /** Marks one notification read, then keeps it in the cache. */
         readonly markNotificationRead: (id: string) => Promise<void>;
       }

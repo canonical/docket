@@ -26,6 +26,11 @@ export default function buildRow(
 ): InboxRow {
   const repo = nameOf(notification.repo, repos);
   const { subject, reason } = notification;
+  const workflow = notification.workflow;
+  const failed =
+    reason === "ci_activity" &&
+    (workflow?.failed === true ||
+      /\bfail(?:ed|ure|ing)?\b/i.test(subject.title));
   const reference = isThread(notification)
     ? `${repo}#${subject.number}`
     : `${repo} ${inboxSubjectWords[subject.kind]}`;
@@ -36,7 +41,11 @@ export default function buildRow(
     subjectKind: subject.kind,
     kind: { text: inboxSubjectWords[subject.kind], kind: "words" },
     reason: {
-      text: isThread(notification) ? describeReason(reason) : browserOnlyWord,
+      text: failed
+        ? "CI failed"
+        : isThread(notification) || workflow
+          ? describeReason(reason)
+          : browserOnlyWord,
       kind: "words",
     },
     distance: {
@@ -45,6 +54,8 @@ export default function buildRow(
     },
     title: { text: subject.title, kind: "title" },
     unread: notification.unread,
+    ...(failed && { failed }),
+    notifications: [notification],
     url: subject.url,
   };
 }

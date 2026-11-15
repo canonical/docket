@@ -1,4 +1,5 @@
 import type { InboxNotification } from "../inbox/index.js";
+import type { PageProgress } from "../provider/index.js";
 import readNotification from "./readNotification.js";
 import type { Client, RestNotification } from "./types.js";
 
@@ -9,6 +10,7 @@ import type { Client, RestNotification } from "./types.js";
  */
 export default async function fetchNotifications(
   client: Client,
+  onPage?: (progress: PageProgress) => void,
 ): Promise<readonly InboxNotification[]> {
   const notifications: InboxNotification[] = [];
   for await (const page of client.pages<RestNotification>(
@@ -16,8 +18,9 @@ export default async function fetchNotifications(
     {
       all: true,
       is_done: false,
-      per_page: 50,
+      per_page: 100,
     },
+    onPage,
   )) {
     notifications.push(...page.map(readNotification));
   }

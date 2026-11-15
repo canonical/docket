@@ -335,11 +335,11 @@ export default function createCache({
   return {
     threads: () => shown,
     notifications: () => shownNotifications,
-    async readNotifications(maxAge) {
+    async readNotifications(maxAge, onPage) {
       const held = await readThrough(
         () => queries.findFreshNotifications(maxAge),
         async (at) => {
-          const items = await provider.notifications();
+          const items = await provider.notifications(onPage);
           queries.keepNotifications(items, at);
           return { items, syncedAt: at };
         },
@@ -347,12 +347,12 @@ export default function createCache({
       publish();
       return held;
     },
-    async refreshNotifications() {
+    async refreshNotifications(onPage) {
       try {
         await withFetchLock(directory, async () => {
           await load();
           const at = now();
-          const items = await provider.notifications();
+          const items = await provider.notifications(onPage);
           queries.keepNotifications(items, at);
           await save();
           publish();

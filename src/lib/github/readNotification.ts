@@ -1,4 +1,9 @@
-import type { InboxNotification, InboxSubjectKind } from "../inbox/index.js";
+import type {
+  InboxNotification,
+  InboxSubjectKind,
+  InboxWorkflow,
+} from "../inbox/index.js";
+import readWorkflow from "./readWorkflow.js";
 import type { RestNotification } from "./types.js";
 
 const kinds: Readonly<Record<string, InboxSubjectKind>> = {
@@ -6,6 +11,8 @@ const kinds: Readonly<Record<string, InboxSubjectKind>> = {
   PullRequest: "pullRequest",
   Discussion: "discussion",
   Commit: "commit",
+  CheckSuite: "workflow",
+  WorkflowRun: "workflow",
   Release: "release",
   RepositoryVulnerabilityAlert: "security",
   RepositoryInvitation: "invitation",
@@ -17,25 +24,35 @@ const pages: Readonly<Record<InboxSubjectKind, string | undefined>> = {
   pullRequest: "pull",
   discussion: "discussions",
   commit: "commit",
+  workflow: undefined,
   release: "releases",
   security: "security",
   invitation: undefined,
   other: undefined,
 };
 
+/** The Actions page filtered to a workflow and branch, or the repository's Actions. */
+const actionsPage = (repoUrl: string, workflow: InboxWorkflow | undefined) =>
+  workflow
+    ? `${repoUrl}/actions?${new URLSearchParams({ query: `branch:${workflow.branch} workflow:"${workflow.name}"` })}`
+    : `${repoUrl}/actions`;
+
 /**
  * Reads one REST notification: its subject's kind and number, the address
  * of its page in a browser, why GitHub notified, and when it last changed.
- * A subject docket cannot place falls back to its repository's page.
+ * A workflow notification opens the Actions runs of its branch, and any
+ * other subject docket cannot place falls back to its repository's page.
  */
 export default function readNotification(
   notification: RestNotification,
 ): InboxNotification {
   const kind = kinds[notification.subject.type] ?? "other";
-  const match =
-    /\/repos\/[^/]+\/[^/]+\/(?:issues|pulls|discussions|commits|releases)\/([^/?#]+)$/.exec(
-      notification.subject.url,
-    );
+  const workflow = readWorkflow(notification.subject.title);
+  const match = notification.subject.url
+    ? /\/repos\/[^/]+\/[^/]+\/(?:issues|pulls|discussions|commits|releases)\/([^/?#]+)$/.exec(
+        notification.subject.url,
+      )
+    : null;
   const id = match?.[1];
   const number =
     id === undefined ||
@@ -45,9 +62,11 @@ export default function readNotification(
   const repoUrl = notification.repository.html_url.replace(/\/$/, "");
   const page = pages[kind];
   const url =
-    id === undefined || page === undefined
-      ? repoUrl
-      : `${repoUrl}/${page}/${id}`;
+    kind === "workflow" || notification.reason === "ci_activity"
+      ? actionsPage(repoUrl, workflow)
+      : id === undefined || page === undefined
+        ? repoUrl
+        : `${repoUrl}/${page}/${id}`;
   return {
     id: notification.id,
     repo: notification.repository.full_name,
@@ -59,6 +78,7 @@ export default function readNotification(
       url,
     },
     reason: notification.reason,
+    ...(workflow && { workflow }),
     unread: notification.unread,
     updatedAt: new Date(notification.updated_at),
     ...(notification.last_read_at

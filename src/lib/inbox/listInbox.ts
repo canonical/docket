@@ -14,6 +14,27 @@ const order = (a: InboxRow, b: InboxRow) =>
   Number(b.unread) - Number(a.unread) ||
   b.notification.updatedAt.getTime() - a.notification.updatedAt.getTime();
 
+/** The one row a notification stands for: a workflow's runs on a branch share one. */
+const rowKey = (notification: InboxNotification): string =>
+  notification.reason === "ci_activity" && notification.workflow
+    ? `workflow:${notification.repo}:${notification.workflow.name}:${notification.workflow.branch}:${notification.unread}`
+    : `notification:${notification.id}`;
+
+/** Gathers a workflow's repeated notifications under its newest run. */
+function gather(notifications: readonly InboxNotification[]) {
+  const groups = new Map<string, InboxNotification[]>();
+  for (const notification of notifications) {
+    const key = rowKey(notification);
+    const group = groups.get(key);
+    if (group) group.push(notification);
+    else groups.set(key, [notification]);
+  }
+  for (const group of groups.values()) {
+    group.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  }
+  return [...groups.values()];
+}
+
 /**
  * Builds the inbox at `now`: the notifications the filter keeps, unread
  * first and then newest, in the sections of the address's grouping, with
@@ -36,8 +57,11 @@ export default function listInbox(
     address.filter === "unread"
       ? notifications.filter(({ unread }) => unread)
       : notifications;
-  const rows = visible
-    .map((notification) => buildRow(notification, repos, now))
+  const rows = gather(visible)
+    .map((notifications) => ({
+      ...buildRow(notifications[0], repos, now),
+      notifications,
+    }))
     .sort(order);
   const fields =
     address.filter === "all"

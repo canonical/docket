@@ -55,7 +55,7 @@ export default async function createProvider(
     events: (repo, since) => fetchEvents(client, repo, since),
     threadDetail: (thread) => fetchThreadDetail(client, thread),
     threadDetails: (threads) => fetchThreadDetails(client, threads),
-    notifications: () => fetchNotifications(client),
+    notifications: (onPage) => fetchNotifications(client, onPage),
     markNotificationRead: (id) => markNotificationRead(client, id),
     assignableUsers: (repo) => listAssignableUsers(client, repo),
     reviewCandidates: (pull) => listReviewCandidates(client, pull),
