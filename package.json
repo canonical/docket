@@ -32,7 +32,7 @@
   },
   "overrides": {
     "glob": "14.0.6",
-    "js-yaml": "4.3.2",
+    "js-yaml": "5.5.0",
     "minimatch": "11.0.8",
     "undici": "7.30.2"
   },
