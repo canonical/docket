@@ -1,6 +1,0 @@
-40 columns
-|◉ a-team-with-a-very-long-name ─────────
-
-runs
-1:1 "◉ a-team-with-a-very-long-name" fg #000080ff bg #00000000
-1:31 " ─────────" fg #ffffffff bg #00000000

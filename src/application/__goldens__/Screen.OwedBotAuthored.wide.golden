@@ -1,0 +1,125 @@
+60x36
+|owed                                one list · overdue first
+|┃┆⇄ example#12 PR reply ○ dave                       4d over
+|╹┆Fix the parser                           ✗ checks  ◉ alice
+|┃┆⇄ example#12 PR close ○ dave                       2h over
+|╹┆Fix the parser                           ✗ checks  ◉ alice
+|┃ ◇ example#15 issue reply ◐ carol                   4h left
+|╹ Crash on start                                  unassigned
+|│ ⇄ example#20 PR review ■ example-sync              1d left
+|╵ Update dependency zod to 3.24                        ● bob
+|│┆⇄ example#12 PR review ○ dave                      1d left
+|╵┆Fix the parser                             ✗ checks  ● bob
+|│ ⇄ example#20 PR close ■ example-sync               4d left
+|│ Update dependency zod to 3.24                        ● bob
+|│ age 2d · owner ● bob
+|│ last activity 2d ago · ■ example-sync
+|╵ labels dependencies
+|│ ◇ docs#4 issue close ◉ alice                      10d left
+|│ Where do tokens live?
+|╵                                             ◉ alice, ● bob
+|│ ◇ example#15 issue close ◐ carol                  29d left
+|╵ Crash on start                                  unassigned
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|2 over · 1 soon · 5 on track                             6/8
+|synced 2m ago
+|←→ mode n ↑↓ sel ⏎ open g grp a r ?
+
+1:1 "owed                                one list ·"
+1:48 "overdue first" fg=7
+2:1 "┃" fg=1
+2:2 "┆" fg=7
+2:3 "⇄ example#12 PR reply" bold
+2:25 "○ dave" fg=6 bold
+2:54 "4d over" fg=1 bold
+3:1 "╹" fg=1
+3:2 "┆" fg=7
+3:3 "Fix the parser" italic
+3:44 "✗ checks" fg=1
+3:54 "◉ alice" fg=4
+4:1 "┃" fg=1
+4:2 "┆" fg=7
+4:3 "⇄ example#12 PR close" bold
+4:25 "○ dave" fg=6 bold
+4:54 "2h over" fg=1 bold
+5:1 "╹" fg=1
+5:2 "┆" fg=7
+5:3 "Fix the parser" italic
+5:44 "✗ checks" fg=1
+5:54 "◉ alice" fg=4
+6:1 "┃" fg=3
+6:3 "◇ example#15 issue reply" bold
+6:28 "◐ carol" fg=5 bold
+6:54 "4h left" fg=3 bold
+7:1 "╹" fg=3
+7:3 "Crash on start" italic
+7:51 "unassigned"
+8:1 "│" fg=7
+8:3 "⇄ example#20 PR review" bold
+8:26 "■ example-sync" fg=7 bold
+8:54 "1d left" bold
+9:1 "╵" fg=7
+9:3 "Update dependency zod to 3.24" italic
+9:56 "● bob" fg=4
+10:1 "│┆" fg=7
+10:3 "⇄ example#12 PR review" bold
+10:26 "○ dave" fg=6 bold
+10:54 "1d left" bold
+11:1 "╵┆" fg=7
+11:3 "Fix the parser" italic
+11:46 "✗ checks" fg=1
+11:56 "● bob" fg=4
+12:1 "│ " fg=7 bg=8
+12:3 "⇄ example#20 PR close " bg=8 bold
+12:25 "■ example-sync               " fg=7 bg=8 bold
+12:54 "4d left" bg=8 bold
+13:1 "│ " fg=7 bg=8
+13:3 "Update dependency zod to 3.24                        " bg=8 italic
+13:56 "● bob" fg=4 bg=8
+14:1 "│ " fg=7 bg=8
+14:3 "age 2d · owner " bg=8
+14:18 "● bob                                      " fg=4 bg=8
+15:1 "│ " fg=7 bg=8
+15:3 "last activity 2d ago · " bg=8
+15:26 "■ example-sync                     " fg=7 bg=8
+16:1 "╵ " fg=7 bg=8
+16:3 "labels dependencies                                       " bg=8
+17:1 "│" fg=7
+17:3 "◇ docs#4 issue close" bold
+17:24 "◉ alice" fg=4 bold
+17:53 "10d left" bold
+18:1 "│" fg=7
+18:3 "Where do tokens live?" italic
+19:1 "╵" fg=7
+19:47 "◉ alice" fg=4
+19:54 ","
+19:56 "● bob" fg=4
+20:1 "│" fg=7
+20:3 "◇ example#15 issue close" bold
+20:28 "◐ carol" fg=5 bold
+20:53 "29d left" bold
+21:1 "╵" fg=7
+21:3 "Crash on start" italic
+21:51 "unassigned"
+34:1 "2 over · 1 soon · 5 on track                             6/8"
+35:1 "synced 2m ago" fg=7
+36:1 "←→"
+36:4 "mode" fg=7
+36:9 "n ↑↓"
+36:14 "sel" fg=7
+36:18 "⏎"
+36:20 "open" fg=7
+36:25 "g"
+36:27 "grp" fg=7
+36:31 "a r ?"

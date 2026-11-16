@@ -1,5 +1,0 @@
-40 columns
-|0 over · 0 soon · 0 on track
-
-runs
-1:1 "0 over · 0 soon · 0 on track" fg #ffffffff bg #00000000

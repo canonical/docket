@@ -1,17 +1,19 @@
+import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { everyCommand, longCommands } from "../../../../testing/commands.js";
-import type { Meta, Story } from "../../../../testing/stories.js";
+import { drawAtWidth } from "../../../../testing/stories.js";
+import { atHeight } from "../../../../testing/viewports.js";
 import HelpOverlay from "./HelpOverlay.js";
-import type { HelpOverlayProps } from "./types.js";
 
-const meta: Meta<HelpOverlayProps> = {
+const meta = {
   title: "component/HelpOverlay",
   component: HelpOverlay,
-};
+  render: drawAtWidth(HelpOverlay),
+} satisfies Meta<typeof HelpOverlay>;
 
 export default meta;
 
 /** Every key bound, as `?` shows them, with room for them all. */
-export const Keys: Story<HelpOverlayProps> = {
+export const Keys: StoryObj<typeof meta> = {
   args: {
     commands: everyCommand,
     note: { text: "windows are counted in working time", kind: "words" },
@@ -21,7 +23,7 @@ export const Keys: Story<HelpOverlayProps> = {
 };
 
 /** Every key, the thread's included, as many as the help lists. */
-export const Long: Story<HelpOverlayProps> = {
+export const Long: StoryObj<typeof meta> = {
   args: {
     commands: longCommands,
     note: { text: "windows are counted in working time", kind: "words" },
@@ -35,7 +37,7 @@ export const Long: Story<HelpOverlayProps> = {
  * heading pinned with the place of the first key line shown, and the key
  * lines under the pane counted.
  */
-export const Scrolled: Story<HelpOverlayProps> = {
+export const Scrolled: StoryObj<typeof meta> = {
   args: { ...Keys.args, height: 8, first: 5 },
-  parameters: { height: 8 },
+  parameters: { viewports: atHeight(8) },
 };

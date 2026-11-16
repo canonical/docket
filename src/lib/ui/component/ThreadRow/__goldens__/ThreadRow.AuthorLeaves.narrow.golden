@@ -1,0 +1,10 @@
+40x36
+|┃ ◇ example#1240 issue reply    22h over
+|╹ Token naming for the spac…  unassigned
+
+1:1 "┃" fg=1
+1:3 "◇ example#1240 issue reply" bold
+1:33 "22h over" fg=1 bold
+2:1 "╹" fg=1
+2:3 "Token naming for the spac…" italic
+2:31 "unassigned"

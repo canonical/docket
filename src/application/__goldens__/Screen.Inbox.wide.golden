@@ -1,0 +1,73 @@
+60x36
+|inbox                        unread · by repo · unread first
+|example ────────────────────────────────────────────────────
+|● ⇄ example#12 review requested                           1h
+|  Fix the parser
+|● ◌ example#7 team mention                                3h
+|  Tokens page
+|● • example release browser only                          4h
+|  Update dependency example-lib to 2.0
+|docs ───────────────────────────────────────────────────────
+|● ◇ docs#4 mention                                        2h
+|  Where do tokens live?
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|4 unread                                               1/3/4
+|synced 2m ago
+|←→ mode n A all ↑↓ sel ⏎ open g grp m read ?
+
+1:1 "inbox                        unread · by repo ·"
+1:49 "unread first" fg=7
+2:1 "example ────────────────────────────────────────────────────"
+3:1 "● " fg=7 bg=8
+3:3 "⇄ example#12 " bg=8 bold
+3:16 "review requested                           1h" fg=7 bg=8 bold
+4:1 "  Fix the parser                                            " bg=8 italic
+5:1 "●" fg=7
+5:3 "◌ example#7" bold
+5:15 "team mention                                3h" fg=7 bold
+6:3 "Tokens page" italic
+7:1 "●" fg=7
+7:3 "• example release" bold
+7:21 "browser only                          4h" fg=7 bold
+8:3 "Update dependency example-lib to 2.0" italic
+9:1 "docs ───────────────────────────────────────────────────────"
+10:1 "●" fg=7
+10:3 "◇ docs#4" bold
+10:12 "mention                                        2h" fg=7 bold
+11:3 "Where do tokens live?" italic
+34:1 "4 unread                                               1/3/4"
+35:1 "synced 2m ago" fg=7
+36:1 "←→"
+36:4 "mode" fg=7
+36:9 "n A"
+36:13 "all" fg=7
+36:17 "↑↓"
+36:20 "sel" fg=7
+36:24 "⏎"
+36:26 "open" fg=7
+36:31 "g"
+36:33 "grp" fg=7
+36:37 "m"
+36:39 "read" fg=7
+36:44 "?"

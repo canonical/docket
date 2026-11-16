@@ -1,0 +1,87 @@
+60x36
+|activity                        72h · by repo · newest first
+|example ────────────────────────────────────────────────────
+| ┆⇄ example#12 PR ○ dave                                 25m
+| ┆Fix the parser                                     ◉ alice
+| ┆○ dave · 3d ago
+| ┆Rebased on main. Could someone look again?
+| ┆waiting since Mon 10:00 · target 24h
+| ┆example stack 3 · 2 of 3 · → main
+| ┆below #11 merged, above #13 open
+| ┆  ✗ checks failed (lint)                               25m
+| ┆  ◉ alice requested review                              3h
+| ┆  ○ dave commented                                      3d
+|docs ───────────────────────────────────────────────────────
+|  ◇ docs#4 issue ◉ alice                                 16h
+|  Where do tokens live?
+|                                              ◉ alice, ● bob
+|    ■ example-sync labelled kind=docs                    16h
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|2 threads · 4 events                                   1/1/2
+|synced 2m ago
+|←→ mode n ↑↓ sel ⏎ open g grp t time a r ?
+
+1:1 "activity                        72h · by repo ·"
+1:49 "newest first" fg=7
+2:1 "example ────────────────────────────────────────────────────"
+3:1 " ┆" fg=7 bg=8
+3:3 "⇄ example#12 PR " bg=8 bold
+3:19 "○ dave                                 " fg=6 bg=8 bold
+3:58 "25m" bg=8 bold
+4:1 " ┆" fg=7 bg=8
+4:3 "Fix the parser                                     " bg=8 italic
+4:54 "◉ alice" fg=4 bg=8
+5:1 " ┆" fg=7 bg=8
+5:3 "○ dave " fg=6 bg=8
+5:10 "· 3d ago                                           " fg=7 bg=8
+6:1 " ┆" fg=7 bg=8
+6:3 "Rebased on main. Could someone look again?                " bg=8
+7:1 " ┆waiting since Mon 10:00 · target 24h                      " fg=7 bg=8
+8:1 " ┆example stack 3 · 2 of 3 · → main                         " fg=7 bg=8
+9:1 " ┆below #11 merged, above #13 open                          " fg=7 bg=8
+10:2 "┆" fg=7
+10:5 "✗ checks failed (lint)" fg=1
+10:58 "25m"
+11:2 "┆" fg=7
+11:5 "◉ alice" fg=4
+11:13 "requested review                              3h"
+12:2 "┆" fg=7
+12:5 "○ dave" fg=6
+12:12 "commented                                      3d"
+13:1 "docs ───────────────────────────────────────────────────────"
+14:3 "◇ docs#4 issue" bold
+14:18 "◉ alice" fg=4 bold
+14:58 "16h" bold
+15:3 "Where do tokens live?" italic
+16:47 "◉ alice" fg=4
+16:54 ","
+16:56 "● bob" fg=4
+17:5 "■ example-sync labelled kind=docs                    16h" fg=7
+34:1 "2 threads · 4 events                                   1/1/2"
+35:1 "synced 2m ago" fg=7
+36:1 "←→"
+36:4 "mode" fg=7
+36:9 "n ↑↓"
+36:14 "sel" fg=7
+36:18 "⏎"
+36:20 "open" fg=7
+36:25 "g"
+36:27 "grp" fg=7
+36:31 "t"
+36:33 "time" fg=7
+36:38 "a r ?"

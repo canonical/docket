@@ -1,0 +1,48 @@
+40x24
+|help
+|
+|Mode ───────────────────────────────────
+|  ← →  h l switch mode
+|           owed → activity → finished →
+|           inbox
+|           docket opens start view
+|  n        open the inbox
+|           n again returns to owed
+|  A        show all or unread
+|           A switches between unread and
+|           the whole inbox
+|  g        next grouping
+|  t        next time window
+|           owed: most overdue first
+|           activity: newest first
+|           finished: newest first
+|
+|List ───────────────────────────────────
+|  ↑ ↓  k j move the selection
+|           (opens the accordion)
+|  ⇞ ⇟      a page up or down
+|  home end the first or last thread
+|  ↓ 13 below
+
+1:1 "help"
+3:1 "Mode ───────────────────────────────────"
+4:3 "← →  h l switch mode"
+5:12 "owed → activity → finished →"
+6:12 "inbox"
+7:12 "docket opens start view"
+8:3 "n        open the inbox"
+9:12 "n again returns to owed"
+10:3 "A        show all or unread"
+11:12 "A switches between unread and"
+12:12 "the whole inbox"
+13:3 "g        next grouping"
+14:3 "t        next time window"
+15:12 "owed: most overdue first"
+16:12 "activity: newest first"
+17:12 "finished: newest first"
+19:1 "List ───────────────────────────────────"
+20:3 "↑ ↓  k j move the selection"
+21:12 "(opens the accordion)"
+22:3 "⇞ ⇟      a page up or down"
+23:3 "home end the first or last thread"
+24:3 "↓ 13 below" fg=7

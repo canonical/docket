@@ -1,0 +1,23 @@
+60x36
+|┃┆asked by ● alice 3d ago
+|┃┆1 push since · …
+|┃┆✗ checks: …
+|┃┆example stack 3 · 2 of 3 · → main
+|╹┆…
+
+1:1 "┃" fg=1 bg=8
+1:2 "┆asked by " fg=7 bg=8
+1:12 "● alice " fg=4 bg=8
+1:20 "3d ago                                   " fg=7 bg=8
+2:1 "┃" fg=1 bg=8
+2:2 "┆" fg=7 bg=8
+2:3 "1 push since · " bg=8
+2:18 "…                                          " fg=7 bg=8
+3:1 "┃" fg=1 bg=8
+3:2 "┆" fg=7 bg=8
+3:3 "✗ checks: " fg=1 bg=8
+3:13 "…                                               " fg=7 bg=8
+4:1 "┃" fg=1 bg=8
+4:2 "┆example stack 3 · 2 of 3 · → main                         " fg=7 bg=8
+5:1 "╹" fg=1 bg=8
+5:2 "┆…                                                         " fg=7 bg=8

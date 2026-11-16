@@ -1,0 +1,108 @@
+40x24
+|finished    1w · one list · newest first
+|│┆⇄ example#1200 PR ● bob        open 3d
+|│┆Focus ring: token names          ● bob
+|╵┆  ◉ alice merged                    6h
+|│ ◇ docs#102 issue ○ dave        open 2d
+|│ Table: sticky header scrolls…  ◉ alice
+|╵   ◉ alice closed as completed       1d
+|┃┆⇄ example#1180 PR ● bob        4d over
+|┃┆Chip: token migration            ● bob
+|┃┆open 9d · target 5d
+|┃┆labels kind=feat
+|┃┆example stack 11 · 3 of 3 · → main
+|┃┆below #1179 merged
+|╹┆  ● bob merged                      2d
+|┃ ◇ docs#77 issue ◐ carol       10d over
+|┃ Tokens page: contrast       unassigned
+|╹   ● bob closed as not planned       2d
+|│ ⇄ example#1244 PR ■ example-s… open 2d
+|│ Update dependency example-lib …  ● bob
+|╵   ● bob merged                      3d
+|  ↓ 2 below
+|3 over · 4 merged · 3 closed         3/7
+|synced 2m ago
+|←→ mode n ↑↓ sel ⏎ open g grp t time ?
+
+1:1 "finished    1w · one list ·"
+1:29 "newest first" fg=7
+2:1 "│" fg=2
+2:2 "┆" fg=7
+2:3 "⇄ example#1200 PR" bold
+2:21 "● bob" fg=4 bold
+2:34 "open 3d" bold
+3:1 "│" fg=2
+3:2 "┆" fg=7
+3:3 "Focus ring: token names" italic
+3:36 "● bob" fg=4
+4:1 "╵" fg=2
+4:2 "┆" fg=7
+4:5 "◉ alice" fg=4
+4:13 "merged                    6h"
+5:1 "│" fg=2
+5:3 "◇ docs#102 issue" bold
+5:20 "○ dave" fg=6 bold
+5:34 "open 2d" bold
+6:1 "│" fg=2
+6:3 "Table: sticky header scrolls…" italic
+6:34 "◉ alice" fg=4
+7:1 "╵" fg=2
+7:5 "◉ alice" fg=4
+7:13 "closed as completed       1d"
+8:1 "┃" fg=1 bg=8
+8:2 "┆" fg=7 bg=8
+8:3 "⇄ example#1180 PR " bg=8 bold
+8:21 "● bob        " fg=4 bg=8 bold
+8:34 "4d over" fg=1 bg=8 bold
+9:1 "┃" fg=1 bg=8
+9:2 "┆" fg=7 bg=8
+9:3 "Chip: token migration            " bg=8 italic
+9:36 "● bob" fg=4 bg=8
+10:1 "┃" fg=1 bg=8
+10:2 "┆" fg=7 bg=8
+10:3 "open 9d · target 5d                   " bg=8
+11:1 "┃" fg=1 bg=8
+11:2 "┆" fg=7 bg=8
+11:3 "labels kind=feat                      " bg=8
+12:1 "┃" fg=1 bg=8
+12:2 "┆example stack 11 · 3 of 3 · → main    " fg=7 bg=8
+13:1 "┃" fg=1 bg=8
+13:2 "┆below #1179 merged                    " fg=7 bg=8
+14:1 "╹" fg=1
+14:2 "┆" fg=7
+14:5 "● bob" fg=4
+14:11 "merged                      2d"
+15:1 "┃" fg=1
+15:3 "◇ docs#77 issue" bold
+15:19 "◐ carol" fg=5 bold
+15:33 "10d over" fg=1 bold
+16:1 "┃" fg=1
+16:3 "Tokens page: contrast" italic
+16:31 "unassigned"
+17:1 "╹" fg=1
+17:5 "● bob" fg=4
+17:11 "closed as not planned       2d"
+18:1 "│" fg=2
+18:3 "⇄ example#1244 PR" bold
+18:21 "■ example-s…" fg=7 bold
+18:34 "open 2d" bold
+19:1 "│" fg=2
+19:3 "Update dependency example-lib …" italic
+19:36 "● bob" fg=4
+20:1 "╵" fg=2
+20:5 "● bob" fg=4
+20:11 "merged                      3d"
+21:3 "↓ 2 below" fg=7
+22:1 "3 over · 4 merged · 3 closed         3/7"
+23:1 "synced 2m ago" fg=7
+24:1 "←→"
+24:4 "mode" fg=7
+24:9 "n ↑↓"
+24:14 "sel" fg=7
+24:18 "⏎"
+24:20 "open" fg=7
+24:25 "g"
+24:27 "grp" fg=7
+24:31 "t"
+24:33 "time" fg=7
+24:38 "?"

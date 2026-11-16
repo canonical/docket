@@ -1,3 +1,4 @@
+import type { Meta, StoryObj } from "@aztlan/lago-react";
 import {
   failDetail,
   overReviewDetail,
@@ -19,14 +20,14 @@ import {
   sharedClose,
   soonReply,
 } from "../../../../testing/rows.js";
-import type { Meta, Story } from "../../../../testing/stories.js";
+import { drawAtWidth } from "../../../../testing/stories.js";
 import ThreadAccordion from "./ThreadAccordion.js";
-import type { ThreadAccordionProps } from "./types.js";
 
-const meta: Meta<ThreadAccordionProps> = {
+const meta = {
   title: "component/ThreadAccordion",
   component: ThreadAccordion,
-};
+  render: drawAtWidth(ThreadAccordion),
+} satisfies Meta<typeof ThreadAccordion>;
 
 export default meta;
 
@@ -48,7 +49,7 @@ export const Review = {
     row: overReview,
     detail: Promise.resolve(overReviewDetail),
   },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /**
  * The same review while its details are read: the snapshot's lines at
@@ -56,7 +57,7 @@ export const Review = {
  */
 export const Loading = {
   args: { ...reading, row: overReview, detail: pendingDetail },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /** A reply: who wrote the message and when, the message in full, then when the reply began. */
 export const Reply = {
@@ -65,7 +66,7 @@ export const Reply = {
     row: soonReply,
     detail: Promise.resolve(soonReplyDetail),
   },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /** A close: the age and owners, the last activity, the labels decoded. */
 export const Close = {
@@ -74,7 +75,7 @@ export const Close = {
     row: sharedClose,
     detail: Promise.resolve(sharedCloseDetail),
   },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /**
  * A closed thread in activity while its details are read: the snapshot
@@ -92,7 +93,7 @@ export const RestingLoading = {
     },
     detail: pendingDetail,
   },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /**
  * Reading is paused, and no details are held: what the snapshot holds,
@@ -104,7 +105,7 @@ export const Paused = {
     row: overReview,
     detail: Promise.resolve(pauseDetail(overReviewDetail)),
   },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /** Reading is paused, for a thread the snapshot holds nothing of. */
 export const PausedUnheld = {
@@ -113,7 +114,7 @@ export const PausedUnheld = {
     row: overReview,
     detail: Promise.resolve({ resumes: new Date("2026-09-28T13:00:00Z") }),
   },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /**
  * A finished issue that ended past its target: what line 1 does not say
@@ -121,12 +122,12 @@ export const PausedUnheld = {
  */
 export const FinishedOver = {
   args: { ...underFinished, row: findFinishedRow("example#7") },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /** A finished issue that a pull request closed, within its target: the target, then what closed it. */
 export const FinishedClosedIn = {
   args: { ...underFinished, row: findFinishedRow("docs#4") },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /**
  * A finished pull request in a stack while its details are read: every
@@ -138,7 +139,7 @@ export const FinishedStackLoading = {
     row: findFinishedRow("example#2"),
     detail: pendingDetail,
   },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /**
  * Reading the details failed: the reason and its recovery, wrapped, under
@@ -150,7 +151,7 @@ export const Failed = {
     row: overReview,
     detail: failDetail(timedOut),
   },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;
 
 /**
  * The long review, owned by a long login and a team, its checks with long
@@ -162,4 +163,4 @@ export const Long = {
     row: longSharedReview,
     detail: Promise.resolve(longReviewDetail),
   },
-} satisfies Story<ThreadAccordionProps>;
+} satisfies StoryObj<typeof meta>;

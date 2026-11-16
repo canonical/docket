@@ -1,0 +1,117 @@
+40x36
+|owed            one list · overdue first
+|┃┆⇄ example#12 PR reply ○ dave   4d over
+|┃┆Fix the parser       ✗ checks  ◉ alice
+|┃┆○ dave · 3d ago
+|┃┆Rebased on main. Could someone look
+|┃┆again?
+|┃┆waiting since Mon 10:00 · target 24h
+|┃┆example stack 3 · 2 of 3 · → main
+|╹┆…
+|┃┆⇄ example#12 PR close ○ dave   2h over
+|╹┆Fix the parser       ✗ checks  ◉ alice
+|┃ ◇ example#15 issue reply       4h left
+|╹ Crash on start              unassigned
+|│┆⇄ example#12 PR review ○ dave  1d left
+|╵┆Fix the parser         ✗ checks  ● bob
+|│ ◇ docs#4 issue close ◉ alice  10d left
+|│ Where do tokens live?
+|╵                         ◉ alice, ● bob
+|│ ◇ example#15 issue close      29d left
+|╵ Crash on start              unassigned
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|2 over · 1 soon · 3 on track         1/6
+|refreshing · docs 2/2        details 0/3
+|←→ mode n ↑↓ sel ⏎ open g grp a r ?
+
+1:1 "owed            one list ·"
+1:28 "overdue first" fg=7
+2:1 "┃" fg=1 bg=8
+2:2 "┆" fg=7 bg=8
+2:3 "⇄ example#12 PR reply " bg=8 bold
+2:25 "○ dave   " fg=6 bg=8 bold
+2:34 "4d over" fg=1 bg=8 bold
+3:1 "┃" fg=1 bg=8
+3:2 "┆" fg=7 bg=8
+3:3 "Fix the parser       " bg=8 italic
+3:24 "✗ checks  " fg=1 bg=8
+3:34 "◉ alice" fg=4 bg=8
+4:1 "┃" fg=1 bg=8
+4:2 "┆" fg=7 bg=8
+4:3 "○ dave " fg=6 bg=8
+4:10 "· 3d ago                       " fg=7 bg=8
+5:1 "┃" fg=1 bg=8
+5:2 "┆" fg=7 bg=8
+5:3 "Rebased on main. Could someone look   " bg=8
+6:1 "┃" fg=1 bg=8
+6:2 "┆" fg=7 bg=8
+6:3 "again?                                " bg=8
+7:1 "┃" fg=1 bg=8
+7:2 "┆waiting since Mon 10:00 · target 24h  " fg=7 bg=8
+8:1 "┃" fg=1 bg=8
+8:2 "┆example stack 3 · 2 of 3 · → main     " fg=7 bg=8
+9:1 "╹" fg=1 bg=8
+9:2 "┆…                                     " fg=7 bg=8
+10:1 "┃" fg=1
+10:2 "┆" fg=7
+10:3 "⇄ example#12 PR close" bold
+10:25 "○ dave" fg=6 bold
+10:34 "2h over" fg=1 bold
+11:1 "╹" fg=1
+11:2 "┆" fg=7
+11:3 "Fix the parser" italic
+11:24 "✗ checks" fg=1
+11:34 "◉ alice" fg=4
+12:1 "┃" fg=3
+12:3 "◇ example#15 issue reply" bold
+12:34 "4h left" fg=3 bold
+13:1 "╹" fg=3
+13:3 "Crash on start" italic
+13:31 "unassigned"
+14:1 "│┆" fg=7
+14:3 "⇄ example#12 PR review" bold
+14:26 "○ dave" fg=6 bold
+14:34 "1d left" bold
+15:1 "╵┆" fg=7
+15:3 "Fix the parser" italic
+15:26 "✗ checks" fg=1
+15:36 "● bob" fg=4
+16:1 "│" fg=7
+16:3 "◇ docs#4 issue close" bold
+16:24 "◉ alice" fg=4 bold
+16:33 "10d left" bold
+17:1 "│" fg=7
+17:3 "Where do tokens live?" italic
+18:1 "╵" fg=7
+18:27 "◉ alice" fg=4
+18:34 ","
+18:36 "● bob" fg=4
+19:1 "│" fg=7
+19:3 "◇ example#15 issue close      29d left" bold
+20:1 "╵" fg=7
+20:3 "Crash on start" italic
+20:31 "unassigned"
+34:1 "2 over · 1 soon · 3 on track         1/6"
+35:1 "refreshing · docs 2/2"
+35:30 "details 0/3" fg=7
+36:1 "←→"
+36:4 "mode" fg=7
+36:9 "n ↑↓"
+36:14 "sel" fg=7
+36:18 "⏎"
+36:20 "open" fg=7
+36:25 "g"
+36:27 "grp" fg=7
+36:31 "a r ?"

@@ -1,0 +1,121 @@
+40x36
+|owed            one list · overdue first
+|  ✗ no team in docket.yaml, so every
+|  comment starts a reply wait
+|  Recovery: list the team under people:
+|  in the personal file or the
+|  repository's .github/docket.yaml, then
+|  run docket config
+|┃ ◇ docs#4 issue reply ◉ alice  18d over
+|┃ Where do tokens live?
+|┃                         ◉ alice, ◐ bob
+|┃ ◉ alice · 27d ago
+|╹ waiting since Tue 10:00 · target 24h
+|┃┆⇄ example#12 PR reply ○ dave   4d over
+|╹┆Fix the parser       ✗ checks  ◉ alice
+|┃┆⇄ example#12 PR close ○ dave   2h over
+|╹┆Fix the parser       ✗ checks  ◉ alice
+|┃ ◇ example#15 issue reply       4h left
+|╹ Crash on start              unassigned
+|│┆⇄ example#12 PR review ○ dave  1d left
+|╵┆Fix the parser         ✗ checks  ◐ bob
+|│ ◇ docs#4 issue close ◉ alice  10d left
+|│ Where do tokens live?
+|╵                         ◉ alice, ◐ bob
+|│ ◇ example#15 issue close      29d left
+|╵ Crash on start              unassigned
+|
+|
+|
+|
+|
+|
+|
+|
+|3 over · 1 soon · 3 on track         1/7
+|synced 2m ago
+|←→ mode n ↑↓ sel ⏎ open g grp a r ?
+
+1:1 "owed            one list ·"
+1:28 "overdue first" fg=7
+2:3 "✗ no team in docket.yaml, so every" fg=1
+3:3 "comment starts a reply wait" fg=1
+4:3 "Recovery: list the team under people:"
+5:3 "in the personal file or the"
+6:3 "repository's .github/docket.yaml, then"
+7:3 "run docket config"
+8:1 "┃ " fg=1 bg=8
+8:3 "◇ docs#4 issue reply " bg=8 bold
+8:24 "◉ alice  " fg=4 bg=8 bold
+8:33 "18d over" fg=1 bg=8 bold
+9:1 "┃ " fg=1 bg=8
+9:3 "Where do tokens live?                 " bg=8 italic
+10:1 "┃                         " fg=1 bg=8
+10:27 "◉ alice" fg=4 bg=8
+10:34 ", " bg=8
+10:36 "◐ bob" fg=5 bg=8
+11:1 "┃ " fg=1 bg=8
+11:3 "◉ alice " fg=4 bg=8
+11:11 "· 27d ago                     " fg=7 bg=8
+12:1 "╹ " fg=1 bg=8
+12:3 "waiting since Tue 10:00 · target 24h  " fg=7 bg=8
+13:1 "┃" fg=1
+13:2 "┆" fg=7
+13:3 "⇄ example#12 PR reply" bold
+13:25 "○ dave" fg=6 bold
+13:34 "4d over" fg=1 bold
+14:1 "╹" fg=1
+14:2 "┆" fg=7
+14:3 "Fix the parser" italic
+14:24 "✗ checks" fg=1
+14:34 "◉ alice" fg=4
+15:1 "┃" fg=1
+15:2 "┆" fg=7
+15:3 "⇄ example#12 PR close" bold
+15:25 "○ dave" fg=6 bold
+15:34 "2h over" fg=1 bold
+16:1 "╹" fg=1
+16:2 "┆" fg=7
+16:3 "Fix the parser" italic
+16:24 "✗ checks" fg=1
+16:34 "◉ alice" fg=4
+17:1 "┃" fg=3
+17:3 "◇ example#15 issue reply" bold
+17:34 "4h left" fg=3 bold
+18:1 "╹" fg=3
+18:3 "Crash on start" italic
+18:31 "unassigned"
+19:1 "│┆" fg=7
+19:3 "⇄ example#12 PR review" bold
+19:26 "○ dave" fg=6 bold
+19:34 "1d left" bold
+20:1 "╵┆" fg=7
+20:3 "Fix the parser" italic
+20:26 "✗ checks" fg=1
+20:36 "◐ bob" fg=5
+21:1 "│" fg=7
+21:3 "◇ docs#4 issue close" bold
+21:24 "◉ alice" fg=4 bold
+21:33 "10d left" bold
+22:1 "│" fg=7
+22:3 "Where do tokens live?" italic
+23:1 "╵" fg=7
+23:27 "◉ alice" fg=4
+23:34 ","
+23:36 "◐ bob" fg=5
+24:1 "│" fg=7
+24:3 "◇ example#15 issue close      29d left" bold
+25:1 "╵" fg=7
+25:3 "Crash on start" italic
+25:31 "unassigned"
+34:1 "3 over · 1 soon · 3 on track         1/7"
+35:1 "synced 2m ago" fg=7
+36:1 "←→"
+36:4 "mode" fg=7
+36:9 "n ↑↓"
+36:14 "sel" fg=7
+36:18 "⏎"
+36:20 "open" fg=7
+36:25 "g"
+36:27 "grp" fg=7
+36:31 "a r ?"

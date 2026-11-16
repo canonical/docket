@@ -1,0 +1,14 @@
+60x36
+|┃┆⇄ example-repository…h-a-long-name#12345 PR review 1d over
+|╹┆Keep the comments a…  draft  ✗ checks  ✗ file  parser-team
+
+1:1 "┃" fg=1
+1:2 "┆" fg=7
+1:3 "⇄ example-repository…h-a-long-name#12345 PR review" bold
+1:54 "1d over" fg=1 bold
+2:1 "╹" fg=1
+2:2 "┆" fg=7
+2:3 "Keep the comments a…" italic
+2:25 "draft" fg=7
+2:32 "✗ checks  ✗ file" fg=1
+2:50 "parser-team"

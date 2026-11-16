@@ -1,14 +1,15 @@
+import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { longAuthor, parserTeam } from "../../../../testing/long.js";
-import type { Meta, Story } from "../../../../testing/stories.js";
+import { drawAtWidth } from "../../../../testing/stories.js";
 import { GroupHeading } from "../../component/index.js";
 import type { ListBlock } from "../../types.js";
 import ScrolledList from "./ScrolledList.js";
-import type { ScrolledListProps } from "./types.js";
 
-const meta: Meta<ScrolledListProps> = {
+const meta = {
   title: "layout/ScrolledList",
   component: ScrolledList,
-};
+  render: drawAtWidth(ScrolledList),
+} satisfies Meta<typeof ScrolledList>;
 
 export default meta;
 
@@ -54,8 +55,15 @@ const blocks = [
  * The top of the list: its first heading in its place, nothing pinned,
  * and the rows under the pane counted on its last line.
  */
-export const Top: Story<ScrolledListProps> = {
-  args: { blocks, from: 1, to: 1, height: 6, onShown: () => {}, width },
+export const Top: StoryObj<typeof meta> = {
+  args: {
+    blocks,
+    from: 1,
+    to: 1,
+    height: 6,
+    onShown: () => {},
+    width,
+  },
 };
 
 /**
@@ -63,7 +71,7 @@ export const Top: Story<ScrolledListProps> = {
  * where the rows shown start among his three, and the unassigned row
  * under the pane counted.
  */
-export const Pinned: Story<ScrolledListProps> = {
+export const Pinned: StoryObj<typeof meta> = {
   args: { ...Top.args, from: 3, to: 3, first: 2 },
 };
 
@@ -72,7 +80,7 @@ export const Pinned: Story<ScrolledListProps> = {
  * pinned heading cuts the login before its place, and the team's row
  * under the pane is counted.
  */
-export const Long: Story<ScrolledListProps> = {
+export const Long: StoryObj<typeof meta> = {
   args: {
     ...Pinned.args,
     blocks: [

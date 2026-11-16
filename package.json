@@ -19,6 +19,7 @@
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
     "!src/**/*.stories.tsx",
+    "!src/**/__goldens__",
     "!src/testing",
     "!src/scripts",
     "LICENSE",
@@ -40,8 +41,8 @@
     "build": "tsc --noEmit -p tsconfig.build.json",
     "lerna": "lerna",
     "check": "biome check && tsc --noEmit",
-    "test": "bunx --bun vitest run",
-    "test:coverage": "bunx --bun vitest run --coverage",
+    "test": "bunx --bun vitest run --project unit && bunx --bun vitest run --project stories",
+    "test:coverage": "bunx --bun vitest run --coverage --project unit && bunx --bun vitest run --project stories",
     "check:identity": "bun src/scripts/check-identity.ts",
     "check:secrets": "bun src/scripts/check-secrets.ts",
     "check:audit": "bun src/scripts/check-audit.ts",
@@ -54,6 +55,9 @@
     "ci": "bun run check && bun run build && bun run test:coverage && bun run self-test && bun run check:identity && bun run check:secrets && bun run check:audit && bun run check:licences && bun run check:structure && bun run guarantees && bun run guarantees:prove"
   },
   "devDependencies": {
+    "@aztlan/lago": "0.1.0-rc.1",
+    "@aztlan/lago-config": "0.1.0-rc.1",
+    "@aztlan/lago-react": "0.1.0-rc.1",
     "@biomejs/biome": "2.6.6",
     "@canonical/biome-config": "0.44.0",
     "@canonical/typescript-config-react": "0.45.0",

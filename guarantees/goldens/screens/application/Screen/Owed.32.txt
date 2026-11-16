@@ -1,5 +1,0 @@
-32 columns
-|docket needs 40 columns
-
-runs
-1:1 "docket needs 40 columns" fg #ffffffff bg #000000ff

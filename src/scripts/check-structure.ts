@@ -195,12 +195,6 @@ function hasUnreadImport(source: ts.SourceFile): boolean {
   return visit(source);
 }
 
-/** A stories file anywhere under `src/`, as an import names it. */
-const isStory = (path: string) => /^src\/.+\.stories\.(js|tsx)$/.test(path);
-
-/** The one corpus file that loads the stories by a path it finds. */
-const storyLoader = "guarantees/screens.test.tsx";
-
 const hasModifier = (node: ts.Node, kind: ts.SyntaxKind) =>
   ts.canHaveModifiers(node) &&
   (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === kind);
@@ -399,6 +393,18 @@ function check(root: string): Finding[] {
         }
       }
     }
+    // Each block draws text longer than its slots hold in a story named
+    // `Long`, so how it gives way is drawn and kept as a golden.
+    if (
+      path.startsWith("src/lib/ui/") &&
+      path.endsWith(".stories.tsx") &&
+      !exportsOf(source).values.includes("Long")
+    ) {
+      report(
+        "stories",
+        "has no story named Long, drawing text longer than the block's slots hold",
+      );
+    }
     const lines = text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
     if (lines > maxLines && !lengthHeader.test(text)) {
       report(
@@ -428,17 +434,13 @@ function check(root: string): Finding[] {
 
 /**
  * The guarantees corpus reaches docket by running it, as a user does, so
- * a guarantee stays evidence independent of the code it pins. The one
- * exception is the stories files under `src/`, which the `screens` entry
- * draws: a story names a state worth pinning, and only drawing it shows it.
+ * a guarantee stays evidence independent of the code it pins.
  *
  * In each `.ts` and `.tsx` file under `guarantees/`, the check refuses an
  * `import`, an `export … from` or an `import()` of a written relative path
- * that reaches under `src/` to anything but a `*.stories` file, and an
- * `import()` of a path it cannot read anywhere but in the file that loads
- * the stories. It reads nothing else: `require()`, `import … = require()`,
- * an absolute path, a `file://` URL and a file with another extension go
- * unseen.
+ * that reaches under `src/`, and an `import()` of a path it cannot read. It
+ * reads nothing else: `require()`, `import … = require()`, an absolute
+ * path, a `file://` URL and a file with another extension go unseen.
  */
 function checkCorpus(root: string, findings: Finding[]): void {
   if (!existsSync(join(root, "guarantees"))) return;
@@ -448,7 +450,7 @@ function checkCorpus(root: string, findings: Finding[]): void {
     const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest);
     for (const { specifier } of importsOf(source)) {
       const target = join(dirname(path), specifier);
-      if (target.startsWith("src/") && !isStory(target)) {
+      if (target.startsWith("src/")) {
         findings.push({
           file: path,
           rule: "dependencies",
@@ -456,11 +458,11 @@ function checkCorpus(root: string, findings: Finding[]): void {
         });
       }
     }
-    if (path !== storyLoader && hasUnreadImport(source)) {
+    if (hasUnreadImport(source)) {
       findings.push({
         file: path,
         rule: "dependencies",
-        message: `imports a path the check cannot read; only ${storyLoader} may, to load the stories`,
+        message: "imports a path the check cannot read",
       });
     }
   }
@@ -572,6 +574,10 @@ const breaks: Record<string, [string, string]> = {
     "dependencies",
     "const path = process.argv[2];\nexport default await import(path);",
   ],
+  "guarantees/screen.test.ts": [
+    "dependencies",
+    'import * as stories from "../src/lib/ui/component/ThreadRow/ThreadRow.stories.js";\nstories;',
+  ],
   "src/lib/config/load.ts": [
     "dependencies",
     'import clock from "#clock";\nexport default function load() { return clock; }',
@@ -580,6 +586,10 @@ const breaks: Record<string, [string, string]> = {
   "src/lib/config/schema.ts": ["length", `${long}\nexport default 1;`],
   "src/lib/config/types.ts": ["exports", "export const x = 1;"],
   "src/lib/waits/owner.ts": ["tests", "export default function owner() {}"],
+  "src/lib/ui/component/Margin/Margin.stories.tsx": [
+    "stories",
+    "export const Short = {};",
+  ],
   "src/lib/ui/component/Row/Row.tsx": [
     "fitting",
     'import trimText from "../../fit/trimText.js";\nexport default function Row() { return trimText; }',
@@ -624,6 +634,11 @@ const breaks: Record<string, [string, string]> = {
 
 /** Each file must be accepted: the allowances and the rules' scopes. */
 const allowed: Record<string, string> = {
+  // A block's stories file with its Long story, and a stories file outside
+  // the blocks, which needs none.
+  "src/lib/ui/component/ThreadRow/ThreadRow.stories.tsx":
+    "export const Long = {};",
+  "src/application/Screen.stories.tsx": "export const Owed = {};",
   "src/lib/ui/component/ThreadRow/common/Margin/Margin.tsx":
     "export default function Margin() { return null; }",
   "src/lib/ui/component/ThreadRow/ThreadRow.tsx": [
@@ -693,12 +708,6 @@ const allowed: Record<string, string> = {
   "src/testing/alice.ts": 'export const alice = "alice";',
   "guarantees/entry.test.ts":
     'import makeHome from "./makeHome.js";\nmakeHome;',
-  "guarantees/screen.test.ts":
-    'import * as stories from "../src/lib/ui/component/ThreadRow/ThreadRow.stories.js";\nstories;',
-  "guarantees/frames.test.ts":
-    'import * as stories from "../src/application/Screen.stories.js";\nstories;',
-  "guarantees/screens.test.tsx":
-    "const path = process.argv[2];\nexport default await import(path);",
   "src/scripts/check.ts": 'import x from "../lib/owed/index.js";\nx;',
 };
 

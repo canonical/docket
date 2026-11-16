@@ -1,0 +1,17 @@
+60x36
+|┃ ◇ example#4 issue close ○ dave                     5d over
+|┃ Where do tokens live?
+|╹                             ● alice, ● bob, ◐ carol-at-ex…
+
+1:1 "┃" fg=1
+1:3 "◇ example#4 issue close" bold
+1:27 "○ dave" fg=6 bold
+1:54 "5d over" fg=1 bold
+2:1 "┃" fg=1
+2:3 "Where do tokens live?" italic
+3:1 "╹" fg=1
+3:31 "● alice" fg=4
+3:38 ","
+3:40 "● bob" fg=4
+3:45 ","
+3:47 "◐ carol-at-ex…" fg=5

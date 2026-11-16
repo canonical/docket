@@ -1,0 +1,69 @@
+60x36
+|help
+|
+|Mode ───────────────────────────────────────────────────────
+|  ← →  h l switch mode
+|           owed → activity → finished → inbox
+|           docket opens start view
+|  n        open the inbox
+|           n again returns to owed
+|  A        show all or unread
+|           A switches between unread and the whole inbox
+|  g        next grouping
+|  t        next time window
+|           owed: most overdue first
+|           activity: newest first
+|           finished: newest first
+|
+|List ───────────────────────────────────────────────────────
+|  ↑ ↓  k j move the selection
+|           (opens the accordion)
+|  ⇞ ⇟      a page up or down
+|  home end the first or last thread
+|
+|Thread ─────────────────────────────────────────────────────
+|  ⏎        open in the browser
+|  a        assign
+|  r        request review
+|  m        mark read
+|
+|Editor ─────────────────────────────────────────────────────
+|  type     filter
+|  ↑ ↓      move
+|  ␣        toggle
+|  ⏎        apply
+|  esc      cancel
+|
+|  ↓ 4 below
+
+1:1 "help"
+3:1 "Mode ───────────────────────────────────────────────────────"
+4:3 "← →  h l switch mode"
+5:12 "owed → activity → finished → inbox"
+6:12 "docket opens start view"
+7:3 "n        open the inbox"
+8:12 "n again returns to owed"
+9:3 "A        show all or unread"
+10:12 "A switches between unread and the whole inbox"
+11:3 "g        next grouping"
+12:3 "t        next time window"
+13:12 "owed: most overdue first"
+14:12 "activity: newest first"
+15:12 "finished: newest first"
+17:1 "List ───────────────────────────────────────────────────────"
+18:3 "↑ ↓  k j move the selection"
+19:12 "(opens the accordion)"
+20:3 "⇞ ⇟      a page up or down"
+21:3 "home end the first or last thread"
+23:1 "Thread ─────────────────────────────────────────────────────"
+24:3 "⏎        open in the browser"
+25:3 "a        assign"
+26:3 "r        request review"
+27:3 "m        mark read"
+29:1 "Editor ─────────────────────────────────────────────────────"
+30:3 "type     filter"
+31:3 "↑ ↓      move"
+32:3 "␣        toggle"
+33:3 "⏎        apply"
+34:3 "esc      cancel"
+36:3 "↓ 4 below" fg=7

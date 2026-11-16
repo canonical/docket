@@ -1,0 +1,35 @@
+60x36
+|┃┆owner ○ example-contributor-with-a-long-login,…
+|┃┆asked by ● alice 6d ago
+|┃┆0 pushes since · 1 file · +40 −12
+|┃┆✗ checks: 3 of 4 failed (lint the whole repository,
+|┃┆unit tests on every platform,
+|┃┆build the documentation site)
+|┃┆stack 7 · 2 of 3 · → release/example-br…h-with-a-long-name
+|╹┆below #12344 merged, above #12346 open
+
+1:1 "┃" fg=1 bg=8
+1:2 "┆" fg=7 bg=8
+1:3 "owner " bg=8
+1:9 "○ example-contributor-with-a-long-login" fg=6 bg=8
+1:48 ",…           " bg=8
+2:1 "┃" fg=1 bg=8
+2:2 "┆asked by " fg=7 bg=8
+2:12 "● alice " fg=4 bg=8
+2:20 "6d ago                                   " fg=7 bg=8
+3:1 "┃" fg=1 bg=8
+3:2 "┆" fg=7 bg=8
+3:3 "0 pushes since · 1 file · +40 −12                         " bg=8
+4:1 "┃" fg=1 bg=8
+4:2 "┆" fg=7 bg=8
+4:3 "✗ checks: 3 of 4 failed (lint the whole repository,       " fg=1 bg=8
+5:1 "┃" fg=1 bg=8
+5:2 "┆" fg=7 bg=8
+5:3 "unit tests on every platform,                             " fg=1 bg=8
+6:1 "┃" fg=1 bg=8
+6:2 "┆" fg=7 bg=8
+6:3 "build the documentation site)                             " fg=1 bg=8
+7:1 "┃" fg=1 bg=8
+7:2 "┆stack 7 · 2 of 3 · → release/example-br…h-with-a-long-name" fg=7 bg=8
+8:1 "╹" fg=1 bg=8
+8:2 "┆below #12344 merged, above #12346 open                    " fg=7 bg=8

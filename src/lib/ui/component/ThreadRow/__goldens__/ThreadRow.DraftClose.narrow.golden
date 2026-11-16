@@ -1,0 +1,12 @@
+40x36
+|│┆⇄ example#13 PR close ○ dave   8d left
+|╵┆Document the parser     draft  ● alice
+
+1:1 "│┆" fg=7
+1:3 "⇄ example#13 PR close" bold
+1:25 "○ dave" fg=6 bold
+1:34 "8d left" bold
+2:1 "╵┆" fg=7
+2:3 "Document the parser" italic
+2:27 "draft" fg=7
+2:34 "● alice" fg=4

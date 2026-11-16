@@ -1,0 +1,10 @@
+60x36
+|  ✗ docket stopped on a failure it has no name for: disk on
+|  fire
+|  Recovery: run the command again; if it keeps failing,
+|  report it
+
+1:3 "✗ docket stopped on a failure it has no name for: disk on" fg=1
+2:3 "fire" fg=1
+3:3 "Recovery: run the command again; if it keeps failing,"
+4:3 "report it"

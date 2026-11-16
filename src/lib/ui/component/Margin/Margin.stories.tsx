@@ -1,40 +1,41 @@
-import type { Meta, Story } from "../../../../testing/stories.js";
+import type { Meta, StoryObj } from "@aztlan/lago-react";
+import { drawAtWidth } from "../../../../testing/stories.js";
 import Margin from "./Margin.js";
-import type { MarginProps } from "./types.js";
 
-const meta: Meta<MarginProps> = {
+const meta = {
   title: "component/Margin",
   component: Margin,
-};
+  render: drawAtWidth(Margin),
+} satisfies Meta<typeof Margin>;
 
 export default meta;
 
 /** A pull request in a stack, over its target: a closed two-line row. */
-export const OverInStack: Story<MarginProps> = {
+export const OverInStack: StoryObj<typeof meta> = {
   args: { state: "over", stacked: true, lines: 2, ends: true },
 };
 
 /** A thread due soon, in no stack, its accordion following. */
-export const SoonOpen: Story<MarginProps> = {
+export const SoonOpen: StoryObj<typeof meta> = {
   args: { state: "soon", stacked: false, lines: 2, ends: false },
 };
 
 /** A pull request in a stack, on track, on a row with a line of owners. */
-export const OnTrackThreeLines: Story<MarginProps> = {
+export const OnTrackThreeLines: StoryObj<typeof meta> = {
   args: { state: "onTrack", stacked: true, lines: 3, ends: true },
 };
 
 /** A finished pull request in a stack that ended within its target, its ending following its row. */
-export const WithinInStack: Story<MarginProps> = {
+export const WithinInStack: StoryObj<typeof meta> = {
   args: { state: "within", stacked: true, lines: 3, ends: true },
 };
 
 /** A pull request in a stack, in activity, where no clock runs. */
-export const NoClock: Story<MarginProps> = {
+export const NoClock: StoryObj<typeof meta> = {
   args: { stacked: true, lines: 2, ends: true },
 };
 
 /** A selected row and its accordion at their tallest: twelve lines of bar. */
-export const Long: Story<MarginProps> = {
+export const Long: StoryObj<typeof meta> = {
   args: { state: "over", stacked: true, lines: 12, ends: true },
 };

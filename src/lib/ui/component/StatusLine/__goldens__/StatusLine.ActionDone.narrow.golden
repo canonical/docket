@@ -1,0 +1,7 @@
+40x36
+|✓ assigned ◉ alice, ◐ erin
+
+1:1 "✓ assigned" fg=2
+1:12 "◉ alice" fg=4
+1:19 ","
+1:21 "◐ erin" fg=5

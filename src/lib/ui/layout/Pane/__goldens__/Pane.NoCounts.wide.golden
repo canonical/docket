@@ -1,0 +1,48 @@
+60x36
+|owed
+|
+|  nothing owed
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|synced 2m ago
+|←→ mode ↑↓ sel g grp ?
+
+1:1 "owed"
+3:3 "nothing owed"
+35:1 "synced 2m ago" fg=7
+36:1 "←→"
+36:4 "mode" fg=7
+36:9 "↑↓"
+36:12 "sel" fg=7
+36:16 "g"
+36:18 "grp" fg=7
+36:22 "?"

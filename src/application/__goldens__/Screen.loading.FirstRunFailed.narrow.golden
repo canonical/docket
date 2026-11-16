@@ -1,0 +1,58 @@
+40x36
+|owed            one list · overdue first
+|
+|  refresh in progress…
+|  example ✓ 2 threads
+|  docs    ✗ failed: GitHub gave no
+|          answer within 30 seconds
+|  Recovery: refresh
+|  ████████████████████████████ 1/1 pages
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|←→ mode n ↑↓ sel ⏎ open g grp a r ?
+
+1:1 "owed            one list ·"
+1:28 "overdue first" fg=7
+3:3 "refresh in progress…"
+4:3 "example"
+4:11 "✓" fg=2
+4:13 "2 threads"
+5:3 "docs"
+5:11 "✗ failed: GitHub gave no" fg=1
+6:11 "answer within 30 seconds" fg=1
+7:3 "Recovery: refresh"
+8:3 "████████████████████████████ 1/1 pages"
+36:1 "←→"
+36:4 "mode" fg=7
+36:9 "n ↑↓"
+36:14 "sel" fg=7
+36:18 "⏎"
+36:20 "open" fg=7
+36:25 "g"
+36:27 "grp" fg=7
+36:31 "a r ?"

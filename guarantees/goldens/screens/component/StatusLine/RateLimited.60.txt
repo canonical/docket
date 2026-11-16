@@ -1,5 +1,0 @@
-60 columns
-|paused: rate limit · resumes 14:20
-
-runs
-1:1 "paused: rate limit · resumes 14:20" fg #ffffffff bg #00000000

@@ -1,0 +1,6 @@
+60x36
+| ┆  ● alice pushed 2 commits                             25m
+
+1:2 "┆" fg=7
+1:5 "● alice" fg=4
+1:13 "pushed 2 commits                             25m"

@@ -1,0 +1,43 @@
+40x36
+|setup
+|
+|  ✗ gh is not signed in to github.com
+|  Recovery: run gh auth login
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|? q quit
+
+1:1 "setup"
+3:3 "✗ gh is not signed in to github.com" fg=1
+4:3 "Recovery: run gh auth login"
+36:1 "? q"
+36:5 "quit" fg=7

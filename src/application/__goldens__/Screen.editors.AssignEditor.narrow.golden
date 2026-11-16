@@ -1,0 +1,106 @@
+40x36
+|assigning example#12
+|┃┆⇄ example#12 PR reply ○ dave   4d over
+|╹┆Fix the parser       ✗ checks  ◉ alice
+|  filter:
+|  ☑ ◉ alice
+|  ☐ ● bob
+|  ☐ ○ dave
+|  ☐ ◐ carol
+|┃┆⇄ example#12 PR close ○ dave   2h over
+|╹┆Fix the parser       ✗ checks  ◉ alice
+|┃ ◇ example#15 issue reply       4h left
+|╹ Crash on start              unassigned
+|│┆⇄ example#12 PR review ○ dave  1d left
+|╵┆Fix the parser         ✗ checks  ● bob
+|│ ◇ docs#4 issue close ◉ alice  10d left
+|│ Where do tokens live?
+|╵                         ◉ alice, ● bob
+|│ ◇ example#15 issue close      29d left
+|╵ Crash on start              unassigned
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|2 over · 1 soon · 3 on track         1/6
+|synced 2m ago
+|type filter ↑↓ ␣ tick ⏎ apply esc ?
+
+1:1 "assigning example#12"
+2:1 "┃" fg=1
+2:2 "┆" fg=7
+2:3 "⇄ example#12 PR reply" bold
+2:25 "○ dave" fg=6 bold
+2:34 "4d over" fg=1 bold
+3:1 "╹" fg=1
+3:2 "┆" fg=7
+3:3 "Fix the parser" italic
+3:24 "✗ checks" fg=1
+3:34 "◉ alice" fg=4
+4:3 "filter:"
+5:3 "☑"
+5:5 "◉ alice" fg=4
+6:3 "☐"
+6:5 "● bob" fg=4
+7:3 "☐"
+7:5 "○ dave" fg=6
+8:1 "  ☐ " bg=8
+8:5 "◐ carol                             " fg=5 bg=8
+9:1 "┃" fg=1
+9:2 "┆" fg=7
+9:3 "⇄ example#12 PR close" bold
+9:25 "○ dave" fg=6 bold
+9:34 "2h over" fg=1 bold
+10:1 "╹" fg=1
+10:2 "┆" fg=7
+10:3 "Fix the parser" italic
+10:24 "✗ checks" fg=1
+10:34 "◉ alice" fg=4
+11:1 "┃" fg=3
+11:3 "◇ example#15 issue reply" bold
+11:34 "4h left" fg=3 bold
+12:1 "╹" fg=3
+12:3 "Crash on start" italic
+12:31 "unassigned"
+13:1 "│┆" fg=7
+13:3 "⇄ example#12 PR review" bold
+13:26 "○ dave" fg=6 bold
+13:34 "1d left" bold
+14:1 "╵┆" fg=7
+14:3 "Fix the parser" italic
+14:26 "✗ checks" fg=1
+14:36 "● bob" fg=4
+15:1 "│" fg=7
+15:3 "◇ docs#4 issue close" bold
+15:24 "◉ alice" fg=4 bold
+15:33 "10d left" bold
+16:1 "│" fg=7
+16:3 "Where do tokens live?" italic
+17:1 "╵" fg=7
+17:27 "◉ alice" fg=4
+17:34 ","
+17:36 "● bob" fg=4
+18:1 "│" fg=7
+18:3 "◇ example#15 issue close      29d left" bold
+19:1 "╵" fg=7
+19:3 "Crash on start" italic
+19:31 "unassigned"
+34:1 "2 over · 1 soon · 3 on track         1/6"
+35:1 "synced 2m ago" fg=7
+36:1 "type"
+36:6 "filter" fg=7
+36:13 "↑↓ ␣"
+36:18 "tick" fg=7
+36:23 "⏎"
+36:25 "apply" fg=7
+36:31 "esc ?"

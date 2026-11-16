@@ -1,3 +1,4 @@
+import type { Meta, StoryObj } from "@aztlan/lago-react";
 import type { ProviderError, ThreadDetail } from "../lib/provider/index.js";
 import type { Thread } from "../lib/waits/index.js";
 import { at, bob, exampleSync } from "../testing/facts.js";
@@ -15,16 +16,17 @@ import {
 import {
   connectRecording,
   ScreenFrame,
-  type ScreenFrameProps,
   settled,
   viewRecording,
 } from "../testing/screen.js";
-import type { Meta, Story } from "../testing/stories.js";
+import { drawAtWidth } from "../testing/stories.js";
+import { atHeight, withTooNarrow } from "../testing/viewports.js";
 
-const meta: Meta<ScreenFrameProps> = {
+const meta = {
   title: "application/Screen",
   component: ScreenFrame,
-};
+  render: drawAtWidth(ScreenFrame),
+} satisfies Meta<typeof ScreenFrame>;
 
 export default meta;
 
@@ -36,12 +38,15 @@ const timedOut: ProviderError = Object.assign(
 );
 
 /** owed, no grouping: the first row selected, with its accordion open. */
-export const Owed: Story<ScreenFrameProps> = { args: recording };
+export const Owed: StoryObj<typeof meta> = {
+  args: recording,
+  parameters: { viewports: withTooNarrow },
+};
 
 const teamless = { ...recordedSettings, people: new Map() };
 
 /** owed while no team is listed: every comment waits, and a notice says so. */
-export const OwedNoTeam: Story<ScreenFrameProps> = {
+export const OwedNoTeam: StoryObj<typeof meta> = {
   args: {
     ...recording,
     settings: teamless,
@@ -56,12 +61,12 @@ export const OwedNoTeam: Story<ScreenFrameProps> = {
 };
 
 /** The selection one row down, its accordion open under it. */
-export const OwedSecondSelected: Story<ScreenFrameProps> = {
+export const OwedSecondSelected: StoryObj<typeof meta> = {
   args: { ...recording, run: ["selection.next"] },
 };
 
 /** A review row selected, its review accordion open under it. */
-export const OwedReviewSelected: Story<ScreenFrameProps> = {
+export const OwedReviewSelected: StoryObj<typeof meta> = {
   args: {
     ...recording,
     run: [
@@ -74,12 +79,12 @@ export const OwedReviewSelected: Story<ScreenFrameProps> = {
 };
 
 /** owed by owner: owners alphabetically, unassigned last. */
-export const OwedByOwner: Story<ScreenFrameProps> = {
+export const OwedByOwner: StoryObj<typeof meta> = {
   args: { ...recording, owedGrouping: "owner" },
 };
 
 /** owed by author: each login that opened a thread, with their group, alphabetically. */
-export const OwedByAuthor: Story<ScreenFrameProps> = {
+export const OwedByAuthor: StoryObj<typeof meta> = {
   args: { ...recording, owedGrouping: "author" },
 };
 
@@ -87,12 +92,12 @@ export const OwedByAuthor: Story<ScreenFrameProps> = {
  * owed by kind of thread: ISSUES, then PULL REQUESTS, as activity heads
  * them, with no section for a kind that owes nothing.
  */
-export const OwedByKind: Story<ScreenFrameProps> = {
+export const OwedByKind: StoryObj<typeof meta> = {
   args: { ...recording, owedGrouping: "kind" },
 };
 
 /** owed by repo, in the configuration's order, the accordion still loading. */
-export const OwedByRepo: Story<ScreenFrameProps> = {
+export const OwedByRepo: StoryObj<typeof meta> = {
   args: {
     ...viewRecording({ read: () => new Promise<ThreadDetail>(() => {}) }),
     owedGrouping: "repo",
@@ -100,7 +105,7 @@ export const OwedByRepo: Story<ScreenFrameProps> = {
 };
 
 /** owed by stack: the stack's section, then what is in no stack. */
-export const OwedByStack: Story<ScreenFrameProps> = {
+export const OwedByStack: StoryObj<typeof meta> = {
   args: { ...recording, owedGrouping: "stack" },
 };
 
@@ -108,7 +113,7 @@ export const OwedByStack: Story<ScreenFrameProps> = {
  * owed by stack, the stacked reply selected and its details failed: the
  * reason under what the snapshot showed, the stack mark down every line.
  */
-export const OwedByStackFailed: Story<ScreenFrameProps> = {
+export const OwedByStackFailed: StoryObj<typeof meta> = {
   args: {
     ...viewRecording({ read: async () => Promise.reject(timedOut) }),
     owedGrouping: "stack",
@@ -121,7 +126,7 @@ export const OwedByStackFailed: Story<ScreenFrameProps> = {
  * alice owes, each person in their group's mark and hue, and each
  * two-line item's bar ending on its second line.
  */
-export const OwedOrganisationReply: Story<ScreenFrameProps> = {
+export const OwedOrganisationReply: StoryObj<typeof meta> = {
   args: {
     ...viewRecording({
       threads: recordedThreads.map((thread) =>
@@ -186,7 +191,7 @@ const botUpdateDetail: ThreadDetail = {
  * mark, dimmed, and the close and the review both waits bob owes, since a
  * label keeps no thread off the close clock unless the settings say so.
  */
-export const OwedBotAuthored: Story<ScreenFrameProps> = {
+export const OwedBotAuthored: StoryObj<typeof meta> = {
   args: {
     ...recording,
     source: connectRecording({
@@ -205,7 +210,7 @@ export const OwedBotAuthored: Story<ScreenFrameProps> = {
 };
 
 /** activity over 24 working hours, by kind: the thread's state above its events. */
-export const ActivityByKind: Story<ScreenFrameProps> = {
+export const ActivityByKind: StoryObj<typeof meta> = {
   args: {
     ...recording,
     mode: "activity",
@@ -214,7 +219,7 @@ export const ActivityByKind: Story<ScreenFrameProps> = {
 };
 
 /** activity over 72 working hours, by author, each with their group. */
-export const ActivityByAuthor: Story<ScreenFrameProps> = {
+export const ActivityByAuthor: StoryObj<typeof meta> = {
   args: {
     ...recording,
     mode: "activity",
@@ -223,7 +228,7 @@ export const ActivityByAuthor: Story<ScreenFrameProps> = {
 };
 
 /** activity over 72 working hours, by repo. */
-export const ActivityByRepo: Story<ScreenFrameProps> = {
+export const ActivityByRepo: StoryObj<typeof meta> = {
   args: {
     ...recording,
     mode: "activity",
@@ -232,7 +237,7 @@ export const ActivityByRepo: Story<ScreenFrameProps> = {
 };
 
 /** activity over 72 working hours with no grouping, newest first. */
-export const ActivityUngrouped: Story<ScreenFrameProps> = {
+export const ActivityUngrouped: StoryObj<typeof meta> = {
   args: {
     ...recording,
     mode: "activity",
@@ -241,7 +246,7 @@ export const ActivityUngrouped: Story<ScreenFrameProps> = {
 };
 
 /** The inbox: unread notifications first, grouped by repository, with the browser-only label. */
-export const Inbox: Story<ScreenFrameProps> = {
+export const Inbox: StoryObj<typeof meta> = {
   args: {
     ...viewRecording({
       notifications: { items: recordedNotifications, syncedAt: recordedNow },
@@ -252,12 +257,12 @@ export const Inbox: Story<ScreenFrameProps> = {
 };
 
 /** Nothing owed: the empty state, the counts at zero, the freshness. */
-export const NothingOwed: Story<ScreenFrameProps> = {
+export const NothingOwed: StoryObj<typeof meta> = {
   args: viewRecording({ threads: [] }),
 };
 
 /** The first run: nothing cached, the full refresh's progress. */
-export const FirstRun: Story<ScreenFrameProps> = {
+export const FirstRun: StoryObj<typeof meta> = {
   args: viewRecording({
     status: {
       ...settled,
@@ -280,7 +285,7 @@ export const FirstRun: Story<ScreenFrameProps> = {
 };
 
 /** A refresh in the background: the rows stay, the status line says so. */
-export const Refreshing: Story<ScreenFrameProps> = {
+export const Refreshing: StoryObj<typeof meta> = {
   args: viewRecording({
     status: {
       ...settled,
@@ -297,7 +302,7 @@ export const Refreshing: Story<ScreenFrameProps> = {
 };
 
 /** GitHub refused requests for its rate limit: the rows stay. */
-export const RateLimited: Story<ScreenFrameProps> = {
+export const RateLimited: StoryObj<typeof meta> = {
   args: viewRecording({
     status: {
       ...settled,
@@ -309,7 +314,7 @@ export const RateLimited: Story<ScreenFrameProps> = {
   }),
 };
 /** No answer from GitHub: the rows stay, with how old they are. */
-export const Offline: Story<ScreenFrameProps> = {
+export const Offline: StoryObj<typeof meta> = {
   args: viewRecording({
     status: {
       ...settled,
@@ -320,7 +325,7 @@ export const Offline: Story<ScreenFrameProps> = {
 };
 
 /** A full refresh asked for within the cooldown of the last one. */
-export const FullRefreshRefused: Story<ScreenFrameProps> = {
+export const FullRefreshRefused: StoryObj<typeof meta> = {
   args: viewRecording({
     status: {
       ...settled,
@@ -333,7 +338,7 @@ export const FullRefreshRefused: Story<ScreenFrameProps> = {
  * gh is not installed: setup, the reason and the recovery in the list's
  * place, and only the keys that act.
  */
-export const GhNotInstalled: Story<ScreenFrameProps> = {
+export const GhNotInstalled: StoryObj<typeof meta> = {
   args: {
     ...recording,
     watched: [],
@@ -349,7 +354,7 @@ export const GhNotInstalled: Story<ScreenFrameProps> = {
 };
 
 /** gh is not signed in: setup, as when gh is not installed. */
-export const GhNotSignedIn: Story<ScreenFrameProps> = {
+export const GhNotSignedIn: StoryObj<typeof meta> = {
   args: {
     ...recording,
     watched: [],
@@ -364,7 +369,7 @@ export const GhNotSignedIn: Story<ScreenFrameProps> = {
 };
 
 /** The help, open over all but the header. */
-export const Help: Story<ScreenFrameProps> = {
+export const Help: StoryObj<typeof meta> = {
   args: { ...recording, run: ["help.toggle"] },
 };
 
@@ -390,7 +395,7 @@ const askedOfYourTeam = recordedThreads.map((thread) =>
  * alice's team: its heading and its row take her mark, though docket
  * never read its members.
  */
-export const OwedByOwnerYourTeam: Story<ScreenFrameProps> = {
+export const OwedByOwnerYourTeam: StoryObj<typeof meta> = {
   args: {
     ...viewRecording({ threads: askedOfYourTeam }),
     owedGrouping: "owner",
@@ -406,7 +411,7 @@ export const OwedByOwnerYourTeam: Story<ScreenFrameProps> = {
 };
 
 /** A pane shorter than 8 lines: it says only that it needs them. */
-export const TooShort: Story<ScreenFrameProps> = {
+export const TooShort: StoryObj<typeof meta> = {
   args: recording,
-  parameters: { height: 7 },
+  parameters: { viewports: atHeight(7) },
 };

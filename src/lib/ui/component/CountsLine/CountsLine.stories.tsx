@@ -1,16 +1,17 @@
-import type { Meta, Story } from "../../../../testing/stories.js";
+import type { Meta, StoryObj } from "@aztlan/lago-react";
+import { drawAtWidth } from "../../../../testing/stories.js";
 import CountsLine from "./CountsLine.js";
-import type { CountsLineProps } from "./types.js";
 
-const meta: Meta<CountsLineProps> = {
+const meta = {
   title: "component/CountsLine",
   component: CountsLine,
-};
+  render: drawAtWidth(CountsLine),
+} satisfies Meta<typeof CountsLine>;
 
 export default meta;
 
 /** owed counts the waits in each state; the selection is the third of four of alice's. */
-export const Owed: Story<CountsLineProps> = {
+export const Owed: StoryObj<typeof meta> = {
   args: {
     summary: {
       fields: [
@@ -25,7 +26,7 @@ export const Owed: Story<CountsLineProps> = {
 };
 
 /** activity counts the threads and the events of the whole window. */
-export const Activity: Story<CountsLineProps> = {
+export const Activity: StoryObj<typeof meta> = {
   args: {
     summary: {
       fields: [
@@ -39,7 +40,7 @@ export const Activity: Story<CountsLineProps> = {
 };
 
 /** Nothing listed: the counts alone, at zero. */
-export const NothingOwed: Story<CountsLineProps> = {
+export const NothingOwed: StoryObj<typeof meta> = {
   args: {
     summary: {
       fields: [
@@ -53,7 +54,7 @@ export const NothingOwed: Story<CountsLineProps> = {
 };
 
 /** owed with four digits of waits in every state: its widest summary. */
-export const Long: Story<CountsLineProps> = {
+export const Long: StoryObj<typeof meta> = {
   args: {
     summary: {
       fields: [

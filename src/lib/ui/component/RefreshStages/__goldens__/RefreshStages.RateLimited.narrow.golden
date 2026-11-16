@@ -1,0 +1,12 @@
+40x36
+|example ✓ 1 thread
+|docs    paused: rate limit
+|site    paused: rate limit
+
+1:1 "example"
+1:9 "✓" fg=2
+1:11 "1 thread"
+2:1 "docs"
+2:9 "paused: rate limit" fg=7
+3:1 "site"
+3:9 "paused: rate limit" fg=7

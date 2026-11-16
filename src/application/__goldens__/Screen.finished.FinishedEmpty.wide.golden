@@ -1,0 +1,42 @@
+60x24
+|finished                         1w · by kind · newest first
+|
+|  nothing merged or closed in 1w
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|0 over · 0 merged · 0 closed
+|synced 2m ago
+|←→ mode n ↑↓ sel ⏎ open g grp t time ?
+
+1:1 "finished                         1w · by kind ·"
+1:49 "newest first" fg=7
+3:3 "nothing merged or closed in 1w"
+22:1 "0 over · 0 merged · 0 closed"
+23:1 "synced 2m ago" fg=7
+24:1 "←→"
+24:4 "mode" fg=7
+24:9 "n ↑↓"
+24:14 "sel" fg=7
+24:18 "⏎"
+24:20 "open" fg=7
+24:25 "g"
+24:27 "grp" fg=7
+24:31 "t"
+24:33 "time" fg=7
+24:38 "?"

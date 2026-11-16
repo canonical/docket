@@ -1,0 +1,32 @@
+40x36
+|help
+|
+|Mode ───────────────────────────────────
+|  ← →  h l switch mode (owed ↔ activity)
+|           docket opens start view
+|  g        next grouping
+|
+|List ───────────────────────────────────
+|  ↑ ↓  k j move the selection
+|           (opens the accordion)
+|
+|App ────────────────────────────────────
+|  ?        show or hide help
+|  R        full refresh
+|  q        quit
+|
+|  windows are counted in working time
+
+1:1 "help"
+3:1 "Mode ───────────────────────────────────"
+4:3 "← →  h l switch mode (owed ↔ activity)"
+5:12 "docket opens start view"
+6:3 "g        next grouping"
+8:1 "List ───────────────────────────────────"
+9:3 "↑ ↓  k j move the selection"
+10:12 "(opens the accordion)"
+12:1 "App ────────────────────────────────────"
+13:3 "?        show or hide help"
+14:3 "R        full refresh"
+15:3 "q        quit"
+17:3 "windows are counted in working time"

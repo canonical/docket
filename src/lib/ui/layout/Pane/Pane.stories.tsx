@@ -1,5 +1,7 @@
+import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { longCommands, owedCommands } from "../../../../testing/commands.js";
-import type { Meta, Story } from "../../../../testing/stories.js";
+import { drawAtWidth } from "../../../../testing/stories.js";
+import { withTooNarrow } from "../../../../testing/viewports.js";
 import {
   CountsLine,
   EmptyState,
@@ -9,12 +11,12 @@ import {
 } from "../../component/index.js";
 import { PaneHeader } from "../../subcomponent/index.js";
 import Pane from "./Pane.js";
-import type { PaneProps } from "./types.js";
 
-const meta: Meta<PaneProps> = {
+const meta = {
   title: "layout/Pane",
   component: Pane,
-};
+  render: drawAtWidth(Pane),
+} satisfies Meta<typeof Pane>;
 
 export default meta;
 
@@ -23,7 +25,8 @@ const width = 40;
 const height = 36;
 
 /** owed with nothing owed: every line of the screen. */
-export const NothingOwed: Story<PaneProps> = {
+export const NothingOwed: StoryObj<typeof meta> = {
+  parameters: { viewports: withTooNarrow },
   args: {
     width,
     height,
@@ -72,7 +75,7 @@ export const NothingOwed: Story<PaneProps> = {
 };
 
 /** The help open: it fills the pane under the header. */
-export const Help: Story<PaneProps> = {
+export const Help: StoryObj<typeof meta> = {
   args: {
     ...NothingOwed.args,
     header: (
@@ -90,7 +93,7 @@ export const Help: Story<PaneProps> = {
 };
 
 /** No counts line: its place stays blank. */
-export const NoCounts: Story<PaneProps> = {
+export const NoCounts: StoryObj<typeof meta> = {
   args: { ...NothingOwed.args, counts: undefined },
 };
 
@@ -99,7 +102,7 @@ export const NoCounts: Story<PaneProps> = {
  * header on a repository with a long short name, the widest counts, and
  * more keys than the bar holds.
  */
-export const Long: Story<PaneProps> = {
+export const Long: StoryObj<typeof meta> = {
   args: {
     ...NothingOwed.args,
     header: (

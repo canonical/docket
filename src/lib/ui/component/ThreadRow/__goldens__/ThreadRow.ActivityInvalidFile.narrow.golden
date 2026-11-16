@@ -1,0 +1,10 @@
+40x36
+|  ◇ docs#4 issue ○ dave               2d
+|  Where do tokens live?    ✗ file  ● bob
+
+1:3 "◇ docs#4 issue" bold
+1:18 "○ dave" fg=6 bold
+1:39 "2d" bold
+2:3 "Where do tokens live?" italic
+2:28 "✗ file" fg=1
+2:36 "● bob" fg=4

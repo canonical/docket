@@ -41,13 +41,6 @@ file   = "request-budget.test.ts"
 select = "request-budget"
 expect = "pass"
 
-[screens]
-kind   = "golden"
-tier   = "pr"
-file   = "screens.test.tsx"
-select = "screens"
-expect = "pass"
-
 [corpus-can-fail]
 kind   = "conformance"
 tier   = "pr"
