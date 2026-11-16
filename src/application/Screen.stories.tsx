@@ -19,7 +19,8 @@ import {
   settled,
   viewRecording,
 } from "../testing/screen.js";
-import { atHeight, drawAtWidth, withTooNarrow } from "../testing/stories.js";
+import { drawAtWidth } from "../testing/stories.js";
+import { atHeight, withTooNarrow } from "../testing/viewports.js";
 
 const meta = {
   title: "application/Screen",

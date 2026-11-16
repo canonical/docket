@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { longCommands, owedCommands } from "../../../../testing/commands.js";
-import { drawAtWidth, withTooNarrow } from "../../../../testing/stories.js";
+import { drawAtWidth } from "../../../../testing/stories.js";
+import { withTooNarrow } from "../../../../testing/viewports.js";
 import {
   CountsLine,
   EmptyState,

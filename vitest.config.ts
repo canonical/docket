@@ -1,6 +1,6 @@
 import { createConfig } from "@aztlan/lago-config";
 import { mergeConfig } from "vitest/config";
-import { viewports } from "./src/testing/stories.js";
+import { viewports } from "./src/testing/viewports.js";
 
 // Lago's configuration: JSX through OpenTUI's React runtime, OpenTUI's Bun
 // build throughout, the timers a component waits on faked, a unit project

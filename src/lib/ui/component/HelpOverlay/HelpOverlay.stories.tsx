@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { everyCommand, longCommands } from "../../../../testing/commands.js";
-import { atHeight, drawAtWidth } from "../../../../testing/stories.js";
+import { drawAtWidth } from "../../../../testing/stories.js";
+import { atHeight } from "../../../../testing/viewports.js";
 import HelpOverlay from "./HelpOverlay.js";
 
 const meta = {

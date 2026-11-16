@@ -1,27 +1,10 @@
 /**
- * What docket's stories files share beyond Lago's story types: the screens
- * they are drawn on, and how a story is drawn on each.
+ * What docket's stories files share beyond Lago's story types: how a story
+ * is drawn on each of the screens in `viewports.ts`.
  */
 
-import type { StoryContext, Viewport } from "@aztlan/lago-react";
+import type { StoryContext } from "@aztlan/lago-react";
 import { cloneElement, isValidElement, type ReactNode } from "react";
-
-/** The least the pane allows, and one wider, on the approved frames' 36 lines. */
-export const viewports = {
-  narrow: { cols: 40, rows: 36 },
-  wide: { cols: 60, rows: 36 },
-} as const satisfies Record<string, Viewport>;
-
-/** The two screens on fewer lines, for a story that ends sooner. */
-export const atHeight = (rows: number) => ({
-  narrow: { rows },
-  wide: { rows },
-});
-
-/** A screen narrower than the pane allows, where it says only that, drawn beside the two. */
-export const withTooNarrow = {
-  tooNarrow: { cols: 32, rows: 36 },
-} as const satisfies Record<string, Viewport>;
 
 /**
  * `value` with every `width` that equals `from` set to `to`, however deep,

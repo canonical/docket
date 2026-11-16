@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@aztlan/lago-react";
 import { drawAtWidth } from "../../../../testing/stories.js";
 import Loading from "./Loading.js";
-import type { LoadingProps } from "./types.js";
 
 const meta = {
   title: "component/Loading",

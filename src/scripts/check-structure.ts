@@ -634,6 +634,11 @@ const breaks: Record<string, [string, string]> = {
 
 /** Each file must be accepted: the allowances and the rules' scopes. */
 const allowed: Record<string, string> = {
+  // A block's stories file with its Long story, and a stories file outside
+  // the blocks, which needs none.
+  "src/lib/ui/component/ThreadRow/ThreadRow.stories.tsx":
+    "export const Long = {};",
+  "src/application/Screen.stories.tsx": "export const Owed = {};",
   "src/lib/ui/component/ThreadRow/common/Margin/Margin.tsx":
     "export default function Margin() { return null; }",
   "src/lib/ui/component/ThreadRow/ThreadRow.tsx": [
